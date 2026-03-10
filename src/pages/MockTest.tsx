@@ -18,7 +18,7 @@ const MockTest = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 min
+  const [timeLeft, setTimeLeft] = useState(600);
 
   useEffect(() => {
     fetchAllQuestions().then(setQuestions);
@@ -67,7 +67,7 @@ const MockTest = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-24 pb-20">
-          <div className="container mx-auto px-4 max-w-2xl">
+          <div className="section-container max-w-2xl">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                 <BookOpen className="w-8 h-8 text-primary" />
@@ -79,10 +79,10 @@ const MockTest = () => {
                 20 câu hỏi · 10 phút · Grammar + Reading + Listening
               </p>
               <div className="glass-card p-6 mb-8 text-left space-y-3">
-                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-secondary" /><span className="text-sm text-foreground">Grammar & Vocabulary: 10 câu</span></div>
-                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-secondary" /><span className="text-sm text-foreground">Reading: 5 câu</span></div>
-                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-secondary" /><span className="text-sm text-foreground">Listening: 5 câu</span></div>
-                <div className="flex items-center gap-3"><Clock className="w-5 h-5 text-accent" /><span className="text-sm text-foreground">Thời gian: 10 phút</span></div>
+                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Grammar & Vocabulary: 10 câu</span></div>
+                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Reading: 5 câu</span></div>
+                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Listening: 5 câu</span></div>
+                <div className="flex items-center gap-3"><Clock className="w-5 h-5 text-primary" /><span className="text-sm text-foreground">Thời gian: 10 phút</span></div>
               </div>
               <Button size="lg" onClick={startTest} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 text-base px-8">
                 Bắt đầu thi thử <ArrowRight className="w-5 h-5" />
@@ -100,7 +100,7 @@ const MockTest = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-24 pb-20">
-          <div className="container mx-auto px-4 max-w-2xl">
+          <div className="section-container max-w-2xl">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
               <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
                 <Trophy className="w-10 h-10 text-primary" />
@@ -117,19 +117,19 @@ const MockTest = () => {
                 </div>
               </div>
 
-              {/* Score breakdown by skill */}
+              {/* Score breakdown */}
               <div className="glass-card p-6 mb-6">
-                <h3 className="font-heading font-bold text-foreground mb-4">Chi tiết theo kỹ năng</h3>
+                <h3 className="font-heading font-bold text-foreground mb-5">Chi tiết theo kỹ năng</h3>
                 {(["grammar", "reading", "listening"] as const).map((skill) => {
                   const skillQs = questions.filter((q) => q.skill === skill);
-                  const skillScore = skillQs.reduce((acc, q, i) => {
+                  const skillScore = skillQs.reduce((acc, q) => {
                     const qIdx = questions.indexOf(q);
                     return acc + (answers[qIdx] === q.correct_answer ? 1 : 0);
                   }, 0);
                   const skillPct = Math.round((skillScore / skillQs.length) * 100);
                   return (
-                    <div key={skill} className="mb-3 last:mb-0">
-                      <div className="flex justify-between text-sm mb-1">
+                    <div key={skill} className="mb-4 last:mb-0">
+                      <div className="flex justify-between text-sm mb-2">
                         <span className="text-foreground font-medium">{skillLabels[skill]}</span>
                         <span className="text-muted-foreground">{skillScore}/{skillQs.length} ({skillPct}%)</span>
                       </div>
@@ -148,19 +148,19 @@ const MockTest = () => {
 
               {/* Review answers */}
               <div className="glass-card p-6 mb-6 text-left">
-                <h3 className="font-heading font-bold text-foreground mb-4">Xem lại đáp án</h3>
+                <h3 className="font-heading font-bold text-foreground mb-5">Xem lại đáp án</h3>
                 <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                   {questions.map((q, i) => {
                     const isCorrect = answers[i] === q.correct_answer;
                     return (
-                      <div key={q.id} className={`p-4 rounded-lg border ${isCorrect ? "border-secondary/30 bg-secondary/5" : "border-destructive/30 bg-destructive/5"}`}>
+                      <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? "border-success/30 bg-success/5" : "border-destructive/30 bg-destructive/5"}`}>
                         <div className="flex items-start gap-2 mb-2">
-                          {isCorrect ? <CheckCircle2 className="w-4 h-4 text-secondary mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />}
+                          {isCorrect ? <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />}
                           <span className="text-sm text-foreground font-medium">Câu {i + 1}: {q.question_text}</span>
                         </div>
                         <div className="ml-6 text-xs text-muted-foreground">
                           {!isCorrect && <p>Bạn chọn: <span className="text-destructive font-medium">{answers[i] !== null ? q.options[answers[i]!] : "Chưa trả lời"}</span></p>}
-                          <p>Đáp án đúng: <span className="text-secondary font-medium">{q.options[q.correct_answer]}</span></p>
+                          <p>Đáp án đúng: <span className="text-success font-medium">{q.options[q.correct_answer]}</span></p>
                           <p className="mt-1 text-muted-foreground">{q.explanation}</p>
                         </div>
                       </div>
@@ -170,12 +170,12 @@ const MockTest = () => {
               </div>
 
               {level !== "B2" && level !== "C1" && level !== "C2" && (
-                <div className="glass-card p-6 mb-6 border-accent/30 bg-accent/5">
+                <div className="glass-card p-6 mb-6 border-primary/20">
                   <p className="text-sm text-foreground mb-3">
                     Trình độ của bạn chưa đạt B2. Tham gia khóa <strong>Aptis Kỳ Tích – 7 Ngày</strong> để nâng cấp nhanh!
                   </p>
                   <Link to="/course">
-                    <Button className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                       Xem khóa học <ArrowRight className="w-4 h-4" />
                     </Button>
                   </Link>
@@ -205,11 +205,11 @@ const MockTest = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-24 pb-20">
-        <div className="container mx-auto px-4 max-w-2xl">
+        <div className="section-container max-w-2xl">
           {/* Timer & Progress */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground px-2 py-1 rounded-md bg-muted">
+              <span className="text-xs font-medium text-muted-foreground px-2.5 py-1 rounded-md bg-muted">
                 {skillLabels[q.skill]}
               </span>
               <span className="text-sm text-muted-foreground">Câu {current + 1}/{total}</span>
@@ -273,14 +273,13 @@ const MockTest = () => {
               <ArrowLeft className="w-4 h-4" /> Trước
             </Button>
 
-            {/* Question dots */}
             <div className="hidden md:flex gap-1.5">
               {questions.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrent(i)}
                   className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                    i === current ? "bg-primary" : answers[i] !== null ? "bg-secondary" : "bg-muted"
+                    i === current ? "bg-primary" : answers[i] !== null ? "bg-primary/40" : "bg-muted"
                   }`}
                 />
               ))}
@@ -296,7 +295,7 @@ const MockTest = () => {
             ) : (
               <Button
                 onClick={handleSubmit}
-                className="bg-secondary text-secondary-foreground gap-1"
+                className="bg-primary text-primary-foreground gap-1"
               >
                 Nộp bài <CheckCircle2 className="w-4 h-4" />
               </Button>

@@ -39,25 +39,25 @@ const Course = () => (
     {/* Hero */}
     <section className="gradient-hero pt-28 pb-20 relative overflow-hidden">
       <div className="absolute inset-0 opacity-15">
-        <div className="absolute top-10 right-20 w-80 h-80 bg-accent/30 rounded-full blur-3xl" />
+        <div className="absolute top-10 right-20 w-80 h-80 bg-primary/30 rounded-full blur-3xl" />
       </div>
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="section-container relative z-10">
         <motion.div initial="hidden" animate="visible" className="max-w-3xl mx-auto text-center">
-          <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
+          <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
             <Flame className="w-4 h-4" /> Khóa học #1 về Aptis
           </motion.div>
           <motion.h1 variants={fadeUp} custom={1} className="text-4xl md:text-5xl font-heading font-extrabold text-on-dark leading-tight mb-6">
             Aptis Kỳ Tích –<br />
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(135deg, hsl(35 95% 60%), hsl(25 90% 55%))" }}>
+            <span className="gradient-text">
               Đạt Aptis trong 7 ngày
             </span>
           </motion.h1>
-          <motion.p variants={fadeUp} custom={2} className="text-lg text-on-dark-muted mb-8 max-w-xl mx-auto">
+          <motion.p variants={fadeUp} custom={2} className="text-lg text-on-dark/60 mb-8 max-w-xl mx-auto leading-relaxed">
             Lộ trình học tập tối ưu, cam kết đầu ra B1–B2, hỗ trợ 1-1 từ giảng viên kinh nghiệm.
           </motion.p>
           <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="https://zalo.me" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-base px-8 gap-2 w-full sm:w-auto">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 gap-2 w-full sm:w-auto">
                 <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
               </Button>
             </a>
@@ -72,15 +72,15 @@ const Course = () => (
     </section>
 
     {/* Benefits */}
-    <section className="py-16 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+    <section className="section-padding bg-background">
+      <div className="section-container">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {benefits.map((b, i) => (
             <motion.div
               key={b.text}
               variants={fadeUp} custom={i}
               initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="glass-card p-5 flex items-center gap-3"
+              className="glass-card p-6 flex items-center gap-3"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <b.icon className="w-5 h-5 text-primary" />
@@ -93,8 +93,8 @@ const Course = () => (
     </section>
 
     {/* 7-Day Roadmap */}
-    <section className="py-20 bg-muted/50">
-      <div className="container mx-auto px-4 max-w-3xl">
+    <section className="section-padding bg-muted/50">
+      <div className="section-container max-w-3xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
           <motion.h2 variants={fadeUp} custom={0} className="text-3xl font-heading font-extrabold text-foreground mb-4">
             Lộ trình 7 ngày
@@ -110,14 +110,14 @@ const Course = () => (
               key={day.day}
               variants={fadeUp} custom={i}
               initial="hidden" whileInView="visible" viewport={{ once: true }}
-              className="glass-card p-5 flex items-start gap-4"
+              className="glass-card p-6 flex items-start gap-4"
             >
               <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shrink-0">
                 <span className="text-primary-foreground font-heading font-extrabold">D{day.day}</span>
               </div>
               <div>
                 <h3 className="font-heading font-bold text-foreground mb-1">{day.title}</h3>
-                <p className="text-sm text-muted-foreground">{day.desc}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{day.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -126,21 +126,21 @@ const Course = () => (
     </section>
 
     {/* Guarantee */}
-    <section className="py-16 bg-background">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <section className="section-padding bg-background">
+      <div className="section-container max-w-2xl">
         <motion.div
           initial="hidden" whileInView="visible" viewport={{ once: true }}
-          className="glass-card p-8 text-center border-secondary/30 bg-secondary/5"
+          className="glass-card p-8 text-center border-primary/20"
         >
           <motion.div variants={fadeUp} custom={0}>
-            <Shield className="w-12 h-12 text-secondary mx-auto mb-4" />
+            <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-heading font-extrabold text-foreground mb-3">Cam kết đầu ra</h2>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-4 leading-relaxed">
               Nếu bạn hoàn thành đầy đủ lộ trình 7 ngày mà không đạt B1, chúng tôi sẽ hỗ trợ học lại <strong className="text-foreground">miễn phí</strong>.
             </p>
             <div className="flex items-center justify-center gap-1">
               {[...Array(5)].map((_, j) => (
-                <Star key={j} className="w-5 h-5 fill-accent text-accent" />
+                <Star key={j} className="w-5 h-5 fill-primary text-primary" />
               ))}
             </div>
             <p className="text-sm text-muted-foreground mt-2">Được tin tưởng bởi 5,000+ học viên</p>
@@ -150,8 +150,8 @@ const Course = () => (
     </section>
 
     {/* Success stories */}
-    <section className="py-20 bg-muted/50">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <section className="section-padding bg-muted/50">
+      <div className="section-container max-w-4xl">
         <motion.h2 initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="text-3xl font-heading font-extrabold text-foreground text-center mb-12">
           Câu chuyện thành công
         </motion.h2>
@@ -164,9 +164,9 @@ const Course = () => (
           ].map((t, i) => (
             <motion.div key={t.name} variants={fadeUp} custom={i} initial="hidden" whileInView="visible" viewport={{ once: true }} className="glass-card p-6">
               <div className="flex items-center gap-1 mb-3">
-                {[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4 fill-accent text-accent" />)}
+                {[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4 fill-primary text-primary" />)}
               </div>
-              <p className="text-sm text-muted-foreground mb-4 italic">"{t.text}"</p>
+              <p className="text-sm text-muted-foreground mb-4 italic leading-relaxed">"{t.text}"</p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">{t.avatar}</div>
                 <div>
@@ -181,18 +181,18 @@ const Course = () => (
     </section>
 
     {/* Final CTA */}
-    <section className="py-20 gradient-hero relative">
-      <div className="container mx-auto px-4 max-w-2xl text-center relative z-10">
+    <section className="section-padding gradient-hero relative">
+      <div className="section-container max-w-2xl text-center relative z-10">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
           <motion.h2 variants={fadeUp} custom={0} className="text-3xl md:text-4xl font-heading font-extrabold text-on-dark mb-4">
             Sẵn sàng đạt Aptis B2?
           </motion.h2>
-          <motion.p variants={fadeUp} custom={1} className="text-on-dark-muted mb-8">
+          <motion.p variants={fadeUp} custom={1} className="text-on-dark/60 mb-8 leading-relaxed">
             Đăng ký ngay hôm nay. Bắt đầu hành trình 7 ngày của bạn.
           </motion.p>
           <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="https://zalo.me" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 text-base px-8 gap-2 w-full sm:w-auto">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 gap-2 w-full sm:w-auto">
                 <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
               </Button>
             </a>

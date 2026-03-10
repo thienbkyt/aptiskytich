@@ -115,7 +115,7 @@ const Auth = () => {
                   <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-primary text-primary-foreground" disabled={loading}>
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
                 {loading ? "Đang xử lý..." : "Đăng nhập"}
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={handleGoogleLogin}>
@@ -151,7 +151,7 @@ const Auth = () => {
                   <Input id="password2" type="password" placeholder="Tối thiểu 6 ký tự" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required minLength={6} />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-primary text-primary-foreground" disabled={loading}>
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
                 {loading ? "Đang xử lý..." : "Đăng ký"}
               </Button>
               <p className="text-center text-sm text-muted-foreground">
@@ -170,7 +170,7 @@ const Auth = () => {
                   <Input id="email3" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-primary text-primary-foreground" disabled={loading}>
+              <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={loading}>
                 {loading ? "Đang xử lý..." : "Gửi link đặt lại"}
               </Button>
               <p className="text-center text-sm">
