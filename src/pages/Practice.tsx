@@ -56,12 +56,12 @@ const Practice = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-24 pb-20">
-          <div className="section-container max-w-3xl">
+            <div className="section-container max-w-4xl">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
               <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-4">Luyện tập theo kỹ năng</h1>
               <p className="text-muted-foreground">Chọn kỹ năng bạn muốn luyện tập</p>
             </motion.div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
               {skills.map((skill, i) => (
                 <motion.button
                   key={skill.key}
@@ -69,10 +69,10 @@ const Practice = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
                   onClick={() => startPractice(skill.key)}
-                  className="glass-card p-8 text-center hover:shadow-lg transition-all group hover:scale-[1.02]"
+                  className="glass-card p-6 md:p-8 text-center hover:shadow-lg transition-all group hover:scale-[1.02]"
                 >
-                  <div className={`w-14 h-14 rounded-2xl ${skill.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                    <skill.icon className="w-7 h-7 text-primary-foreground" />
+                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl ${skill.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+                    <skill.icon className={`w-6 h-6 md:w-7 md:h-7 ${skill.iconColor}`} />
                   </div>
                   <h3 className="font-heading font-bold text-foreground mb-2">{skill.label}</h3>
                   <p className="text-sm text-muted-foreground">
