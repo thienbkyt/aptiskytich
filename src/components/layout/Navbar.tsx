@@ -49,6 +49,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {isAdmin && (
               <Link to="/admin">
                 <Button variant="ghost" size="sm" className="gap-2">
