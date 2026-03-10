@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Flame, BookOpen, LogIn, LogOut, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navLinks = [
   { label: "Trang chủ", path: "/" },
@@ -48,6 +49,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             {isAdmin && (
               <Link to="/admin">
                 <Button variant="ghost" size="sm" className="gap-2">
@@ -86,12 +88,15 @@ const Navbar = () => {
             )}
           </div>
 
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-muted"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          <div className="md:hidden flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              className="p-2 rounded-lg hover:bg-muted"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
