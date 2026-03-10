@@ -21,8 +21,8 @@ const Practice = () => {
   const [submitted, setSubmitted] = useState(false);
   const [stats, setStats] = useState({ total: 0, correct: 0 });
 
-  const startPractice = (skill: Question["skill"]) => {
-    const qs = getQuestionsBySkill(skill).sort(() => Math.random() - 0.5);
+  const startPractice = async (skill: Question["skill"]) => {
+    const qs = (await fetchQuestionsBySkill(skill)).sort(() => Math.random() - 0.5);
     setQuestions(qs);
     setSelectedSkill(skill);
     setCurrent(0);
