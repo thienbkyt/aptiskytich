@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import heroBg from "@/assets/hero-bg.webp";
 import {
   ArrowRight, CheckCircle2, Clock, BarChart3, Flame, BookOpen,
   GraduationCap, Star, MessageCircle, Users, Zap, Target
