@@ -231,7 +231,7 @@ const Index = () => {
                 </Button>
               </Link>
               <a href="https://zalo.me" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="border-on-dark/20 text-on-dark hover:bg-on-dark/10 text-base px-8 gap-2">
+                <Button size="lg" className="bg-muted-foreground text-on-dark hover:bg-muted-foreground/80 text-base px-8 gap-2">
                   <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
                 </Button>
               </a>
