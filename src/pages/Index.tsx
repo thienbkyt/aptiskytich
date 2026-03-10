@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import heroBg from "@/assets/hero-bg.webp";
 import {
   ArrowRight, CheckCircle2, Clock, BarChart3, Flame, BookOpen,
   GraduationCap, Star, MessageCircle, Users, Zap, Target
@@ -52,10 +53,10 @@ const Index = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="gradient-hero pt-28 pb-20 md:pt-36 md:pb-28 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary/30 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+      <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={heroBg} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/70" />
         </div>
         <div className="section-container relative z-10">
           <motion.div
