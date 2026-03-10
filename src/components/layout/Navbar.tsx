@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Flame, BookOpen, LogIn, LogOut, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navLinks = [
   { label: "Trang chủ", path: "/" },
