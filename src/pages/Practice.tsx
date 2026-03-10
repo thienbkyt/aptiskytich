@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Mic, PenLine } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getQuestionsBySkill, type Question } from "@/data/questions";
@@ -11,6 +11,8 @@ const skills = [
   { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary" },
   { key: "reading" as const, label: "Reading", icon: FileText, color: "bg-info" },
   { key: "listening" as const, label: "Listening", icon: Headphones, color: "bg-warning" },
+  { key: "speaking" as const, label: "Speaking", icon: Mic, color: "bg-secondary" },
+  { key: "writing" as const, label: "Writing", icon: PenLine, color: "bg-accent" },
 ];
 
 const Practice = () => {
@@ -59,7 +61,7 @@ const Practice = () => {
               <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-4">Luyện tập theo kỹ năng</h1>
               <p className="text-muted-foreground">Chọn kỹ năng bạn muốn luyện tập</p>
             </motion.div>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {skills.map((skill, i) => (
                 <motion.button
                   key={skill.key}

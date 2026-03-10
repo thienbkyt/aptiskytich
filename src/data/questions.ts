@@ -1,6 +1,6 @@
 export interface Question {
   id: number;
-  skill: "grammar" | "reading" | "listening";
+  skill: "grammar" | "reading" | "listening" | "speaking" | "writing";
   question_text: string;
   options: string[];
   correct_answer: number;
@@ -33,6 +33,20 @@ export const sampleQuestions: Question[] = [
   { id: 18, skill: "listening", question_text: "🎧 You hear: 'Good morning, this is Dr. Smith's office. We need to reschedule your appointment to Thursday at 2 PM.' — What day is the new appointment?", options: ["Monday", "Wednesday", "Thursday", "Friday"], correct_answer: 2, explanation: "Tin nhắn nói: 'reschedule to Thursday at 2 PM.'" },
   { id: 19, skill: "listening", question_text: "🎧 You hear: 'The weather forecast for tomorrow shows heavy rain in the morning, but it should clear up by the afternoon.' — When will the rain stop?", options: ["Morning", "Noon", "Afternoon", "Evening"], correct_answer: 2, explanation: "Dự báo nói: 'should clear up by the afternoon.'" },
   { id: 20, skill: "listening", question_text: "🎧 You hear a conversation: 'A: How much is this shirt? B: It's normally $40, but it's on sale for $28 today.' — How much does the shirt cost today?", options: ["$40", "$28", "$32", "$35"], correct_answer: 1, explanation: "Người B nói giá sale hôm nay là $28." },
+
+  // Speaking (5) - knowledge-based questions about speaking strategies
+  { id: 21, skill: "speaking", question_text: "🎤 In Aptis Speaking Part 1, you are asked: 'Tell me about your hometown.' Which response is BEST?", options: ["It's nice.", "I live in Hanoi. It's a big city with lots of history and delicious food. I really enjoy the Old Quarter.", "Hanoi is capital of Vietnam.", "My hometown is good place."], correct_answer: 1, explanation: "Câu trả lời tốt cần đầy đủ, có chi tiết cụ thể, dùng từ vựng phong phú và ngữ pháp đúng." },
+  { id: 22, skill: "speaking", question_text: "🎤 Which phrase is BEST to start comparing two pictures in Aptis Speaking?", options: ["Picture 1 is good, picture 2 is bad.", "In the first picture I can see... while in the second picture...", "Both pictures are same same.", "I don't know what to say."], correct_answer: 1, explanation: "Dùng cấu trúc so sánh rõ ràng: 'In the first picture... while in the second picture...' thể hiện khả năng diễn đạt tốt." },
+  { id: 23, skill: "speaking", question_text: "🎤 You need to describe a photo of people at a market. Which vocabulary set is MOST relevant?", options: ["Computer, software, coding", "Vendors, bargain, fresh produce, crowded", "Mountains, hiking, camping", "Airport, boarding pass, luggage"], correct_answer: 1, explanation: "Từ vựng về chợ: vendors (người bán), bargain (mặc cả), fresh produce (nông sản tươi), crowded (đông đúc)." },
+  { id: 24, skill: "speaking", question_text: "🎤 When giving your opinion in Aptis Speaking, which expression is MOST appropriate at B1-B2 level?", options: ["I think so.", "In my opinion, ... because ...", "Yes.", "Maybe."], correct_answer: 1, explanation: "'In my opinion, ... because ...' thể hiện ý kiến rõ ràng kèm lý do, đạt chuẩn B1-B2." },
+  { id: 25, skill: "speaking", question_text: "🎤 Which is the BEST way to ask for clarification during the speaking test?", options: ["What?", "Could you repeat the question, please?", "I don't understand.", "Say again."], correct_answer: 1, explanation: "'Could you repeat the question, please?' lịch sự và tự nhiên, thể hiện khả năng giao tiếp tốt." },
+
+  // Writing (5) - knowledge-based questions about writing skills
+  { id: 26, skill: "writing", question_text: "✍️ In Aptis Writing, you need to write an informal email to a friend. Which greeting is MOST appropriate?", options: ["Dear Sir/Madam,", "To Whom It May Concern,", "Hi Sarah,", "Respected Sir,"], correct_answer: 2, explanation: "'Hi Sarah,' phù hợp với email thân mật gửi bạn bè. 'Dear Sir/Madam' dùng cho thư trang trọng." },
+  { id: 27, skill: "writing", question_text: "✍️ Which sentence uses the correct formal register for a complaint letter?", options: ["Your service was rubbish!", "I am writing to express my dissatisfaction with the service I received.", "Fix this now or I'll be angry.", "The service was like super bad lol."], correct_answer: 1, explanation: "'I am writing to express my dissatisfaction...' là cách viết trang trọng, phù hợp với thư khiếu nại." },
+  { id: 28, skill: "writing", question_text: "✍️ Which linking word BEST shows contrast?", options: ["Furthermore", "However", "Therefore", "In addition"], correct_answer: 1, explanation: "'However' dùng để nối 2 ý tương phản. 'Furthermore/In addition' dùng để bổ sung. 'Therefore' chỉ kết quả." },
+  { id: 29, skill: "writing", question_text: "✍️ In an essay, which is the BEST way to introduce your opinion?", options: ["I reckon that...", "It is widely believed that... However, I would argue that...", "Everyone knows that...", "Obviously..."], correct_answer: 1, explanation: "Cấu trúc 'It is widely believed... However, I would argue...' thể hiện tư duy phản biện ở cấp B2." },
+  { id: 30, skill: "writing", question_text: "✍️ Which closing is appropriate for a formal email?", options: ["Love, Anna", "Cheers mate!", "I look forward to hearing from you. Yours sincerely,", "Bye bye!"], correct_answer: 2, explanation: "'I look forward to hearing from you. Yours sincerely,' là cách kết thúc email trang trọng chuẩn mực." },
 ];
 
 export const getQuestionsBySkill = (skill: Question["skill"]) =>
