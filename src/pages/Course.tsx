@@ -62,7 +62,7 @@ const Course = () => (
               </Button>
             </a>
             <a href="https://m.me" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" variant="outline" className="border-on-dark/20 text-on-dark hover:bg-on-dark/10 text-base px-8 w-full sm:w-auto">
+              <Button size="lg" className="bg-muted-foreground text-on-dark hover:bg-muted-foreground/80 text-base px-8 w-full sm:w-auto">
                 Đăng ký qua Messenger
               </Button>
             </a>
