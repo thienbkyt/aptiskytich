@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Flame, BookOpen } from "lucide-react";
+import { Menu, X, Flame, BookOpen, LogIn, LogOut, Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 const navLinks = [
   { label: "Trang chủ", path: "/" },
@@ -15,6 +16,7 @@ const navLinks = [
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, isAdmin, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-xl border-b border-border/50">
@@ -46,17 +48,42 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/dashboard">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <Flame className="w-4 h-4 text-accent" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link to="/mock-test">
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                Thi thử miễn phí
-              </Button>
-            </Link>
+            {isAdmin && (
+              <Link to="/admin">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Shield className="w-4 h-4 text-accent" />
+                  Admin
+                </Button>
+              </Link>
+            )}
+            {user ? (
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <Flame className="w-4 h-4 text-accent" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="outline" size="sm" className="gap-2" onClick={signOut}>
+                  <LogOut className="w-4 h-4" />
+                  Đăng xuất
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <LogIn className="w-4 h-4" />
+                    Đăng nhập
+                  </Button>
+                </Link>
+                <Link to="/mock-test">
+                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    Thi thử miễn phí
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -91,10 +118,29 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              <div className="pt-2 border-t border-border mt-2">
-                <Link to="/mock-test" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full bg-primary text-primary-foreground">Thi thử miễn phí</Button>
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setIsOpen(false)} className="block px-4 py-2.5 rounded-lg text-sm font-medium text-accent">
+                  Admin
                 </Link>
+              )}
+              <div className="pt-2 border-t border-border mt-2">
+                {user ? (
+                  <div className="space-y-2">
+                    <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">Dashboard</Button>
+                    </Link>
+                    <Button className="w-full" variant="destructive" onClick={() => { signOut(); setIsOpen(false); }}>Đăng xuất</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Link to="/auth" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">Đăng nhập</Button>
+                    </Link>
+                    <Link to="/mock-test" onClick={() => setIsOpen(false)}>
+                      <Button className="w-full bg-primary text-primary-foreground">Thi thử miễn phí</Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
