@@ -8,11 +8,11 @@ import { getQuestionsBySkill, type Question } from "@/data/questions";
 import { fetchQuestionsBySkill } from "@/lib/questions";
 
 const skills = [
-  { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary" },
-  { key: "reading" as const, label: "Reading", icon: FileText, color: "bg-info" },
-  { key: "listening" as const, label: "Listening", icon: Headphones, color: "bg-warning" },
-  { key: "speaking" as const, label: "Speaking", icon: Mic, color: "bg-secondary" },
-  { key: "writing" as const, label: "Writing", icon: PenLine, color: "bg-accent" },
+  { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary", iconColor: "text-primary-foreground" },
+  { key: "reading" as const, label: "Reading", icon: FileText, color: "bg-info", iconColor: "text-info-foreground" },
+  { key: "listening" as const, label: "Listening", icon: Headphones, color: "bg-warning", iconColor: "text-warning-foreground" },
+  { key: "speaking" as const, label: "Speaking", icon: Mic, color: "bg-success", iconColor: "text-success-foreground" },
+  { key: "writing" as const, label: "Writing", icon: PenLine, color: "bg-destructive", iconColor: "text-destructive-foreground" },
 ];
 
 const Practice = () => {
