@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Mic, PenLine } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getQuestionsBySkill, type Question } from "@/data/questions";
@@ -11,6 +11,8 @@ const skills = [
   { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary" },
   { key: "reading" as const, label: "Reading", icon: FileText, color: "bg-info" },
   { key: "listening" as const, label: "Listening", icon: Headphones, color: "bg-warning" },
+  { key: "speaking" as const, label: "Speaking", icon: Mic, color: "bg-secondary" },
+  { key: "writing" as const, label: "Writing", icon: PenLine, color: "bg-accent" },
 ];
 
 const Practice = () => {
