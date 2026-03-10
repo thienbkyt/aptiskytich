@@ -94,8 +94,9 @@ const Navbar = () => {
               className="p-2 rounded-lg hover:bg-muted"
               onClick={() => setIsOpen(!isOpen)}
             >
-            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
