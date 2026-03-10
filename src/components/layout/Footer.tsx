@@ -31,7 +31,7 @@ const Footer = () => (
           <h4 className="font-heading font-semibold text-on-dark mb-4">Khóa học</h4>
           <ul className="space-y-2 text-sm">
             <li><Link to="/course" className="hover:text-on-dark transition-colors">Aptis Kỳ Tích – 7 Ngày</Link></li>
-            <li><Link to="/blog" className="hover:text-on-dark transition-colors">Blog & Tips</Link></li>
+            
           </ul>
         </div>
         <div>
