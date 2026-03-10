@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Shuf
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getQuestionsBySkill, type Question } from "@/data/questions";
+import { fetchQuestionsBySkill } from "@/lib/questions";
 
 const skills = [
   { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary" },
