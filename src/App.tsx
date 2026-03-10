@@ -10,7 +10,7 @@ import MockTest from "./pages/MockTest";
 import Practice from "./pages/Practice";
 import Dashboard from "./pages/Dashboard";
 import Course from "./pages/Course";
-import Blog from "./pages/Blog";
+
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
@@ -34,7 +34,7 @@ const App = () => (
             <Route path="/practice" element={<Practice />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/course" element={<Course />} />
-            <Route path="/blog" element={<Blog />} />
+            
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

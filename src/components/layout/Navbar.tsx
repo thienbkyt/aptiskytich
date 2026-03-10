@@ -11,7 +11,7 @@ const navLinks = [
   { label: "Thi thử", path: "/mock-test" },
   { label: "Luyện tập", path: "/practice" },
   { label: "Khóa học", path: "/course" },
-  { label: "Blog", path: "/blog" },
+  
 ];
 
 const Navbar = () => {
