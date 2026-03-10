@@ -74,8 +74,8 @@ const Practice = () => {
                   <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl ${skill.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
                     <skill.icon className={`w-6 h-6 md:w-7 md:h-7 ${skill.iconColor}`} />
                   </div>
-                  <h3 className="font-heading font-bold text-foreground mb-2">{skill.label}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-heading font-bold text-foreground mb-1 text-sm md:text-base">{skill.label}</h3>
+                  <p className="text-xs text-muted-foreground">
                     {getQuestionsBySkill(skill.key).length} câu hỏi
                   </p>
                 </motion.button>
