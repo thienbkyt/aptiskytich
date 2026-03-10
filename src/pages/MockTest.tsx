@@ -8,16 +8,21 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { getMockTestQuestions, getLevel, getLevelColor, type Question } from "@/data/questions";
+import { getLevel, getLevelColor, type Question } from "@/data/questions";
+import { fetchAllQuestions } from "@/lib/questions";
 
 type Phase = "intro" | "test" | "result";
 
 const MockTest = () => {
   const [phase, setPhase] = useState<Phase>("intro");
-  const [questions] = useState<Question[]>(getMockTestQuestions());
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [timeLeft, setTimeLeft] = useState(600); // 10 min
+
+  useEffect(() => {
+    fetchAllQuestions().then(setQuestions);
+  }, []);
   const [showExplanation, setShowExplanation] = useState(false);
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Shuf
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getQuestionsBySkill, type Question } from "@/data/questions";
+import { fetchQuestionsBySkill } from "@/lib/questions";
 
 const skills = [
   { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary" },
@@ -20,8 +21,8 @@ const Practice = () => {
   const [submitted, setSubmitted] = useState(false);
   const [stats, setStats] = useState({ total: 0, correct: 0 });
 
-  const startPractice = (skill: Question["skill"]) => {
-    const qs = getQuestionsBySkill(skill).sort(() => Math.random() - 0.5);
+  const startPractice = async (skill: Question["skill"]) => {
+    const qs = (await fetchQuestionsBySkill(skill)).sort(() => Math.random() - 0.5);
     setQuestions(qs);
     setSelectedSkill(skill);
     setCurrent(0);
