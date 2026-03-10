@@ -10,7 +10,7 @@ import MockTest from "./pages/MockTest";
 import Practice from "./pages/Practice";
 import Dashboard from "./pages/Dashboard";
 import Course from "./pages/Course";
-import Blog from "./pages/Blog";
+
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
