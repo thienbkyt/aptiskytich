@@ -63,17 +63,17 @@ const Index = () => {
             initial="hidden"
             animate="visible"
           >
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary-foreground/90 text-sm font-medium mb-6">
+            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-on-dark/90 text-sm font-medium mb-6">
               <Zap className="w-4 h-4" /> Miễn phí · Không cần đăng ký
             </motion.div>
-            <motion.h1 variants={fadeUp} custom={1} className="text-4xl md:text-6xl font-heading font-extrabold text-background leading-tight mb-6">
+            <motion.h1 variants={fadeUp} custom={1} className="text-4xl md:text-6xl font-heading font-extrabold text-on-dark leading-tight mb-6">
               Thi thử Aptis miễn phí –{" "}
               <span className="bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(135deg, hsl(155 60% 55%), hsl(170 55% 50%))" }}>
                 Kiểm tra trình độ
               </span>{" "}
               trong 10 phút
             </motion.h1>
-            <motion.p variants={fadeUp} custom={2} className="text-lg md:text-xl text-background/70 mb-8 max-w-2xl mx-auto">
+            <motion.p variants={fadeUp} custom={2} className="text-lg md:text-xl text-on-dark-muted mb-8 max-w-2xl mx-auto">
               Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. Theo dõi tiến bộ. Đạt B1–B2 nhanh nhất.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -83,7 +83,7 @@ const Index = () => {
                 </Button>
               </Link>
               <Link to="/course">
-                <Button size="lg" variant="outline" className="border-background/20 text-background hover:bg-background/10 text-base px-8 h-13 w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="border-on-dark/20 text-on-dark hover:bg-on-dark/10 text-base px-8 h-13 w-full sm:w-auto">
                   Xem khóa học 7 ngày
                 </Button>
               </Link>
@@ -97,9 +97,9 @@ const Index = () => {
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16 max-w-3xl mx-auto"
           >
             {stats.map((s) => (
-              <div key={s.label} className="text-center p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-background/10">
-                <div className="text-2xl md:text-3xl font-heading font-extrabold text-background">{s.value}</div>
-                <div className="text-sm text-background/60 mt-1">{s.label}</div>
+              <div key={s.label} className="text-center p-4 rounded-xl bg-on-dark/5 backdrop-blur-sm border border-on-dark/10">
+                <div className="text-2xl md:text-3xl font-heading font-extrabold text-on-dark">{s.value}</div>
+                <div className="text-sm text-on-dark/60 mt-1">{s.label}</div>
               </div>
             ))}
           </motion.div>
@@ -126,7 +126,7 @@ const Index = () => {
                 className="glass-card p-5 text-center hover:scale-105 transition-transform"
               >
                 <div className={`w-10 h-10 rounded-lg ${s.color} flex items-center justify-center mx-auto mb-3`}>
-                  <BookOpen className="w-5 h-5 text-background" />
+                  <BookOpen className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <h3 className="font-heading font-bold text-sm text-foreground mb-2">{s.skill}</h3>
                 <p className="text-xs text-muted-foreground">{s.questions}</p>
@@ -217,10 +217,10 @@ const Index = () => {
             <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
               <Flame className="w-4 h-4" /> Khóa học hot nhất
             </motion.div>
-            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold text-background mb-4">
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold text-on-dark mb-4">
               Aptis Kỳ Tích – Đạt Aptis trong 7 ngày
             </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-background/70 mb-8">
+            <motion.p variants={fadeUp} custom={2} className="text-on-dark-muted mb-8">
               Lộ trình học tập tối ưu, cam kết đầu ra B1–B2. Hỗ trợ 1-1 từ giảng viên.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -230,7 +230,7 @@ const Index = () => {
                 </Button>
               </Link>
               <a href="https://zalo.me" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="border-background/20 text-background hover:bg-background/10 text-base px-8 gap-2">
+                <Button size="lg" variant="outline" className="border-on-dark/20 text-on-dark hover:bg-on-dark/10 text-base px-8 gap-2">
                   <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
                 </Button>
               </a>

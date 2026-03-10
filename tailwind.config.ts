@@ -63,6 +63,10 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        "on-dark": {
+          DEFAULT: "hsl(var(--on-dark))",
+          muted: "hsl(var(--on-dark-muted) / 0.7)",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

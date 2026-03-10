@@ -71,7 +71,7 @@ const Practice = () => {
                   className="glass-card p-8 text-center hover:shadow-lg transition-all group hover:scale-[1.02]"
                 >
                   <div className={`w-14 h-14 rounded-2xl ${skill.color} flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                    <skill.icon className="w-7 h-7 text-background" />
+                    <skill.icon className="w-7 h-7 text-primary-foreground" />
                   </div>
                   <h3 className="font-heading font-bold text-foreground mb-2">{skill.label}</h3>
                   <p className="text-sm text-muted-foreground">

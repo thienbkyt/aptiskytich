@@ -46,13 +46,13 @@ const Course = () => (
           <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
             <Flame className="w-4 h-4" /> Khóa học #1 về Aptis
           </motion.div>
-          <motion.h1 variants={fadeUp} custom={1} className="text-4xl md:text-5xl font-heading font-extrabold text-background leading-tight mb-6">
+          <motion.h1 variants={fadeUp} custom={1} className="text-4xl md:text-5xl font-heading font-extrabold text-on-dark leading-tight mb-6">
             Aptis Kỳ Tích –<br />
             <span className="bg-clip-text text-transparent" style={{ backgroundImage: "linear-gradient(135deg, hsl(35 95% 60%), hsl(25 90% 55%))" }}>
               Đạt Aptis trong 7 ngày
             </span>
           </motion.h1>
-          <motion.p variants={fadeUp} custom={2} className="text-lg text-background/70 mb-8 max-w-xl mx-auto">
+          <motion.p variants={fadeUp} custom={2} className="text-lg text-on-dark-muted mb-8 max-w-xl mx-auto">
             Lộ trình học tập tối ưu, cam kết đầu ra B1–B2, hỗ trợ 1-1 từ giảng viên kinh nghiệm.
           </motion.p>
           <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -62,7 +62,7 @@ const Course = () => (
               </Button>
             </a>
             <a href="https://m.me" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" variant="outline" className="border-background/20 text-background hover:bg-background/10 text-base px-8 w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="border-on-dark/20 text-on-dark hover:bg-on-dark/10 text-base px-8 w-full sm:w-auto">
                 Đăng ký qua Messenger
               </Button>
             </a>
@@ -184,10 +184,10 @@ const Course = () => (
     <section className="py-20 gradient-hero relative">
       <div className="container mx-auto px-4 max-w-2xl text-center relative z-10">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }}>
-          <motion.h2 variants={fadeUp} custom={0} className="text-3xl md:text-4xl font-heading font-extrabold text-background mb-4">
+          <motion.h2 variants={fadeUp} custom={0} className="text-3xl md:text-4xl font-heading font-extrabold text-on-dark mb-4">
             Sẵn sàng đạt Aptis B2?
           </motion.h2>
-          <motion.p variants={fadeUp} custom={1} className="text-background/70 mb-8">
+          <motion.p variants={fadeUp} custom={1} className="text-on-dark-muted mb-8">
             Đăng ký ngay hôm nay. Bắt đầu hành trình 7 ngày của bạn.
           </motion.p>
           <motion.div variants={fadeUp} custom={2} className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -197,7 +197,7 @@ const Course = () => (
               </Button>
             </a>
             <Link to="/mock-test">
-              <Button size="lg" variant="outline" className="border-background/20 text-background hover:bg-background/10 text-base px-8 w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="border-on-dark/20 text-on-dark hover:bg-on-dark/10 text-base px-8 w-full sm:w-auto">
                 Thi thử trước
               </Button>
             </Link>
