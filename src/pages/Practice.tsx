@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Shuffle } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getQuestionsBySkill, type Question } from "@/data/questions";
@@ -9,8 +9,8 @@ import { fetchQuestionsBySkill } from "@/lib/questions";
 
 const skills = [
   { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary" },
-  { key: "reading" as const, label: "Reading", icon: FileText, color: "bg-secondary" },
-  { key: "listening" as const, label: "Listening", icon: Headphones, color: "bg-info" },
+  { key: "reading" as const, label: "Reading", icon: FileText, color: "bg-info" },
+  { key: "listening" as const, label: "Listening", icon: Headphones, color: "bg-warning" },
 ];
 
 const Practice = () => {
@@ -42,7 +42,6 @@ const Practice = () => {
     if (current < questions.length - 1) {
       setCurrent((p) => p + 1);
     } else {
-      // Shuffle and restart
       setQuestions((qs) => [...qs].sort(() => Math.random() - 0.5));
       setCurrent(0);
     }
@@ -55,7 +54,7 @@ const Practice = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-24 pb-20">
-          <div className="container mx-auto px-4 max-w-3xl">
+          <div className="section-container max-w-3xl">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
               <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-4">Luyện tập theo kỹ năng</h1>
               <p className="text-muted-foreground">Chọn kỹ năng bạn muốn luyện tập</p>
@@ -103,9 +102,9 @@ const Practice = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-24 pb-20">
-        <div className="container mx-auto px-4 max-w-2xl">
+        <div className="section-container max-w-2xl">
           <div className="flex items-center justify-between mb-6">
-            <button onClick={() => setSelectedSkill(null)} className="text-sm text-muted-foreground hover:text-foreground">
+            <button onClick={() => setSelectedSkill(null)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               ← Chọn kỹ năng khác
             </button>
             <div className="text-sm text-muted-foreground">
@@ -129,7 +128,7 @@ const Practice = () => {
                   {q.options.map((opt, i) => {
                     let cls = "border-border hover:border-primary/30 text-foreground";
                     if (submitted) {
-                      if (i === q.correct_answer) cls = "border-secondary bg-secondary/10 text-secondary";
+                      if (i === q.correct_answer) cls = "border-success bg-success/10 text-success";
                       else if (i === selected) cls = "border-destructive bg-destructive/10 text-destructive";
                     } else if (selected === i) {
                       cls = "border-primary bg-primary/5 text-primary";
@@ -156,9 +155,9 @@ const Practice = () => {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
-                    className={`mt-4 p-4 rounded-lg ${isCorrect ? "bg-secondary/10 border border-secondary/20" : "bg-destructive/10 border border-destructive/20"}`}
+                    className={`mt-4 p-4 rounded-lg ${isCorrect ? "bg-success/10 border border-success/20" : "bg-destructive/10 border border-destructive/20"}`}
                   >
-                    <p className={`text-sm font-semibold mb-1 ${isCorrect ? "text-secondary" : "text-destructive"}`}>
+                    <p className={`text-sm font-semibold mb-1 ${isCorrect ? "text-success" : "text-destructive"}`}>
                       {isCorrect ? "✓ Chính xác!" : "✗ Sai rồi!"}
                     </p>
                     <p className="text-sm text-muted-foreground">{q.explanation}</p>
