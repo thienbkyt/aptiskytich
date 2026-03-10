@@ -197,7 +197,7 @@ const Course = () => (
               </Button>
             </a>
             <Link to="/mock-test">
-              <Button size="lg" variant="outline" className="border-on-dark/20 text-on-dark hover:bg-on-dark/10 text-base px-8 w-full sm:w-auto">
+              <Button size="lg" className="bg-muted-foreground text-on-dark hover:bg-muted-foreground/80 text-base px-8 w-full sm:w-auto">
                 Thi thử trước
               </Button>
             </Link>
