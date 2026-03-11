@@ -13,7 +13,7 @@ const TimerDisplay = ({ timeLeft, totalTime }: TimerDisplayProps) => {
 
   return (
     <div className="text-right">
-      <div className="font-mono text-2xl font-bold text-foreground tracking-wider leading-none">
+      <div className="font-heading text-2xl font-extrabold text-foreground tracking-wider leading-none">
         {formatTime(timeLeft)}
       </div>
       <div className="text-[11px] text-muted-foreground mt-0.5">Time remaining</div>
