@@ -41,6 +41,7 @@ const ReadingGapFill = ({
   onSubmit,
   isLast,
   isFirst,
+  showResults,
   sections = [],
 }: ReadingGapFillProps) => {
   const [bookmarked, setBookmarked] = useState(false);
