@@ -42,6 +42,7 @@ const ReadingInstructions = ({ timeLeft, totalTime = 600, totalParts, totalMinut
         isFirst={true}
         isLast={false}
         onNext={onStart}
+        sections={sections}
       />
     </div>
   );
