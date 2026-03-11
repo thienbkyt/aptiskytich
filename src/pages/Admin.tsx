@@ -109,7 +109,7 @@ const Admin = () => {
   const startEdit = (q: DBQuestion) => {
     setEditing(q);
     setCreating(false);
-    setForm({ skill: q.skill, question_text: q.question_text, options: [...q.options], correct_answer: q.correct_answer, explanation: q.explanation });
+    setForm({ skill: q.skill, question_text: q.question_text, options: [...q.options], correct_answer: q.correct_answer, explanation: q.explanation, audio_url: q.audio_url || "" });
   };
 
   const startCreate = () => {
