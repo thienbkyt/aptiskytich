@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  Clock, CheckCircle2, XCircle, ArrowRight, ArrowLeft,
+  Clock, CheckCircle2, ArrowRight,
   RotateCcw, Trophy, BookOpen
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
@@ -12,8 +12,10 @@ import { getLevel, getLevelColor, sampleGapFillQuestions, type Question, type Ga
 import { fetchAllQuestions } from "@/lib/questions";
 import ReadingInstructions from "@/components/reading/ReadingInstructions";
 import ReadingGapFill from "@/components/reading/ReadingGapFill";
+import ExamInstructions from "@/components/exam/ExamInstructions";
+import ExamMCQ from "@/components/exam/ExamMCQ";
 
-type Phase = "intro" | "test" | "reading_instructions" | "reading_test" | "result";
+type Phase = "intro" | "mcq_instructions" | "test" | "reading_instructions" | "reading_test" | "result";
 
 const MockTest = () => {
   const [phase, setPhase] = useState<Phase>("intro");
@@ -21,6 +23,8 @@ const MockTest = () => {
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [timeLeft, setTimeLeft] = useState(600);
+  const [seenMcq, setSeenMcq] = useState<Set<number>>(new Set());
+  const [seenGaps, setSeenGaps] = useState<Set<string>>(new Set());
 
   // Reading gap-fill state
   const [gapFillQuestions] = useState<GapFillQuestion[]>(sampleGapFillQuestions);
@@ -31,11 +35,20 @@ const MockTest = () => {
     fetchAllQuestions().then(setQuestions);
   }, []);
 
-  // Filter out old reading MCQ — we use gap-fill for reading now
   const mcqQuestions = questions.filter(q => q.skill !== "reading");
 
+  // Mark seen
   useEffect(() => {
-    if ((phase !== "test" && phase !== "reading_instructions" && phase !== "reading_test") || timeLeft <= 0) return;
+    if (phase === "test") setSeenMcq(prev => new Set(prev).add(current));
+  }, [phase, current]);
+
+  useEffect(() => {
+    if (phase === "reading_test") setSeenGaps(prev => new Set(prev).add(`${currentGapFill}`));
+  }, [phase, currentGapFill]);
+
+  useEffect(() => {
+    if (phase !== "test" && phase !== "reading_instructions" && phase !== "reading_test") return;
+    if (timeLeft <= 0) return;
     const t = setInterval(() => setTimeLeft((p) => {
       if (p <= 1) { clearInterval(t); handleSubmit(); return 0; }
       return p - 1;
@@ -44,26 +57,20 @@ const MockTest = () => {
   }, [phase]);
 
   const startTest = () => {
-    // Start with grammar/listening MCQ, then reading gap-fill
-    setPhase("test");
+    setPhase("mcq_instructions");
     setAnswers(new Array(mcqQuestions.length).fill(null));
     setCurrent(0);
     setTimeLeft(600);
     setCurrentGapFill(0);
     setGapFillAnswers(gapFillQuestions.map(q => new Array(q.gaps.length).fill(null)));
-  };
-
-  const selectAnswer = (idx: number) => {
-    const newAnswers = [...answers];
-    newAnswers[current] = idx;
-    setAnswers(newAnswers);
+    setSeenMcq(new Set());
+    setSeenGaps(new Set());
   };
 
   const handleSubmit = useCallback(() => {
     setPhase("result");
   }, []);
 
-  // When MCQ section done, transition to reading
   const handleMcqDone = () => {
     setPhase("reading_instructions");
   };
@@ -90,10 +97,49 @@ const MockTest = () => {
   const level = getLevel(totalScore, totalQuestions);
   const pct = Math.round((totalScore / totalQuestions) * 100);
 
-  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+  // Build MCQ sections
+  const mcqSections = [
+    {
+      title: "Aptis General Test Instructions",
+      isCurrent: phase === "mcq_instructions",
+      onClick: () => { setPhase("mcq_instructions"); },
+    },
+    {
+      title: "Grammar & Listening",
+      questionCount: mcqQuestions.length,
+      isCurrent: phase === "test",
+      onClick: () => { setPhase("test"); setCurrent(0); },
+      questions: mcqQuestions.map((_, qi) => ({
+        label: String(qi + 1).padStart(2, "0"),
+        seen: seenMcq.has(qi),
+        attempted: answers[qi] !== null && answers[qi] !== undefined,
+        isCurrent: phase === "test" && current === qi,
+        onClick: () => { setPhase("test"); setCurrent(qi); },
+      })),
+    },
+  ];
 
-  const q = mcqQuestions[current];
-  const skillLabels: Record<string, string> = { grammar: "Grammar", reading: "Reading", listening: "Listening" };
+  // Build reading sections
+  const readingSections = [
+    {
+      title: "Aptis General Reading Instructions",
+      isCurrent: phase === "reading_instructions",
+      onClick: () => { setPhase("reading_instructions"); },
+    },
+    ...gapFillQuestions.map((q, qi) => ({
+      title: "Reading",
+      questionCount: q.gaps.length,
+      isCurrent: phase === "reading_test" && currentGapFill === qi,
+      onClick: () => { setPhase("reading_test"); setCurrentGapFill(qi); },
+      questions: q.gaps.map((_gap, gi) => ({
+        label: String(gi + 1).padStart(2, "0"),
+        seen: seenGaps.has(`${qi}`),
+        attempted: gapFillAnswers[qi]?.[gi] !== null && gapFillAnswers[qi]?.[gi] !== undefined,
+        isCurrent: phase === "reading_test" && currentGapFill === qi,
+        onClick: () => { setPhase("reading_test"); setCurrentGapFill(qi); },
+      })),
+    })),
+  ];
 
   if (phase === "intro") {
     return (
@@ -150,10 +196,8 @@ const MockTest = () => {
                 </div>
               </div>
 
-              {/* Score breakdown */}
               <div className="glass-card p-6 mb-6">
                 <h3 className="font-heading font-bold text-foreground mb-5">Chi tiết theo kỹ năng</h3>
-                {/* Grammar */}
                 {(() => {
                   const grammarQs = mcqQuestions.filter(q => q.skill === "grammar");
                   const grammarScore = grammarQs.reduce((acc, q) => {
@@ -173,7 +217,6 @@ const MockTest = () => {
                     </div>
                   );
                 })()}
-                {/* Reading gap-fill */}
                 {(() => {
                   const readingPct = totalReadingGaps > 0 ? Math.round((readingScore / totalReadingGaps) * 100) : 0;
                   return (
@@ -188,7 +231,6 @@ const MockTest = () => {
                     </div>
                   );
                 })()}
-                {/* Listening */}
                 {(() => {
                   const listenQs = mcqQuestions.filter(q => q.skill === "listening");
                   const listenScore = listenQs.reduce((acc, q) => {
@@ -241,7 +283,30 @@ const MockTest = () => {
     );
   }
 
-  // Reading instructions phase
+  // MCQ Instructions
+  if (phase === "mcq_instructions") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <ExamInstructions
+              skillName="Grammar & Listening"
+              timeLeft={timeLeft}
+              totalTime={600}
+              totalParts={mcqQuestions.length}
+              totalMinutes={10}
+              onStart={() => setPhase("test")}
+              sections={mcqSections}
+              description="Answer multiple choice questions for Grammar & Listening sections."
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Reading instructions
   if (phase === "reading_instructions") {
     return (
       <div className="min-h-screen bg-background">
@@ -253,6 +318,7 @@ const MockTest = () => {
               totalParts={gapFillQuestions.length}
               totalMinutes={5}
               onStart={handleReadingStart}
+              sections={readingSections}
             />
           </div>
         </div>
@@ -260,7 +326,7 @@ const MockTest = () => {
     );
   }
 
-  // Reading gap-fill test phase
+  // Reading gap-fill test
   if (phase === "reading_test") {
     return (
       <div className="min-h-screen bg-background">
@@ -285,6 +351,7 @@ const MockTest = () => {
               onSubmit={currentGapFill === gapFillQuestions.length - 1 ? handleReadingSubmit : undefined}
               isFirst={currentGapFill === 0}
               isLast={currentGapFill === gapFillQuestions.length - 1}
+              sections={readingSections}
             />
           </div>
         </div>
@@ -292,107 +359,31 @@ const MockTest = () => {
     );
   }
 
-  // MCQ test phase (grammar + listening)
+  // MCQ test phase with exam interface
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-24 pb-20">
-        <div className="section-container max-w-2xl">
-          {/* Timer & Progress */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground px-2.5 py-1 rounded-md bg-muted">
-                {skillLabels[q?.skill] || ""}
-              </span>
-              <span className="text-sm text-muted-foreground">Câu {current + 1}/{mcqQuestions.length}</span>
-            </div>
-            <div className={`flex items-center gap-1.5 text-sm font-mono font-semibold ${timeLeft < 60 ? "text-destructive" : "text-foreground"}`}>
-              <Clock className="w-4 h-4" /> {formatTime(timeLeft)}
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-1.5 bg-muted rounded-full mb-8 overflow-hidden">
-            <motion.div
-              className="h-full bg-primary rounded-full"
-              animate={{ width: `${((current + 1) / mcqQuestions.length) * 100}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25 }}
-            >
-              <div className="glass-card p-6 md:p-8 mb-6">
-                <h2 className="text-lg font-heading font-bold text-foreground mb-6 leading-relaxed">
-                  {q?.question_text}
-                </h2>
-                <div className="space-y-3">
-                  {q?.options.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => selectAnswer(i)}
-                      className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${
-                        answers[current] === i
-                          ? "border-primary bg-primary/5 text-primary"
-                          : "border-border hover:border-primary/30 text-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-xs font-bold mr-3">
-                        {String.fromCharCode(65 + i)}
-                      </span>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => setCurrent((p) => Math.max(0, p - 1))}
-              disabled={current === 0}
-              className="gap-1"
-            >
-              <ArrowLeft className="w-4 h-4" /> Trước
-            </Button>
-
-            <div className="hidden md:flex gap-1.5">
-              {mcqQuestions.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrent(i)}
-                  className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                    i === current ? "bg-primary" : answers[i] !== null ? "bg-primary/40" : "bg-muted"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {current < mcqQuestions.length - 1 ? (
-              <Button
-                onClick={() => setCurrent((p) => p + 1)}
-                className="bg-primary text-primary-foreground gap-1"
-              >
-                Tiếp <ArrowRight className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleMcqDone}
-                className="bg-primary text-primary-foreground gap-1"
-              >
-                Phần Reading <ArrowRight className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+        <div className="section-container max-w-3xl">
+          <ExamMCQ
+            skillName="Grammar & Listening"
+            questions={mcqQuestions}
+            currentIndex={current}
+            answers={answers}
+            timeLeft={timeLeft}
+            totalTime={600}
+            onAnswerSelect={(qi, ai) => {
+              const newAnswers = [...answers];
+              newAnswers[qi] = ai;
+              setAnswers(newAnswers);
+            }}
+            onPrevious={current > 0 ? () => setCurrent(p => p - 1) : undefined}
+            onNext={current < mcqQuestions.length - 1 ? () => setCurrent(p => p + 1) : undefined}
+            onSubmit={current === mcqQuestions.length - 1 ? handleMcqDone : undefined}
+            isFirst={current === 0}
+            isLast={current === mcqQuestions.length - 1}
+            sections={mcqSections}
+          />
         </div>
       </div>
     </div>
