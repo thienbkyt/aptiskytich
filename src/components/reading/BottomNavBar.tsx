@@ -230,7 +230,7 @@ const BottomNavBar = ({
                 </button>
               </div>
               <div className="p-6 space-y-6">
-                <img src={britishCouncilLogo} alt="British Council Aptis" className="h-16 object-contain" />
+                <img src={britishCouncilLogo} alt="British Council Aptis" className="h-28 object-contain" />
                 <div className="border-l-4 border-primary/30 pl-3">
                   <p className="text-sm font-medium text-foreground">Reading Practice Test Version 001</p>
                 </div>
