@@ -210,6 +210,50 @@ const Admin = () => {
                   <Label>Giải thích</Label>
                   <Textarea value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })} rows={2} />
                 </div>
+                {form.skill === "listening" && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Headphones className="w-4 h-4" /> Audio (URL hoặc upload file)
+                    </Label>
+                    <div className="flex gap-3">
+                      <Input
+                        placeholder="Dán URL audio hoặc upload file bên dưới..."
+                        value={form.audio_url}
+                        onChange={(e) => setForm({ ...form, audio_url: e.target.value })}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2 shrink-0"
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = "audio/*";
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            const fileName = `${Date.now()}_${file.name}`;
+                            const { data, error } = await supabase.storage.from("audio").upload(fileName, file);
+                            if (error) {
+                              toast({ title: "Lỗi upload", description: error.message, variant: "destructive" });
+                              return;
+                            }
+                            const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+                            setForm((prev) => ({ ...prev, audio_url: urlData.publicUrl }));
+                            toast({ title: "Đã upload audio!" });
+                          };
+                          input.click();
+                        }}
+                      >
+                        <Upload className="w-4 h-4" /> Upload
+                      </Button>
+                    </div>
+                    {form.audio_url && (
+                      <audio controls src={form.audio_url} className="w-full mt-2" />
+                    )}
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <Button onClick={handleSave} className="bg-primary text-primary-foreground gap-2"><Save className="w-4 h-4" /> Lưu</Button>
                   <Button onClick={cancelEdit} variant="outline" className="gap-2"><X className="w-4 h-4" /> Huỷ</Button>
