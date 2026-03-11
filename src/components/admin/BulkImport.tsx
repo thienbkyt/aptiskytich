@@ -15,6 +15,7 @@ interface ImportRow {
   option_d: string;
   correct_answer: string;
   explanation: string;
+  audio_url?: string;
 }
 
 interface ImportResult {
