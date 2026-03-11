@@ -134,16 +134,6 @@ const Practice = () => {
     );
   }
 
-  // Track which gaps have been seen (navigated to)
-  const [seenGaps, setSeenGaps] = useState<Set<string>>(new Set());
-
-  // Mark current gap as seen when it changes
-  useEffect(() => {
-    if (selectedSkill === "reading" && readingPhase === "practice") {
-      setSeenGaps(prev => new Set(prev).add(`${currentGapFill}`));
-    }
-  }, [selectedSkill, readingPhase, currentGapFill]);
-
   // Build sections for question list panel
   const readingSections = [
     {
