@@ -104,9 +104,12 @@ const BottomNavBar = ({
                       >
                         <p className="text-sm font-medium text-foreground">{section.title}</p>
                         {section.questionCount !== undefined && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {section.questionCount} Questions
-                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-xs text-muted-foreground">
+                              {section.questionCount} Questions
+                            </p>
+                            <Plus className="w-4 h-4 text-primary" />
+                          </div>
                         )}
                       </button>
                     ))

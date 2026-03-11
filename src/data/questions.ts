@@ -56,34 +56,6 @@ Janice`,
     ],
     explanation: "Đoạn email kể về kỳ nghỉ ở Hy Lạp. Cần chọn từ phù hợp ngữ cảnh cho mỗi chỗ trống.",
   },
-  {
-    id: 102,
-    skill: "reading",
-    question_type: "gap-fill",
-    instruction: "Read the notice below. Choose one word from the list for each gap.",
-    passage: `NOTICE TO ALL STAFF
-
-The company {0} will be held on Friday 15th March in the main hall.
-
-All {1} are expected to attend the meeting.
-
-The {2} will start at 2:00 PM and finish at 4:00 PM.
-
-Please bring your {3} badge for security purposes.
-
-Light {4} will be provided after the meeting.
-
-Thank you for your {5}.`,
-    gaps: [
-      { options: ["meeting", "party", "holiday", "exam"], correct: 0 },
-      { options: ["employees", "customers", "visitors", "students"], correct: 0 },
-      { options: ["event", "game", "show", "concert"], correct: 0 },
-      { options: ["ID", "credit", "library", "gift"], correct: 0 },
-      { options: ["refreshments", "homework", "luggage", "furniture"], correct: 0 },
-      { options: ["cooperation", "money", "luggage", "homework"], correct: 0 },
-    ],
-    explanation: "Thông báo công ty về cuộc họp. Cần chọn từ phù hợp với ngữ cảnh công sở.",
-  },
 ];
 
 export const sampleQuestions: Question[] = [
