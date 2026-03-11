@@ -84,12 +84,9 @@ const ExamMCQ = ({
         </div>
       </div>
 
-      {/* Audio player for listening */}
+      {/* Audio player for listening (max 2 plays) */}
       {q.audio_url && (
-        <div className="mb-6 bg-muted/30 rounded-xl p-4 flex items-center gap-4">
-          <Volume2 className="w-5 h-5 text-primary shrink-0" />
-          <audio controls src={q.audio_url} className="w-full h-10" controlsList="nodownload" />
-        </div>
+        <LimitedAudioPlayer src={q.audio_url} maxPlays={2} questionKey={currentIndex} />
       )}
 
       {/* Question */}
