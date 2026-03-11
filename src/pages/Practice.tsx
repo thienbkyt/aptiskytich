@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Mic, PenLine } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { getQuestionsBySkill, type Question } from "@/data/questions";
+import { getQuestionsBySkill, sampleGapFillQuestions, type Question, type GapFillQuestion } from "@/data/questions";
 import { fetchQuestionsBySkill } from "@/lib/questions";
+import ReadingInstructions from "@/components/reading/ReadingInstructions";
+import ReadingGapFill from "@/components/reading/ReadingGapFill";
 
 const skills = [
   { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary", iconColor: "text-primary-foreground" },
@@ -15,6 +17,8 @@ const skills = [
   { key: "writing" as const, label: "Writing", icon: PenLine, color: "bg-destructive", iconColor: "text-destructive-foreground" },
 ];
 
+type ReadingPhase = "instructions" | "practice" | "review";
+
 const Practice = () => {
   const [selectedSkill, setSelectedSkill] = useState<Question["skill"] | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -23,7 +27,22 @@ const Practice = () => {
   const [submitted, setSubmitted] = useState(false);
   const [stats, setStats] = useState({ total: 0, correct: 0 });
 
+  // Reading gap-fill state
+  const [readingPhase, setReadingPhase] = useState<ReadingPhase>("instructions");
+  const [gapFillQuestions] = useState<GapFillQuestion[]>(sampleGapFillQuestions);
+  const [currentGapFill, setCurrentGapFill] = useState(0);
+  const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
+  const [readingSubmitted, setReadingSubmitted] = useState(false);
+
   const startPractice = async (skill: Question["skill"]) => {
+    if (skill === "reading") {
+      setSelectedSkill("reading");
+      setReadingPhase("instructions");
+      setCurrentGapFill(0);
+      setGapFillAnswers(gapFillQuestions.map(q => new Array(q.gaps.length).fill(null)));
+      setReadingSubmitted(false);
+      return;
+    }
     const qs = (await fetchQuestionsBySkill(skill)).sort(() => Math.random() - 0.5);
     setQuestions(qs);
     setSelectedSkill(skill);
@@ -51,12 +70,13 @@ const Practice = () => {
     setSubmitted(false);
   };
 
+  // Reading gap-fill: skill selection screen
   if (!selectedSkill) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-24 pb-20">
-            <div className="section-container max-w-4xl">
+          <div className="section-container max-w-4xl">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
               <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-4">Luyện tập theo kỹ năng</h1>
               <p className="text-muted-foreground">Chọn kỹ năng bạn muốn luyện tập</p>
@@ -76,7 +96,10 @@ const Practice = () => {
                   </div>
                   <h3 className="font-heading font-bold text-foreground mb-1 text-sm md:text-base">{skill.label}</h3>
                   <p className="text-xs text-muted-foreground">
-                    {getQuestionsBySkill(skill.key).length} câu hỏi
+                    {skill.key === "reading"
+                      ? `${sampleGapFillQuestions.length} bài đọc`
+                      : `${getQuestionsBySkill(skill.key).length} câu hỏi`
+                    }
                   </p>
                 </motion.button>
               ))}
@@ -97,8 +120,62 @@ const Practice = () => {
     );
   }
 
+  // Reading gap-fill mode
+  if (selectedSkill === "reading") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <div className="flex items-center justify-between mb-6">
+              <button onClick={() => setSelectedSkill(null)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                ← Chọn kỹ năng khác
+              </button>
+            </div>
+
+            {readingPhase === "instructions" && (
+              <ReadingInstructions
+                totalParts={gapFillQuestions.length}
+                totalMinutes={10}
+                onStart={() => setReadingPhase("practice")}
+              />
+            )}
+
+            {(readingPhase === "practice" || readingPhase === "review") && (
+              <ReadingGapFill
+                question={gapFillQuestions[currentGapFill]}
+                questionIndex={currentGapFill}
+                totalQuestions={gapFillQuestions.length}
+                answers={gapFillAnswers[currentGapFill] || []}
+                onAnswerChange={(gapIndex, value) => {
+                  if (readingSubmitted) return;
+                  const newAnswers = [...gapFillAnswers];
+                  const currentAnswers = [...(newAnswers[currentGapFill] || [])];
+                  currentAnswers[gapIndex] = value;
+                  newAnswers[currentGapFill] = currentAnswers;
+                  setGapFillAnswers(newAnswers);
+                }}
+                onPrevious={currentGapFill > 0 ? () => setCurrentGapFill(p => p - 1) : undefined}
+                onNext={currentGapFill < gapFillQuestions.length - 1 ? () => setCurrentGapFill(p => p + 1) : undefined}
+                onSubmit={currentGapFill === gapFillQuestions.length - 1 ? () => {
+                  setReadingSubmitted(true);
+                  setReadingPhase("review");
+                  setCurrentGapFill(0);
+                } : undefined}
+                isFirst={currentGapFill === 0}
+                isLast={currentGapFill === gapFillQuestions.length - 1}
+                showResults={readingSubmitted}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard MCQ mode for other skills
   const q = questions[current];
-  const isCorrect = selected === q.correct_answer;
+  const isCorrect = selected === q?.correct_answer;
 
   return (
     <div className="min-h-screen bg-background">
