@@ -2,12 +2,20 @@ import { ArrowRight } from "lucide-react";
 import TimerDisplay from "./TimerDisplay";
 import BottomNavBar from "./BottomNavBar";
 
+interface QuestionSection {
+  title: string;
+  questionCount?: number;
+  isCurrent?: boolean;
+  onClick?: () => void;
+}
+
 interface ReadingInstructionsProps {
   timeLeft?: number;
   totalTime?: number;
   totalParts: number;
   totalMinutes: number;
   onStart: () => void;
+  sections?: QuestionSection[];
 }
 
 const ReadingInstructions = ({ timeLeft, totalTime = 600, totalParts, totalMinutes, onStart, sections = [] }: ReadingInstructionsProps) => {
