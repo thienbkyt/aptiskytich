@@ -155,6 +155,7 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
       options: [row.option_a.trim(), row.option_b.trim(), row.option_c.trim(), row.option_d.trim()],
       correct_answer: VALID_ANSWERS.indexOf(row.correct_answer.toString().toUpperCase().trim()),
       explanation: row.explanation.trim(),
+      audio_url: row.audio_url?.trim() || null,
     }));
 
     // Insert in batches of 50
