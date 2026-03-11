@@ -15,6 +15,7 @@ interface ImportRow {
   option_d: string;
   correct_answer: string;
   explanation: string;
+  audio_url?: string;
 }
 
 interface ImportResult {
@@ -36,16 +37,18 @@ const TEMPLATE_DATA = [
     option_d: "gone",
     correct_answer: "B",
     explanation: "Chủ ngữ 'She' (ngôi 3 số ít) → động từ thêm -s/-es.",
+    audio_url: "",
   },
   {
-    skill: "reading",
-    question_text: "According to the passage, what is the main idea?",
+    skill: "listening",
+    question_text: "What does the speaker suggest?",
     option_a: "Answer A",
     option_b: "Answer B",
     option_c: "Answer C",
     option_d: "Answer D",
     correct_answer: "A",
     explanation: "Giải thích đáp án đúng.",
+    audio_url: "https://example.com/audio.mp3",
   },
 ];
 
@@ -62,6 +65,7 @@ const downloadTemplate = () => {
     { wch: 20 },  // option_d
     { wch: 14 },  // correct_answer
     { wch: 40 },  // explanation
+    { wch: 40 },  // audio_url
   ];
 
   const wb = XLSX.utils.book_new();
@@ -73,6 +77,7 @@ const downloadTemplate = () => {
     { "Hướng dẫn nhập liệu": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
     { "Hướng dẫn nhập liệu": "Cột option_a đến option_d", "Chi tiết": "4 đáp án cho mỗi câu hỏi" },
     { "Hướng dẫn nhập liệu": "Cột explanation", "Chi tiết": "Giải thích đáp án đúng" },
+    { "Hướng dẫn nhập liệu": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
   ];
   const wsInstructions = XLSX.utils.json_to_sheet(instructions);
   wsInstructions["!cols"] = [{ wch: 25 }, { wch: 60 }];
@@ -150,6 +155,7 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
       options: [row.option_a.trim(), row.option_b.trim(), row.option_c.trim(), row.option_d.trim()],
       correct_answer: VALID_ANSWERS.indexOf(row.correct_answer.toString().toUpperCase().trim()),
       explanation: row.explanation.trim(),
+      audio_url: row.audio_url?.trim() || null,
     }));
 
     // Insert in batches of 50

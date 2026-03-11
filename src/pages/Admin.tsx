@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Save, X, BookOpen, Shield, FileSpreadsheet } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, X, BookOpen, Shield, FileSpreadsheet, Upload, Headphones } from "lucide-react";
 import BulkImport from "@/components/admin/BulkImport";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -21,9 +21,10 @@ interface DBQuestion {
   options: string[];
   correct_answer: number;
   explanation: string;
+  audio_url?: string | null;
 }
 
-const emptyQ = { skill: "grammar", question_text: "", options: ["", "", "", ""], correct_answer: 0, explanation: "" };
+const emptyQ = { skill: "grammar", question_text: "", options: ["", "", "", ""], correct_answer: 0, explanation: "", audio_url: "" };
 
 const Admin = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -68,6 +69,7 @@ const Admin = () => {
         options: form.options as unknown as any,
         correct_answer: form.correct_answer,
         explanation: form.explanation,
+        audio_url: form.audio_url || null,
       }).eq("id", editing.id);
       if (error) {
         toast({ title: "Lỗi", description: error.message, variant: "destructive" });
@@ -81,7 +83,8 @@ const Admin = () => {
         options: form.options as unknown as any,
         correct_answer: form.correct_answer,
         explanation: form.explanation,
-      });
+        audio_url: form.audio_url || null,
+      } as any);
       if (error) {
         toast({ title: "Lỗi", description: error.message, variant: "destructive" });
       } else {
@@ -108,7 +111,7 @@ const Admin = () => {
   const startEdit = (q: DBQuestion) => {
     setEditing(q);
     setCreating(false);
-    setForm({ skill: q.skill, question_text: q.question_text, options: [...q.options], correct_answer: q.correct_answer, explanation: q.explanation });
+    setForm({ skill: q.skill, question_text: q.question_text, options: [...q.options], correct_answer: q.correct_answer, explanation: q.explanation, audio_url: q.audio_url || "" });
   };
 
   const startCreate = () => {
@@ -207,6 +210,50 @@ const Admin = () => {
                   <Label>Giải thích</Label>
                   <Textarea value={form.explanation} onChange={(e) => setForm({ ...form, explanation: e.target.value })} rows={2} />
                 </div>
+                {form.skill === "listening" && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Headphones className="w-4 h-4" /> Audio (URL hoặc upload file)
+                    </Label>
+                    <div className="flex gap-3">
+                      <Input
+                        placeholder="Dán URL audio hoặc upload file bên dưới..."
+                        value={form.audio_url}
+                        onChange={(e) => setForm({ ...form, audio_url: e.target.value })}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2 shrink-0"
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = "audio/*";
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            const fileName = `${Date.now()}_${file.name}`;
+                            const { data, error } = await supabase.storage.from("audio").upload(fileName, file);
+                            if (error) {
+                              toast({ title: "Lỗi upload", description: error.message, variant: "destructive" });
+                              return;
+                            }
+                            const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
+                            setForm((prev) => ({ ...prev, audio_url: urlData.publicUrl }));
+                            toast({ title: "Đã upload audio!" });
+                          };
+                          input.click();
+                        }}
+                      >
+                        <Upload className="w-4 h-4" /> Upload
+                      </Button>
+                    </div>
+                    {form.audio_url && (
+                      <audio controls src={form.audio_url} className="w-full mt-2" />
+                    )}
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <Button onClick={handleSave} className="bg-primary text-primary-foreground gap-2"><Save className="w-4 h-4" /> Lưu</Button>
                   <Button onClick={cancelEdit} variant="outline" className="gap-2"><X className="w-4 h-4" /> Huỷ</Button>

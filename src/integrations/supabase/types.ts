@@ -108,6 +108,7 @@ export type Database = {
       }
       questions: {
         Row: {
+          audio_url: string | null
           correct_answer: number
           created_at: string
           explanation: string
@@ -118,6 +119,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audio_url?: string | null
           correct_answer: number
           created_at?: string
           explanation: string
@@ -128,6 +130,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audio_url?: string | null
           correct_answer?: number
           created_at?: string
           explanation?: string

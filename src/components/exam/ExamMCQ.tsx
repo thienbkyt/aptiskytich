@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Bookmark, CheckCircle2, XCircle, Play, Pause, Volume2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Question } from "@/data/questions";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -82,6 +82,14 @@ const ExamMCQ = ({
           )}
         </div>
       </div>
+
+      {/* Audio player for listening */}
+      {q.audio_url && (
+        <div className="mb-6 bg-muted/30 rounded-xl p-4 flex items-center gap-4">
+          <Volume2 className="w-5 h-5 text-primary shrink-0" />
+          <audio controls src={q.audio_url} className="w-full h-10" controlsList="nodownload" />
+        </div>
+      )}
 
       {/* Question */}
       <AnimatePresence mode="wait">

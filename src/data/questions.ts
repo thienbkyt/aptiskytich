@@ -6,6 +6,7 @@ export interface Question {
   correct_answer: number;
   explanation: string;
   question_type?: "mcq" | "gap-fill";
+  audio_url?: string | null;
 }
 
 export interface GapFillQuestion {
