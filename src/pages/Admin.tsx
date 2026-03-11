@@ -166,6 +166,8 @@ const Admin = () => {
                         <SelectItem value="grammar">Grammar & Vocabulary</SelectItem>
                         <SelectItem value="reading">Reading</SelectItem>
                         <SelectItem value="listening">Listening</SelectItem>
+                        <SelectItem value="speaking">Speaking</SelectItem>
+                        <SelectItem value="writing">Writing</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
