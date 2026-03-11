@@ -161,6 +161,8 @@ const Practice = () => {
                 question={gapFillQuestions[currentGapFill]}
                 questionIndex={currentGapFill}
                 totalQuestions={gapFillQuestions.length}
+                timeLeft={readingTimeLeft}
+                totalTime={READING_TOTAL_TIME}
                 answers={gapFillAnswers[currentGapFill] || []}
                 onAnswerChange={(gapIndex, value) => {
                   if (readingSubmitted) return;
