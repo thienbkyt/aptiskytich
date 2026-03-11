@@ -153,6 +153,7 @@ const ReadingGapFill = ({
         isFirst={isFirst}
         isLast={isLast}
         submitLabel="Submit"
+        sections={sections}
       />
     </div>
   );
