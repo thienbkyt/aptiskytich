@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import britishCouncilLogo from "@/assets/british-council-aptis.avif";
+import britishCouncilLogo from "@/assets/british-council-aptis-logo.png";
 
 export interface QuestionItem {
   label: string;
