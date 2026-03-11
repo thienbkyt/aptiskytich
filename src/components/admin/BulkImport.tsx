@@ -65,6 +65,7 @@ const downloadTemplate = () => {
     { wch: 20 },  // option_d
     { wch: 14 },  // correct_answer
     { wch: 40 },  // explanation
+    { wch: 40 },  // audio_url
   ];
 
   const wb = XLSX.utils.book_new();
