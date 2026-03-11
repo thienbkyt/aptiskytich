@@ -2,15 +2,23 @@ import { ArrowRight } from "lucide-react";
 import TimerDisplay from "./TimerDisplay";
 import BottomNavBar from "./BottomNavBar";
 
+interface QuestionSection {
+  title: string;
+  questionCount?: number;
+  isCurrent?: boolean;
+  onClick?: () => void;
+}
+
 interface ReadingInstructionsProps {
   timeLeft?: number;
   totalTime?: number;
   totalParts: number;
   totalMinutes: number;
   onStart: () => void;
+  sections?: QuestionSection[];
 }
 
-const ReadingInstructions = ({ timeLeft, totalTime = 600, totalParts, totalMinutes, onStart }: ReadingInstructionsProps) => {
+const ReadingInstructions = ({ timeLeft, totalTime = 600, totalParts, totalMinutes, onStart, sections = [] }: ReadingInstructionsProps) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
       {/* Timer top-right */}
@@ -42,6 +50,7 @@ const ReadingInstructions = ({ timeLeft, totalTime = 600, totalParts, totalMinut
         isFirst={true}
         isLast={false}
         onNext={onStart}
+        sections={sections}
       />
     </div>
   );
