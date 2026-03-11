@@ -4,6 +4,13 @@ import type { GapFillQuestion } from "@/data/questions";
 import TimerDisplay from "./TimerDisplay";
 import BottomNavBar from "./BottomNavBar";
 
+interface QuestionSection {
+  title: string;
+  questionCount?: number;
+  isCurrent?: boolean;
+  onClick?: () => void;
+}
+
 interface ReadingGapFillProps {
   question: GapFillQuestion;
   questionIndex: number;
@@ -18,6 +25,7 @@ interface ReadingGapFillProps {
   isLast?: boolean;
   isFirst?: boolean;
   showResults?: boolean;
+  sections?: QuestionSection[];
 }
 
 const ReadingGapFill = ({
