@@ -148,6 +148,8 @@ const Practice = () => {
 
             {readingPhase === "instructions" && (
               <ReadingInstructions
+                timeLeft={readingTimeLeft}
+                totalTime={READING_TOTAL_TIME}
                 totalParts={gapFillQuestions.length}
                 totalMinutes={10}
                 onStart={() => setReadingPhase("practice")}
