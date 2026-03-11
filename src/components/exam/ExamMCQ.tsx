@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Bookmark, CheckCircle2, XCircle, Play, Pause, Volume2 } from "lucide-react";
+import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
+import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Question } from "@/data/questions";
 import TimerDisplay from "@/components/reading/TimerDisplay";
