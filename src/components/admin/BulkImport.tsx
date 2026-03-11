@@ -37,16 +37,18 @@ const TEMPLATE_DATA = [
     option_d: "gone",
     correct_answer: "B",
     explanation: "Chủ ngữ 'She' (ngôi 3 số ít) → động từ thêm -s/-es.",
+    audio_url: "",
   },
   {
-    skill: "reading",
-    question_text: "According to the passage, what is the main idea?",
+    skill: "listening",
+    question_text: "What does the speaker suggest?",
     option_a: "Answer A",
     option_b: "Answer B",
     option_c: "Answer C",
     option_d: "Answer D",
     correct_answer: "A",
     explanation: "Giải thích đáp án đúng.",
+    audio_url: "https://example.com/audio.mp3",
   },
 ];
 
