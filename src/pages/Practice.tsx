@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Mic, PenLine } from "lucide-react";
@@ -33,6 +33,18 @@ const Practice = () => {
   const [currentGapFill, setCurrentGapFill] = useState(0);
   const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
   const [readingSubmitted, setReadingSubmitted] = useState(false);
+  const [readingTimeLeft, setReadingTimeLeft] = useState(600); // 10 minutes
+  const READING_TOTAL_TIME = 600;
+
+  // Reading timer
+  useEffect(() => {
+    if (selectedSkill !== "reading" || readingPhase !== "practice" || readingSubmitted || readingTimeLeft <= 0) return;
+    const t = setInterval(() => setReadingTimeLeft(p => {
+      if (p <= 1) { clearInterval(t); setReadingSubmitted(true); setReadingPhase("review"); setCurrentGapFill(0); return 0; }
+      return p - 1;
+    }), 1000);
+    return () => clearInterval(t);
+  }, [selectedSkill, readingPhase, readingSubmitted, readingTimeLeft]);
 
   const startPractice = async (skill: Question["skill"]) => {
     if (skill === "reading") {
@@ -41,6 +53,7 @@ const Practice = () => {
       setCurrentGapFill(0);
       setGapFillAnswers(gapFillQuestions.map(q => new Array(q.gaps.length).fill(null)));
       setReadingSubmitted(false);
+      setReadingTimeLeft(READING_TOTAL_TIME);
       return;
     }
     const qs = (await fetchQuestionsBySkill(skill)).sort(() => Math.random() - 0.5);
@@ -135,6 +148,8 @@ const Practice = () => {
 
             {readingPhase === "instructions" && (
               <ReadingInstructions
+                timeLeft={readingTimeLeft}
+                totalTime={READING_TOTAL_TIME}
                 totalParts={gapFillQuestions.length}
                 totalMinutes={10}
                 onStart={() => setReadingPhase("practice")}
@@ -146,6 +161,8 @@ const Practice = () => {
                 question={gapFillQuestions[currentGapFill]}
                 questionIndex={currentGapFill}
                 totalQuestions={gapFillQuestions.length}
+                timeLeft={readingTimeLeft}
+                totalTime={READING_TOTAL_TIME}
                 answers={gapFillAnswers[currentGapFill] || []}
                 onAnswerChange={(gapIndex, value) => {
                   if (readingSubmitted) return;
