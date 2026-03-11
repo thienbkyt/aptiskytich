@@ -38,8 +38,25 @@ const BottomNavBar = ({
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showAccessibility, setShowAccessibility] = useState(false);
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  const [magnification, setMagnification] = useState(100);
+  const { resolvedTheme, setTheme } = useTheme();
+
+  const isDarkMode = resolvedTheme === "dark";
+
+  const toggleDarkMode = () => {
+    setTheme(isDarkMode ? "light" : "dark");
+  };
+
+  const adjustMagnification = (delta: number) => {
+    setMagnification(prev => {
+      const next = Math.min(200, Math.max(50, prev + delta));
+      document.documentElement.style.fontSize = `${next}%`;
+      return next;
+    });
+  };
 
   const toggleSection = (index: number) => {
     setExpandedSections(prev => {
