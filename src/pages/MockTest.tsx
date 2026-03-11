@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock, CheckCircle2, XCircle, ArrowRight, ArrowLeft,
-  RotateCcw, Trophy, BookOpen, MessageCircle
+  RotateCcw, Trophy, BookOpen
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { getLevel, getLevelColor, type Question } from "@/data/questions";
+import { getLevel, getLevelColor, sampleGapFillQuestions, type Question, type GapFillQuestion } from "@/data/questions";
 import { fetchAllQuestions } from "@/lib/questions";
+import ReadingInstructions from "@/components/reading/ReadingInstructions";
+import ReadingGapFill from "@/components/reading/ReadingGapFill";
 
-type Phase = "intro" | "test" | "result";
+type Phase = "intro" | "test" | "reading_instructions" | "reading_test" | "result";
 
 const MockTest = () => {
   const [phase, setPhase] = useState<Phase>("intro");
@@ -20,13 +22,20 @@ const MockTest = () => {
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [timeLeft, setTimeLeft] = useState(600);
 
+  // Reading gap-fill state
+  const [gapFillQuestions] = useState<GapFillQuestion[]>(sampleGapFillQuestions);
+  const [currentGapFill, setCurrentGapFill] = useState(0);
+  const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
+
   useEffect(() => {
     fetchAllQuestions().then(setQuestions);
   }, []);
-  const [showExplanation, setShowExplanation] = useState(false);
+
+  // Filter out old reading MCQ — we use gap-fill for reading now
+  const mcqQuestions = questions.filter(q => q.skill !== "reading");
 
   useEffect(() => {
-    if (phase !== "test" || timeLeft <= 0) return;
+    if ((phase !== "test" && phase !== "reading_instructions" && phase !== "reading_test") || timeLeft <= 0) return;
     const t = setInterval(() => setTimeLeft((p) => {
       if (p <= 1) { clearInterval(t); handleSubmit(); return 0; }
       return p - 1;
@@ -35,10 +44,13 @@ const MockTest = () => {
   }, [phase]);
 
   const startTest = () => {
+    // Start with grammar/listening MCQ, then reading gap-fill
     setPhase("test");
-    setAnswers(new Array(questions.length).fill(null));
+    setAnswers(new Array(mcqQuestions.length).fill(null));
     setCurrent(0);
     setTimeLeft(600);
+    setCurrentGapFill(0);
+    setGapFillAnswers(gapFillQuestions.map(q => new Array(q.gaps.length).fill(null)));
   };
 
   const selectAnswer = (idx: number) => {
@@ -51,15 +63,36 @@ const MockTest = () => {
     setPhase("result");
   }, []);
 
-  const score = answers.reduce((acc, a, i) => acc + (a === questions[i]?.correct_answer ? 1 : 0), 0);
-  const total = questions.length;
-  const level = getLevel(score, total);
-  const pct = Math.round((score / total) * 100);
+  // When MCQ section done, transition to reading
+  const handleMcqDone = () => {
+    setPhase("reading_instructions");
+  };
+
+  const handleReadingStart = () => {
+    setPhase("reading_test");
+    setCurrentGapFill(0);
+  };
+
+  const handleReadingSubmit = () => {
+    handleSubmit();
+  };
+
+  // Scoring
+  const mcqScore = answers.reduce((acc, a, i) => acc + (a === mcqQuestions[i]?.correct_answer ? 1 : 0), 0);
+  const readingScore = gapFillAnswers.reduce((acc, qAnswers, qi) => {
+    const q = gapFillQuestions[qi];
+    if (!q) return acc;
+    return acc + qAnswers.reduce((s, a, gi) => s + (a === q.gaps[gi]?.correct ? 1 : 0), 0);
+  }, 0);
+  const totalReadingGaps = gapFillQuestions.reduce((acc, q) => acc + q.gaps.length, 0);
+  const totalScore = mcqScore + readingScore;
+  const totalQuestions = mcqQuestions.length + totalReadingGaps;
+  const level = getLevel(totalScore, totalQuestions);
+  const pct = Math.round((totalScore / totalQuestions) * 100);
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const q = questions[current];
-
+  const q = mcqQuestions[current];
   const skillLabels: Record<string, string> = { grammar: "Grammar", reading: "Reading", listening: "Listening" };
 
   if (phase === "intro") {
@@ -76,12 +109,12 @@ const MockTest = () => {
                 Bài thi thử Aptis Mini
               </h1>
               <p className="text-muted-foreground mb-8">
-                20 câu hỏi · 10 phút · Grammar + Reading + Listening
+                Grammar + Reading (gap-fill) + Listening · 10 phút
               </p>
               <div className="glass-card p-6 mb-8 text-left space-y-3">
-                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Grammar & Vocabulary: 10 câu</span></div>
-                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Reading: 5 câu</span></div>
-                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Listening: 5 câu</span></div>
+                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Grammar & Vocabulary: trắc nghiệm</span></div>
+                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Reading: điền từ vào chỗ trống (gap-fill)</span></div>
+                <div className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-success" /><span className="text-sm text-foreground">Listening: trắc nghiệm</span></div>
                 <div className="flex items-center gap-3"><Clock className="w-5 h-5 text-primary" /><span className="text-sm text-foreground">Thời gian: 10 phút</span></div>
               </div>
               <Button size="lg" onClick={startTest} className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 text-base px-8">
@@ -109,7 +142,7 @@ const MockTest = () => {
               <p className="text-muted-foreground mb-8">Bạn đã hoàn thành bài thi thử Aptis!</p>
 
               <div className="glass-card p-8 mb-6">
-                <div className="text-6xl font-heading font-extrabold text-primary mb-2">{score}/{total}</div>
+                <div className="text-6xl font-heading font-extrabold text-primary mb-2">{totalScore}/{totalQuestions}</div>
                 <div className="text-muted-foreground mb-4">Đúng {pct}%</div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted">
                   <span className="text-sm text-muted-foreground">Trình độ dự kiến:</span>
@@ -120,53 +153,61 @@ const MockTest = () => {
               {/* Score breakdown */}
               <div className="glass-card p-6 mb-6">
                 <h3 className="font-heading font-bold text-foreground mb-5">Chi tiết theo kỹ năng</h3>
-                {(["grammar", "reading", "listening"] as const).map((skill) => {
-                  const skillQs = questions.filter((q) => q.skill === skill);
-                  const skillScore = skillQs.reduce((acc, q) => {
-                    const qIdx = questions.indexOf(q);
-                    return acc + (answers[qIdx] === q.correct_answer ? 1 : 0);
+                {/* Grammar */}
+                {(() => {
+                  const grammarQs = mcqQuestions.filter(q => q.skill === "grammar");
+                  const grammarScore = grammarQs.reduce((acc, q) => {
+                    const idx = mcqQuestions.indexOf(q);
+                    return acc + (answers[idx] === q.correct_answer ? 1 : 0);
                   }, 0);
-                  const skillPct = Math.round((skillScore / skillQs.length) * 100);
+                  const grammarPct = grammarQs.length > 0 ? Math.round((grammarScore / grammarQs.length) * 100) : 0;
                   return (
-                    <div key={skill} className="mb-4 last:mb-0">
+                    <div className="mb-4">
                       <div className="flex justify-between text-sm mb-2">
-                        <span className="text-foreground font-medium">{skillLabels[skill]}</span>
-                        <span className="text-muted-foreground">{skillScore}/{skillQs.length} ({skillPct}%)</span>
+                        <span className="text-foreground font-medium">Grammar</span>
+                        <span className="text-muted-foreground">{grammarScore}/{grammarQs.length} ({grammarPct}%)</span>
                       </div>
                       <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${skillPct}%` }}
-                          transition={{ duration: 0.8, delay: 0.3 }}
-                          className="h-full bg-primary rounded-full"
-                        />
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${grammarPct}%` }} transition={{ duration: 0.8, delay: 0.3 }} className="h-full bg-primary rounded-full" />
                       </div>
                     </div>
                   );
-                })}
-              </div>
-
-              {/* Review answers */}
-              <div className="glass-card p-6 mb-6 text-left">
-                <h3 className="font-heading font-bold text-foreground mb-5">Xem lại đáp án</h3>
-                <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                  {questions.map((q, i) => {
-                    const isCorrect = answers[i] === q.correct_answer;
-                    return (
-                      <div key={q.id} className={`p-4 rounded-xl border ${isCorrect ? "border-success/30 bg-success/5" : "border-destructive/30 bg-destructive/5"}`}>
-                        <div className="flex items-start gap-2 mb-2">
-                          {isCorrect ? <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" /> : <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />}
-                          <span className="text-sm text-foreground font-medium">Câu {i + 1}: {q.question_text}</span>
-                        </div>
-                        <div className="ml-6 text-xs text-muted-foreground">
-                          {!isCorrect && <p>Bạn chọn: <span className="text-destructive font-medium">{answers[i] !== null ? q.options[answers[i]!] : "Chưa trả lời"}</span></p>}
-                          <p>Đáp án đúng: <span className="text-success font-medium">{q.options[q.correct_answer]}</span></p>
-                          <p className="mt-1 text-muted-foreground">{q.explanation}</p>
-                        </div>
+                })()}
+                {/* Reading gap-fill */}
+                {(() => {
+                  const readingPct = totalReadingGaps > 0 ? Math.round((readingScore / totalReadingGaps) * 100) : 0;
+                  return (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-foreground font-medium">Reading</span>
+                        <span className="text-muted-foreground">{readingScore}/{totalReadingGaps} ({readingPct}%)</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${readingPct}%` }} transition={{ duration: 0.8, delay: 0.5 }} className="h-full bg-primary rounded-full" />
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* Listening */}
+                {(() => {
+                  const listenQs = mcqQuestions.filter(q => q.skill === "listening");
+                  const listenScore = listenQs.reduce((acc, q) => {
+                    const idx = mcqQuestions.indexOf(q);
+                    return acc + (answers[idx] === q.correct_answer ? 1 : 0);
+                  }, 0);
+                  const listenPct = listenQs.length > 0 ? Math.round((listenScore / listenQs.length) * 100) : 0;
+                  return (
+                    <div className="mb-0">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-foreground font-medium">Listening</span>
+                        <span className="text-muted-foreground">{listenScore}/{listenQs.length} ({listenPct}%)</span>
+                      </div>
+                      <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${listenPct}%` }} transition={{ duration: 0.8, delay: 0.7 }} className="h-full bg-primary rounded-full" />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {level !== "B2" && level !== "C1" && level !== "C2" && (
@@ -200,7 +241,58 @@ const MockTest = () => {
     );
   }
 
-  // Test phase
+  // Reading instructions phase
+  if (phase === "reading_instructions") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <ReadingInstructions
+              timeLeft={timeLeft}
+              totalParts={gapFillQuestions.length}
+              totalMinutes={5}
+              onStart={handleReadingStart}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Reading gap-fill test phase
+  if (phase === "reading_test") {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <ReadingGapFill
+              question={gapFillQuestions[currentGapFill]}
+              questionIndex={currentGapFill}
+              totalQuestions={gapFillQuestions.length}
+              timeLeft={timeLeft}
+              answers={gapFillAnswers[currentGapFill] || []}
+              onAnswerChange={(gapIndex, value) => {
+                const newAnswers = [...gapFillAnswers];
+                const currentAnswers = [...(newAnswers[currentGapFill] || [])];
+                currentAnswers[gapIndex] = value;
+                newAnswers[currentGapFill] = currentAnswers;
+                setGapFillAnswers(newAnswers);
+              }}
+              onPrevious={currentGapFill > 0 ? () => setCurrentGapFill(p => p - 1) : undefined}
+              onNext={currentGapFill < gapFillQuestions.length - 1 ? () => setCurrentGapFill(p => p + 1) : undefined}
+              onSubmit={currentGapFill === gapFillQuestions.length - 1 ? handleReadingSubmit : undefined}
+              isFirst={currentGapFill === 0}
+              isLast={currentGapFill === gapFillQuestions.length - 1}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // MCQ test phase (grammar + listening)
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -210,9 +302,9 @@ const MockTest = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground px-2.5 py-1 rounded-md bg-muted">
-                {skillLabels[q.skill]}
+                {skillLabels[q?.skill] || ""}
               </span>
-              <span className="text-sm text-muted-foreground">Câu {current + 1}/{total}</span>
+              <span className="text-sm text-muted-foreground">Câu {current + 1}/{mcqQuestions.length}</span>
             </div>
             <div className={`flex items-center gap-1.5 text-sm font-mono font-semibold ${timeLeft < 60 ? "text-destructive" : "text-foreground"}`}>
               <Clock className="w-4 h-4" /> {formatTime(timeLeft)}
@@ -223,7 +315,7 @@ const MockTest = () => {
           <div className="h-1.5 bg-muted rounded-full mb-8 overflow-hidden">
             <motion.div
               className="h-full bg-primary rounded-full"
-              animate={{ width: `${((current + 1) / total) * 100}%` }}
+              animate={{ width: `${((current + 1) / mcqQuestions.length) * 100}%` }}
               transition={{ duration: 0.3 }}
             />
           </div>
@@ -238,10 +330,10 @@ const MockTest = () => {
             >
               <div className="glass-card p-6 md:p-8 mb-6">
                 <h2 className="text-lg font-heading font-bold text-foreground mb-6 leading-relaxed">
-                  {q.question_text}
+                  {q?.question_text}
                 </h2>
                 <div className="space-y-3">
-                  {q.options.map((opt, i) => (
+                  {q?.options.map((opt, i) => (
                     <button
                       key={i}
                       onClick={() => selectAnswer(i)}
@@ -274,7 +366,7 @@ const MockTest = () => {
             </Button>
 
             <div className="hidden md:flex gap-1.5">
-              {questions.map((_, i) => (
+              {mcqQuestions.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrent(i)}
@@ -285,7 +377,7 @@ const MockTest = () => {
               ))}
             </div>
 
-            {current < total - 1 ? (
+            {current < mcqQuestions.length - 1 ? (
               <Button
                 onClick={() => setCurrent((p) => p + 1)}
                 className="bg-primary text-primary-foreground gap-1"
@@ -294,10 +386,10 @@ const MockTest = () => {
               </Button>
             ) : (
               <Button
-                onClick={handleSubmit}
+                onClick={handleMcqDone}
                 className="bg-primary text-primary-foreground gap-1"
               >
-                Nộp bài <CheckCircle2 className="w-4 h-4" />
+                Phần Reading <ArrowRight className="w-4 h-4" />
               </Button>
             )}
           </div>
