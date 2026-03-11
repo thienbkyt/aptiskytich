@@ -21,9 +21,10 @@ interface DBQuestion {
   options: string[];
   correct_answer: number;
   explanation: string;
+  audio_url?: string | null;
 }
 
-const emptyQ = { skill: "grammar", question_text: "", options: ["", "", "", ""], correct_answer: 0, explanation: "" };
+const emptyQ = { skill: "grammar", question_text: "", options: ["", "", "", ""], correct_answer: 0, explanation: "", audio_url: "" };
 
 const Admin = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
