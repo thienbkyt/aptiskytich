@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, XCircle, ArrowRight, BookOpen, Headphones, FileText, Mic, PenLine } from "lucide-react";
+import { motion } from "framer-motion";
+import { BookOpen, Headphones, FileText, Mic, PenLine } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getQuestionsBySkill, sampleGapFillQuestions, type Question, type GapFillQuestion } from "@/data/questions";
 import { fetchQuestionsBySkill } from "@/lib/questions";
 import ReadingInstructions from "@/components/reading/ReadingInstructions";
 import ReadingGapFill from "@/components/reading/ReadingGapFill";
+import ExamInstructions from "@/components/exam/ExamInstructions";
+import ExamMCQ from "@/components/exam/ExamMCQ";
 
 const skills = [
   { key: "grammar" as const, label: "Grammar & Vocabulary", icon: BookOpen, color: "bg-primary", iconColor: "text-primary-foreground" },
@@ -17,32 +18,53 @@ const skills = [
   { key: "writing" as const, label: "Writing", icon: PenLine, color: "bg-destructive", iconColor: "text-destructive-foreground" },
 ];
 
-type ReadingPhase = "instructions" | "practice" | "review";
+const skillLabels: Record<string, string> = {
+  grammar: "Grammar & Vocabulary",
+  reading: "Reading",
+  listening: "Listening",
+  speaking: "Speaking",
+  writing: "Writing",
+};
+
+const EXAM_TIME = 600; // 10 minutes
+
+type ExamPhase = "instructions" | "practice" | "review";
 
 const Practice = () => {
   const [selectedSkill, setSelectedSkill] = useState<Question["skill"] | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [current, setCurrent] = useState(0);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [submitted, setSubmitted] = useState(false);
   const [stats, setStats] = useState({ total: 0, correct: 0 });
 
   // Reading gap-fill state
-  const [readingPhase, setReadingPhase] = useState<ReadingPhase>("instructions");
+  const [readingPhase, setReadingPhase] = useState<ExamPhase>("instructions");
   const [gapFillQuestions] = useState<GapFillQuestion[]>(sampleGapFillQuestions);
   const [currentGapFill, setCurrentGapFill] = useState(0);
   const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
   const [readingSubmitted, setReadingSubmitted] = useState(false);
-  const [readingTimeLeft, setReadingTimeLeft] = useState(600); // 10 minutes
+  const [readingTimeLeft, setReadingTimeLeft] = useState(EXAM_TIME);
   const [seenGaps, setSeenGaps] = useState<Set<string>>(new Set());
-  const READING_TOTAL_TIME = 600;
 
-  // Mark current gap as seen when navigated to
+  // MCQ exam state (grammar, listening, speaking, writing)
+  const [mcqPhase, setMcqPhase] = useState<ExamPhase>("instructions");
+  const [mcqQuestions, setMcqQuestions] = useState<Question[]>([]);
+  const [mcqCurrent, setMcqCurrent] = useState(0);
+  const [mcqAnswers, setMcqAnswers] = useState<(number | null)[]>([]);
+  const [mcqSubmitted, setMcqSubmitted] = useState(false);
+  const [mcqTimeLeft, setMcqTimeLeft] = useState(EXAM_TIME);
+  const [seenMcq, setSeenMcq] = useState<Set<number>>(new Set());
+
+  // Mark current gap as seen
   useEffect(() => {
     if (selectedSkill === "reading" && readingPhase === "practice") {
       setSeenGaps(prev => new Set(prev).add(`${currentGapFill}`));
     }
   }, [selectedSkill, readingPhase, currentGapFill]);
+
+  // Mark current MCQ as seen
+  useEffect(() => {
+    if (selectedSkill && selectedSkill !== "reading" && mcqPhase === "practice") {
+      setSeenMcq(prev => new Set(prev).add(mcqCurrent));
+    }
+  }, [selectedSkill, mcqPhase, mcqCurrent]);
 
   // Reading timer
   useEffect(() => {
@@ -54,6 +76,16 @@ const Practice = () => {
     return () => clearInterval(t);
   }, [selectedSkill, readingPhase, readingSubmitted, readingTimeLeft]);
 
+  // MCQ timer
+  useEffect(() => {
+    if (!selectedSkill || selectedSkill === "reading" || mcqPhase !== "practice" || mcqSubmitted || mcqTimeLeft <= 0) return;
+    const t = setInterval(() => setMcqTimeLeft(p => {
+      if (p <= 1) { clearInterval(t); setMcqSubmitted(true); setMcqPhase("review"); setMcqCurrent(0); return 0; }
+      return p - 1;
+    }), 1000);
+    return () => clearInterval(t);
+  }, [selectedSkill, mcqPhase, mcqSubmitted, mcqTimeLeft]);
+
   const startPractice = async (skill: Question["skill"]) => {
     if (skill === "reading") {
       setSelectedSkill("reading");
@@ -61,37 +93,22 @@ const Practice = () => {
       setCurrentGapFill(0);
       setGapFillAnswers(gapFillQuestions.map(q => new Array(q.gaps.length).fill(null)));
       setReadingSubmitted(false);
-      setReadingTimeLeft(READING_TOTAL_TIME);
+      setReadingTimeLeft(EXAM_TIME);
+      setSeenGaps(new Set());
       return;
     }
     const qs = (await fetchQuestionsBySkill(skill)).sort(() => Math.random() - 0.5);
-    setQuestions(qs);
+    setMcqQuestions(qs);
     setSelectedSkill(skill);
-    setCurrent(0);
-    setSelected(null);
-    setSubmitted(false);
+    setMcqPhase("instructions");
+    setMcqCurrent(0);
+    setMcqAnswers(new Array(qs.length).fill(null));
+    setMcqSubmitted(false);
+    setMcqTimeLeft(EXAM_TIME);
+    setSeenMcq(new Set());
   };
 
-  const checkAnswer = () => {
-    setSubmitted(true);
-    setStats((p) => ({
-      total: p.total + 1,
-      correct: p.correct + (selected === questions[current].correct_answer ? 1 : 0),
-    }));
-  };
-
-  const nextQuestion = () => {
-    if (current < questions.length - 1) {
-      setCurrent((p) => p + 1);
-    } else {
-      setQuestions((qs) => [...qs].sort(() => Math.random() - 0.5));
-      setCurrent(0);
-    }
-    setSelected(null);
-    setSubmitted(false);
-  };
-
-  // Reading gap-fill: skill selection screen
+  // Skill selection screen
   if (!selectedSkill) {
     return (
       <div className="min-h-screen bg-background">
@@ -141,7 +158,7 @@ const Practice = () => {
     );
   }
 
-  // Build sections for question list panel
+  // Build sections for reading question list panel
   const readingSections = [
     {
       title: "Aptis General Reading Instructions",
@@ -163,6 +180,28 @@ const Practice = () => {
     })),
   ];
 
+  // Build sections for MCQ question list panel
+  const mcqSections = [
+    {
+      title: `Aptis General ${skillLabels[selectedSkill] || ""} Instructions`,
+      isCurrent: mcqPhase === "instructions",
+      onClick: () => { setMcqPhase("instructions"); },
+    },
+    {
+      title: skillLabels[selectedSkill] || "",
+      questionCount: mcqQuestions.length,
+      isCurrent: mcqPhase !== "instructions",
+      onClick: () => { setMcqPhase("practice"); setMcqCurrent(0); },
+      questions: mcqQuestions.map((_, qi) => ({
+        label: String(qi + 1).padStart(2, "0"),
+        seen: seenMcq.has(qi),
+        attempted: mcqAnswers[qi] !== null && mcqAnswers[qi] !== undefined,
+        isCurrent: mcqPhase === "practice" && mcqCurrent === qi,
+        onClick: () => { setMcqPhase("practice"); setMcqCurrent(qi); },
+      })),
+    },
+  ];
+
   // Reading gap-fill mode
   if (selectedSkill === "reading") {
     return (
@@ -179,7 +218,7 @@ const Practice = () => {
             {readingPhase === "instructions" && (
               <ReadingInstructions
                 timeLeft={readingTimeLeft}
-                totalTime={READING_TOTAL_TIME}
+                totalTime={EXAM_TIME}
                 totalParts={gapFillQuestions.length}
                 totalMinutes={10}
                 onStart={() => setReadingPhase("practice")}
@@ -193,7 +232,7 @@ const Practice = () => {
                 questionIndex={currentGapFill}
                 totalQuestions={gapFillQuestions.length}
                 timeLeft={readingTimeLeft}
-                totalTime={READING_TOTAL_TIME}
+                totalTime={EXAM_TIME}
                 answers={gapFillAnswers[currentGapFill] || []}
                 onAnswerChange={(gapIndex, value) => {
                   if (readingSubmitted) return;
@@ -222,90 +261,59 @@ const Practice = () => {
     );
   }
 
-  // Standard MCQ mode for other skills
-  const q = questions[current];
-  const isCorrect = selected === q?.correct_answer;
-
+  // MCQ exam mode (grammar, listening, speaking, writing)
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-24 pb-20">
-        <div className="section-container max-w-2xl">
+        <div className="section-container max-w-3xl">
           <div className="flex items-center justify-between mb-6">
             <button onClick={() => setSelectedSkill(null)} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               ← Chọn kỹ năng khác
             </button>
-            <div className="text-sm text-muted-foreground">
-              Đúng: {stats.correct}/{stats.total}
-            </div>
           </div>
 
-          <div className="h-1.5 bg-muted rounded-full mb-8 overflow-hidden">
-            <motion.div
-              className="h-full bg-primary rounded-full"
-              animate={{ width: `${((current + 1) / questions.length) * 100}%` }}
+          {mcqPhase === "instructions" && (
+            <ExamInstructions
+              skillName={skillLabels[selectedSkill] || ""}
+              timeLeft={mcqTimeLeft}
+              totalTime={EXAM_TIME}
+              totalParts={mcqQuestions.length}
+              totalMinutes={10}
+              onStart={() => setMcqPhase("practice")}
+              sections={mcqSections}
             />
-          </div>
+          )}
 
-          <AnimatePresence mode="wait">
-            <motion.div key={current} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <div className="glass-card p-6 md:p-8 mb-6">
-                <p className="text-xs font-medium text-muted-foreground mb-3">Câu {current + 1}/{questions.length}</p>
-                <h2 className="text-lg font-heading font-bold text-foreground mb-6 leading-relaxed">{q.question_text}</h2>
-                <div className="space-y-3">
-                  {q.options.map((opt, i) => {
-                    let cls = "border-border hover:border-primary/30 text-foreground";
-                    if (submitted) {
-                      if (i === q.correct_answer) cls = "border-success bg-success/10 text-success";
-                      else if (i === selected) cls = "border-destructive bg-destructive/10 text-destructive";
-                    } else if (selected === i) {
-                      cls = "border-primary bg-primary/5 text-primary";
-                    }
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => !submitted && setSelected(i)}
-                        disabled={submitted}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
-                      >
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-xs font-bold mr-3">
-                          {String.fromCharCode(65 + i)}
-                        </span>
-                        {opt}
-                        {submitted && i === q.correct_answer && <CheckCircle2 className="w-4 h-4 inline ml-2" />}
-                        {submitted && i === selected && i !== q.correct_answer && <XCircle className="w-4 h-4 inline ml-2" />}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {submitted && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className={`mt-4 p-4 rounded-lg ${isCorrect ? "bg-success/10 border border-success/20" : "bg-destructive/10 border border-destructive/20"}`}
-                  >
-                    <p className={`text-sm font-semibold mb-1 ${isCorrect ? "text-success" : "text-destructive"}`}>
-                      {isCorrect ? "✓ Chính xác!" : "✗ Sai rồi!"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{q.explanation}</p>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          <div className="flex justify-end">
-            {!submitted ? (
-              <Button onClick={checkAnswer} disabled={selected === null} className="bg-primary text-primary-foreground gap-1">
-                Kiểm tra <CheckCircle2 className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button onClick={nextQuestion} className="bg-primary text-primary-foreground gap-1">
-                Câu tiếp <ArrowRight className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+          {(mcqPhase === "practice" || mcqPhase === "review") && (
+            <ExamMCQ
+              skillName={skillLabels[selectedSkill] || ""}
+              questions={mcqQuestions}
+              currentIndex={mcqCurrent}
+              answers={mcqAnswers}
+              timeLeft={mcqTimeLeft}
+              totalTime={EXAM_TIME}
+              onAnswerSelect={(qi, ai) => {
+                if (mcqSubmitted) return;
+                const newAnswers = [...mcqAnswers];
+                newAnswers[qi] = ai;
+                setMcqAnswers(newAnswers);
+              }}
+              onPrevious={mcqCurrent > 0 ? () => setMcqCurrent(p => p - 1) : undefined}
+              onNext={mcqCurrent < mcqQuestions.length - 1 ? () => setMcqCurrent(p => p + 1) : undefined}
+              onSubmit={mcqCurrent === mcqQuestions.length - 1 ? () => {
+                setMcqSubmitted(true);
+                setMcqPhase("review");
+                setMcqCurrent(0);
+                const correct = mcqAnswers.reduce((acc, a, i) => acc + (a === mcqQuestions[i]?.correct_answer ? 1 : 0), 0);
+                setStats(p => ({ total: p.total + mcqQuestions.length, correct: p.correct + correct }));
+              } : undefined}
+              isFirst={mcqCurrent === 0}
+              isLast={mcqCurrent === mcqQuestions.length - 1}
+              showResults={mcqSubmitted}
+              sections={mcqSections}
+            />
+          )}
         </div>
       </div>
     </div>
