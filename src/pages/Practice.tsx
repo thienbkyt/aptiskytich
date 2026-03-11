@@ -34,7 +34,15 @@ const Practice = () => {
   const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
   const [readingSubmitted, setReadingSubmitted] = useState(false);
   const [readingTimeLeft, setReadingTimeLeft] = useState(600); // 10 minutes
+  const [seenGaps, setSeenGaps] = useState<Set<string>>(new Set());
   const READING_TOTAL_TIME = 600;
+
+  // Mark current gap as seen when navigated to
+  useEffect(() => {
+    if (selectedSkill === "reading" && readingPhase === "practice") {
+      setSeenGaps(prev => new Set(prev).add(`${currentGapFill}`));
+    }
+  }, [selectedSkill, readingPhase, currentGapFill]);
 
   // Reading timer
   useEffect(() => {
@@ -140,11 +148,18 @@ const Practice = () => {
       isCurrent: readingPhase === "instructions",
       onClick: () => { setReadingPhase("instructions"); },
     },
-    ...gapFillQuestions.map((q, i) => ({
+    ...gapFillQuestions.map((q, qi) => ({
       title: "Reading",
       questionCount: q.gaps.length,
-      isCurrent: readingPhase !== "instructions" && currentGapFill === i,
-      onClick: () => { setReadingPhase("practice"); setCurrentGapFill(i); },
+      isCurrent: readingPhase !== "instructions" && currentGapFill === qi,
+      onClick: () => { setReadingPhase("practice"); setCurrentGapFill(qi); },
+      questions: q.gaps.map((_gap, gi) => ({
+        label: String(gi + 1).padStart(2, "0"),
+        seen: seenGaps.has(`${qi}`),
+        attempted: gapFillAnswers[qi]?.[gi] !== null && gapFillAnswers[qi]?.[gi] !== undefined,
+        isCurrent: readingPhase === "practice" && currentGapFill === qi,
+        onClick: () => { setReadingPhase("practice"); setCurrentGapFill(qi); },
+      })),
     })),
   ];
 
