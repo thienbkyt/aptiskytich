@@ -37,6 +37,13 @@ const Practice = () => {
   const [seenGaps, setSeenGaps] = useState<Set<string>>(new Set());
   const READING_TOTAL_TIME = 600;
 
+  // Mark current gap as seen when navigated to
+  useEffect(() => {
+    if (selectedSkill === "reading" && readingPhase === "practice") {
+      setSeenGaps(prev => new Set(prev).add(`${currentGapFill}`));
+    }
+  }, [selectedSkill, readingPhase, currentGapFill]);
+
   // Reading timer
   useEffect(() => {
     if (selectedSkill !== "reading" || readingPhase !== "practice" || readingSubmitted || readingTimeLeft <= 0) return;
