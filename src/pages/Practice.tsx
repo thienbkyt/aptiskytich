@@ -53,6 +53,7 @@ const Practice = () => {
       setCurrentGapFill(0);
       setGapFillAnswers(gapFillQuestions.map(q => new Array(q.gaps.length).fill(null)));
       setReadingSubmitted(false);
+      setReadingTimeLeft(READING_TOTAL_TIME);
       return;
     }
     const qs = (await fetchQuestionsBySkill(skill)).sort(() => Math.random() - 0.5);
