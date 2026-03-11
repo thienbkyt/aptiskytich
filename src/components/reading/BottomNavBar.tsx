@@ -36,6 +36,7 @@ const BottomNavBar = ({
   sections = [], bookmarkedCount = 0,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
 
