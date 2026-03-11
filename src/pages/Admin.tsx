@@ -83,7 +83,8 @@ const Admin = () => {
         options: form.options as unknown as any,
         correct_answer: form.correct_answer,
         explanation: form.explanation,
-      });
+        audio_url: form.audio_url || null,
+      } as any);
       if (error) {
         toast({ title: "Lỗi", description: error.message, variant: "destructive" });
       } else {
