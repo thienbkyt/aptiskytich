@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, List, Info, Accessibility, LogOut } from "lucide-react";
+import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut } from "lucide-react";
 
 interface BottomNavBarProps {
   onPrevious?: () => void;
