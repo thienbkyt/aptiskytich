@@ -1,13 +1,22 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+
+export interface QuestionItem {
+  label: string;
+  seen: boolean;
+  attempted: boolean;
+  isCurrent?: boolean;
+  onClick?: () => void;
+}
 
 interface QuestionSection {
   title: string;
   questionCount?: number;
   isCurrent?: boolean;
   onClick?: () => void;
+  questions?: QuestionItem[];
 }
 
 interface BottomNavBarProps {
@@ -27,6 +36,16 @@ const BottomNavBar = ({
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
+  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+
+  const toggleSection = (index: number) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
 
   return (
     <>
@@ -34,7 +53,6 @@ const BottomNavBar = ({
       <AnimatePresence>
         {showQuestionList && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -42,7 +60,6 @@ const BottomNavBar = ({
               className="fixed inset-0 z-50 bg-foreground/20"
               onClick={() => setShowQuestionList(false)}
             />
-            {/* Panel */}
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
@@ -90,28 +107,84 @@ const BottomNavBar = ({
                 {listFilter === "all" ? (
                   sections.length > 0 ? (
                     sections.map((section, i) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          section.onClick?.();
-                          setShowQuestionList(false);
-                        }}
-                        className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                          section.isCurrent
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/30 hover:bg-muted/50"
-                        }`}
-                      >
-                        <p className="text-sm font-medium text-foreground">{section.title}</p>
-                        {section.questionCount !== undefined && (
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-xs text-muted-foreground">
-                              {section.questionCount} Questions
-                            </p>
-                            <Plus className="w-4 h-4 text-primary" />
-                          </div>
-                        )}
-                      </button>
+                      <div key={i}>
+                        {/* Section header */}
+                        <div
+                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                            section.isCurrent
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/30 hover:bg-muted/50"
+                          }`}
+                        >
+                          <button
+                            onClick={() => {
+                              if (!section.questions?.length) {
+                                section.onClick?.();
+                                setShowQuestionList(false);
+                              }
+                            }}
+                            className="w-full text-left"
+                          >
+                            <p className="text-sm font-medium text-foreground">{section.title}</p>
+                          </button>
+                          {section.questionCount !== undefined && section.questions?.length && (
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-xs text-muted-foreground">
+                                {section.questionCount} Questions
+                              </p>
+                              <button
+                                onClick={() => toggleSection(i)}
+                                className="w-6 h-6 flex items-center justify-center rounded bg-muted hover:bg-muted/80 transition-colors"
+                              >
+                                {expandedSections.has(i) ? (
+                                  <Minus className="w-3.5 h-3.5 text-foreground" />
+                                ) : (
+                                  <Plus className="w-3.5 h-3.5 text-primary" />
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Expanded questions */}
+                        <AnimatePresence>
+                          {expandedSections.has(i) && section.questions && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-1 space-y-1">
+                                {section.questions.map((q, qi) => (
+                                  <button
+                                    key={qi}
+                                    onClick={() => {
+                                      q.onClick?.();
+                                      setShowQuestionList(false);
+                                    }}
+                                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                                      q.isCurrent
+                                        ? "border-primary bg-primary/10"
+                                        : "border-border hover:border-primary/30 hover:bg-muted/50"
+                                    }`}
+                                  >
+                                    <p className="text-sm font-bold text-foreground">{q.label}</p>
+                                    <div className="flex items-center justify-between mt-0.5">
+                                      <span className="text-xs text-muted-foreground">
+                                        {q.seen ? "Seen" : "Unseen"}
+                                      </span>
+                                      <span className={`text-xs font-medium ${q.attempted ? "text-primary" : "text-muted-foreground"}`}>
+                                        {q.attempted ? "Attempted" : "Not Attempted"}
+                                      </span>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     ))
                   ) : (
                     <p className="text-sm text-muted-foreground py-4 text-center">No sections available</p>
@@ -130,7 +203,6 @@ const BottomNavBar = ({
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t-[3px] border-primary bg-background/95 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Left: icon buttons */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowQuestionList(true)}
@@ -146,32 +218,21 @@ const BottomNavBar = ({
             </button>
           </div>
 
-          {/* Right: navigation */}
           <div className="flex items-center gap-3">
             <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
-              <Button
-                variant="outline"
-                onClick={onPrevious}
-                className="gap-2 border-foreground text-foreground hover:bg-muted"
-              >
+              <Button variant="outline" onClick={onPrevious} className="gap-2 border-foreground text-foreground hover:bg-muted">
                 <ArrowLeft className="w-4 h-4" /> Previous
               </Button>
             )}
             {isLast && onSubmit ? (
-              <Button
-                onClick={onSubmit}
-                className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6"
-              >
+              <Button onClick={onSubmit} className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6">
                 {submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
-              <Button
-                onClick={onNext}
-                className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6"
-              >
+              <Button onClick={onNext} className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6">
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : null}
