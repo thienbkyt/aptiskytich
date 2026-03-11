@@ -5,7 +5,86 @@ export interface Question {
   options: string[];
   correct_answer: number;
   explanation: string;
+  question_type?: "mcq" | "gap-fill";
 }
+
+export interface GapFillQuestion {
+  id: number;
+  skill: "reading";
+  question_type: "gap-fill";
+  passage: string; // Text with {0}, {1}, {2}... placeholders
+  instruction: string;
+  gaps: GapFillGap[];
+  explanation: string;
+}
+
+export interface GapFillGap {
+  options: string[];
+  correct: number;
+}
+
+export const sampleGapFillQuestions: GapFillQuestion[] = [
+  {
+    id: 101,
+    skill: "reading",
+    question_type: "gap-fill",
+    instruction: "Read the email from Janice to her friend. Choose one word from the list for each gap. The first one is done for you.",
+    passage: `Dear Sally,
+
+Tim and I are on holiday in Greece. We have a nice {0} of the sea from our hotel.
+
+The weather is {1} and it's really hot.
+
+Yesterday we went on a {2} on the lake and caught some fish.
+
+We had lunch and then we visited an old {3}.
+
+Tomorrow we are going to take a car and {4} around.
+
+We are going to visit some {5} and buy clothes.
+
+Love,
+
+Janice`,
+    gaps: [
+      { options: ["view", "look", "sight", "scene"], correct: 0 },
+      { options: ["sunny", "rainy", "cloudy", "windy"], correct: 0 },
+      { options: ["boat", "train", "plane", "bus"], correct: 0 },
+      { options: ["castle", "office", "airport", "station"], correct: 0 },
+      { options: ["drive", "walk", "fly", "swim"], correct: 0 },
+      { options: ["shops", "hospitals", "schools", "libraries"], correct: 0 },
+    ],
+    explanation: "Đoạn email kể về kỳ nghỉ ở Hy Lạp. Cần chọn từ phù hợp ngữ cảnh cho mỗi chỗ trống.",
+  },
+  {
+    id: 102,
+    skill: "reading",
+    question_type: "gap-fill",
+    instruction: "Read the notice below. Choose one word from the list for each gap.",
+    passage: `NOTICE TO ALL STAFF
+
+The company {0} will be held on Friday 15th March in the main hall.
+
+All {1} are expected to attend the meeting.
+
+The {2} will start at 2:00 PM and finish at 4:00 PM.
+
+Please bring your {3} badge for security purposes.
+
+Light {4} will be provided after the meeting.
+
+Thank you for your {5}.`,
+    gaps: [
+      { options: ["meeting", "party", "holiday", "exam"], correct: 0 },
+      { options: ["employees", "customers", "visitors", "students"], correct: 0 },
+      { options: ["event", "game", "show", "concert"], correct: 0 },
+      { options: ["ID", "credit", "library", "gift"], correct: 0 },
+      { options: ["refreshments", "homework", "luggage", "furniture"], correct: 0 },
+      { options: ["cooperation", "money", "luggage", "homework"], correct: 0 },
+    ],
+    explanation: "Thông báo công ty về cuộc họp. Cần chọn từ phù hợp với ngữ cảnh công sở.",
+  },
+];
 
 export const sampleQuestions: Question[] = [
   // Grammar & Vocabulary (10)
