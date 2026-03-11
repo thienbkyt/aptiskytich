@@ -1,13 +1,15 @@
 import { useState, Fragment } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Bookmark } from "lucide-react";
+import { Bookmark } from "lucide-react";
 import type { GapFillQuestion } from "@/data/questions";
+import TimerDisplay from "./TimerDisplay";
+import BottomNavBar from "./BottomNavBar";
 
 interface ReadingGapFillProps {
   question: GapFillQuestion;
   questionIndex: number;
   totalQuestions: number;
   timeLeft?: number;
+  totalTime?: number;
   answers: (number | null)[];
   onAnswerChange: (gapIndex: number, value: number) => void;
   onPrevious?: () => void;
@@ -18,14 +20,12 @@ interface ReadingGapFillProps {
   showResults?: boolean;
 }
 
-const formatTime = (s: number) =>
-  `${String(Math.floor(s / 3600)).padStart(2, "0")}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-
 const ReadingGapFill = ({
   question,
   questionIndex,
   totalQuestions,
   timeLeft,
+  totalTime = 600,
   answers,
   onAnswerChange,
   onPrevious,
@@ -37,13 +37,11 @@ const ReadingGapFill = ({
 }: ReadingGapFillProps) => {
   const [bookmarked, setBookmarked] = useState(false);
 
-  // Parse passage and render with inline dropdowns
   const renderPassage = () => {
     const parts = question.passage.split(/\{(\d+)\}/g);
     return (
       <div className="text-sm text-foreground leading-relaxed whitespace-pre-line">
         {parts.map((part, i) => {
-          // Odd indices are gap numbers
           if (i % 2 === 1) {
             const gapIndex = parseInt(part);
             const gap = question.gaps[gapIndex];
@@ -85,8 +83,8 @@ const ReadingGapFill = ({
   };
 
   return (
-    <div className="min-h-[70vh] flex flex-col">
-      {/* Top bar: skill label, question counter, bookmark, timer */}
+    <div className="min-h-[70vh] flex flex-col pb-20">
+      {/* Top bar */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading</p>
@@ -110,24 +108,17 @@ const ReadingGapFill = ({
             Bookmark
           </button>
           {timeLeft !== undefined && (
-            <div className="text-right">
-              <div className="font-mono text-xl font-bold text-foreground tracking-wider">
-                {formatTime(timeLeft)}
-              </div>
-              <div className="text-xs text-muted-foreground border-t-2 border-primary pt-1">
-                Time remaining
-              </div>
-            </div>
+            <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
           )}
         </div>
       </div>
 
-      {/* Passage with gaps */}
+      {/* Passage */}
       <div className="flex-1 bg-background rounded-xl p-6 mb-6">
         {renderPassage()}
       </div>
 
-      {/* Show correct answers if in review mode */}
+      {/* Review results */}
       {showResults && (
         <div className="bg-muted/50 rounded-xl p-4 mb-6 text-sm">
           <p className="font-semibold text-foreground mb-2">Đáp án đúng:</p>
@@ -145,36 +136,15 @@ const ReadingGapFill = ({
         </div>
       )}
 
-      {/* Bottom navigation bar */}
-      <div className="border-t border-border bg-background py-4 flex items-center justify-between mt-auto">
-        <div />
-        <div className="flex items-center gap-3">
-          {!isFirst && onPrevious && (
-            <Button
-              variant="outline"
-              onClick={onPrevious}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" /> Previous
-            </Button>
-          )}
-          {isLast && onSubmit ? (
-            <Button
-              onClick={onSubmit}
-              className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6"
-            >
-              Submit
-            </Button>
-          ) : onNext ? (
-            <Button
-              onClick={onNext}
-              className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6"
-            >
-              Next <ArrowRight className="w-4 h-4" />
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      {/* Fixed bottom bar */}
+      <BottomNavBar
+        onPrevious={onPrevious}
+        onNext={onNext}
+        onSubmit={onSubmit}
+        isFirst={isFirst}
+        isLast={isLast}
+        submitLabel="Submit"
+      />
     </div>
   );
 };
