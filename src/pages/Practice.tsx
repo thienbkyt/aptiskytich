@@ -34,6 +34,7 @@ const Practice = () => {
   const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
   const [readingSubmitted, setReadingSubmitted] = useState(false);
   const [readingTimeLeft, setReadingTimeLeft] = useState(600); // 10 minutes
+  const [seenGaps, setSeenGaps] = useState<Set<string>>(new Set());
   const READING_TOTAL_TIME = 600;
 
   // Reading timer
