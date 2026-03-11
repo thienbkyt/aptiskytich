@@ -8,6 +8,7 @@ export interface DBQuestion {
   options: string[];
   correct_answer: number;
   explanation: string;
+  audio_url?: string | null;
 }
 
 const toQuestion = (q: DBQuestion, index: number): Question => ({
