@@ -262,6 +262,75 @@ const BottomNavBar = ({
         )}
       </AnimatePresence>
 
+      {/* Accessibility Panel */}
+      <AnimatePresence>
+        {showAccessibility && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-foreground/20"
+              onClick={() => setShowAccessibility(false)}
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed left-0 top-0 bottom-0 z-50 w-80 bg-background border-r border-border shadow-xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h2 className="font-heading font-bold text-foreground text-base">Accessibility</h2>
+                <button
+                  onClick={() => setShowAccessibility(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                {/* Dark Mode */}
+                <div className="flex items-center justify-between p-4 rounded-xl border border-dashed border-border">
+                  <span className="text-sm font-medium text-foreground">Dark Mode</span>
+                  <button
+                    onClick={toggleDarkMode}
+                    className={`relative w-12 h-7 rounded-full transition-colors ${
+                      isDarkMode ? "bg-primary" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 w-5 h-5 rounded-full bg-background shadow transition-transform ${
+                        isDarkMode ? "left-6" : "left-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Magnification */}
+                <div className="flex items-center justify-between p-4 rounded-xl border border-dashed border-border">
+                  <span className="text-sm font-medium text-foreground">Magnification</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => adjustMagnification(-10)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => adjustMagnification(10)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t-[3px] border-primary bg-background/95 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
