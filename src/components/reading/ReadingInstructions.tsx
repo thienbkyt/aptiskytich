@@ -10,7 +10,7 @@ interface ReadingInstructionsProps {
   onStart: () => void;
 }
 
-const ReadingInstructions = ({ timeLeft, totalTime = 600, totalParts, totalMinutes, onStart }: ReadingInstructionsProps) => {
+const ReadingInstructions = ({ timeLeft, totalTime = 600, totalParts, totalMinutes, onStart, sections = [] }: ReadingInstructionsProps) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
       {/* Timer top-right */}
