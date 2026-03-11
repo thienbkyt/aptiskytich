@@ -213,10 +213,10 @@ const Admin = () => {
             </motion.div>
           )}
 
-          <div className="flex gap-2 mb-6">
-            {["all", "grammar", "reading", "listening"].map((s) => (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {["all", "grammar", "reading", "listening", "speaking", "writing"].map((s) => (
               <Button key={s} variant={filterSkill === s ? "default" : "outline"} size="sm" onClick={() => setFilterSkill(s)}>
-                {s === "all" ? "Tất cả" : s === "grammar" ? "Grammar" : s === "reading" ? "Reading" : "Listening"}
+                {s === "all" ? "Tất cả" : s.charAt(0).toUpperCase() + s.slice(1)}
               </Button>
             ))}
             <span className="ml-auto text-sm text-muted-foreground self-center">{filtered.length} câu hỏi</span>
