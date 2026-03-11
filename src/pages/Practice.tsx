@@ -133,6 +133,16 @@ const Practice = () => {
     );
   }
 
+  // Track which gaps have been seen (navigated to)
+  const [seenGaps, setSeenGaps] = useState<Set<string>>(new Set());
+
+  // Mark current gap as seen when it changes
+  useEffect(() => {
+    if (selectedSkill === "reading" && readingPhase === "practice") {
+      setSeenGaps(prev => new Set(prev).add(`${currentGapFill}`));
+    }
+  }, [selectedSkill, readingPhase, currentGapFill]);
+
   // Build sections for question list panel
   const readingSections = [
     {
@@ -140,11 +150,18 @@ const Practice = () => {
       isCurrent: readingPhase === "instructions",
       onClick: () => { setReadingPhase("instructions"); },
     },
-    ...gapFillQuestions.map((q, i) => ({
+    ...gapFillQuestions.map((q, qi) => ({
       title: "Reading",
       questionCount: q.gaps.length,
-      isCurrent: readingPhase !== "instructions" && currentGapFill === i,
-      onClick: () => { setReadingPhase("practice"); setCurrentGapFill(i); },
+      isCurrent: readingPhase !== "instructions" && currentGapFill === qi,
+      onClick: () => { setReadingPhase("practice"); setCurrentGapFill(qi); },
+      questions: q.gaps.map((_gap, gi) => ({
+        label: String(gi + 1).padStart(2, "0"),
+        seen: seenGaps.has(`${qi}`),
+        attempted: gapFillAnswers[qi]?.[gi] !== null && gapFillAnswers[qi]?.[gi] !== undefined,
+        isCurrent: readingPhase === "practice" && currentGapFill === qi,
+        onClick: () => { setReadingPhase("practice"); setCurrentGapFill(qi); },
+      })),
     })),
   ];
 
