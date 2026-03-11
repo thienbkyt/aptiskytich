@@ -17,6 +17,7 @@ const toQuestion = (q: DBQuestion, index: number): Question => ({
   options: q.options,
   correct_answer: q.correct_answer,
   explanation: q.explanation,
+  audio_url: q.audio_url || null,
 });
 
 export const fetchQuestionsBySkill = async (skill: string): Promise<Question[]> => {
