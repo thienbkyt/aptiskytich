@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import britishCouncilLogo from "@/assets/british-council-aptis.avif";
 
 export interface QuestionItem {
   label: string;
@@ -35,6 +36,7 @@ const BottomNavBar = ({
   sections = [], bookmarkedCount = 0,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
 
@@ -200,6 +202,48 @@ const BottomNavBar = ({
         )}
       </AnimatePresence>
 
+      {/* Information Panel */}
+      <AnimatePresence>
+        {showInfo && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-foreground/20"
+              onClick={() => setShowInfo(false)}
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed left-0 top-0 bottom-0 z-50 w-80 bg-background border-r border-border shadow-xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h2 className="font-heading font-bold text-foreground text-base">Information</h2>
+                <button
+                  onClick={() => setShowInfo(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                <img src={britishCouncilLogo} alt="British Council Aptis" className="h-16 object-contain" />
+                <div className="border-l-4 border-primary/30 pl-3">
+                  <p className="text-sm font-medium text-foreground">Reading Practice Test Version 001</p>
+                </div>
+                <div className="border-l-4 border-primary/30 pl-3">
+                  <p className="text-sm font-bold text-foreground">Description</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">Aptis General Practice Test</p>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Bottom bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t-[3px] border-primary bg-background/95 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -210,7 +254,10 @@ const BottomNavBar = ({
             >
               <List className="w-4 h-4" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
+            <button
+              onClick={() => setShowInfo(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+            >
               <Info className="w-4 h-4" />
             </button>
             <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
