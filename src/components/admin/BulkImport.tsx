@@ -77,6 +77,7 @@ const downloadTemplate = () => {
     { "Hướng dẫn nhập liệu": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
     { "Hướng dẫn nhập liệu": "Cột option_a đến option_d", "Chi tiết": "4 đáp án cho mỗi câu hỏi" },
     { "Hướng dẫn nhập liệu": "Cột explanation", "Chi tiết": "Giải thích đáp án đúng" },
+    { "Hướng dẫn nhập liệu": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
   ];
   const wsInstructions = XLSX.utils.json_to_sheet(instructions);
   wsInstructions["!cols"] = [{ wch: 25 }, { wch: 60 }];
