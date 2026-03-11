@@ -137,9 +137,20 @@ const Admin = () => {
               <Shield className="w-6 h-6 text-primary" />
               <h1 className="text-2xl font-heading font-extrabold text-foreground">Quản lý câu hỏi</h1>
             </div>
-            <Button onClick={startCreate} className="bg-primary text-primary-foreground gap-2">
-              <Plus className="w-4 h-4" /> Thêm câu hỏi
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={startCreate} className="bg-primary text-primary-foreground gap-2">
+                <Plus className="w-4 h-4" /> Thêm câu hỏi
+              </Button>
+            </div>
+          </div>
+
+          {/* Bulk Import */}
+          <div className="glass-card p-5 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <FileSpreadsheet className="w-5 h-5 text-primary" />
+              <h2 className="font-heading font-bold text-foreground">Nhập liệu hàng loạt từ Excel</h2>
+            </div>
+            <BulkImport onImportComplete={fetchQuestions} />
           </div>
 
           {(creating || editing) && (
