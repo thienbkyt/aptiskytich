@@ -23,7 +23,7 @@ const BottomNavBar = ({ onPrevious, onNext, onSubmit, isFirst, isLast, submitLab
             <Info className="w-4 h-4" />
           </button>
           <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
-            <Accessibility className="w-4 h-4" />
+            <PersonStanding className="w-4 h-4" />
           </button>
         </div>
 
