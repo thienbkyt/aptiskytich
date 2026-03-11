@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Save, X, BookOpen, Shield } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, X, BookOpen, Shield, FileSpreadsheet } from "lucide-react";
+import BulkImport from "@/components/admin/BulkImport";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,9 +137,20 @@ const Admin = () => {
               <Shield className="w-6 h-6 text-primary" />
               <h1 className="text-2xl font-heading font-extrabold text-foreground">Quản lý câu hỏi</h1>
             </div>
-            <Button onClick={startCreate} className="bg-primary text-primary-foreground gap-2">
-              <Plus className="w-4 h-4" /> Thêm câu hỏi
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button onClick={startCreate} className="bg-primary text-primary-foreground gap-2">
+                <Plus className="w-4 h-4" /> Thêm câu hỏi
+              </Button>
+            </div>
+          </div>
+
+          {/* Bulk Import */}
+          <div className="glass-card p-5 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <FileSpreadsheet className="w-5 h-5 text-primary" />
+              <h2 className="font-heading font-bold text-foreground">Nhập liệu hàng loạt từ Excel</h2>
+            </div>
+            <BulkImport onImportComplete={fetchQuestions} />
           </div>
 
           {(creating || editing) && (
@@ -154,6 +166,8 @@ const Admin = () => {
                         <SelectItem value="grammar">Grammar & Vocabulary</SelectItem>
                         <SelectItem value="reading">Reading</SelectItem>
                         <SelectItem value="listening">Listening</SelectItem>
+                        <SelectItem value="speaking">Speaking</SelectItem>
+                        <SelectItem value="writing">Writing</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -201,10 +215,10 @@ const Admin = () => {
             </motion.div>
           )}
 
-          <div className="flex gap-2 mb-6">
-            {["all", "grammar", "reading", "listening"].map((s) => (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {["all", "grammar", "reading", "listening", "speaking", "writing"].map((s) => (
               <Button key={s} variant={filterSkill === s ? "default" : "outline"} size="sm" onClick={() => setFilterSkill(s)}>
-                {s === "all" ? "Tất cả" : s === "grammar" ? "Grammar" : s === "reading" ? "Reading" : "Listening"}
+                {s === "all" ? "Tất cả" : s.charAt(0).toUpperCase() + s.slice(1)}
               </Button>
             ))}
             <span className="ml-auto text-sm text-muted-foreground self-center">{filtered.length} câu hỏi</span>
