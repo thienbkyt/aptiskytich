@@ -133,6 +133,21 @@ const Practice = () => {
     );
   }
 
+  // Build sections for question list panel
+  const readingSections = [
+    {
+      title: "Aptis General Reading Instructions",
+      isCurrent: readingPhase === "instructions",
+      onClick: () => { setReadingPhase("instructions"); },
+    },
+    ...gapFillQuestions.map((q, i) => ({
+      title: "Reading",
+      questionCount: q.gaps.length,
+      isCurrent: readingPhase !== "instructions" && currentGapFill === i,
+      onClick: () => { setReadingPhase("practice"); setCurrentGapFill(i); },
+    })),
+  ];
+
   // Reading gap-fill mode
   if (selectedSkill === "reading") {
     return (
@@ -153,6 +168,7 @@ const Practice = () => {
                 totalParts={gapFillQuestions.length}
                 totalMinutes={10}
                 onStart={() => setReadingPhase("practice")}
+                sections={readingSections}
               />
             )}
 
@@ -182,6 +198,7 @@ const Practice = () => {
                 isFirst={currentGapFill === 0}
                 isLast={currentGapFill === gapFillQuestions.length - 1}
                 showResults={readingSubmitted}
+                sections={readingSections}
               />
             )}
           </div>
