@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import SkillPractice from "./pages/SkillPractice";
 
 const queryClient = new QueryClient();
 
