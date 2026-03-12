@@ -41,7 +41,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop nav links */}
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center flex-1 justify-center">
           {skillLinks.map((link) => (
             <Link
               key={link.path}
