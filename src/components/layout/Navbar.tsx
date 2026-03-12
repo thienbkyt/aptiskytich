@@ -29,24 +29,24 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b border-border">
-      <div className="h-full max-w-[1200px] mx-auto px-4 sm:px-6 flex items-center">
+      <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 mr-8">
+        <Link to="/" className="flex items-center gap-2 shrink-0 mr-4">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <BookOpen className="w-4.5 h-4.5 text-primary-foreground" />
+            <BookOpen className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-heading font-bold text-[17px] text-foreground tracking-tight">
+          <span className="font-heading font-bold text-base text-foreground tracking-tight">
             Aptis <span className="text-primary">Kỳ Tích</span>
           </span>
         </Link>
 
         {/* Desktop nav links */}
-        <div className="hidden lg:flex items-center gap-1">
+        <div className="hidden md:flex items-center">
           {skillLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
-              className={`relative px-3 py-2 text-[13.5px] font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`relative px-2.5 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
                 isActive(link.path)
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary"
@@ -56,7 +56,7 @@ const Navbar = () => {
               {isActive(link.path) && (
                 <motion.div
                   layoutId="nav-active"
-                  className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full"
+                  className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-primary rounded-full"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
                 />
               )}
@@ -70,14 +70,14 @@ const Navbar = () => {
             onMouseLeave={() => setMoreHover(false)}
           >
             <button
-              className={`flex items-center gap-1 px-3 py-2 text-[13.5px] font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1 px-2.5 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
                 moreLinks.some((l) => isActive(l.path))
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary"
               }`}
             >
               More
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${moreHover ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${moreHover ? "rotate-180" : ""}`} />
             </button>
 
             <AnimatePresence>
@@ -120,12 +120,12 @@ const Navbar = () => {
         <div className="flex-1" />
 
         {/* Desktop right actions */}
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-1.5">
           <ThemeToggle />
           {isAdmin && (
             <Link to="/admin">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-[13px]">
-                <Shield className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-xs h-8 px-2.5">
+                <Shield className="w-3.5 h-3.5" />
                 Admin
               </Button>
             </Link>
@@ -133,28 +133,28 @@ const Navbar = () => {
           {user ? (
             <>
               <Link to="/dashboard">
-                <Button variant="ghost" size="sm" className="gap-1.5 text-[13px]">
-                  <Flame className="w-4 h-4 text-primary" />
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
+                  <Flame className="w-3.5 h-3.5 text-primary" />
                   Dashboard
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" className="gap-1.5 text-[13px]" onClick={signOut}>
-                <LogOut className="w-4 h-4" />
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-2.5" onClick={signOut}>
+                <LogOut className="w-3.5 h-3.5" />
                 Đăng xuất
               </Button>
             </>
           ) : (
             <>
               <Link to="/auth">
-                <Button variant="ghost" size="sm" className="gap-1.5 text-[13px]">
-                  <LogIn className="w-4 h-4" />
+                <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
+                  <LogIn className="w-3.5 h-3.5" />
                   Đăng nhập
                 </Button>
               </Link>
               <Link to="/mock-test">
                 <Button
                   size="sm"
-                  className="bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] px-[18px] py-[10px] h-auto text-[13.5px] font-semibold shadow-sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm"
                 >
                   Thi thử miễn phí
                 </Button>
@@ -164,7 +164,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile: theme + hamburger */}
-        <div className="lg:hidden flex items-center gap-1">
+        <div className="md:hidden flex items-center gap-1">
           <ThemeToggle />
           <button
             className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -184,7 +184,7 @@ const Navbar = () => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="lg:hidden bg-background border-b border-border overflow-hidden"
+            className="md:hidden bg-background border-b border-border overflow-hidden"
           >
             <div className="px-4 py-3 space-y-0.5 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {skillLinks.map((link) => (
