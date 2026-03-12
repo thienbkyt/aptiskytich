@@ -11,9 +11,9 @@ import { motion } from "framer-motion";
 
 const TASKS = [
   { id: "task1", label: "Part 1", subtitle: "Personal Questions" },
-  { id: "task2", label: "Task 2", subtitle: "Describe a Picture" },
-  { id: "task3", label: "Task 3", subtitle: "Compare Pictures" },
-  { id: "task4", label: "Task 4", subtitle: "Opinion Questions" },
+  { id: "task2", label: "Part 2", subtitle: "Describe a Picture" },
+  { id: "task3", label: "Part 3", subtitle: "Compare Pictures" },
+  { id: "task4", label: "Part 4", subtitle: "Opinion Questions" },
 ];
 
 const TESTS_PER_TASK = 9;
