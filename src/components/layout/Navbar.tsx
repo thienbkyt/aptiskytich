@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, BookOpen, LogIn, LogOut, Shield, Flame, ChevronDown, BookText, GraduationCap } from "lucide-react";
+import { Menu, X, BookOpen, LogIn, LogOut, Shield, Flame, ChevronDown, BookText, GraduationCap, Book, Headphones, Mic, PenLine, type LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const skillLinks = [
-  { label: "Grammar & Vocabulary", path: "/grammar" },
-  { label: "Reading", path: "/reading" },
-  { label: "Listening", path: "/listening" },
-  { label: "Speaking", path: "/speaking" },
-  { label: "Writing", path: "/writing" },
+const skillLinks: { label: string; path: string; icon: LucideIcon }[] = [
+  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book },
+  { label: "Reading", path: "/reading", icon: BookOpen },
+  { label: "Listening", path: "/listening", icon: Headphones },
+  { label: "Speaking", path: "/speaking", icon: Mic },
+  { label: "Writing", path: "/writing", icon: PenLine },
 ];
 
 const moreLinks = [
@@ -46,12 +46,13 @@ const Navbar = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`relative px-2.5 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`relative flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
                 isActive(link.path)
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary"
               }`}
             >
+              <link.icon className="w-3.5 h-3.5" />
               {link.label}
               {isActive(link.path) && (
                 <motion.div
