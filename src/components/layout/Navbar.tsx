@@ -187,7 +187,7 @@ const Navbar = () => {
             className="md:hidden bg-background border-b border-border overflow-hidden"
           >
             <div className="px-4 py-3 space-y-0.5 max-h-[calc(100vh-4rem)] overflow-y-auto">
-              {skillLinks.map((link) => (
+              {mainLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
