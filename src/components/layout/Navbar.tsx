@@ -2,15 +2,9 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, BookOpen, LogIn, LogOut, Shield, Flame, ChevronDown, BookText, GraduationCap } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const skillLinks = [
   { label: "Grammar & Vocabulary", path: "/grammar" },
@@ -21,203 +15,258 @@ const skillLinks = [
 ];
 
 const moreLinks = [
-  { label: "Học từ vựng", path: "/vocabulary", icon: BookText },
-  { label: "Khóa học Aptis 7 ngày cam kết đầu ra", path: "/course", icon: GraduationCap },
+  { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Ôn luyện từ vựng theo chủ đề Aptis" },
+  { label: "Khóa học Aptis 7 ngày cam kết đầu ra", path: "/course", icon: GraduationCap, desc: "Lộ trình học tập chuyên sâu" },
 ];
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreHover, setMoreHover] = useState(false);
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border">
-      <div className="section-container">
-        <div className="h-16 flex items-center justify-between gap-4">
-          {/* LEFT: Logo */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-heading font-bold text-lg text-foreground">
-              Aptis <span className="text-primary">Kỳ Tích</span>
-            </span>
-          </Link>
-
-          {/* CENTER: Nav links (desktop) */}
-          <div className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
-            {skillLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
-                  isActive(link.path)
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            {/* More dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1 whitespace-nowrap ${
-                    moreLinks.some((l) => isActive(l.path))
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  More
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-72">
-                {moreLinks.map((link) => (
-                  <DropdownMenuItem key={link.path} asChild>
-                    <Link to={link.path} className="flex items-center gap-3 cursor-pointer">
-                      <link.icon className="w-4 h-4 text-primary" />
-                      <span>{link.label}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b border-border">
+      <div className="h-full max-w-[1200px] mx-auto px-4 sm:px-6 flex items-center">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2.5 shrink-0 mr-8">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <BookOpen className="w-4.5 h-4.5 text-primary-foreground" />
           </div>
+          <span className="font-heading font-bold text-[17px] text-foreground tracking-tight">
+            Aptis <span className="text-primary">Kỳ Tích</span>
+          </span>
+        </Link>
 
-          {/* RIGHT: Actions (desktop) */}
-          <div className="hidden lg:flex items-center gap-2 shrink-0">
-            <ThemeToggle />
-            {isAdmin && (
-              <Link to="/admin">
-                <Button variant="ghost" size="sm" className="gap-2 text-primary">
-                  <Shield className="w-4 h-4" />
-                  Admin
-                </Button>
-              </Link>
-            )}
-            {user ? (
-              <>
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Flame className="w-4 h-4 text-primary" />
-                    Dashboard
-                  </Button>
-                </Link>
-                <Button variant="outline" size="sm" className="gap-2" onClick={signOut}>
-                  <LogOut className="w-4 h-4" />
-                  Đăng xuất
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/auth">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <LogIn className="w-4 h-4" />
-                    Đăng nhập
-                  </Button>
-                </Link>
-                <Link to="/mock-test">
-                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg">
-                    Thi thử miễn phí
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile: theme + hamburger */}
-          <div className="lg:hidden flex items-center gap-1">
-            <ThemeToggle />
-            <button
-              className="p-2 rounded-lg hover:bg-muted"
-              onClick={() => setIsOpen(!isOpen)}
+        {/* Desktop nav links */}
+        <div className="hidden lg:flex items-center gap-1">
+          {skillLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`relative px-3 py-2 text-[13.5px] font-medium rounded-md transition-colors whitespace-nowrap ${
+                isActive(link.path)
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-primary"
+              }`}
             >
-              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {link.label}
+              {isActive(link.path) && (
+                <motion.div
+                  layoutId="nav-active"
+                  className="absolute bottom-0 left-3 right-3 h-[2px] bg-primary rounded-full"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+            </Link>
+          ))}
+
+          {/* More dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => setMoreHover(true)}
+            onMouseLeave={() => setMoreHover(false)}
+          >
+            <button
+              className={`flex items-center gap-1 px-3 py-2 text-[13.5px] font-medium rounded-md transition-colors whitespace-nowrap ${
+                moreLinks.some((l) => isActive(l.path))
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-primary"
+              }`}
+            >
+              More
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${moreHover ? "rotate-180" : ""}`} />
             </button>
+
+            <AnimatePresence>
+              {moreHover && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 pt-2 z-50"
+                >
+                  <div className="w-80 bg-popover border border-border rounded-xl shadow-lg p-1.5">
+                    {moreLinks.map((link) => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        className={`flex items-start gap-3 px-3 py-3 rounded-lg transition-colors ${
+                          isActive(link.path)
+                            ? "bg-primary/5 text-primary"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <link.icon className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">{link.label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{link.desc}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+        </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Desktop right actions */}
+        <div className="hidden lg:flex items-center gap-2">
+          <ThemeToggle />
+          {isAdmin && (
+            <Link to="/admin">
+              <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-[13px]">
+                <Shield className="w-4 h-4" />
+                Admin
+              </Button>
+            </Link>
+          )}
+          {user ? (
+            <>
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-[13px]">
+                  <Flame className="w-4 h-4 text-primary" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Button variant="outline" size="sm" className="gap-1.5 text-[13px]" onClick={signOut}>
+                <LogOut className="w-4 h-4" />
+                Đăng xuất
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/auth">
+                <Button variant="ghost" size="sm" className="gap-1.5 text-[13px]">
+                  <LogIn className="w-4 h-4" />
+                  Đăng nhập
+                </Button>
+              </Link>
+              <Link to="/mock-test">
+                <Button
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] px-[18px] py-[10px] h-auto text-[13.5px] font-semibold shadow-sm"
+                >
+                  Thi thử miễn phí
+                </Button>
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Mobile: theme + hamburger */}
+        <div className="lg:hidden flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       <AnimatePresence>
-        {isOpen && (
+        {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
             className="lg:hidden bg-background border-b border-border overflow-hidden"
           >
-            <div className="px-4 py-3 space-y-1">
+            <div className="px-4 py-3 space-y-0.5 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {skillLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`block px-4 py-2.5 rounded-lg text-sm font-medium ${
+                  onClick={() => setMobileOpen(false)}
+                  className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive(link.path)
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   {link.label}
                 </Link>
               ))}
 
-              {/* More section in mobile */}
-              <div className="pt-1">
-                <p className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">More</p>
-                {moreLinks.map((link) => (
-                  <Link
-                    key={link.path}
-                    to={link.path}
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive(link.path)
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <link.icon className="w-4 h-4" />
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+              <div className="my-1 mx-4 border-t border-border" />
+
+              {moreLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive(link.path)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <link.icon className="w-4 h-4" />
+                  {link.label}
+                </Link>
+              ))}
 
               {isAdmin && (
-                <Link
-                  to="/admin"
-                  onClick={() => setIsOpen(false)}
-                  className="block px-4 py-2.5 rounded-lg text-sm font-medium text-primary"
-                >
-                  Admin
-                </Link>
+                <>
+                  <div className="my-1 mx-4 border-t border-border" />
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Link>
+                </>
               )}
 
-              <div className="pt-2 border-t border-border mt-2">
+              <div className="my-1 mx-4 border-t border-border" />
+
+              <div className="px-2 pt-1 space-y-2">
                 {user ? (
-                  <div className="space-y-2">
-                    <Link to="/dashboard" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full">Dashboard</Button>
+                  <>
+                    <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full justify-center gap-2 text-sm">
+                        <Flame className="w-4 h-4 text-primary" />
+                        Dashboard
+                      </Button>
                     </Link>
-                    <Button className="w-full" variant="destructive" onClick={() => { signOut(); setIsOpen(false); }}>
+                    <Button
+                      className="w-full text-sm"
+                      variant="destructive"
+                      onClick={() => { signOut(); setMobileOpen(false); }}
+                    >
                       Đăng xuất
                     </Button>
-                  </div>
+                  </>
                 ) : (
-                  <div className="space-y-2">
-                    <Link to="/auth" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full">Đăng nhập</Button>
+                  <>
+                    <Link to="/auth" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full justify-center gap-2 text-sm">
+                        <LogIn className="w-4 h-4" />
+                        Đăng nhập
+                      </Button>
                     </Link>
-                    <Link to="/mock-test" onClick={() => setIsOpen(false)}>
-                      <Button className="w-full bg-primary text-primary-foreground">Thi thử miễn phí</Button>
+                    <Link to="/mock-test" onClick={() => setMobileOpen(false)}>
+                      <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] text-sm font-semibold">
+                        Thi thử miễn phí
+                      </Button>
                     </Link>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
