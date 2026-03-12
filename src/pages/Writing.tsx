@@ -10,10 +10,10 @@ import { PenLine, Search, Clock, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const TASKS = [
-  { id: "task1", label: "Task 1", subtitle: "Short answers" },
-  { id: "task2", label: "Task 2", subtitle: "Social media response" },
-  { id: "task3", label: "Task 3", subtitle: "Informal email" },
-  { id: "task4", label: "Task 4", subtitle: "Formal email" },
+  { id: "task1", label: "Part 1", subtitle: "Short answers" },
+  { id: "task2", label: "Part 2", subtitle: "Social media response" },
+  { id: "task3", label: "Part 3", subtitle: "Informal email" },
+  { id: "task4", label: "Part 4", subtitle: "Formal email" },
 ];
 
 const TESTS_PER_TASK = 9;
