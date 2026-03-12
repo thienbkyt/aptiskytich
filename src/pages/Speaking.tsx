@@ -10,7 +10,7 @@ import { Mic, Search, Clock, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const TASKS = [
-  { id: "task1", label: "Task 1", subtitle: "Personal Questions" },
+  { id: "task1", label: "Part 1", subtitle: "Personal Questions" },
   { id: "task2", label: "Task 2", subtitle: "Describe a Picture" },
   { id: "task3", label: "Task 3", subtitle: "Compare Pictures" },
   { id: "task4", label: "Task 4", subtitle: "Opinion Questions" },
