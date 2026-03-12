@@ -17,6 +17,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import SkillPractice from "./pages/SkillPractice";
 import Speaking from "./pages/Speaking";
+import Writing from "./pages/Writing";
 
 const queryClient = new QueryClient();
 
