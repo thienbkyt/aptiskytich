@@ -101,8 +101,8 @@ const Navbar = () => {
                             : "text-foreground hover:bg-muted"
                         }`}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <link.icon className="w-4 h-4 text-primary" />
+                        <div className={`w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5`}>
+                          <link.icon className={`w-4 h-4 ${link.color}`} />
                         </div>
                         <div>
                           <p className="text-sm font-medium leading-tight">{link.label}</p>
