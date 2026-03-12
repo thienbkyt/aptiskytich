@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import SkillPractice from "./pages/SkillPractice";
+import Speaking from "./pages/Speaking";
 
 const queryClient = new QueryClient();
 
