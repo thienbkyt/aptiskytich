@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import SkillPractice from "./pages/SkillPractice";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,12 @@ const App = () => (
             <Route path="/practice" element={<Practice />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/course" element={<Course />} />
-            
+            <Route path="/grammar" element={<SkillPractice />} />
+            <Route path="/reading" element={<SkillPractice />} />
+            <Route path="/listening" element={<SkillPractice />} />
+            <Route path="/speaking" element={<SkillPractice />} />
+            <Route path="/writing" element={<SkillPractice />} />
+            <Route path="/vocabulary" element={<SkillPractice />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
