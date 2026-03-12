@@ -41,7 +41,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop nav links */}
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center flex-1 justify-center">
           {skillLinks.map((link) => (
             <Link
               key={link.path}
@@ -116,8 +116,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
+        {/* Spacer - not needed since nav is flex-1 centered */}
 
         {/* Desktop right actions */}
         <div className="hidden md:flex items-center gap-1.5">
