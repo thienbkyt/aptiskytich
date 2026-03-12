@@ -41,7 +41,7 @@ const App = () => (
             <Route path="/reading" element={<SkillPractice />} />
             <Route path="/listening" element={<SkillPractice />} />
             <Route path="/speaking" element={<Speaking />} />
-            <Route path="/writing" element={<SkillPractice />} />
+            <Route path="/writing" element={<Writing />} />
             <Route path="/vocabulary" element={<SkillPractice />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
