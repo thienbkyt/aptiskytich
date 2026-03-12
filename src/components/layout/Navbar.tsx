@@ -6,17 +6,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const skillLinks: { label: string; path: string; icon: LucideIcon; color: string }[] = [
-  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, color: "text-emerald-500" },
-  { label: "Reading", path: "/reading", icon: BookOpen, color: "text-blue-500" },
-  { label: "Listening", path: "/listening", icon: Headphones, color: "text-violet-500" },
+const mainLinks: { label: string; path: string; icon: LucideIcon; color: string }[] = [
+  { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap, color: "text-amber-500" },
   { label: "Speaking", path: "/speaking", icon: Mic, color: "text-orange-500" },
   { label: "Writing", path: "/writing", icon: PenLine, color: "text-pink-500" },
+  { label: "Listening", path: "/listening", icon: Headphones, color: "text-violet-500" },
+  { label: "Reading", path: "/reading", icon: BookOpen, color: "text-blue-500" },
 ];
 
 const moreLinks = [
-  { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Ôn luyện từ vựng theo chủ đề Aptis" },
-  { label: "Khóa học Aptis 7 ngày cam kết đầu ra", path: "/course", icon: GraduationCap, desc: "Lộ trình học tập chuyên sâu" },
+  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Luyện ngữ pháp và từ vựng theo đề Aptis", color: "text-emerald-500" },
+  { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Ôn luyện từ vựng theo chủ đề Aptis", color: "text-cyan-500" },
 ];
 
 const Navbar = () => {
@@ -42,7 +42,7 @@ const Navbar = () => {
 
         {/* Desktop nav links */}
         <div className="hidden md:flex items-center flex-1 justify-center">
-          {skillLinks.map((link) => (
+          {mainLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
@@ -101,8 +101,8 @@ const Navbar = () => {
                             : "text-foreground hover:bg-muted"
                         }`}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <link.icon className="w-4 h-4 text-primary" />
+                        <div className={`w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5`}>
+                          <link.icon className={`w-4 h-4 ${link.color}`} />
                         </div>
                         <div>
                           <p className="text-sm font-medium leading-tight">{link.label}</p>
@@ -187,7 +187,7 @@ const Navbar = () => {
             className="md:hidden bg-background border-b border-border overflow-hidden"
           >
             <div className="px-4 py-3 space-y-0.5 max-h-[calc(100vh-4rem)] overflow-y-auto">
-              {skillLinks.map((link) => (
+              {mainLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
