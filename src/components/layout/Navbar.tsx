@@ -6,12 +6,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const skillLinks = [
-  { label: "Grammar & Vocabulary", path: "/grammar" },
-  { label: "Reading", path: "/reading" },
-  { label: "Listening", path: "/listening" },
-  { label: "Speaking", path: "/speaking" },
-  { label: "Writing", path: "/writing" },
+const skillLinks: { label: string; path: string; icon: LucideIcon }[] = [
+  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book },
+  { label: "Reading", path: "/reading", icon: BookOpen },
+  { label: "Listening", path: "/listening", icon: Headphones },
+  { label: "Speaking", path: "/speaking", icon: Mic },
+  { label: "Writing", path: "/writing", icon: PenLine },
 ];
 
 const moreLinks = [
