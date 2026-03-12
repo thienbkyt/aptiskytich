@@ -20,6 +20,7 @@ import Speaking from "./pages/Speaking";
 import Writing from "./pages/Writing";
 import Listening from "./pages/Listening";
 import Reading from "./pages/Reading";
+import GrammarVocabulary from "./pages/GrammarVocabulary";
 
 const queryClient = new QueryClient();
 
