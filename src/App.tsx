@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import SkillPractice from "./pages/SkillPractice";
 import Speaking from "./pages/Speaking";
 import Writing from "./pages/Writing";
+import Listening from "./pages/Listening";
 
 const queryClient = new QueryClient();
 
