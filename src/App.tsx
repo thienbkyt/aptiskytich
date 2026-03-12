@@ -20,6 +20,7 @@ import Speaking from "./pages/Speaking";
 import Writing from "./pages/Writing";
 import Listening from "./pages/Listening";
 import Reading from "./pages/Reading";
+import GrammarVocabulary from "./pages/GrammarVocabulary";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +40,7 @@ const App = () => (
             <Route path="/practice" element={<Practice />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/course" element={<Course />} />
-            <Route path="/grammar" element={<SkillPractice />} />
+            <Route path="/grammar" element={<GrammarVocabulary />} />
             <Route path="/reading" element={<Reading />} />
             <Route path="/listening" element={<Listening />} />
             <Route path="/speaking" element={<Speaking />} />
