@@ -6,12 +6,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 
-const skillLinks: { label: string; path: string; icon: LucideIcon }[] = [
-  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book },
-  { label: "Reading", path: "/reading", icon: BookOpen },
-  { label: "Listening", path: "/listening", icon: Headphones },
-  { label: "Speaking", path: "/speaking", icon: Mic },
-  { label: "Writing", path: "/writing", icon: PenLine },
+const skillLinks: { label: string; path: string; icon: LucideIcon; color: string }[] = [
+  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, color: "text-emerald-500" },
+  { label: "Reading", path: "/reading", icon: BookOpen, color: "text-blue-500" },
+  { label: "Listening", path: "/listening", icon: Headphones, color: "text-violet-500" },
+  { label: "Speaking", path: "/speaking", icon: Mic, color: "text-orange-500" },
+  { label: "Writing", path: "/writing", icon: PenLine, color: "text-pink-500" },
 ];
 
 const moreLinks = [
@@ -48,16 +48,16 @@ const Navbar = () => {
               to={link.path}
               className={`relative flex items-center gap-1.5 px-2.5 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
                 isActive(link.path)
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-primary"
+                  ? link.color
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <link.icon className="w-3.5 h-3.5" />
+              <link.icon className={`w-3.5 h-3.5 ${link.color}`} />
               {link.label}
               {isActive(link.path) && (
                 <motion.div
                   layoutId="nav-active"
-                  className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-primary rounded-full"
+                  className="absolute bottom-0 left-2.5 right-2.5 h-[2px] rounded-full bg-current"
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
                 />
               )}
