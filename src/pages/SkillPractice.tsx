@@ -30,7 +30,8 @@ const SKILL_META: Record<string, { title: string; description: string }> = {
 };
 
 const SkillPractice = () => {
-  const { skill } = useParams<{ skill: string }>();
+  const location = useLocation();
+  const skill = location.pathname.replace("/", "");
 
   if (!skill || !SKILL_META[skill]) {
     return <Navigate to="/" replace />;
