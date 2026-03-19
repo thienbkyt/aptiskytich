@@ -7,7 +7,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface ImportRow {
+  test_title: string;
   skill: string;
+  part: string;
+  order_index?: number;
   question_text: string;
   option_a: string;
   option_b: string;
@@ -21,6 +24,7 @@ interface ImportRow {
 interface ImportResult {
   total: number;
   success: number;
+  testsCreated: number;
   errors: { row: number; message: string }[];
 }
 
@@ -29,7 +33,10 @@ const VALID_ANSWERS = ["A", "B", "C", "D"];
 
 const TEMPLATE_DATA = [
   {
+    test_title: "Test 1 - Tenses",
     skill: "grammar",
+    part: "Part 1",
+    order_index: 1,
     question_text: "She _____ to the office every day.",
     option_a: "go",
     option_b: "goes",
@@ -40,7 +47,10 @@ const TEMPLATE_DATA = [
     audio_url: "",
   },
   {
+    test_title: "Test 1 - Listening Part 1",
     skill: "listening",
+    part: "Part 1",
+    order_index: 1,
     question_text: "What does the speaker suggest?",
     option_a: "Answer A",
     option_b: "Answer B",
@@ -54,42 +64,35 @@ const TEMPLATE_DATA = [
 
 const downloadTemplate = () => {
   const ws = XLSX.utils.json_to_sheet(TEMPLATE_DATA);
-  
-  // Set column widths
   ws["!cols"] = [
-    { wch: 12 },  // skill
-    { wch: 50 },  // question_text
-    { wch: 20 },  // option_a
-    { wch: 20 },  // option_b
-    { wch: 20 },  // option_c
-    { wch: 20 },  // option_d
-    { wch: 14 },  // correct_answer
-    { wch: 40 },  // explanation
-    { wch: 40 },  // audio_url
+    { wch: 25 }, { wch: 12 }, { wch: 10 }, { wch: 10 },
+    { wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 },
+    { wch: 14 }, { wch: 40 }, { wch: 40 },
   ];
-
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Questions");
 
-  // Add instructions sheet
   const instructions = [
-    { "Hướng dẫn nhập liệu": "Cột skill", "Chi tiết": "grammar, reading, listening, speaking, writing" },
-    { "Hướng dẫn nhập liệu": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
-    { "Hướng dẫn nhập liệu": "Cột option_a đến option_d", "Chi tiết": "4 đáp án cho mỗi câu hỏi" },
-    { "Hướng dẫn nhập liệu": "Cột explanation", "Chi tiết": "Giải thích đáp án đúng" },
-    { "Hướng dẫn nhập liệu": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
+    { "Hướng dẫn": "Cột test_title", "Chi tiết": "Tên bộ đề. Các câu cùng test_title + skill + part sẽ được gom vào 1 bộ đề" },
+    { "Hướng dẫn": "Cột skill", "Chi tiết": "grammar, reading, listening, speaking, writing" },
+    { "Hướng dẫn": "Cột part", "Chi tiết": "Part 1, Part 2, Part 3, Part 4" },
+    { "Hướng dẫn": "Cột order_index", "Chi tiết": "Thứ tự câu hỏi trong bộ đề (1, 2, 3...)" },
+    { "Hướng dẫn": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
+    { "Hướng dẫn": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
   ];
   const wsInstructions = XLSX.utils.json_to_sheet(instructions);
-  wsInstructions["!cols"] = [{ wch: 25 }, { wch: 60 }];
+  wsInstructions["!cols"] = [{ wch: 25 }, { wch: 70 }];
   XLSX.utils.book_append_sheet(wb, wsInstructions, "Hướng dẫn");
 
   XLSX.writeFile(wb, "aptis_questions_template.xlsx");
 };
 
 const validateRow = (row: ImportRow, index: number): string | null => {
+  if (!row.test_title?.trim()) return "Thiếu tên bộ đề (test_title)";
   if (!row.skill || !VALID_SKILLS.includes(row.skill.toLowerCase().trim())) {
     return `Skill không hợp lệ: "${row.skill}". Chọn: ${VALID_SKILLS.join(", ")}`;
   }
+  if (!row.part?.trim()) return "Thiếu phần thi (part)";
   if (!row.question_text?.trim()) return "Thiếu câu hỏi";
   if (!row.option_a?.trim() || !row.option_b?.trim() || !row.option_c?.trim() || !row.option_d?.trim()) {
     return "Thiếu đáp án (cần đủ 4 đáp án A-D)";
@@ -113,26 +116,21 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
         const wb = XLSX.read(ev.target?.result, { type: "binary" });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json<ImportRow>(ws);
-
         if (rows.length === 0) {
           toast({ title: "File trống", description: "Không tìm thấy dữ liệu.", variant: "destructive" });
           return;
         }
-
-        // Validate
         const errors: { row: number; message: string }[] = [];
         rows.forEach((row, i) => {
           const err = validateRow(row, i);
-          if (err) errors.push({ row: i + 2, message: err }); // +2 for header + 0-index
+          if (err) errors.push({ row: i + 2, message: err });
         });
-
         setValidationErrors(errors);
         setPreview(rows);
         setResult(null);
@@ -141,7 +139,6 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
       }
     };
     reader.readAsBinaryString(file);
-    // Reset input
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -149,106 +146,144 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
     if (!preview || validationErrors.length > 0) return;
     setImporting(true);
 
-    const toInsert = preview.map((row) => ({
-      skill: row.skill.toLowerCase().trim(),
-      question_text: row.question_text.trim(),
-      options: [row.option_a.trim(), row.option_b.trim(), row.option_c.trim(), row.option_d.trim()],
-      correct_answer: VALID_ANSWERS.indexOf(row.correct_answer.toString().toUpperCase().trim()),
-      explanation: row.explanation.trim(),
-      audio_url: row.audio_url?.trim() || null,
-    }));
+    // Group by test_title + skill + part
+    const testGroups = new Map<string, { title: string; skill: string; part: string; questions: ImportRow[] }>();
+    preview.forEach((row) => {
+      const key = `${row.test_title.trim()}|${row.skill.toLowerCase().trim()}|${row.part.trim()}`;
+      if (!testGroups.has(key)) {
+        testGroups.set(key, { title: row.test_title.trim(), skill: row.skill.toLowerCase().trim(), part: row.part.trim(), questions: [] });
+      }
+      testGroups.get(key)!.questions.push(row);
+    });
 
-    // Insert in batches of 50
-    const batchSize = 50;
     let success = 0;
+    let testsCreated = 0;
     const errors: { row: number; message: string }[] = [];
 
-    for (let i = 0; i < toInsert.length; i += batchSize) {
-      const batch = toInsert.slice(i, i + batchSize);
-      const { error } = await supabase.from("questions").insert(batch as any);
-      if (error) {
-        errors.push({ row: i + 2, message: `Batch lỗi: ${error.message}` });
+    for (const [, group] of testGroups) {
+      // Find or create test
+      const { data: existing } = await supabase
+        .from("tests")
+        .select("id")
+        .eq("title", group.title)
+        .eq("skill", group.skill)
+        .eq("part", group.part)
+        .maybeSingle();
+
+      let testId: string;
+      if (existing) {
+        testId = existing.id;
       } else {
-        success += batch.length;
+        const { data: newTest, error: testError } = await supabase
+          .from("tests")
+          .insert({ title: group.title, skill: group.skill, part: group.part })
+          .select("id")
+          .single();
+        if (testError || !newTest) {
+          errors.push({ row: 0, message: `Không tạo được bộ đề "${group.title}": ${testError?.message}` });
+          continue;
+        }
+        testId = newTest.id;
+        testsCreated++;
+      }
+
+      // Insert questions in batch
+      const toInsert = group.questions.map((row, i) => ({
+        test_id: testId,
+        skill: group.skill,
+        question_text: row.question_text.trim(),
+        options: [row.option_a.trim(), row.option_b.trim(), row.option_c.trim(), row.option_d.trim()],
+        correct_answer: VALID_ANSWERS.indexOf(row.correct_answer.toString().toUpperCase().trim()),
+        explanation: row.explanation.trim(),
+        audio_url: row.audio_url?.trim() || null,
+        order_index: row.order_index || i + 1,
+      }));
+
+      const batchSize = 50;
+      for (let i = 0; i < toInsert.length; i += batchSize) {
+        const batch = toInsert.slice(i, i + batchSize);
+        const { error } = await supabase.from("questions").insert(batch as any);
+        if (error) {
+          errors.push({ row: 0, message: `Batch lỗi (${group.title}): ${error.message}` });
+        } else {
+          success += batch.length;
+        }
       }
     }
 
-    setResult({ total: toInsert.length, success, errors });
+    setResult({ total: preview.length, success, testsCreated, errors });
     setImporting(false);
-
     if (success > 0) {
-      toast({ title: `Đã nhập ${success}/${toInsert.length} câu hỏi!` });
+      toast({ title: `Đã nhập ${success}/${preview.length} câu hỏi vào ${testGroups.size} bộ đề!` });
       onImportComplete();
     }
   };
 
-  const reset = () => {
-    setPreview(null);
-    setResult(null);
-    setValidationErrors([]);
-  };
+  const reset = () => { setPreview(null); setResult(null); setValidationErrors([]); };
+
+  // Compute test group summary from preview
+  const testGroupSummary = preview
+    ? Array.from(
+        preview.reduce((map, r) => {
+          const key = `${r.test_title?.trim()}|${r.skill?.toLowerCase().trim()}|${r.part?.trim()}`;
+          map.set(key, (map.get(key) || 0) + 1);
+          return map;
+        }, new Map<string, number>())
+      ).map(([key, count]) => {
+        const [title, skill, part] = key.split("|");
+        return { title, skill, part, count };
+      })
+    : [];
 
   return (
     <div className="space-y-4">
-      {/* Actions row */}
       <div className="flex flex-wrap gap-3">
         <Button onClick={downloadTemplate} variant="outline" className="gap-2">
           <Download className="w-4 h-4" /> Tải template Excel
         </Button>
-        <Button
-          onClick={() => fileRef.current?.click()}
-          variant="outline"
-          className="gap-2"
-          disabled={importing}
-        >
+        <Button onClick={() => fileRef.current?.click()} variant="outline" className="gap-2" disabled={importing}>
           <Upload className="w-4 h-4" /> Chọn file Excel
         </Button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".xlsx,.xls,.csv"
-          onChange={handleFile}
-          className="hidden"
-        />
+        <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" />
       </div>
 
-      {/* Preview */}
       <AnimatePresence>
         {preview && !result && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="glass-card p-5 space-y-4"
-          >
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="glass-card p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-primary" />
                 <h3 className="font-heading font-bold text-foreground">
-                  Xem trước: {preview.length} câu hỏi
+                  Xem trước: {preview.length} câu hỏi → {testGroupSummary.length} bộ đề
                 </h3>
               </div>
-              <Button variant="ghost" size="icon" onClick={reset}>
-                <X className="w-4 h-4" />
-              </Button>
+              <Button variant="ghost" size="icon" onClick={reset}><X className="w-4 h-4" /></Button>
             </div>
 
-            {/* Validation errors */}
             {validationErrors.length > 0 && (
               <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 space-y-1">
                 <p className="text-sm font-semibold text-destructive flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  {validationErrors.length} lỗi cần sửa
+                  <AlertCircle className="w-4 h-4" /> {validationErrors.length} lỗi cần sửa
                 </p>
                 <div className="max-h-32 overflow-y-auto space-y-1">
                   {validationErrors.map((err, i) => (
-                    <p key={i} className="text-xs text-destructive">
-                      Dòng {err.row}: {err.message}
-                    </p>
+                    <p key={i} className="text-xs text-destructive">Dòng {err.row}: {err.message}</p>
                   ))}
                 </div>
               </div>
             )}
+
+            {/* Test group summary */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Bộ đề sẽ được tạo/cập nhật:</p>
+              <div className="flex flex-wrap gap-2">
+                {testGroupSummary.map((g, i) => (
+                  <span key={i} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                    {g.title} ({g.skill} · {g.part}) — {g.count} câu
+                  </span>
+                ))}
+              </div>
+            </div>
 
             {/* Preview table */}
             <div className="overflow-x-auto max-h-64 overflow-y-auto rounded-lg border border-border">
@@ -256,9 +291,9 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
                     <th className="px-3 py-2 text-left text-muted-foreground font-medium">#</th>
+                    <th className="px-3 py-2 text-left text-muted-foreground font-medium">Bộ đề</th>
                     <th className="px-3 py-2 text-left text-muted-foreground font-medium">Skill</th>
                     <th className="px-3 py-2 text-left text-muted-foreground font-medium">Câu hỏi</th>
-                    <th className="px-3 py-2 text-left text-muted-foreground font-medium">Đáp án</th>
                     <th className="px-3 py-2 text-left text-muted-foreground font-medium">Đúng</th>
                   </tr>
                 </thead>
@@ -266,100 +301,48 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
                   {preview.slice(0, 20).map((row, i) => {
                     const hasError = validationErrors.some((e) => e.row === i + 2);
                     return (
-                      <tr
-                        key={i}
-                        className={`border-t border-border ${hasError ? "bg-destructive/5" : ""}`}
-                      >
+                      <tr key={i} className={`border-t border-border ${hasError ? "bg-destructive/5" : ""}`}>
                         <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                        <td className="px-3 py-2 text-foreground max-w-[120px] truncate">{row.test_title}</td>
                         <td className="px-3 py-2">
-                          <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                            {row.skill}
-                          </span>
+                          <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{row.skill}</span>
                         </td>
-                        <td className="px-3 py-2 text-foreground max-w-[300px] truncate">
-                          {row.question_text}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">
-                          {[row.option_a, row.option_b, row.option_c, row.option_d]
-                            .filter(Boolean)
-                            .length}{" "}
-                          đáp án
-                        </td>
-                        <td className="px-3 py-2 font-bold text-foreground">
-                          {row.correct_answer?.toString().toUpperCase()}
-                        </td>
+                        <td className="px-3 py-2 text-foreground max-w-[250px] truncate">{row.question_text}</td>
+                        <td className="px-3 py-2 font-bold text-foreground">{row.correct_answer?.toString().toUpperCase()}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
               {preview.length > 20 && (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  ...và {preview.length - 20} câu hỏi khác
-                </p>
+                <p className="text-xs text-muted-foreground text-center py-2">...và {preview.length - 20} câu hỏi khác</p>
               )}
             </div>
 
-            {/* Skill summary */}
-            <div className="flex flex-wrap gap-2">
-              {VALID_SKILLS.map((skill) => {
-                const count = preview.filter(
-                  (r) => r.skill?.toLowerCase().trim() === skill
-                ).length;
-                if (count === 0) return null;
-                return (
-                  <span
-                    key={skill}
-                    className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground"
-                  >
-                    {skill}: {count}
-                  </span>
-                );
-              })}
-            </div>
-
-            {/* Import button */}
-            <Button
-              onClick={handleImport}
-              disabled={importing || validationErrors.length > 0}
-              className="w-full bg-primary text-primary-foreground gap-2"
-            >
-              {importing ? (
-                "Đang nhập..."
-              ) : (
-                <>
-                  <Upload className="w-4 h-4" /> Nhập {preview.length} câu hỏi
-                </>
-              )}
+            <Button onClick={handleImport} disabled={importing || validationErrors.length > 0} className="w-full gap-2">
+              {importing ? "Đang nhập..." : <><Upload className="w-4 h-4" /> Nhập {preview.length} câu hỏi vào {testGroupSummary.length} bộ đề</>}
             </Button>
           </motion.div>
         )}
 
-        {/* Result */}
         {result && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card p-5 space-y-3"
-          >
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="glass-card p-5 space-y-3">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-success" />
               <h3 className="font-heading font-bold text-foreground">Kết quả nhập liệu</h3>
             </div>
             <p className="text-sm text-foreground">
-              Thành công: <span className="font-bold text-success">{result.success}</span> /{" "}
-              {result.total} câu hỏi
+              Thành công: <span className="font-bold text-success">{result.success}</span> / {result.total} câu hỏi
             </p>
+            {result.testsCreated > 0 && (
+              <p className="text-sm text-foreground">Bộ đề mới tạo: <span className="font-bold text-primary">{result.testsCreated}</span></p>
+            )}
             {result.errors.length > 0 && (
               <div className="text-xs text-destructive space-y-1">
-                {result.errors.map((err, i) => (
-                  <p key={i}>Dòng {err.row}: {err.message}</p>
-                ))}
+                {result.errors.map((err, i) => <p key={i}>{err.row > 0 ? `Dòng ${err.row}: ` : ""}{err.message}</p>)}
               </div>
             )}
-            <Button onClick={reset} variant="outline" size="sm">
-              Đóng
-            </Button>
+            <Button onClick={reset} variant="outline" size="sm">Đóng</Button>
           </motion.div>
         )}
       </AnimatePresence>
