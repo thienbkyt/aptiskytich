@@ -5,7 +5,7 @@ export interface Question {
   options: string[];
   correct_answer: number;
   explanation: string;
-  question_type?: "mcq" | "gap-fill";
+  question_type?: "mcq" | "gap-fill" | "fill-in-blank";
   audio_url?: string | null;
 }
 
