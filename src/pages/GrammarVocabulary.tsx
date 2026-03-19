@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { BookA, Search, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
+import GrammarResults from "@/components/grammar/GrammarResults";
+import { fetchQuestionsBySkill } from "@/lib/questions";
+import { getQuestionsBySkill, type Question } from "@/data/questions";
 
 const TOPICS = [
   { id: "basic-grammar", name: "Basic Grammar", description: "Ngữ pháp cơ bản cho người mới bắt đầu", questionCount: 45 },
@@ -20,9 +23,26 @@ const TOPICS = [
   { id: "common-collocations", name: "Common Collocations", description: "Các cụm từ kết hợp phổ biến", questionCount: 58 },
 ];
 
+type ExamState = {
+  active: boolean;
+  questions: Question[];
+  title: string;
+  showResults: boolean;
+  answers: (number | null)[];
+  fillAnswers: string[];
+};
+
 const GrammarVocabulary = () => {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [exam, setExam] = useState<ExamState>({
+    active: false,
+    questions: [],
+    title: "",
+    showResults: false,
+    answers: [],
+    fillAnswers: [],
+  });
 
   const filteredTopics = useMemo(() => {
     if (!searchQuery.trim()) return TOPICS;
@@ -32,14 +52,91 @@ const GrammarVocabulary = () => {
     );
   }, [searchQuery]);
 
-  const handleRandomPractice = () => {
-    console.log("Starting random grammar practice");
+  const startExam = async (title: string) => {
+    setLoading(true);
+    try {
+      const qs = await fetchQuestionsBySkill("grammar");
+      const shuffled = qs.sort(() => Math.random() - 0.5).slice(0, 10);
+      setExam({
+        active: true,
+        questions: shuffled,
+        title,
+        showResults: false,
+        answers: new Array(shuffled.length).fill(null),
+        fillAnswers: new Array(shuffled.length).fill(""),
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleStartTopic = (topicId: string) => {
-    console.log("Starting topic:", topicId);
+  const handleComplete = (correct: number, total: number) => {
+    setExam((prev) => ({ ...prev, showResults: true }));
   };
 
+  const handleExit = () => {
+    setExam({
+      active: false,
+      questions: [],
+      title: "",
+      showResults: false,
+      answers: [],
+      fillAnswers: [],
+    });
+  };
+
+  const handleRetry = () => {
+    setExam((prev) => ({
+      ...prev,
+      showResults: false,
+      answers: new Array(prev.questions.length).fill(null),
+      fillAnswers: new Array(prev.questions.length).fill(""),
+    }));
+  };
+
+  // Exam mode
+  if (exam.active) {
+    if (exam.showResults) {
+      return (
+        <div className="min-h-screen flex flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-24 pb-20">
+            <div className="section-container">
+              <GrammarResults
+                questions={exam.questions}
+                answers={exam.answers}
+                fillAnswers={exam.fillAnswers}
+                onExit={handleExit}
+                onRetry={handleRetry}
+              />
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <GrammarExamEngine
+              questions={exam.questions}
+              testTitle={exam.title}
+              timeLimit={600}
+              onExit={handleExit}
+              onComplete={handleComplete}
+              onAnswersChange={(answers, fillAnswers) => {
+                setExam((prev) => ({ ...prev, answers, fillAnswers }));
+              }}
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Topic listing (unchanged layout)
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -81,11 +178,12 @@ const GrammarVocabulary = () => {
                 </div>
               </div>
               <Button
-                onClick={handleRandomPractice}
+                onClick={() => startExam("Luyện tập ngẫu nhiên")}
+                disabled={loading}
                 className="bg-violet-500 hover:bg-violet-600 text-white shrink-0"
               >
-                Bắt đầu
-                <ArrowRight className="w-4 h-4 ml-1" />
+                {loading ? "Đang tải..." : "Bắt đầu"}
+                {!loading && <ArrowRight className="w-4 h-4 ml-1" />}
               </Button>
             </div>
           </div>
@@ -154,7 +252,8 @@ const GrammarVocabulary = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleStartTopic(topic.id)}
+                      onClick={() => startExam(topic.name)}
+                      disabled={loading}
                       className="text-violet-500 hover:text-violet-600 hover:bg-violet-500/10 font-semibold gap-1 group-hover:gap-2 transition-all"
                     >
                       Luyện tập
