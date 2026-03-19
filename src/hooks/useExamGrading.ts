@@ -32,8 +32,26 @@ export function useExamGrading() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      setGrading(data as GradingResult);
-      return data as GradingResult;
+      const result = data as GradingResult;
+      setGrading(result);
+
+      // Save to database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("exam_gradings").insert({
+          user_id: user.id,
+          skill: params.type,
+          part_type: params.partType,
+          overall_level: result.overallLevel,
+          criteria: result.criteria as any,
+          mistakes: result.mistakes as any,
+          suggestions: result.suggestions as any,
+          transcript: result.transcript || "",
+          student_text: params.text || "",
+        });
+      }
+
+      return result;
     } catch (e: any) {
       console.error("Grading error:", e);
       toast.error("Không thể chấm điểm. Vui lòng thử lại.");
@@ -54,7 +72,6 @@ export async function blobUrlToBase64(blobUrl: string): Promise<string> {
     const reader = new FileReader();
     reader.onloadend = () => {
       const dataUrl = reader.result as string;
-      // Remove "data:audio/webm;base64," prefix
       const base64 = dataUrl.split(",")[1];
       resolve(base64);
     };
