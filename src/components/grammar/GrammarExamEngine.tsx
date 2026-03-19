@@ -26,6 +26,7 @@ const GrammarExamEngine = ({
   timeLimit,
   onExit,
   onComplete,
+  onAnswersChange,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>("instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
