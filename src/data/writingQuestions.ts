@@ -17,24 +17,32 @@ export interface WritingPart2Data {
   sampleAnswer: string;
 }
 
-// Part 3: Informal email — write ~40-50 words
+// Part 3: Three questions — each answer 30-40 words
 export interface WritingPart3Data {
-  type: "informal-email";
+  type: "three-questions";
   instruction: string;
-  scenario: string;
-  bulletPoints: string[];
-  wordLimit: number;
-  sampleAnswer: string;
+  questions: { id: number; text: string; sampleAnswer: string }[];
+  wordLimit: number; // per question (e.g. 40)
 }
 
-// Part 4: Formal email — write ~120-150 words
+// Part 4: Two emails — informal + formal combined
 export interface WritingPart4Data {
-  type: "formal-email";
+  type: "two-emails";
   instruction: string;
-  scenario: string;
-  bulletPoints: string[];
-  wordLimit: number;
-  sampleAnswer: string;
+  informalEmail: {
+    label: string;
+    scenario: string;
+    bulletPoints: string[];
+    wordLimit: number;
+    sampleAnswer: string;
+  };
+  formalEmail: {
+    label: string;
+    scenario: string;
+    bulletPoints: string[];
+    wordLimit: number;
+    sampleAnswer: string;
+  };
 }
 
 export type WritingPartData = WritingPart1Data | WritingPart2Data | WritingPart3Data | WritingPart4Data;
@@ -73,30 +81,54 @@ export const mockWritingPart2: WritingPart2Data[] = [
 
 export const mockWritingPart3: WritingPart3Data[] = [
   {
-    type: "informal-email",
-    instruction: "You are planning a birthday party for a friend. Write an email to another friend to invite them. Write about 40-50 words. Include the following:",
-    scenario: "You are organising a surprise birthday party for your friend Tom.",
-    bulletPoints: [
-      "When and where the party is",
-      "What to bring",
-      "Ask them to keep it a secret",
+    type: "three-questions",
+    instruction: "Answer the following three questions. Write between 30 and 40 words for each answer. Your answers should be relevant, grammatically correct, and logically connected.",
+    questions: [
+      {
+        id: 1,
+        text: "Do you think it is important to learn a foreign language? Why or why not?",
+        sampleAnswer: "Yes, I believe learning a foreign language is very important. It helps us communicate with people from different countries and opens up more job opportunities. It also allows us to understand other cultures better.",
+      },
+      {
+        id: 2,
+        text: "What is the best way to learn a new language?",
+        sampleAnswer: "In my opinion, the best way to learn a new language is to practise speaking every day. You should also watch films and read books in that language to improve your vocabulary naturally.",
+      },
+      {
+        id: 3,
+        text: "How has technology changed the way people learn languages?",
+        sampleAnswer: "Technology has made language learning much easier and more accessible. People can now use apps, watch online videos, and join virtual classes from anywhere in the world, which was not possible before.",
+      },
     ],
-    wordLimit: 50,
-    sampleAnswer: "Hi Sarah,\n\nI'm organising a surprise birthday party for Tom this Saturday at 7pm at my house. Could you bring some snacks or drinks? Please don't tell Tom — it's a surprise!\n\nHope you can make it!\nAnna",
+    wordLimit: 40,
   },
 ];
 
 export const mockWritingPart4: WritingPart4Data[] = [
   {
-    type: "formal-email",
-    instruction: "You recently stayed at a hotel and had a bad experience. Write a formal email to the hotel manager to complain. Write about 120-150 words. Include the following:",
-    scenario: "You stayed at the Grand Hotel last weekend and experienced several problems.",
-    bulletPoints: [
-      "Explain when you stayed and what room you had",
-      "Describe the problems you experienced",
-      "Say what you would like the hotel to do",
-    ],
-    wordLimit: 150,
-    sampleAnswer: "Dear Sir/Madam,\n\nI am writing to express my dissatisfaction with my recent stay at the Grand Hotel from 15-17 March. I was booked into Room 305.\n\nUnfortunately, I experienced several issues during my stay. Firstly, the room was not clean when I arrived — there were used towels on the floor and the bed had not been made. Secondly, the air conditioning was not working properly, making it very uncomfortable to sleep. Additionally, the breakfast service was extremely slow, and the food was cold.\n\nI would appreciate it if you could offer a partial refund or a complimentary stay to make up for these problems. I have always enjoyed staying at your hotel and hope this was an isolated incident.\n\nI look forward to hearing from you.\n\nYours faithfully,\nJohn Smith",
+    type: "two-emails",
+    instruction: "Write two emails based on the scenarios below. The first is an informal email (~50 words) and the second is a formal email (~120-150 words).",
+    informalEmail: {
+      label: "Informal Email (~50 words)",
+      scenario: "You are organising a surprise birthday party for your friend Tom. Write an email to another friend to invite them.",
+      bulletPoints: [
+        "When and where the party is",
+        "What to bring",
+        "Ask them to keep it a secret",
+      ],
+      wordLimit: 50,
+      sampleAnswer: "Hi Sarah,\n\nI'm organising a surprise birthday party for Tom this Saturday at 7pm at my house. Could you bring some snacks or drinks? Please don't tell Tom — it's a surprise!\n\nHope you can make it!\nAnna",
+    },
+    formalEmail: {
+      label: "Formal Email (~120-150 words)",
+      scenario: "You recently stayed at the Grand Hotel and experienced several problems. Write a formal email to the hotel manager to complain.",
+      bulletPoints: [
+        "Explain when you stayed and what room you had",
+        "Describe the problems you experienced",
+        "Say what you would like the hotel to do",
+      ],
+      wordLimit: 150,
+      sampleAnswer: "Dear Sir/Madam,\n\nI am writing to express my dissatisfaction with my recent stay at the Grand Hotel from 15-17 March. I was booked into Room 305.\n\nUnfortunately, I experienced several issues during my stay. Firstly, the room was not clean when I arrived — there were used towels on the floor and the bed had not been made. Secondly, the air conditioning was not working properly, making it very uncomfortable to sleep. Additionally, the breakfast service was extremely slow, and the food was cold.\n\nI would appreciate it if you could offer a partial refund or a complimentary stay to make up for these problems. I have always enjoyed staying at your hotel and hope this was an isolated incident.\n\nI look forward to hearing from you.\n\nYours faithfully,\nJohn Smith",
+    },
   },
 ];

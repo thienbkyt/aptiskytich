@@ -19,8 +19,8 @@ import {
 const TASKS = [
   { id: "task1" as const, label: "Part 1", subtitle: "Short answers" },
   { id: "task2" as const, label: "Part 2", subtitle: "Social media response" },
-  { id: "task3" as const, label: "Part 3", subtitle: "Informal email" },
-  { id: "task4" as const, label: "Part 4", subtitle: "Formal email" },
+  { id: "task3" as const, label: "Part 3", subtitle: "Three questions" },
+  { id: "task4" as const, label: "Part 4", subtitle: "Informal & Formal email" },
 ];
 
 const TESTS_PER_TASK = 9;

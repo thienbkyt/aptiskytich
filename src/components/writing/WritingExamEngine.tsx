@@ -3,8 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import WritingPart1Short from "@/components/writing/WritingPart1Short";
 import WritingPart2Social from "@/components/writing/WritingPart2Social";
-import WritingPart3Informal from "@/components/writing/WritingPart3Informal";
-import WritingPart4Formal from "@/components/writing/WritingPart4Formal";
+import WritingPart3Questions from "@/components/writing/WritingPart3Questions";
+import WritingPart4TwoEmails from "@/components/writing/WritingPart4TwoEmails";
 import type {
   WritingPart1Data,
   WritingPart2Data,
@@ -31,8 +31,8 @@ type Phase = "instructions" | "practice" | "submitted";
 const PART_LABELS: Record<WritingPartType, string> = {
   task1: "Part 1 – Short Answers",
   task2: "Part 2 – Social Media Response",
-  task3: "Part 3 – Informal Email",
-  task4: "Part 4 – Formal Email",
+  task3: "Part 3 – Three Questions",
+  task4: "Part 4 – Informal & Formal Email",
 };
 
 const WritingExamEngine = ({
@@ -48,8 +48,15 @@ const WritingExamEngine = ({
   const [shortAnswers, setShortAnswers] = useState<string[]>(
     new Array(part1Data?.questions.length || 5).fill("")
   );
-  // Part 2-4: single textarea
+  // Part 2: single textarea
   const [textAnswer, setTextAnswer] = useState("");
+  // Part 3: array of 3 answers
+  const [part3Answers, setPart3Answers] = useState<string[]>(
+    new Array(part3Data?.questions.length || 3).fill("")
+  );
+  // Part 4: two textareas
+  const [informalAnswer, setInformalAnswer] = useState("");
+  const [formalAnswer, setFormalAnswer] = useState("");
 
   // Timer
   useEffect(() => {
@@ -83,7 +90,7 @@ const WritingExamEngine = ({
     },
     {
       title: partLabel,
-      questionCount: partType === "task1" ? (part1Data?.questions.length || 5) : 1,
+      questionCount: partType === "task1" ? (part1Data?.questions.length || 5) : partType === "task3" ? (part3Data?.questions.length || 3) : partType === "task4" ? 2 : 1,
       isCurrent: phase !== "instructions",
       onClick: () => {},
     },
@@ -150,10 +157,14 @@ const WritingExamEngine = ({
       )}
 
       {partType === "task3" && part3Data && (
-        <WritingPart3Informal
+        <WritingPart3Questions
           data={part3Data}
-          answer={textAnswer}
-          onAnswerChange={setTextAnswer}
+          answers={part3Answers}
+          onAnswerChange={(i, val) => {
+            const n = [...part3Answers];
+            n[i] = val;
+            setPart3Answers(n);
+          }}
           timeLeft={timeLeft}
           totalTime={timeLimit}
           submitted={submitted}
@@ -163,10 +174,12 @@ const WritingExamEngine = ({
       )}
 
       {partType === "task4" && part4Data && (
-        <WritingPart4Formal
+        <WritingPart4TwoEmails
           data={part4Data}
-          answer={textAnswer}
-          onAnswerChange={setTextAnswer}
+          informalAnswer={informalAnswer}
+          formalAnswer={formalAnswer}
+          onInformalChange={setInformalAnswer}
+          onFormalChange={setFormalAnswer}
           timeLeft={timeLeft}
           totalTime={timeLimit}
           submitted={submitted}
