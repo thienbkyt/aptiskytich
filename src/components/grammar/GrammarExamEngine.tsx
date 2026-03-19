@@ -12,9 +12,10 @@ import type { Question } from "@/data/questions";
 interface GrammarExamEngineProps {
   questions: Question[];
   testTitle: string;
-  timeLimit: number; // seconds
+  timeLimit: number;
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
+  onAnswersChange?: (answers: (number | null)[], fillAnswers: string[]) => void;
 }
 
 type Phase = "instructions" | "practice" | "review";
