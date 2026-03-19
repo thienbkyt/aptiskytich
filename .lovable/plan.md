@@ -1,28 +1,31 @@
 
 
-# Fix: Link đổi mật khẩu không bấm được trong Gmail
+## Cải thiện UX ghi âm Speaking
 
-## Nguyên nhân
+### Vấn đề hiện tại
+- Nút "Bắt đầu ghi âm" có hiển thị nhưng thiếu hướng dẫn rõ ràng cho user
+- Khi mic bị chặn hoặc lỗi, không có thông báo nào cho user biết
+- Không có bước kiểm tra mic trước khi bắt đầu bài thi
+- Trong preview iframe, microphone có thể bị chặn mà user không biết
 
-Email đặt lại mật khẩu mặc định chứa link dạng URL dài, Gmail có thể không hiển thị đúng dạng clickable. Cần tạo email template tùy chỉnh với nút HTML rõ ràng để Gmail luôn hiển thị đúng.
+### Plan
 
-## Giải pháp
+**1. Thêm trạng thái lỗi microphone trong `useAudioRecording`**
+- Thêm state `micError` để track khi `getUserMedia` thất bại
+- Return `micError` từ hook để component có thể hiển thị thông báo
 
-Tạo auth email templates tùy chỉnh với nút bấm HTML đẹp, tương thích Gmail.
+**2. Cải thiện `AudioRecorder` UI**
+- Hiển thị thông báo lỗi khi mic bị từ chối (alert đỏ với hướng dẫn cách bật lại)
+- Thêm text hướng dẫn nhỏ bên dưới nút ghi âm: "Nhấn nút và cho phép truy cập microphone khi trình duyệt yêu cầu"
+- Hiển thị trạng thái "Đang yêu cầu quyền mic..." khi đang chờ permission
 
-### Bước 1: Scaffold auth email templates
-- Tạo 6 template email (signup, recovery, magic-link, invite, email-change, reauthentication)
-- Mỗi template có nút CTA rõ ràng bằng HTML `<a>` button — luôn clickable trên Gmail
+**3. Thêm bước kiểm tra mic trong `ExamInstructions` cho Speaking**
+- Thêm nút "Kiểm tra microphone" trên trang hướng dẫn trước khi bắt đầu
+- Nếu mic hoạt động: hiển thị checkmark xanh "Microphone sẵn sàng"
+- Nếu mic lỗi: hiển thị cảnh báo đỏ với hướng dẫn
 
-### Bước 2: Áp dụng branding Aptis Kỳ Tích
-- Dùng màu `#E11D1F` (primary) cho nút bấm
-- Copy tiếng Việt phù hợp: "Đặt lại mật khẩu", "Xác nhận email"...
-- Logo nếu có
-
-### Bước 3: Deploy edge function `auth-email-hook`
-
-### Lưu ý
-- Domain email (`notify.www.aptiskytich.vn`) đang chờ DNS verification
-- Templates có thể scaffold và deploy ngay, email sẽ gửi được khi DNS xác nhận xong
-- Trong khi chờ, hệ thống vẫn gửi email mặc định
+### Files cần chỉnh sửa
+- `src/hooks/useAudioRecording.tsx` — thêm `micError` state và `micPermissionStatus`
+- `src/components/speaking/AudioRecorder.tsx` — thêm error UI và hướng dẫn
+- `src/components/speaking/SpeakingExamEngine.tsx` — thêm mic check ở trang instructions
 
