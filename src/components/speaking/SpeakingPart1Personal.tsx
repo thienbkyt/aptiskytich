@@ -13,7 +13,7 @@ interface Props {
 
 const SpeakingPart1Personal = ({ data, currentIndex, recordings, onRecordingComplete }: Props) => {
   const question = data.questions[currentIndex];
-  const { isRecording, audioUrl, timeLeft, startRecording, stopRecording } = useAudioRecording({
+  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
     onComplete: (url) => onRecordingComplete(currentIndex, url),
     questionKey: currentIndex,
