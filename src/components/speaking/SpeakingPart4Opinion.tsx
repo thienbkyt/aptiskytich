@@ -14,7 +14,7 @@ interface Props {
 const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) => {
   const [phase, setPhase] = useState<"prep" | "speak">(data.prepTime > 0 ? "prep" : "speak");
 
-  const { isRecording, audioUrl, timeLeft, startRecording, stopRecording } = useAudioRecording({
+  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
     onComplete: onRecordingComplete,
     questionKey: "part4",
