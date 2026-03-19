@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,18 +7,27 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Headphones, Search, Clock, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
+import ListeningResults from "@/components/listening/ListeningResults";
+import type { ListeningPartType } from "@/components/listening/ListeningExamEngine";
+import {
+  mockListeningPart1,
+  mockListeningPart2,
+  mockListeningPart3,
+  mockListeningPart4,
+} from "@/data/listeningQuestions";
 
 const PARTS = [
-  { id: "part1", label: "Part 1", subtitle: "Word recognition" },
-  { id: "part2", label: "Part 2", subtitle: "Matching information" },
-  { id: "part3", label: "Part 3", subtitle: "Short conversations" },
-  { id: "part4", label: "Part 4", subtitle: "Monologues" },
+  { id: "part1" as const, label: "Part 1", subtitle: "Word recognition" },
+  { id: "part2" as const, label: "Part 2", subtitle: "Matching information" },
+  { id: "part3" as const, label: "Part 3", subtitle: "Short conversations" },
+  { id: "part4" as const, label: "Part 4", subtitle: "Monologues" },
 ];
 
 const TESTS_PER_PART = 9;
 
 interface TestCard {
-  partId: string;
+  partId: ListeningPartType;
   partLabel: string;
   testNumber: number;
 }
@@ -28,11 +36,7 @@ const generateTests = (): TestCard[] => {
   const tests: TestCard[] = [];
   PARTS.forEach((part) => {
     for (let i = 1; i <= TESTS_PER_PART; i++) {
-      tests.push({
-        partId: part.id,
-        partLabel: part.label,
-        testNumber: i,
-      });
+      tests.push({ partId: part.id, partLabel: part.label, testNumber: i });
     }
   });
   return tests;
@@ -40,10 +44,26 @@ const generateTests = (): TestCard[] => {
 
 const allTests = generateTests();
 
+interface ExamState {
+  active: boolean;
+  partType: ListeningPartType;
+  testTitle: string;
+  showResults: boolean;
+  correct: number;
+  total: number;
+}
+
 const Listening = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("part1");
   const [searchQuery, setSearchQuery] = useState("");
+  const [exam, setExam] = useState<ExamState>({
+    active: false,
+    partType: "part1",
+    testTitle: "",
+    showResults: false,
+    correct: 0,
+    total: 0,
+  });
 
   const filteredTests = useMemo(() => {
     return allTests
@@ -55,22 +75,86 @@ const Listening = () => {
       );
   }, [activeTab, searchQuery]);
 
-  const handleRandomPractice = () => {
-    const randomTest = allTests[Math.floor(Math.random() * allTests.length)];
-    console.log("Starting random practice:", randomTest);
-  };
-
   const handleStartTest = (test: TestCard) => {
-    console.log("Starting test:", test);
+    setExam({
+      active: true,
+      partType: test.partId,
+      testTitle: `${test.partLabel} – TEST ${test.testNumber}`,
+      showResults: false,
+      correct: 0,
+      total: 0,
+    });
   };
 
+  const handleRandomPractice = () => {
+    const randomPart = PARTS[Math.floor(Math.random() * PARTS.length)];
+    handleStartTest({
+      partId: randomPart.id,
+      partLabel: randomPart.label,
+      testNumber: Math.floor(Math.random() * TESTS_PER_PART) + 1,
+    });
+  };
+
+  const handleComplete = (correct: number, total: number) => {
+    setExam((prev) => ({ ...prev, showResults: true, correct, total }));
+  };
+
+  const handleExit = () => {
+    setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0 });
+  };
+
+  // Exam mode
+  if (exam.active) {
+    if (exam.showResults) {
+      return (
+        <div className="min-h-screen flex flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-24 pb-20">
+            <div className="section-container">
+              <ListeningResults
+                correct={exam.correct}
+                total={exam.total}
+                partLabel={exam.testTitle}
+                onExit={handleExit}
+                onRetry={() => setExam((prev) => ({ ...prev, showResults: false }))}
+              />
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const engineProps = {
+      partType: exam.partType,
+      testTitle: exam.testTitle,
+      timeLimit: 2100, // 35 minutes
+      onExit: handleExit,
+      onComplete: handleComplete,
+      ...(exam.partType === "part1" && { part1Questions: mockListeningPart1 }),
+      ...(exam.partType === "part2" && { part2Questions: mockListeningPart2 }),
+      ...(exam.partType === "part3" && { part3Questions: mockListeningPart3 }),
+      ...(exam.partType === "part4" && { part4Questions: mockListeningPart4 }),
+    };
+
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <ListeningExamEngine {...engineProps} />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Listing page
   const activePartInfo = PARTS.find((t) => t.id === activeTab);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 pt-16">
-        {/* Header */}
         <section className="border-b border-border bg-card">
           <div className="section-container py-12 md:py-16">
             <div className="max-w-3xl">
@@ -87,13 +171,12 @@ const Listening = () => {
                 Phần thi Listening
               </h1>
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                Luyện nghe theo format bài thi Aptis Listening. Làm quen với các dạng câu hỏi và luyện tập với audio giống bài thi thật.
+                Luyện nghe theo format bài thi Aptis Listening. Làm quen với các dạng câu hỏi và luyện tập với audio giống bài thi thật. Mỗi đoạn audio chỉ được nghe tối đa 2 lần.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Random practice block */}
         <section className="border-b border-border">
           <div className="section-container py-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-blue-500/5 to-blue-500/10 dark:from-blue-500/10 dark:to-blue-500/5 border border-blue-500/20 rounded-xl p-5 md:p-6">
@@ -121,9 +204,7 @@ const Listening = () => {
           </div>
         </section>
 
-        {/* Search + Tabs + Cards */}
         <section className="section-container py-8 md:py-10">
-          {/* Search */}
           <div className="relative mb-6">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -134,7 +215,6 @@ const Listening = () => {
             />
           </div>
 
-          {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               {PARTS.map((part) => (
@@ -150,7 +230,6 @@ const Listening = () => {
             </TabsList>
           </Tabs>
 
-          {/* Active part info */}
           {activePartInfo && (
             <div className="mb-6">
               <h2 className="text-lg font-heading font-semibold text-foreground">
@@ -162,7 +241,6 @@ const Listening = () => {
             </div>
           )}
 
-          {/* Test cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {filteredTests.map((test, index) => (
               <motion.div
@@ -185,7 +263,10 @@ const Listening = () => {
 
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                     <span className="flex items-center gap-1.5">
-                      🎧 10 câu hỏi
+                      🎧 5 câu hỏi
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      🔊 Nghe tối đa 2 lần
                     </span>
                   </div>
 
