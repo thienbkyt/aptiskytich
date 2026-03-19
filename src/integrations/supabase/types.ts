@@ -14,38 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      answers: {
-        Row: {
-          answer_text: string
-          created_at: string
-          id: string
-          is_correct: boolean
-          question_id: string
-        }
-        Insert: {
-          answer_text: string
-          created_at?: string
-          id?: string
-          is_correct?: boolean
-          question_id: string
-        }
-        Update: {
-          answer_text?: string
-          created_at?: string
-          id?: string
-          is_correct?: boolean
-          question_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       learning_streaks: {
         Row: {
           created_at: string
@@ -145,13 +113,9 @@ export type Database = {
           created_at: string
           explanation: string
           id: string
-          image_url: string | null
           options: Json
-          order_index: number
           question_text: string
-          question_type: string
           skill: string
-          test_id: string | null
           updated_at: string
         }
         Insert: {
@@ -160,13 +124,9 @@ export type Database = {
           created_at?: string
           explanation: string
           id?: string
-          image_url?: string | null
           options: Json
-          order_index?: number
           question_text: string
-          question_type?: string
           skill: string
-          test_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -175,143 +135,42 @@ export type Database = {
           created_at?: string
           explanation?: string
           id?: string
-          image_url?: string | null
           options?: Json
-          order_index?: number
           question_text?: string
-          question_type?: string
           skill?: string
-          test_id?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "questions_test_id_fkey"
-            columns: ["test_id"]
-            isOneToOne: false
-            referencedRelation: "tests"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       test_results: {
         Row: {
-          correct_answers: number
           created_at: string
           id: string
           level: string
           score: number
           skill_scores: Json | null
-          test_id: string | null
           total: number
           user_id: string
         }
         Insert: {
-          correct_answers?: number
           created_at?: string
           id?: string
           level: string
           score: number
           skill_scores?: Json | null
-          test_id?: string | null
           total: number
           user_id: string
         }
         Update: {
-          correct_answers?: number
           created_at?: string
           id?: string
           level?: string
           score?: number
           skill_scores?: Json | null
-          test_id?: string | null
           total?: number
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "test_results_test_id_fkey"
-            columns: ["test_id"]
-            isOneToOne: false
-            referencedRelation: "tests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tests: {
-        Row: {
-          created_at: string
-          id: string
-          part: string
-          skill: string
-          time_limit: number
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          part: string
-          skill: string
-          time_limit?: number
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          part?: string
-          skill?: string
-          time_limit?: number
-          title?: string
-          updated_at?: string
-        }
         Relationships: []
-      }
-      user_answers: {
-        Row: {
-          created_at: string
-          id: string
-          is_correct: boolean
-          question_id: string
-          selected_answer: string | null
-          test_result_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_correct?: boolean
-          question_id: string
-          selected_answer?: string | null
-          test_result_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_correct?: boolean
-          question_id?: string
-          selected_answer?: string | null
-          test_result_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_answers_test_result_id_fkey"
-            columns: ["test_result_id"]
-            isOneToOne: false
-            referencedRelation: "test_results"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_roles: {
         Row: {
