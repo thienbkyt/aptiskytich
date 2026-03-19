@@ -84,6 +84,7 @@ const GrammarExamEngine = ({
     const newAnswers = [...answers];
     newAnswers[qi] = ai;
     setAnswers(newAnswers);
+    onAnswersChange?.(newAnswers, fillAnswers);
   };
 
   const handleFillAnswer = (qi: number, value: string) => {
@@ -91,6 +92,7 @@ const GrammarExamEngine = ({
     const newFill = [...fillAnswers];
     newFill[qi] = value;
     setFillAnswers(newFill);
+    onAnswersChange?.(answers, newFill);
   };
 
   const toggleBookmark = (qi: number) => {
