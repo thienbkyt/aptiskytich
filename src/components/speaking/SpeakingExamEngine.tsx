@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import ExamInstructions from "@/components/exam/ExamInstructions";
+import SpeakingMicCheck from "@/components/speaking/SpeakingMicCheck";
 import SpeakingPart1Personal from "@/components/speaking/SpeakingPart1Personal";
 import SpeakingPart2Describe from "@/components/speaking/SpeakingPart2Describe";
 import SpeakingPart3Compare from "@/components/speaking/SpeakingPart3Compare";
@@ -158,6 +159,9 @@ const SpeakingExamEngine = ({
           sections={sections}
           description={`Bài luyện tập: ${testTitle}. Bạn cần cho phép trình duyệt truy cập microphone để ghi âm.`}
         />
+        <div className="max-w-2xl mx-auto w-full">
+          <SpeakingMicCheck />
+        </div>
       </div>
     );
   }

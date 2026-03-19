@@ -16,6 +16,8 @@ export const useAudioRecording = ({
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState(maxDuration);
+  const [micError, setMicError] = useState<string | null>(null);
+  const [isRequestingMic, setIsRequestingMic] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -26,6 +28,8 @@ export const useAudioRecording = ({
     setIsRecording(false);
     setAudioUrl(null);
     setTimeLeft(maxDuration);
+    setMicError(null);
+    setIsRequestingMic(false);
     autoStartedRef.current = false;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
@@ -37,7 +41,6 @@ export const useAudioRecording = ({
   useEffect(() => {
     if (autoStart && !autoStartedRef.current && !audioUrl) {
       autoStartedRef.current = true;
-      // Small delay to let UI render
       const timeout = setTimeout(() => startRecording(), 500);
       return () => clearTimeout(timeout);
     }
@@ -55,8 +58,11 @@ export const useAudioRecording = ({
   }, []);
 
   const startRecording = useCallback(async () => {
+    setMicError(null);
+    setIsRequestingMic(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setIsRequestingMic(false);
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -70,7 +76,6 @@ export const useAudioRecording = ({
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         onComplete(url);
-        // Stop all tracks
         stream.getTracks().forEach((track) => track.stop());
       };
 
@@ -78,7 +83,6 @@ export const useAudioRecording = ({
       setIsRecording(true);
       setTimeLeft(maxDuration);
 
-      // Countdown timer
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -88,8 +92,16 @@ export const useAudioRecording = ({
           return prev - 1;
         });
       }, 1000);
-    } catch (err) {
+    } catch (err: any) {
+      setIsRequestingMic(false);
       console.error("Microphone access denied:", err);
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        setMicError("Quyền truy cập microphone bị từ chối. Vui lòng cho phép trong cài đặt trình duyệt và tải lại trang.");
+      } else if (err?.name === "NotFoundError") {
+        setMicError("Không tìm thấy microphone. Vui lòng kết nối microphone và thử lại.");
+      } else {
+        setMicError("Không thể truy cập microphone. Vui lòng kiểm tra thiết bị và thử lại.");
+      }
     }
   }, [maxDuration, onComplete, stopRecording]);
 
@@ -97,7 +109,26 @@ export const useAudioRecording = ({
     isRecording,
     audioUrl,
     timeLeft,
+    micError,
+    isRequestingMic,
     startRecording,
     stopRecording,
   };
 };
+
+/** Check mic permission without starting recording */
+export async function checkMicrophoneAccess(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+    return { ok: true };
+  } catch (err: any) {
+    if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+      return { ok: false, error: "Quyền truy cập microphone bị từ chối. Vui lòng cho phép trong cài đặt trình duyệt." };
+    }
+    if (err?.name === "NotFoundError") {
+      return { ok: false, error: "Không tìm thấy microphone trên thiết bị này." };
+    }
+    return { ok: false, error: "Không thể truy cập microphone." };
+  }
+}
