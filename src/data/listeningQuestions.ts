@@ -1,0 +1,187 @@
+// Listening question data types and mock data for Aptis Listening (4 parts)
+
+// Part 1: Word Recognition – Listen to short audio, pick the word/phrase you hear
+export interface ListeningPart1Question {
+  id: number;
+  audioUrl: string;
+  options: string[];
+  correct: number;
+}
+
+// Part 2: Matching Information – Listen to a short monologue and match info
+export interface ListeningPart2Question {
+  id: number;
+  audioUrl: string;
+  questionText: string;
+  options: string[];
+  correct: number;
+}
+
+// Part 3: Short Conversations – Listen to a dialogue, answer MCQ
+export interface ListeningPart3Question {
+  id: number;
+  audioUrl: string;
+  questionText: string;
+  options: string[];
+  correct: number;
+}
+
+// Part 4: Monologues – Listen to a longer recording, answer MCQ
+export interface ListeningPart4Question {
+  id: number;
+  audioUrl: string;
+  questionText: string;
+  options: string[];
+  correct: number;
+}
+
+// Mock data – Part 1
+export const mockListeningPart1: ListeningPart1Question[] = [
+  {
+    id: 1,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    options: ["appointment", "apartment", "agreement", "arrangement"],
+    correct: 0,
+  },
+  {
+    id: 2,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    options: ["schedule", "school", "scholar", "sculpture"],
+    correct: 0,
+  },
+  {
+    id: 3,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    options: ["environment", "entertainment", "engagement", "encouragement"],
+    correct: 0,
+  },
+  {
+    id: 4,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    options: ["temperature", "temporary", "temptation", "tendency"],
+    correct: 1,
+  },
+  {
+    id: 5,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    options: ["necessary", "negative", "negotiate", "neighbour"],
+    correct: 2,
+  },
+];
+
+// Mock data – Part 2
+export const mockListeningPart2: ListeningPart2Question[] = [
+  {
+    id: 1,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+    questionText: "What is the speaker's main topic?",
+    options: ["A holiday trip", "A business meeting", "A cooking class", "A sports event"],
+    correct: 0,
+  },
+  {
+    id: 2,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+    questionText: "When does the event take place?",
+    options: ["Monday morning", "Tuesday afternoon", "Wednesday evening", "Thursday night"],
+    correct: 2,
+  },
+  {
+    id: 3,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+    questionText: "What does the speaker recommend?",
+    options: ["Taking the bus", "Walking to the venue", "Driving a car", "Cycling"],
+    correct: 1,
+  },
+  {
+    id: 4,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
+    questionText: "How many people are expected to attend?",
+    options: ["About 20", "About 50", "About 100", "About 200"],
+    correct: 2,
+  },
+  {
+    id: 5,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
+    questionText: "What is the cost of the ticket?",
+    options: ["Free", "$5", "$10", "$15"],
+    correct: 3,
+  },
+];
+
+// Mock data – Part 3
+export const mockListeningPart3: ListeningPart3Question[] = [
+  {
+    id: 1,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
+    questionText: "Why is the woman calling?",
+    options: ["To make an appointment", "To cancel an order", "To ask for directions", "To complain about service"],
+    correct: 0,
+  },
+  {
+    id: 2,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
+    questionText: "What does the man suggest?",
+    options: ["Going to a restaurant", "Cooking at home", "Ordering delivery", "Skipping dinner"],
+    correct: 2,
+  },
+  {
+    id: 3,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
+    questionText: "What problem do they discuss?",
+    options: ["Traffic congestion", "A broken machine", "A delayed flight", "A missing document"],
+    correct: 3,
+  },
+  {
+    id: 4,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
+    questionText: "What will the speakers do next?",
+    options: ["Go to the library", "Visit a friend", "Call the office", "Send an email"],
+    correct: 1,
+  },
+  {
+    id: 5,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
+    questionText: "How does the woman feel?",
+    options: ["Excited", "Worried", "Bored", "Angry"],
+    correct: 1,
+  },
+];
+
+// Mock data – Part 4
+export const mockListeningPart4: ListeningPart4Question[] = [
+  {
+    id: 1,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
+    questionText: "What is the main purpose of the talk?",
+    options: ["To introduce a new product", "To explain company policy", "To announce a schedule change", "To report financial results"],
+    correct: 0,
+  },
+  {
+    id: 2,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
+    questionText: "According to the speaker, what is the advantage of the new system?",
+    options: ["Lower cost", "Faster processing", "Better quality", "Easier maintenance"],
+    correct: 1,
+  },
+  {
+    id: 3,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
+    questionText: "When will the changes take effect?",
+    options: ["Next week", "Next month", "In three months", "Next year"],
+    correct: 1,
+  },
+  {
+    id: 4,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
+    questionText: "What should employees do if they have questions?",
+    options: ["Ask their manager", "Visit the website", "Send an email to HR", "Attend a meeting"],
+    correct: 2,
+  },
+  {
+    id: 5,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
+    questionText: "What does the speaker say about training?",
+    options: ["It's optional", "It starts immediately", "It will be provided online", "It's only for managers"],
+    correct: 2,
+  },
+];
