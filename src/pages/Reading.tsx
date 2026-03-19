@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,18 +7,27 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Search, Clock, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
+import ReadingResults from "@/components/reading/ReadingResults";
+import type { ReadingPartType } from "@/components/reading/ReadingExamEngine";
+import {
+  mockPart1Questions,
+  mockPart2Questions,
+  mockPart3Questions,
+  mockPart4Questions,
+} from "@/data/readingQuestions";
 
 const PARTS = [
-  { id: "part1", label: "Part 1", subtitle: "Sentence comprehension" },
-  { id: "part2", label: "Part 2", subtitle: "Text cohesion" },
-  { id: "part3", label: "Part 3", subtitle: "Opinion matching" },
-  { id: "part4", label: "Part 4", subtitle: "Long reading" },
+  { id: "part1" as const, label: "Part 1", subtitle: "Sentence comprehension" },
+  { id: "part2" as const, label: "Part 2", subtitle: "Text cohesion" },
+  { id: "part3" as const, label: "Part 3", subtitle: "Opinion matching" },
+  { id: "part4" as const, label: "Part 4", subtitle: "Long reading" },
 ];
 
 const TESTS_PER_PART = 9;
 
 interface TestCard {
-  partId: string;
+  partId: ReadingPartType;
   partLabel: string;
   testNumber: number;
 }
@@ -36,10 +44,26 @@ const generateTests = (): TestCard[] => {
 
 const allTests = generateTests();
 
+interface ExamState {
+  active: boolean;
+  partType: ReadingPartType;
+  testTitle: string;
+  showResults: boolean;
+  correct: number;
+  total: number;
+}
+
 const Reading = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("part1");
   const [searchQuery, setSearchQuery] = useState("");
+  const [exam, setExam] = useState<ExamState>({
+    active: false,
+    partType: "part1",
+    testTitle: "",
+    showResults: false,
+    correct: 0,
+    total: 0,
+  });
 
   const filteredTests = useMemo(() => {
     return allTests
@@ -51,22 +75,87 @@ const Reading = () => {
       );
   }, [activeTab, searchQuery]);
 
-  const handleRandomPractice = () => {
-    const randomTest = allTests[Math.floor(Math.random() * allTests.length)];
-    console.log("Starting random practice:", randomTest);
-  };
-
   const handleStartTest = (test: TestCard) => {
-    console.log("Starting test:", test);
+    setExam({
+      active: true,
+      partType: test.partId,
+      testTitle: `${test.partLabel} – TEST ${test.testNumber}`,
+      showResults: false,
+      correct: 0,
+      total: 0,
+    });
   };
 
+  const handleRandomPractice = () => {
+    const randomPart = PARTS[Math.floor(Math.random() * PARTS.length)];
+    handleStartTest({
+      partId: randomPart.id,
+      partLabel: randomPart.label,
+      testNumber: Math.floor(Math.random() * TESTS_PER_PART) + 1,
+    });
+  };
+
+  const handleComplete = (correct: number, total: number) => {
+    setExam((prev) => ({ ...prev, showResults: true, correct, total }));
+  };
+
+  const handleExit = () => {
+    setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0 });
+  };
+
+  // Exam mode
+  if (exam.active) {
+    if (exam.showResults) {
+      return (
+        <div className="min-h-screen flex flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-24 pb-20">
+            <div className="section-container">
+              <ReadingResults
+                correct={exam.correct}
+                total={exam.total}
+                partLabel={exam.testTitle}
+                onExit={handleExit}
+                onRetry={() => setExam((prev) => ({ ...prev, showResults: false }))}
+              />
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    // Get part-specific mock data
+    const engineProps = {
+      partType: exam.partType,
+      testTitle: exam.testTitle,
+      timeLimit: 1800, // 30 minutes
+      onExit: handleExit,
+      onComplete: handleComplete,
+      ...(exam.partType === "part1" && { part1Questions: mockPart1Questions }),
+      ...(exam.partType === "part2" && { part2Question: mockPart2Questions[0] }),
+      ...(exam.partType === "part3" && { part3Question: mockPart3Questions[0] }),
+      ...(exam.partType === "part4" && { part4Question: mockPart4Questions[0] }),
+    };
+
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <ReadingExamEngine {...engineProps} />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Listing page (unchanged)
   const activePartInfo = PARTS.find((t) => t.id === activeTab);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 pt-16">
-        {/* Header */}
         <section className="border-b border-border bg-card">
           <div className="section-container py-12 md:py-16">
             <div className="max-w-3xl">
@@ -89,7 +178,6 @@ const Reading = () => {
           </div>
         </section>
 
-        {/* Random practice block */}
         <section className="border-b border-border">
           <div className="section-container py-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-500/5 to-emerald-500/10 dark:from-emerald-500/10 dark:to-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 md:p-6">
@@ -117,7 +205,6 @@ const Reading = () => {
           </div>
         </section>
 
-        {/* Search + Tabs + Cards */}
         <section className="section-container py-8 md:py-10">
           <div className="relative mb-6">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -170,23 +257,18 @@ const Reading = () => {
                   >
                     {test.partLabel}
                   </Badge>
-
                   <h3 className="text-xl font-heading font-bold text-foreground mb-3">
                     TEST {test.testNumber}
                   </h3>
-
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                     <span className="flex items-center gap-1.5">📖 10 câu hỏi</span>
                   </div>
-
                   <div className="mb-4">
                     <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
                       Chưa bắt đầu
                     </span>
                   </div>
-
                   <div className="flex-1" />
-
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
