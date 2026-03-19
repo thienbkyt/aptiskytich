@@ -10,7 +10,6 @@ import MockTest from "./pages/MockTest";
 import Practice from "./pages/Practice";
 import Dashboard from "./pages/Dashboard";
 import Course from "./pages/Course";
-
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
@@ -21,6 +20,7 @@ import Writing from "./pages/Writing";
 import Listening from "./pages/Listening";
 import Reading from "./pages/Reading";
 import GrammarVocabulary from "./pages/GrammarVocabulary";
+import ExamTaking from "./pages/ExamTaking";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/writing" element={<Writing />} />
             <Route path="/vocabulary" element={<SkillPractice />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/exam/:testId" element={<ExamTaking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
