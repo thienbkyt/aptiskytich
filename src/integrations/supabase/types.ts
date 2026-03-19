@@ -133,6 +133,48 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_gradings: {
+        Row: {
+          created_at: string
+          criteria: Json
+          id: string
+          mistakes: Json
+          overall_level: string
+          part_type: string
+          skill: string
+          student_text: string | null
+          suggestions: Json
+          transcript: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          criteria?: Json
+          id?: string
+          mistakes?: Json
+          overall_level: string
+          part_type: string
+          skill: string
+          student_text?: string | null
+          suggestions?: Json
+          transcript?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          id?: string
+          mistakes?: Json
+          overall_level?: string
+          part_type?: string
+          skill?: string
+          student_text?: string | null
+          suggestions?: Json
+          transcript?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_streaks: {
         Row: {
           created_at: string
