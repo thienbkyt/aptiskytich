@@ -45,6 +45,8 @@ const SpeakingPart1Personal = ({ data, currentIndex, recordings, onRecordingComp
           timeLeft={timeLeft}
           totalTime={data.speakTime}
           label="Your Answer"
+          micError={micError}
+          isRequestingMic={isRequestingMic}
         />
       </div>
     </motion.div>

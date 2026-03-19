@@ -40,6 +40,8 @@ const SpeakingPart2Describe = ({ data, recording, onRecordingComplete }: Props) 
           timeLeft={timeLeft}
           totalTime={data.speakTime}
           label="Your Description"
+          micError={micError}
+          isRequestingMic={isRequestingMic}
         />
       )}
     </div>
