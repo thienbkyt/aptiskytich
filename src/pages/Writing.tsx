@@ -1,25 +1,32 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PenLine, Search, Clock, Shuffle, ArrowRight } from "lucide-react";
+import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
+import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import type { WritingPartType } from "@/components/writing/WritingExamEngine";
+import {
+  mockWritingPart1,
+  mockWritingPart2,
+  mockWritingPart3,
+  mockWritingPart4,
+} from "@/data/writingQuestions";
 
 const TASKS = [
-  { id: "task1", label: "Part 1", subtitle: "Short answers" },
-  { id: "task2", label: "Part 2", subtitle: "Social media response" },
-  { id: "task3", label: "Part 3", subtitle: "Informal email" },
-  { id: "task4", label: "Part 4", subtitle: "Formal email" },
+  { id: "task1" as const, label: "Part 1", subtitle: "Short answers" },
+  { id: "task2" as const, label: "Part 2", subtitle: "Social media response" },
+  { id: "task3" as const, label: "Part 3", subtitle: "Informal email" },
+  { id: "task4" as const, label: "Part 4", subtitle: "Formal email" },
 ];
 
 const TESTS_PER_TASK = 9;
 
 interface TestCard {
-  taskId: string;
+  taskId: WritingPartType;
   taskLabel: string;
   testNumber: number;
 }
@@ -28,11 +35,7 @@ const generateTests = (): TestCard[] => {
   const tests: TestCard[] = [];
   TASKS.forEach((task) => {
     for (let i = 1; i <= TESTS_PER_TASK; i++) {
-      tests.push({
-        taskId: task.id,
-        taskLabel: task.label,
-        testNumber: i,
-      });
+      tests.push({ taskId: task.id, taskLabel: task.label, testNumber: i });
     }
   });
   return tests;
@@ -40,10 +43,22 @@ const generateTests = (): TestCard[] => {
 
 const allTests = generateTests();
 
+interface ExamState {
+  active: boolean;
+  partType: WritingPartType;
+  testTitle: string;
+  completed: boolean;
+}
+
 const Writing = () => {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("task1");
   const [searchQuery, setSearchQuery] = useState("");
+  const [exam, setExam] = useState<ExamState>({
+    active: false,
+    partType: "task1",
+    testTitle: "",
+    completed: false,
+  });
 
   const filteredTests = useMemo(() => {
     return allTests
@@ -55,22 +70,94 @@ const Writing = () => {
       );
   }, [activeTab, searchQuery]);
 
-  const handleRandomPractice = () => {
-    const randomTest = allTests[Math.floor(Math.random() * allTests.length)];
-    console.log("Starting random practice:", randomTest);
-  };
-
   const handleStartTest = (test: TestCard) => {
-    console.log("Starting test:", test);
+    setExam({
+      active: true,
+      partType: test.taskId,
+      testTitle: `${test.taskLabel} – TEST ${test.testNumber}`,
+      completed: false,
+    });
   };
 
+  const handleRandomPractice = () => {
+    const randomTask = TASKS[Math.floor(Math.random() * TASKS.length)];
+    handleStartTest({
+      taskId: randomTask.id,
+      taskLabel: randomTask.label,
+      testNumber: Math.floor(Math.random() * TESTS_PER_TASK) + 1,
+    });
+  };
+
+  const handleExit = () => {
+    setExam({ active: false, partType: "task1", testTitle: "", completed: false });
+  };
+
+  // Exam mode
+  if (exam.active) {
+    if (exam.completed) {
+      return (
+        <div className="min-h-screen flex flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-24 pb-20">
+            <div className="section-container max-w-3xl">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-card border border-border rounded-xl p-8 text-center"
+              >
+                <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
+                  Bài viết đã được nộp! ✍️
+                </h2>
+                <p className="text-sm text-muted-foreground mb-6">{exam.testTitle}</p>
+                <p className="text-muted-foreground text-sm mb-8">
+                  Bài viết của bạn đã được ghi nhận. Hãy so sánh với bài mẫu để cải thiện kỹ năng viết.
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <Button variant="outline" onClick={handleExit} className="gap-2">
+                    <ArrowLeft className="w-4 h-4" /> Quay lại
+                  </Button>
+                  <Button onClick={() => setExam((p) => ({ ...p, completed: false }))} className="gap-2">
+                    <RotateCcw className="w-4 h-4" /> Làm lại
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const engineProps = {
+      partType: exam.partType,
+      testTitle: exam.testTitle,
+      timeLimit: 3000, // 50 minutes
+      onExit: handleExit,
+      onComplete: () => setExam((p) => ({ ...p, completed: true })),
+      ...(exam.partType === "task1" && { part1Data: mockWritingPart1[0] }),
+      ...(exam.partType === "task2" && { part2Data: mockWritingPart2[0] }),
+      ...(exam.partType === "task3" && { part3Data: mockWritingPart3[0] }),
+      ...(exam.partType === "task4" && { part4Data: mockWritingPart4[0] }),
+    };
+
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <WritingExamEngine {...engineProps} />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Listing page (unchanged)
   const activeTaskInfo = TASKS.find((t) => t.id === activeTab);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 pt-16">
-        {/* Header */}
         <section className="border-b border-border bg-card">
           <div className="section-container py-12 md:py-16">
             <div className="max-w-3xl">
@@ -93,7 +180,6 @@ const Writing = () => {
           </div>
         </section>
 
-        {/* Random practice block */}
         <section className="border-b border-border">
           <div className="section-container py-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20 rounded-xl p-5 md:p-6">
@@ -102,18 +188,11 @@ const Writing = () => {
                   <Shuffle className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-semibold text-foreground text-base">
-                    Luyện Writing ngẫu nhiên
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Luyện 1 bộ đề thi Aptis Writing ngẫu nhiên
-                  </p>
+                  <h2 className="font-heading font-semibold text-foreground text-base">Luyện Writing ngẫu nhiên</h2>
+                  <p className="text-sm text-muted-foreground">Luyện 1 bộ đề thi Aptis Writing ngẫu nhiên</p>
                 </div>
               </div>
-              <Button
-                onClick={handleRandomPractice}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
-              >
+              <Button onClick={handleRandomPractice} className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0">
                 Bắt đầu
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -121,9 +200,7 @@ const Writing = () => {
           </div>
         </section>
 
-        {/* Search + Tabs + Cards */}
         <section className="section-container py-8 md:py-10">
-          {/* Search */}
           <div className="relative mb-6">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -134,7 +211,6 @@ const Writing = () => {
             />
           </div>
 
-          {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               {TASKS.map((task) => (
@@ -150,19 +226,15 @@ const Writing = () => {
             </TabsList>
           </Tabs>
 
-          {/* Active task info */}
           {activeTaskInfo && (
             <div className="mb-6">
               <h2 className="text-lg font-heading font-semibold text-foreground">
                 {activeTaskInfo.label} – {activeTaskInfo.subtitle}
               </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {filteredTests.length} bộ đề luyện tập
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">{filteredTests.length} bộ đề luyện tập</p>
             </div>
           )}
 
-          {/* Test cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {filteredTests.map((test, index) => (
               <motion.div
@@ -172,31 +244,17 @@ const Writing = () => {
                 transition={{ duration: 0.25, delay: index * 0.03 }}
               >
                 <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                  <Badge
-                    variant="secondary"
-                    className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary border-0"
-                  >
+                  <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary border-0">
                     {test.taskLabel}
                   </Badge>
-
-                  <h3 className="text-xl font-heading font-bold text-foreground mb-3">
-                    TEST {test.testNumber}
-                  </h3>
-
+                  <h3 className="text-xl font-heading font-bold text-foreground mb-3">TEST {test.testNumber}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                    <span className="flex items-center gap-1.5">
-                      ✍️ 1 bài viết
-                    </span>
+                    <span className="flex items-center gap-1.5">✍️ 1 bài viết</span>
                   </div>
-
                   <div className="mb-4">
-                    <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                      Chưa bắt đầu
-                    </span>
+                    <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>
                   </div>
-
                   <div className="flex-1" />
-
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
@@ -215,9 +273,7 @@ const Writing = () => {
 
           {filteredTests.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-muted-foreground">
-                Không tìm thấy bộ đề nào phù hợp.
-              </p>
+              <p className="text-muted-foreground">Không tìm thấy bộ đề nào phù hợp.</p>
             </div>
           )}
         </section>
