@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import ExamInstructions from "@/components/exam/ExamInstructions";
+import SpeakingMicCheck from "@/components/speaking/SpeakingMicCheck";
 import SpeakingPart1Personal from "@/components/speaking/SpeakingPart1Personal";
 import SpeakingPart2Describe from "@/components/speaking/SpeakingPart2Describe";
 import SpeakingPart3Compare from "@/components/speaking/SpeakingPart3Compare";
