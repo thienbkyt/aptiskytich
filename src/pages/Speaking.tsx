@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,18 +7,26 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mic, Search, Clock, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
+import type { SpeakingPartType } from "@/data/speakingQuestions";
+import {
+  mockSpeakingPart1,
+  mockSpeakingPart2,
+  mockSpeakingPart3,
+  mockSpeakingPart4,
+} from "@/data/speakingQuestions";
 
 const TASKS = [
-  { id: "task1", label: "Part 1", subtitle: "Personal Questions" },
-  { id: "task2", label: "Part 2", subtitle: "Describe a Picture" },
-  { id: "task3", label: "Part 3", subtitle: "Compare Pictures" },
-  { id: "task4", label: "Part 4", subtitle: "Opinion Questions" },
+  { id: "part1" as const, label: "Part 1", subtitle: "Personal Questions" },
+  { id: "part2" as const, label: "Part 2", subtitle: "Describe a Picture" },
+  { id: "part3" as const, label: "Part 3", subtitle: "Compare Pictures" },
+  { id: "part4" as const, label: "Part 4", subtitle: "Opinion Questions" },
 ];
 
 const TESTS_PER_TASK = 9;
 
 interface TestCard {
-  taskId: string;
+  taskId: SpeakingPartType;
   taskLabel: string;
   testNumber: number;
 }
@@ -28,11 +35,7 @@ const generateTests = (): TestCard[] => {
   const tests: TestCard[] = [];
   TASKS.forEach((task) => {
     for (let i = 1; i <= TESTS_PER_TASK; i++) {
-      tests.push({
-        taskId: task.id,
-        taskLabel: task.label,
-        testNumber: i,
-      });
+      tests.push({ taskId: task.id, taskLabel: task.label, testNumber: i });
     }
   });
   return tests;
@@ -40,10 +43,27 @@ const generateTests = (): TestCard[] => {
 
 const allTests = generateTests();
 
+interface ExamState {
+  active: boolean;
+  partType: SpeakingPartType;
+  testTitle: string;
+}
+
+const TIME_LIMITS: Record<SpeakingPartType, number> = {
+  part1: 180,  // 3 min
+  part2: 120,  // 2 min
+  part3: 150,  // 2.5 min
+  part4: 240,  // 4 min
+};
+
 const Speaking = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("task1");
+  const [activeTab, setActiveTab] = useState("part1");
   const [searchQuery, setSearchQuery] = useState("");
+  const [exam, setExam] = useState<ExamState>({
+    active: false,
+    partType: "part1",
+    testTitle: "",
+  });
 
   const filteredTests = useMemo(() => {
     return allTests
@@ -55,25 +75,60 @@ const Speaking = () => {
       );
   }, [activeTab, searchQuery]);
 
-  const handleRandomPractice = () => {
-    // Pick a random test
-    const randomTest = allTests[Math.floor(Math.random() * allTests.length)];
-    console.log("Starting random practice:", randomTest);
-    // TODO: navigate to actual exam page
-  };
-
   const handleStartTest = (test: TestCard) => {
-    console.log("Starting test:", test);
-    // TODO: navigate to actual exam page
+    setExam({
+      active: true,
+      partType: test.taskId,
+      testTitle: `${test.taskLabel} – TEST ${test.testNumber}`,
+    });
   };
 
+  const handleRandomPractice = () => {
+    const randomTask = TASKS[Math.floor(Math.random() * TASKS.length)];
+    handleStartTest({
+      taskId: randomTask.id,
+      taskLabel: randomTask.label,
+      testNumber: Math.floor(Math.random() * TESTS_PER_TASK) + 1,
+    });
+  };
+
+  const handleExit = () => {
+    setExam({ active: false, partType: "part1", testTitle: "" });
+  };
+
+  // Exam mode
+  if (exam.active) {
+    const engineProps = {
+      partType: exam.partType,
+      testTitle: exam.testTitle,
+      timeLimit: TIME_LIMITS[exam.partType],
+      onExit: handleExit,
+      onComplete: () => {},
+      ...(exam.partType === "part1" && { part1Data: mockSpeakingPart1 }),
+      ...(exam.partType === "part2" && { part2Data: mockSpeakingPart2 }),
+      ...(exam.partType === "part3" && { part3Data: mockSpeakingPart3 }),
+      ...(exam.partType === "part4" && { part4Data: mockSpeakingPart4 }),
+    };
+
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <SpeakingExamEngine {...engineProps} />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Listing page
   const activeTaskInfo = TASKS.find((t) => t.id === activeTab);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 pt-16">
-        {/* Header */}
         <section className="border-b border-border bg-card">
           <div className="section-container py-12 md:py-16">
             <div className="max-w-3xl">
@@ -90,13 +145,12 @@ const Speaking = () => {
                 Phần thi Speaking
               </h1>
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                Luyện nói qua các đề thi với format Aptis Speaking. Làm quen với 4 phần của bài thi nói và luyện tập trả lời với thời gian giống bài thi thật.
+                Luyện nói qua các đề thi với format Aptis Speaking. Ghi âm câu trả lời với thời gian chuẩn bị và trả lời giống bài thi thật.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Random practice block */}
         <section className="border-b border-border">
           <div className="section-container py-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-orange-500/5 to-orange-500/10 dark:from-orange-500/10 dark:to-orange-500/5 border border-orange-500/20 rounded-xl p-5 md:p-6">
@@ -124,9 +178,7 @@ const Speaking = () => {
           </div>
         </section>
 
-        {/* Search + Tabs + Cards */}
         <section className="section-container py-8 md:py-10">
-          {/* Search */}
           <div className="relative mb-6">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -137,7 +189,6 @@ const Speaking = () => {
             />
           </div>
 
-          {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               {TASKS.map((task) => (
@@ -153,7 +204,6 @@ const Speaking = () => {
             </TabsList>
           </Tabs>
 
-          {/* Active task info */}
           {activeTaskInfo && (
             <div className="mb-6">
               <h2 className="text-lg font-heading font-semibold text-foreground">
@@ -165,7 +215,6 @@ const Speaking = () => {
             </div>
           )}
 
-          {/* Test cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {filteredTests.map((test, index) => (
               <motion.div
@@ -175,7 +224,6 @@ const Speaking = () => {
                 transition={{ duration: 0.25, delay: index * 0.03 }}
               >
                 <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                  {/* Task tag */}
                   <Badge
                     variant="secondary"
                     className="w-fit text-[11px] font-medium mb-3 bg-orange-500/10 text-orange-600 dark:text-orange-400 border-0"
@@ -183,29 +231,23 @@ const Speaking = () => {
                     {test.taskLabel}
                   </Badge>
 
-                  {/* Test title */}
                   <h3 className="text-xl font-heading font-bold text-foreground mb-3">
                     TEST {test.testNumber}
                   </h3>
 
-                  {/* Info */}
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                    <span className="flex items-center gap-1.5">
-                      🎤 4 câu hỏi
-                    </span>
+                    <span className="flex items-center gap-1.5">🎤 Ghi âm</span>
+                    <span className="flex items-center gap-1.5">⏱️ Có thời gian chuẩn bị</span>
                   </div>
 
-                  {/* Status */}
                   <div className="mb-4">
                     <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
                       Chưa bắt đầu
                     </span>
                   </div>
 
-                  {/* Spacer */}
                   <div className="flex-1" />
 
-                  {/* Action button */}
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
@@ -222,7 +264,6 @@ const Speaking = () => {
             ))}
           </div>
 
-          {/* Empty state */}
           {filteredTests.length === 0 && (
             <div className="text-center py-16">
               <p className="text-muted-foreground">
