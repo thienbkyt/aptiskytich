@@ -50,6 +50,8 @@ const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) =
           timeLeft={timeLeft}
           totalTime={data.speakTime}
           label="Your Opinion"
+          micError={micError}
+          isRequestingMic={isRequestingMic}
         />
       )}
     </div>

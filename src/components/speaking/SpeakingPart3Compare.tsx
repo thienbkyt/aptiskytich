@@ -47,6 +47,8 @@ const SpeakingPart3Compare = ({ data, recording, onRecordingComplete }: Props) =
           timeLeft={timeLeft}
           totalTime={data.speakTime}
           label="Your Comparison"
+          micError={micError}
+          isRequestingMic={isRequestingMic}
         />
       )}
     </div>

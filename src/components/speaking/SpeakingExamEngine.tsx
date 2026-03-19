@@ -159,6 +159,9 @@ const SpeakingExamEngine = ({
           sections={sections}
           description={`Bài luyện tập: ${testTitle}. Bạn cần cho phép trình duyệt truy cập microphone để ghi âm.`}
         />
+        <div className="max-w-2xl mx-auto w-full">
+          <SpeakingMicCheck />
+        </div>
       </div>
     );
   }
