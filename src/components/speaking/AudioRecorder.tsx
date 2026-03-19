@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Mic, MicOff, Square, CircleDot } from "lucide-react";
+import { Mic, Square, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
 
 interface AudioRecorderProps {
@@ -12,6 +12,8 @@ interface AudioRecorderProps {
   timeLeft: number;
   totalTime: number;
   label?: string;
+  micError?: string | null;
+  isRequestingMic?: boolean;
 }
 
 const AudioRecorder = ({
@@ -23,6 +25,8 @@ const AudioRecorder = ({
   timeLeft,
   totalTime,
   label = "Ghi âm",
+  micError,
+  isRequestingMic,
 }: AudioRecorderProps) => {
   const progress = totalTime > 0 ? ((totalTime - timeLeft) / totalTime) * 100 : 0;
 
@@ -53,17 +57,41 @@ const AudioRecorder = ({
         />
       </div>
 
+      {/* Mic error */}
+      {micError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="text-xs">{micError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Recording controls */}
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex flex-col items-center gap-3">
         {!isRecording && !audioUrl && (
-          <Button
-            onClick={onStartRecording}
-            disabled={disabled}
-            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground gap-2 px-6"
-          >
-            <Mic className="w-4 h-4" />
-            Bắt đầu ghi âm
-          </Button>
+          <>
+            {isRequestingMic ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Đang yêu cầu quyền microphone...</span>
+              </div>
+            ) : (
+              <>
+                <Button
+                  onClick={onStartRecording}
+                  disabled={disabled}
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground gap-2 px-6"
+                >
+                  <Mic className="w-4 h-4" />
+                  Bắt đầu ghi âm
+                </Button>
+                {!micError && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Nhấn nút và cho phép truy cập microphone khi trình duyệt yêu cầu
+                  </p>
+                )}
+              </>
+            )}
+          </>
         )}
 
         {isRecording && (
