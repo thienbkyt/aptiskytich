@@ -236,7 +236,35 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
     const { user } = useAuth();
     const [addOpen, setAddOpen] = useState(false);
     const [adding, setAdding] = useState(false);
+    const [userLists, setUserLists] = useState<{ id: string; name: string }[]>([]);
+    const [listsLoaded, setListsLoaded] = useState(false);
+    const [creatingNew, setCreatingNew] = useState(false);
+    const [newListName, setNewListName] = useState("");
     const popupWidth = 360;
+
+    // Fetch user's vocab lists when dropdown opens
+    useEffect(() => {
+      if (!addOpen || !user || listsLoaded) return;
+      (async () => {
+        const { data } = await supabase
+          .from("vocab_lists")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        if (data) setUserLists(data as any);
+        setListsLoaded(true);
+      })();
+    }, [addOpen, user, listsLoaded]);
+
+    // Reset state when popup hides
+    useEffect(() => {
+      if (!visible) {
+        setAddOpen(false);
+        setListsLoaded(false);
+        setCreatingNew(false);
+        setNewListName("");
+      }
+    }, [visible]);
 
     // Clamp x to viewport
     const clampedX = Math.max(
