@@ -138,6 +138,7 @@ const SkillPractice = () => {
                         <Button
                           size="sm"
                           className="flex-1 gap-1.5 bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"
+                          onClick={() => navigate(`/vocabulary/${set.id}`)}
                         >
                           <Play className="w-3.5 h-3.5" /> Luyện tập
                         </Button>
