@@ -484,6 +484,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vocab_items: {
+        Row: {
+          created_at: string
+          id: string
+          last_reviewed_at: string | null
+          review_count: number
+          status: string
+          updated_at: string
+          user_id: string
+          vocab_set_id: string
+          word: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_reviewed_at?: string | null
+          review_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          vocab_set_id: string
+          word: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_reviewed_at?: string | null
+          review_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vocab_set_id?: string
+          word?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

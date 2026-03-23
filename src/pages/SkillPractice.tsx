@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, Navigate } from "react-router-dom";
+import { useLocation, Navigate, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -21,18 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-/* ───── mock data ───── */
-const VOCAB_SETS = [
-  { id: "1", group: "APTIS GENERAL", title: "Test 1 – Animals & Nature", words: 30 },
-  { id: "2", group: "APTIS GENERAL", title: "Test 2 – Travel & Tourism", words: 28 },
-  { id: "3", group: "APTIS GENERAL", title: "Test 3 – Health & Lifestyle", words: 32 },
-  { id: "4", group: "APTIS GENERAL", title: "Test 4 – Education & Learning", words: 25 },
-  { id: "5", group: "APTIS GENERAL", title: "Test 5 – Technology & Media", words: 30 },
-  { id: "6", group: "APTIS GENERAL", title: "Test 6 – Work & Career", words: 27 },
-  { id: "7", group: "APTIS ADVANCED", title: "Test 7 – Environment & Society", words: 35 },
-  { id: "8", group: "APTIS ADVANCED", title: "Test 8 – Culture & Arts", words: 30 },
-  { id: "9", group: "APTIS ADVANCED", title: "Test 9 – Science & Innovation", words: 33 },
-];
+import { VOCAB_SETS } from "@/data/vocabSets";
 
 /* ───── colour helpers (teal / green) ───── */
 const TEAL = {
@@ -45,6 +34,7 @@ const TEAL = {
 
 const SkillPractice = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const skill = location.pathname.replace("/", "");
   const [search, setSearch] = useState("");
 
@@ -135,7 +125,7 @@ const SkillPractice = () => {
                         {set.title}
                       </h3>
                       <span className="text-sm text-muted-foreground">
-                        {set.words} từ vựng
+                        {set.words.length} từ vựng
                       </span>
                       <div className="flex gap-2 mt-auto pt-2">
                         <Button
@@ -148,6 +138,7 @@ const SkillPractice = () => {
                         <Button
                           size="sm"
                           className="flex-1 gap-1.5 bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"
+                          onClick={() => navigate(`/vocabulary/${set.id}`)}
                         >
                           <Play className="w-3.5 h-3.5" /> Luyện tập
                         </Button>

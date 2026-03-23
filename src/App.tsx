@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import SkillPractice from "./pages/SkillPractice";
+import VocabStudy from "./pages/VocabStudy";
 import Speaking from "./pages/Speaking";
 import Writing from "./pages/Writing";
 import Listening from "./pages/Listening";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/speaking" element={<Speaking />} />
             <Route path="/writing" element={<Writing />} />
             <Route path="/vocabulary" element={<SkillPractice />} />
+            <Route path="/vocabulary/:id" element={<VocabStudy />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
