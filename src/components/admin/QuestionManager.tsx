@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Pencil, Trash2, Save, X, ArrowLeft, Upload, Headphones, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { resolveAudioUrl } from "@/lib/audioUrl";
 
 interface Question {
   id: string;
