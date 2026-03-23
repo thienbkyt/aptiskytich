@@ -512,6 +512,30 @@ const VocabListDetail = () => {
         </div>
       )}
 
+      {/* ═══ Delete Confirmation Dialog ═══ */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa từ "{deleteTarget?.word}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Từ này sẽ bị xóa khỏi danh sách. Bạn không thể hoàn tác thao tác này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget) deleteWord(deleteTarget.id);
+                setDeleteTarget(null);
+              }}
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Footer />
     </div>
   );
