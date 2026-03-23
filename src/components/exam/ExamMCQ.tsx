@@ -50,7 +50,16 @@ const ExamMCQ = ({
   sections = [],
 }: ExamMCQProps) => {
   const [bookmarked, setBookmarked] = useState(false);
+  const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
   const q = questions[currentIndex];
+
+  useEffect(() => {
+    setSignedAudioUrl(null);
+    if (q?.audio_url) {
+      resolveAudioUrl(q.audio_url).then(setSignedAudioUrl);
+    }
+  }, [q?.audio_url, currentIndex]);
+
   if (!q) return null;
 
   const selected = answers[currentIndex];
@@ -86,8 +95,8 @@ const ExamMCQ = ({
       </div>
 
       {/* Audio player for listening (max 2 plays) */}
-      {q.audio_url && (
-        <LimitedAudioPlayer src={q.audio_url} maxPlays={2} questionKey={currentIndex} />
+      {signedAudioUrl && (
+        <LimitedAudioPlayer src={signedAudioUrl} maxPlays={2} questionKey={currentIndex} />
       )}
 
       {/* Question */}

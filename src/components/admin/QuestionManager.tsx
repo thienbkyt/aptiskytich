@@ -138,8 +138,8 @@ const QuestionManager = ({ testId, testTitle, testSkill, onBack }: QuestionManag
       const fileName = `${Date.now()}_${file.name}`;
       const { error } = await supabase.storage.from("audio").upload(fileName, file);
       if (error) { toast({ title: "Lỗi upload", description: error.message, variant: "destructive" }); return; }
-      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
-      setForm((prev) => ({ ...prev, audio_url: urlData.publicUrl }));
+      // Store just the file path, not the full public URL
+      setForm((prev) => ({ ...prev, audio_url: fileName }));
       toast({ title: "Đã upload audio!" });
     };
     input.click();
