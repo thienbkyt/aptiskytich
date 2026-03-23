@@ -290,8 +290,9 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
     const spaceBelow = window.innerHeight - (position.y - window.scrollY);
     const showAbove = spaceBelow < 350;
 
-    const addToSet = async (setId: string) => {
+    const addToSet = async (setId: string, listName: string) => {
       if (!user || !result) return;
+      if (savedListIds.has(setId)) return; // already saved
       setAdding(true);
       const { error: dbError } = await supabase.from("vocab_items").upsert(
         {
@@ -299,13 +300,18 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
           word: result.word,
           vocab_set_id: setId,
           status: "new",
+          phonetic: result.phonetic || "",
+          meaning: result.meanings.map((m) => m.definition_vi).join("; ") || "",
+          example_en: result.examples[0]?.en || "",
+          example_vi: result.examples[0]?.vi || "",
+          word_family: result.wordFamily as any,
         },
         { onConflict: "user_id,word,vocab_set_id" }
       );
       setAdding(false);
-      setAddOpen(false);
       if (!dbError) {
-        toast({ title: `Đã thêm "${result.word}" vào kho từ vựng ✓` });
+        setSavedListIds((prev) => new Set(prev).add(setId));
+        toast({ title: `Đã lưu vào "${listName}" thành công ✓` });
       } else {
         toast({ title: "Lỗi khi thêm từ", variant: "destructive" });
       }
