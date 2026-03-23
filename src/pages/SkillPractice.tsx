@@ -113,6 +113,16 @@ const SkillPractice = () => {
     fetchAll();
   }, [user]);
 
+  if (skill !== "vocabulary") {
+    return <Navigate to="/" replace />;
+  }
+
+  const filtered = VOCAB_SETS.filter(
+    (s) =>
+      s.title.toLowerCase().includes(search.toLowerCase()) ||
+      s.group.toLowerCase().includes(search.toLowerCase()),
+  );
+
   const handleCreateList = async () => {
     if (!user || !newName.trim()) return;
     setCreating(true);
