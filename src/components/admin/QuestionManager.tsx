@@ -45,6 +45,15 @@ const QuestionManager = ({ testId, testTitle, testSkill, onBack }: QuestionManag
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (form.audio_url) {
+      resolveAudioUrl(form.audio_url).then(setPreviewAudioUrl);
+    } else {
+      setPreviewAudioUrl(null);
+    }
+  }, [form.audio_url]);
 
   useEffect(() => {
     fetchQuestions();
