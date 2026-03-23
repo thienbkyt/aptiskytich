@@ -584,20 +584,27 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
                         </p>
                       )}
 
-                      {listsLoaded && userLists.map((list) => (
-                        <button
-                          key={list.id}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center justify-between gap-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToSet(list.id);
-                          }}
-                          disabled={adding}
-                        >
-                          <span className="truncate">{list.name}</span>
-                          <Plus className="w-3.5 h-3.5 text-[hsl(170,55%,40%)] shrink-0" />
-                        </button>
-                      ))}
+                      {listsLoaded && userLists.map((list) => {
+                        const isSaved = savedListIds.has(list.id);
+                        return (
+                          <button
+                            key={list.id}
+                            className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between gap-2 ${isSaved ? "opacity-60 cursor-default" : "hover:bg-muted"}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isSaved) addToSet(list.id, list.name);
+                            }}
+                            disabled={adding || isSaved}
+                          >
+                            <span className="truncate">{list.name}</span>
+                            {isSaved ? (
+                              <span className="text-[10px] text-primary font-medium shrink-0">Đã lưu</span>
+                            ) : (
+                              <Plus className="w-3.5 h-3.5 text-[hsl(170,55%,40%)] shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
 
                       {/* Create new list */}
                       {creatingNew ? (
