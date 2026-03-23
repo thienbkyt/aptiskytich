@@ -1,31 +1,35 @@
 
 
-## Cải thiện UX ghi âm Speaking
+# Thiết kế lại trang Học Từ Vựng
 
-### Vấn đề hiện tại
-- Nút "Bắt đầu ghi âm" có hiển thị nhưng thiếu hướng dẫn rõ ràng cho user
-- Khi mic bị chặn hoặc lỗi, không có thông báo nào cho user biết
-- Không có bước kiểm tra mic trước khi bắt đầu bài thi
-- Trong preview iframe, microphone có thể bị chặn mà user không biết
+## Tổng quan
+Xây dựng lại trang `/vocabulary` (SkillPractice) thành một trang học từ vựng hoàn chỉnh với 2 tab chính, lấy cảm hứng từ hình ảnh tham khảo.
 
-### Plan
+## Cấu trúc
 
-**1. Thêm trạng thái lỗi microphone trong `useAudioRecording`**
-- Thêm state `micError` để track khi `getUserMedia` thất bại
-- Return `micError` từ hook để component có thể hiển thị thông báo
+### Layout chính
+- Header với tiêu đề "Học từ vựng Aptis"
+- 2 tab lớn: **"Từ vựng bài thi Aptis"** | **"Kho từ vựng của tôi"**
 
-**2. Cải thiện `AudioRecorder` UI**
-- Hiển thị thông báo lỗi khi mic bị từ chối (alert đỏ với hướng dẫn cách bật lại)
-- Thêm text hướng dẫn nhỏ bên dưới nút ghi âm: "Nhấn nút và cho phép truy cập microphone khi trình duyệt yêu cầu"
-- Hiển thị trạng thái "Đang yêu cầu quyền mic..." khi đang chờ permission
+### Tab 1: Từ vựng bài thi Aptis
+- Grid 3 cột hiển thị các card bộ từ vựng theo đề thi
+- Mỗi card gồm: Badge nhóm (VD: "APTIS GENERAL"), tên bộ từ (VD: "Test 1 - Animals & Nature"), số lượng từ, 2 nút "Xem nhanh" và "Luyện tập"
+- Dữ liệu tĩnh ban đầu (mock data) với ~9 bộ từ vựng theo chủ đề Aptis
+- Search bar để tìm kiếm bộ từ
 
-**3. Thêm bước kiểm tra mic trong `ExamInstructions` cho Speaking**
-- Thêm nút "Kiểm tra microphone" trên trang hướng dẫn trước khi bắt đầu
-- Nếu mic hoạt động: hiển thị checkmark xanh "Microphone sẵn sàng"
-- Nếu mic lỗi: hiển thị cảnh báo đỏ với hướng dẫn
+### Tab 2: Kho từ vựng của tôi
+- Dashboard cá nhân với 3 stat cards: "Từ đã thuộc", "Từ cần ôn", "Tổng từ đã học"
+- 2 nút game lớn dẫn đến: **Flashcards** và **Matching** (hiện tại hiển thị "Sắp ra mắt")
+- Danh sách từ vựng đã lưu (placeholder)
 
-### Files cần chỉnh sửa
-- `src/hooks/useAudioRecording.tsx` — thêm `micError` state và `micPermissionStatus`
-- `src/components/speaking/AudioRecorder.tsx` — thêm error UI và hướng dẫn
-- `src/components/speaking/SpeakingExamEngine.tsx` — thêm mic check ở trang instructions
+## Files cần thay đổi
+
+1. **`src/pages/SkillPractice.tsx`** — Viết lại hoàn toàn thành trang Vocabulary với 2 tab, header, search, grid cards, và dashboard cá nhân
+
+## Chi tiết kỹ thuật
+- Sử dụng Tabs component có sẵn từ Radix UI
+- Mock data tĩnh cho các bộ từ vựng (có thể kết nối DB sau)
+- Stat cards dùng giá trị placeholder (0) vì chưa có bảng vocabulary trong DB
+- Màu chủ đạo: teal/green cho vocabulary (phân biệt với các skill khác)
+- Responsive: 3 cột desktop, 2 cột tablet, 1 cột mobile
 
