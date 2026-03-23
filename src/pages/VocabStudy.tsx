@@ -19,7 +19,6 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
-/* ─── TTS helper using Web Speech API ─── */
 function speak(text: string, lang: "en" | "vi") {
   if (!("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
@@ -38,15 +37,9 @@ const VocabStudy = () => {
   const [loadingStatus, setLoadingStatus] = useState(true);
 
   const set = VOCAB_SETS.find((s) => s.id === id);
-  if (!set) return <Navigate to="/vocabulary" replace />;
 
-  const word = set.words[currentIndex];
-  const total = set.words.length;
-  const progressPct = ((currentIndex + 1) / total) * 100;
-
-  /* ─── load user progress ─── */
   useEffect(() => {
-    if (!user) {
+    if (!user || !set) {
       setLoadingStatus(false);
       return;
     }
@@ -60,9 +53,8 @@ const VocabStudy = () => {
       if (data) setLearnedWords(new Set(data.map((d: any) => d.word)));
       setLoadingStatus(false);
     })();
-  }, [user, id]);
+  }, [user, id, set]);
 
-  /* ─── mark word as learned ─── */
   const markLearned = useCallback(
     async (w: VocabWord) => {
       if (!user) {
@@ -88,41 +80,36 @@ const VocabStudy = () => {
     [user, id],
   );
 
+  if (!set) return <Navigate to="/vocabulary" replace />;
+
+  const word = set.words[currentIndex];
+  const total = set.words.length;
+  const progressPct = ((currentIndex + 1) / total) * 100;
+  const isLearned = learnedWords.has(word.word);
+
   const prev = () => setCurrentIndex((i) => Math.max(0, i - 1));
   const next = () => setCurrentIndex((i) => Math.min(total - 1, i + 1));
-
-  const isLearned = learnedWords.has(word.word);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 pt-16">
-        {/* Header */}
         <div className="border-b border-border bg-card">
           <div className="section-container py-4 flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/vocabulary")}
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate("/vocabulary")}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground">{set.group}</p>
-              <h1 className="font-heading font-bold text-lg text-foreground truncate">
-                {set.title}
-              </h1>
+              <h1 className="font-heading font-bold text-lg text-foreground truncate">{set.title}</h1>
             </div>
-            <Badge variant="outline" className="shrink-0">
-              {currentIndex + 1} / {total}
-            </Badge>
+            <Badge variant="outline" className="shrink-0">{currentIndex + 1} / {total}</Badge>
           </div>
           <div className="section-container pb-3">
             <Progress value={progressPct} className="h-2" />
           </div>
         </div>
 
-        {/* Word card */}
         <div className="section-container py-8 max-w-2xl mx-auto">
           <Card className="border border-border overflow-hidden">
             <CardContent className="p-0">
@@ -130,68 +117,31 @@ const VocabStudy = () => {
               <div className="p-6 pb-4 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-3xl font-heading font-bold text-foreground">
-                      {word.word}
-                    </h2>
-                    <p className="text-muted-foreground text-sm mt-1">
-                      {word.phonetic}
-                    </p>
+                    <h2 className="text-3xl font-heading font-bold text-foreground">{word.word}</h2>
+                    <p className="text-muted-foreground text-sm mt-1">{word.phonetic}</p>
                   </div>
-                  <div className="flex gap-1 shrink-0 mt-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9"
-                      onClick={() => speak(word.word, "en")}
-                      title="Nghe phát âm tiếng Anh"
-                    >
-                      <Volume2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 mt-1" onClick={() => speak(word.word, "en")} title="Nghe phát âm">
+                    <Volume2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <p className="mt-3 text-lg font-semibold text-[hsl(170,55%,35%)] dark:text-[hsl(170,55%,55%)]">
-                  {word.meaning}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-1 text-xs gap-1 text-muted-foreground h-7 px-2"
-                  onClick={() => speak(word.meaning, "vi")}
-                >
+                <p className="mt-3 text-lg font-semibold text-[hsl(170,55%,35%)] dark:text-[hsl(170,55%,55%)]">{word.meaning}</p>
+                <Button variant="ghost" size="sm" className="mt-1 text-xs gap-1 text-muted-foreground h-7 px-2" onClick={() => speak(word.meaning, "vi")}>
                   <Volume2 className="w-3 h-3" /> Nghe nghĩa
                 </Button>
               </div>
 
               {/* Row 2 — Example */}
               <div className="p-6 pb-4 border-b border-border">
-                <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2">
-                  Ví dụ minh họa
-                </p>
+                <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2">Ví dụ minh họa</p>
                 <div className="flex items-start gap-2">
-                  <p className="text-foreground leading-relaxed flex-1 italic">
-                    "{word.example}"
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => speak(word.example, "en")}
-                    title="Nghe ví dụ tiếng Anh"
-                  >
+                  <p className="text-foreground leading-relaxed flex-1 italic">"{word.example}"</p>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => speak(word.example, "en")} title="Nghe ví dụ">
                     <Volume2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
                 <div className="flex items-start gap-2 mt-2">
-                  <p className="text-muted-foreground text-sm flex-1">
-                    {word.exampleVi}
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => speak(word.exampleVi, "vi")}
-                    title="Nghe nghĩa tiếng Việt"
-                  >
+                  <p className="text-muted-foreground text-sm flex-1">{word.exampleVi}</p>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => speak(word.exampleVi, "vi")} title="Nghe nghĩa">
                     <Volume2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -199,20 +149,12 @@ const VocabStudy = () => {
 
               {/* Row 3 — Word family */}
               <div className="p-6">
-                <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-3">
-                  Word Family
-                </p>
+                <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-3">Word Family</p>
                 {word.wordFamily.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {word.wordFamily.map((wf) => (
-                      <Badge
-                        key={wf}
-                        variant="secondary"
-                        className="text-sm font-normal cursor-pointer hover:bg-accent"
-                        onClick={() => speak(wf.split(" ")[0], "en")}
-                      >
-                        <Volume2 className="w-3 h-3 mr-1.5 opacity-50" />
-                        {wf}
+                      <Badge key={wf} variant="secondary" className="text-sm font-normal cursor-pointer hover:bg-accent" onClick={() => speak(wf.split(" ")[0], "en")}>
+                        <Volume2 className="w-3 h-3 mr-1.5 opacity-50" />{wf}
                       </Badge>
                     ))}
                   </div>
@@ -223,44 +165,20 @@ const VocabStudy = () => {
             </CardContent>
           </Card>
 
-          {/* Action buttons */}
+          {/* Actions */}
           <div className="flex items-center justify-between mt-6 gap-3">
-            <Button
-              variant="outline"
-              onClick={prev}
-              disabled={currentIndex === 0}
-              className="gap-1.5"
-            >
+            <Button variant="outline" onClick={prev} disabled={currentIndex === 0} className="gap-1.5">
               <ArrowLeft className="w-4 h-4" /> Trước
             </Button>
-
             <Button
               variant={isLearned ? "secondary" : "default"}
               onClick={() => markLearned(word)}
               disabled={isLearned}
-              className={
-                isLearned
-                  ? ""
-                  : "bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"
-              }
+              className={isLearned ? "" : "bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"}
             >
-              {isLearned ? (
-                <>
-                  <Check className="w-4 h-4 mr-1.5" /> Đã thuộc
-                </>
-              ) : (
-                <>
-                  <BookOpen className="w-4 h-4 mr-1.5" /> Đánh dấu đã thuộc
-                </>
-              )}
+              {isLearned ? <><Check className="w-4 h-4 mr-1.5" /> Đã thuộc</> : <><BookOpen className="w-4 h-4 mr-1.5" /> Đánh dấu đã thuộc</>}
             </Button>
-
-            <Button
-              variant="outline"
-              onClick={next}
-              disabled={currentIndex === total - 1}
-              className="gap-1.5"
-            >
+            <Button variant="outline" onClick={next} disabled={currentIndex === total - 1} className="gap-1.5">
               Tiếp <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -268,18 +186,7 @@ const VocabStudy = () => {
           {/* Word dots */}
           <div className="flex justify-center flex-wrap gap-1.5 mt-6">
             {set.words.map((w, i) => (
-              <button
-                key={w.word}
-                onClick={() => setCurrentIndex(i)}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  i === currentIndex
-                    ? "bg-[hsl(170,55%,40%)] scale-125"
-                    : learnedWords.has(w.word)
-                      ? "bg-[hsl(142,60%,50%)]"
-                      : "bg-muted-foreground/25"
-                }`}
-                title={w.word}
-              />
+              <button key={w.word} onClick={() => setCurrentIndex(i)} className={`w-3 h-3 rounded-full transition-all ${i === currentIndex ? "bg-[hsl(170,55%,40%)] scale-125" : learnedWords.has(w.word) ? "bg-[hsl(142,60%,50%)]" : "bg-muted-foreground/25"}`} title={w.word} />
             ))}
           </div>
         </div>
