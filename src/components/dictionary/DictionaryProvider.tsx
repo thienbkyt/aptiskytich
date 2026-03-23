@@ -240,21 +240,34 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
     const [listsLoaded, setListsLoaded] = useState(false);
     const [creatingNew, setCreatingNew] = useState(false);
     const [newListName, setNewListName] = useState("");
+    const [savedListIds, setSavedListIds] = useState<Set<string>>(new Set());
     const popupWidth = 360;
 
-    // Fetch user's vocab lists when dropdown opens
+    // Fetch user's vocab lists + check which already contain this word
     useEffect(() => {
       if (!addOpen || !user || listsLoaded) return;
       (async () => {
-        const { data } = await supabase
-          .from("vocab_lists")
-          .select("id, name")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-        if (data) setUserLists(data as any);
+        const [listsRes, itemsRes] = await Promise.all([
+          supabase
+            .from("vocab_lists")
+            .select("id, name")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false }),
+          result
+            ? supabase
+                .from("vocab_items")
+                .select("vocab_set_id")
+                .eq("user_id", user.id)
+                .eq("word", result.word)
+            : Promise.resolve({ data: [] }),
+        ]);
+        if (listsRes.data) setUserLists(listsRes.data as any);
+        if (itemsRes.data) {
+          setSavedListIds(new Set((itemsRes.data as any[]).map((i: any) => i.vocab_set_id)));
+        }
         setListsLoaded(true);
       })();
-    }, [addOpen, user, listsLoaded]);
+    }, [addOpen, user, listsLoaded, result]);
 
     // Reset state when popup hides
     useEffect(() => {
