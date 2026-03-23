@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
 import Index from "./pages/Index";
 import MockTest from "./pages/MockTest";
 import Practice from "./pages/Practice";
