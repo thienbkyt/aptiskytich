@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/speaking" element={<Speaking />} />
             <Route path="/writing" element={<Writing />} />
             <Route path="/vocabulary" element={<SkillPractice />} />
+            <Route path="/vocabulary/:id" element={<VocabStudy />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

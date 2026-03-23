@@ -34,6 +34,7 @@ const TEAL = {
 
 const SkillPractice = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const skill = location.pathname.replace("/", "");
   const [search, setSearch] = useState("");
 
