@@ -20,8 +20,9 @@ import {
   Loader2,
   BookOpen,
   ChevronDown,
+  FolderPlus,
 } from "lucide-react";
-import { VOCAB_SETS } from "@/data/vocabSets";
+import { Input } from "@/components/ui/input";
 
 /* ─── Types ─── */
 interface DictMeaning {
