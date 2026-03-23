@@ -1,0 +1,560 @@
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
+import { createPortal } from "react-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Volume2,
+  X,
+  Plus,
+  Loader2,
+  BookOpen,
+  ChevronDown,
+} from "lucide-react";
+import { VOCAB_SETS } from "@/data/vocabSets";
+
+/* ─── Types ─── */
+interface DictMeaning {
+  partOfSpeech: string;
+  definition_vi: string;
+  definition_en: string;
+}
+interface DictExample {
+  en: string;
+  vi: string;
+}
+interface DictWordFamily {
+  word: string;
+  partOfSpeech: string;
+}
+interface DictResult {
+  word: string;
+  phonetic: string;
+  meanings: DictMeaning[];
+  examples: DictExample[];
+  synonyms: string[];
+  wordFamily: DictWordFamily[];
+}
+
+interface DictionaryContextType {
+  lookup: (word: string, rect: DOMRect) => void;
+  close: () => void;
+}
+
+const DictionaryContext = createContext<DictionaryContextType | null>(null);
+export const useDictionary = () => useContext(DictionaryContext);
+
+/* ─── TTS ─── */
+function speak(text: string, lang: "en" | "vi") {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang === "en" ? "en-US" : "vi-VN";
+  u.rate = 0.9;
+  window.speechSynthesis.speak(u);
+}
+
+/* ─── English word regex ─── */
+const ENGLISH_WORD_RE = /^[a-zA-Z]{2,}$/;
+
+/* ══════════════════ Provider ══════════════════ */
+export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [result, setResult] = useState<DictResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [visible, setVisible] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const cacheRef = useRef<Map<string, DictResult>>(new Map());
+
+  const close = useCallback(() => {
+    setVisible(false);
+    setTimeout(() => {
+      setResult(null);
+      setPosition(null);
+      setError(null);
+    }, 200);
+  }, []);
+
+  const lookup = useCallback(
+    async (word: string, rect: DOMRect) => {
+      const clean = word.trim().toLowerCase();
+      if (!ENGLISH_WORD_RE.test(clean)) return;
+
+      // Position popup
+      const x = Math.min(
+        rect.left + rect.width / 2,
+        window.innerWidth - 200
+      );
+      const y = rect.bottom + window.scrollY + 8;
+      setPosition({ x, y });
+      setVisible(true);
+      setError(null);
+
+      // Check cache
+      if (cacheRef.current.has(clean)) {
+        setResult(cacheRef.current.get(clean)!);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setResult(null);
+
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke(
+          "dictionary-lookup",
+          { body: { word: clean } }
+        );
+        if (fnError) throw fnError;
+        if (data?.error) throw new Error(data.error);
+
+        cacheRef.current.set(clean, data as DictResult);
+        setResult(data as DictResult);
+      } catch (e: any) {
+        console.error("Dictionary lookup failed:", e);
+        setError("Không thể tra từ này. Thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  /* ─── Global click handler ─── */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      // If clicking inside popup, ignore
+      if (popupRef.current?.contains(e.target as Node)) return;
+
+      // If popup is visible and click is outside, close
+      if (visible) {
+        close();
+        return;
+      }
+
+      const target = e.target as HTMLElement;
+      // Skip buttons, inputs, interactive elements
+      if (
+        target.closest("button") ||
+        target.closest("input") ||
+        target.closest("textarea") ||
+        target.closest("a") ||
+        target.closest("[role='button']") ||
+        target.closest(".dictionary-popup")
+      )
+        return;
+
+      // Get word under cursor
+      const sel = window.getSelection();
+      if (!sel) return;
+
+      // Try to expand selection to word
+      const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+      if (!range) return;
+
+      // Expand to word boundaries
+      range.expand("word" as any);
+      const word = range.toString().trim();
+
+      if (ENGLISH_WORD_RE.test(word)) {
+        const rect = range.getBoundingClientRect();
+        lookup(word, rect);
+        // Prevent text selection
+        sel.removeAllRanges();
+      }
+    };
+
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [visible, lookup, close]);
+
+  /* ─── Escape key ─── */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && visible) close();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [visible, close]);
+
+  return (
+    <DictionaryContext.Provider value={{ lookup, close }}>
+      {children}
+      {position &&
+        createPortal(
+          <DictionaryPopup
+            ref={popupRef}
+            result={result}
+            loading={loading}
+            error={error}
+            position={position}
+            visible={visible}
+            onClose={close}
+          />,
+          document.body
+        )}
+    </DictionaryContext.Provider>
+  );
+};
+
+/* ══════════════════ Popup ══════════════════ */
+interface PopupProps {
+  result: DictResult | null;
+  loading: boolean;
+  error: string | null;
+  position: { x: number; y: number };
+  visible: boolean;
+  onClose: () => void;
+}
+
+const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
+  ({ result, loading, error, position, visible, onClose }, ref) => {
+    const { user } = useAuth();
+    const [addOpen, setAddOpen] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const popupWidth = 360;
+
+    // Clamp x to viewport
+    const clampedX = Math.max(
+      12,
+      Math.min(position.x - popupWidth / 2, window.innerWidth - popupWidth - 12)
+    );
+
+    // If popup would go below viewport, show above
+    const spaceBelow = window.innerHeight - (position.y - window.scrollY);
+    const showAbove = spaceBelow < 350;
+
+    const addToSet = async (setId: string) => {
+      if (!user || !result) return;
+      setAdding(true);
+      const { error: dbError } = await supabase.from("vocab_items").upsert(
+        {
+          user_id: user.id,
+          word: result.word,
+          vocab_set_id: setId,
+          status: "new",
+        },
+        { onConflict: "user_id,word,vocab_set_id" }
+      );
+      setAdding(false);
+      setAddOpen(false);
+      if (!dbError) {
+        toast({ title: `Đã thêm "${result.word}" vào kho từ vựng ✓` });
+      } else {
+        toast({ title: "Lỗi khi thêm từ", variant: "destructive" });
+      }
+    };
+
+    return (
+      <div
+        ref={ref}
+        className={`dictionary-popup fixed z-[9999] transition-all duration-200 ${
+          visible
+            ? "opacity-100 scale-100"
+            : "opacity-0 scale-95 pointer-events-none"
+        }`}
+        style={{
+          left: clampedX,
+          top: showAbove ? undefined : position.y,
+          bottom: showAbove
+            ? window.innerHeight - (position.y - window.scrollY) + 16
+            : undefined,
+          width: popupWidth,
+          transformOrigin: showAbove ? "bottom center" : "top center",
+        }}
+      >
+        <div className="bg-popover border border-border rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)] overflow-hidden">
+          {/* ── Loading state ── */}
+          {loading && (
+            <div className="p-8 flex flex-col items-center gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Đang tra từ…</p>
+            </div>
+          )}
+
+          {/* ── Error state ── */}
+          {error && !loading && (
+            <div className="p-6 text-center">
+              <p className="text-sm text-destructive">{error}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2"
+                onClick={onClose}
+              >
+                Đóng
+              </Button>
+            </div>
+          )}
+
+          {/* ── Result ── */}
+          {result && !loading && (
+            <>
+              {/* Header */}
+              <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-2 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-heading font-bold text-foreground">
+                      {result.word}
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        speak(result.word, "en");
+                      }}
+                    >
+                      <Volume2 className="w-4 h-4 text-primary" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {result.phonetic}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 -mr-1 -mt-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Tabs */}
+              <div className="px-4 pt-3 pb-2">
+                <Tabs defaultValue="meaning" className="w-full">
+                  <TabsList className="w-full h-8 p-0.5 bg-muted rounded-lg mb-2">
+                    <TabsTrigger
+                      value="meaning"
+                      className="flex-1 h-full text-xs rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    >
+                      Nghĩa
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="examples"
+                      className="flex-1 h-full text-xs rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    >
+                      Ví dụ
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="synonyms"
+                      className="flex-1 h-full text-xs rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    >
+                      Đồng nghĩa
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="family"
+                      className="flex-1 h-full text-xs rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                    >
+                      Họ từ
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Meanings */}
+                  <TabsContent value="meaning" className="mt-0 max-h-[180px] overflow-y-auto">
+                    <div className="space-y-2 py-1">
+                      {result.meanings.map((m, i) => (
+                        <div key={i}>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] mb-1"
+                          >
+                            {m.partOfSpeech}
+                          </Badge>
+                          <p className="text-sm font-medium text-foreground">
+                            {m.definition_vi}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {m.definition_en}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  {/* Examples */}
+                  <TabsContent value="examples" className="mt-0 max-h-[180px] overflow-y-auto">
+                    <div className="space-y-3 py-1">
+                      {result.examples.map((ex, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <div className="flex-1">
+                            <p className="text-sm text-foreground italic">
+                              "{ex.en}"
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {ex.vi}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              speak(ex.en, "en");
+                            }}
+                          >
+                            <Volume2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      {result.examples.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Không có ví dụ.
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  {/* Synonyms */}
+                  <TabsContent value="synonyms" className="mt-0 max-h-[180px] overflow-y-auto">
+                    <div className="flex flex-wrap gap-1.5 py-1">
+                      {result.synonyms.map((s) => (
+                        <Badge
+                          key={s}
+                          variant="secondary"
+                          className="text-xs font-normal cursor-pointer hover:bg-accent"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            speak(s, "en");
+                          }}
+                        >
+                          <Volume2 className="w-2.5 h-2.5 mr-1 opacity-50" />
+                          {s}
+                        </Badge>
+                      ))}
+                      {result.synonyms.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Không có từ đồng nghĩa.
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  {/* Word Family */}
+                  <TabsContent value="family" className="mt-0 max-h-[180px] overflow-y-auto">
+                    <div className="space-y-1.5 py-1">
+                      {result.wordFamily.map((wf, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-muted rounded-md px-2 py-1 -mx-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            speak(wf.word, "en");
+                          }}
+                        >
+                          <Volume2 className="w-3 h-3 text-muted-foreground opacity-50" />
+                          <span className="text-sm font-medium text-foreground">
+                            {wf.word}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] ml-auto"
+                          >
+                            {wf.partOfSpeech}
+                          </Badge>
+                        </div>
+                      ))}
+                      {result.wordFamily.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Không có họ từ.
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+
+              {/* Footer — Add to set */}
+              <div className="px-4 pb-4 pt-1 border-t border-border">
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAddOpen(!addOpen);
+                    }}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5" />
+                      Thêm vào học phần
+                    </span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform ${
+                        addOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </Button>
+
+                  {addOpen && (
+                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-popover border border-border rounded-lg shadow-lg max-h-[160px] overflow-y-auto z-10">
+                      {VOCAB_SETS.map((vs) => (
+                        <button
+                          key={vs.id}
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center justify-between gap-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToSet(vs.id);
+                          }}
+                          disabled={adding}
+                        >
+                          <span className="truncate">{vs.title}</span>
+                          <Plus className="w-3.5 h-3.5 text-[hsl(170,55%,40%)] shrink-0" />
+                        </button>
+                      ))}
+                      {user && (
+                        <button
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center justify-between gap-2 border-t border-border"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToSet("my-words");
+                          }}
+                          disabled={adding}
+                        >
+                          <span className="font-medium">Kho từ của tôi</span>
+                          <Plus className="w-3.5 h-3.5 text-[hsl(170,55%,40%)] shrink-0" />
+                        </button>
+                      )}
+                      {!user && (
+                        <p className="px-3 py-2 text-xs text-muted-foreground">
+                          Đăng nhập để lưu từ
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+);
+
+DictionaryPopup.displayName = "DictionaryPopup";
+
+export default DictionaryProvider;
