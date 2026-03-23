@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import SkillPractice from "./pages/SkillPractice";
 import VocabStudy from "./pages/VocabStudy";
+import VocabListDetail from "./pages/VocabListDetail";
 import Speaking from "./pages/Speaking";
 import Writing from "./pages/Writing";
 import Listening from "./pages/Listening";
