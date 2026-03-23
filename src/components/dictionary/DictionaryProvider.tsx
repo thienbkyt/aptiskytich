@@ -240,21 +240,34 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
     const [listsLoaded, setListsLoaded] = useState(false);
     const [creatingNew, setCreatingNew] = useState(false);
     const [newListName, setNewListName] = useState("");
+    const [savedListIds, setSavedListIds] = useState<Set<string>>(new Set());
     const popupWidth = 360;
 
-    // Fetch user's vocab lists when dropdown opens
+    // Fetch user's vocab lists + check which already contain this word
     useEffect(() => {
       if (!addOpen || !user || listsLoaded) return;
       (async () => {
-        const { data } = await supabase
-          .from("vocab_lists")
-          .select("id, name")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-        if (data) setUserLists(data as any);
+        const [listsRes, itemsRes] = await Promise.all([
+          supabase
+            .from("vocab_lists")
+            .select("id, name")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false }),
+          result
+            ? supabase
+                .from("vocab_items")
+                .select("vocab_set_id")
+                .eq("user_id", user.id)
+                .eq("word", result.word)
+            : Promise.resolve({ data: [] }),
+        ]);
+        if (listsRes.data) setUserLists(listsRes.data as any);
+        if (itemsRes.data) {
+          setSavedListIds(new Set((itemsRes.data as any[]).map((i: any) => i.vocab_set_id)));
+        }
         setListsLoaded(true);
       })();
-    }, [addOpen, user, listsLoaded]);
+    }, [addOpen, user, listsLoaded, result]);
 
     // Reset state when popup hides
     useEffect(() => {
@@ -263,6 +276,7 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
         setListsLoaded(false);
         setCreatingNew(false);
         setNewListName("");
+        setSavedListIds(new Set());
       }
     }, [visible]);
 
@@ -276,8 +290,9 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
     const spaceBelow = window.innerHeight - (position.y - window.scrollY);
     const showAbove = spaceBelow < 350;
 
-    const addToSet = async (setId: string) => {
+    const addToSet = async (setId: string, listName: string) => {
       if (!user || !result) return;
+      if (savedListIds.has(setId)) return; // already saved
       setAdding(true);
       const { error: dbError } = await supabase.from("vocab_items").upsert(
         {
@@ -285,13 +300,18 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
           word: result.word,
           vocab_set_id: setId,
           status: "new",
+          phonetic: result.phonetic || "",
+          meaning: result.meanings.map((m) => m.definition_vi).join("; ") || "",
+          example_en: result.examples[0]?.en || "",
+          example_vi: result.examples[0]?.vi || "",
+          word_family: result.wordFamily as any,
         },
         { onConflict: "user_id,word,vocab_set_id" }
       );
       setAdding(false);
-      setAddOpen(false);
       if (!dbError) {
-        toast({ title: `Đã thêm "${result.word}" vào kho từ vựng ✓` });
+        setSavedListIds((prev) => new Set(prev).add(setId));
+        toast({ title: `Đã lưu vào "${listName}" thành công ✓` });
       } else {
         toast({ title: "Lỗi khi thêm từ", variant: "destructive" });
       }
@@ -564,20 +584,27 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
                         </p>
                       )}
 
-                      {listsLoaded && userLists.map((list) => (
-                        <button
-                          key={list.id}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center justify-between gap-2"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToSet(list.id);
-                          }}
-                          disabled={adding}
-                        >
-                          <span className="truncate">{list.name}</span>
-                          <Plus className="w-3.5 h-3.5 text-[hsl(170,55%,40%)] shrink-0" />
-                        </button>
-                      ))}
+                      {listsLoaded && userLists.map((list) => {
+                        const isSaved = savedListIds.has(list.id);
+                        return (
+                          <button
+                            key={list.id}
+                            className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between gap-2 ${isSaved ? "opacity-60 cursor-default" : "hover:bg-muted"}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isSaved) addToSet(list.id, list.name);
+                            }}
+                            disabled={adding || isSaved}
+                          >
+                            <span className="truncate">{list.name}</span>
+                            {isSaved ? (
+                              <span className="text-[10px] text-primary font-medium shrink-0">Đã lưu</span>
+                            ) : (
+                              <Plus className="w-3.5 h-3.5 text-[hsl(170,55%,40%)] shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
 
                       {/* Create new list */}
                       {creatingNew ? (
@@ -602,17 +629,26 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
                                     .single();
                                   if (!dbErr && data) {
                                     setUserLists((prev) => [data as any, ...prev]);
-                                    // Also add the word to the new list
                                     if (result) {
                                       await supabase.from("vocab_items").upsert(
-                                        { user_id: user.id, word: result.word, vocab_set_id: (data as any).id, status: "new" },
+                                        {
+                                          user_id: user.id,
+                                          word: result.word,
+                                          vocab_set_id: (data as any).id,
+                                          status: "new",
+                                          phonetic: result.phonetic || "",
+                                          meaning: result.meanings.map((m) => m.definition_vi).join("; ") || "",
+                                          example_en: result.examples[0]?.en || "",
+                                          example_vi: result.examples[0]?.vi || "",
+                                          word_family: result.wordFamily as any,
+                                        },
                                         { onConflict: "user_id,word,vocab_set_id" }
                                       );
+                                      setSavedListIds((prev) => new Set(prev).add((data as any).id));
                                     }
-                                    toast({ title: `Đã tạo "${data.name}" và thêm từ ✓` });
+                                    toast({ title: `Đã lưu vào "${data.name}" thành công ✓` });
                                     setCreatingNew(false);
                                     setNewListName("");
-                                    setAddOpen(false);
                                   } else {
                                     toast({ title: "Lỗi khi tạo danh sách", variant: "destructive" });
                                   }
