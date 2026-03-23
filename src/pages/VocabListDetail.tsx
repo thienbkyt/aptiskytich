@@ -353,7 +353,7 @@ const VocabListDetail = () => {
                           className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteWord(item.id);
+                            setDeleteTarget({ id: item.id, word: item.word });
                           }}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
