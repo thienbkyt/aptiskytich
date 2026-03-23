@@ -487,42 +487,58 @@ export type Database = {
       vocab_items: {
         Row: {
           created_at: string
+          example_en: string | null
+          example_vi: string | null
           id: string
           last_reviewed_at: string | null
+          meaning: string | null
+          phonetic: string | null
           review_count: number
           status: string
           updated_at: string
           user_id: string
           vocab_set_id: string
           word: string
+          word_family: Json | null
         }
         Insert: {
           created_at?: string
+          example_en?: string | null
+          example_vi?: string | null
           id?: string
           last_reviewed_at?: string | null
+          meaning?: string | null
+          phonetic?: string | null
           review_count?: number
           status?: string
           updated_at?: string
           user_id: string
           vocab_set_id: string
           word: string
+          word_family?: Json | null
         }
         Update: {
           created_at?: string
+          example_en?: string | null
+          example_vi?: string | null
           id?: string
           last_reviewed_at?: string | null
+          meaning?: string | null
+          phonetic?: string | null
           review_count?: number
           status?: string
           updated_at?: string
           user_id?: string
           vocab_set_id?: string
           word?: string
+          word_family?: Json | null
         }
         Relationships: []
       }
       vocab_lists: {
         Row: {
           created_at: string
+          description: string | null
           id: string
           name: string
           updated_at: string
@@ -530,6 +546,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string | null
           id?: string
           name: string
           updated_at?: string
@@ -537,6 +554,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
           updated_at?: string

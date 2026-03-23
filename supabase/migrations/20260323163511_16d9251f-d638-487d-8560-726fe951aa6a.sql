@@ -1,0 +1,9 @@
+
+ALTER TABLE public.vocab_lists ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+
+ALTER TABLE public.vocab_items
+  ADD COLUMN IF NOT EXISTS phonetic TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS meaning TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS example_en TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS example_vi TEXT DEFAULT '',
+  ADD COLUMN IF NOT EXISTS word_family JSONB DEFAULT '[]'::jsonb;
