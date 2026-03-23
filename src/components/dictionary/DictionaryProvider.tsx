@@ -163,18 +163,26 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       const sel = window.getSelection();
       if (!sel) return;
 
-      // Try to expand selection to word
-      const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+      const range = document.caretRangeFromPoint?.(e.clientX, e.clientY);
       if (!range) return;
 
-      // Expand to word boundaries
-      range.expand("word" as any);
-      const word = range.toString().trim();
+      // Expand range to word boundaries manually
+      const textNode = range.startContainer;
+      if (textNode.nodeType !== Node.TEXT_NODE) return;
+      const text = textNode.textContent || "";
+      let start = range.startOffset;
+      let end = range.startOffset;
+
+      while (start > 0 && /[a-zA-Z]/.test(text[start - 1])) start--;
+      while (end < text.length && /[a-zA-Z]/.test(text[end])) end++;
+
+      const word = text.slice(start, end).trim();
 
       if (ENGLISH_WORD_RE.test(word)) {
+        range.setStart(textNode, start);
+        range.setEnd(textNode, end);
         const rect = range.getBoundingClientRect();
         lookup(word, rect);
-        // Prevent text selection
         sel.removeAllRanges();
       }
     };
