@@ -175,6 +175,104 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_questions: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string
+          exam_set_id: string
+          explanation: string | null
+          extra_data: Json | null
+          id: string
+          image_url: string | null
+          options: Json | null
+          order_index: number
+          question_text: string
+          question_type: string
+          response_time: number | null
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string
+          exam_set_id: string
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number
+          question_text?: string
+          question_type?: string
+          response_time?: number | null
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string
+          exam_set_id?: string
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number
+          question_text?: string
+          question_type?: string
+          response_time?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_questions_exam_set_id_fkey"
+            columns: ["exam_set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          exam_type: string
+          id: string
+          is_published: boolean
+          part: string
+          skill: string
+          time_limit: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          exam_type?: string
+          id?: string
+          is_published?: boolean
+          part: string
+          skill: string
+          time_limit?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          exam_type?: string
+          id?: string
+          is_published?: boolean
+          part?: string
+          skill?: string
+          time_limit?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       learning_streaks: {
         Row: {
           created_at: string
