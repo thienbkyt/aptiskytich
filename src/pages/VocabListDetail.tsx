@@ -22,6 +22,16 @@ import {
   Trash2,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /* ─── TTS helpers ─── */
 function speak(text: string, lang: "en" | "vi") {
@@ -75,6 +85,9 @@ const VocabListDetail = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const abortRef = useRef(false);
+
+  /* ── Delete confirmation state ── */
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; word: string } | null>(null);
 
   /* ── Drag state ── */
   const dragIndexRef = useRef<number | null>(null);
@@ -340,7 +353,7 @@ const VocabListDetail = () => {
                           className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteWord(item.id);
+                            setDeleteTarget({ id: item.id, word: item.word });
                           }}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -498,6 +511,30 @@ const VocabListDetail = () => {
           </div>
         </div>
       )}
+
+      {/* ═══ Delete Confirmation Dialog ═══ */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa từ "{deleteTarget?.word}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Từ này sẽ bị xóa khỏi danh sách. Bạn không thể hoàn tác thao tác này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget) deleteWord(deleteTarget.id);
+                setDeleteTarget(null);
+              }}
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>
