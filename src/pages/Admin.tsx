@@ -27,7 +27,14 @@ const Admin = () => {
     }
   }, [user, isAdmin, authLoading, navigate]);
 
-  if (authLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><p>Đang tải...</p></div>;
+  // Render nothing until auth is confirmed AND user is verified as admin server-side
+  if (authLoading || !user || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        {authLoading ? <p>Đang tải...</p> : null}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
