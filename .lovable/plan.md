@@ -1,48 +1,31 @@
 
 
-## Current Security Issues (warn level)
+## Cải thiện UX ghi âm Speaking
 
-From the scan results, there are **3 warn-level findings** that need fixing:
+### Vấn đề hiện tại
+- Nút "Bắt đầu ghi âm" có hiển thị nhưng thiếu hướng dẫn rõ ràng cho user
+- Khi mic bị chặn hoặc lỗi, không có thông báo nào cho user biết
+- Không có bước kiểm tra mic trước khi bắt đầu bài thi
+- Trong preview iframe, microphone có thể bị chặn mà user không biết
 
-### 1. Audio Storage Bucket is Public (`STORAGE_EXPOSURE`)
-The `audio` bucket is public — anyone with a URL can access exam audio without authentication. Client code already uses signed URLs via `resolveAudioUrl()`, so the only remaining step is a database migration.
+### Plan
 
-### 2. `has_role` Function Publicly Callable (`DEFINER_OR_RPC_BYPASS`)
-The `has_role` SECURITY DEFINER function is callable via RPC by any user, enabling role enumeration (checking if any UUID is an admin).
+**1. Thêm trạng thái lỗi microphone trong `useAudioRecording`**
+- Thêm state `micError` để track khi `getUserMedia` thất bại
+- Return `micError` từ hook để component có thể hiển thị thông báo
 
-### 3. Leaked Password Protection Disabled (`SUPA_auth_leaked_password_protection`)
-Password protection against known leaked passwords is not enabled. This is a configuration change.
+**2. Cải thiện `AudioRecorder` UI**
+- Hiển thị thông báo lỗi khi mic bị từ chối (alert đỏ với hướng dẫn cách bật lại)
+- Thêm text hướng dẫn nhỏ bên dưới nút ghi âm: "Nhấn nút và cho phép truy cập microphone khi trình duyệt yêu cầu"
+- Hiển thị trạng thái "Đang yêu cầu quyền mic..." khi đang chờ permission
 
-### About the "Error loading buckets" Screenshot
-This is caused by the same database connectivity timeout that has been blocking migrations in previous attempts. The storage UI cannot load because the backend is intermittently unreachable.
+**3. Thêm bước kiểm tra mic trong `ExamInstructions` cho Speaking**
+- Thêm nút "Kiểm tra microphone" trên trang hướng dẫn trước khi bắt đầu
+- Nếu mic hoạt động: hiển thị checkmark xanh "Microphone sẵn sàng"
+- Nếu mic lỗi: hiển thị cảnh báo đỏ với hướng dẫn
 
----
-
-## Plan
-
-### Step 1: Apply database migration for storage + RPC security
-Run a single migration with:
-```sql
--- Make audio bucket private
-UPDATE storage.buckets SET public = false WHERE id = 'audio';
-
--- Replace public read policy with authenticated-only
-DROP POLICY IF EXISTS "Anyone can read audio" ON storage.objects;
-CREATE POLICY "Authenticated users can read audio"
-  ON storage.objects FOR SELECT TO authenticated
-  USING (bucket_id = 'audio');
-
--- Revoke public RPC access to has_role
-REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM anon, authenticated;
-```
-
-### Step 2: Enable leaked password protection
-Use the `configure_auth` tool to enable leaked password protection.
-
-### Step 3: Update security findings
-Delete or mark resolved the findings that have been fixed.
-
----
-
-**Risk**: Previous migration attempts failed due to database timeouts. If the timeout persists, no code-level workaround exists — it requires backend connectivity to be restored.
+### Files cần chỉnh sửa
+- `src/hooks/useAudioRecording.tsx` — thêm `micError` state và `micPermissionStatus`
+- `src/components/speaking/AudioRecorder.tsx` — thêm error UI và hướng dẫn
+- `src/components/speaking/SpeakingExamEngine.tsx` — thêm mic check ở trang instructions
 

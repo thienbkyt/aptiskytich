@@ -6,7 +6,6 @@ import type { Question } from "@/data/questions";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
-import { resolveAudioUrl } from "@/lib/audioUrl";
 
 interface QuestionSection {
   title: string;
@@ -50,16 +49,7 @@ const ExamMCQ = ({
   sections = [],
 }: ExamMCQProps) => {
   const [bookmarked, setBookmarked] = useState(false);
-  const [signedAudioUrl, setSignedAudioUrl] = useState<string | null>(null);
   const q = questions[currentIndex];
-
-  useEffect(() => {
-    setSignedAudioUrl(null);
-    if (q?.audio_url) {
-      resolveAudioUrl(q.audio_url).then(setSignedAudioUrl);
-    }
-  }, [q?.audio_url, currentIndex]);
-
   if (!q) return null;
 
   const selected = answers[currentIndex];
@@ -95,8 +85,8 @@ const ExamMCQ = ({
       </div>
 
       {/* Audio player for listening (max 2 plays) */}
-      {signedAudioUrl && (
-        <LimitedAudioPlayer src={signedAudioUrl} maxPlays={2} questionKey={currentIndex} />
+      {q.audio_url && (
+        <LimitedAudioPlayer src={q.audio_url} maxPlays={2} questionKey={currentIndex} />
       )}
 
       {/* Question */}

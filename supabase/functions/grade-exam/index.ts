@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,10 +8,10 @@ const corsHeaders = {
 
 interface GradingRequest {
   type: "speaking" | "writing";
-  audioBase64?: string;
-  text?: string;
-  questions: string[];
-  partType: string;
+  audioBase64?: string; // base64 encoded audio for speaking
+  text?: string; // written text for writing
+  questions: string[]; // the exam questions/prompts
+  partType: string; // e.g. "part1", "task1"
 }
 
 serve(async (req) => {
@@ -21,67 +20,12 @@ serve(async (req) => {
   }
 
   try {
-    // --- Authentication ---
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsError } =
-      await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claims?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // --- Parse & validate input ---
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const body: GradingRequest = await req.json();
     const { type, audioBase64, text, questions, partType } = body;
 
-    if (type !== "speaking" && type !== "writing") {
-      return new Response(JSON.stringify({ error: "Invalid type" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (!Array.isArray(questions) || questions.length > 20) {
-      return new Response(
-        JSON.stringify({ error: "Invalid or too many questions" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-    if (audioBase64 && audioBase64.length > 10_000_000) {
-      return new Response(JSON.stringify({ error: "Audio payload too large" }), {
-        status: 413,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (text && text.length > 10_000) {
-      return new Response(JSON.stringify({ error: "Text payload too large" }), {
-        status: 413,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // --- Build AI prompt ---
     let userContent: any[];
     let systemPrompt: string;
 
@@ -98,6 +42,7 @@ Your task:
 Be strict but fair. Grade based on actual Aptis exam standards.`;
 
       if (audioBase64) {
+        // Send audio as multimodal content to Gemini
         userContent = [
           {
             type: "text",
@@ -111,6 +56,7 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
           },
         ];
       } else if (text) {
+        // Fallback: transcript provided
         userContent = [
           {
             type: "text",
@@ -121,6 +67,7 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
         throw new Error("No audio or text provided for speaking grading");
       }
     } else {
+      // Writing
       systemPrompt = `You are an expert Aptis Writing exam grader. You will receive a student's written response along with the exam prompt.
 
 Your task:
@@ -280,7 +227,7 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
     console.error("grade-exam error:", e);
     return new Response(
       JSON.stringify({
-        error: "An error occurred during grading",
+        error: e instanceof Error ? e.message : "Unknown error",
       }),
       {
         status: 500,
