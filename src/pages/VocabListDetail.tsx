@@ -86,6 +86,9 @@ const VocabListDetail = () => {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const abortRef = useRef(false);
 
+  /* ── Delete confirmation state ── */
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; word: string } | null>(null);
+
   /* ── Drag state ── */
   const dragIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
