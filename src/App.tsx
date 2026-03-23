@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
 import Index from "./pages/Index";
 import MockTest from "./pages/MockTest";
 import Practice from "./pages/Practice";
@@ -33,6 +34,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <DictionaryProvider>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -51,6 +53,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </DictionaryProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
