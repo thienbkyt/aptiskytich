@@ -125,7 +125,7 @@ const SkillPractice = () => {
                         {set.title}
                       </h3>
                       <span className="text-sm text-muted-foreground">
-                        {set.words} từ vựng
+                        {set.words.length} từ vựng
                       </span>
                       <div className="flex gap-2 mt-auto pt-2">
                         <Button
