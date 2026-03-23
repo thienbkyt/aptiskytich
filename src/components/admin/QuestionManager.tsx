@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Pencil, Trash2, Save, X, ArrowLeft, Upload, Headphones, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { resolveAudioUrl } from "@/lib/audioUrl";
 
 interface Question {
   id: string;
@@ -44,6 +45,15 @@ const QuestionManager = ({ testId, testTitle, testSkill, onBack }: QuestionManag
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (form.audio_url) {
+      resolveAudioUrl(form.audio_url).then(setPreviewAudioUrl);
+    } else {
+      setPreviewAudioUrl(null);
+    }
+  }, [form.audio_url]);
 
   useEffect(() => {
     fetchQuestions();
@@ -138,8 +148,8 @@ const QuestionManager = ({ testId, testTitle, testSkill, onBack }: QuestionManag
       const fileName = `${Date.now()}_${file.name}`;
       const { error } = await supabase.storage.from("audio").upload(fileName, file);
       if (error) { toast({ title: "Lỗi upload", description: error.message, variant: "destructive" }); return; }
-      const { data: urlData } = supabase.storage.from("audio").getPublicUrl(fileName);
-      setForm((prev) => ({ ...prev, audio_url: urlData.publicUrl }));
+      // Store just the file path, not the full public URL
+      setForm((prev) => ({ ...prev, audio_url: fileName }));
       toast({ title: "Đã upload audio!" });
     };
     input.click();
@@ -216,7 +226,7 @@ const QuestionManager = ({ testId, testTitle, testSkill, onBack }: QuestionManag
                     <Upload className="w-4 h-4" /> Upload
                   </Button>
                 </div>
-                {form.audio_url && <audio controls src={form.audio_url} className="w-full mt-2" />}
+                {previewAudioUrl && <audio controls src={previewAudioUrl} className="w-full mt-2" />}
               </div>
             )}
             <div className="flex gap-3">
