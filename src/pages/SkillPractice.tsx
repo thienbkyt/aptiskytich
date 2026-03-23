@@ -56,18 +56,7 @@ const SkillPractice = () => {
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
 
-  if (skill !== "vocabulary") {
-    return <Navigate to="/" replace />;
-  }
-
-  const filtered = VOCAB_SETS.filter(
-    (s) =>
-      s.title.toLowerCase().includes(search.toLowerCase()) ||
-      s.group.toLowerCase().includes(search.toLowerCase()),
-  );
-
   /* ── Fetch user lists & stats ── */
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!user) return;
     setListsLoading(true);
