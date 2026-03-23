@@ -629,17 +629,26 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
                                     .single();
                                   if (!dbErr && data) {
                                     setUserLists((prev) => [data as any, ...prev]);
-                                    // Also add the word to the new list
                                     if (result) {
                                       await supabase.from("vocab_items").upsert(
-                                        { user_id: user.id, word: result.word, vocab_set_id: (data as any).id, status: "new" },
+                                        {
+                                          user_id: user.id,
+                                          word: result.word,
+                                          vocab_set_id: (data as any).id,
+                                          status: "new",
+                                          phonetic: result.phonetic || "",
+                                          meaning: result.meanings.map((m) => m.definition_vi).join("; ") || "",
+                                          example_en: result.examples[0]?.en || "",
+                                          example_vi: result.examples[0]?.vi || "",
+                                          word_family: result.wordFamily as any,
+                                        },
                                         { onConflict: "user_id,word,vocab_set_id" }
                                       );
+                                      setSavedListIds((prev) => new Set(prev).add((data as any).id));
                                     }
-                                    toast({ title: `Đã tạo "${data.name}" và thêm từ ✓` });
+                                    toast({ title: `Đã lưu vào "${data.name}" thành công ✓` });
                                     setCreatingNew(false);
                                     setNewListName("");
-                                    setAddOpen(false);
                                   } else {
                                     toast({ title: "Lỗi khi tạo danh sách", variant: "destructive" });
                                   }
