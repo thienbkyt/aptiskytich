@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 import {
   ChevronLeft,
   Volume2,
@@ -17,6 +18,8 @@ import {
   SkipForward,
   SkipBack,
   Headphones,
+  GripVertical,
+  Trash2,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
@@ -55,6 +58,7 @@ interface VocabItem {
   example_vi: string;
   word_family: any[];
   status: string;
+  sort_order: number;
 }
 
 /* ══════════════════ Component ══════════════════ */
@@ -71,6 +75,10 @@ const VocabListDetail = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const abortRef = useRef(false);
+
+  /* ── Drag state ── */
+  const dragIndexRef = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user || !listId) return;
@@ -93,6 +101,7 @@ const VocabListDetail = () => {
         .select("*")
         .eq("user_id", user.id)
         .eq("vocab_set_id", listId)
+        .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
 
       if (wordsData) setWords(wordsData as any);
@@ -101,6 +110,68 @@ const VocabListDetail = () => {
 
     fetchData();
   }, [user, listId]);
+
+  /* ── Delete word ── */
+  const deleteWord = useCallback(async (wordId: string) => {
+    setWords((prev) => prev.filter((w) => w.id !== wordId));
+    const { error } = await supabase.from("vocab_items").delete().eq("id", wordId);
+    if (error) {
+      toast({ title: "Lỗi khi xóa từ", variant: "destructive" });
+    } else {
+      toast({ title: "Đã xóa từ khỏi danh sách" });
+    }
+  }, []);
+
+  /* ── Drag & Drop ── */
+  const handleDragStart = useCallback((index: number) => {
+    dragIndexRef.current = index;
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverIndex(index);
+  }, []);
+
+  const handleDrop = useCallback(async (dropIndex: number) => {
+    const dragIndex = dragIndexRef.current;
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragOverIndex(null);
+      dragIndexRef.current = null;
+      return;
+    }
+
+    const newWords = [...words];
+    const [moved] = newWords.splice(dragIndex, 1);
+    newWords.splice(dropIndex, 0, moved);
+    setWords(newWords);
+    setDragOverIndex(null);
+    dragIndexRef.current = null;
+
+    // Persist new order
+    const updates = newWords.map((w, i) => ({
+      id: w.id,
+      sort_order: i,
+      // required fields for upsert
+      user_id: w.id, // placeholder, won't change
+      word: w.word,
+      vocab_set_id: listId!,
+    }));
+
+    // Update each item's sort_order
+    await Promise.all(
+      newWords.map((w, i) =>
+        supabase
+          .from("vocab_items")
+          .update({ sort_order: i } as any)
+          .eq("id", w.id)
+      )
+    );
+  }, [words, listId]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragOverIndex(null);
+    dragIndexRef.current = null;
+  }, []);
 
   /* ── 3R Playlist logic ── */
   const playFrom = useCallback(async (startIndex: number) => {
@@ -112,35 +183,26 @@ const VocabListDetail = () => {
       setCurrentIndex(i);
       const item = words[i];
 
-      // [Number]
       await speakAsync(`Number ${i + 1}`, "en", 1);
       if (abortRef.current) break;
 
-      // [Word]
       await speakAsync(item.word, "en");
       if (abortRef.current) break;
 
-      // [Vietnamese meaning]
       if (item.meaning) {
         await speakAsync(item.meaning, "vi");
         if (abortRef.current) break;
       }
 
-      // [Example sentence — 1st time]
       if (item.example_en) {
         await speakAsync(item.example_en, "en");
         if (abortRef.current) break;
-
-        // [Pause 2 seconds]
         await delay(2000);
         if (abortRef.current) break;
-
-        // [Example sentence — 2nd time]
         await speakAsync(item.example_en, "en", 0.8);
         if (abortRef.current) break;
       }
 
-      // Brief gap between words
       await delay(1000);
     }
 
@@ -169,7 +231,6 @@ const VocabListDetail = () => {
     setTimeout(() => playFrom(currentIndex - 1), 100);
   }, [currentIndex, playFrom]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       abortRef.current = true;
@@ -231,16 +292,25 @@ const VocabListDetail = () => {
               {words.map((item, index) => (
                 <Card
                   key={item.id}
-                  className={`border overflow-hidden transition-shadow ${
+                  draggable
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={() => handleDrop(index)}
+                  onDragEnd={handleDragEnd}
+                  className={`border overflow-hidden transition-all cursor-grab active:cursor-grabbing ${
                     currentIndex === index
                       ? "border-primary shadow-lg ring-2 ring-primary/20"
+                      : dragOverIndex === index
+                      ? "border-primary/50 shadow-md ring-2 ring-primary/10 scale-[1.01]"
                       : "border-border hover:shadow-md"
                   }`}
                 >
                   <CardContent className="p-0">
                     {/* Row 1 — Word, phonetic, meaning (RED accent) */}
                     <div className="px-5 py-4 border-b border-border bg-primary/5 dark:bg-primary/10">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {/* Drag handle */}
+                        <GripVertical className="w-4 h-4 text-muted-foreground/40 shrink-0 cursor-grab" />
                         <span className="text-primary font-heading font-bold text-lg shrink-0">
                           {index + 1}.
                         </span>
@@ -260,9 +330,21 @@ const VocabListDetail = () => {
                             {item.phonetic}
                           </span>
                         )}
-                        <span className="text-sm font-medium text-foreground ml-auto">
+                        <span className="text-sm font-medium text-foreground ml-auto mr-1">
                           {item.meaning || "—"}
                         </span>
+                        {/* Delete button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteWord(item.id);
+                          }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </div>
 
@@ -347,7 +429,6 @@ const VocabListDetail = () => {
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-popover/95 backdrop-blur-lg border-t border-border shadow-[0_-4px_20px_-4px_hsl(0_0%_0%/0.15)]">
           <Progress value={progress} className="h-1 rounded-none" />
           <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-4">
-            {/* Now playing info */}
             <div className="flex-1 min-w-0">
               {currentIndex >= 0 ? (
                 <div className="flex items-center gap-2">
@@ -371,7 +452,6 @@ const VocabListDetail = () => {
               )}
             </div>
 
-            {/* Controls */}
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
@@ -412,7 +492,6 @@ const VocabListDetail = () => {
               </Button>
             </div>
 
-            {/* Word counter */}
             <div className="text-xs text-muted-foreground w-16 text-right shrink-0">
               {currentIndex >= 0 ? `${currentIndex + 1} / ${words.length}` : ""}
             </div>
