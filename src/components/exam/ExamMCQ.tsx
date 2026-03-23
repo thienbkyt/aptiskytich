@@ -6,6 +6,7 @@ import type { Question } from "@/data/questions";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
+import { resolveAudioUrl } from "@/lib/audioUrl";
 
 interface QuestionSection {
   title: string;
