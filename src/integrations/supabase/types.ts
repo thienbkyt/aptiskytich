@@ -494,6 +494,7 @@ export type Database = {
           meaning: string | null
           phonetic: string | null
           review_count: number
+          sort_order: number
           status: string
           updated_at: string
           user_id: string
@@ -510,6 +511,7 @@ export type Database = {
           meaning?: string | null
           phonetic?: string | null
           review_count?: number
+          sort_order?: number
           status?: string
           updated_at?: string
           user_id: string
@@ -526,6 +528,7 @@ export type Database = {
           meaning?: string | null
           phonetic?: string | null
           review_count?: number
+          sort_order?: number
           status?: string
           updated_at?: string
           user_id?: string
