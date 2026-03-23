@@ -276,6 +276,7 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
         setListsLoaded(false);
         setCreatingNew(false);
         setNewListName("");
+        setSavedListIds(new Set());
       }
     }, [visible]);
 
