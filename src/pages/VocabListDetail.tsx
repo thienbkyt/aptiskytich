@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,15 @@ import {
   Volume2,
   Loader2,
   BookOpen,
+  Play,
+  Pause,
+  SkipForward,
+  SkipBack,
+  Headphones,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
+/* ─── TTS helpers ─── */
 function speak(text: string, lang: "en" | "vi") {
   if (!("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
@@ -21,6 +28,22 @@ function speak(text: string, lang: "en" | "vi") {
   u.lang = lang === "en" ? "en-US" : "vi-VN";
   u.rate = 0.9;
   window.speechSynthesis.speak(u);
+}
+
+function speakAsync(text: string, lang: "en" | "vi", rate = 0.9): Promise<void> {
+  return new Promise((resolve) => {
+    if (!("speechSynthesis" in window)) { resolve(); return; }
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === "en" ? "en-US" : "vi-VN";
+    u.rate = rate;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    window.speechSynthesis.speak(u);
+  });
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 interface VocabItem {
@@ -34,6 +57,7 @@ interface VocabItem {
   status: string;
 }
 
+/* ══════════════════ Component ══════════════════ */
 const VocabListDetail = () => {
   const { listId } = useParams<{ listId: string }>();
   const navigate = useNavigate();
@@ -43,11 +67,15 @@ const VocabListDetail = () => {
   const [words, setWords] = useState<VocabItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /* ── Playlist state ── */
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const abortRef = useRef(false);
+
   useEffect(() => {
     if (!user || !listId) return;
 
     const fetchData = async () => {
-      // Fetch list info
       const { data: listData } = await supabase
         .from("vocab_lists")
         .select("*")
@@ -60,7 +88,6 @@ const VocabListDetail = () => {
         setListDesc((listData as any).description || "");
       }
 
-      // Fetch words
       const { data: wordsData } = await supabase
         .from("vocab_items")
         .select("*")
@@ -75,12 +102,91 @@ const VocabListDetail = () => {
     fetchData();
   }, [user, listId]);
 
+  /* ── 3R Playlist logic ── */
+  const playFrom = useCallback(async (startIndex: number) => {
+    abortRef.current = false;
+    setIsPlaying(true);
+
+    for (let i = startIndex; i < words.length; i++) {
+      if (abortRef.current) break;
+      setCurrentIndex(i);
+      const item = words[i];
+
+      // [Number]
+      await speakAsync(`Number ${i + 1}`, "en", 1);
+      if (abortRef.current) break;
+
+      // [Word]
+      await speakAsync(item.word, "en");
+      if (abortRef.current) break;
+
+      // [Vietnamese meaning]
+      if (item.meaning) {
+        await speakAsync(item.meaning, "vi");
+        if (abortRef.current) break;
+      }
+
+      // [Example sentence — 1st time]
+      if (item.example_en) {
+        await speakAsync(item.example_en, "en");
+        if (abortRef.current) break;
+
+        // [Pause 2 seconds]
+        await delay(2000);
+        if (abortRef.current) break;
+
+        // [Example sentence — 2nd time]
+        await speakAsync(item.example_en, "en", 0.8);
+        if (abortRef.current) break;
+      }
+
+      // Brief gap between words
+      await delay(1000);
+    }
+
+    setIsPlaying(false);
+    setCurrentIndex(-1);
+  }, [words]);
+
+  const stopPlayback = useCallback(() => {
+    abortRef.current = true;
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    setCurrentIndex(-1);
+  }, []);
+
+  const skipNext = useCallback(() => {
+    if (currentIndex < 0 || currentIndex >= words.length - 1) return;
+    window.speechSynthesis.cancel();
+    abortRef.current = true;
+    setTimeout(() => playFrom(currentIndex + 1), 100);
+  }, [currentIndex, words.length, playFrom]);
+
+  const skipPrev = useCallback(() => {
+    if (currentIndex <= 0) return;
+    window.speechSynthesis.cancel();
+    abortRef.current = true;
+    setTimeout(() => playFrom(currentIndex - 1), 100);
+  }, [currentIndex, playFrom]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current = true;
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
   if (!user) return <Navigate to="/auth" replace />;
+
+  const progress = words.length > 0 && currentIndex >= 0
+    ? ((currentIndex + 1) / words.length) * 100
+    : 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-16 pb-28">
         {/* Header */}
         <div className="border-b border-border bg-primary/5 dark:bg-primary/10">
           <div className="section-container py-5 flex items-center gap-4">
@@ -125,7 +231,11 @@ const VocabListDetail = () => {
               {words.map((item, index) => (
                 <Card
                   key={item.id}
-                  className="border border-border overflow-hidden hover:shadow-md transition-shadow"
+                  className={`border overflow-hidden transition-shadow ${
+                    currentIndex === index
+                      ? "border-primary shadow-lg ring-2 ring-primary/20"
+                      : "border-border hover:shadow-md"
+                  }`}
                 >
                   <CardContent className="p-0">
                     {/* Row 1 — Word, phonetic, meaning (RED accent) */}
@@ -231,6 +341,85 @@ const VocabListDetail = () => {
           )}
         </div>
       </main>
+
+      {/* ═══ Sticky Audio Player ═══ */}
+      {words.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-popover/95 backdrop-blur-lg border-t border-border shadow-[0_-4px_20px_-4px_hsl(0_0%_0%/0.15)]">
+          <Progress value={progress} className="h-1 rounded-none" />
+          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-4">
+            {/* Now playing info */}
+            <div className="flex-1 min-w-0">
+              {currentIndex >= 0 ? (
+                <div className="flex items-center gap-2">
+                  <Headphones className="w-4 h-4 text-primary shrink-0 animate-pulse" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {currentIndex + 1}. {words[currentIndex]?.word}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {words[currentIndex]?.meaning}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Headphones className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                    Audio 3R — {words.length} từ
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={skipPrev}
+                disabled={!isPlaying || currentIndex <= 0}
+              >
+                <SkipBack className="w-4 h-4" />
+              </Button>
+
+              <Button
+                size="icon"
+                className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                onClick={() => {
+                  if (isPlaying) {
+                    stopPlayback();
+                  } else {
+                    playFrom(currentIndex >= 0 ? currentIndex : 0);
+                  }
+                }}
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5" />
+                ) : (
+                  <Play className="w-5 h-5 ml-0.5" />
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={skipNext}
+                disabled={!isPlaying || currentIndex >= words.length - 1}
+              >
+                <SkipForward className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Word counter */}
+            <div className="text-xs text-muted-foreground w-16 text-right shrink-0">
+              {currentIndex >= 0 ? `${currentIndex + 1} / ${words.length}` : ""}
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
