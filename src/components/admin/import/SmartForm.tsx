@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ExamSetRow, ExamQuestionRow, Skill, SKILL_PARTS } from "./types";
+import { ExamSetRow, ExamQuestionRow, Skill, SKILL_PARTS, ExcelImportRow } from "./types";
 
 interface Props {
   examSet: ExamSetRow | null;
@@ -15,6 +15,7 @@ interface Props {
   examType: string;
   onBack: () => void;
   onSaved: () => void;
+  prefillQuestions?: ExcelImportRow[] | null;
 }
 
 const EMPTY_Q = (): Omit<ExamQuestionRow, "exam_set_id"> => ({
