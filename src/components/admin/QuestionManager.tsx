@@ -226,7 +226,7 @@ const QuestionManager = ({ testId, testTitle, testSkill, onBack }: QuestionManag
                     <Upload className="w-4 h-4" /> Upload
                   </Button>
                 </div>
-                {form.audio_url && <audio controls src={form.audio_url} className="w-full mt-2" />}
+                {previewAudioUrl && <audio controls src={previewAudioUrl} className="w-full mt-2" />}
               </div>
             )}
             <div className="flex gap-3">
