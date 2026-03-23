@@ -31,7 +31,7 @@ const EMPTY_Q = (): Omit<ExamQuestionRow, "exam_set_id"> => ({
   extra_data: {},
 });
 
-const SmartForm = ({ examSet, skill, examType, onBack, onSaved }: Props) => {
+const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions }: Props) => {
   const { toast } = useToast();
   const [title, setTitle] = useState(examSet?.title || "");
   const [part, setPart] = useState(examSet?.part || SKILL_PARTS[skill][0]);
@@ -39,6 +39,25 @@ const SmartForm = ({ examSet, skill, examType, onBack, onSaved }: Props) => {
   const [questions, setQuestions] = useState<Omit<ExamQuestionRow, "exam_set_id">[]>([EMPTY_Q()]);
   const [saving, setSaving] = useState(false);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  // Prefill from AI Parser
+  useEffect(() => {
+    if (prefillQuestions && prefillQuestions.length > 0) {
+      const VALID_ANSWERS = ["A", "B", "C", "D"];
+      setQuestions(prefillQuestions.map((q, i) => ({
+        order_index: q.order_index || i,
+        question_text: q.question_text || "",
+        question_type: "multiple_choice",
+        options: [q.option_a || "", q.option_b || "", q.option_c || "", q.option_d || ""],
+        correct_answer: VALID_ANSWERS.indexOf(q.correct_answer?.toUpperCase() || "A"),
+        explanation: q.explanation || "",
+        audio_url: null,
+        image_url: null,
+        response_time: null,
+        extra_data: {},
+      })));
+    }
+  }, [prefillQuestions]);
 
   // Load existing questions if editing
   useEffect(() => {
