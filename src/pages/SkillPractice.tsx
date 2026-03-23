@@ -21,18 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-/* ───── mock data ───── */
-const VOCAB_SETS = [
-  { id: "1", group: "APTIS GENERAL", title: "Test 1 – Animals & Nature", words: 30 },
-  { id: "2", group: "APTIS GENERAL", title: "Test 2 – Travel & Tourism", words: 28 },
-  { id: "3", group: "APTIS GENERAL", title: "Test 3 – Health & Lifestyle", words: 32 },
-  { id: "4", group: "APTIS GENERAL", title: "Test 4 – Education & Learning", words: 25 },
-  { id: "5", group: "APTIS GENERAL", title: "Test 5 – Technology & Media", words: 30 },
-  { id: "6", group: "APTIS GENERAL", title: "Test 6 – Work & Career", words: 27 },
-  { id: "7", group: "APTIS ADVANCED", title: "Test 7 – Environment & Society", words: 35 },
-  { id: "8", group: "APTIS ADVANCED", title: "Test 8 – Culture & Arts", words: 30 },
-  { id: "9", group: "APTIS ADVANCED", title: "Test 9 – Science & Innovation", words: 33 },
-];
+import { VOCAB_SETS } from "@/data/vocabSets";
 
 /* ───── colour helpers (teal / green) ───── */
 const TEAL = {
