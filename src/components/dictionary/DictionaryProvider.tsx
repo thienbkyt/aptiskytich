@@ -82,13 +82,20 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   const popupRef = useRef<HTMLDivElement>(null);
   const cacheRef = useRef<Map<string, DictResult>>(new Map());
   const dblClickRef = useRef(false);
+  const closeTimeoutRef = useRef<number | null>(null);
 
   const close = useCallback(() => {
     setVisible(false);
-    setTimeout(() => {
+
+    if (closeTimeoutRef.current !== null) {
+      window.clearTimeout(closeTimeoutRef.current);
+    }
+
+    closeTimeoutRef.current = window.setTimeout(() => {
       setResult(null);
       setPosition(null);
       setError(null);
+      closeTimeoutRef.current = null;
     }, 200);
   }, []);
 
@@ -96,6 +103,11 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     async (word: string, rect: DOMRect) => {
       const clean = word.trim().toLowerCase();
       if (!ENGLISH_WORD_RE.test(clean)) return;
+
+      if (closeTimeoutRef.current !== null) {
+        window.clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
 
       // Position popup
       const x = Math.min(
