@@ -78,7 +78,25 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
     // Strip markdown code fences if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    const parsed = JSON.parse(content);
+    if (!content) {
+      console.error("Empty AI content. Full response:", JSON.stringify(data));
+      return new Response(
+        JSON.stringify({ error: "AI returned empty response" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Try to extract JSON object from content
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error("No JSON object found in content:", content);
+      return new Response(
+        JSON.stringify({ error: "AI returned invalid format" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
