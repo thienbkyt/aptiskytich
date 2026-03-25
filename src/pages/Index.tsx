@@ -215,7 +215,7 @@ const Index = () => {
             initial="hidden" whileInView="visible" viewport={{ once: true }}
             className="max-w-2xl mx-auto text-center"
           >
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">
+            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 text-sm font-medium mb-6 text-accent">
               <Flame className="w-4 h-4" /> Khóa học hot nhất
             </motion.div>
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold text-on-dark mb-4">
