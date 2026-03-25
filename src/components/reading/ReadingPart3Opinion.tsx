@@ -88,7 +88,7 @@ const ReadingPart3Opinion = ({
                   else if (pi === selected) cls = "border-destructive bg-destructive/10 text-destructive";
                   else cls = "border-border text-muted-foreground";
                 } else if (selected === pi) {
-                  cls = "border-primary bg-primary/5 text-primary";
+                  cls = "border-accent bg-accent/15 text-accent-foreground ring-2 ring-accent";
                 }
                 return (
                   <button

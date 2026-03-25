@@ -128,8 +128,8 @@ const Speaking = () => {
           <div className="section-container py-12 md:py-16">
             <div className="max-w-3xl">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
-                  <Mic className="w-6 h-6 text-orange-500" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Mic className="w-6 h-6 text-primary" />
                 </div>
                 <Badge variant="secondary" className="text-xs font-medium gap-1.5">
                   <Clock className="w-3 h-3" />12 phút
@@ -145,17 +145,17 @@ const Speaking = () => {
 
         <section className="border-b border-border">
           <div className="section-container py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-orange-500/5 to-orange-500/10 dark:from-orange-500/10 dark:to-orange-500/5 border border-orange-500/20 rounded-xl p-5 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20 rounded-xl p-5 md:p-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-orange-500/15 flex items-center justify-center shrink-0">
-                  <Shuffle className="w-5 h-5 text-orange-500" />
+                <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                  <Shuffle className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="font-heading font-semibold text-foreground text-base">Luyện Speaking ngẫu nhiên</h2>
                   <p className="text-sm text-muted-foreground">Luyện 1 bộ đề thi Aptis Speaking ngẫu nhiên</p>
                 </div>
               </div>
-              <Button onClick={handleRandomPractice} className="bg-orange-500 hover:bg-orange-600 text-white shrink-0">
+              <Button onClick={handleRandomPractice} className="bg-primary hover:bg-brand-brown text-white shrink-0">
                 Bắt đầu<ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
@@ -171,7 +171,7 @@ const Speaking = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               {TASKS.map((task) => (
-                <TabsTrigger key={task.id} value={task.id} className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+                <TabsTrigger key={task.id} value={task.id} className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
                   <span className="font-semibold">{task.label}</span>
                   <span className="hidden sm:inline ml-1 opacity-80">– {task.subtitle}</span>
                 </TabsTrigger>
@@ -197,7 +197,7 @@ const Speaking = () => {
               {filteredSets.map((set, index) => (
                 <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                   <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-orange-500/10 text-orange-600 dark:text-orange-400 border-0">{activeTaskInfo?.label}</Badge>
+                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                       <span className="flex items-center gap-1.5">🎤 Ghi âm</span>
@@ -206,7 +206,7 @@ const Speaking = () => {
                     <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
                     <div className="flex-1" />
                     <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                      <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
                         Luyện tập<ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>
@@ -224,7 +224,7 @@ const Speaking = () => {
                     </div>
                     <div className="flex-1" />
                     <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => handleStartMock(activeTab as SpeakingPartType)} className="text-orange-500 hover:text-orange-600 hover:bg-orange-500/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                      <Button variant="ghost" size="sm" onClick={() => handleStartMock(activeTab as SpeakingPartType)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
                         Luyện tập<ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>

@@ -7,16 +7,16 @@ import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const mainLinks: { label: string; path: string; icon: LucideIcon; color: string }[] = [
-  { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap, color: "text-amber-500" },
-  { label: "Speaking", path: "/speaking", icon: Mic, color: "text-orange-500" },
-  { label: "Writing", path: "/writing", icon: PenLine, color: "text-pink-500" },
-  { label: "Listening", path: "/listening", icon: Headphones, color: "text-violet-500" },
-  { label: "Reading", path: "/reading", icon: BookOpen, color: "text-blue-500" },
+  { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap, color: "text-accent" },
+  { label: "Speaking", path: "/speaking", icon: Mic, color: "text-accent" },
+  { label: "Writing", path: "/writing", icon: PenLine, color: "text-accent" },
+  { label: "Listening", path: "/listening", icon: Headphones, color: "text-accent" },
+  { label: "Reading", path: "/reading", icon: BookOpen, color: "text-accent" },
 ];
 
 const moreLinks = [
-  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Luyện ngữ pháp và từ vựng theo đề Aptis", color: "text-emerald-500" },
-  { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Ôn luyện từ vựng theo chủ đề Aptis", color: "text-cyan-500" },
+  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Luyện ngữ pháp và từ vựng theo đề Aptis", color: "text-accent" },
+  { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Ôn luyện từ vựng theo chủ đề Aptis", color: "text-accent" },
 ];
 
 const Navbar = () => {
@@ -28,7 +28,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b-[3px] border-b-primary border-x-0 border-t-0">
       <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 mr-4">
@@ -154,7 +154,7 @@ const Navbar = () => {
               <Link to="/mock-test">
                 <Button
                   size="sm"
-                  className="bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm"
+                  className="bg-primary text-primary-foreground hover:bg-brand-brown rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm"
                 >
                   Thi thử miễn phí
                 </Button>
@@ -262,7 +262,7 @@ const Navbar = () => {
                       </Button>
                     </Link>
                     <Link to="/mock-test" onClick={() => setMobileOpen(false)}>
-                      <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] text-sm font-semibold">
+                      <Button className="w-full bg-primary text-primary-foreground hover:bg-brand-brown rounded-[10px] text-sm font-semibold">
                         Thi thử miễn phí
                       </Button>
                     </Link>

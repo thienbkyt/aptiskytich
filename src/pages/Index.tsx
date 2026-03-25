@@ -79,7 +79,7 @@ const Index = () => {
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/mock-test">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 btn-glow text-base px-8 h-13 gap-2 w-full sm:w-auto">
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-brand-brown btn-glow text-base px-8 h-13 gap-2 w-full sm:w-auto">
                   Bắt đầu thi thử <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
@@ -226,7 +226,7 @@ const Index = () => {
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/course">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-base px-8 gap-2">
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-brand-brown text-base px-8 gap-2">
                   Xem chi tiết khóa học <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>

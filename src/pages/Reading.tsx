@@ -176,8 +176,8 @@ const Reading = () => {
           <div className="section-container py-12 md:py-16">
             <div className="max-w-3xl">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-emerald-500" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-primary" />
                 </div>
                 <Badge variant="secondary" className="text-xs font-medium gap-1.5">
                   <Clock className="w-3 h-3" />
@@ -196,17 +196,17 @@ const Reading = () => {
 
         <section className="border-b border-border">
           <div className="section-container py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-500/5 to-emerald-500/10 dark:from-emerald-500/10 dark:to-emerald-500/5 border border-emerald-500/20 rounded-xl p-5 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20 rounded-xl p-5 md:p-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-                  <Shuffle className="w-5 h-5 text-emerald-500" />
+                <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                  <Shuffle className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="font-heading font-semibold text-foreground text-base">Luyện Reading ngẫu nhiên</h2>
                   <p className="text-sm text-muted-foreground">Luyện 1 bộ đề Aptis Reading ngẫu nhiên</p>
                 </div>
               </div>
-              <Button onClick={handleRandomPractice} className="bg-emerald-500 hover:bg-emerald-600 text-white shrink-0">
+              <Button onClick={handleRandomPractice} className="bg-primary hover:bg-brand-brown text-white shrink-0">
                 Bắt đầu
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -231,7 +231,7 @@ const Reading = () => {
                 <TabsTrigger
                   key={part.id}
                   value={part.id}
-                  className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
+                  className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-md transition-all"
                 >
                   <span className="font-semibold">{part.label}</span>
                   <span className="hidden sm:inline ml-1 opacity-80">– {part.subtitle}</span>
@@ -268,7 +268,7 @@ const Reading = () => {
                   transition={{ duration: 0.25, delay: index * 0.03 }}
                 >
                   <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0">
+                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
                       {activePartInfo?.label}
                     </Badge>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
@@ -284,7 +284,7 @@ const Reading = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleStartFromDB(set)}
-                        className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                        className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all"
                       >
                         Luyện tập
                         <ArrowRight className="w-4 h-4" />
@@ -311,7 +311,7 @@ const Reading = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleStartMock(activeTab as ReadingPartType)}
-                        className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                        className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all"
                       >
                         Luyện tập
                         <ArrowRight className="w-4 h-4" />

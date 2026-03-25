@@ -67,6 +67,9 @@ export default {
           DEFAULT: "hsl(var(--on-dark))",
           muted: "hsl(var(--on-dark-muted) / 0.7)",
         },
+        "brand-red": "hsl(var(--brand-red))",
+        "brand-orange": "hsl(var(--brand-orange))",
+        "brand-brown": "hsl(var(--brand-brown))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
