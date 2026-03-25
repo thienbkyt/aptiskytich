@@ -109,12 +109,12 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         closeTimeoutRef.current = null;
       }
 
-      // Position popup
+      // Position popup (viewport-relative since we use position:fixed)
       const x = Math.min(
         rect.left + rect.width / 2,
         window.innerWidth - 200
       );
-      const y = rect.bottom + window.scrollY + 8;
+      const y = rect.bottom + 8;
       setPosition({ x, y });
       setVisible(true);
       setError(null);
@@ -308,8 +308,8 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
       Math.min(position.x - popupWidth / 2, window.innerWidth - popupWidth - 12)
     );
 
-    // If popup would go below viewport, show above
-    const spaceBelow = window.innerHeight - (position.y - window.scrollY);
+    // If popup would go below viewport, show above the word
+    const spaceBelow = window.innerHeight - position.y;
     const showAbove = spaceBelow < 350;
 
     const addToSet = async (setId: string, listName: string) => {
@@ -351,7 +351,7 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
           left: clampedX,
           top: showAbove ? undefined : position.y,
           bottom: showAbove
-            ? window.innerHeight - (position.y - window.scrollY) + 16
+            ? window.innerHeight - position.y + 24
             : undefined,
           width: popupWidth,
           transformOrigin: showAbove ? "bottom center" : "top center",
