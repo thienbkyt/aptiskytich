@@ -136,38 +136,38 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  /* ─── Global click handler ─── */
+  /* ─── Helper: skip interactive elements ─── */
+  const isInteractive = (el: HTMLElement) =>
+    el.closest("button") ||
+    el.closest("input") ||
+    el.closest("textarea") ||
+    el.closest("a") ||
+    el.closest("[role='button']") ||
+    el.closest(".dictionary-popup");
+
+  /* ─── Close on outside click ─── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      // If clicking inside popup, ignore
       if (popupRef.current?.contains(e.target as Node)) return;
+      if (visible) close();
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [visible, close]);
 
-      // If popup is visible and click is outside, close
-      if (visible) {
-        close();
-        return;
-      }
-
+  /* ─── Double-click: lookup single word ─── */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (popupRef.current?.contains(e.target as Node)) return;
       const target = e.target as HTMLElement;
-      // Skip buttons, inputs, interactive elements
-      if (
-        target.closest("button") ||
-        target.closest("input") ||
-        target.closest("textarea") ||
-        target.closest("a") ||
-        target.closest("[role='button']") ||
-        target.closest(".dictionary-popup")
-      )
-        return;
+      if (isInteractive(target)) return;
 
-      // Get word under cursor
       const sel = window.getSelection();
       if (!sel) return;
 
       const range = document.caretRangeFromPoint?.(e.clientX, e.clientY);
       if (!range) return;
 
-      // Expand range to word boundaries manually
       const textNode = range.startContainer;
       if (textNode.nodeType !== Node.TEXT_NODE) return;
       const text = textNode.textContent || "";
@@ -178,7 +178,6 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       while (end < text.length && /[a-zA-Z]/.test(text[end])) end++;
 
       const word = text.slice(start, end).trim();
-
       if (ENGLISH_WORD_RE.test(word)) {
         range.setStart(textNode, start);
         range.setEnd(textNode, end);
@@ -187,10 +186,30 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         sel.removeAllRanges();
       }
     };
+    document.addEventListener("dblclick", handler);
+    return () => document.removeEventListener("dblclick", handler);
+  }, [lookup]);
 
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, [visible, lookup, close]);
+  /* ─── Text selection (mouseup): lookup selected text ─── */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (popupRef.current?.contains(e.target as Node)) return;
+      const target = e.target as HTMLElement;
+      if (isInteractive(target)) return;
+
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) return;
+
+      const text = sel.toString().trim();
+      if (!text || !ENGLISH_WORD_RE.test(text)) return;
+
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      lookup(text, rect);
+    };
+    document.addEventListener("mouseup", handler);
+    return () => document.removeEventListener("mouseup", handler);
+  }, [lookup]);
 
   /* ─── Escape key ─── */
   useEffect(() => {
