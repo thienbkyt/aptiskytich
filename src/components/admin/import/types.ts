@@ -58,3 +58,39 @@ export interface ExcelImportRow {
   response_time?: number;
   order_index?: number;
 }
+
+// Sheet name → skill + part mapping for full exam import
+export interface SheetMapping {
+  sheetName: string;
+  skill: Skill;
+  part: string;
+  label: string;
+}
+
+export const FULL_EXAM_SHEETS: SheetMapping[] = [
+  // Grammar & Vocab
+  { sheetName: "GV_Part1", skill: "grammar_vocab", part: "Part 1 - Word Meaning", label: "Grammar Part 1" },
+  { sheetName: "GV_Part2", skill: "grammar_vocab", part: "Part 2 - Word Form", label: "Grammar Part 2" },
+  { sheetName: "GV_Part3", skill: "grammar_vocab", part: "Part 3 - Sentence Completion", label: "Grammar Part 3" },
+  { sheetName: "GV_Part4", skill: "grammar_vocab", part: "Part 4 - Error Identification", label: "Grammar Part 4" },
+  // Reading
+  { sheetName: "R_Part1", skill: "reading", part: "Part 1 - Sentence Completion", label: "Reading Part 1" },
+  { sheetName: "R_Part2", skill: "reading", part: "Part 2 - Text Cohesion", label: "Reading Part 2" },
+  { sheetName: "R_Part3", skill: "reading", part: "Part 3 - Opinion Matching", label: "Reading Part 3" },
+  { sheetName: "R_Part4", skill: "reading", part: "Part 4 - Long Reading", label: "Reading Part 4" },
+  // Listening
+  { sheetName: "L_Part1", skill: "listening", part: "Part 1 - Word Recognition", label: "Listening Part 1" },
+  { sheetName: "L_Part2", skill: "listening", part: "Part 2 - Matching", label: "Listening Part 2" },
+  { sheetName: "L_Part3", skill: "listening", part: "Part 3 - Conversation", label: "Listening Part 3" },
+  { sheetName: "L_Part4", skill: "listening", part: "Part 4 - Monologue", label: "Listening Part 4" },
+  // Speaking
+  { sheetName: "S_Part1", skill: "speaking", part: "Part 1 - Personal", label: "Speaking Part 1" },
+  { sheetName: "S_Part2", skill: "speaking", part: "Part 2 - Describe Image", label: "Speaking Part 2" },
+  { sheetName: "S_Part3", skill: "speaking", part: "Part 3 - Compare Images", label: "Speaking Part 3" },
+  { sheetName: "S_Part4", skill: "speaking", part: "Part 4 - Opinion", label: "Speaking Part 4" },
+  // Writing
+  { sheetName: "W_Part1", skill: "writing", part: "Part 1 - Short Message", label: "Writing Part 1" },
+  { sheetName: "W_Part2", skill: "writing", part: "Part 2 - Social Media", label: "Writing Part 2" },
+  { sheetName: "W_Part3", skill: "writing", part: "Part 3 - Questions", label: "Writing Part 3" },
+  { sheetName: "W_Part4", skill: "writing", part: "Part 4 - Two Emails", label: "Writing Part 4" },
+];
