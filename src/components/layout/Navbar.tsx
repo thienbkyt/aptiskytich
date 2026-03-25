@@ -154,7 +154,7 @@ const Navbar = () => {
               <Link to="/mock-test">
                 <Button
                   size="sm"
-                  className="bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm"
+                  className="bg-primary text-primary-foreground hover:bg-brand-brown rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm"
                 >
                   Thi thử miễn phí
                 </Button>
@@ -262,7 +262,7 @@ const Navbar = () => {
                       </Button>
                     </Link>
                     <Link to="/mock-test" onClick={() => setMobileOpen(false)}>
-                      <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/85 rounded-[10px] text-sm font-semibold">
+                      <Button className="w-full bg-primary text-primary-foreground hover:bg-brand-brown rounded-[10px] text-sm font-semibold">
                         Thi thử miễn phí
                       </Button>
                     </Link>
