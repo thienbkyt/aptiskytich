@@ -135,8 +135,8 @@ const GrammarVocabulary = () => {
           <div className="section-container py-12 md:py-16">
             <div className="max-w-3xl">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center">
-                  <BookA className="w-6 h-6 text-violet-500" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <BookA className="w-6 h-6 text-primary" />
                 </div>
               </div>
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">Grammar & Vocabulary</h1>
@@ -149,17 +149,17 @@ const GrammarVocabulary = () => {
 
         <section className="border-b border-border">
           <div className="section-container py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-violet-500/5 to-violet-500/10 dark:from-violet-500/10 dark:to-violet-500/5 border border-violet-500/20 rounded-xl p-5 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-violet-500/5 to-violet-500/10 dark:from-violet-500/10 dark:to-violet-500/5 border border-primary/20 rounded-xl p-5 md:p-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-violet-500/15 flex items-center justify-center shrink-0">
-                  <Shuffle className="w-5 h-5 text-violet-500" />
+                <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                  <Shuffle className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="font-heading font-semibold text-foreground text-base">Luyện Grammar & Vocabulary ngẫu nhiên</h2>
                   <p className="text-sm text-muted-foreground">Luyện 10 câu hỏi ngẫu nhiên từ ngân hàng câu hỏi.</p>
                 </div>
               </div>
-              <Button onClick={handleRandomPractice} className="bg-violet-500 hover:bg-violet-600 text-white shrink-0">
+              <Button onClick={handleRandomPractice} className="bg-primary hover:bg-brand-brown text-white shrink-0">
                 Bắt đầu<ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
@@ -188,7 +188,7 @@ const GrammarVocabulary = () => {
               {filteredSets.map((set, index) => (
                 <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                   <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-violet-500/10 text-violet-600 dark:text-violet-400 border-0">
+                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
                       Grammar & Vocab
                     </Badge>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">{set.title}</h3>
@@ -196,7 +196,7 @@ const GrammarVocabulary = () => {
                     <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
                     <div className="flex-1" />
                     <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-violet-500 hover:text-violet-600 hover:bg-violet-500/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                      <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
                         Luyện tập<ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>
@@ -212,7 +212,7 @@ const GrammarVocabulary = () => {
                     <p className="text-sm text-muted-foreground mb-3">Dữ liệu mẫu để luyện tập</p>
                     <div className="flex-1" />
                     <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={handleRandomPractice} className="text-violet-500 hover:text-violet-600 hover:bg-violet-500/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                      <Button variant="ghost" size="sm" onClick={handleRandomPractice} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
                         Luyện tập<ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>
