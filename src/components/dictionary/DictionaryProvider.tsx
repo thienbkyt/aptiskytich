@@ -149,6 +149,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   /* ─── Close on outside click ─── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      if (dblClickRef.current) return;
       if (popupRef.current?.contains(e.target as Node)) return;
       if (visible) close();
     };
