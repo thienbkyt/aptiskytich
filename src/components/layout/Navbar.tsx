@@ -28,7 +28,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b-[3px] border-b-primary border-x-0 border-t-0">
       <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 mr-4">
