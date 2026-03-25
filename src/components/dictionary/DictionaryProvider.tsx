@@ -351,7 +351,7 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
           left: clampedX,
           top: showAbove ? undefined : position.y,
           bottom: showAbove
-            ? window.innerHeight - (position.y - window.scrollY) + 16
+            ? window.innerHeight - position.y + 24
             : undefined,
           width: popupWidth,
           transformOrigin: showAbove ? "bottom center" : "top center",
