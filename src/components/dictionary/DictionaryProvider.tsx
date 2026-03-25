@@ -81,6 +81,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   const [visible, setVisible] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const cacheRef = useRef<Map<string, DictResult>>(new Map());
+  const dblClickRef = useRef(false);
 
   const close = useCallback(() => {
     setVisible(false);
@@ -155,36 +156,24 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => document.removeEventListener("click", handler);
   }, [visible, close]);
 
-  /* ─── Double-click: lookup single word ─── */
+  /* ─── Double-click: let browser select word, then lookup ─── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (popupRef.current?.contains(e.target as Node)) return;
       const target = e.target as HTMLElement;
       if (isInteractive(target)) return;
 
-      const sel = window.getSelection();
-      if (!sel) return;
-
-      const range = document.caretRangeFromPoint?.(e.clientX, e.clientY);
-      if (!range) return;
-
-      const textNode = range.startContainer;
-      if (textNode.nodeType !== Node.TEXT_NODE) return;
-      const text = textNode.textContent || "";
-      let start = range.startOffset;
-      let end = range.startOffset;
-
-      while (start > 0 && /[a-zA-Z]/.test(text[start - 1])) start--;
-      while (end < text.length && /[a-zA-Z]/.test(text[end])) end++;
-
-      const word = text.slice(start, end).trim();
-      if (ENGLISH_WORD_RE.test(word)) {
-        range.setStart(textNode, start);
-        range.setEnd(textNode, end);
-        const rect = range.getBoundingClientRect();
-        lookup(word, rect);
-        sel.removeAllRanges();
-      }
+      dblClickRef.current = true;
+      // Wait for browser to finish native word selection
+      setTimeout(() => {
+        const sel = window.getSelection();
+        const text = sel?.toString().trim();
+        if (text && ENGLISH_WORD_RE.test(text) && sel!.rangeCount > 0) {
+          const rect = sel!.getRangeAt(0).getBoundingClientRect();
+          lookup(text, rect);
+        }
+        setTimeout(() => { dblClickRef.current = false; }, 100);
+      }, 0);
     };
     document.addEventListener("dblclick", handler);
     return () => document.removeEventListener("dblclick", handler);
@@ -193,6 +182,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   /* ─── Text selection (mouseup): lookup selected text ─── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      if (dblClickRef.current) return;
       if (popupRef.current?.contains(e.target as Node)) return;
       const target = e.target as HTMLElement;
       if (isInteractive(target)) return;
