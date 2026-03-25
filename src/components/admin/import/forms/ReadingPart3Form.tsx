@@ -11,8 +11,9 @@ interface Props {
 }
 
 const ReadingPart3Form = ({ questions, setQuestions }: Props) => {
-  const q = questions[0] || { extra_data: {}, question_text: "", explanation: "" };
-  const ed = q.extra_data || {};
+  const defaultQ: Omit<ExamQuestionRow, "exam_set_id"> = { order_index: 0, question_text: "", question_type: "opinion_matching", options: [], correct_answer: 0, explanation: "", audio_url: null, image_url: null, response_time: null, extra_data: {} };
+  const q = questions[0] || defaultQ;
+  const ed = (q.extra_data || {}) as Record<string, any>;
   const people: { name: string; text: string }[] = ed.people || [];
   const statements: { text: string; correctPerson: number }[] = ed.statements || [];
 
