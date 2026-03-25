@@ -42,7 +42,7 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: word.trim().toLowerCase() },
