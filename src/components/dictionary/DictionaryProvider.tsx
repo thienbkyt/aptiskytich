@@ -109,12 +109,12 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         closeTimeoutRef.current = null;
       }
 
-      // Position popup
+      // Position popup (viewport-relative since we use position:fixed)
       const x = Math.min(
         rect.left + rect.width / 2,
         window.innerWidth - 200
       );
-      const y = rect.bottom + window.scrollY + 8;
+      const y = rect.bottom + 8;
       setPosition({ x, y });
       setVisible(true);
       setError(null);
