@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Search, Clock, Shuffle, ArrowRight } from "lucide-react";
+import { BookOpen, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import ReadingResults from "@/components/reading/ReadingResults";
@@ -16,6 +16,9 @@ import {
   mockPart3Questions,
   mockPart4Questions,
 } from "@/data/readingQuestions";
+import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
+import { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } from "@/lib/examTransformers";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PARTS = [
   { id: "part1" as const, label: "Part 1", subtitle: "Sentence comprehension" },
@@ -24,26 +27,6 @@ const PARTS = [
   { id: "part4" as const, label: "Part 4", subtitle: "Long reading" },
 ];
 
-const TESTS_PER_PART = 9;
-
-interface TestCard {
-  partId: ReadingPartType;
-  partLabel: string;
-  testNumber: number;
-}
-
-const generateTests = (): TestCard[] => {
-  const tests: TestCard[] = [];
-  PARTS.forEach((part) => {
-    for (let i = 1; i <= TESTS_PER_PART; i++) {
-      tests.push({ partId: part.id, partLabel: part.label, testNumber: i });
-    }
-  });
-  return tests;
-};
-
-const allTests = generateTests();
-
 interface ExamState {
   active: boolean;
   partType: ReadingPartType;
@@ -51,11 +34,14 @@ interface ExamState {
   showResults: boolean;
   correct: number;
   total: number;
+  engineData?: any;
+  loadingExam: boolean;
 }
 
 const Reading = () => {
   const [activeTab, setActiveTab] = useState("part1");
   const [searchQuery, setSearchQuery] = useState("");
+  const { examSets, loading } = useExamSets("reading");
   const [exam, setExam] = useState<ExamState>({
     active: false,
     partType: "part1",
@@ -63,35 +49,58 @@ const Reading = () => {
     showResults: false,
     correct: 0,
     total: 0,
+    loadingExam: false,
   });
 
-  const filteredTests = useMemo(() => {
-    return allTests
-      .filter((t) => t.partId === activeTab)
-      .filter((t) =>
+  const filteredSets = useMemo(() => {
+    return examSets
+      .filter((s) => normalizePart(s.part) === activeTab)
+      .filter((s) =>
         searchQuery.trim()
-          ? `TEST ${t.testNumber}`.toLowerCase().includes(searchQuery.toLowerCase())
+          ? s.title.toLowerCase().includes(searchQuery.toLowerCase())
           : true
       );
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, examSets]);
 
-  const handleStartTest = (test: TestCard) => {
-    setExam({
-      active: true,
-      partType: test.partId,
-      testTitle: `${test.partLabel} – TEST ${test.testNumber}`,
-      showResults: false,
-      correct: 0,
-      total: 0,
-    });
+  const handleStartFromDB = async (set: ExamSetRow) => {
+    const partType = normalizePart(set.part) as ReadingPartType;
+    setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0 }));
+
+    const questions = await fetchExamQuestions(set.id);
+    let engineData: any = {};
+
+    switch (partType) {
+      case "part1": engineData = { part1Questions: toReadingPart1(questions) }; break;
+      case "part2": engineData = { part2Question: toReadingPart2(questions) }; break;
+      case "part3": engineData = { part3Question: toReadingPart3(questions) }; break;
+      case "part4": engineData = { part4Question: toReadingPart4(questions) }; break;
+    }
+
+    setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };
 
   const handleRandomPractice = () => {
-    const randomPart = PARTS[Math.floor(Math.random() * PARTS.length)];
-    handleStartTest({
-      partId: randomPart.id,
-      partLabel: randomPart.label,
-      testNumber: Math.floor(Math.random() * TESTS_PER_PART) + 1,
+    if (examSets.length > 0) {
+      const randomSet = examSets[Math.floor(Math.random() * examSets.length)];
+      handleStartFromDB(randomSet);
+    } else {
+      // Fallback to mock
+      const randomPart = PARTS[Math.floor(Math.random() * PARTS.length)];
+      handleStartMock(randomPart.id);
+    }
+  };
+
+  const handleStartMock = (partType: ReadingPartType) => {
+    const mockData: any = {};
+    switch (partType) {
+      case "part1": mockData.part1Questions = mockPart1Questions; break;
+      case "part2": mockData.part2Question = mockPart2Questions[0]; break;
+      case "part3": mockData.part3Question = mockPart3Questions[0]; break;
+      case "part4": mockData.part4Question = mockPart4Questions[0]; break;
+    }
+    setExam({
+      active: true, partType, testTitle: `${PARTS.find(p => p.id === partType)?.label} – Đề mẫu`,
+      showResults: false, correct: 0, total: 0, engineData: mockData, loadingExam: false,
     });
   };
 
@@ -100,11 +109,22 @@ const Reading = () => {
   };
 
   const handleExit = () => {
-    setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0 });
+    setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
   };
 
   // Exam mode
   if (exam.active) {
+    if (exam.loadingExam) {
+      return (
+        <div className="min-h-screen flex flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-24 pb-20 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </main>
+        </div>
+      );
+    }
+
     if (exam.showResults) {
       return (
         <div className="min-h-screen flex flex-col bg-background">
@@ -124,17 +144,13 @@ const Reading = () => {
       );
     }
 
-    // Get part-specific mock data
     const engineProps = {
       partType: exam.partType,
       testTitle: exam.testTitle,
-      timeLimit: 1800, // 30 minutes
+      timeLimit: 1800,
       onExit: handleExit,
       onComplete: handleComplete,
-      ...(exam.partType === "part1" && { part1Questions: mockPart1Questions }),
-      ...(exam.partType === "part2" && { part2Question: mockPart2Questions[0] }),
-      ...(exam.partType === "part3" && { part3Question: mockPart3Questions[0] }),
-      ...(exam.partType === "part4" && { part4Question: mockPart4Questions[0] }),
+      ...exam.engineData,
     };
 
     return (
@@ -149,8 +165,8 @@ const Reading = () => {
     );
   }
 
-  // Listing page (unchanged)
   const activePartInfo = PARTS.find((t) => t.id === activeTab);
+  const hasMockFallback = filteredSets.length === 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -186,18 +202,11 @@ const Reading = () => {
                   <Shuffle className="w-5 h-5 text-emerald-500" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-semibold text-foreground text-base">
-                    Luyện Reading ngẫu nhiên
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Luyện 1 bộ đề Aptis Reading ngẫu nhiên
-                  </p>
+                  <h2 className="font-heading font-semibold text-foreground text-base">Luyện Reading ngẫu nhiên</h2>
+                  <p className="text-sm text-muted-foreground">Luyện 1 bộ đề Aptis Reading ngẫu nhiên</p>
                 </div>
               </div>
-              <Button
-                onClick={handleRandomPractice}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
-              >
+              <Button onClick={handleRandomPractice} className="bg-emerald-500 hover:bg-emerald-600 text-white shrink-0">
                 Bắt đầu
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -237,55 +246,84 @@ const Reading = () => {
                 {activePartInfo.label} – {activePartInfo.subtitle}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {filteredTests.length} bộ đề luyện tập
+                {loading ? "Đang tải..." : `${filteredSets.length + (hasMockFallback ? 1 : 0)} bộ đề luyện tập`}
               </p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-            {filteredTests.map((test, index) => (
-              <motion.div
-                key={`${test.partId}-${test.testNumber}`}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: index * 0.03 }}
-              >
-                <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                  <Badge
-                    variant="secondary"
-                    className="w-fit text-[11px] font-medium mb-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0"
-                  >
-                    {test.partLabel}
-                  </Badge>
-                  <h3 className="text-xl font-heading font-bold text-foreground mb-3">
-                    TEST {test.testNumber}
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                    <span className="flex items-center gap-1.5">📖 10 câu hỏi</span>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-48 rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {/* DB exam sets */}
+              {filteredSets.map((set, index) => (
+                <motion.div
+                  key={set.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: index * 0.03 }}
+                >
+                  <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0">
+                      {activePartInfo?.label}
+                    </Badge>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                      <span className="flex items-center gap-1.5">📖 {set.description || "Đề luyện tập"}</span>
+                    </div>
+                    <div className="mb-4">
+                      <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>
+                    </div>
+                    <div className="flex-1" />
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStartFromDB(set)}
+                        className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                      >
+                        Luyện tập
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="mb-4">
-                    <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                      Chưa bắt đầu
-                    </span>
-                  </div>
-                  <div className="flex-1" />
-                  <div className="flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleStartTest(test)}
-                      className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10 font-semibold gap-1 group-hover:gap-2 transition-all"
-                    >
-                      Luyện tập
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
 
-          {filteredTests.length === 0 && (
+              {/* Mock fallback card */}
+              {hasMockFallback && (
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                  <div className="group relative bg-card border border-dashed border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-muted text-muted-foreground border-0">
+                      Đề mẫu
+                    </Badge>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-3">Đề mẫu</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                      <span className="flex items-center gap-1.5">📖 Dữ liệu mẫu để luyện tập</span>
+                    </div>
+                    <div className="flex-1" />
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStartMock(activeTab as ReadingPartType)}
+                        className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                      >
+                        Luyện tập
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          )}
+
+          {!loading && filteredSets.length === 0 && !hasMockFallback && (
             <div className="text-center py-16">
               <p className="text-muted-foreground">Không tìm thấy bộ đề nào phù hợp.</p>
             </div>

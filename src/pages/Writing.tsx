@@ -5,120 +5,121 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw } from "lucide-react";
+import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import type { WritingPartType } from "@/components/writing/WritingExamEngine";
 import {
-  mockWritingPart1,
-  mockWritingPart2,
-  mockWritingPart3,
-  mockWritingPart4,
+  mockWritingPart1, mockWritingPart2, mockWritingPart3, mockWritingPart4,
 } from "@/data/writingQuestions";
+import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
+import { toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4 } from "@/lib/examTransformers";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const TASKS = [
-  { id: "task1" as const, label: "Part 1", subtitle: "Short answers" },
-  { id: "task2" as const, label: "Part 2", subtitle: "Social media response" },
-  { id: "task3" as const, label: "Part 3", subtitle: "Three questions" },
-  { id: "task4" as const, label: "Part 4", subtitle: "Informal & Formal email" },
-];
-
-const TESTS_PER_TASK = 9;
-
-interface TestCard {
-  taskId: WritingPartType;
-  taskLabel: string;
-  testNumber: number;
-}
-
-const generateTests = (): TestCard[] => {
-  const tests: TestCard[] = [];
-  TASKS.forEach((task) => {
-    for (let i = 1; i <= TESTS_PER_TASK; i++) {
-      tests.push({ taskId: task.id, taskLabel: task.label, testNumber: i });
-    }
-  });
-  return tests;
+// Map normalized part IDs to WritingPartType used by the engine
+const partToTask: Record<string, WritingPartType> = {
+  part1: "task1", part2: "task2", part3: "task3", part4: "task4",
 };
 
-const allTests = generateTests();
+const TASKS = [
+  { id: "task1" as const, partKey: "part1", label: "Part 1", subtitle: "Short answers" },
+  { id: "task2" as const, partKey: "part2", label: "Part 2", subtitle: "Social media response" },
+  { id: "task3" as const, partKey: "part3", label: "Part 3", subtitle: "Three questions" },
+  { id: "task4" as const, partKey: "part4", label: "Part 4", subtitle: "Informal & Formal email" },
+];
 
 interface ExamState {
   active: boolean;
   partType: WritingPartType;
   testTitle: string;
   completed: boolean;
+  engineData?: any;
+  loadingExam: boolean;
 }
 
 const Writing = () => {
   const [activeTab, setActiveTab] = useState("task1");
   const [searchQuery, setSearchQuery] = useState("");
+  const { examSets, loading } = useExamSets("writing");
   const [exam, setExam] = useState<ExamState>({
-    active: false,
-    partType: "task1",
-    testTitle: "",
-    completed: false,
+    active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
 
-  const filteredTests = useMemo(() => {
-    return allTests
-      .filter((t) => t.taskId === activeTab)
-      .filter((t) =>
-        searchQuery.trim()
-          ? `TEST ${t.testNumber}`.toLowerCase().includes(searchQuery.toLowerCase())
-          : true
-      );
-  }, [activeTab, searchQuery]);
+  const activePartKey = TASKS.find(t => t.id === activeTab)?.partKey || "part1";
 
-  const handleStartTest = (test: TestCard) => {
-    setExam({
-      active: true,
-      partType: test.taskId,
-      testTitle: `${test.taskLabel} – TEST ${test.testNumber}`,
-      completed: false,
-    });
+  const filteredSets = useMemo(() => {
+    return examSets
+      .filter((s) => normalizePart(s.part) === activePartKey)
+      .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
+  }, [activeTab, searchQuery, examSets, activePartKey]);
+
+  const handleStartFromDB = async (set: ExamSetRow) => {
+    const normalizedPart = normalizePart(set.part);
+    const partType = partToTask[normalizedPart] || "task1";
+    setExam({ active: true, partType, testTitle: set.title, completed: false, loadingExam: true });
+    const questions = await fetchExamQuestions(set.id);
+    let engineData: any = {};
+    switch (normalizedPart) {
+      case "part1": engineData = { part1Data: toWritingPart1(questions) }; break;
+      case "part2": engineData = { part2Data: toWritingPart2(questions) }; break;
+      case "part3": engineData = { part3Data: toWritingPart3(questions) }; break;
+      case "part4": engineData = { part4Data: toWritingPart4(questions) }; break;
+    }
+    setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };
 
   const handleRandomPractice = () => {
-    const randomTask = TASKS[Math.floor(Math.random() * TASKS.length)];
-    handleStartTest({
-      taskId: randomTask.id,
-      taskLabel: randomTask.label,
-      testNumber: Math.floor(Math.random() * TESTS_PER_TASK) + 1,
+    if (examSets.length > 0) {
+      handleStartFromDB(examSets[Math.floor(Math.random() * examSets.length)]);
+    } else {
+      const randomTask = TASKS[Math.floor(Math.random() * TASKS.length)];
+      handleStartMock(randomTask.id);
+    }
+  };
+
+  const handleStartMock = (taskId: WritingPartType) => {
+    const mockData: any = {};
+    switch (taskId) {
+      case "task1": mockData.part1Data = mockWritingPart1[0]; break;
+      case "task2": mockData.part2Data = mockWritingPart2[0]; break;
+      case "task3": mockData.part3Data = mockWritingPart3[0]; break;
+      case "task4": mockData.part4Data = mockWritingPart4[0]; break;
+    }
+    setExam({
+      active: true, partType: taskId, testTitle: `${TASKS.find(p => p.id === taskId)?.label} – Đề mẫu`,
+      completed: false, engineData: mockData, loadingExam: false,
     });
   };
 
   const handleExit = () => {
-    setExam({ active: false, partType: "task1", testTitle: "", completed: false });
+    setExam({ active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false });
   };
 
-  // Exam mode
   if (exam.active) {
+    if (exam.loadingExam) {
+      return (
+        <div className="min-h-screen flex flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-24 pb-20 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </main>
+        </div>
+      );
+    }
+
     if (exam.completed) {
       return (
         <div className="min-h-screen flex flex-col bg-background">
           <Navbar />
           <main className="flex-1 pt-24 pb-20">
             <div className="section-container max-w-3xl">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-card border border-border rounded-xl p-8 text-center"
-              >
-                <h2 className="text-2xl font-heading font-bold text-foreground mb-2">
-                  Bài viết đã được nộp! ✍️
-                </h2>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-xl p-8 text-center">
+                <h2 className="text-2xl font-heading font-bold text-foreground mb-2">Bài viết đã được nộp! ✍️</h2>
                 <p className="text-sm text-muted-foreground mb-6">{exam.testTitle}</p>
-                <p className="text-muted-foreground text-sm mb-8">
-                  Bài viết của bạn đã được ghi nhận. Hãy so sánh với bài mẫu để cải thiện kỹ năng viết.
-                </p>
+                <p className="text-muted-foreground text-sm mb-8">Bài viết của bạn đã được ghi nhận. Hãy so sánh với bài mẫu để cải thiện kỹ năng viết.</p>
                 <div className="flex items-center justify-center gap-3">
-                  <Button variant="outline" onClick={handleExit} className="gap-2">
-                    <ArrowLeft className="w-4 h-4" /> Quay lại
-                  </Button>
-                  <Button onClick={() => setExam((p) => ({ ...p, completed: false }))} className="gap-2">
-                    <RotateCcw className="w-4 h-4" /> Làm lại
-                  </Button>
+                  <Button variant="outline" onClick={handleExit} className="gap-2"><ArrowLeft className="w-4 h-4" /> Quay lại</Button>
+                  <Button onClick={() => setExam((p) => ({ ...p, completed: false }))} className="gap-2"><RotateCcw className="w-4 h-4" /> Làm lại</Button>
                 </div>
               </motion.div>
             </div>
@@ -127,32 +128,24 @@ const Writing = () => {
       );
     }
 
-    const engineProps = {
-      partType: exam.partType,
-      testTitle: exam.testTitle,
-      timeLimit: 3000, // 50 minutes
-      onExit: handleExit,
-      onComplete: () => setExam((p) => ({ ...p, completed: true })),
-      ...(exam.partType === "task1" && { part1Data: mockWritingPart1[0] }),
-      ...(exam.partType === "task2" && { part2Data: mockWritingPart2[0] }),
-      ...(exam.partType === "task3" && { part3Data: mockWritingPart3[0] }),
-      ...(exam.partType === "task4" && { part4Data: mockWritingPart4[0] }),
-    };
-
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
         <main className="flex-1 pt-24 pb-20">
           <div className="section-container max-w-3xl">
-            <WritingExamEngine {...engineProps} />
+            <WritingExamEngine
+              partType={exam.partType} testTitle={exam.testTitle} timeLimit={3000}
+              onExit={handleExit} onComplete={() => setExam((p) => ({ ...p, completed: true }))}
+              {...exam.engineData}
+            />
           </div>
         </main>
       </div>
     );
   }
 
-  // Listing page (unchanged)
   const activeTaskInfo = TASKS.find((t) => t.id === activeTab);
+  const hasMockFallback = filteredSets.length === 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -165,14 +158,9 @@ const Writing = () => {
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                   <PenLine className="w-6 h-6 text-primary" />
                 </div>
-                <Badge variant="secondary" className="text-xs font-medium gap-1.5">
-                  <Clock className="w-3 h-3" />
-                  50 phút
-                </Badge>
+                <Badge variant="secondary" className="text-xs font-medium gap-1.5"><Clock className="w-3 h-3" />50 phút</Badge>
               </div>
-              <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
-                Phần thi Writing
-              </h1>
+              <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">Phần thi Writing</h1>
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
                 Luyện viết theo format bài thi Aptis Writing. Hoàn thành các task viết với thời gian giống bài thi thật.
               </p>
@@ -193,8 +181,7 @@ const Writing = () => {
                 </div>
               </div>
               <Button onClick={handleRandomPractice} className="bg-primary hover:bg-primary/90 text-primary-foreground shrink-0">
-                Bắt đầu
-                <ArrowRight className="w-4 h-4 ml-1" />
+                Bắt đầu<ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
           </div>
@@ -203,22 +190,13 @@ const Writing = () => {
         <section className="section-container py-8 md:py-10">
           <div className="relative mb-6">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Tìm kiếm bộ đề Writing..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-11 bg-card"
-            />
+            <Input placeholder="Tìm kiếm bộ đề Writing..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-11 bg-card" />
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               {TASKS.map((task) => (
-                <TabsTrigger
-                  key={task.id}
-                  value={task.id}
-                  className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all"
-                >
+                <TabsTrigger key={task.id} value={task.id} className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
                   <span className="font-semibold">{task.label}</span>
                   <span className="hidden sm:inline ml-1 opacity-80">– {task.subtitle}</span>
                 </TabsTrigger>
@@ -228,52 +206,55 @@ const Writing = () => {
 
           {activeTaskInfo && (
             <div className="mb-6">
-              <h2 className="text-lg font-heading font-semibold text-foreground">
-                {activeTaskInfo.label} – {activeTaskInfo.subtitle}
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">{filteredTests.length} bộ đề luyện tập</p>
+              <h2 className="text-lg font-heading font-semibold text-foreground">{activeTaskInfo.label} – {activeTaskInfo.subtitle}</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {loading ? "Đang tải..." : `${filteredSets.length + (hasMockFallback ? 1 : 0)} bộ đề luyện tập`}
+              </p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-            {filteredTests.map((test, index) => (
-              <motion.div
-                key={`${test.taskId}-${test.testNumber}`}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: index * 0.03 }}
-              >
-                <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                  <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary border-0">
-                    {test.taskLabel}
-                  </Badge>
-                  <h3 className="text-xl font-heading font-bold text-foreground mb-3">TEST {test.testNumber}</h3>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                    <span className="flex items-center gap-1.5">✍️ 1 bài viết</span>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {filteredSets.map((set, index) => (
+                <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
+                  <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary border-0">{activeTaskInfo?.label}</Badge>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                      <span className="flex items-center gap-1.5">✍️ {set.description || "Đề luyện tập"}</span>
+                    </div>
+                    <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
+                    <div className="flex-1" />
+                    <div className="flex justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                        Luyện tập<ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="mb-4">
-                    <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>
-                  </div>
-                  <div className="flex-1" />
-                  <div className="flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleStartTest(test)}
-                      className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all"
-                    >
-                      Luyện tập
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
 
-          {filteredTests.length === 0 && (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground">Không tìm thấy bộ đề nào phù hợp.</p>
+              {hasMockFallback && (
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                  <div className="group relative bg-card border border-dashed border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-muted text-muted-foreground border-0">Đề mẫu</Badge>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-3">Đề mẫu</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                      <span className="flex items-center gap-1.5">✍️ Dữ liệu mẫu để luyện tập</span>
+                    </div>
+                    <div className="flex-1" />
+                    <div className="flex justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => handleStartMock(activeTab as WritingPartType)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                        Luyện tập<ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
           )}
         </section>
