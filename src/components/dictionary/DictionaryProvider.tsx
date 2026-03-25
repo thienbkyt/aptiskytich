@@ -81,6 +81,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   const [visible, setVisible] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const cacheRef = useRef<Map<string, DictResult>>(new Map());
+  const dblClickRef = useRef(false);
 
   const close = useCallback(() => {
     setVisible(false);
