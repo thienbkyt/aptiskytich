@@ -308,8 +308,8 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
       Math.min(position.x - popupWidth / 2, window.innerWidth - popupWidth - 12)
     );
 
-    // If popup would go below viewport, show above
-    const spaceBelow = window.innerHeight - (position.y - window.scrollY);
+    // If popup would go below viewport, show above the word
+    const spaceBelow = window.innerHeight - position.y;
     const showAbove = spaceBelow < 350;
 
     const addToSet = async (setId: string, listName: string) => {
