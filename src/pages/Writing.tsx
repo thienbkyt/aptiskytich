@@ -196,7 +196,7 @@ const Writing = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               {TASKS.map((task) => (
-                <TabsTrigger key={task.id} value={task.id} className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all">
+                <TabsTrigger key={task.id} value={task.id} className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-md transition-all">
                   <span className="font-semibold">{task.label}</span>
                   <span className="hidden sm:inline ml-1 opacity-80">– {task.subtitle}</span>
                 </TabsTrigger>

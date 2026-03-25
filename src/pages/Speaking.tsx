@@ -145,7 +145,7 @@ const Speaking = () => {
 
         <section className="border-b border-border">
           <div className="section-container py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-orange-500/5 to-orange-500/10 dark:from-orange-500/10 dark:to-orange-500/5 border border-primary/20 rounded-xl p-5 md:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20 rounded-xl p-5 md:p-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
                   <Shuffle className="w-5 h-5 text-primary" />
