@@ -7,16 +7,16 @@ import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const mainLinks: { label: string; path: string; icon: LucideIcon; color: string }[] = [
-  { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap, color: "text-amber-500" },
-  { label: "Speaking", path: "/speaking", icon: Mic, color: "text-orange-500" },
-  { label: "Writing", path: "/writing", icon: PenLine, color: "text-pink-500" },
-  { label: "Listening", path: "/listening", icon: Headphones, color: "text-violet-500" },
-  { label: "Reading", path: "/reading", icon: BookOpen, color: "text-blue-500" },
+  { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap, color: "text-accent" },
+  { label: "Speaking", path: "/speaking", icon: Mic, color: "text-accent" },
+  { label: "Writing", path: "/writing", icon: PenLine, color: "text-accent" },
+  { label: "Listening", path: "/listening", icon: Headphones, color: "text-accent" },
+  { label: "Reading", path: "/reading", icon: BookOpen, color: "text-accent" },
 ];
 
 const moreLinks = [
-  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Luyện ngữ pháp và từ vựng theo đề Aptis", color: "text-emerald-500" },
-  { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Ôn luyện từ vựng theo chủ đề Aptis", color: "text-cyan-500" },
+  { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Luyện ngữ pháp và từ vựng theo đề Aptis", color: "text-accent" },
+  { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Ôn luyện từ vựng theo chủ đề Aptis", color: "text-accent" },
 ];
 
 const Navbar = () => {
