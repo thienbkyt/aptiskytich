@@ -69,7 +69,7 @@ const Index = () => {
             </motion.div>
             <motion.h1 variants={fadeUp} custom={1} className="text-4xl md:text-6xl font-heading font-extrabold text-on-dark leading-tight mb-6">
               Thi thử Aptis miễn phí –{" "}
-              <span className="gradient-text">
+              <span className="gradient-text text-primary">
                 Kiểm tra trình độ
               </span>{" "}
               trong 10 phút
