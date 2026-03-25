@@ -1,0 +1,225 @@
+import type { ExamQuestionRow } from "@/hooks/useExamSets";
+import type { Question } from "@/data/questions";
+import type { ReadingSentenceQuestion, ReadingCohesionQuestion, ReadingOpinionQuestion, ReadingLongQuestion } from "@/data/readingQuestions";
+import type { ListeningPart1Question, ListeningPart2Question, ListeningPart3Question, ListeningPart4Question } from "@/data/listeningQuestions";
+import type { SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data } from "@/data/speakingQuestions";
+import type { WritingPart1Data, WritingPart2Data, WritingPart3Data, WritingPart4Data } from "@/data/writingQuestions";
+
+// ─── Grammar ────────────────────────────────────────────────
+export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] =>
+  rows.map((r, i) => ({
+    id: i + 1,
+    skill: "grammar" as const,
+    question_text: r.question_text,
+    options: r.options,
+    correct_answer: r.correct_answer ?? 0,
+    explanation: r.explanation || "",
+    question_type: (r.question_type === "fill_in_blank" ? "fill-in-blank" : "mcq") as Question["question_type"],
+    audio_url: r.audio_url,
+  }));
+
+// ─── Reading ────────────────────────────────────────────────
+export const toReadingPart1 = (rows: ExamQuestionRow[]): ReadingSentenceQuestion[] =>
+  rows.map((r, i) => ({
+    id: i + 1,
+    type: "sentence-comprehension" as const,
+    sentence: r.extra_data?.sentence || r.question_text,
+    question: r.extra_data?.question || r.question_text,
+    options: r.options,
+    correct: r.correct_answer ?? 0,
+    explanation: r.explanation || "",
+  }));
+
+export const toReadingPart2 = (rows: ExamQuestionRow[]): ReadingCohesionQuestion | null => {
+  if (rows.length === 0) return null;
+  const first = rows[0];
+  const ed = first.extra_data || {};
+  return {
+    id: 1,
+    type: "text-cohesion" as const,
+    instruction: ed.instruction || "Read the text below. Choose the correct sentence from the list to fill each gap.",
+    passage: ed.passage || first.question_text,
+    sentenceOptions: ed.sentenceOptions || first.options,
+    gaps: ed.gaps || [{ correct: 0 }],
+    explanation: first.explanation || "",
+  };
+};
+
+export const toReadingPart3 = (rows: ExamQuestionRow[]): ReadingOpinionQuestion | null => {
+  if (rows.length === 0) return null;
+  const first = rows[0];
+  const ed = first.extra_data || {};
+  return {
+    id: 1,
+    type: "opinion-matching" as const,
+    instruction: ed.instruction || first.question_text,
+    people: ed.people || [],
+    statements: ed.statements || [],
+    explanation: first.explanation || "",
+  };
+};
+
+export const toReadingPart4 = (rows: ExamQuestionRow[]): ReadingLongQuestion | null => {
+  if (rows.length === 0) return null;
+  const first = rows[0];
+  const ed = first.extra_data || {};
+  return {
+    id: 1,
+    type: "long-reading" as const,
+    instruction: ed.instruction || "Read the text below and answer the questions.",
+    passage: ed.passage || first.question_text,
+    questions: ed.questions || rows.map((r) => ({
+      text: r.question_text,
+      options: r.options,
+      correct: r.correct_answer ?? 0,
+    })),
+    explanation: first.explanation || "",
+  };
+};
+
+// ─── Listening ──────────────────────────────────────────────
+export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Question[] =>
+  rows.map((r, i) => ({
+    id: i + 1,
+    audioUrl: r.audio_url || "",
+    options: r.options,
+    correct: r.correct_answer ?? 0,
+  }));
+
+export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] =>
+  rows.map((r, i) => ({
+    id: i + 1,
+    audioUrl: r.audio_url || "",
+    questionText: r.question_text,
+    options: r.options,
+    correct: r.correct_answer ?? 0,
+  }));
+
+export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Question[] =>
+  rows.map((r, i) => ({
+    id: i + 1,
+    audioUrl: r.audio_url || "",
+    questionText: r.question_text,
+    options: r.options,
+    correct: r.correct_answer ?? 0,
+  }));
+
+export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Question[] =>
+  rows.map((r, i) => ({
+    id: i + 1,
+    audioUrl: r.audio_url || "",
+    questionText: r.question_text,
+    options: r.options,
+    correct: r.correct_answer ?? 0,
+  }));
+
+// ─── Speaking ───────────────────────────────────────────────
+export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    questions: rows.map((r) => r.question_text),
+    prepTime: ed.prepTime ?? 0,
+    speakTime: ed.speakTime ?? 30,
+  };
+};
+
+export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    imageUrl: first?.image_url || "",
+    prompt: first?.question_text || "",
+    prepTime: ed.prepTime ?? 45,
+    speakTime: ed.speakTime ?? 45,
+  };
+};
+
+export const toSpeakingPart3 = (rows: ExamQuestionRow[]): SpeakingPart3Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    imageUrl1: ed.imageUrl1 || first?.image_url || "",
+    imageUrl2: ed.imageUrl2 || "",
+    prompt: first?.question_text || "",
+    prepTime: ed.prepTime ?? 45,
+    speakTime: ed.speakTime ?? 60,
+  };
+};
+
+export const toSpeakingPart4 = (rows: ExamQuestionRow[]): SpeakingPart4Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    topic: ed.topic || first?.question_text || "",
+    questions: rows.map((r) => r.question_text),
+    prepTime: ed.prepTime ?? 60,
+    speakTime: ed.speakTime ?? 120,
+  };
+};
+
+// ─── Writing ────────────────────────────────────────────────
+export const toWritingPart1 = (rows: ExamQuestionRow[]): WritingPart1Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    type: "short-answers",
+    instruction: ed.instruction || "Answer the following questions. Write between 1 and 5 words for each answer.",
+    questions: rows.map((r, i) => ({
+      id: i + 1,
+      text: r.question_text,
+      sampleAnswer: r.extra_data?.sampleAnswer || r.explanation || "",
+    })),
+  };
+};
+
+export const toWritingPart2 = (rows: ExamQuestionRow[]): WritingPart2Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    type: "social-media",
+    instruction: ed.instruction || "Read the social media post below and write a response. Use about 20-30 words.",
+    socialPost: ed.socialPost || { author: "User", content: first?.question_text || "" },
+    promptQuestions: ed.promptQuestions || [],
+    wordLimit: ed.wordLimit ?? 30,
+    sampleAnswer: ed.sampleAnswer || first?.explanation || "",
+  };
+};
+
+export const toWritingPart3 = (rows: ExamQuestionRow[]): WritingPart3Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    type: "three-questions",
+    instruction: ed.instruction || "Answer the following three questions. Write between 30 and 40 words for each answer.",
+    questions: rows.map((r, i) => ({
+      id: i + 1,
+      text: r.question_text,
+      sampleAnswer: r.extra_data?.sampleAnswer || r.explanation || "",
+    })),
+    wordLimit: ed.wordLimit ?? 40,
+  };
+};
+
+export const toWritingPart4 = (rows: ExamQuestionRow[]): WritingPart4Data => {
+  const first = rows[0];
+  const ed = first?.extra_data || {};
+  return {
+    type: "two-emails",
+    instruction: ed.instruction || "Write two emails based on the scenarios below.",
+    informalEmail: ed.informalEmail || {
+      label: "Informal Email (~50 words)",
+      scenario: first?.question_text || "",
+      bulletPoints: [],
+      wordLimit: 50,
+      sampleAnswer: "",
+    },
+    formalEmail: ed.formalEmail || {
+      label: "Formal Email (~120-150 words)",
+      scenario: rows[1]?.question_text || "",
+      bulletPoints: [],
+      wordLimit: 150,
+      sampleAnswer: "",
+    },
+  };
+};
