@@ -2,27 +2,23 @@ import { useState, useRef } from "react";
 import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Skill, SKILL_LABELS, ExcelImportRow } from "./types";
-
-const VALID_ANSWERS = ["A", "B", "C", "D"];
-
-const SHEET_SKILL_MAP: Record<string, Skill> = {
-  grammar_vocab: "grammar_vocab",
-  reading: "reading",
-  listening: "listening",
-  speaking: "speaking",
-  writing: "writing",
-};
+import { FULL_EXAM_SHEETS, SKILL_LABELS } from "./types";
+import { parseSheet } from "./excelParsers";
 
 interface ParsedSheet {
-  skill: Skill;
   sheetName: string;
-  rows: ExcelImportRow[];
+  skill: string;
+  part: string;
+  label: string;
+  questions: any[];
   errors: { row: number; message: string }[];
+  rowCount: number;
 }
 
 interface Props {
@@ -33,56 +29,75 @@ interface Props {
 const downloadTemplate = () => {
   const wb = XLSX.utils.book_new();
 
-  const skills: { name: string; cols: Record<string, string>[] }[] = [
+  const sheets: { name: string; cols: Record<string, string>[] }[] = [
+    // Grammar & Vocab Part 1-4 (MCQ)
+    ...[1, 2, 3, 4].map((p) => ({
+      name: `GV_Part${p}`,
+      cols: [{ question_text: "She _____ to work every day.", option_a: "go", option_b: "goes", option_c: "going", option_d: "gone", correct_answer: "B", explanation: "Present Simple, ngôi 3 số ít" }],
+    })),
+    // Reading Part 1
     {
-      name: "Grammar_Vocab",
+      name: "R_Part1",
+      cols: [{ sentence: "The cat sat on the mat.", question: "Where is the cat?", option_a: "On the mat", option_b: "Under the table", option_c: "In the garden", option_d: "On the chair", correct_answer: "A", explanation: "Câu nói rõ: on the mat" }],
+    },
+    // Reading Part 2
+    {
+      name: "R_Part2",
       cols: [
-        { question_text: "She _____ to work every day.", option_a: "go", option_b: "goes", option_c: "going", option_d: "gone", correct_answer: "B", explanation: "Ngôi 3 số ít + Present Simple", order_index: "1" },
+        { passage: "The city has changed a lot. {0} New buildings have appeared everywhere. {1} However, some old traditions remain.", sentence_option: "It is now very modern.", gap_index: "0", explanation: "Cohesion logic" },
+        { passage: "", sentence_option: "Many people still celebrate local festivals.", gap_index: "1", explanation: "" },
+        { passage: "", sentence_option: "The weather has become colder.", gap_index: "", explanation: "" },
       ],
     },
+    // Reading Part 3
     {
-      name: "Reading",
+      name: "R_Part3",
       cols: [
-        { question_text: "What does the author suggest?", option_a: "Answer A", option_b: "Answer B", option_c: "Answer C", option_d: "Answer D", correct_answer: "A", explanation: "Đoạn 2, dòng 3", order_index: "1" },
+        { person_name: "Alice", person_text: "I love reading books in my free time.", statement: "This person enjoys literature.", correct_person: "Alice", explanation: "Alice nói rõ love reading books" },
+        { person_name: "Bob", person_text: "I prefer outdoor activities like hiking.", statement: "This person prefers being outside.", correct_person: "Bob", explanation: "" },
       ],
     },
+    // Reading Part 4
     {
-      name: "Listening",
-      cols: [
-        { question_text: "What does the speaker mean?", option_a: "A", option_b: "B", option_c: "C", option_d: "D", correct_answer: "C", explanation: "Speaker nói...", audio_filename: "listening_p1_q1.mp3", order_index: "1" },
-      ],
+      name: "R_Part4",
+      cols: [{ passage: "Long reading passage here...", question_text: "What is the main idea?", option_a: "Idea A", option_b: "Idea B", option_c: "Idea C", option_d: "Idea D", correct_answer: "A", explanation: "Đoạn đầu nêu rõ" }],
     },
+    // Listening Part 1-4 (MCQ + audio)
+    ...[1, 2, 3, 4].map((p) => ({
+      name: `L_Part${p}`,
+      cols: [{ question_text: "What does the speaker say?", option_a: "A", option_b: "B", option_c: "C", option_d: "D", correct_answer: "C", explanation: "Speaker nói...", audio_filename: `listening_p${p}_q1.mp3` }],
+    })),
+    // Speaking Part 1
+    { name: "S_Part1", cols: [{ question_text: "What is your name?", prep_time: "0", speak_time: "30", sample_answer: "My name is..." }] },
+    // Speaking Part 2
+    { name: "S_Part2", cols: [{ prompt: "Describe this image.", image_url: "https://...", prep_time: "45", speak_time: "45", sample_answer: "In this image..." }] },
+    // Speaking Part 3
+    { name: "S_Part3", cols: [{ prompt: "Compare these two images.", image_url_1: "https://...", image_url_2: "https://...", prep_time: "45", speak_time: "60", sample_answer: "Both images show..." }] },
+    // Speaking Part 4
+    { name: "S_Part4", cols: [{ topic: "Education and technology", question_text: "Do you think technology improves education?", prep_time: "60", speak_time: "120", sample_answer: "I believe that..." }] },
+    // Writing Part 1
+    { name: "W_Part1", cols: [{ question_text: "What is your favorite color?", sample_answer: "My favorite color is blue." }] },
+    // Writing Part 2
+    { name: "W_Part2", cols: [{ social_post_author: "John", social_post_content: "Just visited a new café!", prompt_question: "Would you like to go there?", word_limit: "30", sample_answer: "That sounds great..." }] },
+    // Writing Part 3
+    { name: "W_Part3", cols: [{ question_text: "What do you think about online learning?", word_limit: "40", sample_answer: "Online learning is..." }] },
+    // Writing Part 4
     {
-      name: "Speaking",
+      name: "W_Part4",
       cols: [
-        { question_text: "Describe this image.", option_a: "", option_b: "", option_c: "", option_d: "", correct_answer: "", explanation: "Sample answer", image_url: "", response_time: "45", order_index: "1" },
-      ],
-    },
-    {
-      name: "Writing",
-      cols: [
-        { question_text: "Write a short message to...", option_a: "", option_b: "", option_c: "", option_d: "", correct_answer: "", explanation: "Model answer", order_index: "1" },
+        { email_type: "informal", scenario: "Write to your friend about a party.", bullet_points: "when;where;what to bring", word_limit: "50", sample_answer: "Hi! I'm having a party..." },
+        { email_type: "formal", scenario: "Write to your manager requesting leave.", bullet_points: "reason;dates;work coverage", word_limit: "150", sample_answer: "Dear Sir/Madam..." },
       ],
     },
   ];
 
-  skills.forEach(({ name, cols }) => {
+  sheets.forEach(({ name, cols }) => {
     const ws = XLSX.utils.json_to_sheet(cols);
     ws["!cols"] = Object.keys(cols[0]).map(() => ({ wch: 25 }));
     XLSX.utils.book_append_sheet(wb, ws, name);
   });
 
-  XLSX.writeFile(wb, "aptis_import_template.xlsx");
-};
-
-const validateRow = (row: ExcelImportRow, rowNum: number, skill: Skill): string | null => {
-  if (!row.question_text?.toString().trim()) return `Dòng ${rowNum}: Thiếu câu hỏi`;
-  if (skill !== "speaking" && skill !== "writing") {
-    if (!row.option_a?.toString().trim() || !row.option_b?.toString().trim()) return `Dòng ${rowNum}: Thiếu đáp án`;
-    const ans = row.correct_answer?.toString().toUpperCase().trim();
-    if (!ans || !VALID_ANSWERS.includes(ans)) return `Dòng ${rowNum}: Đáp án đúng không hợp lệ: "${row.correct_answer}"`;
-  }
-  return null;
+  XLSX.writeFile(wb, "aptis_full_exam_template.xlsx");
 };
 
 const ExcelImport = ({ examType, onImportComplete }: Props) => {
@@ -93,7 +108,6 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
   const [activeSheet, setActiveSheet] = useState(0);
   const [result, setResult] = useState<{ success: number; total: number; setsCreated: number } | null>(null);
   const [examTitle, setExamTitle] = useState("");
-  const [examPart, setExamPart] = useState("Part 1");
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -105,22 +119,26 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
         const sheets: ParsedSheet[] = [];
 
         wb.SheetNames.forEach((name) => {
-          const normalizedName = name.toLowerCase().replace(/[\s-]/g, "_");
-          const skill = SHEET_SKILL_MAP[normalizedName];
-          if (!skill) return;
-
           const ws = wb.Sheets[name];
-          const rows = XLSX.utils.sheet_to_json<ExcelImportRow>(ws);
-          const errors: { row: number; message: string }[] = [];
-          rows.forEach((row, i) => {
-            const err = validateRow(row, i + 2, skill);
-            if (err) errors.push({ row: i + 2, message: err });
+          const rows = XLSX.utils.sheet_to_json(ws);
+          if (rows.length === 0) return;
+
+          const parsed = parseSheet(name, rows);
+          if (!parsed.mapping) return;
+
+          sheets.push({
+            sheetName: name,
+            skill: parsed.mapping.skill,
+            part: parsed.mapping.part,
+            label: parsed.mapping.label,
+            questions: parsed.questions,
+            errors: parsed.errors,
+            rowCount: rows.length,
           });
-          sheets.push({ skill, sheetName: name, rows, errors });
         });
 
         if (sheets.length === 0) {
-          toast({ title: "Không tìm thấy tab hợp lệ", description: "Đặt tên tab: Grammar_Vocab, Reading, Listening, Speaking, Writing", variant: "destructive" });
+          toast({ title: "Không tìm thấy tab hợp lệ", description: "Đặt tên tab theo format: GV_Part1, R_Part2, L_Part3, S_Part1, W_Part4...", variant: "destructive" });
           return;
         }
 
@@ -142,34 +160,34 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
     let setsCreated = 0;
 
     for (const sheet of parsedSheets) {
-      if (sheet.errors.length > 0) continue;
+      if (sheet.errors.length > 0 || sheet.questions.length === 0) continue;
 
-      // Create exam_set
       const { data: setData, error: setErr } = await supabase
         .from("exam_sets")
-        .insert({ title: `${examTitle} - ${SKILL_LABELS[sheet.skill]}`, exam_type: examType, skill: sheet.skill, part: examPart })
+        .insert({
+          title: `${examTitle} - ${sheet.label}`,
+          exam_type: examType,
+          skill: sheet.skill,
+          part: sheet.part,
+        })
         .select("id").single();
       if (setErr || !setData) continue;
       setsCreated++;
 
-      const toInsert = sheet.rows.map((row, i) => ({
+      const toInsert = sheet.questions.map((q: any) => ({
+        ...q,
         exam_set_id: setData.id,
-        order_index: row.order_index || i + 1,
-        question_text: row.question_text?.toString().trim() || "",
-        question_type: "multiple_choice",
-        options: [row.option_a || "", row.option_b || "", row.option_c || "", row.option_d || ""].map((o) => o.toString().trim()),
-        correct_answer: VALID_ANSWERS.indexOf(row.correct_answer?.toString().toUpperCase().trim() || "A"),
-        explanation: row.explanation?.toString().trim() || "",
-        audio_url: row.audio_filename?.toString().trim() || null,
-        image_url: row.image_url?.toString().trim() || null,
-        response_time: row.response_time ? Number(row.response_time) : null,
       }));
 
       const { error } = await supabase.from("exam_questions").insert(toInsert as any);
       if (!error) totalSuccess += toInsert.length;
     }
 
-    setResult({ success: totalSuccess, total: parsedSheets.reduce((s, sh) => s + sh.rows.length, 0), setsCreated });
+    setResult({
+      success: totalSuccess,
+      total: parsedSheets.reduce((s, sh) => s + sh.questions.length, 0),
+      setsCreated,
+    });
     setImporting(false);
     if (totalSuccess > 0) {
       toast({ title: `Đã nhập ${totalSuccess} câu hỏi vào ${setsCreated} đề!` });
@@ -177,14 +195,16 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
     }
   };
 
-  const reset = () => { setParsedSheets([]); setResult(null); };
+  const reset = () => { setParsedSheets([]); setResult(null); setExamTitle(""); };
   const currentSheet = parsedSheets[activeSheet];
+  const validSheets = parsedSheets.filter((s) => s.errors.length === 0 && s.questions.length > 0);
+  const totalParts = FULL_EXAM_SHEETS.length;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
         <Button onClick={downloadTemplate} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> Tải Template Excel
+          <Download className="w-4 h-4" /> Tải Template (20 Parts)
         </Button>
         <Button onClick={() => fileRef.current?.click()} variant="outline" className="gap-2" disabled={importing}>
           <Upload className="w-4 h-4" /> Chọn file Excel
@@ -198,21 +218,20 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-primary" />
-                <h3 className="font-heading font-bold text-foreground">Preview — {parsedSheets.length} tab</h3>
+                <h3 className="font-heading font-bold text-foreground">
+                  Preview — {parsedSheets.length}/{totalParts} parts
+                </h3>
+                <Badge variant="secondary" className="text-xs">
+                  {validSheets.length} sẵn sàng
+                </Badge>
               </div>
               <Button variant="ghost" size="icon" onClick={reset}><X className="w-4 h-4" /></Button>
             </div>
 
-            {/* Exam info inputs */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-foreground">Tên đề thi</label>
-                <input className="w-full mt-1 rounded-lg border border-input bg-background px-3 py-2 text-sm" value={examTitle} onChange={(e) => setExamTitle(e.target.value)} placeholder="VD: Đề thi Aptis #5" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground">Part</label>
-                <input className="w-full mt-1 rounded-lg border border-input bg-background px-3 py-2 text-sm" value={examPart} onChange={(e) => setExamPart(e.target.value)} placeholder="Part 1" />
-              </div>
+            {/* Exam title */}
+            <div>
+              <Label>Tên đề thi (prefix cho tất cả parts)</Label>
+              <Input value={examTitle} onChange={(e) => setExamTitle(e.target.value)} placeholder="VD: Aptis Mock Test #5" className="mt-1" />
             </div>
 
             {/* Sheet tabs */}
@@ -225,7 +244,7 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
                     i === activeSheet ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  {sh.sheetName} ({sh.rows.length})
+                  {sh.label} ({sh.questions.length})
                   {sh.errors.length > 0 && <AlertTriangle className="w-3 h-3 inline ml-1 text-destructive" />}
                 </button>
               ))}
@@ -243,47 +262,30 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
               </div>
             )}
 
-            {/* Audio warnings for listening */}
-            {currentSheet?.skill === "listening" && currentSheet.rows.some((r) => r.audio_filename) && (
-              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-                <p className="text-sm font-medium text-yellow-600 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" /> Kiểm tra audio
-                </p>
-                <div className="text-xs text-yellow-600 mt-1 space-y-0.5">
-                  {currentSheet.rows.filter((r) => r.audio_filename).map((r, i) => (
-                    <p key={i}>🎵 {r.audio_filename} — sẽ liên kết với bucket audio</p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Preview table */}
-            {currentSheet && (
+            {/* Preview */}
+            {currentSheet && currentSheet.questions.length > 0 && (
               <div className="overflow-x-auto max-h-60 overflow-y-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead className="bg-muted/50 sticky top-0">
                     <tr>
                       <th className="px-3 py-2 text-left text-muted-foreground">#</th>
-                      <th className="px-3 py-2 text-left text-muted-foreground">Câu hỏi</th>
-                      <th className="px-3 py-2 text-left text-muted-foreground">A</th>
-                      <th className="px-3 py-2 text-left text-muted-foreground">B</th>
-                      <th className="px-3 py-2 text-left text-muted-foreground">Đúng</th>
-                      {currentSheet.skill === "listening" && <th className="px-3 py-2 text-left text-muted-foreground">Audio</th>}
+                      <th className="px-3 py-2 text-left text-muted-foreground">Nội dung</th>
+                      <th className="px-3 py-2 text-left text-muted-foreground">Loại</th>
+                      <th className="px-3 py-2 text-left text-muted-foreground">Extra</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {currentSheet.rows.slice(0, 25).map((row, i) => (
+                    {currentSheet.questions.slice(0, 25).map((q: any, i: number) => (
                       <tr key={i} className="border-t border-border">
                         <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
-                        <td className="px-3 py-2 text-foreground max-w-[200px] truncate">{row.question_text}</td>
-                        <td className="px-3 py-2 text-foreground truncate max-w-[80px]">{row.option_a}</td>
-                        <td className="px-3 py-2 text-foreground truncate max-w-[80px]">{row.option_b}</td>
-                        <td className="px-3 py-2 font-bold text-primary">{row.correct_answer?.toString().toUpperCase()}</td>
-                        {currentSheet.skill === "listening" && (
-                          <td className="px-3 py-2 text-muted-foreground truncate max-w-[100px]">
-                            {row.audio_filename ? <Badge variant="outline" className="text-xs">{row.audio_filename}</Badge> : "—"}
-                          </td>
-                        )}
+                        <td className="px-3 py-2 text-foreground max-w-[250px] truncate">{q.question_text}</td>
+                        <td className="px-3 py-2"><Badge variant="outline" className="text-xs">{q.question_type}</Badge></td>
+                        <td className="px-3 py-2 text-muted-foreground max-w-[150px] truncate">
+                          {q.options?.length > 0 ? `${q.options.length} options` : ""}
+                          {q.audio_url ? " 🎵" : ""}
+                          {q.image_url ? " 🖼" : ""}
+                          {Object.keys(q.extra_data || {}).length > 0 ? ` +${Object.keys(q.extra_data).length} fields` : ""}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -293,10 +295,10 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
 
             <Button
               onClick={handleImport}
-              disabled={importing || parsedSheets.every((s) => s.errors.length > 0) || !examTitle.trim()}
+              disabled={importing || validSheets.length === 0 || !examTitle.trim()}
               className="w-full gap-2"
             >
-              {importing ? "Đang nhập..." : <><Upload className="w-4 h-4" /> Lưu vào Database</>}
+              {importing ? "Đang nhập..." : <><Upload className="w-4 h-4" /> Lưu {validSheets.length} parts ({validSheets.reduce((s, sh) => s + sh.questions.length, 0)} câu hỏi)</>}
             </Button>
           </motion.div>
         )}
@@ -304,11 +306,11 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
         {result && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="border border-border rounded-xl p-5 bg-card space-y-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-success" />
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
               <h3 className="font-heading font-bold text-foreground">Hoàn tất</h3>
             </div>
             <p className="text-sm text-foreground">
-              Đã nhập <span className="font-bold text-primary">{result.success}</span> / {result.total} câu hỏi
+              Đã nhập <span className="font-bold text-primary">{result.success}</span> câu hỏi
               vào <span className="font-bold text-primary">{result.setsCreated}</span> đề thi
             </p>
             <Button onClick={reset} variant="outline" size="sm">Đóng</Button>
