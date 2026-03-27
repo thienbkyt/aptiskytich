@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { FULL_EXAM_SHEETS, SKILL_LABELS } from "./types";
+import { FULL_EXAM_SHEETS } from "./types";
 import { parseSheet } from "./excelParsers";
 
 interface ParsedSheet {
@@ -26,78 +26,193 @@ interface Props {
   onImportComplete: () => void;
 }
 
+/**
+ * Generate template matching official Aptis General format (British Council 2023)
+ */
 const downloadTemplate = () => {
   const wb = XLSX.utils.book_new();
 
-  const sheets: { name: string; cols: Record<string, string>[] }[] = [
-    // Grammar & Vocab Part 1-4 (MCQ)
-    ...[1, 2, 3, 4].map((p) => ({
-      name: `GV_Part${p}`,
-      cols: [{ question_text: "She _____ to work every day.", option_a: "go", option_b: "goes", option_c: "going", option_d: "gone", correct_answer: "B", explanation: "Present Simple, ngôi 3 số ít" }],
-    })),
-    // Reading Part 1
+  const sheets: { name: string; cols: Record<string, string | number | boolean>[] }[] = [
+    // ─── Core Grammar: 25 MCQ × 3 options ───
+    {
+      name: "Core_Grammar",
+      cols: [
+        { question_text: "She _____ to work every day.", option_a: "go", option_b: "goes", option_c: "going", correct_answer: "B", explanation: "Present Simple, ngôi 3 số ít" },
+        { question_text: "I _____ seen that movie before.", option_a: "have", option_b: "has", option_c: "had", correct_answer: "A", explanation: "Present Perfect với I/you/we/they" },
+      ],
+    },
+    // ─── Core Vocabulary: word matching/definition/usage/pairs ───
+    {
+      name: "Core_Vocab",
+      cols: [
+        { vocab_type: "matching", question_text: "Which word is closest in meaning to 'happy'?", option_a: "sad", option_b: "joyful", option_c: "angry", correct_answer: "B", explanation: "joyful = happy" },
+        { vocab_type: "usage", question_text: "She made a good _____ on her boss.", option_a: "impression", option_b: "expression", option_c: "depression", option_d: "possession", correct_answer: "A", explanation: "make an impression" },
+      ],
+    },
+    // ─── Reading Part 1: Sentence Comprehension — 5 sentences × 3 options ───
     {
       name: "R_Part1",
-      cols: [{ sentence: "The cat sat on the mat.", question: "Where is the cat?", option_a: "On the mat", option_b: "Under the table", option_c: "In the garden", option_d: "On the chair", correct_answer: "A", explanation: "Câu nói rõ: on the mat" }],
+      cols: [
+        { sentence: "The cat sat on the _____.", option_a: "mat", option_b: "map", option_c: "man", correct_answer: "A", explanation: "The cat sat on the mat - nghĩa phù hợp" },
+        { sentence: "Please _____ the door when you leave.", option_a: "close", option_b: "clothes", option_c: "clock", correct_answer: "A", explanation: "close the door" },
+      ],
     },
-    // Reading Part 2
+    // ─── Reading Part 2: Text Cohesion — 6 sentences, reorder ───
     {
       name: "R_Part2",
       cols: [
-        { passage: "The city has changed a lot. {0} New buildings have appeared everywhere. {1} However, some old traditions remain.", sentence_option: "It is now very modern.", gap_index: "0", explanation: "Cohesion logic" },
-        { passage: "", sentence_option: "Many people still celebrate local festivals.", gap_index: "1", explanation: "" },
-        { passage: "", sentence_option: "The weather has become colder.", gap_index: "", explanation: "" },
+        { sentence_text: "First, she woke up early in the morning.", correct_position: 1, explanation: "Đây là câu mở đầu" },
+        { sentence_text: "Then, she had breakfast with her family.", correct_position: 2, explanation: "" },
+        { sentence_text: "After that, she went to school by bus.", correct_position: 3, explanation: "" },
+        { sentence_text: "She studied hard all day.", correct_position: 4, explanation: "" },
+        { sentence_text: "In the evening, she did her homework.", correct_position: 5, explanation: "" },
+        { sentence_text: "Finally, she went to bed at 10 PM.", correct_position: 6, explanation: "" },
       ],
     },
-    // Reading Part 3
+    // ─── Reading Part 3: Opinion Matching — 4 people, 7 statements ───
     {
       name: "R_Part3",
       cols: [
-        { person_name: "Alice", person_text: "I love reading books in my free time.", statement: "This person enjoys literature.", correct_person: "Alice", explanation: "Alice nói rõ love reading books" },
-        { person_name: "Bob", person_text: "I prefer outdoor activities like hiking.", statement: "This person prefers being outside.", correct_person: "Bob", explanation: "" },
+        { person_name: "Alice", person_text: "I love reading books in my free time. There's nothing better than a good novel.", statement: "This person enjoys literature.", correct_person: "Alice", explanation: "Alice nói love reading books" },
+        { person_name: "Bob", person_text: "I prefer outdoor activities like hiking and cycling.", statement: "This person likes being outside.", correct_person: "Bob", explanation: "" },
+        { person_name: "Carol", person_text: "Cooking is my passion. I try new recipes every weekend.", statement: "This person is interested in food preparation.", correct_person: "Carol", explanation: "" },
+        { person_name: "David", person_text: "I spend most of my time playing video games online.", statement: "This person enjoys digital entertainment.", correct_person: "David", explanation: "" },
+        { person_name: "", person_text: "", statement: "This person prefers solitary activities.", correct_person: "Alice", explanation: "Alice đọc sách - hoạt động cá nhân" },
+        { person_name: "", person_text: "", statement: "This person is physically active.", correct_person: "Bob", explanation: "" },
+        { person_name: "", person_text: "", statement: "This person creates things at home.", correct_person: "Carol", explanation: "" },
       ],
     },
-    // Reading Part 4
+    // ─── Reading Part 4: Long Text — passage + 8 headings (7 match + 1 extra) ───
     {
       name: "R_Part4",
-      cols: [{ passage: "Long reading passage here...", question_text: "What is the main idea?", option_a: "Idea A", option_b: "Idea B", option_c: "Idea C", option_d: "Idea D", correct_answer: "A", explanation: "Đoạn đầu nêu rõ" }],
+      cols: [
+        { passage: "Paste your long reading passage here (~750 words). Each paragraph should be clearly separated.", heading: "The Beginning of Change", paragraph_index: 1, is_extra: false, explanation: "" },
+        { passage: "", heading: "Modern Solutions", paragraph_index: 2, is_extra: false, explanation: "" },
+        { passage: "", heading: "Community Response", paragraph_index: 3, is_extra: false, explanation: "" },
+        { passage: "", heading: "Financial Impact", paragraph_index: 4, is_extra: false, explanation: "" },
+        { passage: "", heading: "Future Plans", paragraph_index: 5, is_extra: false, explanation: "" },
+        { passage: "", heading: "Environmental Concerns", paragraph_index: 6, is_extra: false, explanation: "" },
+        { passage: "", heading: "Final Thoughts", paragraph_index: 7, is_extra: false, explanation: "" },
+        { passage: "", heading: "This heading does not match", paragraph_index: 0, is_extra: true, explanation: "Extra heading" },
+      ],
     },
-    // Listening Part 1-4 (MCQ + audio)
-    ...[1, 2, 3, 4].map((p) => ({
-      name: `L_Part${p}`,
-      cols: [{ question_text: "What does the speaker say?", option_a: "A", option_b: "B", option_c: "C", option_d: "D", correct_answer: "C", explanation: "Speaker nói...", audio_filename: `listening_p${p}_q1.mp3` }],
-    })),
-    // Speaking Part 1
-    { name: "S_Part1", cols: [{ question_text: "What is your name?", prep_time: "0", speak_time: "30", sample_answer: "My name is..." }] },
-    // Speaking Part 2
-    { name: "S_Part2", cols: [{ prompt: "Describe this image.", image_url: "https://...", prep_time: "45", speak_time: "45", sample_answer: "In this image..." }] },
-    // Speaking Part 3
-    { name: "S_Part3", cols: [{ prompt: "Compare these two images.", image_url_1: "https://...", image_url_2: "https://...", prep_time: "45", speak_time: "60", sample_answer: "Both images show..." }] },
-    // Speaking Part 4
-    { name: "S_Part4", cols: [{ topic: "Education and technology", question_text: "Do you think technology improves education?", prep_time: "60", speak_time: "120", sample_answer: "I believe that..." }] },
-    // Writing Part 1
-    { name: "W_Part1", cols: [{ question_text: "What is your favorite color?", sample_answer: "My favorite color is blue." }] },
-    // Writing Part 2
-    { name: "W_Part2", cols: [{ social_post_author: "John", social_post_content: "Just visited a new café!", prompt_question: "Would you like to go there?", word_limit: "30", sample_answer: "That sounds great..." }] },
-    // Writing Part 3
-    { name: "W_Part3", cols: [{ question_text: "What do you think about online learning?", word_limit: "40", sample_answer: "Online learning is..." }] },
-    // Writing Part 4
+    // ─── Listening Part 1: Information Recognition — audio + MCQ ───
+    {
+      name: "L_Part1",
+      cols: [
+        { question_text: "What time is the meeting?", option_a: "2:00 PM", option_b: "3:00 PM", option_c: "4:00 PM", correct_answer: "B", explanation: "Speaker says 3 o'clock", audio_filename: "l_part1_q1.mp3" },
+      ],
+    },
+    // ─── Listening Part 2: Information Matching — 4 people × 6 info items ───
+    {
+      name: "L_Part2",
+      cols: [
+        { person_name: "Speaker 1", audio_filename: "l_part2.mp3", info_text: "Lives near the city center", correct_person: "Speaker 1", explanation: "" },
+        { person_name: "Speaker 2", audio_filename: "", info_text: "Works from home", correct_person: "Speaker 2", explanation: "" },
+        { person_name: "Speaker 3", audio_filename: "", info_text: "Has two children", correct_person: "Speaker 3", explanation: "" },
+        { person_name: "Speaker 4", audio_filename: "", info_text: "Recently changed jobs", correct_person: "Speaker 4", explanation: "" },
+        { person_name: "", audio_filename: "", info_text: "Enjoys gardening", correct_person: "Speaker 1", explanation: "" },
+        { person_name: "", audio_filename: "", info_text: "Plans to travel abroad", correct_person: "Speaker 3", explanation: "" },
+      ],
+    },
+    // ─── Listening Part 3: Opinion Matching — man/woman/both ───
+    {
+      name: "L_Part3",
+      cols: [
+        { question_text: "Who thinks online learning is effective?", correct_answer: "woman", audio_filename: "l_part3.mp3", explanation: "The woman says she finds it very useful" },
+        { question_text: "Who prefers face-to-face classes?", correct_answer: "man", audio_filename: "", explanation: "" },
+        { question_text: "Who agrees that practice is important?", correct_answer: "both", audio_filename: "", explanation: "" },
+        { question_text: "Who mentions cost as a factor?", correct_answer: "man", audio_filename: "", explanation: "" },
+      ],
+    },
+    // ─── Listening Part 4: Monologue Comprehension — 2 MCQ questions ───
+    {
+      name: "L_Part4",
+      cols: [
+        { question_text: "What is the speaker's main point?", option_a: "Education needs reform", option_b: "Technology is harmful", option_c: "Students are lazy", correct_answer: "A", explanation: "", audio_filename: "l_part4.mp3" },
+        { question_text: "How does the speaker feel about the topic?", option_a: "Concerned", option_b: "Indifferent", option_c: "Excited", correct_answer: "A", explanation: "", audio_filename: "" },
+      ],
+    },
+    // ─── Speaking Part 1: 3 personal questions, 30s each ───
+    {
+      name: "S_Part1",
+      cols: [
+        { question_text: "Please tell me about your hometown.", sample_answer: "I come from..." },
+        { question_text: "What do you enjoy doing in your free time?", sample_answer: "In my free time, I..." },
+        { question_text: "Do you prefer spending time indoors or outdoors? Why?", sample_answer: "I prefer..." },
+      ],
+    },
+    // ─── Speaking Part 2: 1 photo + 3 questions, 45s each ───
+    {
+      name: "S_Part2",
+      cols: [
+        { question_text: "Describe what you can see in the photograph.", image_url: "https://example.com/photo.jpg", sample_answer: "In this photograph, I can see..." },
+        { question_text: "Would you like to visit this place? Why or why not?", image_url: "", sample_answer: "I would like to..." },
+        { question_text: "What are the advantages of places like this?", image_url: "", sample_answer: "The advantages are..." },
+      ],
+    },
+    // ─── Speaking Part 3: 2 photos + 3 questions, 45s each ───
+    {
+      name: "S_Part3",
+      cols: [
+        { question_text: "Describe and compare the two photographs.", image_url_1: "https://example.com/photo1.jpg", image_url_2: "https://example.com/photo2.jpg", sample_answer: "In the first photo..." },
+        { question_text: "Which situation would you prefer? Why?", image_url_1: "", image_url_2: "", sample_answer: "I would prefer..." },
+        { question_text: "What do you think are the advantages and disadvantages of each?", image_url_1: "", image_url_2: "", sample_answer: "The advantages..." },
+      ],
+    },
+    // ─── Speaking Part 4: abstract topic, 1 min prep, 2 min speak ───
+    {
+      name: "S_Part4",
+      cols: [
+        { topic: "The role of technology in education", question_text: "How has technology changed the way people learn?", image_url: "https://example.com/topic.jpg", sample_answer: "Technology has changed..." },
+        { topic: "", question_text: "Do you think technology always improves learning? Why or why not?", image_url: "", sample_answer: "I think..." },
+        { topic: "", question_text: "What might education look like in the future?", image_url: "", sample_answer: "In the future..." },
+      ],
+    },
+    // ─── Writing Part 1: Word-level — 5 text messages ───
+    {
+      name: "W_Part1",
+      cols: [
+        { context: "You have joined a photography club. Other members are chatting.", message_text: "Hi! What's your name?", sample_answer: "My name is..." },
+        { context: "", message_text: "Where are you from?", sample_answer: "Vietnam" },
+        { context: "", message_text: "How long have you been interested in photography?", sample_answer: "Two years" },
+        { context: "", message_text: "What kind of photos do you like?", sample_answer: "Landscape" },
+        { context: "", message_text: "When can you come to the next meeting?", sample_answer: "Saturday" },
+      ],
+    },
+    // ─── Writing Part 2: Short Text — 20-30 words ───
+    {
+      name: "W_Part2",
+      cols: [
+        { social_post_author: "John", social_post_content: "Just visited a new café downtown. The coffee was amazing!", prompt_question: "Would you like to go there?", sample_answer: "That sounds great! I'd love to try it..." },
+      ],
+    },
+    // ─── Writing Part 3: Three Responses — 30-40 words each ───
+    {
+      name: "W_Part3",
+      cols: [
+        { question_text: "What do you think about online learning?", sample_answer: "Online learning has many advantages..." },
+        { question_text: "How do you usually study for exams?", sample_answer: "I usually make a study plan..." },
+        { question_text: "Do you prefer studying alone or in groups?", sample_answer: "I prefer studying alone because..." },
+      ],
+    },
+    // ─── Writing Part 4: Informal (40-50 words) + Formal (120-150 words) ───
     {
       name: "W_Part4",
       cols: [
-        { email_type: "informal", scenario: "Write to your friend about a party.", bullet_points: "when;where;what to bring", word_limit: "50", sample_answer: "Hi! I'm having a party..." },
-        { email_type: "formal", scenario: "Write to your manager requesting leave.", bullet_points: "reason;dates;work coverage", word_limit: "150", sample_answer: "Dear Sir/Madam..." },
+        { email_type: "informal", change_info: "Your company has announced that the office will move to a new location next month.", scenario: "Write to your friend who works at the same company about the office move.", bullet_points: "your feelings about the move;how it affects your commute;suggestion to meet up", word_limit: 50, sample_answer: "Hi! Did you hear about the office move..." },
+        { email_type: "formal", change_info: "", scenario: "Write to your manager about the office relocation.", bullet_points: "ask about the new address;request for flexible hours during transition;offer to help with the move", word_limit: 150, sample_answer: "Dear Sir/Madam, I am writing regarding..." },
       ],
     },
   ];
 
   sheets.forEach(({ name, cols }) => {
     const ws = XLSX.utils.json_to_sheet(cols);
-    ws["!cols"] = Object.keys(cols[0]).map(() => ({ wch: 25 }));
+    ws["!cols"] = Object.keys(cols[0]).map(() => ({ wch: 30 }));
     XLSX.utils.book_append_sheet(wb, ws, name);
   });
 
-  XLSX.writeFile(wb, "aptis_full_exam_template.xlsx");
+  XLSX.writeFile(wb, "aptis_general_full_exam_template.xlsx");
 };
 
 const ExcelImport = ({ examType, onImportComplete }: Props) => {
@@ -138,7 +253,7 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
         });
 
         if (sheets.length === 0) {
-          toast({ title: "Không tìm thấy tab hợp lệ", description: "Đặt tên tab theo format: GV_Part1, R_Part2, L_Part3, S_Part1, W_Part4...", variant: "destructive" });
+          toast({ title: "Không tìm thấy tab hợp lệ", description: "Tên tab phải theo format: Core_Grammar, Core_Vocab, R_Part1, L_Part2, S_Part3, W_Part4...", variant: "destructive" });
           return;
         }
 
@@ -204,7 +319,7 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
         <Button onClick={downloadTemplate} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> Tải Template (20 Parts)
+          <Download className="w-4 h-4" /> Tải Template Aptis General (18 Parts)
         </Button>
         <Button onClick={() => fileRef.current?.click()} variant="outline" className="gap-2" disabled={importing}>
           <Upload className="w-4 h-4" /> Chọn file Excel
@@ -228,13 +343,11 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
               <Button variant="ghost" size="icon" onClick={reset}><X className="w-4 h-4" /></Button>
             </div>
 
-            {/* Exam title */}
             <div>
               <Label>Tên đề thi (prefix cho tất cả parts)</Label>
               <Input value={examTitle} onChange={(e) => setExamTitle(e.target.value)} placeholder="VD: Aptis Mock Test #5" className="mt-1" />
             </div>
 
-            {/* Sheet tabs */}
             <div className="flex gap-2 flex-wrap">
               {parsedSheets.map((sh, i) => (
                 <button
@@ -250,7 +363,6 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
               ))}
             </div>
 
-            {/* Errors */}
             {currentSheet?.errors.length > 0 && (
               <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-1">
                 <p className="text-sm font-semibold text-destructive flex items-center gap-2">
@@ -262,7 +374,6 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
               </div>
             )}
 
-            {/* Preview */}
             {currentSheet && currentSheet.questions.length > 0 && (
               <div className="overflow-x-auto max-h-60 overflow-y-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
