@@ -199,47 +199,43 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
   const [result, setResult] = useState<{ success: number; total: number; setsCreated: number } | null>(null);
   const [examTitle, setExamTitle] = useState("");
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const wb = XLSX.read(ev.target?.result, { type: "binary" });
-        const sheets: ParsedSheet[] = [];
+    try {
+      const buffer = await file.arrayBuffer();
+      const { sheetNames, sheets: excelSheets } = await readExcelFile(buffer);
+      const parsedResults: ParsedSheet[] = [];
 
-        wb.SheetNames.forEach((name) => {
-          const ws = wb.Sheets[name];
-          const rows = XLSX.utils.sheet_to_json(ws);
-          if (rows.length === 0) return;
+      sheetNames.forEach((name) => {
+        const rows = excelSheets[name];
+        if (!rows || rows.length === 0) return;
 
-          const parsed = parseSheet(name, rows);
-          if (!parsed.mapping) return;
+        const parsed = parseSheet(name, rows);
+        if (!parsed.mapping) return;
 
-          sheets.push({
-            sheetName: name,
-            skill: parsed.mapping.skill,
-            part: parsed.mapping.part,
-            label: parsed.mapping.label,
-            questions: parsed.questions,
-            errors: parsed.errors,
-            rowCount: rows.length,
-          });
+        parsedResults.push({
+          sheetName: name,
+          skill: parsed.mapping.skill,
+          part: parsed.mapping.part,
+          label: parsed.mapping.label,
+          questions: parsed.questions,
+          errors: parsed.errors,
+          rowCount: rows.length,
         });
+      });
 
-        if (sheets.length === 0) {
-          toast({ title: "Không tìm thấy tab hợp lệ", description: "Tên tab phải theo format: Core_Grammar, Core_Vocab, R_Part1, L_Part2, S_Part3, W_Part4...", variant: "destructive" });
-          return;
-        }
-
-        setParsedSheets(sheets);
-        setActiveSheet(0);
-        setResult(null);
-      } catch {
-        toast({ title: "Lỗi đọc file", variant: "destructive" });
+      if (parsedResults.length === 0) {
+        toast({ title: "Không tìm thấy tab hợp lệ", description: "Tên tab phải theo format: Core_Grammar, Core_Vocab, R_Part1, L_Part2, S_Part3, W_Part4...", variant: "destructive" });
+        return;
       }
-    };
-    reader.readAsBinaryString(file);
+
+      setParsedSheets(parsedResults);
+      setActiveSheet(0);
+      setResult(null);
+    } catch {
+      toast({ title: "Lỗi đọc file", variant: "destructive" });
+    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
