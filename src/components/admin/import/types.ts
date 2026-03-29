@@ -78,7 +78,7 @@ export const FULL_EXAM_SHEETS: SheetMapping[] = [
   // Reading — 35 min
   { sheetName: "R_Part1", skill: "reading", part: "Part 1 - Sentence Comprehension", label: "Reading Part 1" },
   { sheetName: "R_Part2", skill: "reading", part: "Part 2 - Text Cohesion", label: "Reading Part 2" },
-  { sheetName: "R_Part3", skill: "reading", part: "Part 3 - Opinion Matching", label: "Reading Part 3" },
+  { sheetName: "R_Part3", skill: "reading", part: "Part 3 - Gap Fill", label: "Reading Part 3" },
   { sheetName: "R_Part4", skill: "reading", part: "Part 4 - Long Text Comprehension", label: "Reading Part 4" },
   // Listening — 40 min
   { sheetName: "L_Part1", skill: "listening", part: "Part 1 - Information Recognition", label: "Listening Part 1" },
