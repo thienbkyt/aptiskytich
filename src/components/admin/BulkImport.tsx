@@ -105,32 +105,28 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ row: number; message: string }[]>([]);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const wb = XLSX.read(ev.target?.result, { type: "binary" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json<ImportRow>(ws);
-        if (rows.length === 0) {
-          toast({ title: "File trống", description: "Không tìm thấy dữ liệu.", variant: "destructive" });
-          return;
-        }
-        const errors: { row: number; message: string }[] = [];
-        rows.forEach((row, i) => {
-          const err = validateRow(row, i);
-          if (err) errors.push({ row: i + 2, message: err });
-        });
-        setValidationErrors(errors);
-        setPreview(rows);
-        setResult(null);
-      } catch {
-        toast({ title: "Lỗi đọc file", description: "File không đúng định dạng Excel.", variant: "destructive" });
+    try {
+      const buffer = await file.arrayBuffer();
+      const { sheetNames, sheets } = await readExcelFile(buffer);
+      const rows = (sheets[sheetNames[0]] || []) as unknown as ImportRow[];
+      if (rows.length === 0) {
+        toast({ title: "File trống", description: "Không tìm thấy dữ liệu.", variant: "destructive" });
+        return;
       }
-    };
-    reader.readAsBinaryString(file);
+      const errors: { row: number; message: string }[] = [];
+      rows.forEach((row, i) => {
+        const err = validateRow(row, i);
+        if (err) errors.push({ row: i + 2, message: err });
+      });
+      setValidationErrors(errors);
+      setPreview(rows);
+      setResult(null);
+    } catch {
+      toast({ title: "Lỗi đọc file", description: "File không đúng định dạng Excel.", variant: "destructive" });
+    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
