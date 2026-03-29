@@ -108,6 +108,11 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       const clean = word.trim().toLowerCase();
       if (!ENGLISH_WORD_RE.test(clean)) return;
 
+      // Rate limit: skip if too frequent (unless cached)
+      const now = Date.now();
+      if (!cacheRef.current.has(clean) && now - lastLookupRef.time < LOOKUP_COOLDOWN_MS) return;
+      lastLookupRef.time = now;
+
       if (closeTimeoutRef.current !== null) {
         window.clearTimeout(closeTimeoutRef.current);
         closeTimeoutRef.current = null;
