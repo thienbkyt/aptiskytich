@@ -70,7 +70,11 @@ export interface SheetMapping {
 export const FULL_EXAM_SHEETS: SheetMapping[] = [
   // Core (Grammar & Vocabulary) — 25 min
   { sheetName: "Core_Grammar", skill: "grammar_vocab", part: "Part 1 - Grammar", label: "Core Grammar" },
-  { sheetName: "Core_Vocab", skill: "grammar_vocab", part: "Part 2 - Vocabulary", label: "Core Vocabulary" },
+  { sheetName: "V_Part1", skill: "grammar_vocab", part: "Vocab Part 1 - Word Synonyms", label: "Vocab Part 1 (Synonyms)" },
+  { sheetName: "V_Part2", skill: "grammar_vocab", part: "Vocab Part 2 - Sentence Definition", label: "Vocab Part 2 (Definition)" },
+  { sheetName: "V_Part3", skill: "grammar_vocab", part: "Vocab Part 3 - Definition Matching", label: "Vocab Part 3 (Matching)" },
+  { sheetName: "V_Part4", skill: "grammar_vocab", part: "Vocab Part 4 - Gap Fill", label: "Vocab Part 4 (Gap Fill)" },
+  { sheetName: "V_Part5", skill: "grammar_vocab", part: "Vocab Part 5 - Collocation", label: "Vocab Part 5 (Collocation)" },
   // Reading — 35 min
   { sheetName: "R_Part1", skill: "reading", part: "Part 1 - Sentence Comprehension", label: "Reading Part 1" },
   { sheetName: "R_Part2", skill: "reading", part: "Part 2 - Text Cohesion", label: "Reading Part 2" },
