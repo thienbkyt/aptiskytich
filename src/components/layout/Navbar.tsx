@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, BookOpen, LogIn, LogOut, Shield, Flame, ChevronDown, BookText, GraduationCap, Book, Headphones, Mic, PenLine, type LucideIcon } from "lucide-react";
+import { Menu, X, LogIn, LogOut, Shield, Flame, ChevronDown, BookText, GraduationCap, Book, Headphones, Mic, PenLine, type LucideIcon } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
