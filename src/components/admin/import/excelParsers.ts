@@ -58,42 +58,42 @@ const parseCoreGrammar = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Core Vocabulary: 25 questions, multiple types ───
-// Columns: question_type (matching/definition/usage/pairs), question_text, option_a/b/c/d, correct_answer, explanation
-const parseCoreVocab = (rows: any[]): ParseResult => {
+// ─── Vocab shared: 11 options A-K ───
+const OPTION_KEYS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
+
+const parseVocabPart = (rows: any[], vocabType: string, questionField: string): ParseResult => {
   const questions: ParsedQuestion[] = [];
   const errors: { row: number; message: string }[] = [];
 
   rows.forEach((r, i) => {
     const rowNum = i + 2;
-    const qt = r.question_text?.toString().trim();
-    if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu question_text` }); return; }
+    const qt = r[questionField]?.toString().trim() || r.question_text?.toString().trim();
+    if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu ${questionField}` }); return; }
     const ans = r.correct_answer?.toString().toUpperCase().trim();
-    // Vocab can have 3 or 4 options depending on question type
-    const hasD = r.option_d?.toString().trim();
-    const validAnswers = hasD ? VALID_ABCD : VALID_ABC;
-    if (!ans || !validAnswers.includes(ans)) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: correct_answer phải là ${hasD ? "A/B/C/D" : "A/B/C"}` }); return; }
+    if (!ans || !OPTION_KEYS.includes(ans)) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: correct_answer phải là A-K` }); return; }
 
-    const opts = hasD
-      ? [r.option_a || "", r.option_b || "", r.option_c || "", r.option_d || ""]
-      : [r.option_a || "", r.option_b || "", r.option_c || ""];
-
-    const vocabType = r.vocab_type?.toString().trim() || "usage";
+    const options = OPTION_KEYS.map((k) => (r[`option_${k}`] || "").toString().trim());
 
     questions.push({
       order_index: i,
       question_text: qt,
-      question_type: "multiple_choice",
-      options: opts.map((o: any) => o.toString().trim()),
-      correct_answer: validAnswers.indexOf(ans),
+      question_type: "vocab_matching",
+      options,
+      correct_answer: OPTION_KEYS.indexOf(ans),
       explanation: r.explanation?.toString().trim() || "",
       audio_url: null, image_url: null, response_time: null,
-      extra_data: { vocabType },
+      extra_data: { vocabType, optionLabels: OPTION_KEYS },
     });
   });
 
   return { questions, errors };
 };
+
+const parseVocabPart1 = (rows: any[]): ParseResult => parseVocabPart(rows, "synonym", "word");
+const parseVocabPart2 = (rows: any[]): ParseResult => parseVocabPart(rows, "sentence_definition", "sentence");
+const parseVocabPart3 = (rows: any[]): ParseResult => parseVocabPart(rows, "definition_matching", "definition");
+const parseVocabPart4 = (rows: any[]): ParseResult => parseVocabPart(rows, "gap_fill", "sentence");
+const parseVocabPart5 = (rows: any[]): ParseResult => parseVocabPart(rows, "collocation", "word");
 
 // ─── Reading Part 1: Sentence Comprehension — 5 sentences, 3 options each ───
 const parseReadingPart1 = (rows: any[]): ParseResult => {
