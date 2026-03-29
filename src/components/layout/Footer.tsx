@@ -8,9 +8,7 @@ const Footer = () => (
       <div className="grid md:grid-cols-4 gap-10">
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-primary-foreground" />
-            </div>
+            <img src={logoImg} alt="Aptis Kỳ Tích" className="h-10 w-auto" />
             <span className="font-heading font-bold text-lg text-sidebar-foreground">
               Aptis Kỳ Tích
             </span>

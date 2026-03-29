@@ -33,9 +33,7 @@ const Navbar = () => {
       <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 mr-4">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-primary-foreground" />
-          </div>
+          <img src={logoImg} alt="Aptis Kỳ Tích" className="h-10 w-auto" />
           <span className="font-heading font-bold text-base text-foreground tracking-tight">
             Aptis <span className="text-primary">Kỳ Tích</span>
           </span>
