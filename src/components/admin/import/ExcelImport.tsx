@@ -29,9 +29,7 @@ interface Props {
 /**
  * Generate template matching official Aptis General format (British Council 2023)
  */
-const downloadTemplate = () => {
-  const wb = XLSX.utils.book_new();
-
+const downloadTemplate = async () => {
   const sheets: { name: string; cols: Record<string, string | number | boolean>[] }[] = [
     // ─── Core Grammar: 25 MCQ × 3 options ───
     {
@@ -41,7 +39,6 @@ const downloadTemplate = () => {
         { question_text: "I _____ seen that movie before.", option_a: "have", option_b: "has", option_c: "had", correct_answer: "A", explanation: "Present Perfect với I/you/we/they" },
       ],
     },
-    // ─── Core Vocabulary: word matching/definition/usage/pairs ───
     {
       name: "Core_Vocab",
       cols: [
@@ -49,7 +46,6 @@ const downloadTemplate = () => {
         { vocab_type: "usage", question_text: "She made a good _____ on her boss.", option_a: "impression", option_b: "expression", option_c: "depression", option_d: "possession", correct_answer: "A", explanation: "make an impression" },
       ],
     },
-    // ─── Reading Part 1: Sentence Comprehension — 5 sentences × 3 options ───
     {
       name: "R_Part1",
       cols: [
@@ -57,7 +53,6 @@ const downloadTemplate = () => {
         { sentence: "Please _____ the door when you leave.", option_a: "close", option_b: "clothes", option_c: "clock", correct_answer: "A", explanation: "close the door" },
       ],
     },
-    // ─── Reading Part 2: Text Cohesion — 6 sentences, reorder ───
     {
       name: "R_Part2",
       cols: [
@@ -69,7 +64,6 @@ const downloadTemplate = () => {
         { sentence_text: "Finally, she went to bed at 10 PM.", correct_position: 6, explanation: "" },
       ],
     },
-    // ─── Reading Part 3: Opinion Matching — 4 people, 7 statements ───
     {
       name: "R_Part3",
       cols: [
@@ -82,7 +76,6 @@ const downloadTemplate = () => {
         { person_name: "", person_text: "", statement: "This person creates things at home.", correct_person: "Carol", explanation: "" },
       ],
     },
-    // ─── Reading Part 4: Long Text — passage + 8 headings (7 match + 1 extra) ───
     {
       name: "R_Part4",
       cols: [
@@ -96,14 +89,12 @@ const downloadTemplate = () => {
         { passage: "", heading: "This heading does not match", paragraph_index: 0, is_extra: true, explanation: "Extra heading" },
       ],
     },
-    // ─── Listening Part 1: Information Recognition — audio + MCQ ───
     {
       name: "L_Part1",
       cols: [
         { question_text: "What time is the meeting?", option_a: "2:00 PM", option_b: "3:00 PM", option_c: "4:00 PM", correct_answer: "B", explanation: "Speaker says 3 o'clock", audio_filename: "l_part1_q1.mp3" },
       ],
     },
-    // ─── Listening Part 2: Information Matching — 4 people × 6 info items ───
     {
       name: "L_Part2",
       cols: [
@@ -115,7 +106,6 @@ const downloadTemplate = () => {
         { person_name: "", audio_filename: "", info_text: "Plans to travel abroad", correct_person: "Speaker 3", explanation: "" },
       ],
     },
-    // ─── Listening Part 3: Opinion Matching — man/woman/both ───
     {
       name: "L_Part3",
       cols: [
@@ -125,7 +115,6 @@ const downloadTemplate = () => {
         { question_text: "Who mentions cost as a factor?", correct_answer: "man", audio_filename: "", explanation: "" },
       ],
     },
-    // ─── Listening Part 4: Monologue Comprehension — 2 MCQ questions ───
     {
       name: "L_Part4",
       cols: [
@@ -133,7 +122,6 @@ const downloadTemplate = () => {
         { question_text: "How does the speaker feel about the topic?", option_a: "Concerned", option_b: "Indifferent", option_c: "Excited", correct_answer: "A", explanation: "", audio_filename: "" },
       ],
     },
-    // ─── Speaking Part 1: 3 personal questions, 30s each ───
     {
       name: "S_Part1",
       cols: [
@@ -142,7 +130,6 @@ const downloadTemplate = () => {
         { question_text: "Do you prefer spending time indoors or outdoors? Why?", sample_answer: "I prefer..." },
       ],
     },
-    // ─── Speaking Part 2: 1 photo + 3 questions, 45s each ───
     {
       name: "S_Part2",
       cols: [
@@ -151,7 +138,6 @@ const downloadTemplate = () => {
         { question_text: "What are the advantages of places like this?", image_url: "", sample_answer: "The advantages are..." },
       ],
     },
-    // ─── Speaking Part 3: 2 photos + 3 questions, 45s each ───
     {
       name: "S_Part3",
       cols: [
@@ -160,7 +146,6 @@ const downloadTemplate = () => {
         { question_text: "What do you think are the advantages and disadvantages of each?", image_url_1: "", image_url_2: "", sample_answer: "The advantages..." },
       ],
     },
-    // ─── Speaking Part 4: abstract topic, 1 min prep, 2 min speak ───
     {
       name: "S_Part4",
       cols: [
@@ -169,7 +154,6 @@ const downloadTemplate = () => {
         { topic: "", question_text: "What might education look like in the future?", image_url: "", sample_answer: "In the future..." },
       ],
     },
-    // ─── Writing Part 1: Word-level — 5 text messages ───
     {
       name: "W_Part1",
       cols: [
@@ -180,14 +164,12 @@ const downloadTemplate = () => {
         { context: "", message_text: "When can you come to the next meeting?", sample_answer: "Saturday" },
       ],
     },
-    // ─── Writing Part 2: Short Text — 20-30 words ───
     {
       name: "W_Part2",
       cols: [
         { social_post_author: "John", social_post_content: "Just visited a new café downtown. The coffee was amazing!", prompt_question: "Would you like to go there?", sample_answer: "That sounds great! I'd love to try it..." },
       ],
     },
-    // ─── Writing Part 3: Three Responses — 30-40 words each ───
     {
       name: "W_Part3",
       cols: [
@@ -196,7 +178,6 @@ const downloadTemplate = () => {
         { question_text: "Do you prefer studying alone or in groups?", sample_answer: "I prefer studying alone because..." },
       ],
     },
-    // ─── Writing Part 4: Informal (40-50 words) + Formal (120-150 words) ───
     {
       name: "W_Part4",
       cols: [
@@ -206,13 +187,7 @@ const downloadTemplate = () => {
     },
   ];
 
-  sheets.forEach(({ name, cols }) => {
-    const ws = XLSX.utils.json_to_sheet(cols);
-    ws["!cols"] = Object.keys(cols[0]).map(() => ({ wch: 30 }));
-    XLSX.utils.book_append_sheet(wb, ws, name);
-  });
-
-  XLSX.writeFile(wb, "aptis_general_full_exam_template.xlsx");
+  await createAndDownloadExcel("aptis_general_full_exam_template.xlsx", sheets);
 };
 
 const ExcelImport = ({ examType, onImportComplete }: Props) => {
