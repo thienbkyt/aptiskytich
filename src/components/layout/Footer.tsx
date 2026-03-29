@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { BookOpen, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
+import logoImg from "@/assets/logo.png";
 
 const Footer = () => (
   <footer className="bg-sidebar text-sidebar-foreground/80 section-padding">
