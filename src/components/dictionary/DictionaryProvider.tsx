@@ -68,6 +68,10 @@ function speak(text: string, lang: "en" | "vi") {
 /* ─── English word regex ─── */
 const ENGLISH_WORD_RE = /^[a-zA-Z]{2,}$/;
 
+/* ─── Rate limiter: max 1 lookup per 2 seconds ─── */
+const lastLookupRef = { time: 0 };
+const LOOKUP_COOLDOWN_MS = 2000;
+
 /* ══════════════════ Provider ══════════════════ */
 export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -103,6 +107,11 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     async (word: string, rect: DOMRect) => {
       const clean = word.trim().toLowerCase();
       if (!ENGLISH_WORD_RE.test(clean)) return;
+
+      // Rate limit: skip if too frequent (unless cached)
+      const now = Date.now();
+      if (!cacheRef.current.has(clean) && now - lastLookupRef.time < LOOKUP_COOLDOWN_MS) return;
+      lastLookupRef.time = now;
 
       if (closeTimeoutRef.current !== null) {
         window.clearTimeout(closeTimeoutRef.current);

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,26 @@ serve(async (req) => {
       });
     }
 
+    const clean = word.trim().toLowerCase();
+
+    // Check DB cache first
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: cached } = await supabase
+      .from("dictionary_cache")
+      .select("result")
+      .eq("word", clean)
+      .maybeSingle();
+
+    if (cached?.result) {
+      return new Response(JSON.stringify(cached.result), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Not cached — call AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -42,10 +63,10 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-flash-lite",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: word.trim().toLowerCase() },
+            { role: "user", content: clean },
           ],
         }),
       }
@@ -75,21 +96,17 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
     const data = await response.json();
     let content = data.choices?.[0]?.message?.content || "";
 
-    // Strip markdown code fences if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
     if (!content) {
-      console.error("Empty AI content. Full response:", JSON.stringify(data));
       return new Response(
         JSON.stringify({ error: "AI returned empty response" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Try to extract JSON object from content
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error("No JSON object found in content:", content);
       return new Response(
         JSON.stringify({ error: "AI returned invalid format" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -97,6 +114,14 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
+
+    // Save to cache (fire-and-forget)
+    supabase
+      .from("dictionary_cache")
+      .upsert({ word: clean, result: parsed }, { onConflict: "word" })
+      .then(({ error: cacheErr }) => {
+        if (cacheErr) console.error("Cache write error:", cacheErr);
+      });
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

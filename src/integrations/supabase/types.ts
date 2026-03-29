@@ -46,6 +46,24 @@ export type Database = {
           },
         ]
       }
+      dictionary_cache: {
+        Row: {
+          created_at: string
+          result: Json
+          word: string
+        }
+        Insert: {
+          created_at?: string
+          result: Json
+          word: string
+        }
+        Update: {
+          created_at?: string
+          result?: Json
+          word?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
