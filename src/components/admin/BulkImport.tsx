@@ -62,29 +62,21 @@ const TEMPLATE_DATA = [
   },
 ];
 
-const downloadTemplate = () => {
-  const ws = XLSX.utils.json_to_sheet(TEMPLATE_DATA);
-  ws["!cols"] = [
-    { wch: 25 }, { wch: 12 }, { wch: 10 }, { wch: 10 },
-    { wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 },
-    { wch: 14 }, { wch: 40 }, { wch: 40 },
-  ];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Questions");
-
-  const instructions = [
-    { "Hướng dẫn": "Cột test_title", "Chi tiết": "Tên bộ đề. Các câu cùng test_title + skill + part sẽ được gom vào 1 bộ đề" },
-    { "Hướng dẫn": "Cột skill", "Chi tiết": "grammar, reading, listening, speaking, writing" },
-    { "Hướng dẫn": "Cột part", "Chi tiết": "Part 1, Part 2, Part 3, Part 4" },
-    { "Hướng dẫn": "Cột order_index", "Chi tiết": "Thứ tự câu hỏi trong bộ đề (1, 2, 3...)" },
-    { "Hướng dẫn": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
-    { "Hướng dẫn": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
-  ];
-  const wsInstructions = XLSX.utils.json_to_sheet(instructions);
-  wsInstructions["!cols"] = [{ wch: 25 }, { wch: 70 }];
-  XLSX.utils.book_append_sheet(wb, wsInstructions, "Hướng dẫn");
-
-  XLSX.writeFile(wb, "aptis_questions_template.xlsx");
+const downloadTemplate = async () => {
+  await createAndDownloadExcel("aptis_questions_template.xlsx", [
+    { name: "Questions", cols: TEMPLATE_DATA },
+    {
+      name: "Hướng dẫn",
+      cols: [
+        { "Hướng dẫn": "Cột test_title", "Chi tiết": "Tên bộ đề. Các câu cùng test_title + skill + part sẽ được gom vào 1 bộ đề" },
+        { "Hướng dẫn": "Cột skill", "Chi tiết": "grammar, reading, listening, speaking, writing" },
+        { "Hướng dẫn": "Cột part", "Chi tiết": "Part 1, Part 2, Part 3, Part 4" },
+        { "Hướng dẫn": "Cột order_index", "Chi tiết": "Thứ tự câu hỏi trong bộ đề (1, 2, 3...)" },
+        { "Hướng dẫn": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
+        { "Hướng dẫn": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
+      ],
+    },
+  ]);
 };
 
 const validateRow = (row: ImportRow, index: number): string | null => {
