@@ -10,78 +10,83 @@ interface Props {
   setQuestions: React.Dispatch<React.SetStateAction<Omit<ExamQuestionRow, "exam_set_id">[]>>;
 }
 
+const OPTION_KEYS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
+
 const ReadingPart3Form = ({ questions, setQuestions }: Props) => {
-  const defaultQ: Omit<ExamQuestionRow, "exam_set_id"> = { order_index: 0, question_text: "", question_type: "opinion_matching", options: [], correct_answer: 0, explanation: "", audio_url: null, image_url: null, response_time: null, extra_data: {} };
+  const defaultQ: Omit<ExamQuestionRow, "exam_set_id"> = { order_index: 0, question_text: "", question_type: "gap_fill_reading", options: Array(11).fill(""), correct_answer: 0, explanation: "", audio_url: null, image_url: null, response_time: null, extra_data: {} };
   const q = questions[0] || defaultQ;
   const ed = (q.extra_data || {}) as Record<string, any>;
-  const people: { name: string; text: string }[] = ed.people || [];
-  const statements: { text: string; correctPerson: number }[] = ed.statements || [];
+  const gaps: { gapNumber: number; correctAnswer: number }[] = ed.gaps || [];
+  const options: string[] = q.options?.length === 11 ? q.options : Array(11).fill("");
 
-  const update = (field: string, val: any) => {
+  const updateEd = (field: string, val: any) => {
     setQuestions([{ ...q, extra_data: { ...ed, [field]: val } }]);
   };
 
-  const updatePerson = (idx: number, field: string, val: string) => {
-    const p = [...people];
-    p[idx] = { ...p[idx], [field]: val };
-    update("people", p);
+  const updateOption = (idx: number, val: string) => {
+    const o = [...options];
+    o[idx] = val;
+    setQuestions([{ ...q, options: o }]);
   };
 
-  const addPerson = () => update("people", [...people, { name: "", text: "" }]);
-  const removePerson = (idx: number) => update("people", people.filter((_, i) => i !== idx));
-
-  const updateStatement = (idx: number, field: string, val: any) => {
-    const s = [...statements];
-    s[idx] = { ...s[idx], [field]: val };
-    update("statements", s);
+  const updateGap = (idx: number, field: string, val: any) => {
+    const g = [...gaps];
+    g[idx] = { ...g[idx], [field]: val };
+    updateEd("gaps", g);
   };
 
-  const addStatement = () => update("statements", [...statements, { text: "", correctPerson: 0 }]);
-  const removeStatement = (idx: number) => update("statements", statements.filter((_, i) => i !== idx));
+  const addGap = () => updateEd("gaps", [...gaps, { gapNumber: gaps.length + 12, correctAnswer: 0 }]);
+  const removeGap = (idx: number) => updateEd("gaps", gaps.filter((_, i) => i !== idx));
 
   return (
     <div className="space-y-4 p-4 rounded-xl border border-border bg-card">
-      <h3 className="font-semibold text-foreground">Reading Part 3 — Opinion Matching</h3>
+      <h3 className="font-semibold text-foreground">Reading Part 3 — Gap Fill</h3>
 
       <div>
-        <Label>Instruction</Label>
-        <Input value={q.question_text} onChange={(e) => setQuestions([{ ...q, question_text: e.target.value }])} placeholder="Match the statements to the people." />
+        <Label>Tiêu đề bài đọc</Label>
+        <Input value={ed.title || ""} onChange={(e) => updateEd("title", e.target.value)} placeholder="Occupational Stress" />
       </div>
 
       <div>
-        <Label>People (tên + đoạn văn)</Label>
-        <div className="space-y-3 mt-1">
-          {people.map((p, i) => (
-            <div key={i} className="flex gap-2 items-start">
-              <span className="text-xs text-muted-foreground mt-2 w-6">{i + 1}</span>
-              <div className="flex-1 space-y-1">
-                <Input value={p.name} onChange={(e) => updatePerson(i, "name", e.target.value)} placeholder="Tên người" />
-                <Textarea value={p.text} onChange={(e) => updatePerson(i, "text", e.target.value)} placeholder="Đoạn văn / ý kiến" rows={2} />
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => removePerson(i)} className="text-destructive shrink-0"><Trash2 className="w-3 h-3" /></Button>
+        <Label>Đoạn văn (dùng (12)_____, (13)_____ cho chỗ trống)</Label>
+        <Textarea value={q.question_text} onChange={(e) => setQuestions([{ ...q, question_text: e.target.value }])} rows={6} placeholder="Occupational stress relates to the physical... (12)_____ between..." />
+      </div>
+
+      <div>
+        <Label>Ví dụ (Example)</Label>
+        <Input value={ed.example || ""} onChange={(e) => updateEd("example", e.target.value)} placeholder="Example (0): K - effects" />
+      </div>
+
+      <div>
+        <Label>11 từ lựa chọn (A-K)</Label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+          {OPTION_KEYS.map((k, i) => (
+            <div key={k} className="flex items-center gap-1">
+              <span className="text-xs font-mono text-muted-foreground w-4">{k}</span>
+              <Input value={options[i]} onChange={(e) => updateOption(i, e.target.value)} placeholder={`Từ ${k}`} className="text-sm" />
             </div>
           ))}
-          <Button variant="outline" size="sm" onClick={addPerson} className="gap-1"><Plus className="w-3 h-3" /> Thêm person</Button>
         </div>
       </div>
 
       <div>
-        <Label>Statements</Label>
+        <Label>Các chỗ trống (Gaps)</Label>
         <div className="space-y-2 mt-1">
-          {statements.map((s, i) => (
+          {gaps.map((g, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <Input value={s.text} onChange={(e) => updateStatement(i, "text", e.target.value)} placeholder="Statement..." className="flex-1" />
+              <span className="text-xs text-muted-foreground w-6">({g.gapNumber})</span>
+              <Input type="number" value={g.gapNumber} onChange={(e) => updateGap(i, "gapNumber", Number(e.target.value))} className="w-20" placeholder="Số" />
               <select
-                value={s.correctPerson}
-                onChange={(e) => updateStatement(i, "correctPerson", Number(e.target.value))}
+                value={g.correctAnswer}
+                onChange={(e) => updateGap(i, "correctAnswer", Number(e.target.value))}
                 className="rounded-lg border border-input bg-background px-2 py-2 text-sm"
               >
-                {people.map((p, pi) => <option key={pi} value={pi}>{p.name || `Person ${pi + 1}`}</option>)}
+                {OPTION_KEYS.map((k, ki) => <option key={ki} value={ki}>{k} - {options[ki] || "..."}</option>)}
               </select>
-              <Button variant="ghost" size="icon" onClick={() => removeStatement(i)} className="text-destructive shrink-0"><Trash2 className="w-3 h-3" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => removeGap(i)} className="text-destructive shrink-0"><Trash2 className="w-3 h-3" /></Button>
             </div>
           ))}
-          <Button variant="outline" size="sm" onClick={addStatement} className="gap-1"><Plus className="w-3 h-3" /> Thêm statement</Button>
+          <Button variant="outline" size="sm" onClick={addGap} className="gap-1"><Plus className="w-3 h-3" /> Thêm gap</Button>
         </div>
       </div>
 

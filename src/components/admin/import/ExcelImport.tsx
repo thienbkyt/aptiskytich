@@ -91,13 +91,8 @@ const downloadTemplate = async () => {
     {
       name: "R_Part3",
       cols: [
-        { person_name: "Alice", person_text: "I love reading books in my free time. There's nothing better than a good novel.", statement: "This person enjoys literature.", correct_person: "Alice", explanation: "Alice nói love reading books" },
-        { person_name: "Bob", person_text: "I prefer outdoor activities like hiking and cycling.", statement: "This person likes being outside.", correct_person: "Bob", explanation: "" },
-        { person_name: "Carol", person_text: "Cooking is my passion. I try new recipes every weekend.", statement: "This person is interested in food preparation.", correct_person: "Carol", explanation: "" },
-        { person_name: "David", person_text: "I spend most of my time playing video games online.", statement: "This person enjoys digital entertainment.", correct_person: "David", explanation: "" },
-        { person_name: "", person_text: "", statement: "This person prefers solitary activities.", correct_person: "Alice", explanation: "Alice đọc sách - hoạt động cá nhân" },
-        { person_name: "", person_text: "", statement: "This person is physically active.", correct_person: "Bob", explanation: "" },
-        { person_name: "", person_text: "", statement: "This person creates things at home.", correct_person: "Carol", explanation: "" },
+        { passage: "Occupational stress relates to the physical, emotional and psychological (0)_____ on a person. It can be caused by a/an (12)_____ between a person's ability and the demands of a task. Stressful work environments can cause organisations (13)_____ issues such as lower productivity.", title: "Occupational Stress", example: "Example (0): K - effects", gap_number: 12, option_A: "illness", option_B: "assistance", option_C: "complication", option_D: "survey", option_E: "increasing", option_F: "significant", option_G: "conflict", option_H: "reducing", option_I: "employers", option_J: "management", option_K: "effects", correct_answer: "G", explanation: "conflict = mâu thuẫn giữa khả năng và yêu cầu" },
+        { passage: "", title: "", example: "", gap_number: 13, option_A: "illness", option_B: "assistance", option_C: "complication", option_D: "survey", option_E: "increasing", option_F: "significant", option_G: "conflict", option_H: "reducing", option_I: "employers", option_J: "management", option_K: "effects", correct_answer: "F", explanation: "significant issues = vấn đề đáng kể" },
       ],
     },
     {

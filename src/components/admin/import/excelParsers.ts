@@ -159,44 +159,47 @@ const parseReadingPart2 = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Reading Part 3: Opinion Matching — 4 people, 7 statements ───
+// ─── Reading Part 3: Gap Fill — passage with numbered gaps + 11 word options (A-K) ───
 const parseReadingPart3 = (rows: any[]): ParseResult => {
   const errors: { row: number; message: string }[] = [];
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
 
-  const peopleMap = new Map<string, string>();
-  const statements: { text: string; correctPerson: number }[] = [];
+  const passage = rows[0].passage?.toString().trim() || "";
+  const title = rows[0].title?.toString().trim() || "";
+  const example = rows[0].example?.toString().trim() || "";
 
-  rows.forEach((r) => {
-    const name = r.person_name?.toString().trim();
-    const text = r.person_text?.toString().trim();
-    if (name && text && !peopleMap.has(name)) peopleMap.set(name, text);
-  });
+  if (!passage) errors.push({ row: 2, message: "Dòng 2: Thiếu passage" });
 
-  const people = Array.from(peopleMap.entries()).map(([name, text]) => ({ name, text }));
-  const personNames = people.map((p) => p.name);
+  // All rows share the same 11 options (A-K), read from first row
+  const options = OPTION_KEYS.map((k) => (rows[0][`option_${k}`] || rows[0][`option_${k.toLowerCase()}`] || "").toString().trim());
+
+  const gaps: { gapNumber: number; correctAnswer: number }[] = [];
 
   rows.forEach((r, i) => {
     const rowNum = i + 2;
-    const stmt = r.statement?.toString().trim();
-    if (!stmt) return;
-    const correctName = r.correct_person?.toString().trim();
-    const personIdx = personNames.indexOf(correctName);
-    if (personIdx < 0) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: correct_person "${correctName}" không tìm thấy` }); return; }
-    statements.push({ text: stmt, correctPerson: personIdx });
+    const gapNum = Number(r.gap_number);
+    if (isNaN(gapNum)) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu hoặc sai gap_number` }); return; }
+    const ans = r.correct_answer?.toString().toUpperCase().trim();
+    if (!ans || !OPTION_KEYS.includes(ans)) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: correct_answer phải là A-K` }); return; }
+    gaps.push({ gapNumber: gapNum, correctAnswer: OPTION_KEYS.indexOf(ans) });
   });
-
-  if (people.length === 0) errors.push({ row: 2, message: "Không tìm thấy person nào" });
 
   const questions: ParsedQuestion[] = [{
     order_index: 0,
-    question_text: rows[0].topic?.toString().trim() || "Match the statements to the people.",
-    question_type: "opinion_matching",
-    options: [],
+    question_text: passage,
+    question_type: "gap_fill_reading",
+    options,
     correct_answer: 0,
     explanation: rows[0].explanation?.toString().trim() || "",
     audio_url: null, image_url: null, response_time: null,
-    extra_data: { people, statements },
+    extra_data: {
+      passage,
+      title,
+      example,
+      gaps,
+      optionLabels: OPTION_KEYS,
+      instruction: "Read the text and complete each gap with a word from the list at the bottom of the page.",
+    },
   }];
 
   return { questions, errors };

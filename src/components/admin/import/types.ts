@@ -12,7 +12,7 @@ export const SKILL_LABELS: Record<Skill, string> = {
 
 export const SKILL_PARTS: Record<Skill, string[]> = {
   grammar_vocab: ["Part 1 - Grammar", "Part 2 - Vocabulary"],
-  reading: ["Part 1 - Sentence Comprehension", "Part 2 - Text Cohesion", "Part 3 - Opinion Matching", "Part 4 - Long Text Comprehension"],
+  reading: ["Part 1 - Sentence Comprehension", "Part 2 - Text Cohesion", "Part 3 - Gap Fill", "Part 4 - Long Text Comprehension"],
   listening: ["Part 1 - Information Recognition", "Part 2 - Information Matching", "Part 3 - Opinion Matching", "Part 4 - Monologue Comprehension"],
   speaking: ["Part 1 - Personal Information", "Part 2 - Describe & Opinion", "Part 3 - Compare & Explain", "Part 4 - Abstract Discussion"],
   writing: ["Part 1 - Word-level Writing", "Part 2 - Short Text Writing", "Part 3 - Three Responses", "Part 4 - Formal & Informal Emails"],
@@ -78,7 +78,7 @@ export const FULL_EXAM_SHEETS: SheetMapping[] = [
   // Reading — 35 min
   { sheetName: "R_Part1", skill: "reading", part: "Part 1 - Sentence Comprehension", label: "Reading Part 1" },
   { sheetName: "R_Part2", skill: "reading", part: "Part 2 - Text Cohesion", label: "Reading Part 2" },
-  { sheetName: "R_Part3", skill: "reading", part: "Part 3 - Opinion Matching", label: "Reading Part 3" },
+  { sheetName: "R_Part3", skill: "reading", part: "Part 3 - Gap Fill", label: "Reading Part 3" },
   { sheetName: "R_Part4", skill: "reading", part: "Part 4 - Long Text Comprehension", label: "Reading Part 4" },
   // Listening — 40 min
   { sheetName: "L_Part1", skill: "listening", part: "Part 1 - Information Recognition", label: "Listening Part 1" },

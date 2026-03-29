@@ -49,6 +49,7 @@ export const toReadingPart3 = (rows: ExamQuestionRow[]): ReadingOpinionQuestion 
   if (rows.length === 0) return null;
   const first = rows[0];
   const ed = first.extra_data || {};
+  // Support new gap_fill_reading format stored as opinion-matching shape for engine
   return {
     id: 1,
     type: "opinion-matching" as const,
