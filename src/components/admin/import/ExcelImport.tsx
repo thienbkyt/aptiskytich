@@ -40,10 +40,34 @@ const downloadTemplate = async () => {
       ],
     },
     {
-      name: "Core_Vocab",
+      name: "V_Part1",
       cols: [
-        { vocab_type: "matching", question_text: "Which word is closest in meaning to 'happy'?", option_a: "sad", option_b: "joyful", option_c: "angry", correct_answer: "B", explanation: "joyful = happy" },
-        { vocab_type: "usage", question_text: "She made a good _____ on her boss.", option_a: "impression", option_b: "expression", option_c: "depression", option_d: "possession", correct_answer: "A", explanation: "make an impression" },
+        { word: "happy", option_A: "joyful", option_B: "sad", option_C: "angry", option_D: "tired", option_E: "hungry", option_F: "clever", option_G: "brave", option_H: "lazy", option_I: "kind", option_J: "rude", option_K: "shy", correct_answer: "A", explanation: "joyful = happy (đồng nghĩa)" },
+        { word: "fast", option_A: "joyful", option_B: "sad", option_C: "quick", option_D: "tired", option_E: "hungry", option_F: "clever", option_G: "brave", option_H: "lazy", option_I: "kind", option_J: "rude", option_K: "shy", correct_answer: "C", explanation: "quick = fast" },
+      ],
+    },
+    {
+      name: "V_Part2",
+      cols: [
+        { sentence: "A person who fixes water pipes is a _____.", option_A: "plumber", option_B: "teacher", option_C: "doctor", option_D: "lawyer", option_E: "driver", option_F: "painter", option_G: "chef", option_H: "nurse", option_I: "pilot", option_J: "farmer", option_K: "singer", correct_answer: "A", explanation: "plumber = thợ sửa ống nước" },
+      ],
+    },
+    {
+      name: "V_Part3",
+      cols: [
+        { definition: "feeling of great happiness", option_A: "joy", option_B: "anger", option_C: "fear", option_D: "pain", option_E: "hope", option_F: "pride", option_G: "shame", option_H: "guilt", option_I: "love", option_J: "hate", option_K: "envy", correct_answer: "A", explanation: "joy = feeling of great happiness" },
+      ],
+    },
+    {
+      name: "V_Part4",
+      cols: [
+        { sentence: "She _____ her coat because it was cold outside.", option_A: "put on", option_B: "took off", option_C: "gave up", option_D: "set out", option_E: "broke down", option_F: "turned on", option_G: "looked after", option_H: "ran into", option_I: "picked up", option_J: "held on", option_K: "went through", correct_answer: "A", explanation: "put on = mặc vào" },
+      ],
+    },
+    {
+      name: "V_Part5",
+      cols: [
+        { word: "make", option_A: "a decision", option_B: "a bath", option_C: "a sleep", option_D: "a walk", option_E: "a read", option_F: "a drive", option_G: "a cook", option_H: "a swim", option_I: "a run", option_J: "a fight", option_K: "a dream", correct_answer: "A", explanation: "make a decision = ra quyết định (collocation)" },
       ],
     },
     {
