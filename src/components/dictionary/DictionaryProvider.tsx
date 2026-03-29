@@ -68,6 +68,10 @@ function speak(text: string, lang: "en" | "vi") {
 /* ─── English word regex ─── */
 const ENGLISH_WORD_RE = /^[a-zA-Z]{2,}$/;
 
+/* ─── Rate limiter: max 1 lookup per 2 seconds ─── */
+const lastLookupRef = { time: 0 };
+const LOOKUP_COOLDOWN_MS = 2000;
+
 /* ══════════════════ Provider ══════════════════ */
 export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
