@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import * as XLSX from "xlsx";
+import { readExcelFile, createAndDownloadExcel } from "@/lib/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 

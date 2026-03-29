@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
-import * as XLSX from "xlsx";
+import { readExcelFile, createAndDownloadExcel } from "@/lib/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FULL_EXAM_SHEETS } from "./types";
