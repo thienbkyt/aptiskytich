@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import * as XLSX from "xlsx";
+import { readExcelFile, createAndDownloadExcel } from "@/lib/excelUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -62,29 +62,21 @@ const TEMPLATE_DATA = [
   },
 ];
 
-const downloadTemplate = () => {
-  const ws = XLSX.utils.json_to_sheet(TEMPLATE_DATA);
-  ws["!cols"] = [
-    { wch: 25 }, { wch: 12 }, { wch: 10 }, { wch: 10 },
-    { wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 },
-    { wch: 14 }, { wch: 40 }, { wch: 40 },
-  ];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Questions");
-
-  const instructions = [
-    { "Hướng dẫn": "Cột test_title", "Chi tiết": "Tên bộ đề. Các câu cùng test_title + skill + part sẽ được gom vào 1 bộ đề" },
-    { "Hướng dẫn": "Cột skill", "Chi tiết": "grammar, reading, listening, speaking, writing" },
-    { "Hướng dẫn": "Cột part", "Chi tiết": "Part 1, Part 2, Part 3, Part 4" },
-    { "Hướng dẫn": "Cột order_index", "Chi tiết": "Thứ tự câu hỏi trong bộ đề (1, 2, 3...)" },
-    { "Hướng dẫn": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
-    { "Hướng dẫn": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
-  ];
-  const wsInstructions = XLSX.utils.json_to_sheet(instructions);
-  wsInstructions["!cols"] = [{ wch: 25 }, { wch: 70 }];
-  XLSX.utils.book_append_sheet(wb, wsInstructions, "Hướng dẫn");
-
-  XLSX.writeFile(wb, "aptis_questions_template.xlsx");
+const downloadTemplate = async () => {
+  await createAndDownloadExcel("aptis_questions_template.xlsx", [
+    { name: "Questions", cols: TEMPLATE_DATA },
+    {
+      name: "Hướng dẫn",
+      cols: [
+        { "Hướng dẫn": "Cột test_title", "Chi tiết": "Tên bộ đề. Các câu cùng test_title + skill + part sẽ được gom vào 1 bộ đề" },
+        { "Hướng dẫn": "Cột skill", "Chi tiết": "grammar, reading, listening, speaking, writing" },
+        { "Hướng dẫn": "Cột part", "Chi tiết": "Part 1, Part 2, Part 3, Part 4" },
+        { "Hướng dẫn": "Cột order_index", "Chi tiết": "Thứ tự câu hỏi trong bộ đề (1, 2, 3...)" },
+        { "Hướng dẫn": "Cột correct_answer", "Chi tiết": "A, B, C hoặc D (viết hoa)" },
+        { "Hướng dẫn": "Cột audio_url", "Chi tiết": "URL audio cho câu hỏi listening (để trống nếu không cần)" },
+      ],
+    },
+  ]);
 };
 
 const validateRow = (row: ImportRow, index: number): string | null => {
@@ -113,32 +105,28 @@ const BulkImport = ({ onImportComplete }: { onImportComplete: () => void }) => {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ row: number; message: string }[]>([]);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const wb = XLSX.read(ev.target?.result, { type: "binary" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json<ImportRow>(ws);
-        if (rows.length === 0) {
-          toast({ title: "File trống", description: "Không tìm thấy dữ liệu.", variant: "destructive" });
-          return;
-        }
-        const errors: { row: number; message: string }[] = [];
-        rows.forEach((row, i) => {
-          const err = validateRow(row, i);
-          if (err) errors.push({ row: i + 2, message: err });
-        });
-        setValidationErrors(errors);
-        setPreview(rows);
-        setResult(null);
-      } catch {
-        toast({ title: "Lỗi đọc file", description: "File không đúng định dạng Excel.", variant: "destructive" });
+    try {
+      const buffer = await file.arrayBuffer();
+      const { sheetNames, sheets } = await readExcelFile(buffer);
+      const rows = (sheets[sheetNames[0]] || []) as unknown as ImportRow[];
+      if (rows.length === 0) {
+        toast({ title: "File trống", description: "Không tìm thấy dữ liệu.", variant: "destructive" });
+        return;
       }
-    };
-    reader.readAsBinaryString(file);
+      const errors: { row: number; message: string }[] = [];
+      rows.forEach((row, i) => {
+        const err = validateRow(row, i);
+        if (err) errors.push({ row: i + 2, message: err });
+      });
+      setValidationErrors(errors);
+      setPreview(rows);
+      setResult(null);
+    } catch {
+      toast({ title: "Lỗi đọc file", description: "File không đúng định dạng Excel.", variant: "destructive" });
+    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
