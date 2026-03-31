@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookA, Search, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
+import ExamPagination from "@/components/ExamPagination";
 import GrammarResults from "@/components/grammar/GrammarResults";
 import { fetchQuestionsBySkill } from "@/lib/questions";
 import { type Question } from "@/data/questions";
@@ -26,7 +27,7 @@ type ExamState = {
 
 const GrammarVocabulary = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading } = useExamSets("grammar_vocab");
+  const { examSets, loading, page, setPage, totalPages } = useExamSets("grammar_vocab");
   const [exam, setExam] = useState<ExamState>({
     active: false, questions: [], title: "", showResults: false,
     answers: [], fillAnswers: [], loadingExam: false,
@@ -221,6 +222,8 @@ const GrammarVocabulary = () => {
               )}
             </div>
           )}
+
+          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </section>
       </main>
       <Footer />

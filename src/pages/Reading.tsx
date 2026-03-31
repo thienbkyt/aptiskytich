@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
+import ExamPagination from "@/components/ExamPagination";
 import ReadingResults from "@/components/reading/ReadingResults";
 import type { ReadingPartType } from "@/components/reading/ReadingExamEngine";
 import {
@@ -41,7 +42,7 @@ interface ExamState {
 const Reading = () => {
   const [activeTab, setActiveTab] = useState("part1");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading } = useExamSets("reading");
+  const { examSets, loading, page, setPage, totalPages } = useExamSets("reading");
   const [exam, setExam] = useState<ExamState>({
     active: false,
     partType: "part1",
@@ -322,6 +323,8 @@ const Reading = () => {
               )}
             </div>
           )}
+
+          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
           {!loading && filteredSets.length === 0 && !hasMockFallback && (
             <div className="text-center py-16">

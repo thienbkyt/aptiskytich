@@ -38,31 +38,42 @@ export const normalizePart = (part: string): string => {
 };
 
 /**
- * Fetches published exam_sets for a given skill
+ * Fetches published exam_sets for a given skill with pagination
  */
-export const useExamSets = (skill: string) => {
+export const useExamSets = (skill: string, pageSize = 10) => {
   const [examSets, setExamSets] = useState<ExamSetRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    const fetch = async () => {
+    const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error, count } = await supabase
         .from("exam_sets")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("skill", skill)
         .eq("is_published", true)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .range(from, to);
 
       if (!error && data) {
         setExamSets(data as unknown as ExamSetRow[]);
       }
+      if (count !== null && count !== undefined) {
+        setTotalCount(count);
+      }
       setLoading(false);
     };
-    fetch();
-  }, [skill]);
+    load();
+  }, [skill, page, pageSize]);
 
-  return { examSets, loading };
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return { examSets, loading, page, setPage, totalCount, totalPages };
 };
 
 /**

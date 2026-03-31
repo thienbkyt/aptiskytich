@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import ExamPagination from "@/components/ExamPagination";
 import type { WritingPartType } from "@/components/writing/WritingExamEngine";
 import {
   mockWritingPart1, mockWritingPart2, mockWritingPart3, mockWritingPart4,
@@ -40,7 +41,7 @@ interface ExamState {
 const Writing = () => {
   const [activeTab, setActiveTab] = useState("task1");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading } = useExamSets("writing");
+  const { examSets, loading, page, setPage, totalPages } = useExamSets("writing");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
@@ -257,6 +258,8 @@ const Writing = () => {
               )}
             </div>
           )}
+
+          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </section>
       </main>
       <Footer />

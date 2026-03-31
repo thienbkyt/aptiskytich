@@ -9,7 +9,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getLevel, getLevelColor, sampleGapFillQuestions, type Question, type GapFillQuestion } from "@/data/questions";
-import { fetchAllQuestions } from "@/lib/questions";
+import { fetchQuestionsBySkill } from "@/lib/questions";
 import ReadingInstructions from "@/components/reading/ReadingInstructions";
 import ReadingGapFill from "@/components/reading/ReadingGapFill";
 import ExamInstructions from "@/components/exam/ExamInstructions";
@@ -32,7 +32,14 @@ const MockTest = () => {
   const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
 
   useEffect(() => {
-    fetchAllQuestions().then(setQuestions);
+    const loadQuestions = async () => {
+      const [grammar, listening] = await Promise.all([
+        fetchQuestionsBySkill("grammar"),
+        fetchQuestionsBySkill("listening"),
+      ]);
+      setQuestions([...grammar, ...listening]);
+    };
+    loadQuestions();
   }, []);
 
   const mcqQuestions = questions.filter(q => q.skill !== "reading");

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil } from "lucide-react";
+import ExamPagination from "@/components/ExamPagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,26 +20,36 @@ interface Props {
   refreshKey: number;
 }
 
+const PAGE_SIZE = 10;
+
 const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Props) => {
   const [sets, setSets] = useState<ExamSetRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error, count } = await supabase
         .from("exam_sets")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("exam_type", examType)
         .eq("skill", skill)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
       if (!error && data) setSets(data as unknown as ExamSetRow[]);
+      if (count !== null && count !== undefined) setTotalCount(count);
       setLoading(false);
     };
     load();
-  }, [examType, skill, refreshKey]);
+  }, [examType, skill, refreshKey, page]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -120,6 +131,8 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
           ))}
         </div>
       )}
+
+      <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
