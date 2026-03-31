@@ -257,27 +257,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => document.removeEventListener("dblclick", handler);
   }, [lookup]);
 
-  /* ─── Text selection (mouseup): lookup selected text ─── */
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dblClickRef.current) return;
-      if (popupRef.current?.contains(e.target as Node)) return;
-      const target = e.target as HTMLElement;
-      if (isInteractive(target)) return;
-
-      const sel = window.getSelection();
-      if (!sel || sel.isCollapsed) return;
-
-      const text = sel.toString().trim();
-      if (!text || !ENGLISH_WORD_RE.test(text)) return;
-
-      const range = sel.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      lookup(text, rect);
-    };
-    document.addEventListener("mouseup", handler);
-    return () => document.removeEventListener("mouseup", handler);
-  }, [lookup]);
+  /* ─── REMOVED mouseup auto-lookup to prevent wasteful API calls ─── */
+  /* Dictionary lookup is now ONLY triggered by double-click (manual) */
 
   /* ─── Escape key ─── */
   useEffect(() => {
