@@ -324,6 +324,8 @@ const Reading = () => {
             </div>
           )}
 
+          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
           {!loading && filteredSets.length === 0 && !hasMockFallback && (
             <div className="text-center py-16">
               <p className="text-muted-foreground">Không tìm thấy bộ đề nào phù hợp.</p>

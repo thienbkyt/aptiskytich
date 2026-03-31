@@ -32,7 +32,14 @@ const MockTest = () => {
   const [gapFillAnswers, setGapFillAnswers] = useState<(number | null)[][]>([]);
 
   useEffect(() => {
-    fetchAllQuestions().then(setQuestions);
+    const loadQuestions = async () => {
+      const [grammar, listening] = await Promise.all([
+        fetchQuestionsBySkill("grammar"),
+        fetchQuestionsBySkill("listening"),
+      ]);
+      setQuestions([...grammar, ...listening]);
+    };
+    loadQuestions();
   }, []);
 
   const mcqQuestions = questions.filter(q => q.skill !== "reading");
