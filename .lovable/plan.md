@@ -1,44 +1,62 @@
 
 
-# Sửa format Import Vocabulary theo đề thi Aptis thực tế
+# Tối ưu Fetch dữ liệu: Pagination + On-demand Loading
 
-## Vấn đề
+## Vấn đề hiện tại
 
-Template hiện tại dùng **1 sheet `Core_Vocab`** với format MCQ đơn giản (option_a/b/c/d), không đúng với format thực tế của bài thi Aptis. Bài thi thực tế có **5 phần Vocabulary** riêng biệt, mỗi phần có dạng bài khác nhau với **11 lựa chọn (A-K)**.
-
-## Format chuẩn Aptis Vocabulary (25 câu – 13 phút)
-
-```text
-Part 01 (Q1-5):   Word Synonym Matching    — Nối từ đồng nghĩa (11 options A-K)
-Part 02 (Q6-10):  Sentence Definition      — Hoàn thành câu định nghĩa (11 options A-K)  
-Part 03 (Q11-15): Definition Matching       — Nối định nghĩa với từ (11 options A-K)
-Part 04 (Q16-20): Gap Fill                  — Điền từ vào câu (11 options A-K)
-Part 05 (Q21-25): Collocation               — Nối từ kết hợp phổ biến (11 options A-K)
-```
-
-Điểm chung: Mỗi part có **5 câu hỏi** + **11 từ lựa chọn (A-K)**, chỉ dùng **6 từ**, còn **5 từ thừa**.
+1. **`ExamSetList` (Admin)**: Tải toàn bộ exam_sets không giới hạn — nếu có hàng trăm đề sẽ tải hết một lúc
+2. **`useExamSets` (User-facing)**: Tải tất cả published exam_sets cho mỗi skill — không phân trang
+3. **`fetchExamQuestions`**: Tải toàn bộ câu hỏi của một exam_set — hợp lý vì user cần tất cả câu để làm bài, KHÔNG cần thay đổi
+4. **`fetchAllQuestions` (MockTest)**: Tải toàn bộ bảng `questions` cũ — lãng phí nhất
 
 ## Giải pháp
 
-### 1. Cập nhật types — thêm 5 sheet mapping cho Vocab
+### 1. Thêm pagination cho `ExamSetList` (Admin)
+**File: `src/components/admin/import/ExamSetList.tsx`**
+- Thêm state `page` (mặc định 0), `pageSize` = 10, `totalCount`
+- Query dùng `.range(page * pageSize, (page + 1) * pageSize - 1)` và `{ count: "exact" }`
+- Hiển thị UI phân trang (Previous / Next / số trang) dùng component `Pagination` có sẵn
+- Mỗi lần đổi trang chỉ tải 10 đề
 
-Thay `Core_Vocab` (1 sheet) bằng 5 sheet: `V_Part1` → `V_Part5`, mỗi sheet map đến skill `grammar_vocab` với part tương ứng.
+### 2. Thêm pagination cho `useExamSets` hook (User-facing)
+**File: `src/hooks/useExamSets.ts`**
+- Thêm tham số `page` và `pageSize` (mặc định 10)
+- Query dùng `.range()` + `{ count: "exact" }`
+- Return thêm `totalCount`, `page`, `setPage`
 
-### 2. Cập nhật Excel template — 5 sheets mới đúng format
+### 3. Cập nhật các trang skill hiển thị pagination
+**Files: `src/pages/Reading.tsx`, `Writing.tsx`, `Listening.tsx`, `Speaking.tsx`, `GrammarVocabulary.tsx`**
+- Sử dụng `page`/`setPage`/`totalCount` từ hook
+- Thêm UI Pagination khi có nhiều hơn 1 trang
 
-Mỗi sheet có cấu trúc:
-- `word` / `sentence` / `definition` — nội dung câu hỏi (tùy dạng bài)
-- `option_A` → `option_K` — 11 từ lựa chọn
-- `correct_answer` — đáp án đúng (A-K)
-- `explanation` — giải thích
+### 4. Tối ưu MockTest — lazy load
+**File: `src/pages/MockTest.tsx`**
+- Thay `fetchAllQuestions()` bằng fetch theo skill khi cần (chỉ fetch khi user bắt đầu phần thi đó)
+- Hoặc giới hạn `.limit(50)` nếu vẫn cần tải trước
 
-### 3. Viết parser mới cho từng dạng Vocab
+### 5. Giữ nguyên `fetchExamQuestions`
+- Khi user chọn 1 đề để làm bài, cần tải tất cả câu hỏi của đề đó — đây là on-demand đúng nghĩa, KHÔNG thay đổi
 
-Mỗi parser đọc 5 câu + 11 options, lưu vào `extra_data` với format phù hợp cho engine hiển thị (danh sách options A-K, correct letter, question type).
+## Chi tiết kỹ thuật
 
-### File thay đổi
+```text
+Trước:  useExamSets("reading") → SELECT * FROM exam_sets WHERE skill='reading' (tất cả)
+Sau:    useExamSets("reading") → SELECT * FROM exam_sets WHERE skill='reading' LIMIT 10 OFFSET 0
 
-1. **`src/components/admin/import/types.ts`** — Thay `Core_Vocab` bằng `V_Part1`–`V_Part5` trong `FULL_EXAM_SHEETS`
-2. **`src/components/admin/import/ExcelImport.tsx`** — Thay template sheet `Core_Vocab` bằng 5 sheets mới với sample data đúng format
-3. **`src/components/admin/import/excelParsers.ts`** — Thay `parseCoreVocab` bằng 5 parser mới + cập nhật `parseSheet` switch
+Trước:  ExamSetList → SELECT * FROM exam_sets WHERE ... (tất cả)  
+Sau:    ExamSetList → SELECT * FROM exam_sets WHERE ... LIMIT 10 OFFSET 0 + count
+
+Trước:  MockTest → fetchAllQuestions() → SELECT * FROM questions (toàn bộ)
+Sau:    MockTest → fetchQuestionsBySkill("grammar") khi cần
+```
+
+## Files thay đổi
+1. `src/hooks/useExamSets.ts` — thêm pagination params + return totalCount
+2. `src/components/admin/import/ExamSetList.tsx` — thêm pagination UI + range query
+3. `src/pages/Reading.tsx` — dùng pagination từ hook
+4. `src/pages/Writing.tsx` — dùng pagination từ hook
+5. `src/pages/Listening.tsx` — dùng pagination từ hook
+6. `src/pages/Speaking.tsx` — dùng pagination từ hook
+7. `src/pages/GrammarVocabulary.tsx` — dùng pagination từ hook
+8. `src/pages/MockTest.tsx` — lazy load questions theo skill thay vì tải hết
 
