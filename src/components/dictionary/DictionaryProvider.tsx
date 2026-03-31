@@ -173,9 +173,18 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       setVisible(true);
       setError(null);
 
-      // Check cache
+      // Check in-memory cache
       if (cacheRef.current.has(clean)) {
         setResult(cacheRef.current.get(clean)!);
+        setLoading(false);
+        return;
+      }
+
+      // Check localStorage cache
+      const cached = getDictCacheEntry(clean);
+      if (cached) {
+        cacheRef.current.set(clean, cached);
+        setResult(cached);
         setLoading(false);
         return;
       }
@@ -184,6 +193,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       setResult(null);
 
       try {
+        console.log('API Dictionary Called:', clean);
         const { data, error: fnError } = await supabase.functions.invoke(
           "dictionary-lookup",
           { body: { word: clean } }
@@ -192,6 +202,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         if (data?.error) throw new Error(data.error);
 
         cacheRef.current.set(clean, data as DictResult);
+        setDictCache(clean, data as DictResult);
         setResult(data as DictResult);
       } catch (e: any) {
         console.error("Dictionary lookup failed:", e);
