@@ -132,6 +132,8 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
         </div>
       )}
 
+      <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
