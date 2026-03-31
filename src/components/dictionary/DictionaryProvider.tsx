@@ -72,6 +72,41 @@ const ENGLISH_WORD_RE = /^[a-zA-Z]{2,}$/;
 const lastLookupRef = { time: 0 };
 const LOOKUP_COOLDOWN_MS = 2000;
 
+/* ─── localStorage cache helpers (TTL 7 days, max 500 entries) ─── */
+const DICT_CACHE_KEY = "dict_cache";
+const DICT_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const DICT_CACHE_MAX = 500;
+
+interface CacheEntry { data: DictResult; ts: number; }
+
+function getDictCache(): Record<string, CacheEntry> {
+  try {
+    const raw = localStorage.getItem(DICT_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function getDictCacheEntry(word: string): DictResult | null {
+  const cache = getDictCache();
+  const entry = cache[word];
+  if (!entry) return null;
+  if (Date.now() - entry.ts > DICT_CACHE_TTL) return null;
+  return entry.data;
+}
+
+function setDictCache(word: string, data: DictResult) {
+  const cache = getDictCache();
+  cache[word] = { data, ts: Date.now() };
+  // LRU eviction: remove oldest entries if over max
+  const keys = Object.keys(cache);
+  if (keys.length > DICT_CACHE_MAX) {
+    const sorted = keys.sort((a, b) => cache[a].ts - cache[b].ts);
+    const toRemove = sorted.slice(0, keys.length - DICT_CACHE_MAX);
+    toRemove.forEach((k) => delete cache[k]);
+  }
+  try { localStorage.setItem(DICT_CACHE_KEY, JSON.stringify(cache)); } catch {}
+}
+
 /* ══════════════════ Provider ══════════════════ */
 export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
