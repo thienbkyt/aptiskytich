@@ -75,7 +75,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
     <div className="mb-6 bg-muted/30 rounded-xl p-4">
       <audio
         ref={audioRef}
-        src={src}
+        src={resolvedSrc}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
         onTimeUpdate={() => {
           const a = audioRef.current;
