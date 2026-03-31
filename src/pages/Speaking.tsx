@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mic, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
+import ExamPagination from "@/components/ExamPagination";
 import type { SpeakingPartType } from "@/data/speakingQuestions";
 import {
   mockSpeakingPart1, mockSpeakingPart2, mockSpeakingPart3, mockSpeakingPart4,
