@@ -9,7 +9,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { getLevel, getLevelColor, sampleGapFillQuestions, type Question, type GapFillQuestion } from "@/data/questions";
-import { fetchAllQuestions } from "@/lib/questions";
+import { fetchQuestionsBySkill } from "@/lib/questions";
 import ReadingInstructions from "@/components/reading/ReadingInstructions";
 import ReadingGapFill from "@/components/reading/ReadingGapFill";
 import ExamInstructions from "@/components/exam/ExamInstructions";
