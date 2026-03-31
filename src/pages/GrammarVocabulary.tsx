@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookA, Search, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
+import ExamPagination from "@/components/ExamPagination";
 import GrammarResults from "@/components/grammar/GrammarResults";
 import { fetchQuestionsBySkill } from "@/lib/questions";
 import { type Question } from "@/data/questions";
