@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import ExamPagination from "@/components/ExamPagination";
 import type { WritingPartType } from "@/components/writing/WritingExamEngine";
 import {
   mockWritingPart1, mockWritingPart2, mockWritingPart3, mockWritingPart4,
