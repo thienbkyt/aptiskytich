@@ -72,6 +72,41 @@ const ENGLISH_WORD_RE = /^[a-zA-Z]{2,}$/;
 const lastLookupRef = { time: 0 };
 const LOOKUP_COOLDOWN_MS = 2000;
 
+/* ─── localStorage cache helpers (TTL 7 days, max 500 entries) ─── */
+const DICT_CACHE_KEY = "dict_cache";
+const DICT_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+const DICT_CACHE_MAX = 500;
+
+interface CacheEntry { data: DictResult; ts: number; }
+
+function getDictCache(): Record<string, CacheEntry> {
+  try {
+    const raw = localStorage.getItem(DICT_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+function getDictCacheEntry(word: string): DictResult | null {
+  const cache = getDictCache();
+  const entry = cache[word];
+  if (!entry) return null;
+  if (Date.now() - entry.ts > DICT_CACHE_TTL) return null;
+  return entry.data;
+}
+
+function setDictCache(word: string, data: DictResult) {
+  const cache = getDictCache();
+  cache[word] = { data, ts: Date.now() };
+  // LRU eviction: remove oldest entries if over max
+  const keys = Object.keys(cache);
+  if (keys.length > DICT_CACHE_MAX) {
+    const sorted = keys.sort((a, b) => cache[a].ts - cache[b].ts);
+    const toRemove = sorted.slice(0, keys.length - DICT_CACHE_MAX);
+    toRemove.forEach((k) => delete cache[k]);
+  }
+  try { localStorage.setItem(DICT_CACHE_KEY, JSON.stringify(cache)); } catch {}
+}
+
 /* ══════════════════ Provider ══════════════════ */
 export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -85,6 +120,16 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   const [visible, setVisible] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const cacheRef = useRef<Map<string, DictResult>>(new Map());
+
+  // Load localStorage cache into memory on mount
+  useEffect(() => {
+    const stored = getDictCache();
+    Object.entries(stored).forEach(([word, entry]) => {
+      if (Date.now() - entry.ts < DICT_CACHE_TTL) {
+        cacheRef.current.set(word, entry.data);
+      }
+    });
+  }, []);
   const dblClickRef = useRef(false);
   const closeTimeoutRef = useRef<number | null>(null);
 
@@ -128,9 +173,18 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       setVisible(true);
       setError(null);
 
-      // Check cache
+      // Check in-memory cache
       if (cacheRef.current.has(clean)) {
         setResult(cacheRef.current.get(clean)!);
+        setLoading(false);
+        return;
+      }
+
+      // Check localStorage cache
+      const cached = getDictCacheEntry(clean);
+      if (cached) {
+        cacheRef.current.set(clean, cached);
+        setResult(cached);
         setLoading(false);
         return;
       }
@@ -139,6 +193,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       setResult(null);
 
       try {
+        console.log('API Dictionary Called:', clean);
         const { data, error: fnError } = await supabase.functions.invoke(
           "dictionary-lookup",
           { body: { word: clean } }
@@ -147,6 +202,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         if (data?.error) throw new Error(data.error);
 
         cacheRef.current.set(clean, data as DictResult);
+        setDictCache(clean, data as DictResult);
         setResult(data as DictResult);
       } catch (e: any) {
         console.error("Dictionary lookup failed:", e);
@@ -201,27 +257,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => document.removeEventListener("dblclick", handler);
   }, [lookup]);
 
-  /* ─── Text selection (mouseup): lookup selected text ─── */
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dblClickRef.current) return;
-      if (popupRef.current?.contains(e.target as Node)) return;
-      const target = e.target as HTMLElement;
-      if (isInteractive(target)) return;
-
-      const sel = window.getSelection();
-      if (!sel || sel.isCollapsed) return;
-
-      const text = sel.toString().trim();
-      if (!text || !ENGLISH_WORD_RE.test(text)) return;
-
-      const range = sel.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      lookup(text, rect);
-    };
-    document.addEventListener("mouseup", handler);
-    return () => document.removeEventListener("mouseup", handler);
-  }, [lookup]);
+  /* ─── REMOVED mouseup auto-lookup to prevent wasteful API calls ─── */
+  /* Dictionary lookup is now ONLY triggered by double-click (manual) */
 
   /* ─── Escape key ─── */
   useEffect(() => {
