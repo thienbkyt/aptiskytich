@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { resolveAudioUrl } from "@/lib/audioUrl";
 
 interface LimitedAudioPlayerProps {
   src: string;
@@ -15,7 +16,20 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const disabled = playCount >= maxPlays && !isPlaying;
+
+  // Resolve audio URL (raw path → signed URL)
+  useEffect(() => {
+    let cancelled = false;
+    setResolvedSrc("");
+    if (src) {
+      resolveAudioUrl(src).then((url) => {
+        if (!cancelled && url) setResolvedSrc(url);
+      });
+    }
+    return () => { cancelled = true; };
+  }, [src]);
 
   // Reset state when question changes
   useEffect(() => {
@@ -61,7 +75,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
     <div className="mb-6 bg-muted/30 rounded-xl p-4">
       <audio
         ref={audioRef}
-        src={src}
+        src={resolvedSrc}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
         onTimeUpdate={() => {
           const a = audioRef.current;
