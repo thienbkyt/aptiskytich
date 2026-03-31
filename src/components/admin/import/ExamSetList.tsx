@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil } from "lucide-react";
+import ExamPagination from "@/components/ExamPagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
