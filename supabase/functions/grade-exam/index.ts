@@ -118,7 +118,10 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
           },
         ];
       } else {
-        throw new Error("No audio or text provided for speaking grading");
+        return new Response(
+          JSON.stringify({ error: "No audio or text provided for speaking grading. Please record your answer first." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     } else {
       systemPrompt = `You are an expert Aptis Writing exam grader. You will receive a student's written response along with the exam prompt.
