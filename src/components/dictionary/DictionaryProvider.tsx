@@ -120,6 +120,16 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   const [visible, setVisible] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const cacheRef = useRef<Map<string, DictResult>>(new Map());
+
+  // Load localStorage cache into memory on mount
+  useEffect(() => {
+    const stored = getDictCache();
+    Object.entries(stored).forEach(([word, entry]) => {
+      if (Date.now() - entry.ts < DICT_CACHE_TTL) {
+        cacheRef.current.set(word, entry.data);
+      }
+    });
+  }, []);
   const dblClickRef = useRef(false);
   const closeTimeoutRef = useRef<number | null>(null);
 
