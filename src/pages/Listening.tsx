@@ -41,7 +41,7 @@ interface ExamState {
 const Listening = () => {
   const [activeTab, setActiveTab] = useState("part1");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading } = useExamSets("listening");
+  const { examSets, loading, page, setPage, totalPages } = useExamSets("listening");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
