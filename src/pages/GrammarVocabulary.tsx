@@ -26,7 +26,7 @@ type ExamState = {
 
 const GrammarVocabulary = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading } = useExamSets("grammar_vocab");
+  const { examSets, loading, page, setPage, totalPages } = useExamSets("grammar_vocab");
   const [exam, setExam] = useState<ExamState>({
     active: false, questions: [], title: "", showResults: false,
     answers: [], fillAnswers: [], loadingExam: false,
