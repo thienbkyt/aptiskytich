@@ -83,27 +83,30 @@ const SpeakingExamEngine = ({
   };
 
   const handleFinish = async () => {
-    setPhase("grading");
-    onComplete?.();
-
-    // Collect recordings and convert to base64
-    let audioBase64: string | undefined;
+    // Collect recordings
     const recordings = partType === "part1"
       ? p1Recordings.filter(Boolean) as string[]
       : partType === "part2" ? (p2Recording ? [p2Recording] : [])
       : partType === "part3" ? (p3Recording ? [p3Recording] : [])
       : (p4Recording ? [p4Recording] : []);
 
-    if (recordings.length > 0) {
-      try {
-        // Use the first/main recording for grading
-        audioBase64 = await blobUrlToBase64(recordings[0]);
-      } catch (e) {
-        console.error("Failed to convert audio:", e);
-      }
+    if (recordings.length === 0) {
+      const { toast } = await import("sonner");
+      toast.error("Bạn chưa ghi âm câu trả lời nào. Vui lòng ghi âm trước khi nộp bài.");
+      return;
     }
 
-    const result = await gradeExam({
+    setPhase("grading");
+    onComplete?.();
+
+    let audioBase64: string | undefined;
+    try {
+      audioBase64 = await blobUrlToBase64(recordings[0]);
+    } catch (e) {
+      console.error("Failed to convert audio:", e);
+    }
+
+    await gradeExam({
       type: "speaking",
       audioBase64,
       questions: getQuestions(),
