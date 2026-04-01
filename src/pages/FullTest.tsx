@@ -1,14 +1,13 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Clock, ArrowRight, Loader2, Mic, Headphones, BookOpen, PenLine, Brain } from "lucide-react";
+import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain } from "lucide-react";
 import { motion } from "framer-motion";
-import ExamPagination from "@/components/ExamPagination";
-import { useExamSets, type ExamSetRow } from "@/hooks/useExamSets";
 import { Skeleton } from "@/components/ui/skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
+import { useFullTests, type FullTestItem } from "@/hooks/useFullTests";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -19,30 +18,27 @@ const SKILL_BREAKDOWN = [
 ];
 
 const FullTest = () => {
-  const { examSets, loading, page, setPage, totalPages } = useExamSets("full_test", 12);
-  const [activeTestId, setActiveTestId] = useState<string | null>(null);
-  const [activeTestTitle, setActiveTestTitle] = useState("");
+  const { tests, loading } = useFullTests();
+  const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
 
-  const handleStartTest = (set: ExamSetRow) => {
-    setActiveTestId(set.id);
-    setActiveTestTitle(set.title);
+  const handleStartTest = (test: FullTestItem) => {
+    setActiveTest(test);
   };
 
   const handleExit = () => {
-    setActiveTestId(null);
-    setActiveTestTitle("");
+    setActiveTest(null);
   };
 
   // Full test engine mode
-  if (activeTestId) {
+  if (activeTest) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
         <main className="flex-1 pt-24 pb-20">
           <div className="section-container max-w-3xl">
             <FullTestEngine
-              testId={activeTestId}
-              testTitle={activeTestTitle}
+              testId={activeTest.fullTestId}
+              testTitle={activeTest.title}
               onExit={handleExit}
             />
           </div>
@@ -102,7 +98,7 @@ const FullTest = () => {
               Thi thử đề Aptis ngẫu nhiên
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {loading ? "Đang tải..." : `${examSets.length} bộ đề thi thử`}
+              {loading ? "Đang tải..." : `${tests.length} bộ đề thi thử`}
             </p>
           </div>
 
@@ -112,17 +108,17 @@ const FullTest = () => {
                 <Skeleton key={i} className="h-52 rounded-xl" />
               ))}
             </div>
-          ) : examSets.length === 0 ? (
+          ) : tests.length === 0 ? (
             <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
               <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-              <p className="text-muted-foreground font-medium mb-1">Chưa có đề thi thử nào</p>
+              <p className="text-muted-foreground font-medium mb-1">Chưa có đề thi Full Test nào được xuất bản</p>
               <p className="text-sm text-muted-foreground">Đề thi sẽ xuất hiện ở đây khi được import vào hệ thống.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {examSets.map((set, index) => (
+              {tests.map((test, index) => (
                 <motion.div
-                  key={set.id}
+                  key={test.fullTestId}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25, delay: index * 0.03 }}
@@ -132,30 +128,29 @@ const FullTest = () => {
                       Full Test
                     </Badge>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">
-                      {set.title}
+                      {test.title}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      {set.description || "Đề thi thử Aptis Full Test – 5 kỹ năng"}
+                      Đề thi thử Aptis Full Test – {test.skillCount} kỹ năng
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                       <Clock className="w-3.5 h-3.5" />
-                      <span>162 phút • 5 kỹ năng</span>
+                      <span>162 phút • {test.skillCount} kỹ năng</span>
                     </div>
                     <div className="flex-1" />
                     <Button
-                      onClick={() => handleStartTest(set)}
+                      onClick={() => handleStartTest(test)}
+                      disabled={!test.isReady}
                       className="w-full bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
                     >
-                      Bắt đầu thi thử
-                      <ArrowRight className="w-4 h-4" />
+                      {test.isReady ? "Bắt đầu thi thử" : `Chưa đủ kỹ năng (${test.skillCount}/5)`}
+                      {test.isReady && <ArrowRight className="w-4 h-4" />}
                     </Button>
                   </div>
                 </motion.div>
               ))}
             </div>
           )}
-
-          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </section>
       </main>
       <Footer />
