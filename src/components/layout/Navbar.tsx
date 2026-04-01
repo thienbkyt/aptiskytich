@@ -100,10 +100,10 @@ const Navbar = () => {
             onMouseLeave={handleSkillLeave}
           >
             <button
-              className={`flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1 px-3 py-2 text-xs font-extrabold rounded-md transition-colors whitespace-nowrap ${
                 isSkillActive
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-primary"
+                  : "text-secondary-foreground"
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
