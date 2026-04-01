@@ -17,6 +17,7 @@ export const SKILL_PARTS: Record<Skill, string[]> = {
   listening: ["Part 1 - Information Recognition", "Part 2 - Information Matching", "Part 3 - Opinion Matching", "Part 4 - Monologue Comprehension"],
   speaking: ["Part 1 - Personal Information", "Part 2 - Describe & Opinion", "Part 3 - Compare & Explain", "Part 4 - Abstract Discussion"],
   writing: ["Part 1 - Word-level Writing", "Part 2 - Short Text Writing", "Part 3 - Three Responses", "Part 4 - Formal & Informal Emails"],
+  full_test: ["Full Test"],
 };
 
 export interface ExamSetRow {
