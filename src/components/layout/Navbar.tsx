@@ -85,6 +85,37 @@ const Navbar = () => {
             </Link>
           ))}
 
+          {/* Thi thử Aptis - red CTA */}
+          <Link to="/thi-thu">
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm gap-1.5"
+            >
+              <ClipboardCheck className="w-3.5 h-3.5" />
+              Thi thử Aptis
+            </Button>
+          </Link>
+
+          {/* Học từ vựng */}
+          <Link
+            to="/vocabulary"
+            className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              isActive("/vocabulary")
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary"
+            }`}
+          >
+            <BookText className="w-3.5 h-3.5" />
+            Học từ vựng
+            {isActive("/vocabulary") && (
+              <motion.div
+                layoutId="nav-active"
+                className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-primary"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+          </Link>
+
           {/* Skill dropdown */}
           <div
             className="relative"
