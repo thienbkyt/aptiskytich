@@ -83,7 +83,7 @@ const Navbar = () => {
             }`}
           >
             <BookText className="w-3.5 h-3.5" />
-            Học từ vựng
+            Học từ vựng bài thi Aptis
             {isActive("/vocabulary") && (
               <motion.div
                 layoutId="nav-active"
