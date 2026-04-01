@@ -1,5 +1,5 @@
 export type ExamType = "general" | "advanced";
-export type Skill = "grammar_vocab" | "reading" | "listening" | "speaking" | "writing";
+export type Skill = "grammar_vocab" | "reading" | "listening" | "speaking" | "writing" | "full_test";
 export type ImportMethod = "form" | "excel" | "ai";
 
 export const SKILL_LABELS: Record<Skill, string> = {
@@ -8,6 +8,7 @@ export const SKILL_LABELS: Record<Skill, string> = {
   listening: "Listening",
   speaking: "Speaking",
   writing: "Writing",
+  full_test: "Full Test",
 };
 
 export const SKILL_PARTS: Record<Skill, string[]> = {
