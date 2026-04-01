@@ -9,6 +9,7 @@ import SmartForm from "./SmartForm";
 import ExcelImport from "./ExcelImport";
 import AiParser from "./AiParser";
 import MediaLibrary from "./MediaLibrary";
+import FullTestManager from "./FullTestManager";
 
 const ImportCenter = () => {
   const [examType, setExamType] = useState<ExamType>("general");
@@ -50,6 +51,8 @@ const ImportCenter = () => {
     setMode("form");
   };
 
+  const isFullTest = skill === "full_test";
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -80,53 +83,57 @@ const ImportCenter = () => {
       )}
 
       {mode === "list" ? (
-        <Tabs defaultValue="browse" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="browse" className="gap-1.5 text-xs sm:text-sm">
-              <BookOpen className="w-4 h-4" /> <span className="hidden sm:inline">Danh sách</span>
-            </TabsTrigger>
-            <TabsTrigger value="excel" className="gap-1.5 text-xs sm:text-sm">
-              <FileSpreadsheet className="w-4 h-4" /> <span className="hidden sm:inline">Excel</span>
-            </TabsTrigger>
-            <TabsTrigger value="ai" className="gap-1.5 text-xs sm:text-sm">
-              <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">AI Parser</span>
-            </TabsTrigger>
-            <TabsTrigger value="media" className="gap-1.5 text-xs sm:text-sm">
-              <FolderOpen className="w-4 h-4" /> <span className="hidden sm:inline">Media</span>
-            </TabsTrigger>
-          </TabsList>
+        isFullTest ? (
+          <FullTestManager examType={examType} refreshKey={refreshKey} onRefresh={() => setRefreshKey((k) => k + 1)} />
+        ) : (
+          <Tabs defaultValue="browse" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="browse" className="gap-1.5 text-xs sm:text-sm">
+                <BookOpen className="w-4 h-4" /> <span className="hidden sm:inline">Danh sách</span>
+              </TabsTrigger>
+              <TabsTrigger value="excel" className="gap-1.5 text-xs sm:text-sm">
+                <FileSpreadsheet className="w-4 h-4" /> <span className="hidden sm:inline">Excel</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="gap-1.5 text-xs sm:text-sm">
+                <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">AI Parser</span>
+              </TabsTrigger>
+              <TabsTrigger value="media" className="gap-1.5 text-xs sm:text-sm">
+                <FolderOpen className="w-4 h-4" /> <span className="hidden sm:inline">Media</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="browse">
-            <ExamSetList
-              examType={examType}
-              skill={skill}
-              onSelect={handleSelect}
-              onCreateNew={handleCreateNew}
-              refreshKey={refreshKey}
-            />
-          </TabsContent>
+            <TabsContent value="browse">
+              <ExamSetList
+                examType={examType}
+                skill={skill}
+                onSelect={handleSelect}
+                onCreateNew={handleCreateNew}
+                refreshKey={refreshKey}
+              />
+            </TabsContent>
 
-          <TabsContent value="excel">
-            <div className="border border-border rounded-xl p-5 bg-card space-y-4">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-primary" />
-                <h2 className="font-heading font-bold text-foreground">Nhập từ Excel</h2>
+            <TabsContent value="excel">
+              <div className="border border-border rounded-xl p-5 bg-card space-y-4">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="w-5 h-5 text-primary" />
+                  <h2 className="font-heading font-bold text-foreground">Nhập từ Excel</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Upload file Excel với các tab: Grammar_Vocab, Reading, Listening, Speaking, Writing.
+                </p>
+                <ExcelImport examType={examType} onImportComplete={() => setRefreshKey((k) => k + 1)} />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Upload file Excel với các tab: Grammar_Vocab, Reading, Listening, Speaking, Writing.
-              </p>
-              <ExcelImport examType={examType} onImportComplete={() => setRefreshKey((k) => k + 1)} />
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="ai">
-            <AiParser onParsed={handleAiParsed} />
-          </TabsContent>
+            <TabsContent value="ai">
+              <AiParser onParsed={handleAiParsed} />
+            </TabsContent>
 
-          <TabsContent value="media">
-            <MediaLibrary />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="media">
+              <MediaLibrary />
+            </TabsContent>
+          </Tabs>
+        )
       ) : (
         <SmartForm
           examSet={editingSet}

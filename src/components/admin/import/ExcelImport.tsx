@@ -264,6 +264,9 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
     let totalSuccess = 0;
     let setsCreated = 0;
 
+    // Generate a shared full_test_id if importing multiple parts
+    const fullTestId = parsedSheets.length > 1 ? crypto.randomUUID() : null;
+
     for (const sheet of parsedSheets) {
       if (sheet.errors.length > 0 || sheet.questions.length === 0) continue;
 
@@ -274,7 +277,8 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
           exam_type: examType,
           skill: sheet.skill,
           part: sheet.part,
-        })
+          ...(fullTestId ? { full_test_id: fullTestId, full_test_title: examTitle } : {}),
+        } as any)
         .select("id").single();
       if (setErr || !setData) continue;
       setsCreated++;

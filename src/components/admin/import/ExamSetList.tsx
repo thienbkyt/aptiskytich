@@ -98,14 +98,20 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
               onClick={() => onSelect(set)}
             >
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h3 className="font-semibold text-foreground truncate">{set.title}</h3>
+                  {(set as any).full_test_id && (
+                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                      Full Test
+                    </Badge>
+                  )}
                   <Badge variant={set.is_published ? "default" : "secondary"} className="text-xs">
                     {set.is_published ? "Đã xuất bản" : "Nháp"}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {set.part} · {set.time_limit} phút · {new Date(set.created_at).toLocaleDateString("vi-VN")}
+                  {(set as any).full_test_title && <span className="ml-1">· 📦 {(set as any).full_test_title}</span>}
                 </p>
               </div>
               <div className="flex items-center gap-1 ml-3">
