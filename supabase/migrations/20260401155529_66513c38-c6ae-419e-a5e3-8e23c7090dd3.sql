@@ -1,0 +1,1 @@
+UPDATE public.exam_questions SET audio_url = REPLACE(audio_url, '_-_ ', '_-_') WHERE audio_url LIKE '%_-_ %';
