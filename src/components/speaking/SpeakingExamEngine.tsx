@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
-import ExamInstructions from "@/components/exam/ExamInstructions";
-import SpeakingMicCheck from "@/components/speaking/SpeakingMicCheck";
-import SpeakingPart1Personal from "@/components/speaking/SpeakingPart1Personal";
-import SpeakingPart2Describe from "@/components/speaking/SpeakingPart2Describe";
-import SpeakingPart3Compare from "@/components/speaking/SpeakingPart3Compare";
-import SpeakingPart4Opinion from "@/components/speaking/SpeakingPart4Opinion";
-import SpeakingResults from "@/components/speaking/SpeakingResults";
-import TimerDisplay from "@/components/reading/TimerDisplay";
-import BottomNavBar from "@/components/reading/BottomNavBar";
+import { useState, useEffect, useCallback, useRef } from "react";
+import SpeakingHeader from "./SpeakingHeader";
+import SpeakingFooter from "./SpeakingFooter";
+import CircularTimer from "./CircularTimer";
+import SpeakingPromptScreen from "./SpeakingPromptScreen";
+import SpeakingResults from "./SpeakingResults";
+import SpeakingMicCheck from "./SpeakingMicCheck";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
+import { resolveImageUrl } from "@/lib/imageUrl";
+import { motion } from "framer-motion";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -30,13 +28,17 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "instructions" | "practice" | "grading" | "done";
+type Phase = "mic-check" | "prompt" | "prep" | "recording" | "grading" | "done";
 
-const PART_LABELS: Record<SpeakingPartType, string> = {
-  part1: "Part 1 – Personal Questions",
-  part2: "Part 2 – Describe a Picture",
-  part3: "Part 3 – Compare Pictures",
-  part4: "Part 4 – Opinion Questions",
+const PART_PROMPTS: Record<SpeakingPartType, string> = {
+  part1: "Part One - In this part, I am going to ask you three short questions about yourself and your interests. You will have 30 seconds to reply to each question.\n\nBegin speaking when you hear this sound.",
+  part2: "Part Two - In this part, I'm going to ask you to describe a picture. Then I will ask you two questions about it. You will have 45 seconds for each response.\n\nBegin speaking when you hear this sound.",
+  part3: "Part Three - In this part, I'm going to ask you to compare two pictures and then answer a question about them. You will have 45 seconds of preparation and 60 seconds to speak.\n\nBegin speaking when you hear this sound.",
+  part4: "Part Four - In this part, you will discuss a topic. You will have 60 seconds to prepare and 120 seconds to speak.\n\nBegin speaking when you hear this sound.",
+};
+
+const PART_NUMBERS: Record<SpeakingPartType, number> = {
+  part1: 1, part2: 2, part3: 3, part4: 4,
 };
 
 const SpeakingExamEngine = ({
@@ -44,195 +46,359 @@ const SpeakingExamEngine = ({
   part1Data, part2Data, part3Data, part4Data,
   onExit, onComplete,
 }: SpeakingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("instructions");
+  const [phase, setPhase] = useState<Phase>("mic-check");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
-
-  const [p1Recordings, setP1Recordings] = useState<(string | null)[]>(
-    new Array(part1Data?.questions.length || 0).fill(null)
-  );
-  const [p2Recording, setP2Recording] = useState<string | null>(null);
-  const [p3Recording, setP3Recording] = useState<string | null>(null);
-  const [p4Recording, setP4Recording] = useState<string | null>(null);
+  const [prepTimeLeft, setPrepTimeLeft] = useState(0);
+  const [speakTimeLeft, setSpeakTimeLeft] = useState(0);
+  const [canFinish, setCanFinish] = useState(false);
+  const [recordings, setRecordings] = useState<(string | null)[]>([]);
+  const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
+  const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const { grading, isGrading, gradeExam } = useExamGrading();
 
-  const totalQuestions = partType === "part1" ? (part1Data?.questions.length || 0) : 1;
+  const partNumber = PART_NUMBERS[partType];
+  const totalParts = 4;
 
-  useEffect(() => {
-    if (phase !== "practice" || timeLeft <= 0) return;
-    const t = setInterval(() => {
-      setTimeLeft((p) => {
-        if (p <= 1) {
-          clearInterval(t);
-          handleFinish();
-          return 0;
-        }
-        return p - 1;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [phase, timeLeft]);
-
-  const getQuestions = (): string[] => {
-    if (partType === "part1" && part1Data) return part1Data.questions;
-    if (partType === "part2" && part2Data) return [part2Data.prompt];
-    if (partType === "part3" && part3Data) return [part3Data.prompt];
-    if (partType === "part4" && part4Data) return part4Data.questions;
-    return [];
+  // Get total questions for this part
+  const getTotalQuestions = () => {
+    if (partType === "part1") return part1Data?.questions.length || 0;
+    return 1;
   };
 
-  const handleFinish = async () => {
-    // Collect recordings
-    const recordings = partType === "part1"
-      ? p1Recordings.filter(Boolean) as string[]
-      : partType === "part2" ? (p2Recording ? [p2Recording] : [])
-      : partType === "part3" ? (p3Recording ? [p3Recording] : [])
-      : (p4Recording ? [p4Recording] : []);
+  const getPrepTime = () => {
+    if (partType === "part1") return part1Data?.prepTime || 0;
+    if (partType === "part2") return part2Data?.prepTime || 0;
+    if (partType === "part3") return part3Data?.prepTime || 0;
+    if (partType === "part4") return part4Data?.prepTime || 0;
+    return 0;
+  };
 
-    if (recordings.length === 0) {
-      const { toast } = await import("sonner");
-      toast.error("Bạn chưa ghi âm câu trả lời nào. Vui lòng ghi âm trước khi nộp bài.");
+  const getSpeakTime = () => {
+    if (partType === "part1") return part1Data?.speakTime || 30;
+    if (partType === "part2") return part2Data?.speakTime || 45;
+    if (partType === "part3") return part3Data?.speakTime || 60;
+    if (partType === "part4") return part4Data?.speakTime || 120;
+    return 30;
+  };
+
+  const getCurrentQuestion = () => {
+    if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
+    if (partType === "part2" && part2Data) return part2Data.prompt;
+    if (partType === "part3" && part3Data) return part3Data.prompt;
+    if (partType === "part4" && part4Data) return part4Data.topic;
+    return "";
+  };
+
+  // Resolve images
+  useEffect(() => {
+    if (part2Data?.imageUrl) resolveImageUrl(part2Data.imageUrl).then(setResolvedImg1);
+    if (part3Data?.imageUrl1) resolveImageUrl(part3Data.imageUrl1).then(setResolvedImg1);
+    if (part3Data?.imageUrl2) resolveImageUrl(part3Data.imageUrl2).then(setResolvedImg2);
+  }, [part2Data, part3Data]);
+
+  // Initialize recordings array
+  useEffect(() => {
+    setRecordings(new Array(getTotalQuestions()).fill(null));
+  }, [partType]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    };
+  }, []);
+
+  // Start preparation phase
+  const startPrep = useCallback(() => {
+    const prepTime = getPrepTime();
+    if (prepTime <= 0) {
+      startRecording();
       return;
     }
+    setPrepTimeLeft(prepTime);
+    setPhase("prep");
+    
+    timerRef.current = setInterval(() => {
+      setPrepTimeLeft(prev => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
+          startRecording();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [partType, currentIndex]);
 
+  // Start recording
+  const startRecording = useCallback(async () => {
+    const speakTime = getSpeakTime();
+    setSpeakTimeLeft(speakTime);
+    setCanFinish(false);
+    setPhase("recording");
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setRecordings(prev => {
+          const next = [...prev];
+          next[currentIndex] = url;
+          return next;
+        });
+        stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      };
+
+      mediaRecorder.start();
+
+      // Enable "Finish Recording" after 10 seconds
+      finishTimerRef.current = setTimeout(() => {
+        setCanFinish(true);
+      }, 10000);
+
+      // Countdown timer
+      timerRef.current = setInterval(() => {
+        setSpeakTimeLeft(prev => {
+          if (prev <= 1) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            timerRef.current = null;
+            stopAndAdvance();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+    } catch (err) {
+      console.error("Mic error:", err);
+    }
+  }, [partType, currentIndex]);
+
+  // Stop recording and move to next question/finish
+  const stopAndAdvance = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+    
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    
+    const total = getTotalQuestions();
+    if (currentIndex < total - 1) {
+      // Next question within same part
+      setTimeout(() => {
+        setCurrentIndex(prev => prev + 1);
+        setCanFinish(false);
+        startPrep();
+      }, 500);
+    } else {
+      // Part complete - go to grading
+      handleFinish();
+    }
+  }, [currentIndex, partType]);
+
+  const handleFinishRecording = useCallback(() => {
+    if (!canFinish) return;
+    stopAndAdvance();
+  }, [canFinish, stopAndAdvance]);
+
+  const handleFinish = async () => {
     setPhase("grading");
     onComplete?.();
 
+    const validRecordings = recordings.filter(Boolean) as string[];
+    if (validRecordings.length === 0) {
+      setPhase("done");
+      return;
+    }
+
     let audioBase64: string | undefined;
     try {
-      audioBase64 = await blobUrlToBase64(recordings[0]);
+      audioBase64 = await blobUrlToBase64(validRecordings[0]);
     } catch (e) {
       console.error("Failed to convert audio:", e);
     }
 
-    await gradeExam({
-      type: "speaking",
-      audioBase64,
-      questions: getQuestions(),
-      partType,
-    });
+    const questions = partType === "part1" && part1Data
+      ? part1Data.questions
+      : partType === "part2" && part2Data ? [part2Data.prompt]
+      : partType === "part3" && part3Data ? [part3Data.prompt]
+      : partType === "part4" && part4Data ? part4Data.questions
+      : [];
 
+    await gradeExam({ type: "speaking", audioBase64, questions, partType });
     setPhase("done");
   };
 
-  const partLabel = PART_LABELS[partType];
+  // ============ RENDER ============
 
-  const sections = [
-    {
-      title: "Aptis General Speaking Instructions",
-      isCurrent: phase === "instructions",
-    },
-    {
-      title: partLabel,
-      questionCount: totalQuestions,
-      isCurrent: phase === "practice",
-    },
-  ];
-
-  const navProps = partType === "part1" ? {
-    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined,
-    onNext: currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : undefined,
-    onSubmit: currentIndex === totalQuestions - 1 ? handleFinish : undefined,
-    isFirst: currentIndex === 0,
-    isLast: currentIndex === totalQuestions - 1,
-    sections,
-  } : {
-    onSubmit: handleFinish,
-    isFirst: true,
-    isLast: true,
-    sections,
-  };
-
-  if (phase === "instructions") {
+  // Mic check
+  if (phase === "mic-check") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
-        </div>
-        <ExamInstructions
-          skillName={`Speaking – ${partLabel}`}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          totalParts={totalQuestions}
-          totalMinutes={Math.ceil(timeLimit / 60)}
-          onStart={() => setPhase("practice")}
-          sections={sections}
-          description={`Bài luyện tập: ${testTitle}. Bạn cần cho phép trình duyệt truy cập microphone để ghi âm.`}
-        />
-        <div className="max-w-2xl mx-auto w-full">
-          <SpeakingMicCheck />
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} />
+        <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
+          <div className="bg-white rounded-xl shadow-sm max-w-xl w-full p-8">
+            <p className="text-xs text-gray-500">Aptis General Practice Test</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Speaking Practice Test – {testTitle}</h2>
+            <p className="text-sm text-gray-500 mb-1">Number of Questions</p>
+            <p className="text-lg font-bold text-gray-900 mb-4">{getTotalQuestions()}</p>
+            <p className="text-sm font-bold text-gray-900 mb-4">Assessment Description</p>
+            <SpeakingMicCheck />
+            <button
+              onClick={() => setPhase("prompt")}
+              className="mt-6 bg-[#24085a] hover:bg-[#1a0640] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Start Assessment
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Prompt/Instructions screen
+  if (phase === "prompt") {
+    return (
+      <SpeakingPromptScreen
+        partNumber={partNumber}
+        totalParts={totalParts}
+        title={`Speaking Part ${partNumber}`}
+        instructions={PART_PROMPTS[partType]}
+        onNext={() => startPrep()}
+      />
+    );
+  }
+
+  // Grading / Done
   if (phase === "grading" || phase === "done") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} />
+        <div className="flex-1 px-4 pt-8">
+          <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
         </div>
-        <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
       </div>
     );
   }
 
+  // Prep or Recording phase
+  const question = getCurrentQuestion();
+  const isRec = phase === "recording";
+  const timeLeft = isRec ? speakTimeLeft : prepTimeLeft;
+  const totalTime = isRec ? getSpeakTime() : getPrepTime();
+
   return (
-    <div className="min-h-[70vh] pb-20">
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Quay lại
-        </button>
-        <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} />
+
+      <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
+        {/* Left: Content */}
+        <div className="flex-1">
+          <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
+            <p className="text-xs text-gray-500 mb-1">Speaking</p>
+            <p className="text-sm font-bold text-gray-900 mb-6">
+              Part {partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
+            </p>
+
+            {/* Part 2 image */}
+            {partType === "part2" && (
+              <div className="mb-4">
+                <img
+                  src={resolvedImg1 || part2Data?.imageUrl}
+                  alt="Describe this picture"
+                  className="w-full max-w-md rounded-lg object-cover"
+                />
+              </div>
+            )}
+
+            {/* Part 3 two images side by side */}
+            {partType === "part3" && (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <img
+                  src={resolvedImg1 || part3Data?.imageUrl1}
+                  alt="Picture 1"
+                  className="w-full rounded-lg object-cover h-56"
+                />
+                <img
+                  src={resolvedImg2 || part3Data?.imageUrl2}
+                  alt="Picture 2"
+                  className="w-full rounded-lg object-cover h-56"
+                />
+              </div>
+            )}
+
+            {/* Part 4 topic + questions */}
+            {partType === "part4" && part4Data && (
+              <div className="bg-gray-50 rounded-lg p-5 mb-4">
+                <p className="font-bold text-gray-900 mb-2">Topic: {part4Data.topic}</p>
+                <ul className="space-y-1.5">
+                  {part4Data.questions.map((q, i) => (
+                    <li key={i} className="text-sm text-gray-700">• {q}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Question text */}
+            <p className="text-sm text-gray-800 mt-4">{question}</p>
+          </div>
+        </div>
+
+        {/* Right: Timer panel */}
+        <div className="w-[220px] shrink-0">
+          <CircularTimer
+            timeLeft={timeLeft}
+            totalTime={totalTime}
+            label={isRec ? "Recording..." : "Preparation..."}
+            isRecording={isRec}
+            isPrep={phase === "prep"}
+          />
+
+          {/* Finish Recording button - only shows after 10s of recording */}
+          {isRec && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: canFinish ? 1 : 0.3, y: 0 }}
+              className="mt-4"
+            >
+              <button
+                onClick={handleFinishRecording}
+                disabled={!canFinish}
+                className="w-full py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#24085a] text-white hover:bg-[#1a0640]"
+              >
+                Finish Recording
+              </button>
+            </motion.div>
+          )}
+        </div>
       </div>
 
-      <div className="mb-3">
-        <p className="text-sm font-heading font-bold text-foreground">{partLabel}</p>
-      </div>
-
-      {partType === "part1" && part1Data && (
-        <SpeakingPart1Personal
-          data={part1Data}
-          currentIndex={currentIndex}
-          recordings={p1Recordings}
-          onRecordingComplete={(qi, url) => {
-            const n = [...p1Recordings];
-            n[qi] = url;
-            setP1Recordings(n);
-          }}
-        />
-      )}
-
-      {partType === "part2" && part2Data && (
-        <SpeakingPart2Describe
-          data={part2Data}
-          recording={p2Recording}
-          onRecordingComplete={setP2Recording}
-        />
-      )}
-
-      {partType === "part3" && part3Data && (
-        <SpeakingPart3Compare
-          data={part3Data}
-          recording={p3Recording}
-          onRecordingComplete={setP3Recording}
-        />
-      )}
-
-      {partType === "part4" && part4Data && (
-        <SpeakingPart4Opinion
-          data={part4Data}
-          recording={p4Recording}
-          onRecordingComplete={setP4Recording}
-        />
-      )}
-
-      <BottomNavBar {...navProps} />
+      <SpeakingFooter
+        onExit={onExit}
+        showNext={false}
+      />
     </div>
   );
 };
