@@ -14,7 +14,6 @@ import ThemeToggle from "@/components/ThemeToggle";
 /* ── Nav data ── */
 const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap },
-  { label: "Học từ vựng", path: "/vocabulary", icon: BookText },
 ];
 
 const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
@@ -86,6 +85,37 @@ const Navbar = () => {
             </Link>
           ))}
 
+          {/* Thi thử Aptis - red CTA */}
+          <Link to="/thi-thu">
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm gap-1.5"
+            >
+              <ClipboardCheck className="w-3.5 h-3.5" />
+              Thi thử Aptis
+            </Button>
+          </Link>
+
+          {/* Học từ vựng */}
+          <Link
+            to="/vocabulary"
+            className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+              isActive("/vocabulary")
+                ? "text-primary"
+                : "text-muted-foreground hover:text-primary"
+            }`}
+          >
+            <BookText className="w-3.5 h-3.5" />
+            Học từ vựng
+            {isActive("/vocabulary") && (
+              <motion.div
+                layoutId="nav-active"
+                className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-primary"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+          </Link>
+
           {/* Skill dropdown */}
           <div
             className="relative"
@@ -139,16 +169,6 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
-          {/* Thi thử Aptis - red CTA style */}
-          <Link to="/thi-thu">
-            <Button
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm gap-1.5"
-            >
-              <ClipboardCheck className="w-3.5 h-3.5" />
-              Thi thử Aptis
-            </Button>
-          </Link>
         </div>
 
         {/* ── Desktop right actions ── */}
