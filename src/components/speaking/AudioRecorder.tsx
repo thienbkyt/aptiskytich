@@ -2,7 +2,6 @@ import { Mic, Square, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
-import VolumeIndicator from "@/components/speaking/VolumeIndicator";
 
 interface AudioRecorderProps {
   isRecording: boolean;
@@ -15,9 +14,6 @@ interface AudioRecorderProps {
   label?: string;
   micError?: string | null;
   isRequestingMic?: boolean;
-  recordingElapsed?: number;
-  stream?: MediaStream | null;
-  minRecordingTime?: number; // seconds before Finish is allowed
 }
 
 const AudioRecorder = ({
@@ -28,15 +24,11 @@ const AudioRecorder = ({
   audioUrl,
   timeLeft,
   totalTime,
-  label = "Your Answer",
+  label = "Ghi âm",
   micError,
   isRequestingMic,
-  recordingElapsed = 0,
-  stream = null,
-  minRecordingTime = 10,
 }: AudioRecorderProps) => {
   const progress = totalTime > 0 ? ((totalTime - timeLeft) / totalTime) * 100 : 0;
-  const canFinish = recordingElapsed >= minRecordingTime;
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
@@ -45,7 +37,26 @@ const AudioRecorder = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div className="bg-card border border-border rounded-xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-heading font-bold text-foreground">{label}</span>
+        <span className={`text-sm font-heading font-bold tabular-nums ${
+          timeLeft <= 10 ? "text-destructive" : "text-foreground"
+        }`}>
+          {formatTime(timeLeft)}
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-2 w-full bg-muted rounded-full mb-5 overflow-hidden">
+        <motion.div
+          className={`h-full rounded-full ${isRecording ? "bg-destructive" : "bg-primary"}`}
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5 }}
+        />
+      </div>
+
       {/* Mic error */}
       {micError && (
         <Alert variant="destructive" className="mb-4">
@@ -54,107 +65,62 @@ const AudioRecorder = ({
         </Alert>
       )}
 
-      {/* Not recording, no audio yet */}
-      {!isRecording && !audioUrl && (
-        <div className="flex flex-col items-center gap-4 py-4">
-          {isRequestingMic ? (
-            <div className="flex items-center gap-2 text-gray-500">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Đang yêu cầu quyền microphone...</span>
-            </div>
-          ) : (
-            <>
-              <div className="text-center">
-                <p className="text-lg font-bold text-gray-700 mb-1">Preparation Time</p>
-                <p className="text-3xl font-mono font-extrabold tabular-nums text-gray-800">
-                  {formatTime(timeLeft)}
-                </p>
+      {/* Recording controls */}
+      <div className="flex flex-col items-center gap-3">
+        {!isRecording && !audioUrl && (
+          <>
+            {isRequestingMic ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Đang yêu cầu quyền microphone...</span>
               </div>
-              <div className="h-2 w-full max-w-xs bg-gray-200 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-blue-400"
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              {!disabled && !micError && (
+            ) : (
+              <>
                 <Button
                   onClick={onStartRecording}
-                  className="gap-2 px-6 mt-2"
-                  style={{ backgroundColor: "#24085a" }}
+                  disabled={disabled}
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground gap-2 px-6"
                 >
                   <Mic className="w-4 h-4" />
                   Bắt đầu ghi âm
                 </Button>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Recording state */}
-      {isRecording && (
-        <div className="flex flex-col items-center gap-4 py-4">
-          <div className="flex items-center gap-3">
-            <motion.div
-              animate={{ scale: [1, 1.4, 1], opacity: [1, 0.5, 1] }}
-              transition={{ repeat: Infinity, duration: 1 }}
-              className="w-3.5 h-3.5 rounded-full bg-red-600"
-            />
-            <span className="text-base font-bold text-red-600">Recording</span>
-          </div>
-
-          <p className="text-3xl font-mono font-extrabold tabular-nums text-gray-800">
-            {formatTime(timeLeft)}
-          </p>
-
-          {/* Progress bar */}
-          <div className="h-2 w-full max-w-xs bg-gray-200 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full bg-red-500"
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-
-          {/* Volume indicator */}
-          <div className="flex flex-col items-center gap-1">
-            <VolumeIndicator stream={stream} />
-            <span className="text-[10px] text-gray-400">Mic đang nhận âm thanh</span>
-          </div>
-
-          {/* Finish Recording button - hidden for first N seconds */}
-          <div className="h-10 flex items-center">
-            {canFinish ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <Button
-                  onClick={onStopRecording}
-                  variant="outline"
-                  className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
-                >
-                  <Square className="w-3.5 h-3.5" />
-                  Finish Recording
-                </Button>
-              </motion.div>
-            ) : (
-              <p className="text-xs text-gray-400">
-                Finish Recording sẽ khả dụng sau {minRecordingTime - recordingElapsed}s
-              </p>
+                {!micError && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Nhấn nút và cho phép truy cập microphone khi trình duyệt yêu cầu
+                  </p>
+                )}
+              </>
             )}
-          </div>
-        </div>
-      )}
+          </>
+        )}
 
-      {/* Playback */}
-      {audioUrl && !isRecording && (
-        <div className="flex flex-col items-center gap-3 py-4">
-          <p className="text-sm font-bold text-green-600">✓ Đã ghi âm xong</p>
-          <audio src={audioUrl} controls className="w-full max-w-md h-10" />
-        </div>
-      )}
+        {isRecording && (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <motion.div
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ repeat: Infinity, duration: 1 }}
+                className="w-3 h-3 rounded-full bg-destructive"
+              />
+              <span className="text-sm font-medium text-destructive">Đang ghi âm...</span>
+            </div>
+            <Button
+              onClick={onStopRecording}
+              variant="outline"
+              className="gap-2"
+            >
+              <Square className="w-4 h-4" />
+              Dừng
+            </Button>
+          </div>
+        )}
+
+        {audioUrl && !isRecording && (
+          <div className="w-full">
+            <audio src={audioUrl} controls className="w-full h-10" />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

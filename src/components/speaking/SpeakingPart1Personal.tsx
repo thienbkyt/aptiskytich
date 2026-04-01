@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import type { SpeakingPart1Data } from "@/data/speakingQuestions";
 import AudioRecorder from "@/components/speaking/AudioRecorder";
@@ -12,7 +13,7 @@ interface Props {
 
 const SpeakingPart1Personal = ({ data, currentIndex, recordings, onRecordingComplete }: Props) => {
   const question = data.questions[currentIndex];
-  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, recordingElapsed, stream, startRecording, stopRecording } = useAudioRecording({
+  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
     onComplete: (url) => onRecordingComplete(currentIndex, url),
     questionKey: currentIndex,
@@ -27,11 +28,11 @@ const SpeakingPart1Personal = ({ data, currentIndex, recordings, onRecordingComp
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <p className="text-xs text-gray-500 mb-2">
+      <div className="bg-background rounded-xl p-6 mb-6">
+        <p className="text-xs text-muted-foreground mb-2">
           Question {currentIndex + 1} of {data.questions.length}
         </p>
-        <h2 className="text-lg font-bold text-gray-800 mb-6">
+        <h2 className="text-lg font-heading font-bold text-foreground mb-6">
           {question}
         </h2>
 
@@ -46,9 +47,6 @@ const SpeakingPart1Personal = ({ data, currentIndex, recordings, onRecordingComp
           label="Your Answer"
           micError={micError}
           isRequestingMic={isRequestingMic}
-          recordingElapsed={recordingElapsed}
-          stream={stream}
-          minRecordingTime={10}
         />
       </div>
     </motion.div>

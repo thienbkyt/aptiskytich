@@ -18,13 +18,10 @@ export const useAudioRecording = ({
   const [timeLeft, setTimeLeft] = useState(maxDuration);
   const [micError, setMicError] = useState<string | null>(null);
   const [isRequestingMic, setIsRequestingMic] = useState(false);
-  const [recordingElapsed, setRecordingElapsed] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoStartedRef = useRef(false);
-  const streamRef = useRef<MediaStream | null>(null);
 
   // Reset on question change
   useEffect(() => {
@@ -33,14 +30,11 @@ export const useAudioRecording = ({
     setTimeLeft(maxDuration);
     setMicError(null);
     setIsRequestingMic(false);
-    setRecordingElapsed(0);
     autoStartedRef.current = false;
-    streamRef.current = null;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
     if (timerRef.current) clearInterval(timerRef.current);
-    if (elapsedRef.current) clearInterval(elapsedRef.current);
   }, [questionKey, maxDuration]);
 
   // Auto-start recording
@@ -60,21 +54,15 @@ export const useAudioRecording = ({
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    if (elapsedRef.current) {
-      clearInterval(elapsedRef.current);
-      elapsedRef.current = null;
-    }
     setIsRecording(false);
   }, []);
 
   const startRecording = useCallback(async () => {
     setMicError(null);
     setIsRequestingMic(true);
-    setRecordingElapsed(0);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setIsRequestingMic(false);
-      streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -89,7 +77,6 @@ export const useAudioRecording = ({
         setAudioUrl(url);
         onComplete(url);
         stream.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
       };
 
       mediaRecorder.start();
@@ -104,11 +91,6 @@ export const useAudioRecording = ({
           }
           return prev - 1;
         });
-      }, 1000);
-
-      // Track elapsed recording time
-      elapsedRef.current = setInterval(() => {
-        setRecordingElapsed((prev) => prev + 1);
       }, 1000);
     } catch (err: any) {
       setIsRequestingMic(false);
@@ -129,8 +111,6 @@ export const useAudioRecording = ({
     timeLeft,
     micError,
     isRequestingMic,
-    recordingElapsed,
-    stream: streamRef.current,
     startRecording,
     stopRecording,
   };

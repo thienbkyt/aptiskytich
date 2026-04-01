@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { SpeakingPart2Data } from "@/data/speakingQuestions";
 import AudioRecorder from "@/components/speaking/AudioRecorder";
@@ -22,7 +22,7 @@ const SpeakingPart2Describe = ({ data, recording, onRecordingComplete }: Props) 
     }
   }, [data.imageUrl]);
 
-  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, recordingElapsed, stream, startRecording, stopRecording } = useAudioRecording({
+  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
     onComplete: onRecordingComplete,
     questionKey: "part2",
@@ -30,12 +30,12 @@ const SpeakingPart2Describe = ({ data, recording, onRecordingComplete }: Props) 
   });
 
   const content = (
-    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-      <h2 className="text-sm font-bold text-gray-800 mb-4">
+    <div className="bg-background rounded-xl p-6 mb-6">
+      <h2 className="text-sm font-heading font-bold text-foreground mb-4">
         {data.prompt}
       </h2>
-      <div className="rounded-xl overflow-hidden border border-gray-200 mb-6">
-        <img src={resolvedImageUrl || data.imageUrl} alt="Describe this picture" className="w-full h-72 object-cover" />
+      <div className="rounded-xl overflow-hidden border border-border mb-6">
+        <img src={resolvedImageUrl || data.imageUrl} alt="Describe this picture" className="w-full h-64 object-cover" />
       </div>
 
       {phase === "speak" && (
@@ -50,9 +50,6 @@ const SpeakingPart2Describe = ({ data, recording, onRecordingComplete }: Props) 
           label="Your Description"
           micError={micError}
           isRequestingMic={isRequestingMic}
-          recordingElapsed={recordingElapsed}
-          stream={stream}
-          minRecordingTime={10}
         />
       )}
     </div>
