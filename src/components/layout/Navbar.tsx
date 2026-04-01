@@ -62,30 +62,7 @@ const Navbar = () => {
 
         {/* ── Desktop nav ── */}
         <div className="hidden md:flex items-center flex-1 justify-center gap-1">
-          {/* Top-level links */}
-          {topLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
-                isActive(link.path)
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-primary"
-              }`}
-            >
-              <link.icon className="w-3.5 h-3.5" />
-              {link.label}
-              {isActive(link.path) && (
-                <motion.div
-                  layoutId="nav-active"
-                  className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                />
-              )}
-            </Link>
-          ))}
-
-          {/* Thi thử Aptis - red CTA */}
+          {/* 1. Thi thử Aptis - red CTA */}
           <Link to="/thi-thu">
             <Button
               size="sm"
@@ -96,7 +73,7 @@ const Navbar = () => {
             </Button>
           </Link>
 
-          {/* Học từ vựng */}
+          {/* 2. Học từ vựng */}
           <Link
             to="/vocabulary"
             className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
@@ -116,7 +93,7 @@ const Navbar = () => {
             )}
           </Link>
 
-          {/* Skill dropdown */}
+          {/* 3. Luyện tập theo kỹ năng dropdown */}
           <div
             className="relative"
             onMouseEnter={handleSkillEnter}
@@ -169,6 +146,28 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
+          {/* 4. Khóa học Aptis 7 ngày */}
+          {topLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+                isActive(link.path)
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-primary"
+              }`}
+            >
+              <link.icon className="w-3.5 h-3.5" />
+              {link.label}
+              {isActive(link.path) && (
+                <motion.div
+                  layoutId="nav-active"
+                  className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-primary"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+            </Link>
+          ))}
         </div>
 
         {/* ── Desktop right actions ── */}
