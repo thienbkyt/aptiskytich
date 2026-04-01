@@ -24,7 +24,7 @@ import Writing from "./pages/Writing";
 import Listening from "./pages/Listening";
 import Reading from "./pages/Reading";
 import GrammarVocabulary from "./pages/GrammarVocabulary";
-import ComingSoon from "./pages/ComingSoon";
+import FullTest from "./pages/FullTest";
 
 const queryClient = new QueryClient();
 
