@@ -71,8 +71,9 @@ const FullTest = () => {
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
                 Thi thử bài thi Aptis
               </h1>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mb-6 whitespace-pre-line">
-                Thi thử bài thi Aptis giống đề thì thật 100%. Thứ tự của các phần thi trong bài thi:
+              <p className="text-base text-muted-foreground leading-relaxed max-w-2xl mb-6 whitespace-pre-line md:text-lg font-medium">
+                Thi thử bài thi Aptis giống đề thì thật 100% với tổng thời gian 162 phút. 
+                Thứ tự của các phần thi trong bài thi:
               </p>
 
               {/* Skill breakdown */}
