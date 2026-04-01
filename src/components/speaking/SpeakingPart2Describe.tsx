@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { SpeakingPart2Data } from "@/data/speakingQuestions";
 import AudioRecorder from "@/components/speaking/AudioRecorder";
 import PrepTimer from "@/components/speaking/PrepTimer";
 import { useAudioRecording } from "@/hooks/useAudioRecording";
+import { resolveImageUrl } from "@/lib/imageUrl";
 
 interface Props {
   data: SpeakingPart2Data;
