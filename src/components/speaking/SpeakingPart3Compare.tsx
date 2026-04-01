@@ -14,6 +14,13 @@ interface Props {
 
 const SpeakingPart3Compare = ({ data, recording, onRecordingComplete }: Props) => {
   const [phase, setPhase] = useState<"prep" | "speak">(data.prepTime > 0 ? "prep" : "speak");
+  const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
+  const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (data.imageUrl1) resolveImageUrl(data.imageUrl1).then(setResolvedImg1);
+    if (data.imageUrl2) resolveImageUrl(data.imageUrl2).then(setResolvedImg2);
+  }, [data.imageUrl1, data.imageUrl2]);
 
   const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
