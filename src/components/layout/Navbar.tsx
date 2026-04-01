@@ -169,16 +169,6 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
-          {/* Thi thử Aptis - red CTA style */}
-          <Link to="/thi-thu">
-            <Button
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm gap-1.5"
-            >
-              <ClipboardCheck className="w-3.5 h-3.5" />
-              Thi thử Aptis
-            </Button>
-          </Link>
         </div>
 
         {/* ── Desktop right actions ── */}
