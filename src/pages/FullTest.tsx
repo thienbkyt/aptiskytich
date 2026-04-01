@@ -11,11 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
 
 const SKILL_BREAKDOWN = [
-  { label: "Grammar & Vocabulary", time: "25 phút", icon: Brain, color: "text-purple-500" },
+  { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
   { label: "Listening", time: "40 phút", icon: Headphones, color: "text-blue-500" },
+  { label: "Grammar &\nVocabulary", time: "25 phút", icon: Brain, color: "text-purple-500" },
   { label: "Reading", time: "35 phút", icon: BookOpen, color: "text-green-500" },
   { label: "Writing", time: "50 phút", icon: PenLine, color: "text-pink-500" },
-  { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
 ];
 
 const FullTest = () => {
