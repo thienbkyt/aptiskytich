@@ -14,7 +14,6 @@ import ThemeToggle from "@/components/ThemeToggle";
 /* ── Nav data ── */
 const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap },
-  { label: "Học từ vựng", path: "/vocabulary", icon: BookText },
 ];
 
 const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
