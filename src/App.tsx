@@ -24,6 +24,7 @@ import Writing from "./pages/Writing";
 import Listening from "./pages/Listening";
 import Reading from "./pages/Reading";
 import GrammarVocabulary from "./pages/GrammarVocabulary";
+import ComingSoon from "./pages/ComingSoon";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/vocabulary" element={<SkillPractice />} />
             <Route path="/vocabulary/:id" element={<VocabStudy />} />
             <Route path="/vocab/:listId" element={<VocabListDetail />} />
+            <Route path="/thi-thu" element={<ComingSoon />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
