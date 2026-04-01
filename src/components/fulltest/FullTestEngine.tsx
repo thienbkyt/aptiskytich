@@ -81,14 +81,17 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     }
 
     setLoading(true);
-    // Fetch published exam_sets for this skill, pick first available for each part
+    // Map skill step to DB skill value
+    const dbSkill = skill === "grammar" ? "grammar_vocab" : skill;
+    
+    // Fetch exam_sets linked to this full test for the current skill
     const { data: sets } = await supabase
       .from("exam_sets")
       .select("id, part, skill")
-      .eq("skill", skill)
+      .eq("full_test_id", testId)
+      .eq("skill", dbSkill)
       .eq("is_published", true)
-      .order("created_at", { ascending: true })
-      .limit(10);
+      .order("created_at", { ascending: true });
 
     if (!sets || sets.length === 0) {
       setLoading(false);
