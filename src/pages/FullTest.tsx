@@ -83,7 +83,7 @@ const FullTest = () => {
                     <div className="flex flex-col items-center gap-1.5 bg-muted/50 dark:bg-muted/20 rounded-lg p-3 border border-border min-w-[90px]">
                       <skill.icon className={`w-5 h-5 ${skill.color}`} />
                       <span className="text-xs font-semibold text-foreground text-center leading-tight whitespace-pre-line">{skill.label}</span>
-                      <span className="text-[11px] text-muted-foreground">{skill.time}</span>
+                      <span className="text-[11px] text-muted-foreground font-extrabold">{skill.time}</span>
                     </div>
                     {index < SKILL_BREAKDOWN.length - 1 && (
                       <ArrowRight className="w-4 h-4 text-muted-foreground hidden sm:block shrink-0" />
