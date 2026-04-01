@@ -14,7 +14,7 @@ interface Props {
 const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) => {
   const [phase, setPhase] = useState<"prep" | "speak">(data.prepTime > 0 ? "prep" : "speak");
 
-  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
+  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, recordingElapsed, stream, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
     onComplete: onRecordingComplete,
     questionKey: "part4",
@@ -22,18 +22,18 @@ const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) =
   });
 
   const content = (
-    <div className="bg-background rounded-xl p-6 mb-6">
-      <div className="bg-muted/50 rounded-xl p-5 mb-6">
-        <h2 className="text-base font-heading font-bold text-foreground mb-3">
+    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="bg-gray-50 rounded-xl p-5 mb-6">
+        <h2 className="text-base font-bold text-gray-800 mb-3">
           Topic: {data.topic}
         </h2>
-        <p className="text-sm text-muted-foreground mb-3">
+        <p className="text-sm text-gray-500 mb-3">
           Consider the following questions in your answer:
         </p>
         <ul className="space-y-2">
           {data.questions.map((q, i) => (
-            <li key={i} className="text-sm text-foreground flex gap-2">
-              <span className="text-muted-foreground font-bold shrink-0">{i + 1}.</span>
+            <li key={i} className="text-sm text-gray-700 flex gap-2">
+              <span className="text-gray-400 font-bold shrink-0">{i + 1}.</span>
               {q}
             </li>
           ))}
@@ -52,6 +52,9 @@ const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) =
           label="Your Opinion"
           micError={micError}
           isRequestingMic={isRequestingMic}
+          recordingElapsed={recordingElapsed}
+          stream={stream}
+          minRecordingTime={10}
         />
       )}
     </div>

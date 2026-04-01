@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
-import ExamInstructions from "@/components/exam/ExamInstructions";
+import { useState, useEffect, useCallback, useRef } from "react";
+import SpeakingLayout from "@/components/speaking/SpeakingLayout";
 import SpeakingMicCheck from "@/components/speaking/SpeakingMicCheck";
 import SpeakingPart1Personal from "@/components/speaking/SpeakingPart1Personal";
 import SpeakingPart2Describe from "@/components/speaking/SpeakingPart2Describe";
 import SpeakingPart3Compare from "@/components/speaking/SpeakingPart3Compare";
 import SpeakingPart4Opinion from "@/components/speaking/SpeakingPart4Opinion";
 import SpeakingResults from "@/components/speaking/SpeakingResults";
-import TimerDisplay from "@/components/reading/TimerDisplay";
-import BottomNavBar from "@/components/reading/BottomNavBar";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
+import { speakText, cancelSpeech } from "@/lib/speechSynthesis";
+import { Button } from "@/components/ui/button";
+import { Mic, Loader2 } from "lucide-react";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -30,13 +30,20 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "instructions" | "practice" | "grading" | "done";
+type Phase = "mic-check" | "tts" | "practice" | "grading" | "done";
 
 const PART_LABELS: Record<SpeakingPartType, string> = {
-  part1: "Part 1 – Personal Questions",
-  part2: "Part 2 – Describe a Picture",
-  part3: "Part 3 – Compare Pictures",
-  part4: "Part 4 – Opinion Questions",
+  part1: "Speaking Part 1",
+  part2: "Speaking Part 2",
+  part3: "Speaking Part 3",
+  part4: "Speaking Part 4",
+};
+
+const PART_INSTRUCTIONS: Record<SpeakingPartType, string> = {
+  part1: "In this part, I'm going to ask you some questions about yourself. Please answer each question. You will have 30 seconds to answer each question.",
+  part2: "Now, look at this picture. Please describe what you can see. You will have some time to prepare, and then you should speak for about 45 seconds.",
+  part3: "Now look at these two pictures. Please compare the two pictures. Talk about the similarities and differences. You will have some time to prepare, then speak for about 1 minute.",
+  part4: "Now I'm going to give you a topic to talk about. You should give your opinion and explain your reasons. You will have some time to prepare, then speak for about 2 minutes.",
 };
 
 const SpeakingExamEngine = ({
@@ -44,9 +51,10 @@ const SpeakingExamEngine = ({
   part1Data, part2Data, part3Data, part4Data,
   onExit, onComplete,
 }: SpeakingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("instructions");
+  const [phase, setPhase] = useState<Phase>("mic-check");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [p1Recordings, setP1Recordings] = useState<(string | null)[]>(
     new Array(part1Data?.questions.length || 0).fill(null)
@@ -59,6 +67,16 @@ const SpeakingExamEngine = ({
 
   const totalQuestions = partType === "part1" ? (part1Data?.questions.length || 0) : 1;
 
+  // Check if current recording is done (for Next button)
+  const isCurrentRecordingDone = (() => {
+    if (partType === "part1") return !!p1Recordings[currentIndex];
+    if (partType === "part2") return !!p2Recording;
+    if (partType === "part3") return !!p3Recording;
+    if (partType === "part4") return !!p4Recording;
+    return false;
+  })();
+
+  // Timer
   useEffect(() => {
     if (phase !== "practice" || timeLeft <= 0) return;
     const t = setInterval(() => {
@@ -74,6 +92,21 @@ const SpeakingExamEngine = ({
     return () => clearInterval(t);
   }, [phase, timeLeft]);
 
+  // TTS: read instructions when entering TTS phase
+  useEffect(() => {
+    if (phase === "tts") {
+      setIsSpeaking(true);
+      const instruction = PART_INSTRUCTIONS[partType];
+      speakText(instruction).then(() => {
+        setIsSpeaking(false);
+        setPhase("practice");
+      });
+    }
+    return () => {
+      cancelSpeech();
+    };
+  }, [phase, partType]);
+
   const getQuestions = (): string[] => {
     if (partType === "part1" && part1Data) return part1Data.questions;
     if (partType === "part2" && part2Data) return [part2Data.prompt];
@@ -83,7 +116,6 @@ const SpeakingExamEngine = ({
   };
 
   const handleFinish = async () => {
-    // Collect recordings
     const recordings = partType === "part1"
       ? p1Recordings.filter(Boolean) as string[]
       : partType === "part2" ? (p2Recording ? [p2Recording] : [])
@@ -116,85 +148,86 @@ const SpeakingExamEngine = ({
     setPhase("done");
   };
 
-  const partLabel = PART_LABELS[partType];
-
-  const sections = [
-    {
-      title: "Aptis General Speaking Instructions",
-      isCurrent: phase === "instructions",
-    },
-    {
-      title: partLabel,
-      questionCount: totalQuestions,
-      isCurrent: phase === "practice",
-    },
-  ];
-
-  const navProps = partType === "part1" ? {
-    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined,
-    onNext: currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : undefined,
-    onSubmit: currentIndex === totalQuestions - 1 ? handleFinish : undefined,
-    isFirst: currentIndex === 0,
-    isLast: currentIndex === totalQuestions - 1,
-    sections,
-  } : {
-    onSubmit: handleFinish,
-    isFirst: true,
-    isLast: true,
-    sections,
+  const handleNext = () => {
+    if (partType === "part1" && currentIndex < totalQuestions - 1) {
+      setCurrentIndex((p) => p + 1);
+    } else {
+      handleFinish();
+    }
   };
 
-  if (phase === "instructions") {
+  const partLabel = PART_LABELS[partType];
+
+  // ── Mic Check ──
+  if (phase === "mic-check") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
-        </div>
-        <ExamInstructions
-          skillName={`Speaking – ${partLabel}`}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          totalParts={totalQuestions}
-          totalMinutes={Math.ceil(timeLimit / 60)}
-          onStart={() => setPhase("practice")}
-          sections={sections}
-          description={`Bài luyện tập: ${testTitle}. Bạn cần cho phép trình duyệt truy cập microphone để ghi âm.`}
-        />
-        <div className="max-w-2xl mx-auto w-full">
+      <SpeakingLayout
+        partLabel={partLabel}
+        timeLeft={timeLimit}
+        totalTime={timeLimit}
+        showFooter={false}
+        onExit={onExit}
+      >
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center max-w-lg mx-auto">
+          <Mic className="w-12 h-12 mx-auto mb-4" style={{ color: "#24085a" }} />
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{partLabel}</h2>
+          <p className="text-sm text-gray-500 mb-6">
+            {testTitle}. Kiểm tra microphone trước khi bắt đầu.
+          </p>
           <SpeakingMicCheck />
+          <Button
+            onClick={() => setPhase("tts")}
+            className="mt-6 px-8 font-bold text-white"
+            style={{ backgroundColor: "#24085a" }}
+          >
+            Bắt đầu bài thi
+          </Button>
         </div>
-      </div>
+      </SpeakingLayout>
     );
   }
 
+  // ── TTS Phase (reading instructions) ──
+  if (phase === "tts") {
+    return (
+      <SpeakingLayout
+        partLabel={partLabel}
+        timeLeft={timeLeft}
+        totalTime={timeLimit}
+        showFooter={false}
+        onExit={onExit}
+      >
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center max-w-lg mx-auto">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <h2 className="text-lg font-bold text-gray-800 mb-3">Listening to Instructions...</h2>
+          <p className="text-sm text-gray-500 italic">
+            "{PART_INSTRUCTIONS[partType]}"
+          </p>
+        </div>
+      </SpeakingLayout>
+    );
+  }
+
+  // ── Grading / Done ──
   if (phase === "grading" || phase === "done") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
-        </div>
+      <div className="min-h-[70vh] p-6">
         <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
       </div>
     );
   }
 
+  // ── Practice Phase ──
   return (
-    <div className="min-h-[70vh] pb-20">
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Quay lại
-        </button>
-        <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
-      </div>
-
-      <div className="mb-3">
-        <p className="text-sm font-heading font-bold text-foreground">{partLabel}</p>
-      </div>
-
+    <SpeakingLayout
+      partLabel={partLabel}
+      timeLeft={timeLeft}
+      totalTime={timeLimit}
+      onExit={onExit}
+      showFooter={true}
+      nextDisabled={!isCurrentRecordingDone}
+      onNext={handleNext}
+    >
       {partType === "part1" && part1Data && (
         <SpeakingPart1Personal
           data={part1Data}
@@ -231,9 +264,7 @@ const SpeakingExamEngine = ({
           onRecordingComplete={setP4Recording}
         />
       )}
-
-      <BottomNavBar {...navProps} />
-    </div>
+    </SpeakingLayout>
   );
 };
 
