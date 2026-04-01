@@ -103,18 +103,11 @@ const Speaking = () => {
     }
 
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 pt-24 pb-20">
-          <div className="section-container max-w-3xl">
-            <SpeakingExamEngine
-              partType={exam.partType} testTitle={exam.testTitle}
-              timeLimit={TIME_LIMITS[exam.partType]} onExit={handleExit} onComplete={() => {}}
-              {...exam.engineData}
-            />
-          </div>
-        </main>
-      </div>
+      <SpeakingExamEngine
+        partType={exam.partType} testTitle={exam.testTitle}
+        timeLimit={TIME_LIMITS[exam.partType]} onExit={handleExit} onComplete={() => {}}
+        {...exam.engineData}
+      />
     );
   }
 
