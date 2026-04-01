@@ -76,7 +76,7 @@ const Navbar = () => {
           {/* 2. Học từ vựng */}
           <Link
             to="/vocabulary"
-            className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold rounded-md transition-colors whitespace-nowrap ${
+            className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
               isActive("/vocabulary")
                 ? "text-primary"
                 : "text-secondary-foreground"
@@ -100,7 +100,7 @@ const Navbar = () => {
             onMouseLeave={handleSkillLeave}
           >
             <button
-              className={`flex items-center gap-1 px-3 py-2 text-xs font-extrabold rounded-md transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
                 isSkillActive
                   ? "text-primary"
                   : "text-secondary-foreground"
@@ -151,7 +151,7 @@ const Navbar = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold rounded-md transition-colors whitespace-nowrap ${
+              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
                 isActive(link.path)
                   ? "text-primary"
                   : "text-secondary-foreground"
