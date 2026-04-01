@@ -22,7 +22,7 @@ const SpeakingPart3Compare = ({ data, recording, onRecordingComplete }: Props) =
     if (data.imageUrl2) resolveImageUrl(data.imageUrl2).then(setResolvedImg2);
   }, [data.imageUrl1, data.imageUrl2]);
 
-  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
+  const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, recordingElapsed, stream, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
     onComplete: onRecordingComplete,
     questionKey: "part3",
@@ -30,18 +30,18 @@ const SpeakingPart3Compare = ({ data, recording, onRecordingComplete }: Props) =
   });
 
   const content = (
-    <div className="bg-background rounded-xl p-6 mb-6">
-      <h2 className="text-sm font-heading font-bold text-foreground mb-4">
+    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 className="text-sm font-bold text-gray-800 mb-4">
         {data.prompt}
       </h2>
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="rounded-xl overflow-hidden border border-border">
-          <img src={resolvedImg1 || data.imageUrl1} alt="Picture 1" className="w-full h-48 object-cover" />
-          <p className="text-xs text-center py-2 text-muted-foreground font-medium">Picture 1</p>
+        <div className="rounded-xl overflow-hidden border border-gray-200">
+          <img src={resolvedImg1 || data.imageUrl1} alt="Picture 1" className="w-full h-52 object-cover" />
+          <p className="text-xs text-center py-2 text-gray-500 font-medium bg-gray-50">Picture 1</p>
         </div>
-        <div className="rounded-xl overflow-hidden border border-border">
-          <img src={resolvedImg2 || data.imageUrl2} alt="Picture 2" className="w-full h-48 object-cover" />
-          <p className="text-xs text-center py-2 text-muted-foreground font-medium">Picture 2</p>
+        <div className="rounded-xl overflow-hidden border border-gray-200">
+          <img src={resolvedImg2 || data.imageUrl2} alt="Picture 2" className="w-full h-52 object-cover" />
+          <p className="text-xs text-center py-2 text-gray-500 font-medium bg-gray-50">Picture 2</p>
         </div>
       </div>
 
@@ -57,6 +57,9 @@ const SpeakingPart3Compare = ({ data, recording, onRecordingComplete }: Props) =
           label="Your Comparison"
           micError={micError}
           isRequestingMic={isRequestingMic}
+          recordingElapsed={recordingElapsed}
+          stream={stream}
+          minRecordingTime={10}
         />
       )}
     </div>
