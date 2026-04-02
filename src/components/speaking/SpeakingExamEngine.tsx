@@ -291,6 +291,29 @@ const SpeakingExamEngine = ({
     );
   }
 
+  // Instructions screen
+  if (phase === "instructions") {
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
+          <div className="bg-white rounded-xl shadow-sm max-w-3xl w-full p-8 md:p-12">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Aptis General Speaking Test Instructions</h2>
+            <p className="text-sm font-bold text-gray-900 mb-3">Speaking</p>
+            <div className="text-sm text-gray-700 leading-relaxed space-y-2">
+              <p>You will answer some questions about yourself and then do three short speaking tasks.</p>
+              <p>Listen to the instructions and speak clearly into your microphone when you hear the signal.</p>
+              <p>Each part of the test will appear automatically.</p>
+              <p>The test will take about 12 minutes.</p>
+              <p className="mt-4">When you click on the 'Next' button, the test will begin.</p>
+            </div>
+          </div>
+        </div>
+        <BottomNavBar onNext={() => setPhase("prompt")} isFirst={true} isLast={false} />
+        {exitDialog}
+      </div>
+    );
+  }
+
   // Prompt/Instructions screen
   if (phase === "prompt") {
     return (
