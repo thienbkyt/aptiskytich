@@ -9,15 +9,19 @@ import { Mic, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
 import ExamPagination from "@/components/ExamPagination";
+import FullPartSection from "@/components/practice/FullPartSection";
+import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { SpeakingPartType } from "@/data/speakingQuestions";
 import {
   mockSpeakingPart1, mockSpeakingPart2, mockSpeakingPart3, mockSpeakingPart4,
 } from "@/data/speakingQuestions";
 import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
+import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const TASKS = [
+  { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
   { id: "part1" as const, label: "Part 1", subtitle: "Personal Questions" },
   { id: "part2" as const, label: "Part 2", subtitle: "Describe a Picture" },
   { id: "part3" as const, label: "Part 3", subtitle: "Compare Pictures" },
@@ -36,15 +40,26 @@ interface ExamState {
   loadingExam: boolean;
 }
 
+interface FullPracticeState {
+  active: boolean;
+  fullTestId: string;
+  title: string;
+}
+
 const Speaking = () => {
-  const [activeTab, setActiveTab] = useState("part1");
+  const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading, page, setPage, totalPages } = useExamSets("speaking");
+  const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", loadingExam: false,
   });
+  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
+    active: false, fullTestId: "", title: "",
+  });
 
   const filteredSets = useMemo(() => {
+    if (activeTab === "full") return [];
     return examSets
       .filter((s) => normalizePart(s.part) === activeTab)
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
@@ -68,7 +83,7 @@ const Speaking = () => {
     if (examSets.length > 0) {
       handleStartFromDB(examSets[Math.floor(Math.random() * examSets.length)]);
     } else {
-      handleStartMock(TASKS[Math.floor(Math.random() * TASKS.length)].id);
+      handleStartMock(["part1", "part2", "part3", "part4"][Math.floor(Math.random() * 4)] as SpeakingPartType);
     }
   };
 
@@ -89,6 +104,33 @@ const Speaking = () => {
   const handleExit = () => {
     setExam({ active: false, partType: "part1", testTitle: "", loadingExam: false });
   };
+
+  const handleStartFullPractice = (set: SkillFullSetItem) => {
+    setFullPractice({ active: true, fullTestId: set.fullTestId, title: set.title });
+  };
+
+  const handleExitFullPractice = () => {
+    setFullPractice({ active: false, fullTestId: "", title: "" });
+  };
+
+  // Full practice mode
+  if (fullPractice.active) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-24 pb-20">
+          <div className="section-container max-w-3xl">
+            <SkillFullPracticeEngine
+              fullTestId={fullPractice.fullTestId}
+              skill="speaking"
+              testTitle={fullPractice.title}
+              onExit={handleExitFullPractice}
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (exam.active) {
     if (exam.loadingExam) {
@@ -112,7 +154,7 @@ const Speaking = () => {
   }
 
   const activeTaskInfo = TASKS.find((t) => t.id === activeTab);
-  const hasMockFallback = filteredSets.length === 0;
+  const hasMockFallback = activeTab !== "full" && filteredSets.length === 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -165,7 +207,15 @@ const Speaking = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               {TASKS.map((task) => (
-                <TabsTrigger key={task.id} value={task.id} className="flex-1 min-w-[140px] text-xs sm:text-sm py-2.5 data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+                <TabsTrigger
+                  key={task.id}
+                  value={task.id}
+                  className={`flex-1 min-w-[120px] text-xs sm:text-sm py-2.5 transition-all ${
+                    task.id === "full"
+                      ? "data-[state=active]:bg-[#CC1C01] data-[state=active]:text-white data-[state=active]:shadow-md"
+                      : "data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-md"
+                  }`}
+                >
                   <span className="font-semibold">{task.label}</span>
                   <span className="hidden sm:inline ml-1 opacity-80">– {task.subtitle}</span>
                 </TabsTrigger>
@@ -173,59 +223,70 @@ const Speaking = () => {
             </TabsList>
           </Tabs>
 
-          {activeTaskInfo && (
-            <div className="mb-6">
-              <h2 className="text-lg font-heading font-semibold text-foreground">{activeTaskInfo.label} – {activeTaskInfo.subtitle}</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {loading ? "Đang tải..." : `${filteredSets.length + (hasMockFallback ? 1 : 0)} bộ đề luyện tập`}
-              </p>
-            </div>
-          )}
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
-            </div>
+          {activeTab === "full" ? (
+            <FullPartSection
+              skillName="Speaking"
+              sets={fullSets}
+              loading={fullLoading}
+              onStart={handleStartFullPractice}
+            />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {filteredSets.map((set, index) => (
-                <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
-                  <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
-                    <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <span className="flex items-center gap-1.5">🎤 Ghi âm</span>
-                      <span className="flex items-center gap-1.5">⏱️ Có thời gian chuẩn bị</span>
-                    </div>
-                    <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
-                    <div className="flex-1" />
-                    <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
-                        Luyện tập<ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-
-              {hasMockFallback && (
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                  <div className="group relative bg-card border border-dashed border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-muted text-muted-foreground border-0">Đề mẫu</Badge>
-                    <h3 className="text-xl font-heading font-bold text-foreground mb-3">Đề mẫu</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                      <span className="flex items-center gap-1.5">🎤 Dữ liệu mẫu để luyện tập</span>
-                    </div>
-                    <div className="flex-1" />
-                    <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => handleStartMock(activeTab as SpeakingPartType)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
-                        Luyện tập<ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
+            <>
+              {activeTaskInfo && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-heading font-semibold text-foreground">{activeTaskInfo.label} – {activeTaskInfo.subtitle}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {loading ? "Đang tải..." : `${filteredSets.length + (hasMockFallback ? 1 : 0)} bộ đề luyện tập`}
+                  </p>
+                </div>
               )}
-            </div>
+
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                  {filteredSets.map((set, index) => (
+                    <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
+                      <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                        <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
+                        <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                          <span className="flex items-center gap-1.5">🎤 Ghi âm</span>
+                          <span className="flex items-center gap-1.5">⏱️ Có thời gian chuẩn bị</span>
+                        </div>
+                        <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
+                        <div className="flex-1" />
+                        <div className="flex justify-end">
+                          <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                            Luyện tập<ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {hasMockFallback && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                      <div className="group relative bg-card border border-dashed border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                        <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-muted text-muted-foreground border-0">Đề mẫu</Badge>
+                        <h3 className="text-xl font-heading font-bold text-foreground mb-3">Đề mẫu</h3>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                          <span className="flex items-center gap-1.5">🎤 Dữ liệu mẫu để luyện tập</span>
+                        </div>
+                        <div className="flex-1" />
+                        <div className="flex justify-end">
+                          <Button variant="ghost" size="sm" onClick={() => handleStartMock(activeTab as SpeakingPartType)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                            Luyện tập<ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              )}
+            </>
           )}
 
           <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
