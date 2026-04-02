@@ -196,6 +196,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     </div>
   );
 
+  const handleExit = () => setShowExitConfirm(true);
+
   // ── Loading ──
   if (phase === "loading") {
     return (
