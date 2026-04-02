@@ -9,6 +9,7 @@ import SpeakingMicCheck from "./SpeakingMicCheck";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import { motion } from "framer-motion";
+import type { QuestionReviewData } from "@/components/exam/QuestionReviewModal";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
