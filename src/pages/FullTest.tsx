@@ -94,11 +94,11 @@ const FullTest = () => {
         {/* Test list */}
         <section className="section-container py-8 md:py-10">
           <div className="mb-6">
-            <h2 className="text-lg font-heading font-semibold text-foreground">
-              Thi thử đề Aptis ngẫu nhiên
+            <h2 className="font-heading text-foreground text-4xl font-extrabold">
+              Bộ đề thi Aptis
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {loading ? "Đang tải..." : `${tests.length} bộ đề thi thử`}
+              {loading ? "Đang tải..." : "​"}
             </p>
           </div>
 
