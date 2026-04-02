@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Min
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 import britishCouncilLogo from "@/assets/british-council-aptis-logo.png";
+import QuestionReviewModal, { type QuestionReviewData } from "@/components/exam/QuestionReviewModal";
 
 export interface QuestionItem {
   label: string;
@@ -30,12 +31,15 @@ interface BottomNavBarProps {
   submitLabel?: string;
   sections?: QuestionSection[];
   bookmarkedCount?: number;
+  reviewData?: QuestionReviewData;
+  onReviewSubmit?: () => void;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
-  sections = [], bookmarkedCount = 0,
+  sections = [], bookmarkedCount = 0, reviewData, onReviewSubmit,
 }: BottomNavBarProps) => {
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showAccessibility, setShowAccessibility] = useState(false);
@@ -336,7 +340,7 @@ const BottomNavBar = ({
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowQuestionList(true)}
+              onClick={() => reviewData ? setShowReviewModal(true) : setShowQuestionList(true)}
               className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
             >
               <List className="w-4 h-4" />
@@ -376,6 +380,20 @@ const BottomNavBar = ({
           </div>
         </div>
       </div>
+
+      {/* Question Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && reviewData && (
+          <QuestionReviewModal
+            data={reviewData}
+            onClose={() => setShowReviewModal(false)}
+            onSubmit={() => {
+              setShowReviewModal(false);
+              onReviewSubmit?.();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };

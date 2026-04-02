@@ -9,6 +9,7 @@ import SpeakingMicCheck from "./SpeakingMicCheck";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import { motion } from "framer-motion";
+import type { QuestionReviewData } from "@/components/exam/QuestionReviewModal";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -255,7 +256,32 @@ const SpeakingExamEngine = ({
 
   const handleExit = () => setShowExitConfirm(true);
 
+  // Build review data for QuestionReviewModal
+  const buildReviewData = (): QuestionReviewData => {
+    const totalQ = getTotalQuestions();
+    const questions = [];
+    for (let i = 0; i < totalQ; i++) {
+      questions.push({
+        label: `Part ${i + 1}`,
+        seen: i <= currentIndex,
+        attempted: !!recordings[i],
+      });
+    }
+    return {
+      skills: [{
+        label: "Speaking",
+        questionCount: totalQ,
+        questions: [{
+          label: `Speaking Part ${partNumber}`,
+          parts: questions,
+        }],
+      }],
+    };
+  };
+
   // ============ RENDER ============
+  const reviewData = buildReviewData();
+
   const exitDialog = showExitConfirm && (
     <ExamFinishScreen
       title="Submit Test?"
@@ -301,6 +327,8 @@ const SpeakingExamEngine = ({
         instructions={PART_PROMPTS[partType]}
         onNext={() => startPrep()}
         onExit={handleExit}
+        reviewData={reviewData}
+        onReviewSubmit={onExit}
       />
     );
   }
@@ -415,6 +443,8 @@ const SpeakingExamEngine = ({
         submitLabel="Exit"
         isLast={true}
         isFirst={true}
+        reviewData={reviewData}
+        onReviewSubmit={onExit}
       />
       {exitDialog}
     </div>
