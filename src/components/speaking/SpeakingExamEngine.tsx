@@ -441,6 +441,8 @@ const SpeakingExamEngine = ({
         submitLabel="Exit"
         isLast={true}
         isFirst={true}
+        reviewData={reviewData}
+        onReviewSubmit={onExit}
       />
       {exitDialog}
     </div>
