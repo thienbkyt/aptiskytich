@@ -26,6 +26,7 @@ interface BottomNavBarProps {
   onPrevious?: () => void;
   onNext?: () => void;
   onSubmit?: () => void;
+  onExit?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
   submitLabel?: string;
