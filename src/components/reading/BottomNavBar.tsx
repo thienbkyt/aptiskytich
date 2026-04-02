@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Min
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 import britishCouncilLogo from "@/assets/british-council-aptis-logo.png";
+import QuestionReviewModal, { type QuestionReviewData } from "@/components/exam/QuestionReviewModal";
 
 export interface QuestionItem {
   label: string;
@@ -30,6 +31,8 @@ interface BottomNavBarProps {
   submitLabel?: string;
   sections?: QuestionSection[];
   bookmarkedCount?: number;
+  reviewData?: QuestionReviewData;
+  onReviewSubmit?: () => void;
 }
 
 const BottomNavBar = ({
