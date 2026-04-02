@@ -340,7 +340,7 @@ const BottomNavBar = ({
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowQuestionList(true)}
+              onClick={() => reviewData ? setShowReviewModal(true) : setShowQuestionList(true)}
               className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
             >
               <List className="w-4 h-4" />
