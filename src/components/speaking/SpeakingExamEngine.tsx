@@ -64,6 +64,7 @@ const SpeakingExamEngine = ({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const currentIndexRef = useRef(0);
 
   const { grading, isGrading, gradeExam } = useExamGrading();
 
