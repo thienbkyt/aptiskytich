@@ -257,7 +257,7 @@ const SpeakingExamEngine = ({
   if (phase === "mic-check") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} />
+        <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
         <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
           <div className="bg-white rounded-xl shadow-sm max-w-xl w-full p-8">
             <p className="text-xs text-gray-500">Aptis General Practice Test</p>
@@ -287,6 +287,7 @@ const SpeakingExamEngine = ({
         title={`Speaking Part ${partNumber}`}
         instructions={PART_PROMPTS[partType]}
         onNext={() => startPrep()}
+        onExit={onExit}
       />
     );
   }
@@ -295,7 +296,7 @@ const SpeakingExamEngine = ({
   if (phase === "grading" || phase === "done") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} />
+        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
         <div className="flex-1 px-4 pt-8">
           <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
         </div>
@@ -311,7 +312,7 @@ const SpeakingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} />
+      <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}
