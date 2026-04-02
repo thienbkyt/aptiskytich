@@ -257,6 +257,40 @@ const SpeakingExamEngine = ({
 
   const handleExit = () => setShowExitConfirm(true);
 
+  // Build review modal data
+  const buildReviewSkills = (): ReviewSkill[] => {
+    const totalQ = getTotalQuestions();
+    const parts: { label: string; seen: boolean; attempted: boolean }[] = [];
+
+    if (partType === "part1" && part1Data) {
+      part1Data.questions.forEach((_, i) => {
+        parts.push({
+          label: `Part ${i + 1}`,
+          seen: currentIndex >= i || (phase !== "mic-check" && phase !== "prompt"),
+          attempted: !!recordings[i],
+        });
+      });
+    } else {
+      for (let i = 1; i <= 4; i++) {
+        const pType = `part${i}` as SpeakingPartType;
+        parts.push({
+          label: `Part ${i}`,
+          seen: pType === partType && phase !== "mic-check" && phase !== "prompt",
+          attempted: pType === partType && !!recordings[0],
+        });
+      }
+    }
+
+    return [{
+      skill: "Speaking",
+      totalQuestions: totalQ > 1 ? totalQ : 4,
+      questions: [{
+        label: String(partNumber).padStart(2, "0"),
+        parts,
+      }],
+    }];
+  };
+
   // ============ RENDER ============
   const exitDialog = showExitConfirm && (
     <ExamFinishScreen
@@ -264,6 +298,18 @@ const SpeakingExamEngine = ({
       message="Once you submit your test you will no longer have access to the questions."
       buttonText="Submit test"
       onSubmit={onExit}
+    />
+  );
+
+  const reviewModal = (
+    <QuestionReviewModal
+      open={showReviewModal}
+      skills={buildReviewSkills()}
+      onClose={() => setShowReviewModal(false)}
+      onSubmit={() => {
+        setShowReviewModal(false);
+        setShowExitConfirm(true);
+      }}
     />
   );
 
