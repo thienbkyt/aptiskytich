@@ -107,7 +107,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
         </div>
 
         <div className={`flex items-center gap-1 shrink-0 text-xs font-medium px-2 py-1 rounded-md ${
-          disabled ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+          disabled ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-[#230859]"
         }`}>
           {disabled ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
           {playCount}/{maxPlays}

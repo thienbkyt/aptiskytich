@@ -365,11 +365,11 @@ const BottomNavBar = ({
               </Button>
             )}
             {isLast && onSubmit ? (
-              <Button onClick={onSubmit} className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6">
+              <Button onClick={onSubmit} className="text-background gap-2 px-6 bg-[#230859]">
                 {submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
-              <Button onClick={onNext} className="bg-foreground text-background hover:bg-foreground/90 gap-2 px-6">
+              <Button onClick={onNext} className="text-background gap-2 px-6 bg-[#230859]">
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : null}
