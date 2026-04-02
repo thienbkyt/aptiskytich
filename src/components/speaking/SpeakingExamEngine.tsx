@@ -384,7 +384,7 @@ const SpeakingExamEngine = ({
         totalParts={totalParts}
         title={`Speaking Part ${partNumber}`}
         instructions={PART_PROMPTS[partType]}
-        onNext={() => startPrep()}
+        onNext={() => startQuestionFlow()}
         onExit={handleExit}
       />
     );
