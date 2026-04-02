@@ -8,7 +8,8 @@ import SpeakingResults from "./SpeakingResults";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -54,6 +55,7 @@ const SpeakingExamEngine = ({
   const [canFinish, setCanFinish] = useState(false);
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
   const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
   
@@ -205,6 +207,8 @@ const SpeakingExamEngine = ({
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
+
+    setIsTransitioning(true);
     
     const total = getTotalQuestions();
     if (currentIndex < total - 1) {
@@ -212,10 +216,12 @@ const SpeakingExamEngine = ({
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
         setCanFinish(false);
+        setIsTransitioning(false);
         startPrep();
-      }, 500);
+      }, 300);
     } else {
       // Part complete - go to grading
+      setIsTransitioning(false);
       handleFinish();
     }
   }, [currentIndex, partType]);
@@ -433,12 +439,21 @@ const SpeakingExamEngine = ({
         </div>
       </div>
 
-      <BottomNavBar
-        onSubmit={handleExit}
-        submitLabel="Exit"
-        isLast={true}
-        isFirst={true}
-      />
+      {/* Transitioning indicator */}
+      <AnimatePresence>
+        {isTransitioning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md"
+          >
+            <Loader2 className="h-4 w-4 animate-spin text-[#24085a]" />
+            <span className="text-xs text-[#24085a] font-medium">Đang xử lý...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {exitDialog}
     </div>
   );
