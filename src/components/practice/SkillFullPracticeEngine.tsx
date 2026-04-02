@@ -257,18 +257,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": writingProps.part4Data = toWritingPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <WritingExamEngine
-          key={`writing-${engineKey}`}
-          partType={writingPartType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={() => handlePartComplete()}
-          {...writingProps}
-        />
-      </>
+      <WritingExamEngine
+        key={`writing-${engineKey}`}
+        partType={writingPartType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={() => handlePartComplete()}
+        {...writingProps}
+      />
     );
   }
 
