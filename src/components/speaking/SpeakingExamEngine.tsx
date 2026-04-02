@@ -53,6 +53,7 @@ const SpeakingExamEngine = ({
   const [speakTimeLeft, setSpeakTimeLeft] = useState(0);
   const [canFinish, setCanFinish] = useState(false);
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
   const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
   
