@@ -20,7 +20,7 @@ const TimerDisplay = ({ timeLeft, totalTime }: TimerDisplayProps) => {
       {/* Progress bar under timer */}
       <div className="h-[3px] w-full bg-muted rounded-full mt-1 overflow-hidden">
         <div
-          className="h-full bg-primary rounded-full transition-all duration-1000"
+          className="h-full rounded-full transition-all duration-1000 bg-[#230859]"
           style={{ width: `${progress}%` }}
         />
       </div>
