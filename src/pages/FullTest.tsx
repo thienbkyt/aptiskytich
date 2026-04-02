@@ -32,18 +32,11 @@ const FullTest = () => {
   // Full test engine mode
   if (activeTest) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 pt-24 pb-20">
-          <div className="section-container max-w-3xl">
-            <FullTestEngine
-              testId={activeTest.fullTestId}
-              testTitle={activeTest.title}
-              onExit={handleExit}
-            />
-          </div>
-        </main>
-      </div>
+      <FullTestEngine
+        testId={activeTest.fullTestId}
+        testTitle={activeTest.title}
+        onExit={handleExit}
+      />
     );
   }
 
