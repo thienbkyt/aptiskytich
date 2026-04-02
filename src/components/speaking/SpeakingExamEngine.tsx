@@ -327,6 +327,8 @@ const SpeakingExamEngine = ({
         instructions={PART_PROMPTS[partType]}
         onNext={() => startPrep()}
         onExit={handleExit}
+        reviewData={reviewData}
+        onReviewSubmit={onExit}
       />
     );
   }
