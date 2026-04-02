@@ -30,7 +30,40 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "mic-check" | "instructions" | "prompt" | "prep" | "recording" | "grading" | "done";
+type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
+
+/** Play a short beep using Web Audio API */
+function playBeep(): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.value = 0.5;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+      osc.onended = () => { ctx.close(); resolve(); };
+    } catch { resolve(); }
+  });
+}
+
+/** Speak text using Web Speech API */
+function speakAsync(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (!("speechSynthesis" in window)) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-GB";
+    u.rate = 0.9;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    window.speechSynthesis.speak(u);
+  });
+}
 
 const PART_PROMPTS: Record<SpeakingPartType, string> = {
   part1: "Part One - In this part, I am going to ask you three short questions about yourself and your interests. You will have 30 seconds to reply to each question.\n\nBegin speaking when you hear this sound.",
