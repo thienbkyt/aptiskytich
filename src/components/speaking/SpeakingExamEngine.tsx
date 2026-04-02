@@ -403,9 +403,10 @@ const SpeakingExamEngine = ({
     );
   }
 
-  // Prep or Recording phase
+  // Reading-question, Prep or Recording phase
   const question = getCurrentQuestion();
   const isRec = phase === "recording";
+  const isReading = phase === "reading-question";
   const timeLeft = isRec ? speakTimeLeft : prepTimeLeft;
   const totalTime = isRec ? getSpeakTime() : getPrepTime();
 
