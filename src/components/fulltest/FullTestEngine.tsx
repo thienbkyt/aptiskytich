@@ -355,7 +355,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           questions={grammarQuestions}
           testTitle={`${testTitle} – Grammar & Vocabulary`}
           timeLimit={SKILL_TIMES.grammar}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
         />
       </>
