@@ -213,18 +213,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": listeningProps.part4Questions = toListeningPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <ListeningExamEngine
-          key={`listening-${engineKey}`}
-          partType={partType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={(correct, total) => handlePartComplete(correct, total)}
-          {...listeningProps}
-        />
-      </>
+      <ListeningExamEngine
+        key={`listening-${engineKey}`}
+        partType={partType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={(correct, total) => handlePartComplete(correct, total)}
+        {...listeningProps}
+      />
     );
   }
 
