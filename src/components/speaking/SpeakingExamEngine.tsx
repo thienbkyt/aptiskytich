@@ -421,7 +421,7 @@ const SpeakingExamEngine = ({
           <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
             <p className="text-xs text-gray-500 mb-1">Speaking</p>
             <p className="text-sm font-bold text-gray-900 mb-6">
-              Part {partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
+              {partType === "part1" ? "Question" : "Part"} {partType === "part1" ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
             </p>
 
             {/* Part 2 image */}
