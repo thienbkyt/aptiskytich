@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
+import QuestionReviewModal, { type ReviewSkill } from "@/components/exam/QuestionReviewModal";
 import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingResults from "./SpeakingResults";
@@ -54,6 +55,7 @@ const SpeakingExamEngine = ({
   const [canFinish, setCanFinish] = useState(false);
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
   const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
   
@@ -255,6 +257,40 @@ const SpeakingExamEngine = ({
 
   const handleExit = () => setShowExitConfirm(true);
 
+  // Build review modal data
+  const buildReviewSkills = (): ReviewSkill[] => {
+    const totalQ = getTotalQuestions();
+    const parts: { label: string; seen: boolean; attempted: boolean }[] = [];
+
+    if (partType === "part1" && part1Data) {
+      part1Data.questions.forEach((_, i) => {
+        parts.push({
+          label: `Part ${i + 1}`,
+          seen: currentIndex >= i || (phase !== "mic-check" && phase !== "prompt"),
+          attempted: !!recordings[i],
+        });
+      });
+    } else {
+      for (let i = 1; i <= 4; i++) {
+        const pType = `part${i}` as SpeakingPartType;
+        parts.push({
+          label: `Part ${i}`,
+          seen: pType === partType && phase !== "mic-check" && phase !== "prompt",
+          attempted: pType === partType && !!recordings[0],
+        });
+      }
+    }
+
+    return [{
+      skill: "Speaking",
+      totalQuestions: totalQ > 1 ? totalQ : 4,
+      questions: [{
+        label: String(partNumber).padStart(2, "0"),
+        parts,
+      }],
+    }];
+  };
+
   // ============ RENDER ============
   const exitDialog = showExitConfirm && (
     <ExamFinishScreen
@@ -262,6 +298,18 @@ const SpeakingExamEngine = ({
       message="Once you submit your test you will no longer have access to the questions."
       buttonText="Submit test"
       onSubmit={onExit}
+    />
+  );
+
+  const reviewModal = (
+    <QuestionReviewModal
+      open={showReviewModal}
+      skills={buildReviewSkills()}
+      onClose={() => setShowReviewModal(false)}
+      onSubmit={() => {
+        setShowReviewModal(false);
+        setShowExitConfirm(true);
+      }}
     />
   );
 
@@ -286,6 +334,7 @@ const SpeakingExamEngine = ({
             </button>
           </div>
         </div>
+        {reviewModal}
         {exitDialog}
       </div>
     );
@@ -313,6 +362,7 @@ const SpeakingExamEngine = ({
         <div className="flex-1 px-4 pt-8">
           <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
         </div>
+        {reviewModal}
         {exitDialog}
       </div>
     );
@@ -415,7 +465,9 @@ const SpeakingExamEngine = ({
         submitLabel="Exit"
         isLast={true}
         isFirst={true}
+        onQuestionListClick={() => setShowReviewModal(true)}
       />
+      {reviewModal}
       {exitDialog}
     </div>
   );
