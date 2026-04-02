@@ -8,7 +8,8 @@ import SpeakingResults from "./SpeakingResults";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
