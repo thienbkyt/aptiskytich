@@ -116,19 +116,12 @@ const Speaking = () => {
   // Full practice mode
   if (fullPractice.active) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 pt-24 pb-20">
-          <div className="section-container max-w-3xl">
-            <SkillFullPracticeEngine
-              fullTestId={fullPractice.fullTestId}
-              skill="speaking"
-              testTitle={fullPractice.title}
-              onExit={handleExitFullPractice}
-            />
-          </div>
-        </main>
-      </div>
+      <SkillFullPracticeEngine
+        fullTestId={fullPractice.fullTestId}
+        skill="speaking"
+        testTitle={fullPractice.title}
+        onExit={handleExitFullPractice}
+      />
     );
   }
 
