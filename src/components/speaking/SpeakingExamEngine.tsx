@@ -155,8 +155,26 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
-  // Start preparation phase
-  const startPrep = useCallback(() => {
+  // Read question aloud, beep, then start prep/recording
+  const startQuestionFlow = useCallback(async () => {
+    setPhase("reading-question");
+    
+    // Get the question text for current index
+    const questionText = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions[currentIndexRef.current];
+      if (partType === "part2" && part2Data) return part2Data.prompt;
+      if (partType === "part3" && part3Data) return part3Data.prompt;
+      if (partType === "part4" && part4Data) return part4Data.topic;
+      return "";
+    })();
+
+    if (questionText) {
+      await speakAsync(questionText);
+    }
+    await playBeep();
+    await new Promise(r => setTimeout(r, 500));
+
+    // Now start prep or recording
     const prepTime = getPrepTime();
     if (prepTime <= 0) {
       startRecording();
@@ -177,7 +195,7 @@ const SpeakingExamEngine = ({
         return prev - 1;
       });
     }, 1000);
-  }, [partType]);
+  }, [partType, part1Data, part2Data, part3Data, part4Data]);
 
   // Start recording
   const startRecording = useCallback(async () => {
