@@ -256,7 +256,32 @@ const SpeakingExamEngine = ({
 
   const handleExit = () => setShowExitConfirm(true);
 
+  // Build review data for QuestionReviewModal
+  const buildReviewData = (): QuestionReviewData => {
+    const totalQ = getTotalQuestions();
+    const questions = [];
+    for (let i = 0; i < totalQ; i++) {
+      questions.push({
+        label: `Part ${i + 1}`,
+        seen: i <= currentIndex,
+        attempted: !!recordings[i],
+      });
+    }
+    return {
+      skills: [{
+        label: "Speaking",
+        questionCount: totalQ,
+        questions: [{
+          label: `Speaking Part ${partNumber}`,
+          parts: questions,
+        }],
+      }],
+    };
+  };
+
   // ============ RENDER ============
+  const reviewData = buildReviewData();
+
   const exitDialog = showExitConfirm && (
     <ExamFinishScreen
       title="Submit Test?"
