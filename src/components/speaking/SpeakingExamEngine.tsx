@@ -411,9 +411,10 @@ const SpeakingExamEngine = ({
       </div>
 
       <SpeakingFooter
-        onExit={onExit}
+        onExit={handleExit}
         showNext={false}
       />
+      {exitDialog}
     </div>
   );
 };
