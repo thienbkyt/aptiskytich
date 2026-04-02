@@ -35,7 +35,7 @@ interface BottomNavBarProps {
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
-  sections = [], bookmarkedCount = 0,
+  sections = [], bookmarkedCount = 0, onQuestionListClick,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
