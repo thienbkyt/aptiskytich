@@ -166,17 +166,10 @@ const Reading = () => {
     }
 
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 pt-24 pb-20">
-          <div className="section-container max-w-3xl">
-            <ReadingExamEngine
-              partType={exam.partType} testTitle={exam.testTitle} timeLimit={1800}
-              onExit={handleExit} onComplete={handleComplete} {...exam.engineData}
-            />
-          </div>
-        </main>
-      </div>
+      <ReadingExamEngine
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={1800}
+        onExit={handleExit} onComplete={handleComplete} {...exam.engineData}
+      />
     );
   }
 
