@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import SpeakingFooter from "./SpeakingFooter";
+import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingResults from "./SpeakingResults";
