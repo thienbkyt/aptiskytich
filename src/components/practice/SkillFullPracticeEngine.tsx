@@ -191,18 +191,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": speakingProps.part4Data = toSpeakingPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <SpeakingExamEngine
-          key={`speaking-${engineKey}`}
-          partType={partType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={() => handlePartComplete()}
-          {...speakingProps}
-        />
-      </>
+      <SpeakingExamEngine
+        key={`speaking-${engineKey}`}
+        partType={partType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={() => handlePartComplete()}
+        {...speakingProps}
+      />
     );
   }
 
