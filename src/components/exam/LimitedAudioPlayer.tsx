@@ -92,7 +92,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
           className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${
             disabled
               ? "bg-muted text-muted-foreground cursor-not-allowed"
-              : "bg-primary text-primary-foreground hover:bg-primary/90"
+              : "text-primary-foreground bg-[#230859]"
           }`}
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
