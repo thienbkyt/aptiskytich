@@ -179,24 +179,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   if (!currentPart) return null;
   const partNorm = currentPart.partNorm;
 
-  // Progress indicator
-  const progressBar = (
-    <div className="flex items-center gap-2 mb-4">
-      {parts.map((_, i) => (
-        <div
-          key={i}
-          className={`h-1.5 rounded-full transition-all ${
-            i < currentPartIndex ? "bg-green-500 w-10"
-              : i === currentPartIndex ? "bg-primary w-14"
-              : "bg-muted w-10"
-          }`}
-        />
-      ))}
-      <span className="text-xs text-muted-foreground ml-2">
-        Part {currentPartIndex + 1}/{parts.length}
-      </span>
-    </div>
-  );
+  // Progress indicator removed — engines render full-screen like individual parts
 
   if (skill === "speaking") {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
@@ -208,18 +191,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": speakingProps.part4Data = toSpeakingPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <SpeakingExamEngine
-          key={`speaking-${engineKey}`}
-          partType={partType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={() => handlePartComplete()}
-          {...speakingProps}
-        />
-      </>
+      <SpeakingExamEngine
+        key={`speaking-${engineKey}`}
+        partType={partType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={() => handlePartComplete()}
+        {...speakingProps}
+      />
     );
   }
 
@@ -233,18 +213,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": listeningProps.part4Questions = toListeningPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <ListeningExamEngine
-          key={`listening-${engineKey}`}
-          partType={partType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={(correct, total) => handlePartComplete(correct, total)}
-          {...listeningProps}
-        />
-      </>
+      <ListeningExamEngine
+        key={`listening-${engineKey}`}
+        partType={partType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={(correct, total) => handlePartComplete(correct, total)}
+        {...listeningProps}
+      />
     );
   }
 
@@ -258,18 +235,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <ReadingExamEngine
-          key={`reading-${engineKey}`}
-          partType={partType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={(correct, total) => handlePartComplete(correct, total)}
-          {...readingProps}
-        />
-      </>
+      <ReadingExamEngine
+        key={`reading-${engineKey}`}
+        partType={partType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={(correct, total) => handlePartComplete(correct, total)}
+        {...readingProps}
+      />
     );
   }
 
@@ -283,18 +257,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": writingProps.part4Data = toWritingPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <WritingExamEngine
-          key={`writing-${engineKey}`}
-          partType={writingPartType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={() => handlePartComplete()}
-          {...writingProps}
-        />
-      </>
+      <WritingExamEngine
+        key={`writing-${engineKey}`}
+        partType={writingPartType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={() => handlePartComplete()}
+        {...writingProps}
+      />
     );
   }
 
