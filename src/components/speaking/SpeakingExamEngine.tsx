@@ -439,9 +439,8 @@ const SpeakingExamEngine = ({
       </div>
 
       <BottomNavBar
-        onSubmit={handleExit}
-        submitLabel="Exit"
-        isLast={true}
+        onExit={handleExit}
+        isLast={false}
         isFirst={true}
         reviewData={reviewData}
         onReviewSubmit={onExit}
