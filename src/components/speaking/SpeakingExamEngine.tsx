@@ -233,8 +233,8 @@ const SpeakingExamEngine = ({
 
   const handleFinishRecording = useCallback(() => {
     if (!canFinish) return;
-    stopAndAdvance();
-  }, [canFinish, stopAndAdvance]);
+    doStopAndAdvance();
+  }, [canFinish, doStopAndAdvance]);
 
   const handleFinish = async () => {
     setPhase("grading");
