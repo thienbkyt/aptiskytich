@@ -30,7 +30,40 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "mic-check" | "instructions" | "prompt" | "prep" | "recording" | "grading" | "done";
+type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
+
+/** Play a short beep using Web Audio API */
+function playBeep(): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.value = 0.5;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+      osc.onended = () => { ctx.close(); resolve(); };
+    } catch { resolve(); }
+  });
+}
+
+/** Speak text using Web Speech API */
+function speakAsync(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (!("speechSynthesis" in window)) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-GB";
+    u.rate = 0.9;
+    u.onend = () => resolve();
+    u.onerror = () => resolve();
+    window.speechSynthesis.speak(u);
+  });
+}
 
 const PART_PROMPTS: Record<SpeakingPartType, string> = {
   part1: "Part One - In this part, I am going to ask you three short questions about yourself and your interests. You will have 30 seconds to reply to each question.\n\nBegin speaking when you hear this sound.",
@@ -119,11 +152,30 @@ const SpeakingExamEngine = ({
       if (timerRef.current) clearInterval(timerRef.current);
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      window.speechSynthesis?.cancel();
     };
   }, []);
 
-  // Start preparation phase
-  const startPrep = useCallback(() => {
+  // Read question aloud, beep, then start prep/recording
+  const startQuestionFlow = useCallback(async () => {
+    setPhase("reading-question");
+    
+    // Get the question text for current index
+    const questionText = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions[currentIndexRef.current];
+      if (partType === "part2" && part2Data) return part2Data.prompt;
+      if (partType === "part3" && part3Data) return part3Data.prompt;
+      if (partType === "part4" && part4Data) return part4Data.topic;
+      return "";
+    })();
+
+    if (questionText) {
+      await speakAsync(questionText);
+    }
+    await playBeep();
+    await new Promise(r => setTimeout(r, 500));
+
+    // Now start prep or recording
     const prepTime = getPrepTime();
     if (prepTime <= 0) {
       startRecording();
@@ -144,7 +196,7 @@ const SpeakingExamEngine = ({
         return prev - 1;
       });
     }, 1000);
-  }, [partType]);
+  }, [partType, part1Data, part2Data, part3Data, part4Data]);
 
   // Start recording
   const startRecording = useCallback(async () => {
@@ -223,7 +275,7 @@ const SpeakingExamEngine = ({
         setCurrentIndex(nextIdx);
         setCanFinish(false);
         setIsTransitioning(false);
-        startPrep();
+        startQuestionFlow();
       }, 300);
     } else {
       setIsTransitioning(false);
@@ -333,7 +385,7 @@ const SpeakingExamEngine = ({
         totalParts={totalParts}
         title={`Speaking Part ${partNumber}`}
         instructions={PART_PROMPTS[partType]}
-        onNext={() => startPrep()}
+        onNext={() => startQuestionFlow()}
         onExit={handleExit}
       />
     );
@@ -352,9 +404,10 @@ const SpeakingExamEngine = ({
     );
   }
 
-  // Prep or Recording phase
+  // Reading-question, Prep or Recording phase
   const question = getCurrentQuestion();
   const isRec = phase === "recording";
+  const isReading = phase === "reading-question";
   const timeLeft = isRec ? speakTimeLeft : prepTimeLeft;
   const totalTime = isRec ? getSpeakTime() : getPrepTime();
 
@@ -418,11 +471,11 @@ const SpeakingExamEngine = ({
         {/* Right: Timer panel */}
         <div className="w-[220px] shrink-0">
           <CircularTimer
-            timeLeft={timeLeft}
-            totalTime={totalTime}
-            label={isRec ? "Recording..." : "Preparation..."}
+            timeLeft={isReading ? 0 : timeLeft}
+            totalTime={isReading ? 1 : totalTime}
+            label={isReading ? "Listening..." : isRec ? "Recording..." : "Preparation..."}
             isRecording={isRec}
-            isPrep={phase === "prep"}
+            isPrep={phase === "prep" || isReading}
           />
 
           {/* Finish Recording button - only shows after 10s of recording */}
