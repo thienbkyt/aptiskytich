@@ -269,7 +269,7 @@ const SpeakingExamEngine = ({
   if (phase === "mic-check") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
+        <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
           <div className="bg-white rounded-xl shadow-sm max-w-xl w-full p-8">
             <p className="text-xs text-gray-500">Aptis General Practice Test</p>
@@ -286,6 +286,7 @@ const SpeakingExamEngine = ({
             </button>
           </div>
         </div>
+        {exitDialog}
       </div>
     );
   }
