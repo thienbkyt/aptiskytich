@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft } from "lucide-react";
+import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import WritingPart1Short from "@/components/writing/WritingPart1Short";
 import WritingPart2Social from "@/components/writing/WritingPart2Social";
@@ -139,108 +139,101 @@ const WritingExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
+        <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+          <ExamInstructions
+            skillName={`Writing – ${partLabel}`}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            totalParts={1}
+            totalMinutes={Math.ceil(timeLimit / 60)}
+            onStart={() => setPhase("practice")}
+            sections={sections}
+            description={`Bài luyện tập: ${testTitle}`}
+          />
         </div>
-        <ExamInstructions
-          skillName={`Writing – ${partLabel}`}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          totalParts={1}
-          totalMinutes={Math.ceil(timeLimit / 60)}
-          onStart={() => setPhase("practice")}
-          sections={sections}
-          description={`Bài luyện tập: ${testTitle}`}
-        />
       </div>
     );
   }
 
   if (phase === "grading" || phase === "results") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
+        <div className="flex-1 px-4 pt-8">
+          <WritingResults isGrading={isGrading} grading={grading} onExit={onExit} />
         </div>
-        <WritingResults isGrading={isGrading} grading={grading} onExit={onExit} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[70vh]">
-      <div className="flex items-center mb-6">
-        <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Quay lại
-        </button>
+    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
+      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+        {partType === "task1" && part1Data && (
+          <WritingPart1Short
+            data={part1Data}
+            answers={shortAnswers}
+            onAnswerChange={(i, val) => {
+              const n = [...shortAnswers];
+              n[i] = val;
+              setShortAnswers(n);
+            }}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onSubmit={handleSubmit}
+            sections={sections}
+          />
+        )}
+
+        {partType === "task2" && part2Data && (
+          <WritingPart2Social
+            data={part2Data}
+            answer={textAnswer}
+            onAnswerChange={setTextAnswer}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onSubmit={handleSubmit}
+            sections={sections}
+          />
+        )}
+
+        {partType === "task3" && part3Data && (
+          <WritingPart3Questions
+            data={part3Data}
+            answers={part3Answers}
+            onAnswerChange={(i, val) => {
+              const n = [...part3Answers];
+              n[i] = val;
+              setPart3Answers(n);
+            }}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onSubmit={handleSubmit}
+            sections={sections}
+          />
+        )}
+
+        {partType === "task4" && part4Data && (
+          <WritingPart4TwoEmails
+            data={part4Data}
+            informalAnswer={informalAnswer}
+            formalAnswer={formalAnswer}
+            onInformalChange={setInformalAnswer}
+            onFormalChange={setFormalAnswer}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onSubmit={handleSubmit}
+            sections={sections}
+          />
+        )}
       </div>
-
-      {partType === "task1" && part1Data && (
-        <WritingPart1Short
-          data={part1Data}
-          answers={shortAnswers}
-          onAnswerChange={(i, val) => {
-            const n = [...shortAnswers];
-            n[i] = val;
-            setShortAnswers(n);
-          }}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onSubmit={handleSubmit}
-          sections={sections}
-        />
-      )}
-
-      {partType === "task2" && part2Data && (
-        <WritingPart2Social
-          data={part2Data}
-          answer={textAnswer}
-          onAnswerChange={setTextAnswer}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onSubmit={handleSubmit}
-          sections={sections}
-        />
-      )}
-
-      {partType === "task3" && part3Data && (
-        <WritingPart3Questions
-          data={part3Data}
-          answers={part3Answers}
-          onAnswerChange={(i, val) => {
-            const n = [...part3Answers];
-            n[i] = val;
-            setPart3Answers(n);
-          }}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onSubmit={handleSubmit}
-          sections={sections}
-        />
-      )}
-
-      {partType === "task4" && part4Data && (
-        <WritingPart4TwoEmails
-          data={part4Data}
-          informalAnswer={informalAnswer}
-          formalAnswer={formalAnswer}
-          onInformalChange={setInformalAnswer}
-          onFormalChange={setFormalAnswer}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onSubmit={handleSubmit}
-          sections={sections}
-        />
-      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft } from "lucide-react";
+import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import ListeningPart1Word from "@/components/listening/ListeningPart1Word";
 import ListeningPart2Match from "@/components/listening/ListeningPart2Match";
@@ -56,14 +56,12 @@ const ListeningExamEngine = ({
     new Array(totalQuestions).fill(null)
   );
 
-  // Mark current as seen
   useEffect(() => {
     if (phase === "practice") {
       setSeenQuestions((prev) => new Set(prev).add(currentIndex));
     }
   }, [phase, currentIndex]);
 
-  // Timer
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
@@ -138,85 +136,80 @@ const ListeningExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
+        <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+          <ExamInstructions
+            skillName={`Listening – ${partLabel}`}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            totalParts={totalQuestions}
+            totalMinutes={Math.ceil(timeLimit / 60)}
+            onStart={() => setPhase("practice")}
+            sections={sections}
+            description={`Bài luyện tập: ${testTitle}. Mỗi đoạn audio chỉ được nghe tối đa 2 lần.`}
+          />
         </div>
-        <ExamInstructions
-          skillName={`Listening – ${partLabel}`}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          totalParts={totalQuestions}
-          totalMinutes={Math.ceil(timeLimit / 60)}
-          onStart={() => setPhase("practice")}
-          sections={sections}
-          description={`Bài luyện tập: ${testTitle}. Mỗi đoạn audio chỉ được nghe tối đa 2 lần.`}
-        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[70vh]">
-      <div className="flex items-center mb-6">
-        <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Quay lại
-        </button>
+    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
+      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+        {partType === "part1" && part1Questions && (
+          <ListeningPart1Word
+            questions={part1Questions}
+            currentIndex={currentIndex}
+            answers={answers}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onAnswer={handleAnswer}
+            {...navProps}
+          />
+        )}
+
+        {partType === "part2" && part2Questions && (
+          <ListeningPart2Match
+            questions={part2Questions}
+            currentIndex={currentIndex}
+            answers={answers}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onAnswer={handleAnswer}
+            {...navProps}
+          />
+        )}
+
+        {partType === "part3" && part3Questions && (
+          <ListeningPart3Conversation
+            questions={part3Questions}
+            currentIndex={currentIndex}
+            answers={answers}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onAnswer={handleAnswer}
+            {...navProps}
+          />
+        )}
+
+        {partType === "part4" && part4Questions && (
+          <ListeningPart4Monologue
+            questions={part4Questions}
+            currentIndex={currentIndex}
+            answers={answers}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onAnswer={handleAnswer}
+            {...navProps}
+          />
+        )}
       </div>
-
-      {partType === "part1" && part1Questions && (
-        <ListeningPart1Word
-          questions={part1Questions}
-          currentIndex={currentIndex}
-          answers={answers}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onAnswer={handleAnswer}
-          {...navProps}
-        />
-      )}
-
-      {partType === "part2" && part2Questions && (
-        <ListeningPart2Match
-          questions={part2Questions}
-          currentIndex={currentIndex}
-          answers={answers}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onAnswer={handleAnswer}
-          {...navProps}
-        />
-      )}
-
-      {partType === "part3" && part3Questions && (
-        <ListeningPart3Conversation
-          questions={part3Questions}
-          currentIndex={currentIndex}
-          answers={answers}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onAnswer={handleAnswer}
-          {...navProps}
-        />
-      )}
-
-      {partType === "part4" && part4Questions && (
-        <ListeningPart4Monologue
-          questions={part4Questions}
-          currentIndex={currentIndex}
-          answers={answers}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onAnswer={handleAnswer}
-          {...navProps}
-        />
-      )}
     </div>
   );
 };
