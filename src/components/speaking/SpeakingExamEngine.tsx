@@ -274,7 +274,7 @@ const SpeakingExamEngine = ({
         setCurrentIndex(nextIdx);
         setCanFinish(false);
         setIsTransitioning(false);
-        startPrep();
+        startQuestionFlow();
       }, 300);
     } else {
       setIsTransitioning(false);
