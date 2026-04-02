@@ -439,12 +439,21 @@ const SpeakingExamEngine = ({
         </div>
       </div>
 
-      <BottomNavBar
-        onSubmit={handleExit}
-        submitLabel="Exit"
-        isLast={true}
-        isFirst={true}
-      />
+      {/* Transitioning indicator */}
+      <AnimatePresence>
+        {isTransitioning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md"
+          >
+            <Loader2 className="h-4 w-4 animate-spin text-[#24085a]" />
+            <span className="text-xs text-[#24085a] font-medium">Đang xử lý...</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {exitDialog}
     </div>
   );
