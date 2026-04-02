@@ -380,6 +380,20 @@ const BottomNavBar = ({
           </div>
         </div>
       </div>
+
+      {/* Question Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && reviewData && (
+          <QuestionReviewModal
+            data={reviewData}
+            onClose={() => setShowReviewModal(false)}
+            onSubmit={() => {
+              setShowReviewModal(false);
+              onReviewSubmit?.();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };
