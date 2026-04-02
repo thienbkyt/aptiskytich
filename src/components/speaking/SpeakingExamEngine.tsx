@@ -470,11 +470,11 @@ const SpeakingExamEngine = ({
         {/* Right: Timer panel */}
         <div className="w-[220px] shrink-0">
           <CircularTimer
-            timeLeft={timeLeft}
-            totalTime={totalTime}
-            label={isRec ? "Recording..." : "Preparation..."}
+            timeLeft={isReading ? 0 : timeLeft}
+            totalTime={isReading ? 1 : totalTime}
+            label={isReading ? "Listening..." : isRec ? "Recording..." : "Preparation..."}
             isRecording={isRec}
-            isPrep={phase === "prep"}
+            isPrep={phase === "prep" || isReading}
           />
 
           {/* Finish Recording button - only shows after 10s of recording */}
