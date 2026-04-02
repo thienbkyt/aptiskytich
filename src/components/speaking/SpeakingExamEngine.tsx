@@ -362,6 +362,7 @@ const SpeakingExamEngine = ({
         <div className="flex-1 px-4 pt-8">
           <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
         </div>
+        {reviewModal}
         {exitDialog}
       </div>
     );
