@@ -235,18 +235,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;
     }
     return (
-      <>
-        {progressBar}
-        <ReadingExamEngine
-          key={`reading-${engineKey}`}
-          partType={partType}
-          testTitle={headerTitle}
-          timeLimit={timeLimit}
-          onExit={onExit}
-          onComplete={(correct, total) => handlePartComplete(correct, total)}
-          {...readingProps}
-        />
-      </>
+      <ReadingExamEngine
+        key={`reading-${engineKey}`}
+        partType={partType}
+        testTitle={headerTitle}
+        timeLimit={timeLimit}
+        onExit={onExit}
+        onComplete={(correct, total) => handlePartComplete(correct, total)}
+        {...readingProps}
+      />
     );
   }
 
