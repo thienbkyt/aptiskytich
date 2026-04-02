@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
+import QuestionReviewModal, { type ReviewSkill } from "@/components/exam/QuestionReviewModal";
 import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingResults from "./SpeakingResults";
