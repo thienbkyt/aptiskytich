@@ -29,7 +29,7 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "mic-check" | "prompt" | "prep" | "recording" | "grading" | "done";
+type Phase = "mic-check" | "instructions" | "prompt" | "prep" | "recording" | "grading" | "done";
 
 const PART_PROMPTS: Record<SpeakingPartType, string> = {
   part1: "Part One - In this part, I am going to ask you three short questions about yourself and your interests. You will have 30 seconds to reply to each question.\n\nBegin speaking when you hear this sound.",
