@@ -309,10 +309,11 @@ const SpeakingExamEngine = ({
   if (phase === "grading" || phase === "done") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
+        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 pt-8">
           <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
         </div>
+        {exitDialog}
       </div>
     );
   }
