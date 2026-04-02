@@ -361,9 +361,14 @@ const BottomNavBar = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
-              <LogOut className="w-4 h-4" />
-            </button>
+            {onExit && (
+              <button
+                onClick={onExit}
+                className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
             {!isFirst && onPrevious && (
               <Button variant="outline" onClick={onPrevious} className="gap-2 border-foreground text-foreground hover:bg-muted">
                 <ArrowLeft className="w-4 h-4" /> Previous
