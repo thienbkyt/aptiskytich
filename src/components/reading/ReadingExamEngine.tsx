@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft } from "lucide-react";
+import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import ReadingPart1Sentence from "@/components/reading/ReadingPart1Sentence";
 import ReadingPart2Cohesion from "@/components/reading/ReadingPart2Cohesion";
@@ -18,7 +18,6 @@ interface ReadingExamEngineProps {
   partType: ReadingPartType;
   testTitle: string;
   timeLimit: number;
-  // Part-specific data
   part1Questions?: ReadingSentenceQuestion[];
   part2Question?: ReadingCohesionQuestion;
   part3Question?: ReadingOpinionQuestion;
@@ -40,19 +39,15 @@ const ReadingExamEngine = ({
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
 
-  // Part 1 answers (MCQ per sentence)
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     new Array(part1Questions?.length || 0).fill(null)
   );
-  // Part 2 answers (gap fill)
   const [p2Answers, setP2Answers] = useState<(number | null)[]>(
     new Array(part2Question?.gaps.length || 0).fill(null)
   );
-  // Part 3 answers (person per statement)
   const [p3Answers, setP3Answers] = useState<(number | null)[]>(
     new Array(part3Question?.statements.length || 0).fill(null)
   );
-  // Part 4 answers (MCQ per sub-question)
   const [p4Answers, setP4Answers] = useState<(number | null)[]>(
     new Array(part4Question?.questions.length || 0).fill(null)
   );
@@ -67,14 +62,12 @@ const ReadingExamEngine = ({
     : partType === "part3" ? p3Answers
     : p4Answers;
 
-  // Mark current as seen
   useEffect(() => {
     if (phase === "practice") {
       setSeenQuestions((prev) => new Set(prev).add(currentIndex));
     }
   }, [phase, currentIndex]);
 
-  // Timer
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
@@ -110,7 +103,6 @@ const ReadingExamEngine = ({
 
   const isAnswered = (qi: number) => currentAnswers[qi] !== null;
 
-  // Build sections for question list
   const partLabel = partType === "part1" ? "Part 1 – Sentence Comprehension"
     : partType === "part2" ? "Part 2 – Text Cohesion"
     : partType === "part3" ? "Part 3 – Opinion Matching"
@@ -146,113 +138,106 @@ const ReadingExamEngine = ({
     sections,
   };
 
-  // Instructions
   if (phase === "instructions") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
-          </button>
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
+        <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+          <ExamInstructions
+            skillName={`Reading – ${partLabel}`}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            totalParts={totalQuestions}
+            totalMinutes={Math.ceil(timeLimit / 60)}
+            onStart={() => setPhase("practice")}
+            sections={sections}
+            description={`Bài luyện tập: ${testTitle}`}
+          />
         </div>
-        <ExamInstructions
-          skillName={`Reading – ${partLabel}`}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          totalParts={totalQuestions}
-          totalMinutes={Math.ceil(timeLimit / 60)}
-          onStart={() => setPhase("practice")}
-          sections={sections}
-          description={`Bài luyện tập: ${testTitle}`}
-        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[70vh]">
-      <div className="flex items-center mb-6">
-        <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Quay lại
-        </button>
+    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
+      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+        {partType === "part1" && part1Questions && (
+          <ReadingPart1Sentence
+            questions={part1Questions}
+            currentIndex={currentIndex}
+            answers={p1Answers}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onAnswer={(qi, ai) => {
+              if (submitted) return;
+              const n = [...p1Answers];
+              n[qi] = ai;
+              setP1Answers(n);
+            }}
+            {...navProps}
+          />
+        )}
+
+        {partType === "part2" && part2Question && (
+          <ReadingPart2Cohesion
+            question={part2Question}
+            answers={p2Answers}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onAnswer={(gi, val) => {
+              if (submitted) return;
+              const n = [...p2Answers];
+              n[gi] = val;
+              setP2Answers(n);
+            }}
+            {...navProps}
+            onPrevious={undefined}
+            onNext={undefined}
+            onSubmit={!submitted ? handleSubmit : undefined}
+            isFirst={true}
+            isLast={true}
+          />
+        )}
+
+        {partType === "part3" && part3Question && (
+          <ReadingPart3Opinion
+            question={part3Question}
+            answers={p3Answers}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            currentStatement={currentIndex}
+            onAnswer={(si, pi) => {
+              if (submitted) return;
+              const n = [...p3Answers];
+              n[si] = pi;
+              setP3Answers(n);
+            }}
+            {...navProps}
+          />
+        )}
+
+        {partType === "part4" && part4Question && (
+          <ReadingPart4Long
+            question={part4Question}
+            answers={p4Answers}
+            currentIndex={currentIndex}
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            submitted={submitted}
+            onAnswer={(qi, ai) => {
+              if (submitted) return;
+              const n = [...p4Answers];
+              n[qi] = ai;
+              setP4Answers(n);
+            }}
+            {...navProps}
+          />
+        )}
       </div>
-
-      {partType === "part1" && part1Questions && (
-        <ReadingPart1Sentence
-          questions={part1Questions}
-          currentIndex={currentIndex}
-          answers={p1Answers}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onAnswer={(qi, ai) => {
-            if (submitted) return;
-            const n = [...p1Answers];
-            n[qi] = ai;
-            setP1Answers(n);
-          }}
-          {...navProps}
-        />
-      )}
-
-      {partType === "part2" && part2Question && (
-        <ReadingPart2Cohesion
-          question={part2Question}
-          answers={p2Answers}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onAnswer={(gi, val) => {
-            if (submitted) return;
-            const n = [...p2Answers];
-            n[gi] = val;
-            setP2Answers(n);
-          }}
-          {...navProps}
-          // Part 2 is single page, no prev/next between gaps
-          onPrevious={undefined}
-          onNext={undefined}
-          onSubmit={!submitted ? handleSubmit : undefined}
-          isFirst={true}
-          isLast={true}
-        />
-      )}
-
-      {partType === "part3" && part3Question && (
-        <ReadingPart3Opinion
-          question={part3Question}
-          answers={p3Answers}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          currentStatement={currentIndex}
-          onAnswer={(si, pi) => {
-            if (submitted) return;
-            const n = [...p3Answers];
-            n[si] = pi;
-            setP3Answers(n);
-          }}
-          {...navProps}
-        />
-      )}
-
-      {partType === "part4" && part4Question && (
-        <ReadingPart4Long
-          question={part4Question}
-          answers={p4Answers}
-          currentIndex={currentIndex}
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          submitted={submitted}
-          onAnswer={(qi, ai) => {
-            if (submitted) return;
-            const n = [...p4Answers];
-            n[qi] = ai;
-            setP4Answers(n);
-          }}
-          {...navProps}
-        />
-      )}
     </div>
   );
 };

@@ -156,18 +156,11 @@ const GrammarVocabulary = () => {
     }
 
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 pt-24 pb-20">
-          <div className="section-container max-w-3xl">
-            <GrammarExamEngine
-              questions={exam.questions} testTitle={exam.title} timeLimit={600}
-              onExit={handleExit} onComplete={handleComplete}
-              onAnswersChange={(answers, fillAnswers) => setExam((prev) => ({ ...prev, answers, fillAnswers }))}
-            />
-          </div>
-        </main>
-      </div>
+      <GrammarExamEngine
+        questions={exam.questions} testTitle={exam.title} timeLimit={600}
+        onExit={handleExit} onComplete={handleComplete}
+        onAnswersChange={(answers, fillAnswers) => setExam((prev) => ({ ...prev, answers, fillAnswers }))}
+      />
     );
   }
 

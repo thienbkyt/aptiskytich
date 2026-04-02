@@ -170,18 +170,11 @@ const Writing = () => {
     }
 
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navbar />
-        <main className="flex-1 pt-24 pb-20">
-          <div className="section-container max-w-3xl">
-            <WritingExamEngine
-              partType={exam.partType} testTitle={exam.testTitle} timeLimit={3000}
-              onExit={handleExit} onComplete={() => setExam((p) => ({ ...p, completed: true }))}
-              {...exam.engineData}
-            />
-          </div>
-        </main>
-      </div>
+      <WritingExamEngine
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={3000}
+        onExit={handleExit} onComplete={() => setExam((p) => ({ ...p, completed: true }))}
+        {...exam.engineData}
+      />
     );
   }
 

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
@@ -41,14 +41,12 @@ const GrammarExamEngine = ({
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
 
-  // Mark current as seen
   useEffect(() => {
     if (phase === "practice") {
       setSeenQuestions((prev) => new Set(prev).add(currentIndex));
     }
   }, [phase, currentIndex]);
 
-  // Timer
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
@@ -70,7 +68,6 @@ const GrammarExamEngine = ({
     setCurrentIndex(0);
     const correct = questions.reduce((acc, q, i) => {
       if (q.question_type === "fill-in-blank") {
-        // For fill-in-blank, compare text answer with the correct option
         const correctText = q.options[q.correct_answer]?.toLowerCase().trim();
         return acc + (fillAnswers[i]?.toLowerCase().trim() === correctText ? 1 : 0);
       }
@@ -121,7 +118,6 @@ const GrammarExamEngine = ({
     return answers[qi] === q?.correct_answer;
   };
 
-  // Build sections for question list panel
   const sections = [
     {
       title: `Aptis General Grammar & Vocabulary Instructions`,
@@ -149,29 +145,22 @@ const GrammarExamEngine = ({
     },
   ];
 
-  // Instructions phase
   if (phase === "instructions") {
     return (
-      <div className="min-h-[70vh]">
-        <div className="flex items-center mb-6">
-          <button
-            onClick={onExit}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Quay lại
-          </button>
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+        <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+          <ExamInstructions
+            skillName="Grammar & Vocabulary"
+            timeLeft={timeLeft}
+            totalTime={timeLimit}
+            totalParts={questions.length}
+            totalMinutes={Math.ceil(timeLimit / 60)}
+            onStart={() => setPhase("practice")}
+            sections={sections}
+            description={`Bài luyện tập: ${testTitle}. Bao gồm câu hỏi trắc nghiệm và điền từ.`}
+          />
         </div>
-        <ExamInstructions
-          skillName="Grammar & Vocabulary"
-          timeLeft={timeLeft}
-          totalTime={timeLimit}
-          totalParts={questions.length}
-          totalMinutes={Math.ceil(timeLimit / 60)}
-          onStart={() => setPhase("practice")}
-          sections={sections}
-          description={`Bài luyện tập: ${testTitle}. Bao gồm câu hỏi trắc nghiệm và điền từ.`}
-        />
       </div>
     );
   }
@@ -185,196 +174,188 @@ const GrammarExamEngine = ({
   const qIsWrong = submitted && isAnswered(currentIndex) && !isCorrect(currentIndex);
 
   return (
-    <div className="min-h-[70vh]">
-      <div className="flex items-center mb-6">
-        <button
-          onClick={onExit}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Quay lại
-        </button>
-      </div>
-
-      <div className="min-h-[70vh] flex flex-col pb-20">
-        {/* Top bar */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <p className="text-sm font-heading font-bold text-foreground">
-              Grammar & Vocabulary
-            </p>
-            <p className="text-sm text-foreground">
-              Question {currentIndex + 1} of {questions.length}
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => toggleBookmark(currentIndex)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-                bookmarked.has(currentIndex)
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/30"
-              }`}
-            >
-              <Bookmark
-                className={`w-4 h-4 ${
-                  bookmarked.has(currentIndex) ? "fill-primary" : ""
+    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+        <div className="min-h-[70vh] flex flex-col pb-20">
+          {/* Top bar */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <p className="text-sm font-heading font-bold text-gray-900">
+                Grammar & Vocabulary
+              </p>
+              <p className="text-sm text-gray-700">
+                Question {currentIndex + 1} of {questions.length}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => toggleBookmark(currentIndex)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+                  bookmarked.has(currentIndex)
+                    ? "border-[#24085a] bg-[#24085a]/10 text-[#24085a]"
+                    : "border-gray-300 text-gray-500 hover:border-[#24085a]/30"
                 }`}
-              />
-              Bookmark
-            </button>
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+              >
+                <Bookmark
+                  className={`w-4 h-4 ${
+                    bookmarked.has(currentIndex) ? "fill-[#24085a]" : ""
+                  }`}
+                />
+                Bookmark
+              </button>
+              <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            </div>
           </div>
-        </div>
 
-        {/* Question */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.25 }}
-            className="flex-1"
-          >
-            <div className="bg-background rounded-xl p-6 mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                {isFillBlank && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                    Fill in the blank
-                  </span>
-                )}
-                {!isFillBlank && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                    Multiple Choice
-                  </span>
-                )}
-              </div>
-
-              <h2 className="text-sm font-heading font-bold text-foreground mb-6 leading-relaxed">
-                {q.question_text}
-              </h2>
-
-              {/* MCQ Options */}
-              {!isFillBlank && (
-                <div className="space-y-3">
-                  {q.options.map((opt, i) => {
-                    let cls =
-                      "border-border hover:border-primary/30 text-foreground hover:bg-muted/50";
-                    if (submitted) {
-                      if (i === q.correct_answer)
-                        cls = "border-success bg-success/10 text-success";
-                      else if (i === selected)
-                        cls =
-                          "border-destructive bg-destructive/10 text-destructive";
-                      else cls = "border-border text-muted-foreground";
-                    } else if (selected === i) {
-                      cls = "border-accent bg-accent/15 text-accent-foreground ring-2 ring-accent";
-                    }
-                    return (
-                      <button
-                        key={i}
-                        onClick={() =>
-                          !submitted && handleAnswerSelect(currentIndex, i)
-                        }
-                        disabled={submitted}
-                        className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
-                      >
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-xs font-bold mr-3">
-                          {String.fromCharCode(65 + i)}
-                        </span>
-                        {opt}
-                        {submitted && i === q.correct_answer && (
-                          <CheckCircle2 className="w-4 h-4 inline ml-2" />
-                        )}
-                        {submitted &&
-                          i === selected &&
-                          i !== q.correct_answer && (
-                            <XCircle className="w-4 h-4 inline ml-2" />
-                          )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Fill in the blank */}
-              {isFillBlank && (
-                <div className="space-y-4">
-                  <Input
-                    value={fillAnswers[currentIndex] || ""}
-                    onChange={(e) =>
-                      handleFillAnswer(currentIndex, e.target.value)
-                    }
-                    placeholder="Nhập đáp án của bạn..."
-                    disabled={submitted}
-                    className={`text-base h-12 ${
-                      submitted
-                        ? isCorrect(currentIndex)
-                          ? "border-success bg-success/5"
-                          : "border-destructive bg-destructive/5"
-                        : ""
-                    }`}
-                  />
-                  {submitted && (
-                    <p className="text-sm text-muted-foreground">
-                      Đáp án đúng:{" "}
-                      <span className="font-bold text-success">
-                        {q.options[q.correct_answer]}
-                      </span>
-                    </p>
+          {/* Question */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+              className="flex-1"
+            >
+              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  {isFillBlank && (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600">
+                      Fill in the blank
+                    </span>
+                  )}
+                  {!isFillBlank && (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#24085a]/10 text-[#24085a]">
+                      Multiple Choice
+                    </span>
                   )}
                 </div>
-              )}
 
-              {/* Explanation */}
-              {submitted && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className={`mt-4 p-4 rounded-lg ${
-                    qIsCorrect
-                      ? "bg-success/10 border border-success/20"
-                      : "bg-destructive/10 border border-destructive/20"
-                  }`}
-                >
-                  <p
-                    className={`text-sm font-semibold mb-1 ${
-                      qIsCorrect ? "text-success" : "text-destructive"
+                <h2 className="text-sm font-heading font-bold text-gray-900 mb-6 leading-relaxed">
+                  {q.question_text}
+                </h2>
+
+                {/* MCQ Options */}
+                {!isFillBlank && (
+                  <div className="space-y-3">
+                    {q.options.map((opt, i) => {
+                      let cls =
+                        "border-gray-200 hover:border-[#24085a]/30 text-gray-900 hover:bg-gray-50";
+                      if (submitted) {
+                        if (i === q.correct_answer)
+                          cls = "border-green-500 bg-green-50 text-green-700";
+                        else if (i === selected)
+                          cls = "border-red-500 bg-red-50 text-red-700";
+                        else cls = "border-gray-200 text-gray-400";
+                      } else if (selected === i) {
+                        cls = "border-[#FEAD5F] bg-[#FEAD5F]/15 text-gray-900 ring-2 ring-[#FEAD5F]";
+                      }
+                      return (
+                        <button
+                          key={i}
+                          onClick={() =>
+                            !submitted && handleAnswerSelect(currentIndex, i)
+                          }
+                          disabled={submitted}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
+                        >
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 text-xs font-bold mr-3">
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          {opt}
+                          {submitted && i === q.correct_answer && (
+                            <CheckCircle2 className="w-4 h-4 inline ml-2" />
+                          )}
+                          {submitted &&
+                            i === selected &&
+                            i !== q.correct_answer && (
+                              <XCircle className="w-4 h-4 inline ml-2" />
+                            )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Fill in the blank */}
+                {isFillBlank && (
+                  <div className="space-y-4">
+                    <Input
+                      value={fillAnswers[currentIndex] || ""}
+                      onChange={(e) =>
+                        handleFillAnswer(currentIndex, e.target.value)
+                      }
+                      placeholder="Nhập đáp án của bạn..."
+                      disabled={submitted}
+                      className={`text-base h-12 ${
+                        submitted
+                          ? isCorrect(currentIndex)
+                            ? "border-green-500 bg-green-50"
+                            : "border-red-500 bg-red-50"
+                          : ""
+                      }`}
+                    />
+                    {submitted && (
+                      <p className="text-sm text-gray-500">
+                        Đáp án đúng:{" "}
+                        <span className="font-bold text-green-600">
+                          {q.options[q.correct_answer]}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Explanation */}
+                {submitted && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className={`mt-4 p-4 rounded-lg ${
+                      qIsCorrect
+                        ? "bg-green-50 border border-green-200"
+                        : "bg-red-50 border border-red-200"
                     }`}
                   >
-                    {qIsCorrect ? "✓ Chính xác!" : "✗ Sai rồi!"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {q.explanation}
-                  </p>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
-        </AnimatePresence>
+                    <p
+                      className={`text-sm font-semibold mb-1 ${
+                        qIsCorrect ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {qIsCorrect ? "✓ Chính xác!" : "✗ Sai rồi!"}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {q.explanation}
+                    </p>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
-        {/* Bottom nav */}
-        <BottomNavBar
-          onPrevious={
-            currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined
-          }
-          onNext={
-            currentIndex < questions.length - 1
-              ? () => setCurrentIndex((p) => p + 1)
-              : undefined
-          }
-          onSubmit={
-            currentIndex === questions.length - 1 && !submitted
-              ? handleSubmit
-              : undefined
-          }
-          isFirst={currentIndex === 0}
-          isLast={currentIndex === questions.length - 1}
-          submitLabel="Submit"
-          sections={sections}
-          bookmarkedCount={bookmarked.size}
-        />
+          {/* Bottom nav */}
+          <BottomNavBar
+            onPrevious={
+              currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined
+            }
+            onNext={
+              currentIndex < questions.length - 1
+                ? () => setCurrentIndex((p) => p + 1)
+                : undefined
+            }
+            onSubmit={
+              currentIndex === questions.length - 1 && !submitted
+                ? handleSubmit
+                : undefined
+            }
+            isFirst={currentIndex === 0}
+            isLast={currentIndex === questions.length - 1}
+            submitLabel="Submit"
+            sections={sections}
+            bookmarkedCount={bookmarked.size}
+          />
+        </div>
       </div>
     </div>
   );
