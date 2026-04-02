@@ -179,24 +179,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   if (!currentPart) return null;
   const partNorm = currentPart.partNorm;
 
-  // Progress indicator
-  const progressBar = (
-    <div className="flex items-center gap-2 mb-4">
-      {parts.map((_, i) => (
-        <div
-          key={i}
-          className={`h-1.5 rounded-full transition-all ${
-            i < currentPartIndex ? "bg-green-500 w-10"
-              : i === currentPartIndex ? "bg-primary w-14"
-              : "bg-muted w-10"
-          }`}
-        />
-      ))}
-      <span className="text-xs text-muted-foreground ml-2">
-        Part {currentPartIndex + 1}/{parts.length}
-      </span>
-    </div>
-  );
+  // Progress indicator removed — engines render full-screen like individual parts
 
   if (skill === "speaking") {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
