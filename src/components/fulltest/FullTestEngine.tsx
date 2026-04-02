@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine } from "lucide-react";
+import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchExamQuestions, type ExamQuestionRow } from "@/hooks/useExamSets";
@@ -73,6 +74,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     reading: { correct: 0, total: 0 },
     writing: { correct: 0, total: 0 },
   });
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   // Key to force re-mount engines on part change
   const [engineKey, setEngineKey] = useState(0);
 
@@ -193,6 +195,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       </span>
     </div>
   );
+
+  const handleExit = () => setShowExitConfirm(true);
 
   // ── Loading ──
   if (phase === "loading") {
@@ -351,7 +355,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           questions={grammarQuestions}
           testTitle={`${testTitle} – Grammar & Vocabulary`}
           timeLimit={SKILL_TIMES.grammar}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
         />
       </>
@@ -381,7 +385,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType={partType}
           testTitle={`${testTitle} – Speaking ${currentPart.part}`}
           timeLimit={SKILL_TIMES.speaking}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={() => handlePartComplete()}
           {...speakingProps}
         />
@@ -406,7 +410,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType={partType}
           testTitle={`${testTitle} – Listening ${currentPart.part}`}
           timeLimit={SKILL_TIMES.listening}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           {...listeningProps}
         />
@@ -431,7 +435,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType={partType}
           testTitle={`${testTitle} – Reading ${currentPart.part}`}
           timeLimit={SKILL_TIMES.reading}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           {...readingProps}
         />
@@ -456,7 +460,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType={partType}
           testTitle={`${testTitle} – Writing ${currentPart.part}`}
           timeLimit={SKILL_TIMES.writing}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={() => handlePartComplete()}
           {...writingProps}
         />
@@ -464,7 +468,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     );
   }
 
-  return null;
+  return showExitConfirm ? (
+    <ExamFinishScreen
+      title="Submit Test?"
+      message="Once you submit your test you will no longer have access to the questions."
+      buttonText="Submit test"
+      onSubmit={onExit}
+    />
+  ) : null;
 };
 
 export default FullTestEngine;

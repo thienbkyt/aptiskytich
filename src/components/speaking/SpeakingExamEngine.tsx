@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import SpeakingFooter from "./SpeakingFooter";
+import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingResults from "./SpeakingResults";
@@ -52,6 +53,7 @@ const SpeakingExamEngine = ({
   const [speakTimeLeft, setSpeakTimeLeft] = useState(0);
   const [canFinish, setCanFinish] = useState(false);
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
   const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
   
@@ -251,13 +253,23 @@ const SpeakingExamEngine = ({
     setPhase("done");
   };
 
+  const handleExit = () => setShowExitConfirm(true);
+
   // ============ RENDER ============
+  const exitDialog = showExitConfirm && (
+    <ExamFinishScreen
+      title="Submit Test?"
+      message="Once you submit your test you will no longer have access to the questions."
+      buttonText="Submit test"
+      onSubmit={onExit}
+    />
+  );
 
   // Mic check
   if (phase === "mic-check") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
+        <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
           <div className="bg-white rounded-xl shadow-sm max-w-xl w-full p-8">
             <p className="text-xs text-gray-500">Aptis General Practice Test</p>
@@ -274,6 +286,7 @@ const SpeakingExamEngine = ({
             </button>
           </div>
         </div>
+        {exitDialog}
       </div>
     );
   }
@@ -287,7 +300,7 @@ const SpeakingExamEngine = ({
         title={`Speaking Part ${partNumber}`}
         instructions={PART_PROMPTS[partType]}
         onNext={() => startPrep()}
-        onExit={onExit}
+        onExit={handleExit}
       />
     );
   }
@@ -296,10 +309,11 @@ const SpeakingExamEngine = ({
   if (phase === "grading" || phase === "done") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
+        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 pt-8">
           <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
         </div>
+        {exitDialog}
       </div>
     );
   }
@@ -312,7 +326,7 @@ const SpeakingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
+      <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}
@@ -397,9 +411,10 @@ const SpeakingExamEngine = ({
       </div>
 
       <SpeakingFooter
-        onExit={onExit}
+        onExit={handleExit}
         showNext={false}
       />
+      {exitDialog}
     </div>
   );
 };
