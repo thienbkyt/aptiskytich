@@ -435,7 +435,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType={partType}
           testTitle={`${testTitle} – Reading ${currentPart.part}`}
           timeLimit={SKILL_TIMES.reading}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           {...readingProps}
         />
