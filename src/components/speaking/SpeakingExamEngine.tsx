@@ -465,7 +465,9 @@ const SpeakingExamEngine = ({
         submitLabel="Exit"
         isLast={true}
         isFirst={true}
+        onQuestionListClick={() => setShowReviewModal(true)}
       />
+      {reviewModal}
       {exitDialog}
     </div>
   );
