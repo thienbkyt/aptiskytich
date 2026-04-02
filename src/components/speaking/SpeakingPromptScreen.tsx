@@ -1,5 +1,5 @@
 import SpeakingHeader from "./SpeakingHeader";
-import SpeakingFooter from "./SpeakingFooter";
+import BottomNavBar from "@/components/reading/BottomNavBar";
 
 interface SpeakingPromptScreenProps {
   partNumber: number;
@@ -24,7 +24,7 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
         </div>
       </div>
 
-      <SpeakingFooter onNext={onNext} nextDisabled={false} showNext={true} />
+      <BottomNavBar onNext={onNext} isFirst={true} isLast={false} />
     </div>
   );
 };
