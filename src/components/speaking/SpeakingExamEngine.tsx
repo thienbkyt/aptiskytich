@@ -334,6 +334,7 @@ const SpeakingExamEngine = ({
             </button>
           </div>
         </div>
+        {reviewModal}
         {exitDialog}
       </div>
     );
