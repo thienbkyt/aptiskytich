@@ -132,6 +132,7 @@ const SpeakingExamEngine = ({
     setPrepTimeLeft(prepTime);
     setPhase("prep");
     
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setPrepTimeLeft(prev => {
         if (prev <= 1) {
@@ -143,7 +144,7 @@ const SpeakingExamEngine = ({
         return prev - 1;
       });
     }, 1000);
-  }, [partType, currentIndex]);
+  }, [partType]);
 
   // Start recording
   const startRecording = useCallback(async () => {
@@ -166,9 +167,10 @@ const SpeakingExamEngine = ({
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
+        const idx = currentIndexRef.current;
         setRecordings(prev => {
           const next = [...prev];
-          next[currentIndex] = url;
+          next[idx] = url;
           return next;
         });
         stream.getTracks().forEach(t => t.stop());
@@ -183,12 +185,13 @@ const SpeakingExamEngine = ({
       }, 10000);
 
       // Countdown timer
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         setSpeakTimeLeft(prev => {
           if (prev <= 1) {
             if (timerRef.current) clearInterval(timerRef.current);
             timerRef.current = null;
-            stopAndAdvance();
+            doStopAndAdvance();
             return 0;
           }
           return prev - 1;
@@ -198,10 +201,10 @@ const SpeakingExamEngine = ({
     } catch (err) {
       console.error("Mic error:", err);
     }
-  }, [partType, currentIndex]);
+  }, [partType]);
 
-  // Stop recording and move to next question/finish
-  const stopAndAdvance = useCallback(() => {
+  // Stop recording and move to next question/finish (uses refs to avoid stale closures)
+  const doStopAndAdvance = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
     
@@ -212,20 +215,21 @@ const SpeakingExamEngine = ({
     setIsTransitioning(true);
     
     const total = getTotalQuestions();
-    if (currentIndex < total - 1) {
-      // Next question within same part
+    const idx = currentIndexRef.current;
+    if (idx < total - 1) {
+      const nextIdx = idx + 1;
+      currentIndexRef.current = nextIdx;
       setTimeout(() => {
-        setCurrentIndex(prev => prev + 1);
+        setCurrentIndex(nextIdx);
         setCanFinish(false);
         setIsTransitioning(false);
         startPrep();
       }, 300);
     } else {
-      // Part complete - go to grading
       setIsTransitioning(false);
       handleFinish();
     }
-  }, [currentIndex, partType]);
+  }, [partType]);
 
   const handleFinishRecording = useCallback(() => {
     if (!canFinish) return;
