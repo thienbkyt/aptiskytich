@@ -74,6 +74,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     reading: { correct: 0, total: 0 },
     writing: { correct: 0, total: 0 },
   });
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   // Key to force re-mount engines on part change
   const [engineKey, setEngineKey] = useState(0);
 
