@@ -460,7 +460,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType={partType}
           testTitle={`${testTitle} – Writing ${currentPart.part}`}
           timeLimit={SKILL_TIMES.writing}
-          onExit={onExit}
+          onExit={handleExit}
           onComplete={() => handlePartComplete()}
           {...writingProps}
         />
