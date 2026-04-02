@@ -1,5 +1,6 @@
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import type { QuestionReviewData } from "@/components/exam/QuestionReviewModal";
 
 interface SpeakingPromptScreenProps {
   partNumber: number;
@@ -8,9 +9,11 @@ interface SpeakingPromptScreenProps {
   instructions: string;
   onNext: () => void;
   onExit?: () => void;
+  reviewData?: QuestionReviewData;
+  onReviewSubmit?: () => void;
 }
 
-const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onNext, onExit }: SpeakingPromptScreenProps) => {
+const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onNext, onExit, reviewData, onReviewSubmit }: SpeakingPromptScreenProps) => {
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       <SpeakingHeader partLabel={title} partNumber={partNumber} totalParts={totalParts} onExit={onExit} />
@@ -24,7 +27,7 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
         </div>
       </div>
 
-      <BottomNavBar onNext={onNext} isFirst={true} isLast={false} />
+      <BottomNavBar onNext={onNext} isFirst={true} isLast={false} reviewData={reviewData} onReviewSubmit={onReviewSubmit} />
     </div>
   );
 };
