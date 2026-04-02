@@ -30,6 +30,7 @@ interface BottomNavBarProps {
   submitLabel?: string;
   sections?: QuestionSection[];
   bookmarkedCount?: number;
+  onQuestionListClick?: () => void;
 }
 
 const BottomNavBar = ({
