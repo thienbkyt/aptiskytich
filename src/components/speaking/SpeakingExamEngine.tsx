@@ -410,9 +410,11 @@ const SpeakingExamEngine = ({
         </div>
       </div>
 
-      <SpeakingFooter
-        onExit={handleExit}
-        showNext={false}
+      <BottomNavBar
+        onSubmit={handleExit}
+        submitLabel="Exit"
+        isLast={true}
+        isFirst={true}
       />
       {exitDialog}
     </div>
