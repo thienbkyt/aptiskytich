@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine } from "lucide-react";
+import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchExamQuestions, type ExamQuestionRow } from "@/hooks/useExamSets";
