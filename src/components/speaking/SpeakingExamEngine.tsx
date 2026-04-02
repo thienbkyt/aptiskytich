@@ -206,6 +206,8 @@ const SpeakingExamEngine = ({
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
+
+    setIsTransitioning(true);
     
     const total = getTotalQuestions();
     if (currentIndex < total - 1) {
@@ -213,10 +215,12 @@ const SpeakingExamEngine = ({
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1);
         setCanFinish(false);
+        setIsTransitioning(false);
         startPrep();
-      }, 500);
+      }, 300);
     } else {
       // Part complete - go to grading
+      setIsTransitioning(false);
       handleFinish();
     }
   }, [currentIndex, partType]);
