@@ -152,6 +152,7 @@ const SpeakingExamEngine = ({
       if (timerRef.current) clearInterval(timerRef.current);
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      window.speechSynthesis?.cancel();
     };
   }, []);
 
