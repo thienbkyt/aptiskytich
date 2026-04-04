@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { VOCAB_SETS, type VocabWord } from "@/data/vocabSets";
+import { useSystemVocabSets, useSystemVocabWords } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ import {
   Check,
   BookOpen,
   ChevronLeft,
+  Loader2,
 } from "lucide-react";
 
 function speak(text: string, lang: "en" | "vi") {
@@ -36,10 +37,12 @@ const VocabStudy = () => {
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
   const [loadingStatus, setLoadingStatus] = useState(true);
 
-  const set = VOCAB_SETS.find((s) => s.id === id);
+  const { data: sets = [] } = useSystemVocabSets();
+  const { data: words = [], isLoading: wordsLoading } = useSystemVocabWords(id);
+  const set = sets.find((s) => s.id === id);
 
   useEffect(() => {
-    if (!user || !set) {
+    if (!user || !id) {
       setLoadingStatus(false);
       return;
     }
@@ -48,15 +51,15 @@ const VocabStudy = () => {
         .from("vocab_items")
         .select("word")
         .eq("user_id", user.id)
-        .eq("vocab_set_id", id!)
+        .eq("vocab_set_id", id)
         .eq("status", "learned");
       if (data) setLearnedWords(new Set(data.map((d: any) => d.word)));
       setLoadingStatus(false);
     })();
-  }, [user, id, set]);
+  }, [user, id]);
 
   const markLearned = useCallback(
-    async (w: VocabWord) => {
+    async (wordText: string) => {
       if (!user) {
         toast({ title: "Vui lòng đăng nhập để lưu tiến độ", variant: "destructive" });
         return;
@@ -64,7 +67,7 @@ const VocabStudy = () => {
       const { error } = await supabase.from("vocab_items").upsert(
         {
           user_id: user.id,
-          word: w.word,
+          word: wordText,
           vocab_set_id: id!,
           status: "learned",
           review_count: 1,
@@ -73,17 +76,31 @@ const VocabStudy = () => {
         { onConflict: "user_id,word,vocab_set_id" },
       );
       if (!error) {
-        setLearnedWords((prev) => new Set(prev).add(w.word));
-        toast({ title: `Đã đánh dấu "${w.word}" là đã thuộc ✓` });
+        setLearnedWords((prev) => new Set(prev).add(wordText));
+        toast({ title: `Đã đánh dấu "${wordText}" là đã thuộc ✓` });
       }
     },
     [user, id],
   );
 
-  if (!set) return <Navigate to="/vocabulary" replace />;
+  if (wordsLoading || loadingStatus) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-16 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-  const word = set.words[currentIndex];
-  const total = set.words.length;
+  if (words.length === 0) return <Navigate to="/vocabulary" replace />;
+
+  const word = words[currentIndex];
+  if (!word) return <Navigate to="/vocabulary" replace />;
+
+  const total = words.length;
   const progressPct = ((currentIndex + 1) / total) * 100;
   const isLearned = learnedWords.has(word.word);
 
@@ -100,8 +117,8 @@ const VocabStudy = () => {
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground">{set.group}</p>
-              <h1 className="font-heading font-bold text-lg text-foreground truncate">{set.title}</h1>
+              <p className="text-sm text-muted-foreground">{set?.group_name ?? ""}</p>
+              <h1 className="font-heading font-bold text-lg text-foreground truncate">{set?.title ?? "Bộ từ vựng"}</h1>
             </div>
             <Badge variant="outline" className="shrink-0">{currentIndex + 1} / {total}</Badge>
           </div>
@@ -134,14 +151,14 @@ const VocabStudy = () => {
               <div className="p-6 pb-4 border-b border-border">
                 <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2">Ví dụ minh họa</p>
                 <div className="flex items-start gap-2">
-                  <p className="text-foreground leading-relaxed flex-1 italic">"{word.example}"</p>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => speak(word.example, "en")} title="Nghe ví dụ">
+                  <p className="text-foreground leading-relaxed flex-1 italic">"{word.example_en}"</p>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => speak(word.example_en, "en")} title="Nghe ví dụ">
                     <Volume2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
                 <div className="flex items-start gap-2 mt-2">
-                  <p className="text-muted-foreground text-sm flex-1">{word.exampleVi}</p>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => speak(word.exampleVi, "vi")} title="Nghe nghĩa">
+                  <p className="text-muted-foreground text-sm flex-1">{word.example_vi}</p>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => speak(word.example_vi, "vi")} title="Nghe nghĩa">
                     <Volume2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -150,9 +167,9 @@ const VocabStudy = () => {
               {/* Row 3 — Word family */}
               <div className="p-6">
                 <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-3">Word Family</p>
-                {word.wordFamily.length > 0 ? (
+                {word.word_family.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {word.wordFamily.map((wf) => (
+                    {word.word_family.map((wf: string) => (
                       <Badge key={wf} variant="secondary" className="text-sm font-normal cursor-pointer hover:bg-accent" onClick={() => speak(wf.split(" ")[0], "en")}>
                         <Volume2 className="w-3 h-3 mr-1.5 opacity-50" />{wf}
                       </Badge>
@@ -172,7 +189,7 @@ const VocabStudy = () => {
             </Button>
             <Button
               variant={isLearned ? "secondary" : "default"}
-              onClick={() => markLearned(word)}
+              onClick={() => markLearned(word.word)}
               disabled={isLearned}
               className={isLearned ? "" : "bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"}
             >
@@ -185,8 +202,8 @@ const VocabStudy = () => {
 
           {/* Word dots */}
           <div className="flex justify-center flex-wrap gap-1.5 mt-6">
-            {set.words.map((w, i) => (
-              <button key={w.word} onClick={() => setCurrentIndex(i)} className={`w-3 h-3 rounded-full transition-all ${i === currentIndex ? "bg-[hsl(170,55%,40%)] scale-125" : learnedWords.has(w.word) ? "bg-[hsl(142,60%,50%)]" : "bg-muted-foreground/25"}`} title={w.word} />
+            {words.map((w, i) => (
+              <button key={w.id} onClick={() => setCurrentIndex(i)} className={`w-3 h-3 rounded-full transition-all ${i === currentIndex ? "bg-[hsl(170,55%,40%)] scale-125" : learnedWords.has(w.word) ? "bg-[hsl(142,60%,50%)]" : "bg-muted-foreground/25"}`} title={w.word} />
             ))}
           </div>
         </div>

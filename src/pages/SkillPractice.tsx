@@ -28,7 +28,7 @@ import {
   FolderPlus,
   Loader2,
 } from "lucide-react";
-import { VOCAB_SETS } from "@/data/vocabSets";
+import { useSystemVocabSets } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -117,10 +117,12 @@ const SkillPractice = () => {
     return <Navigate to="/" replace />;
   }
 
-  const filtered = VOCAB_SETS.filter(
+  const { data: systemSets = [], isLoading: setsLoading } = useSystemVocabSets();
+
+  const filtered = systemSets.filter(
     (s) =>
       s.title.toLowerCase().includes(search.toLowerCase()) ||
-      s.group.toLowerCase().includes(search.toLowerCase()),
+      s.group_name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleCreateList = async () => {
@@ -201,6 +203,11 @@ const SkillPractice = () => {
                 />
               </div>
 
+              {setsLoading ? (
+                <div className="py-12 flex justify-center col-span-full">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filtered.map((set) => (
                   <Card
@@ -211,18 +218,18 @@ const SkillPractice = () => {
                       <Badge
                         variant="outline"
                         className={
-                          set.group === "APTIS ADVANCED"
+                          set.group_name.toUpperCase().includes("ADVANCED")
                             ? TEAL.badgeAdv
                             : TEAL.badge
                         }
                       >
-                        {set.group}
+                        {set.group_name}
                       </Badge>
                       <h3 className="font-heading font-semibold text-foreground text-base leading-snug">
                         {set.title}
                       </h3>
                       <span className="text-sm text-muted-foreground">
-                        {set.words.length} từ vựng
+                        {set.word_count} từ vựng
                       </span>
                       <div className="flex gap-2 mt-auto pt-2">
                         <Button
@@ -250,6 +257,7 @@ const SkillPractice = () => {
                   </p>
                 )}
               </div>
+              )}
             </TabsContent>
 
             {/* ════════ TAB 2 — KHO TỪ VỰNG CỦA TÔI ════════ */}
