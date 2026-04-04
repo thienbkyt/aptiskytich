@@ -376,6 +376,7 @@ const VocabManager = () => {
 /* ─── Add single word form ─── */
 function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void }) {
   const [word, setWord] = useState("");
+  const [wordType, setWordType] = useState("");
   const [phonetic, setPhonetic] = useState("");
   const [meaning, setMeaning] = useState("");
   const [exampleEn, setExampleEn] = useState("");
@@ -389,6 +390,7 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
     const { error } = await supabase.from("system_vocab_words").insert({
       vocab_set_id: setId,
       word: word.trim(),
+      word_type: wordType.trim(),
       phonetic: phonetic.trim(),
       meaning: meaning.trim(),
       example_en: exampleEn.trim(),
