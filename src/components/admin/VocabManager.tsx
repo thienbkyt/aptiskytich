@@ -51,7 +51,7 @@ const VocabManager = () => {
 
   // Form state for new set
   const [newTitle, setNewTitle] = useState("");
-  const [newGroup, setNewGroup] = useState("APTIS");
+  const [newGroup, setNewGroup] = useState("APTIS GENERAL");
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
 
