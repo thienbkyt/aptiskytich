@@ -407,7 +407,7 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
         await supabase.from("system_vocab_sets").update({ word_count: count }).eq("id", setId);
       }
       toast({ title: `Đã thêm "${word.trim()}" ✓` });
-      setWord(""); setPhonetic(""); setMeaning(""); setExampleEn(""); setExampleVi(""); setWordFamily("");
+      setWord(""); setWordType(""); setPhonetic(""); setMeaning(""); setExampleEn(""); setExampleVi(""); setWordFamily("");
       onAdded();
     } else {
       toast({ title: "Lỗi: " + error.message, variant: "destructive" });
