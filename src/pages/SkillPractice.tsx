@@ -117,10 +117,12 @@ const SkillPractice = () => {
     return <Navigate to="/" replace />;
   }
 
-  const filtered = VOCAB_SETS.filter(
+  const { data: systemSets = [], isLoading: setsLoading } = useSystemVocabSets();
+
+  const filtered = systemSets.filter(
     (s) =>
       s.title.toLowerCase().includes(search.toLowerCase()) ||
-      s.group.toLowerCase().includes(search.toLowerCase()),
+      s.group_name.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleCreateList = async () => {
