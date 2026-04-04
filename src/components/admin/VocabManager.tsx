@@ -33,6 +33,7 @@ interface VocabSet {
 interface VocabWord {
   id?: string;
   word: string;
+  word_type: string;
   phonetic: string;
   meaning: string;
   example_en: string;
