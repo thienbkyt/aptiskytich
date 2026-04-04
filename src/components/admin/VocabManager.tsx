@@ -165,6 +165,7 @@ const VocabManager = () => {
         const wordsToInsert = rows.map((row: any, idx: number) => ({
           vocab_set_id: setData.id,
           word: String(row.word || row.Word || "").trim(),
+          word_type: String(row.word_type || row.WordType || row.type || row.Type || "").trim(),
           phonetic: String(row.phonetic || row.Phonetic || "").trim(),
           meaning: String(row.meaning || row.Meaning || "").trim(),
           example_en: String(row.example_en || row.example || row.Example || "").trim(),
