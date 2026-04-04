@@ -33,6 +33,7 @@ interface VocabSet {
 interface VocabWord {
   id?: string;
   word: string;
+  word_type: string;
   phonetic: string;
   meaning: string;
   example_en: string;
@@ -164,6 +165,7 @@ const VocabManager = () => {
         const wordsToInsert = rows.map((row: any, idx: number) => ({
           vocab_set_id: setData.id,
           word: String(row.word || row.Word || "").trim(),
+          word_type: String(row.word_type || row.WordType || row.type || row.Type || "").trim(),
           phonetic: String(row.phonetic || row.Phonetic || "").trim(),
           meaning: String(row.meaning || row.Meaning || "").trim(),
           example_en: String(row.example_en || row.example || row.Example || "").trim(),
@@ -231,7 +233,7 @@ const VocabManager = () => {
                 <CardContent className="p-3 flex items-center gap-3">
                   <span className="text-xs text-muted-foreground w-6 text-right">{i + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{w.word} <span className="text-muted-foreground font-normal text-sm">{w.phonetic}</span></p>
+                    <p className="font-semibold text-foreground">{w.word} {w.word_type && <span className="text-muted-foreground font-normal text-xs">({w.word_type})</span>} <span className="text-muted-foreground font-normal text-sm">{w.phonetic}</span></p>
                     <p className="text-sm text-muted-foreground truncate">{w.meaning}</p>
                   </div>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive shrink-0"
@@ -300,7 +302,7 @@ const VocabManager = () => {
             <p className="font-semibold text-sm text-foreground">Import từ Excel</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Mỗi sheet = 1 bộ từ vựng. Cột: <code>word</code>, <code>phonetic</code>, <code>meaning</code>, <code>example_en</code>, <code>example_vi</code>, <code>word_family</code> (ngăn bởi dấu phẩy)
+            Mỗi sheet = 1 bộ từ vựng. Cột: <code>word</code>, <code>word_type</code> (n/v/adj/adv), <code>phonetic</code>, <code>meaning</code>, <code>example_en</code>, <code>example_vi</code>, <code>word_family</code> (ngăn bởi dấu phẩy)
           </p>
           <div className="flex items-center gap-3">
             <Button variant="outline" className="gap-1.5 relative" disabled={importing}>
@@ -324,7 +326,7 @@ const VocabManager = () => {
                     {
                       name: "Animals & Nature",
                       cols: [
-                        { word: "habitat", phonetic: "/ˈhæb.ɪ.tæt/", meaning: "môi trường sống", example_en: "The forest is a natural habitat.", example_vi: "Rừng là môi trường sống tự nhiên.", word_family: "habitation (n), habitable (adj)" },
+                        { word: "habitat", word_type: "n", phonetic: "/ˈhæb.ɪ.tæt/", meaning: "môi trường sống", example_en: "The forest is a natural habitat.", example_vi: "Rừng là môi trường sống tự nhiên.", word_family: "habitation (n), habitable (adj)" },
                       ],
                     },
                   ]);
@@ -374,6 +376,7 @@ const VocabManager = () => {
 /* ─── Add single word form ─── */
 function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void }) {
   const [word, setWord] = useState("");
+  const [wordType, setWordType] = useState("");
   const [phonetic, setPhonetic] = useState("");
   const [meaning, setMeaning] = useState("");
   const [exampleEn, setExampleEn] = useState("");
@@ -387,6 +390,7 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
     const { error } = await supabase.from("system_vocab_words").insert({
       vocab_set_id: setId,
       word: word.trim(),
+      word_type: wordType.trim(),
       phonetic: phonetic.trim(),
       meaning: meaning.trim(),
       example_en: exampleEn.trim(),
@@ -403,7 +407,7 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
         await supabase.from("system_vocab_sets").update({ word_count: count }).eq("id", setId);
       }
       toast({ title: `Đã thêm "${word.trim()}" ✓` });
-      setWord(""); setPhonetic(""); setMeaning(""); setExampleEn(""); setExampleVi(""); setWordFamily("");
+      setWord(""); setWordType(""); setPhonetic(""); setMeaning(""); setExampleEn(""); setExampleVi(""); setWordFamily("");
       onAdded();
     } else {
       toast({ title: "Lỗi: " + error.message, variant: "destructive" });
@@ -415,13 +419,14 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
     <Card className="border border-dashed border-primary/30">
       <CardContent className="p-4 space-y-3">
         <p className="font-semibold text-sm text-foreground">Thêm từ mới</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Input placeholder="word *" value={word} onChange={e => setWord(e.target.value)} />
+          <Input placeholder="loại từ (n/v/adj...)" value={wordType} onChange={e => setWordType(e.target.value)} className="max-w-[160px]" />
           <Input placeholder="phonetic" value={phonetic} onChange={e => setPhonetic(e.target.value)} />
           <Input placeholder="meaning" value={meaning} onChange={e => setMeaning(e.target.value)} />
           <Input placeholder="example (EN)" value={exampleEn} onChange={e => setExampleEn(e.target.value)} />
           <Input placeholder="example (VI)" value={exampleVi} onChange={e => setExampleVi(e.target.value)} />
-          <Input placeholder="word family (phẩy ngăn)" value={wordFamily} onChange={e => setWordFamily(e.target.value)} />
+          <Input placeholder="word family (phẩy ngăn)" value={wordFamily} onChange={e => setWordFamily(e.target.value)} className="col-span-2" />
         </div>
         <Button size="sm" onClick={handleAdd} disabled={!word.trim() || saving} className="gap-1.5">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}

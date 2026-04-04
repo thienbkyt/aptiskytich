@@ -134,7 +134,9 @@ const VocabStudy = () => {
               <div className="p-6 pb-4 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-3xl font-heading font-bold text-foreground">{word.word}</h2>
+                    <h2 className="text-3xl font-heading font-bold text-foreground">
+                      {word.word} {word.word_type && <span className="text-xl font-normal text-muted-foreground">({word.word_type})</span>}
+                    </h2>
                     <p className="text-muted-foreground text-sm mt-1">{word.phonetic}</p>
                   </div>
                   <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 mt-1" onClick={() => speak(word.word, "en")} title="Nghe phát âm">

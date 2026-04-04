@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface SystemVocabWord {
   id: string;
   word: string;
+  word_type: string;
   phonetic: string;
   meaning: string;
   example_en: string;
