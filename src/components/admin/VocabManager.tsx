@@ -419,13 +419,14 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
     <Card className="border border-dashed border-primary/30">
       <CardContent className="p-4 space-y-3">
         <p className="font-semibold text-sm text-foreground">Thêm từ mới</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Input placeholder="word *" value={word} onChange={e => setWord(e.target.value)} />
+          <Input placeholder="loại từ (n/v/adj...)" value={wordType} onChange={e => setWordType(e.target.value)} className="max-w-[160px]" />
           <Input placeholder="phonetic" value={phonetic} onChange={e => setPhonetic(e.target.value)} />
           <Input placeholder="meaning" value={meaning} onChange={e => setMeaning(e.target.value)} />
           <Input placeholder="example (EN)" value={exampleEn} onChange={e => setExampleEn(e.target.value)} />
           <Input placeholder="example (VI)" value={exampleVi} onChange={e => setExampleVi(e.target.value)} />
-          <Input placeholder="word family (phẩy ngăn)" value={wordFamily} onChange={e => setWordFamily(e.target.value)} />
+          <Input placeholder="word family (phẩy ngăn)" value={wordFamily} onChange={e => setWordFamily(e.target.value)} className="col-span-2" />
         </div>
         <Button size="sm" onClick={handleAdd} disabled={!word.trim() || saving} className="gap-1.5">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
