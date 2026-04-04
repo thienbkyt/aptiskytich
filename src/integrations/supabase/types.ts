@@ -514,6 +514,7 @@ export type Database = {
           vocab_set_id: string
           word: string
           word_family: Json | null
+          word_type: string
         }
         Insert: {
           created_at?: string
@@ -526,6 +527,7 @@ export type Database = {
           vocab_set_id: string
           word: string
           word_family?: Json | null
+          word_type?: string
         }
         Update: {
           created_at?: string
@@ -538,6 +540,7 @@ export type Database = {
           vocab_set_id?: string
           word?: string
           word_family?: Json | null
+          word_type?: string
         }
         Relationships: [
           {

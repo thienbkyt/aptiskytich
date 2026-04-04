@@ -1,0 +1,1 @@
+ALTER TABLE public.system_vocab_words ADD COLUMN word_type text DEFAULT '' NOT NULL;
