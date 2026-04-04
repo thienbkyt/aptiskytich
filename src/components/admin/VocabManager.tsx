@@ -302,7 +302,7 @@ const VocabManager = () => {
             <p className="font-semibold text-sm text-foreground">Import từ Excel</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Mỗi sheet = 1 bộ từ vựng. Cột: <code>word</code>, <code>phonetic</code>, <code>meaning</code>, <code>example_en</code>, <code>example_vi</code>, <code>word_family</code> (ngăn bởi dấu phẩy)
+            Mỗi sheet = 1 bộ từ vựng. Cột: <code>word</code>, <code>word_type</code> (n/v/adj/adv), <code>phonetic</code>, <code>meaning</code>, <code>example_en</code>, <code>example_vi</code>, <code>word_family</code> (ngăn bởi dấu phẩy)
           </p>
           <div className="flex items-center gap-3">
             <Button variant="outline" className="gap-1.5 relative" disabled={importing}>
