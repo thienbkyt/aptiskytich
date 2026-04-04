@@ -390,6 +390,14 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
       word_family: wordFamily.split(/[,;|]/).map(s => s.trim()).filter(Boolean),
     });
     if (!error) {
+      // Update word_count in DB
+      const { count } = await supabase
+        .from("system_vocab_words")
+        .select("*", { count: "exact", head: true })
+        .eq("vocab_set_id", setId);
+      if (count !== null) {
+        await supabase.from("system_vocab_sets").update({ word_count: count }).eq("id", setId);
+      }
       toast({ title: `Đã thêm "${word.trim()}" ✓` });
       setWord(""); setPhonetic(""); setMeaning(""); setExampleEn(""); setExampleVi(""); setWordFamily("");
       onAdded();
