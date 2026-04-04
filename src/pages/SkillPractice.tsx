@@ -203,6 +203,11 @@ const SkillPractice = () => {
                 />
               </div>
 
+              {setsLoading ? (
+                <div className="py-12 flex justify-center col-span-full">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filtered.map((set) => (
                   <Card
@@ -213,18 +218,18 @@ const SkillPractice = () => {
                       <Badge
                         variant="outline"
                         className={
-                          set.group === "APTIS ADVANCED"
+                          set.group_name.toUpperCase().includes("ADVANCED")
                             ? TEAL.badgeAdv
                             : TEAL.badge
                         }
                       >
-                        {set.group}
+                        {set.group_name}
                       </Badge>
                       <h3 className="font-heading font-semibold text-foreground text-base leading-snug">
                         {set.title}
                       </h3>
                       <span className="text-sm text-muted-foreground">
-                        {set.words.length} từ vựng
+                        {set.word_count} từ vựng
                       </span>
                       <div className="flex gap-2 mt-auto pt-2">
                         <Button
@@ -252,6 +257,7 @@ const SkillPractice = () => {
                   </p>
                 )}
               </div>
+              )}
             </TabsContent>
 
             {/* ════════ TAB 2 — KHO TỪ VỰNG CỦA TÔI ════════ */}
