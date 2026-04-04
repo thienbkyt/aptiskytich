@@ -276,7 +276,7 @@ const VocabManager = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label className="text-xs">Nhóm</Label>
-              <Input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="APTIS" />
+              <Input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="APTIS GENERAL" />
             </div>
             <div>
               <Label className="text-xs">Tiêu đề *</Label>
