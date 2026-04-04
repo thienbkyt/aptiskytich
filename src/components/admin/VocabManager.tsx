@@ -96,7 +96,7 @@ const VocabManager = () => {
     setCreating(true);
     const { error } = await supabase.from("system_vocab_sets").insert({
       title: newTitle.trim(),
-      group_name: newGroup.trim() || "APTIS",
+      group_name: newGroup.trim() || "APTIS GENERAL",
       description: newDesc.trim(),
     });
     if (!error) {
