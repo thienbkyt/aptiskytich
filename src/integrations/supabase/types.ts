@@ -469,6 +469,86 @@ export type Database = {
         }
         Relationships: []
       }
+      system_vocab_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          group_name: string
+          id: string
+          is_published: boolean
+          title: string
+          updated_at: string
+          word_count: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          group_name?: string
+          id?: string
+          is_published?: boolean
+          title: string
+          updated_at?: string
+          word_count?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          group_name?: string
+          id?: string
+          is_published?: boolean
+          title?: string
+          updated_at?: string
+          word_count?: number
+        }
+        Relationships: []
+      }
+      system_vocab_words: {
+        Row: {
+          created_at: string
+          example_en: string | null
+          example_vi: string | null
+          id: string
+          meaning: string | null
+          order_index: number
+          phonetic: string | null
+          vocab_set_id: string
+          word: string
+          word_family: Json | null
+        }
+        Insert: {
+          created_at?: string
+          example_en?: string | null
+          example_vi?: string | null
+          id?: string
+          meaning?: string | null
+          order_index?: number
+          phonetic?: string | null
+          vocab_set_id: string
+          word: string
+          word_family?: Json | null
+        }
+        Update: {
+          created_at?: string
+          example_en?: string | null
+          example_vi?: string | null
+          id?: string
+          meaning?: string | null
+          order_index?: number
+          phonetic?: string | null
+          vocab_set_id?: string
+          word?: string
+          word_family?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_vocab_words_vocab_set_id_fkey"
+            columns: ["vocab_set_id"]
+            isOneToOne: false
+            referencedRelation: "system_vocab_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       test_results: {
         Row: {
           correct_answers: number
