@@ -28,7 +28,7 @@ import {
   FolderPlus,
   Loader2,
 } from "lucide-react";
-import { VOCAB_SETS } from "@/data/vocabSets";
+import { useSystemVocabSets } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
