@@ -326,7 +326,7 @@ const VocabManager = () => {
                     {
                       name: "Animals & Nature",
                       cols: [
-                        { word: "habitat", phonetic: "/ˈhæb.ɪ.tæt/", meaning: "môi trường sống", example_en: "The forest is a natural habitat.", example_vi: "Rừng là môi trường sống tự nhiên.", word_family: "habitation (n), habitable (adj)" },
+                        { word: "habitat", word_type: "n", phonetic: "/ˈhæb.ɪ.tæt/", meaning: "môi trường sống", example_en: "The forest is a natural habitat.", example_vi: "Rừng là môi trường sống tự nhiên.", word_family: "habitation (n), habitable (adj)" },
                       ],
                     },
                   ]);
