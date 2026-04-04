@@ -51,7 +51,7 @@ const VocabManager = () => {
 
   // Form state for new set
   const [newTitle, setNewTitle] = useState("");
-  const [newGroup, setNewGroup] = useState("APTIS");
+  const [newGroup, setNewGroup] = useState("APTIS GENERAL");
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -96,7 +96,7 @@ const VocabManager = () => {
     setCreating(true);
     const { error } = await supabase.from("system_vocab_sets").insert({
       title: newTitle.trim(),
-      group_name: newGroup.trim() || "APTIS",
+      group_name: newGroup.trim() || "APTIS GENERAL",
       description: newDesc.trim(),
     });
     if (!error) {
@@ -152,7 +152,7 @@ const VocabManager = () => {
           .from("system_vocab_sets")
           .insert({
             title: sheetName,
-            group_name: newGroup.trim() || "APTIS",
+            group_name: newGroup.trim() || "APTIS GENERAL",
             description: `Imported from ${file.name}`,
             word_count: rows.length,
           })
@@ -276,7 +276,7 @@ const VocabManager = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label className="text-xs">Nhóm</Label>
-              <Input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="APTIS" />
+              <Input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="APTIS GENERAL" />
             </div>
             <div>
               <Label className="text-xs">Tiêu đề *</Label>
