@@ -239,9 +239,13 @@ const VocabManager = () => {
                       if (!w.id) return;
                       await supabase.from("system_vocab_words").delete().eq("id", w.id);
                       setWords(prev => prev.filter(x => x.id !== w.id));
-                      // Update count
-                      await supabase.from("system_vocab_sets").update({ word_count: Math.max(0, selectedSet.word_count - 1) }).eq("id", selectedSet.id);
-                      setSelectedSet(prev => prev ? { ...prev, word_count: Math.max(0, prev.word_count - 1) } : prev);
+                      const { count } = await supabase
+                        .from("system_vocab_words")
+                        .select("*", { count: "exact", head: true })
+                        .eq("vocab_set_id", selectedSet.id);
+                      const newCount = count ?? 0;
+                      await supabase.from("system_vocab_sets").update({ word_count: newCount }).eq("id", selectedSet.id);
+                      setSelectedSet(prev => prev ? { ...prev, word_count: newCount } : prev);
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -390,6 +394,14 @@ function AddWordForm({ setId, onAdded }: { setId: string; onAdded: () => void })
       word_family: wordFamily.split(/[,;|]/).map(s => s.trim()).filter(Boolean),
     });
     if (!error) {
+      // Update word_count in DB
+      const { count } = await supabase
+        .from("system_vocab_words")
+        .select("*", { count: "exact", head: true })
+        .eq("vocab_set_id", setId);
+      if (count !== null) {
+        await supabase.from("system_vocab_sets").update({ word_count: count }).eq("id", setId);
+      }
       toast({ title: `Đã thêm "${word.trim()}" ✓` });
       setWord(""); setPhonetic(""); setMeaning(""); setExampleEn(""); setExampleVi(""); setWordFamily("");
       onAdded();
