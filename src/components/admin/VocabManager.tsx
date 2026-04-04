@@ -233,7 +233,7 @@ const VocabManager = () => {
                 <CardContent className="p-3 flex items-center gap-3">
                   <span className="text-xs text-muted-foreground w-6 text-right">{i + 1}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{w.word} <span className="text-muted-foreground font-normal text-sm">{w.phonetic}</span></p>
+                    <p className="font-semibold text-foreground">{w.word} {w.word_type && <span className="text-muted-foreground font-normal text-xs">({w.word_type})</span>} <span className="text-muted-foreground font-normal text-sm">{w.phonetic}</span></p>
                     <p className="text-sm text-muted-foreground truncate">{w.meaning}</p>
                   </div>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive shrink-0"
