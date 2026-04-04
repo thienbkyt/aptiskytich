@@ -152,7 +152,7 @@ const VocabManager = () => {
           .from("system_vocab_sets")
           .insert({
             title: sheetName,
-            group_name: newGroup.trim() || "APTIS",
+            group_name: newGroup.trim() || "APTIS GENERAL",
             description: `Imported from ${file.name}`,
             word_count: rows.length,
           })
