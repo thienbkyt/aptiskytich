@@ -59,25 +59,27 @@ const ReadingPart1Form = ({ questions, setQuestions }: Props) => {
       </p>
 
       <div>
-        <Label>Instruction</Label>
+        <Label>Instruction (Đoạn hướng dẫn đầu bài)</Label>
         <Input
           value={instruction}
           onChange={(e) => update("instruction", e.target.value)}
-          placeholder="Read the email from ... Choose one word from the list for each gap."
+          placeholder="Read the email from Janice to her friend. Choose one word from the list for each gap. The first one is done for you."
         />
+        <p className="text-xs text-muted-foreground mt-1">Ví dụ: "Read the email from Janice to her friend. Choose one word from the list for each gap. The first one is done for you."</p>
       </div>
 
       <div>
-        <Label>Passage (dùng {"{0}"}, {"{1}"}... cho gaps)</Label>
+        <Label>Passage — Nội dung bài đọc (dùng {"{0}"}, {"{1}"}... cho gaps)</Label>
         <Textarea
           value={passage}
           onChange={(e) => {
             update("passage", e.target.value);
             setQuestions((qs) => [{ ...qs[0], question_text: e.target.value }]);
           }}
-          rows={8}
-          placeholder={`Dear Sally,\n\nWe have a nice {0} of the sea.\n\nThe weather is {1} and hot.\n\nLove,\nJanice`}
+          rows={10}
+          placeholder={`Dear Sally,\n\nTim and I are on holiday in Greece. We have a nice {0} of the sea from our hotel.\n\nThe weather is {1} and it's really hot.\n\nYesterday we went on a {2} on the lake and caught some fish.\n\nWe had lunch and then we visited an old {3}.\n\nTomorrow we are going to take a car and {4} around.\n\nWe are going to visit some {5} and buy clothes.\n\nLove,\n\nJanice`}
         />
+        <p className="text-xs text-muted-foreground mt-1">⚠️ Nhớ bao gồm đầy đủ phần mở đầu (Dear Sally,) và phần kết (Love, Janice) trong nội dung passage.</p>
       </div>
 
       <div>
