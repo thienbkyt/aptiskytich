@@ -40,13 +40,14 @@ const EMPTY_Q = (): Omit<ExamQuestionRow, "exam_set_id"> => ({
 
 // Detect if this part needs a special (non-MCQ) form
 const getFormType = (skill: Skill, part: string): string => {
+  if (skill === "reading" && part.includes("1")) return "reading_part1";
   if (skill === "reading" && part.includes("2")) return "reading_part2";
   if (skill === "reading" && part.includes("3")) return "reading_part3";
   if (skill === "reading" && part.includes("4")) return "reading_part4";
   if (skill === "speaking") return "speaking";
   if (skill === "writing" && part.includes("2")) return "writing_part2";
   if (skill === "writing" && part.includes("4")) return "writing_part4";
-  return "mcq"; // Default MCQ form for grammar, reading p1, listening, writing p1/p3
+  return "mcq";
 };
 
 const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions }: Props) => {
