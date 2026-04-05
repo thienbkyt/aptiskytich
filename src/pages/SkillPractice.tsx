@@ -125,12 +125,22 @@ const SkillPractice = () => {
   }
 
   const { data: systemSets = [], isLoading: setsLoading } = useSystemVocabSets();
+  const quickViewSet = systemSets.find((s) => s.id === quickViewSetId);
 
   const filtered = systemSets.filter(
     (s) =>
       s.title.toLowerCase().includes(search.toLowerCase()) ||
       s.group_name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  function speak(text: string, lang: "en" | "vi") {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === "en" ? "en-US" : "vi-VN";
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
 
   const handleCreateList = async () => {
     if (!user || !newName.trim()) return;
