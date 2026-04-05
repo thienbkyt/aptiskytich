@@ -165,7 +165,7 @@ const SkillPractice = () => {
                 Học từ vựng Aptis
               </h1>
               <p className="text-muted-foreground mt-1 text-base md:text-lg">
-                Ôn luyện từ vựng theo bộ đề thi & quản lý kho từ cá nhân
+                Ôn luyện từ vựng theo các chủ đề trong bộ đề thi & quản lý kho từ cá nhân
               </p>
             </div>
           </div>
