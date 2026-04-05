@@ -96,31 +96,45 @@ const parseVocabPart4 = (rows: any[]): ParseResult => parseVocabPart(rows, "gap_
 const parseVocabPart5 = (rows: any[]): ParseResult => parseVocabPart(rows, "collocation", "word");
 
 // ─── Reading Part 1: Gap Fill — passage with inline dropdowns ───
-// Expects a single row with columns: instruction, passage, gaps (JSON string)
-// Or multiple rows where each row = one gap: gap_index, options (comma-separated), correct_answer (0-based index)
+// Gaps format: "{0} view,large,boat:view\n{1} sunny,large,boat:large" 
+// Each line: {n} option1,option2,...:correct_answer
+// Also supports legacy JSON format for backward compatibility
+const parseGapsString = (gapsStr: string): { options: string[]; correct: number }[] => {
+  const gaps: { options: string[]; correct: number }[] = [];
+  const lines = gapsStr.split("\n").map(l => l.trim()).filter(Boolean);
+  for (const line of lines) {
+    // Match: {n} option1,option2,...:correct_answer
+    const match = line.match(/^\{(\d+)\}\s*(.+):(.+)$/);
+    if (!match) continue;
+    const optionsStr = match[2].trim();
+    const correctStr = match[3].trim();
+    const options = optionsStr.split(",").map(o => o.trim()).filter(Boolean);
+    const correctIdx = options.indexOf(correctStr);
+    gaps.push({ options, correct: correctIdx >= 0 ? correctIdx : 0 });
+  }
+  return gaps;
+};
+
 const parseReadingPart1 = (rows: any[]): ParseResult => {
   const errors: { row: number; message: string }[] = [];
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
 
-  // Check if first row has 'passage' field (single-row format)
   const first = rows[0];
   if (first.passage) {
-    const gaps: { options: string[]; correct: number }[] = [];
-    // Try JSON gaps field
+    let gaps: { options: string[]; correct: number }[] = [];
     if (first.gaps) {
-      try {
-        const parsed = typeof first.gaps === "string" ? JSON.parse(first.gaps) : first.gaps;
-        if (Array.isArray(parsed)) gaps.push(...parsed);
-      } catch { errors.push({ row: 2, message: "Không parse được trường gaps (JSON)" }); }
-    }
-    // Or build gaps from subsequent rows
-    if (gaps.length === 0) {
-      rows.forEach((r, i) => {
-        if (i === 0 && r.passage) return; // skip header row with passage
-        const opts = (r.options || "").toString().split(",").map((s: string) => s.trim()).filter(Boolean);
-        const correct = parseInt(r.correct_answer || "0");
-        if (opts.length > 0) gaps.push({ options: opts, correct: isNaN(correct) ? 0 : correct });
-      });
+      const gapsRaw = first.gaps.toString().trim();
+      // Try new format first: {0} opt1,opt2:correct
+      if (gapsRaw.includes("{") && gapsRaw.includes(":")) {
+        gaps = parseGapsString(gapsRaw);
+      }
+      // Fallback to JSON
+      if (gaps.length === 0) {
+        try {
+          const parsed = JSON.parse(gapsRaw);
+          if (Array.isArray(parsed)) gaps.push(...parsed);
+        } catch { errors.push({ row: 2, message: "Không parse được trường gaps" }); }
+      }
     }
 
     return {
