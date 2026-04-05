@@ -49,6 +49,7 @@ const SkillPractice = () => {
   const { user } = useAuth();
   const skill = location.pathname.replace("/", "");
   const [search, setSearch] = useState("");
+  const [quickViewSetId, setQuickViewSetId] = useState<string | null>(null);
 
   /* ── My Vocab state ── */
   const [myLists, setMyLists] = useState<any[]>([]);
@@ -58,6 +59,10 @@ const SkillPractice = () => {
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
+
+  /* ── Quick view words ── */
+  const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
+  const quickViewSet = vocabSets.find((s) => s.id === quickViewSetId);
 
   /* ── Fetch user lists & stats ── */
   useEffect(() => {
