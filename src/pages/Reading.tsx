@@ -92,7 +92,7 @@ const Reading = () => {
   const handleStartMock = (partType: ReadingPartType) => {
     const mockData: any = {};
     switch (partType) {
-      case "part1": mockData.part1Questions = mockPart1Questions; break;
+      case "part1": mockData.part1Question = mockPart1Questions[0]; break;
       case "part2": mockData.part2Question = mockPart2Questions[0]; break;
       case "part3": mockData.part3Question = mockPart3Questions[0]; break;
       case "part4": mockData.part4Question = mockPart4Questions[0]; break;
