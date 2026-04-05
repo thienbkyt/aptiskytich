@@ -422,7 +422,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const readingProps: any = {};
     switch (partType) {
-      case "part1": readingProps.part1Questions = toReadingPart1(currentPart.questions); break;
+      case "part1": readingProps.part1Question = toReadingPart1(currentPart.questions); break;
       case "part2": readingProps.part2Question = toReadingPart2(currentPart.questions); break;
       case "part3": readingProps.part3Question = toReadingPart3(currentPart.questions); break;
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;

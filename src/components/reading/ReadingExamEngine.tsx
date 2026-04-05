@@ -18,7 +18,7 @@ interface ReadingExamEngineProps {
   partType: ReadingPartType;
   testTitle: string;
   timeLimit: number;
-  part1Questions?: ReadingSentenceQuestion[];
+  part1Question?: ReadingSentenceQuestion;
   part2Question?: ReadingCohesionQuestion;
   part3Question?: ReadingOpinionQuestion;
   part4Question?: ReadingLongQuestion;
@@ -30,7 +30,7 @@ type Phase = "instructions" | "practice" | "review";
 
 const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
-  part1Questions, part2Question, part3Question, part4Question,
+  part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>("instructions");
@@ -40,7 +40,7 @@ const ReadingExamEngine = ({
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
-    new Array(part1Questions?.length || 0).fill(null)
+    new Array(part1Question?.gaps.length || 0).fill(null)
   );
   const [p2Answers, setP2Answers] = useState<(number | null)[]>(
     new Array(part2Question?.gaps.length || 0).fill(null)
@@ -52,7 +52,7 @@ const ReadingExamEngine = ({
     new Array(part4Question?.questions.length || 0).fill(null)
   );
 
-  const totalQuestions = partType === "part1" ? (part1Questions?.length || 0)
+  const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
     : partType === "part2" ? (part2Question?.gaps.length || 0)
     : partType === "part3" ? (part3Question?.statements.length || 0)
     : (part4Question?.questions.length || 0);
@@ -89,8 +89,8 @@ const ReadingExamEngine = ({
     setCurrentIndex(0);
 
     let correct = 0;
-    if (partType === "part1" && part1Questions) {
-      correct = part1Questions.reduce((acc, q, i) => acc + (p1Answers[i] === q.correct ? 1 : 0), 0);
+    if (partType === "part1" && part1Question) {
+      correct = part1Question.gaps.reduce((acc, g, i) => acc + (p1Answers[i] === g.correct ? 1 : 0), 0);
     } else if (partType === "part2" && part2Question) {
       correct = part2Question.gaps.reduce((acc, g, i) => acc + (p2Answers[i] === g.correct ? 1 : 0), 0);
     } else if (partType === "part3" && part3Question) {
@@ -99,11 +99,11 @@ const ReadingExamEngine = ({
       correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
     }
     onComplete?.(correct, totalQuestions);
-  }, [partType, part1Questions, part2Question, part3Question, part4Question, p1Answers, p2Answers, p3Answers, p4Answers, totalQuestions, onComplete]);
+  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Answers, p3Answers, p4Answers, totalQuestions, onComplete]);
 
   const isAnswered = (qi: number) => currentAnswers[qi] !== null;
 
-  const partLabel = partType === "part1" ? "Part 1 – Sentence Comprehension"
+  const partLabel = partType === "part1" ? "Part 1 – Gap Fill"
     : partType === "part2" ? "Part 2 – Text Cohesion"
     : partType === "part3" ? "Part 3 – Opinion Matching"
     : "Part 4 – Long Reading";
@@ -162,21 +162,25 @@ const ReadingExamEngine = ({
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
-        {partType === "part1" && part1Questions && (
+        {partType === "part1" && part1Question && (
           <ReadingPart1Sentence
-            questions={part1Questions}
-            currentIndex={currentIndex}
+            question={part1Question}
             answers={p1Answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(qi, ai) => {
+            onAnswer={(gi, val) => {
               if (submitted) return;
               const n = [...p1Answers];
-              n[qi] = ai;
+              n[gi] = val;
               setP1Answers(n);
             }}
             {...navProps}
+            onPrevious={undefined}
+            onNext={undefined}
+            onSubmit={!submitted ? handleSubmit : undefined}
+            isFirst={true}
+            isLast={true}
           />
         )}
 

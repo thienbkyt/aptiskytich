@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExamSetRow, ExamQuestionRow, Skill, SKILL_PARTS, ExcelImportRow } from "./types";
+import ReadingPart1Form from "./forms/ReadingPart1Form";
 import ReadingPart2Form from "./forms/ReadingPart2Form";
 import ReadingPart3Form from "./forms/ReadingPart3Form";
 import ReadingPart4Form from "./forms/ReadingPart4Form";
@@ -39,13 +40,14 @@ const EMPTY_Q = (): Omit<ExamQuestionRow, "exam_set_id"> => ({
 
 // Detect if this part needs a special (non-MCQ) form
 const getFormType = (skill: Skill, part: string): string => {
+  if (skill === "reading" && part.includes("1")) return "reading_part1";
   if (skill === "reading" && part.includes("2")) return "reading_part2";
   if (skill === "reading" && part.includes("3")) return "reading_part3";
   if (skill === "reading" && part.includes("4")) return "reading_part4";
   if (skill === "speaking") return "speaking";
   if (skill === "writing" && part.includes("2")) return "writing_part2";
   if (skill === "writing" && part.includes("4")) return "writing_part4";
-  return "mcq"; // Default MCQ form for grammar, reading p1, listening, writing p1/p3
+  return "mcq";
 };
 
 const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions }: Props) => {
@@ -183,6 +185,8 @@ const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions
   // Render specialized form for certain part types
   const renderSpecialForm = () => {
     switch (formType) {
+      case "reading_part1":
+        return <ReadingPart1Form questions={questions} setQuestions={setQuestions} />;
       case "reading_part2":
         return <ReadingPart2Form questions={questions} setQuestions={setQuestions} />;
       case "reading_part3":

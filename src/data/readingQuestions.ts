@@ -1,13 +1,12 @@
 import type { Question, GapFillQuestion } from "@/data/questions";
 
-// Part 1: Sentence comprehension — read sentence, pick correct meaning (MCQ)
+// Part 1: Gap-fill — read passage (email), fill in blanks with dropdown
 export interface ReadingSentenceQuestion {
   id: number;
-  type: "sentence-comprehension";
-  sentence: string;
-  question: string;
-  options: string[];
-  correct: number;
+  type: "gap-fill";
+  instruction: string;
+  passage: string; // with {0}, {1}... placeholders for gaps
+  gaps: { options: string[]; correct: number }[];
   explanation: string;
 }
 
@@ -52,73 +51,34 @@ export type ReadingPartQuestion =
 export const mockPart1Questions: ReadingSentenceQuestion[] = [
   {
     id: 1,
-    type: "sentence-comprehension",
-    sentence: "The manager decided to postpone the meeting until further notice.",
-    question: "What does this sentence mean?",
-    options: [
-      "The meeting was cancelled permanently.",
-      "The meeting will happen at a later, unspecified time.",
-      "The meeting is happening right now.",
-      "The manager forgot about the meeting.",
+    type: "gap-fill",
+    instruction: "Read the email from Janice to her friend. Choose one word from the list for each gap. The first one is done for you.",
+    passage: `Dear Sally,
+
+Tim and I are on holiday in Greece. We have a nice {0} of the sea from our hotel.
+
+The weather is {1} and it's really hot.
+
+Yesterday we went on a {2} on the lake and caught some fish.
+
+We had lunch and then we visited an old {3}.
+
+Tomorrow we are going to take a car and {4} around.
+
+We are going to visit some {5} and buy clothes.
+
+Love,
+
+Janice`,
+    gaps: [
+      { options: ["view", "large", "boat"], correct: 0 },
+      { options: ["view", "large", "boat"], correct: 1 },
+      { options: ["boat", "castle", "drive"], correct: 0 },
+      { options: ["castle", "shops", "drive"], correct: 0 },
+      { options: ["drive", "shops", "books"], correct: 0 },
+      { options: ["shops", "books", "brothers"], correct: 0 },
     ],
-    correct: 1,
-    explanation: "'Postpone until further notice' nghĩa là hoãn lại đến khi có thông báo mới.",
-  },
-  {
-    id: 2,
-    type: "sentence-comprehension",
-    sentence: "She couldn't help but laugh at the comedian's jokes.",
-    question: "What does this sentence mean?",
-    options: [
-      "She refused to laugh.",
-      "She found it impossible not to laugh.",
-      "She helped the comedian.",
-      "She was not amused.",
-    ],
-    correct: 1,
-    explanation: "'Couldn't help but + V' nghĩa là không thể ngăn bản thân làm điều gì.",
-  },
-  {
-    id: 3,
-    type: "sentence-comprehension",
-    sentence: "The new policy will come into effect at the beginning of next month.",
-    question: "What does this sentence tell us?",
-    options: [
-      "The policy has already started.",
-      "The policy will start next month.",
-      "The policy was rejected.",
-      "The policy ends next month.",
-    ],
-    correct: 1,
-    explanation: "'Come into effect' = bắt đầu có hiệu lực.",
-  },
-  {
-    id: 4,
-    type: "sentence-comprehension",
-    sentence: "He takes after his mother in many ways.",
-    question: "What does this sentence mean?",
-    options: [
-      "He follows his mother everywhere.",
-      "He is similar to his mother.",
-      "He takes care of his mother.",
-      "He runs after his mother.",
-    ],
-    correct: 1,
-    explanation: "'Take after someone' = giống ai đó (về tính cách, ngoại hình).",
-  },
-  {
-    id: 5,
-    type: "sentence-comprehension",
-    sentence: "The restaurant is second to none when it comes to seafood.",
-    question: "What does this sentence mean?",
-    options: [
-      "The restaurant is the second best for seafood.",
-      "The restaurant is the best for seafood.",
-      "The restaurant doesn't serve seafood.",
-      "The restaurant is not good at seafood.",
-    ],
-    correct: 1,
-    explanation: "'Second to none' = tốt nhất, không ai sánh bằng.",
+    explanation: "Điền từ phù hợp vào mỗi chỗ trống dựa trên ngữ cảnh của bức thư.",
   },
 ];
 
