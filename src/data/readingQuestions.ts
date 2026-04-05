@@ -1,13 +1,12 @@
 import type { Question, GapFillQuestion } from "@/data/questions";
 
-// Part 1: Sentence comprehension — read sentence, pick correct meaning (MCQ)
+// Part 1: Gap-fill — read passage (email), fill in blanks with dropdown
 export interface ReadingSentenceQuestion {
   id: number;
-  type: "sentence-comprehension";
-  sentence: string;
-  question: string;
-  options: string[];
-  correct: number;
+  type: "gap-fill";
+  instruction: string;
+  passage: string; // with {0}, {1}... placeholders for gaps
+  gaps: { options: string[]; correct: number }[];
   explanation: string;
 }
 
