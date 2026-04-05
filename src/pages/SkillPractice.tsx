@@ -27,7 +27,10 @@ import {
   Sparkles,
   FolderPlus,
   Loader2,
+  Volume2,
+  X,
 } from "lucide-react";
+import { useSystemVocabWords } from "@/hooks/useSystemVocabSets";
 import { useSystemVocabSets } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
