@@ -19,16 +19,19 @@ export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] =>
   }));
 
 // ─── Reading ────────────────────────────────────────────────
-export const toReadingPart1 = (rows: ExamQuestionRow[]): ReadingSentenceQuestion[] =>
-  rows.map((r, i) => ({
-    id: i + 1,
-    type: "sentence-comprehension" as const,
-    sentence: r.extra_data?.sentence || r.question_text,
-    question: r.extra_data?.question || r.question_text,
-    options: r.options,
-    correct: r.correct_answer ?? 0,
-    explanation: r.explanation || "",
-  }));
+export const toReadingPart1 = (rows: ExamQuestionRow[]): ReadingSentenceQuestion | null => {
+  if (rows.length === 0) return null;
+  const first = rows[0];
+  const ed = first.extra_data || {};
+  return {
+    id: 1,
+    type: "gap-fill" as const,
+    instruction: ed.instruction || "Read the text below. Choose one word from the list for each gap.",
+    passage: ed.passage || first.question_text,
+    gaps: ed.gaps || [],
+    explanation: first.explanation || "",
+  };
+};
 
 export const toReadingPart2 = (rows: ExamQuestionRow[]): ReadingCohesionQuestion | null => {
   if (rows.length === 0) return null;
