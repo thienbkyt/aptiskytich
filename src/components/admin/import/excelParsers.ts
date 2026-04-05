@@ -95,31 +95,82 @@ const parseVocabPart3 = (rows: any[]): ParseResult => parseVocabPart(rows, "defi
 const parseVocabPart4 = (rows: any[]): ParseResult => parseVocabPart(rows, "gap_fill", "sentence");
 const parseVocabPart5 = (rows: any[]): ParseResult => parseVocabPart(rows, "collocation", "word");
 
-// ─── Reading Part 1: Sentence Comprehension — 5 sentences, 3 options each ───
+// ─── Reading Part 1: Gap Fill — passage with inline dropdowns ───
+// Expects a single row with columns: instruction, passage, gaps (JSON string)
+// Or multiple rows where each row = one gap: gap_index, options (comma-separated), correct_answer (0-based index)
 const parseReadingPart1 = (rows: any[]): ParseResult => {
-  const questions: ParsedQuestion[] = [];
   const errors: { row: number; message: string }[] = [];
+  if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
+
+  // Check if first row has 'passage' field (single-row format)
+  const first = rows[0];
+  if (first.passage) {
+    const gaps: { options: string[]; correct: number }[] = [];
+    // Try JSON gaps field
+    if (first.gaps) {
+      try {
+        const parsed = typeof first.gaps === "string" ? JSON.parse(first.gaps) : first.gaps;
+        if (Array.isArray(parsed)) gaps.push(...parsed);
+      } catch { errors.push({ row: 2, message: "Không parse được trường gaps (JSON)" }); }
+    }
+    // Or build gaps from subsequent rows
+    if (gaps.length === 0) {
+      rows.forEach((r, i) => {
+        if (i === 0 && r.passage) return; // skip header row with passage
+        const opts = (r.options || "").toString().split(",").map((s: string) => s.trim()).filter(Boolean);
+        const correct = parseInt(r.correct_answer || "0");
+        if (opts.length > 0) gaps.push({ options: opts, correct: isNaN(correct) ? 0 : correct });
+      });
+    }
+
+    return {
+      questions: [{
+        order_index: 0,
+        question_text: first.passage.toString().trim(),
+        question_type: "gap_fill",
+        options: [],
+        correct_answer: 0,
+        explanation: first.explanation?.toString().trim() || "",
+        audio_url: null, image_url: null, response_time: null,
+        extra_data: {
+          instruction: first.instruction?.toString().trim() || "Read the text below. Choose one word from the list for each gap.",
+          passage: first.passage.toString().trim(),
+          gaps,
+        },
+      }],
+      errors,
+    };
+  }
+
+  // Fallback: treat each row as a gap
+  const gaps: { options: string[]; correct: number }[] = [];
+  let passage = "";
+  let instruction = "";
+  let explanation = "";
 
   rows.forEach((r, i) => {
-    const rowNum = i + 2;
-    const sentence = r.sentence?.toString().trim() || r.question_text?.toString().trim();
-    if (!sentence) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu sentence` }); return; }
-    const ans = r.correct_answer?.toString().toUpperCase().trim();
-    if (!ans || !VALID_ABC.includes(ans)) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: correct_answer phải là A/B/C` }); return; }
-
-    questions.push({
-      order_index: i,
-      question_text: sentence,
-      question_type: "multiple_choice",
-      options: [r.option_a || "", r.option_b || "", r.option_c || ""].map((o: any) => o.toString().trim()),
-      correct_answer: VALID_ABC.indexOf(ans),
-      explanation: r.explanation?.toString().trim() || "",
-      audio_url: null, image_url: null, response_time: null,
-      extra_data: { sentence },
-    });
+    const opts = (r.options || "").toString().split(",").map((s: string) => s.trim()).filter(Boolean);
+    const correct = parseInt(r.correct_answer || "0");
+    if (opts.length === 0) { errors.push({ row: i + 2, message: `Dòng ${i + 2}: Thiếu options` }); return; }
+    gaps.push({ options: opts, correct: isNaN(correct) ? 0 : correct });
+    if (!passage && r.passage) passage = r.passage.toString().trim();
+    if (!instruction && r.instruction) instruction = r.instruction.toString().trim();
+    if (!explanation && r.explanation) explanation = r.explanation.toString().trim();
   });
 
-  return { questions, errors };
+  return {
+    questions: [{
+      order_index: 0,
+      question_text: passage,
+      question_type: "gap_fill",
+      options: [],
+      correct_answer: 0,
+      explanation,
+      audio_url: null, image_url: null, response_time: null,
+      extra_data: { instruction, passage, gaps },
+    }],
+    errors,
+  };
 };
 
 // ─── Reading Part 2: Text Cohesion — 6 sentences in wrong order, reorder ───
