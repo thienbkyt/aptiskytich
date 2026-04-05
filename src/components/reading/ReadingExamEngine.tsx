@@ -18,7 +18,7 @@ interface ReadingExamEngineProps {
   partType: ReadingPartType;
   testTitle: string;
   timeLimit: number;
-  part1Questions?: ReadingSentenceQuestion[];
+  part1Question?: ReadingSentenceQuestion;
   part2Question?: ReadingCohesionQuestion;
   part3Question?: ReadingOpinionQuestion;
   part4Question?: ReadingLongQuestion;
