@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExamSetRow, ExamQuestionRow, Skill, SKILL_PARTS, ExcelImportRow } from "./types";
+import ReadingPart1Form from "./forms/ReadingPart1Form";
 import ReadingPart2Form from "./forms/ReadingPart2Form";
 import ReadingPart3Form from "./forms/ReadingPart3Form";
 import ReadingPart4Form from "./forms/ReadingPart4Form";
