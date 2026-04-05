@@ -62,7 +62,7 @@ const SkillPractice = () => {
 
   /* ── Quick view words ── */
   const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
-  const quickViewSet = vocabSets.find((s) => s.id === quickViewSetId);
+  const quickViewSet = systemSets.find((s) => s.id === quickViewSetId);
 
   /* ── Fetch user lists & stats ── */
   useEffect(() => {
