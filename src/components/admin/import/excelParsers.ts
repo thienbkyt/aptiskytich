@@ -100,17 +100,25 @@ const parseVocabPart5 = (rows: any[]): ParseResult => parseVocabPart(rows, "coll
 // Each line: {n} option1,option2,...:correct_answer
 // Also supports legacy JSON format for backward compatibility
 const parseGapsString = (gapsStr: string): { options: string[]; correct: number }[] => {
-  const gaps: { options: string[]; correct: number }[] = [];
+  const gapMap: Record<number, { options: string[]; correct: number }> = {};
+  let maxIdx = -1;
   const lines = gapsStr.split("\n").map(l => l.trim()).filter(Boolean);
   for (const line of lines) {
     // Match: {n} option1,option2,...:correct_answer
     const match = line.match(/^\{(\d+)\}\s*(.+):(.+)$/);
     if (!match) continue;
+    const gapIdx = parseInt(match[1]);
     const optionsStr = match[2].trim();
     const correctStr = match[3].trim();
     const options = optionsStr.split(",").map(o => o.trim()).filter(Boolean);
     const correctIdx = options.indexOf(correctStr);
-    gaps.push({ options, correct: correctIdx >= 0 ? correctIdx : 0 });
+    gapMap[gapIdx] = { options, correct: correctIdx >= 0 ? correctIdx : 0 };
+    if (gapIdx > maxIdx) maxIdx = gapIdx;
+  }
+  // Build array aligned to indices used in passage placeholders
+  const gaps: { options: string[]; correct: number }[] = [];
+  for (let i = 0; i <= maxIdx; i++) {
+    gaps.push(gapMap[i] || { options: [], correct: 0 });
   }
   return gaps;
 };
