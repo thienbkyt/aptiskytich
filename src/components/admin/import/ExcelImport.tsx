@@ -73,8 +73,7 @@ const downloadTemplate = async () => {
     {
       name: "R_Part1",
       cols: [
-        { sentence: "The cat sat on the _____.", option_a: "mat", option_b: "map", option_c: "man", correct_answer: "A", explanation: "The cat sat on the mat - nghĩa phù hợp" },
-        { sentence: "Please _____ the door when you leave.", option_a: "close", option_b: "clothes", option_c: "clock", correct_answer: "A", explanation: "close the door" },
+        { instruction: "Read the email from Janice to her friend. Choose one word from the list for each gap. The first one is done for you.", passage: "Dear Sally,\n\nTim and I are on holiday in Greece. We have a nice {0} of the sea from our hotel.\n\nThe weather is {1} and it's really hot.\n\nYesterday we went on a {2} on the lake and caught some fish.\n\nWe had lunch and then we visited an old {3}.\n\nTomorrow we are going to take a car and {4} around.\n\nWe are going to visit some {5} and buy clothes.\n\nLove,\n\nJanice", gaps: '[{"options":["view","large","boat"],"correct":0},{"options":["view","large","boat"],"correct":1},{"options":["boat","castle","drive"],"correct":0},{"options":["castle","shops","drive"],"correct":0},{"options":["drive","shops","books"],"correct":0},{"options":["shops","books","brothers"],"correct":0}]', explanation: "Chọn từ phù hợp với ngữ cảnh bức thư." },
       ],
     },
     {
