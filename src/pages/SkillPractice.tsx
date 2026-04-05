@@ -253,6 +253,7 @@ const SkillPractice = () => {
                           variant="outline"
                           size="sm"
                           className="flex-1 gap-1.5 border-primary/40 text-primary hover:bg-primary/5"
+                          onClick={() => setQuickViewSetId(set.id)}
                         >
                           <Eye className="w-3.5 h-3.5" /> Xem nhanh
                         </Button>
