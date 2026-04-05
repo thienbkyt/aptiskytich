@@ -27,7 +27,10 @@ import {
   Sparkles,
   FolderPlus,
   Loader2,
+  Volume2,
+  X,
 } from "lucide-react";
+import { useSystemVocabWords } from "@/hooks/useSystemVocabSets";
 import { useSystemVocabSets } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +49,7 @@ const SkillPractice = () => {
   const { user } = useAuth();
   const skill = location.pathname.replace("/", "");
   const [search, setSearch] = useState("");
+  const [quickViewSetId, setQuickViewSetId] = useState<string | null>(null);
 
   /* ── My Vocab state ── */
   const [myLists, setMyLists] = useState<any[]>([]);
@@ -55,6 +59,9 @@ const SkillPractice = () => {
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
+
+  /* ── Quick view words ── */
+  const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
 
   /* ── Fetch user lists & stats ── */
   useEffect(() => {
@@ -118,12 +125,22 @@ const SkillPractice = () => {
   }
 
   const { data: systemSets = [], isLoading: setsLoading } = useSystemVocabSets();
+  const quickViewSet = systemSets.find((s) => s.id === quickViewSetId);
 
   const filtered = systemSets.filter(
     (s) =>
       s.title.toLowerCase().includes(search.toLowerCase()) ||
       s.group_name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  function speak(text: string, lang: "en" | "vi") {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === "en" ? "en-US" : "vi-VN";
+    u.rate = 0.9;
+    window.speechSynthesis.speak(u);
+  }
 
   const handleCreateList = async () => {
     if (!user || !newName.trim()) return;
@@ -236,6 +253,7 @@ const SkillPractice = () => {
                           variant="outline"
                           size="sm"
                           className="flex-1 gap-1.5 border-primary/40 text-primary hover:bg-primary/5"
+                          onClick={() => setQuickViewSetId(set.id)}
                         >
                           <Eye className="w-3.5 h-3.5" /> Xem nhanh
                         </Button>
@@ -423,6 +441,62 @@ const SkillPractice = () => {
                   <FolderPlus className="w-4 h-4 mr-1.5" />
                 )}
                 Tạo
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ════════ QUICK VIEW DIALOG ════════ */}
+        <Dialog open={!!quickViewSetId} onOpenChange={(open) => !open && setQuickViewSetId(null)}>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 gap-0">
+            <DialogHeader className="p-6 pb-4 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)] shrink-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{quickViewSet?.group_name}</p>
+                  <DialogTitle className="font-heading text-xl">{quickViewSet?.title}</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-1">{quickViewSet?.word_count} từ vựng</p>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto p-0">
+              {quickViewLoading ? (
+                <div className="py-12 flex justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {quickViewWords.map((w, i) => (
+                    <div key={w.id} className="px-6 py-4 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xs text-muted-foreground font-mono w-6 shrink-0">{i + 1}.</span>
+                            <h4 className="font-heading font-bold text-foreground text-lg">
+                              {w.word}
+                              {w.word_type && <span className="text-sm font-normal text-muted-foreground ml-1">({w.word_type})</span>}
+                            </h4>
+                          </div>
+                          {w.phonetic && <p className="text-xs text-muted-foreground ml-8">{w.phonetic}</p>}
+                          <p className="text-sm font-medium text-[hsl(170,55%,35%)] dark:text-[hsl(170,55%,55%)] ml-8 mt-0.5">{w.meaning}</p>
+                          {w.example_en && (
+                            <p className="text-sm text-muted-foreground ml-8 mt-1 italic">"{w.example_en}"</p>
+                          )}
+                          {w.example_vi && (
+                            <p className="text-xs text-muted-foreground ml-8">{w.example_vi}</p>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 mt-1" onClick={() => speak(w.word, "en")} title="Nghe phát âm">
+                          <Volume2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <DialogFooter className="p-4 border-t border-border shrink-0">
+              <Button className="w-full gap-1.5" onClick={() => { setQuickViewSetId(null); navigate(`/vocabulary/${quickViewSetId}`); }}>
+                <Play className="w-4 h-4" /> Bắt đầu luyện tập
               </Button>
             </DialogFooter>
           </DialogContent>
