@@ -185,6 +185,8 @@ const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions
   // Render specialized form for certain part types
   const renderSpecialForm = () => {
     switch (formType) {
+      case "reading_part1":
+        return <ReadingPart1Form questions={questions} setQuestions={setQuestions} />;
       case "reading_part2":
         return <ReadingPart2Form questions={questions} setQuestions={setQuestions} />;
       case "reading_part3":
