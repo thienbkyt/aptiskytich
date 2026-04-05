@@ -73,7 +73,7 @@ const downloadTemplate = async () => {
     {
       name: "R_Part1",
       cols: [
-        { instruction: "Read the email from Janice to her friend. Choose one word from the list for each gap. The first one is done for you.", passage: "Dear Sally,\n\nTim and I are on holiday in Greece. We have a nice {0} of the sea from our hotel.\n\nThe weather is {1} and it's really hot.\n\nYesterday we went on a {2} on the lake and caught some fish.\n\nWe had lunch and then we visited an old {3}.\n\nTomorrow we are going to take a car and {4} around.\n\nWe are going to visit some {5} and buy clothes.\n\nLove,\n\nJanice", gaps: '[{"options":["view","large","boat"],"correct":0},{"options":["view","large","boat"],"correct":1},{"options":["boat","castle","drive"],"correct":0},{"options":["castle","shops","drive"],"correct":0},{"options":["drive","shops","books"],"correct":0},{"options":["shops","books","brothers"],"correct":0}]', explanation: "Chọn từ phù hợp với ngữ cảnh bức thư." },
+        { instruction: "Read the email from Janice to her friend. Choose one word from the list for each gap. The first one is done for you.", passage: "Dear Sally,\n\nTim and I are on holiday in Greece. We have a nice {0} of the sea from our hotel.\n\nThe weather is {1} and it's really hot.\n\nYesterday we went on a {2} on the lake and caught some fish.\n\nWe had lunch and then we visited an old {3}.\n\nTomorrow we are going to take a car and {4} around.\n\nWe are going to visit some {5} and buy clothes.\n\nLove,\n\nJanice", gaps: "{0} view,large,boat:view\n{1} sunny,large,boat:sunny\n{2} boat,castle,drive:boat\n{3} castle,shops,drive:castle\n{4} drive,shops,books:drive\n{5} shops,books,brothers:shops", explanation: "Chọn từ phù hợp với ngữ cảnh bức thư." },
       ],
     },
     {
