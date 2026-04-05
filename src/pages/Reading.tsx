@@ -72,7 +72,7 @@ const Reading = () => {
     const questions = await fetchExamQuestions(set.id);
     let engineData: any = {};
     switch (partType) {
-      case "part1": engineData = { part1Questions: toReadingPart1(questions) }; break;
+      case "part1": engineData = { part1Question: toReadingPart1(questions) }; break;
       case "part2": engineData = { part2Question: toReadingPart2(questions) }; break;
       case "part3": engineData = { part3Question: toReadingPart3(questions) }; break;
       case "part4": engineData = { part4Question: toReadingPart4(questions) }; break;
