@@ -511,21 +511,7 @@ const SpeakingExamEngine = ({
               </div>
             )}
 
-            {/* Part 3 two images side by side */}
-            {partType === "part3" && (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <img
-                  src={resolvedImg1 || part3Data?.imageUrl1}
-                  alt="Picture 1"
-                  className="w-full rounded-lg object-cover h-56"
-                />
-                <img
-                  src={resolvedImg2 || part3Data?.imageUrl2}
-                  alt="Picture 2"
-                  className="w-full rounded-lg object-cover h-56"
-                />
-              </div>
-            )}
+            {/* Part 3 is handled in part3-quiz phase, not here */}
 
             {/* Part 4 topic + questions */}
             {partType === "part4" && part4Data && (
