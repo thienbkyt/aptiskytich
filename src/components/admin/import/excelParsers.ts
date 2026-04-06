@@ -232,46 +232,68 @@ const parseReadingPart2 = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Reading Part 3: Gap Fill — passage with numbered gaps + 11 word options (A-K) ───
+// ─── Reading Part 3: Opinion Matching — 4 people texts + 7 questions with dropdown answers ───
+// Columns: instruction, texts (A: Name\nText...\nB: Name\nText...), questions_answers (Question?: Answer\n...)
 const parseReadingPart3 = (rows: any[]): ParseResult => {
   const errors: { row: number; message: string }[] = [];
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
 
-  const passage = rows[0].passage?.toString().trim() || "";
-  const title = rows[0].title?.toString().trim() || "";
-  const example = rows[0].example?.toString().trim() || "";
+  const first = rows[0];
+  const instruction = first.instruction?.toString().trim() || "Read the texts and then answer the questions below.";
+  const textsRaw = first.texts?.toString().trim() || "";
+  const qaRaw = first.questions_answers?.toString().trim() || "";
 
-  if (!passage) errors.push({ row: 2, message: "Dòng 2: Thiếu passage" });
+  // Parse people from texts: "A: Name\nText...\nB: Name\nText..."
+  const people: { name: string; text: string }[] = [];
+  if (textsRaw) {
+    // Split by letter markers: A:, B:, C:, D: at line start
+    const parts = textsRaw.split(/^([A-D]):\s*/m).filter(Boolean);
+    for (let i = 0; i < parts.length; i++) {
+      const marker = parts[i].trim();
+      if (/^[A-D]$/.test(marker) && i + 1 < parts.length) {
+        const block = parts[i + 1].trim();
+        const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
+        const name = lines[0] || marker;
+        const text = lines.slice(1).join("\n");
+        people.push({ name, text });
+        i++; // skip the text block
+      }
+    }
+  }
 
-  // All rows share the same 11 options (A-K), read from first row
-  const options = OPTION_KEYS.map((k) => (rows[0][`option_${k}`] || rows[0][`option_${k.toLowerCase()}`] || "").toString().trim());
+  if (people.length === 0) errors.push({ row: 2, message: "Không tách được danh sách người từ cột texts. Dùng format: A: Tên\\nNội dung\\nB: Tên\\nNội dung" });
 
-  const gaps: { gapNumber: number; correctAnswer: number }[] = [];
+  // Parse questions and answers: "Question text?: AnswerLetter\n..."
+  const statements: { text: string; correctPerson: number }[] = [];
+  if (qaRaw) {
+    const qaLines = qaRaw.split("\n").map(l => l.trim()).filter(Boolean);
+    const personLetters = ["A", "B", "C", "D"];
+    for (const line of qaLines) {
+      // Match: "Question text?: A" or "Question text: B"
+      const match = line.match(/^(.+?):\s*([A-D])\s*$/i);
+      if (match) {
+        const qText = match[1].trim();
+        const ansLetter = match[2].toUpperCase();
+        const personIdx = personLetters.indexOf(ansLetter);
+        statements.push({ text: qText, correctPerson: personIdx >= 0 ? personIdx : 0 });
+      }
+    }
+  }
 
-  rows.forEach((r, i) => {
-    const rowNum = i + 2;
-    const gapNum = Number(r.gap_number);
-    if (isNaN(gapNum)) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu hoặc sai gap_number` }); return; }
-    const ans = r.correct_answer?.toString().toUpperCase().trim();
-    if (!ans || !OPTION_KEYS.includes(ans)) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: correct_answer phải là A-K` }); return; }
-    gaps.push({ gapNumber: gapNum, correctAnswer: OPTION_KEYS.indexOf(ans) });
-  });
+  if (statements.length === 0) errors.push({ row: 2, message: "Không tách được câu hỏi từ cột questions_answers. Dùng format: Who thinks X?: A" });
 
   const questions: ParsedQuestion[] = [{
     order_index: 0,
-    question_text: passage,
-    question_type: "gap_fill_reading",
-    options,
+    question_text: instruction,
+    question_type: "opinion_matching",
+    options: people.map(p => p.name),
     correct_answer: 0,
-    explanation: rows[0].explanation?.toString().trim() || "",
+    explanation: first.explanation?.toString().trim() || "",
     audio_url: null, image_url: null, response_time: null,
     extra_data: {
-      passage,
-      title,
-      example,
-      gaps,
-      optionLabels: OPTION_KEYS,
-      instruction: "Read the text and complete each gap with a word from the list at the bottom of the page.",
+      instruction,
+      people,
+      statements,
     },
   }];
 
