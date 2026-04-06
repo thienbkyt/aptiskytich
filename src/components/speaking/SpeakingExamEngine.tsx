@@ -315,7 +315,7 @@ const SpeakingExamEngine = ({
     const questions = partType === "part1" && part1Data
       ? part1Data.questions
       : partType === "part2" && part2Data ? [part2Data.prompt]
-      : partType === "part3" && part3Data ? [part3Data.prompt]
+      : partType === "part3" && part3Data ? [part3Data.instruction]
       : partType === "part4" && part4Data ? part4Data.questions
       : [];
 
