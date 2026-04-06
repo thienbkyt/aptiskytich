@@ -6,6 +6,7 @@ import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingResults from "./SpeakingResults";
 import SpeakingMicCheck from "./SpeakingMicCheck";
+import SpeakingPart3Compare from "./SpeakingPart3Compare";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +31,7 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
+type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "part3-quiz" | "grading" | "done";
 
 /** Play a short beep using Web Audio API */
 function playBeep(): Promise<void> {
@@ -68,7 +69,7 @@ function speakAsync(text: string): Promise<void> {
 const PART_PROMPTS: Record<SpeakingPartType, string> = {
   part1: "Part One - In this part, I am going to ask you three short questions about yourself and your interests. You will have 30 seconds to reply to each question.\n\nBegin speaking when you hear this sound.",
   part2: "Part Two - In this part, I'm going to ask you to describe a picture. Then I will ask you two questions about it. You will have 45 seconds for each response.\n\nBegin speaking when you hear this sound.",
-  part3: "Part Three - In this part, I'm going to ask you to compare two pictures and then answer a question about them. You will have 45 seconds of preparation and 60 seconds to speak.\n\nBegin speaking when you hear this sound.",
+  part3: "Part Three - In this part, you will read four people's opinions and answer questions about who said what. Choose the correct person for each question.",
   part4: "Part Four - In this part, you will discuss a topic. You will have 60 seconds to prepare and 120 seconds to speak.\n\nBegin speaking when you hear this sound.",
 };
 
@@ -91,6 +92,8 @@ const SpeakingExamEngine = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
   const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
+  const [part3Answers, setPart3Answers] = useState<(string | null)[]>([]);
+  const [part3Submitted, setPart3Submitted] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -129,7 +132,7 @@ const SpeakingExamEngine = ({
   const getCurrentQuestion = () => {
     if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
     if (partType === "part2" && part2Data) return part2Data.prompt;
-    if (partType === "part3" && part3Data) return part3Data.prompt;
+    if (partType === "part3" && part3Data) return part3Data.instruction;
     if (partType === "part4" && part4Data) return part4Data.topic;
     return "";
   };
@@ -137,9 +140,15 @@ const SpeakingExamEngine = ({
   // Resolve images
   useEffect(() => {
     if (part2Data?.imageUrl) resolveImageUrl(part2Data.imageUrl).then(setResolvedImg1);
-    if (part3Data?.imageUrl1) resolveImageUrl(part3Data.imageUrl1).then(setResolvedImg1);
-    if (part3Data?.imageUrl2) resolveImageUrl(part3Data.imageUrl2).then(setResolvedImg2);
-  }, [part2Data, part3Data]);
+  }, [part2Data]);
+
+  // Init part3 answers
+  useEffect(() => {
+    if (partType === "part3" && part3Data) {
+      setPart3Answers(new Array(part3Data.questions.length).fill(null));
+      setPart3Submitted(false);
+    }
+  }, [partType, part3Data]);
 
   // Initialize recordings array
   useEffect(() => {
@@ -164,7 +173,7 @@ const SpeakingExamEngine = ({
     const questionText = (() => {
       if (partType === "part1" && part1Data) return part1Data.questions[currentIndexRef.current];
       if (partType === "part2" && part2Data) return part2Data.prompt;
-      if (partType === "part3" && part3Data) return part3Data.prompt;
+      if (partType === "part3" && part3Data) return part3Data.instruction;
       if (partType === "part4" && part4Data) return part4Data.topic;
       return "";
     })();
@@ -308,7 +317,7 @@ const SpeakingExamEngine = ({
     const questions = partType === "part1" && part1Data
       ? part1Data.questions
       : partType === "part2" && part2Data ? [part2Data.prompt]
-      : partType === "part3" && part3Data ? [part3Data.prompt]
+      : partType === "part3" && part3Data ? [part3Data.instruction]
       : partType === "part4" && part4Data ? part4Data.questions
       : [];
 
@@ -385,9 +394,76 @@ const SpeakingExamEngine = ({
         totalParts={totalParts}
         title={`Speaking Part ${partNumber}`}
         instructions={PART_PROMPTS[partType]}
-        onNext={() => startQuestionFlow()}
+        onNext={() => {
+          if (partType === "part3") {
+            setPhase("part3-quiz");
+          } else {
+            startQuestionFlow();
+          }
+        }}
         onExit={handleExit}
       />
+    );
+  }
+
+  // Part 3 quiz phase (opinion matching with dropdowns)
+  if (phase === "part3-quiz" && part3Data) {
+    const handlePart3Answer = (qi: number, personName: string) => {
+      setPart3Answers(prev => {
+        const next = [...prev];
+        next[qi] = personName;
+        return next;
+      });
+    };
+
+    const handlePart3Submit = () => {
+      setPart3Submitted(true);
+    };
+
+    const handlePart3Finish = () => {
+      // Calculate score
+      const correct = part3Data.questions.reduce((acc, q, i) => {
+        return acc + (part3Answers[i] === q.correctPerson ? 1 : 0);
+      }, 0);
+      onComplete?.();
+      setPhase("done");
+    };
+
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
+        <div className="flex-1 px-4 pt-8 pb-20 max-w-4xl mx-auto w-full">
+          <div className="bg-white rounded-xl shadow-sm p-8">
+            <p className="text-xs text-gray-500 mb-1">Speaking</p>
+            <p className="text-sm font-bold text-gray-900 mb-6">Part {partNumber} of {totalParts}</p>
+            <SpeakingPart3Compare
+              data={part3Data}
+              answers={part3Answers}
+              onAnswer={handlePart3Answer}
+              submitted={part3Submitted}
+            />
+            <div className="mt-6 flex justify-end gap-3">
+              {!part3Submitted ? (
+                <button
+                  onClick={handlePart3Submit}
+                  disabled={part3Answers.some(a => a === null)}
+                  className="px-6 py-2.5 rounded-lg text-sm font-medium bg-[#24085a] text-white hover:bg-[#1a0640] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Submit Answers
+                </button>
+              ) : (
+                <button
+                  onClick={handlePart3Finish}
+                  className="px-6 py-2.5 rounded-lg text-sm font-medium bg-[#24085a] text-white hover:bg-[#1a0640] transition-colors"
+                >
+                  Continue
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        {exitDialog}
+      </div>
     );
   }
 
@@ -435,21 +511,7 @@ const SpeakingExamEngine = ({
               </div>
             )}
 
-            {/* Part 3 two images side by side */}
-            {partType === "part3" && (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <img
-                  src={resolvedImg1 || part3Data?.imageUrl1}
-                  alt="Picture 1"
-                  className="w-full rounded-lg object-cover h-56"
-                />
-                <img
-                  src={resolvedImg2 || part3Data?.imageUrl2}
-                  alt="Picture 2"
-                  className="w-full rounded-lg object-cover h-56"
-                />
-              </div>
-            )}
+            {/* Part 3 is handled in part3-quiz phase, not here */}
 
             {/* Part 4 topic + questions */}
             {partType === "part4" && part4Data && (
