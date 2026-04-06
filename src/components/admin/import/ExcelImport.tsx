@@ -90,8 +90,12 @@ const downloadTemplate = async () => {
     {
       name: "R_Part3",
       cols: [
-        { passage: "Occupational stress relates to the physical, emotional and psychological (0)_____ on a person. It can be caused by a/an (12)_____ between a person's ability and the demands of a task. Stressful work environments can cause organisations (13)_____ issues such as lower productivity.", title: "Occupational Stress", example: "Example (0): K - effects", gap_number: 12, option_A: "illness", option_B: "assistance", option_C: "complication", option_D: "survey", option_E: "increasing", option_F: "significant", option_G: "conflict", option_H: "reducing", option_I: "employers", option_J: "management", option_K: "effects", correct_answer: "G", explanation: "conflict = mâu thuẫn giữa khả năng và yêu cầu" },
-        { passage: "", title: "", example: "", gap_number: 13, option_A: "illness", option_B: "assistance", option_C: "complication", option_D: "survey", option_E: "increasing", option_F: "significant", option_G: "conflict", option_H: "reducing", option_I: "employers", option_J: "management", option_K: "effects", correct_answer: "F", explanation: "significant issues = vấn đề đáng kể" },
+        {
+          instruction: "Four people respond in the comments section of an online magazine article about education and work. Read the texts and then answer the questions below.",
+          texts: "A: Petra\nAs you get older, responsibilities like a job and family dominate your life. It can be hard to balance things. Studying at university is demanding. So you should do it at an age when you are independent and carefree.\n\nB: Antonio\nLife doesn't really get serious until you hit your mid-twenties. Before that, try out different things and get some life experience. It's only as you approach your thirties that you need to get serious about your career.\n\nC: Eleanor\nNowadays, it is popular for school leavers to take a break. I think the most important thing is to start working as soon as you can. You need practical experience for your CV.\n\nD: Jermaine\nI think we should all keep learning, but you don't need a piece of paper from an institution to prove it. There are many free courses available online. A lot of young people get into debt because they have to pay for their studies.",
+          questions_answers: "Who thinks you should study when you are older?: B\nWho thinks formal qualifications are too expensive?: D\nWho thinks you should go to university when you are young?: A\nWho thinks you should study independently?: D\nWho thinks you should combine a job with studying?: C\nWho thinks you should choose a course that is practical?: A\nWho thinks you should get a job immediately after leaving school?: C",
+          explanation: "Đọc kỹ ý kiến của từng người và so sánh với các câu hỏi để tìm đáp án phù hợp."
+        },
       ],
     },
     {
