@@ -92,6 +92,8 @@ const SpeakingExamEngine = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
   const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
+  const [part3Answers, setPart3Answers] = useState<(string | null)[]>([]);
+  const [part3Submitted, setPart3Submitted] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
