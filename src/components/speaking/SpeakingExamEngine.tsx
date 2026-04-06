@@ -394,7 +394,13 @@ const SpeakingExamEngine = ({
         totalParts={totalParts}
         title={`Speaking Part ${partNumber}`}
         instructions={PART_PROMPTS[partType]}
-        onNext={() => startQuestionFlow()}
+        onNext={() => {
+          if (partType === "part3") {
+            setPhase("part3-quiz");
+          } else {
+            startQuestionFlow();
+          }
+        }}
         onExit={handleExit}
       />
     );
