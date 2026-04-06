@@ -130,7 +130,7 @@ const SpeakingExamEngine = ({
   const getCurrentQuestion = () => {
     if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
     if (partType === "part2" && part2Data) return part2Data.prompt;
-    if (partType === "part3" && part3Data) return part3Data.prompt;
+    if (partType === "part3" && part3Data) return part3Data.instruction;
     if (partType === "part4" && part4Data) return part4Data.topic;
     return "";
   };
@@ -138,9 +138,15 @@ const SpeakingExamEngine = ({
   // Resolve images
   useEffect(() => {
     if (part2Data?.imageUrl) resolveImageUrl(part2Data.imageUrl).then(setResolvedImg1);
-    if (part3Data?.imageUrl1) resolveImageUrl(part3Data.imageUrl1).then(setResolvedImg1);
-    if (part3Data?.imageUrl2) resolveImageUrl(part3Data.imageUrl2).then(setResolvedImg2);
-  }, [part2Data, part3Data]);
+  }, [part2Data]);
+
+  // Init part3 answers
+  useEffect(() => {
+    if (partType === "part3" && part3Data) {
+      setPart3Answers(new Array(part3Data.questions.length).fill(null));
+      setPart3Submitted(false);
+    }
+  }, [partType, part3Data]);
 
   // Initialize recordings array
   useEffect(() => {
