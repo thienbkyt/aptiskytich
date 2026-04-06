@@ -221,6 +221,11 @@ const ReadingExamEngine = ({
               setP3Answers(n);
             }}
             {...navProps}
+            onPrevious={undefined}
+            onNext={undefined}
+            onSubmit={!submitted ? handleSubmit : undefined}
+            isFirst={true}
+            isLast={true}
           />
         )}
 
