@@ -115,33 +115,35 @@ export const mockPart3Questions: ReadingOpinionQuestion[] = [
   {
     id: 20,
     type: "opinion-matching",
-    instruction: "Read the texts from four people about working from home. Then match each statement to the correct person.",
+    instruction: "Four people respond in the comments section of an online magazine article about education and work. Read the texts and then answer the questions below.",
     people: [
       {
-        name: "Anna",
-        text: "I love working from home because I can manage my own schedule. I'm more productive when I don't have to commute. However, I sometimes miss the social interaction with colleagues.",
+        name: "Petra",
+        text: "As you get older, responsibilities like a job and family dominate your life. It can be hard to balance things. Studying at university is demanding. So you should do it at an age when you are independent and carefree. It is also important to learn how the world of business works.",
       },
       {
-        name: "Ben",
-        text: "Working from home has been challenging for me. I find it hard to separate work and personal life. My home office is in the living room, so there are constant distractions from my family.",
+        name: "Antonio",
+        text: "Life doesn't really get serious until you hit your mid-twenties. Before that, try out different things and get some life experience. It's only as you approach your thirties that you need to get serious about your career. Many colleges offer inexpensive courses for more mature students.",
       },
       {
-        name: "Clara",
-        text: "I prefer a hybrid model — working from home three days and going to the office twice a week. This gives me the best of both worlds: flexibility and face-to-face collaboration.",
+        name: "Eleanor",
+        text: "Nowadays, it is popular for school leavers to take a break before they think about an occupation or a place at university. I think the most important thing is to start working as soon as you can. You need practical experience for your CV, and that can be more valuable than a diploma.",
       },
       {
-        name: "David",
-        text: "I think working from home is the future. Companies should invest in better remote working tools. The traditional office is outdated and unnecessary for most knowledge workers.",
+        name: "Jermaine",
+        text: "I think we should all keep learning, but you don't need a piece of paper from an institution to prove it. There are many free courses available online. A lot of young people get into debt because they have to pay for their studies.",
       },
     ],
     statements: [
-      { text: "This person thinks offices are no longer needed.", correctPerson: 3 },
-      { text: "This person finds it difficult to focus at home.", correctPerson: 1 },
-      { text: "This person likes combining home and office work.", correctPerson: 2 },
-      { text: "This person is more efficient without commuting.", correctPerson: 0 },
-      { text: "This person sometimes feels lonely working remotely.", correctPerson: 0 },
+      { text: "Who thinks you should study when you are older?", correctPerson: 1 },
+      { text: "Who thinks formal qualifications are too expensive?", correctPerson: 3 },
+      { text: "Who thinks you should go to university when you are young?", correctPerson: 0 },
+      { text: "Who thinks you should study independently?", correctPerson: 3 },
+      { text: "Who thinks you should combine a job with studying?", correctPerson: 2 },
+      { text: "Who thinks you should choose a course that is practical?", correctPerson: 0 },
+      { text: "Who thinks you should get a job immediately after leaving school?", correctPerson: 2 },
     ],
-    explanation: "Cần đọc kỹ ý kiến mỗi người và so sánh với các phát biểu để tìm sự tương ứng.",
+    explanation: "Cần đọc kỹ ý kiến mỗi người và so sánh với các câu hỏi để tìm sự tương ứng.",
   },
 ];
 
