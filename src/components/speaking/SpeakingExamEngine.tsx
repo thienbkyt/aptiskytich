@@ -31,7 +31,7 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
+type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "part3-quiz" | "grading" | "done";
 
 /** Play a short beep using Web Audio API */
 function playBeep(): Promise<void> {
