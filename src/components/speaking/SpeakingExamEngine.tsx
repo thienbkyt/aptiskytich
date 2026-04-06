@@ -6,6 +6,7 @@ import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingResults from "./SpeakingResults";
 import SpeakingMicCheck from "./SpeakingMicCheck";
+import SpeakingPart3Compare from "./SpeakingPart3Compare";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import { motion, AnimatePresence } from "framer-motion";
