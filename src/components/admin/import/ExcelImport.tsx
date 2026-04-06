@@ -159,9 +159,13 @@ const downloadTemplate = async () => {
     {
       name: "S_Part3",
       cols: [
-        { question_text: "Describe and compare the two photographs.", image_url_1: "https://example.com/photo1.jpg", image_url_2: "https://example.com/photo2.jpg", sample_answer: "In the first photo..." },
-        { question_text: "Which situation would you prefer? Why?", image_url_1: "", image_url_2: "", sample_answer: "I would prefer..." },
-        { question_text: "What do you think are the advantages and disadvantages of each?", image_url_1: "", image_url_2: "", sample_answer: "The advantages..." },
+        { instruction: "Four people respond in the comments section of an online magazine article about education and work. Read the texts and then answer the questions below.", person_name: "Petra", person_text: "As you get older, responsibilities like a job and family dominate your life...", question_text: "Who thinks you should study when you are older?", correct_person: "Antonio", explanation: "" },
+        { instruction: "", person_name: "Antonio", person_text: "Life doesn't really get serious until you hit your mid-twenties...", question_text: "Who thinks formal qualifications are too expensive?", correct_person: "Jermaine", explanation: "" },
+        { instruction: "", person_name: "Eleanor", person_text: "Nowadays, it is popular for school leavers to take a break...", question_text: "Who thinks you should go to university when you are young?", correct_person: "Petra", explanation: "" },
+        { instruction: "", person_name: "Jermaine", person_text: "I think we should all keep learning, but you don't need a piece of paper...", question_text: "Who thinks you should study independently?", correct_person: "Jermaine", explanation: "" },
+        { instruction: "", person_name: "", person_text: "", question_text: "Who thinks you should combine a job with studying?", correct_person: "Eleanor", explanation: "" },
+        { instruction: "", person_name: "", person_text: "", question_text: "Who thinks you should choose a course that is practical?", correct_person: "Petra", explanation: "" },
+        { instruction: "", person_name: "", person_text: "", question_text: "Who thinks you should get a job immediately after leaving school?", correct_person: "Eleanor", explanation: "" },
       ],
     },
     {
