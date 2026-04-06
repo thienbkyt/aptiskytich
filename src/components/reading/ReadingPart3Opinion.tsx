@@ -51,12 +51,12 @@ const ReadingPart3Opinion = ({
       {/* Instruction */}
       <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{question.instruction}</p>
 
-      {/* People's opinions - 4 cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+      {/* People's opinions - plain text paragraphs like real exam */}
+      <div className="bg-white rounded-xl p-6 shadow-sm mb-6 space-y-5">
         {question.people.map((person, pi) => (
-          <div key={pi} className="bg-white border border-border rounded-xl p-4 shadow-sm">
-            <p className="text-sm font-heading font-bold text-foreground mb-2">{person.name}</p>
-            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{person.text}</p>
+          <div key={pi}>
+            <p className="text-sm font-bold text-foreground mb-1">{person.name}</p>
+            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{person.text}</p>
           </div>
         ))}
       </div>
