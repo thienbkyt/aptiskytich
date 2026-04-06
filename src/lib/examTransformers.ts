@@ -143,11 +143,11 @@ export const toSpeakingPart3 = (rows: ExamQuestionRow[]): SpeakingPart3Data => {
   const first = rows[0];
   const ed = first?.extra_data || {};
   return {
-    instruction: ed.instruction || first?.question_text || "",
-    texts: ed.texts || [],
-    questions: ed.questions || [],
-    prepTime: ed.prepTime ?? 0,
-    speakTime: ed.speakTime ?? 0,
+    imageUrl1: ed.imageUrl1 || first?.image_url || "",
+    imageUrl2: ed.imageUrl2 || "",
+    prompt: first?.question_text || "",
+    prepTime: ed.prepTime ?? 45,
+    speakTime: ed.speakTime ?? 60,
   };
 };
 

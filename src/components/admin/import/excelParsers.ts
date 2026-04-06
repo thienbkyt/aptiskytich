@@ -508,50 +508,30 @@ const parseSpeakingPart2 = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Speaking Part 3: Opinion Matching — 4 people texts + 7 questions with dropdown ───
-// Columns: person_name, person_text, question_text, correct_person
+// ─── Speaking Part 3: 2 photos + 3 questions, 45s each ───
 const parseSpeakingPart3 = (rows: any[]): ParseResult => {
+  const questions: ParsedQuestion[] = [];
   const errors: { row: number; message: string }[] = [];
-  if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
+  const imageUrl1 = rows[0]?.image_url_1?.toString().trim() || null;
+  const imageUrl2 = rows[0]?.image_url_2?.toString().trim() || null;
 
-  const instruction = rows[0]?.instruction?.toString().trim() || "Read the four texts and answer the questions below.";
-
-  // Collect unique persons
-  const personsMap = new Map<string, string>();
-  rows.forEach((r) => {
-    const name = r.person_name?.toString().trim();
-    const text = r.person_text?.toString().trim();
-    if (name && text && !personsMap.has(name)) personsMap.set(name, text);
-  });
-  const texts = Array.from(personsMap.entries()).map(([name, content]) => ({ name, content }));
-
-  // Collect questions
-  const questions: { text: string; correctPerson: string }[] = [];
   rows.forEach((r, i) => {
     const rowNum = i + 2;
     const qt = r.question_text?.toString().trim();
-    const correct = r.correct_person?.toString().trim();
-    if (!qt) return; // skip rows without question
-    if (!correct) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu correct_person` }); return; }
-    if (!Array.from(personsMap.keys()).includes(correct)) {
-      errors.push({ row: rowNum, message: `Dòng ${rowNum}: correct_person "${correct}" không có trong danh sách người` });
-      return;
-    }
-    questions.push({ text: qt, correctPerson: correct });
+    if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu question_text` }); return; }
+    questions.push({
+      order_index: i,
+      question_text: qt,
+      question_type: "speaking",
+      options: [], correct_answer: 0,
+      explanation: r.sample_answer?.toString().trim() || "",
+      audio_url: null, image_url: imageUrl1,
+      response_time: 45,
+      extra_data: { prepTime: 0, speakTime: 45, imageUrl1, imageUrl2 },
+    });
   });
 
-  return {
-    questions: [{
-      order_index: 0,
-      question_text: instruction,
-      question_type: "speaking_opinion_matching",
-      options: [], correct_answer: 0,
-      explanation: rows[0]?.explanation?.toString().trim() || "",
-      audio_url: null, image_url: null, response_time: null,
-      extra_data: { instruction, texts, questions },
-    }],
-    errors,
-  };
+  return { questions, errors };
 };
 
 // ─── Speaking Part 4: abstract topic, 1 min prep, 2 min speak, 3 questions ───

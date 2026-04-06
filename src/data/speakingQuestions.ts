@@ -15,11 +15,11 @@ export interface SpeakingPart2Data {
   speakTime: number;
 }
 
-// Part 3: Opinion Matching – Read 4 people's opinions + answer 7 dropdown questions
+// Part 3: Compare Pictures – Compare two images (45s prep, 60s speak)
 export interface SpeakingPart3Data {
-  instruction: string;
-  texts: { name: string; content: string }[];
-  questions: { text: string; correctPerson: string }[];
+  imageUrl1: string;
+  imageUrl2: string;
+  prompt: string;
   prepTime: number;
   speakTime: number;
 }
@@ -41,8 +41,8 @@ export const mockSpeakingPart1: SpeakingPart1Data = {
     "Where do you come from?",
     "What do you do for a living?",
   ],
-  prepTime: 0,
-  speakTime: 30,
+  prepTime: 0,    // No prep for Part 1
+  speakTime: 30,  // 30 seconds per answer
 };
 
 export const mockSpeakingPart2: SpeakingPart2Data = {
@@ -53,24 +53,11 @@ export const mockSpeakingPart2: SpeakingPart2Data = {
 };
 
 export const mockSpeakingPart3: SpeakingPart3Data = {
-  instruction: "Four people respond in the comments section of an online magazine article about education and work. Read the texts and then answer the questions below.",
-  texts: [
-    { name: "Petra", content: "As you get older, responsibilities like a job and family dominate your life. It can be hard to balance things. Studying at university is demanding. So you should do it at an age when you are independent and carefree. It is also important to learn how the world of business works. Spending unpaid time in a company is a great way to get that experience. Any course that can give you an opportunity to do that is worth considering." },
-    { name: "Antonio", content: "Life doesn't really get serious until you hit your mid-twenties. Before that, try out different things and get some life experience. It's only as you approach your thirties that you need to get serious about your career. That's the time to start thinking about further education. Many colleges offer inexpensive courses for more mature students. Going back to student life for a year is a great idea, and you can then return to the world of work at management level." },
-    { name: "Eleanor", content: "Nowadays, it is popular for school leavers to take a break before they think about an occupation or a place at university. I think the most important thing is to start working as soon as you can. You need practical experience for your CV, and that can be more valuable than a diploma. Nevertheless, your studies do not have to stop just because you are working. Colleges and universities offer options for people who want to do both." },
-    { name: "Jermaine", content: "I think we should all keep learning, but you don't need a piece of paper from an institution to prove it. There are many free courses available online. Of course, not all are good, but a little research will help you identify which one is best for you. A lot of young people get into debt because they have to pay for their studies. With the resources available online these days, you can take control. You won't regret it." },
-  ],
-  questions: [
-    { text: "Who thinks you should study when you are older?", correctPerson: "Antonio" },
-    { text: "Who thinks formal qualifications are too expensive?", correctPerson: "Jermaine" },
-    { text: "Who thinks you should go to university when you are young?", correctPerson: "Petra" },
-    { text: "Who thinks you should study independently?", correctPerson: "Jermaine" },
-    { text: "Who thinks you should combine a job with studying?", correctPerson: "Eleanor" },
-    { text: "Who thinks you should choose a course that is practical?", correctPerson: "Petra" },
-    { text: "Who thinks you should get a job immediately after leaving school?", correctPerson: "Eleanor" },
-  ],
-  prepTime: 0,
-  speakTime: 0,
+  imageUrl1: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800",
+  imageUrl2: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800",
+  prompt: "Compare these two pictures. Talk about the similarities and differences between them.",
+  prepTime: 45,
+  speakTime: 60,
 };
 
 export const mockSpeakingPart4: SpeakingPart4Data = {
