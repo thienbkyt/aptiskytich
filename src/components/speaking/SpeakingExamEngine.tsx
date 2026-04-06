@@ -406,6 +406,67 @@ const SpeakingExamEngine = ({
     );
   }
 
+  // Part 3 quiz phase (opinion matching with dropdowns)
+  if (phase === "part3-quiz" && part3Data) {
+    const handlePart3Answer = (qi: number, personName: string) => {
+      setPart3Answers(prev => {
+        const next = [...prev];
+        next[qi] = personName;
+        return next;
+      });
+    };
+
+    const handlePart3Submit = () => {
+      setPart3Submitted(true);
+    };
+
+    const handlePart3Finish = () => {
+      // Calculate score
+      const correct = part3Data.questions.reduce((acc, q, i) => {
+        return acc + (part3Answers[i] === q.correctPerson ? 1 : 0);
+      }, 0);
+      onComplete?.();
+      setPhase("done");
+    };
+
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
+        <div className="flex-1 px-4 pt-8 pb-20 max-w-4xl mx-auto w-full">
+          <div className="bg-white rounded-xl shadow-sm p-8">
+            <p className="text-xs text-gray-500 mb-1">Speaking</p>
+            <p className="text-sm font-bold text-gray-900 mb-6">Part {partNumber} of {totalParts}</p>
+            <SpeakingPart3Compare
+              data={part3Data}
+              answers={part3Answers}
+              onAnswer={handlePart3Answer}
+              submitted={part3Submitted}
+            />
+            <div className="mt-6 flex justify-end gap-3">
+              {!part3Submitted ? (
+                <button
+                  onClick={handlePart3Submit}
+                  disabled={part3Answers.some(a => a === null)}
+                  className="px-6 py-2.5 rounded-lg text-sm font-medium bg-[#24085a] text-white hover:bg-[#1a0640] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Submit Answers
+                </button>
+              ) : (
+                <button
+                  onClick={handlePart3Finish}
+                  className="px-6 py-2.5 rounded-lg text-sm font-medium bg-[#24085a] text-white hover:bg-[#1a0640] transition-colors"
+                >
+                  Continue
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        {exitDialog}
+      </div>
+    );
+  }
+
   // Grading / Done
   if (phase === "grading" || phase === "done") {
     return (
