@@ -43,7 +43,7 @@ interface FullPracticeState {
 const GrammarVocabulary = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading, page, setPage, totalPages } = useExamSets("grammar_vocab");
+  const { examSets, loading } = useExamSets("grammar_vocab");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
   const [exam, setExam] = useState<ExamState>({
     active: false, questions: [], title: "", showResults: false,
