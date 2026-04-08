@@ -130,7 +130,7 @@ const ReadingPart4Long = ({
                   </button>
 
                   {openDropdown === pIdx && !submitted && (
-                    <div className="absolute z-50 left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                    <div className="absolute z-50 left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-y-visible">
                       {allHeadingTexts.map((heading, hIdx) => (
                         <button
                           key={hIdx}
