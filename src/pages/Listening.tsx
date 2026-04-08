@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Headphones, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
-import ExamPagination from "@/components/ExamPagination";
+
 import ListeningResults from "@/components/listening/ListeningResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
