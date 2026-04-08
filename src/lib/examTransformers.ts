@@ -226,20 +226,17 @@ export const toWritingPart4 = (rows: ExamQuestionRow[]): WritingPart4Data => {
   const ed = first?.extra_data || {};
   return {
     type: "two-emails",
-    instruction: ed.instruction || "Write two emails based on the scenarios below.",
-    informalEmail: ed.informalEmail || {
-      label: "Informal Email (~50 words)",
-      scenario: first?.question_text || "",
-      bulletPoints: [],
-      wordLimit: 50,
-      sampleAnswer: "",
+    scenarioIntro: ed.scenarioIntro || ed.instruction || first?.question_text || "",
+    scenarioEmail: ed.scenarioEmail || "",
+    informalEmail: {
+      instruction: ed.informalEmail?.instruction || ed.informalEmail?.scenario || "",
+      wordLimit: ed.informalEmail?.wordLimit ?? 75,
+      sampleAnswer: ed.informalEmail?.sampleAnswer || "",
     },
-    formalEmail: ed.formalEmail || {
-      label: "Formal Email (~120-150 words)",
-      scenario: rows[1]?.question_text || "",
-      bulletPoints: [],
-      wordLimit: 150,
-      sampleAnswer: "",
+    formalEmail: {
+      instruction: ed.formalEmail?.instruction || ed.formalEmail?.scenario || "",
+      wordLimit: ed.formalEmail?.wordLimit ?? 225,
+      sampleAnswer: ed.formalEmail?.sampleAnswer || "",
     },
   };
 };

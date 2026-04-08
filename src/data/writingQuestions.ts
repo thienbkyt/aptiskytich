@@ -27,18 +27,17 @@ export interface WritingPart3Data {
 // Part 4: Two emails — informal + formal combined
 export interface WritingPart4Data {
   type: "two-emails";
-  instruction: string;
+  /** Role context, e.g. "You are a member of the Travel Club. You have received this email from the club:" */
+  scenarioIntro: string;
+  /** The full email body received from the club */
+  scenarioEmail: string;
   informalEmail: {
-    label: string;
-    scenario: string;
-    bulletPoints: string[];
+    instruction: string;
     wordLimit: number;
     sampleAnswer: string;
   };
   formalEmail: {
-    label: string;
-    scenario: string;
-    bulletPoints: string[];
+    instruction: string;
     wordLimit: number;
     sampleAnswer: string;
   };
@@ -99,28 +98,17 @@ export const mockWritingPart3: WritingPart3Data[] = [
 export const mockWritingPart4: WritingPart4Data[] = [
   {
     type: "two-emails",
-    instruction: "Write two emails based on the scenarios below. The first is an informal email (~50 words) and the second is a formal email (~120-150 words).",
+    scenarioIntro: "You are a member of the Travel Club. You have received this email from the club:",
+    scenarioEmail: "Dear Member,\n\nWe are writing to tell you that the famous travel writer Mr David Price will unfortunately not be able to attend our next club meeting. Although Mr Price will not be there to sign copies of his new book Around The World In Eighty Ways, members of the club will be able to buy a copy at the price of twenty five pounds. If you would like to reserve a copy of the book, please contact the club secretary.\n\nThe President",
     informalEmail: {
-      label: "Informal Email (~50 words)",
-      scenario: "You are organising a surprise birthday party for your friend Tom. Write an email to another friend to invite them.",
-      bulletPoints: [
-        "When and where the party is",
-        "What to bring",
-        "Ask them to keep it a secret",
-      ],
-      wordLimit: 50,
-      sampleAnswer: "Hi Sarah,\n\nI'm organising a surprise birthday party for Tom this Saturday at 7pm at my house. Could you bring some snacks or drinks? Please don't tell Tom — it's a surprise!\n\nHope you can make it!\nAnna",
+      instruction: "Write an email to your friend. Write about your feelings and what you think the club should do about the situation. Write about 50 words. Recommended time: 10 minutes.",
+      wordLimit: 75,
+      sampleAnswer: "Hi Sarah,\n\nI'm really disappointed that Mr Price won't be at the meeting. I was looking forward to meeting him! I think the club should try to reschedule his visit. At least we can still buy the book. Are you going to get one?\n\nLet me know!\nAnna",
     },
     formalEmail: {
-      label: "Formal Email (~120-150 words)",
-      scenario: "You recently stayed at the Grand Hotel and experienced several problems. Write a formal email to the hotel manager to complain.",
-      bulletPoints: [
-        "Explain when you stayed and what room you had",
-        "Describe the problems you experienced",
-        "Say what you would like the hotel to do",
-      ],
-      wordLimit: 150,
-      sampleAnswer: "Dear Sir/Madam,\n\nI am writing to express my dissatisfaction with my recent stay at the Grand Hotel from 15-17 March. I was booked into Room 305.\n\nUnfortunately, I experienced several issues during my stay. Firstly, the room was not clean when I arrived — there were used towels on the floor and the bed had not been made. Secondly, the air conditioning was not working properly, making it very uncomfortable to sleep. Additionally, the breakfast service was extremely slow, and the food was cold.\n\nI would appreciate it if you could offer a partial refund or a complimentary stay to make up for these problems. I have always enjoyed staying at your hotel and hope this was an isolated incident.\n\nI look forward to hearing from you.\n\nYours faithfully,\nJohn Smith",
+      instruction: "Write an email to the president of the club. Write about your feelings and what you think the club should do about the situation. Write 120–150 words. Recommended time: 20 minutes.",
+      wordLimit: 225,
+      sampleAnswer: "Dear Mr/Ms President,\n\nI am writing to express my disappointment regarding the cancellation of Mr David Price's visit to our next club meeting. Many members, including myself, were very excited about this event and had been looking forward to it for some time.\n\nWhile I understand that these situations can be difficult to control, I believe the club should make every effort to reschedule Mr Price's visit in the near future. It would also be helpful if the club could communicate any updates about this matter to all members as soon as possible.\n\nIn the meantime, I appreciate that we will still have the opportunity to purchase his book. However, I would suggest that the club consider offering a small discount as a gesture of goodwill to those members who were particularly affected by this change.\n\nI look forward to hearing from you.\n\nYours sincerely,\nJohn Smith",
     },
   },
 ];

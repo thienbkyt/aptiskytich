@@ -96,8 +96,8 @@ const WritingExamEngine = ({
       return {
         text: `Informal Email:\n${informalAnswer}\n\nFormal Email:\n${formalAnswer}`,
         questions: [
-          `Informal: ${part4Data.informalEmail.scenario}`,
-          `Formal: ${part4Data.formalEmail.scenario}`,
+          `Informal: ${part4Data.informalEmail.instruction}`,
+          `Formal: ${part4Data.formalEmail.instruction}`,
         ],
       };
     }
