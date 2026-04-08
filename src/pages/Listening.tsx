@@ -49,7 +49,7 @@ interface FullPracticeState {
 const Listening = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading, page, setPage, totalPages } = useExamSets("listening");
+  const { examSets, loading } = useExamSets("listening");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("listening");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
