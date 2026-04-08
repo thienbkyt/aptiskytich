@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import RichTextEditor from "@/components/writing/RichTextEditor";
 import type { WritingPart1Data } from "@/data/writingQuestions";
 
 interface Props {
@@ -41,13 +41,11 @@ const WritingPart1Short = ({
             <p className="text-sm font-medium text-foreground mb-3">
               {i + 1}. {q.text}
             </p>
-            <Input
-              value={answers[i] || ""}
-              onChange={(e) => onAnswerChange(i, e.target.value)}
-              placeholder="Type your answer..."
+            <RichTextEditor
+              onTextChange={(val) => onAnswerChange(i, val)}
               disabled={submitted}
-              className="text-sm"
-              maxLength={50}
+              placeholder="Type your answer..."
+              minHeight="60px"
             />
             {submitted && (
               <p className="text-xs text-muted-foreground mt-2">
@@ -58,13 +56,7 @@ const WritingPart1Short = ({
         ))}
       </div>
 
-      <BottomNavBar
-        isFirst={true}
-        isLast={true}
-        onSubmit={!submitted ? onSubmit : undefined}
-        submitLabel="Submit"
-        sections={sections}
-      />
+      <BottomNavBar isFirst={true} isLast={true} onSubmit={!submitted ? onSubmit : undefined} submitLabel="Submit" sections={sections} />
     </div>
   );
 };
