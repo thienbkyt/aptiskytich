@@ -651,29 +651,29 @@ const parseWritingPart1 = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Writing Part 2: Short Text — 20-30 words ───
+// ─── Writing Part 2: Form Fill — 20-30 words ───
+// Excel format: Col A = instruction, Col B = question, Col C = sample_answer
 const parseWritingPart2 = (rows: any[]): ParseResult => {
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
   const r = rows[0];
 
-  const promptQuestions = rows.filter((r) => r.prompt_question?.toString().trim()).map((r) => r.prompt_question.toString().trim());
+  const instruction = (r.instruction || r.question_text || "").toString().trim();
+  const question = (r.question || r.prompt_question || "").toString().trim();
+  const sampleAnswer = (r.sample_answer || "").toString().trim();
 
   return {
     questions: [{
       order_index: 0,
-      question_text: r.social_post_content?.toString().trim() || r.question_text?.toString().trim() || "",
+      question_text: instruction,
       question_type: "writing",
       options: [], correct_answer: 0,
-      explanation: r.sample_answer?.toString().trim() || "",
+      explanation: sampleAnswer,
       audio_url: null, image_url: null, response_time: null,
       extra_data: {
-        socialPost: {
-          author: r.social_post_author?.toString().trim() || "User",
-          content: r.social_post_content?.toString().trim() || "",
-        },
-        promptQuestions,
-        wordLimit: 30,
-        sampleAnswer: r.sample_answer?.toString().trim() || "",
+        instruction,
+        question,
+        wordLimit: 45,
+        sampleAnswer,
       },
     }],
     errors: [],

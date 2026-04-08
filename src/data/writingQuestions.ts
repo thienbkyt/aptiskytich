@@ -63,18 +63,11 @@ export const mockWritingPart1: WritingPart1Data[] = [
 
 export const mockWritingPart2: WritingPart2Data[] = [
   {
-    type: "social-media",
-    instruction: "Read the social media post below and write a response. Use about 20-30 words.",
-    socialPost: {
-      author: "TravelBug_Jenny",
-      content: "Just booked my flight to Japan! 🇯🇵 So excited for cherry blossom season. Has anyone been? Any tips?",
-    },
-    promptQuestions: [
-      "Have you been to Japan or would you like to go?",
-      "Give Jenny a tip or share your opinion.",
-    ],
-    wordLimit: 30,
-    sampleAnswer: "Hi Jenny! I haven't been to Japan yet, but it's on my bucket list. I've heard Kyoto is amazing during cherry blossom season. Have a great trip!",
+    type: "form-fill",
+    instruction: "You are a new member of the Travel Club. Fill in the form. Write in sentences. Use 20–30 words. Recommended time: 7 minutes.",
+    question: "Please tell us why you are interested in travel.",
+    wordLimit: 45,
+    sampleAnswer: "I am interested in travel because I love exploring new cultures and meeting people from different countries. Travelling also helps me relax and learn new things.",
   },
 ];
 

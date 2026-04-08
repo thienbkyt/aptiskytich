@@ -198,11 +198,10 @@ export const toWritingPart2 = (rows: ExamQuestionRow[]): WritingPart2Data => {
   const first = rows[0];
   const ed = first?.extra_data || {};
   return {
-    type: "social-media",
-    instruction: ed.instruction || "Read the social media post below and write a response. Use about 20-30 words.",
-    socialPost: ed.socialPost || { author: "User", content: first?.question_text || "" },
-    promptQuestions: ed.promptQuestions || [],
-    wordLimit: ed.wordLimit ?? 30,
+    type: "form-fill",
+    instruction: ed.instruction || first?.question_text || "Fill in the form. Write in sentences. Use 20–30 words.",
+    question: ed.question || ed.promptQuestions?.[0] || "",
+    wordLimit: ed.wordLimit ?? 45,
     sampleAnswer: ed.sampleAnswer || first?.explanation || "",
   };
 };
