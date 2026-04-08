@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookA, Search, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
-import ExamPagination from "@/components/ExamPagination";
+
 import GrammarResults from "@/components/grammar/GrammarResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
