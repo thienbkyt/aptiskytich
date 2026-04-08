@@ -155,58 +155,23 @@ export const mockPart4Questions: ReadingLongQuestion[] = [
   {
     id: 30,
     type: "long-reading",
-    instruction: "Read the text below and answer the questions.",
-    passage: `The Rise of Electric Vehicles
-
-Electric vehicles (EVs) have become increasingly popular over the past decade. Several factors have contributed to this growth, including government incentives, improving battery technology, and growing environmental awareness among consumers.
-
-One of the main advantages of EVs is their lower operating cost. Electricity is generally cheaper than petrol or diesel, and electric motors require less maintenance than internal combustion engines. Additionally, EVs produce zero direct emissions, making them a cleaner alternative for urban transportation.
-
-However, challenges remain. The initial purchase price of EVs is still higher than comparable petrol cars, although this gap is narrowing. Charging infrastructure is expanding but remains insufficient in many rural areas. Battery range, while improving, is still a concern for long-distance travel.
-
-Despite these challenges, analysts predict that EVs will account for more than 50% of new car sales globally by 2030. Major automakers have announced plans to phase out internal combustion engines entirely within the next two decades. The transition to electric vehicles represents one of the most significant shifts in the automotive industry since the invention of the car itself.`,
-    questions: [
-      {
-        text: "What has NOT contributed to the growth of EVs according to the text?",
-        options: [
-          "Government incentives",
-          "Better battery technology",
-          "Lower fuel prices",
-          "Environmental awareness",
-        ],
-        correct: 2,
-      },
-      {
-        text: "What is mentioned as an advantage of EVs?",
-        options: [
-          "They are cheaper to buy",
-          "They require less maintenance",
-          "They can travel longer distances",
-          "They are faster than petrol cars",
-        ],
-        correct: 1,
-      },
-      {
-        text: "What challenge of EVs is mentioned?",
-        options: [
-          "They are too small",
-          "They are too noisy",
-          "Charging infrastructure is limited in rural areas",
-          "They cannot be used in cities",
-        ],
-        correct: 2,
-      },
-      {
-        text: "What do analysts predict?",
-        options: [
-          "EVs will replace all cars by 2025",
-          "EVs will make up over 50% of new sales by 2030",
-          "Petrol cars will become cheaper",
-          "Battery technology will stop improving",
-        ],
-        correct: 1,
-      },
+    instruction: "Read the passage quickly. Choose a heading for each numbered paragraph (1–7) from the drop-down box. There is one more heading than you need.",
+    title: "The Rise of Electric Vehicles",
+    passage: "",
+    paragraphs: [
+      { index: 1, text: "Electric vehicles (EVs) have become increasingly popular over the past decade. Several factors have contributed to this growth, including government incentives, improving battery technology, and growing environmental awareness among consumers." },
+      { index: 2, text: "One of the main advantages of EVs is their lower operating cost. Electricity is generally cheaper than petrol or diesel, and electric motors require less maintenance than internal combustion engines." },
+      { index: 3, text: "However, challenges remain. The initial purchase price of EVs is still higher than comparable petrol cars, although this gap is narrowing. Charging infrastructure is expanding but remains insufficient in many rural areas." },
+      { index: 4, text: "Despite these challenges, analysts predict that EVs will account for more than 50% of new car sales globally by 2030. Major automakers have announced plans to phase out internal combustion engines entirely." },
     ],
-    explanation: "Bài đọc về xu hướng xe điện — cần nắm được ý chính, ưu/nhược điểm và dự đoán tương lai.",
+    headings: [
+      { text: "Growing popularity", paragraphIndex: 1 },
+      { text: "Cost benefits", paragraphIndex: 2 },
+      { text: "Remaining obstacles", paragraphIndex: 3 },
+      { text: "A promising future", paragraphIndex: 4 },
+      { text: "Government regulations", paragraphIndex: null },
+    ],
+    questions: [],
+    explanation: "Bài đọc về xu hướng xe điện — cần nắm được ý chính của từng đoạn để gán tiêu đề phù hợp.",
   },
 ];
