@@ -703,41 +703,37 @@ const parseWritingPart3 = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Writing Part 4: Informal (40-50 words) + Formal (120-150 words) ───
+// ─── Writing Part 4: Two emails (scenario-based) ───
 const parseWritingPart4 = (rows: any[]): ParseResult => {
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
 
-  const informal = rows[0];
-  const formal = rows[1] || rows[0];
-
-  const parseBullets = (val: any) => {
-    if (!val) return [];
-    return val.toString().split(/[;\n]/).map((s: string) => s.trim()).filter(Boolean);
-  };
+  const r = rows[0];
+  const scenarioIntro = r.scenario_intro?.toString().trim() || r[Object.keys(r)[0]]?.toString().trim() || "";
+  const scenarioEmail = r.scenario_email?.toString().trim() || r[Object.keys(r)[1]]?.toString().trim() || "";
+  const informalInstruction = r.informal_instruction?.toString().trim() || "Write an email to your friend. Write about your feelings and what you think the club should do about the situation. Write about 50 words. Recommended time: 10 minutes.";
+  const formalInstruction = r.formal_instruction?.toString().trim() || "Write an email to the president of the club. Write about your feelings and what you think the club should do about the situation. Write 120–150 words. Recommended time: 20 minutes.";
+  const sampleAnswer = r.sample_answer?.toString().trim() || r[Object.keys(r)[3]]?.toString().trim() || "";
 
   return {
     questions: [{
       order_index: 0,
-      question_text: informal.scenario?.toString().trim() || "",
+      question_text: scenarioIntro,
       question_type: "writing",
       options: [], correct_answer: 0,
-      explanation: informal.sample_answer?.toString().trim() || "",
+      explanation: sampleAnswer,
       audio_url: null, image_url: null, response_time: null,
       extra_data: {
-        changeInfo: rows[0].change_info?.toString().trim() || "",
+        scenarioIntro,
+        scenarioEmail,
         informalEmail: {
-          label: "Informal Email (40-50 words)",
-          scenario: informal.scenario?.toString().trim() || "",
-          bulletPoints: parseBullets(informal.bullet_points),
-          wordLimit: 50,
-          sampleAnswer: informal.sample_answer?.toString().trim() || "",
+          instruction: informalInstruction,
+          wordLimit: 75,
+          sampleAnswer: "",
         },
         formalEmail: {
-          label: "Formal Email (120-150 words)",
-          scenario: formal.scenario?.toString().trim() || "",
-          bulletPoints: parseBullets(formal.bullet_points),
-          wordLimit: 150,
-          sampleAnswer: formal.sample_answer?.toString().trim() || "",
+          instruction: formalInstruction,
+          wordLimit: 225,
+          sampleAnswer: sampleAnswer,
         },
       },
     }],
