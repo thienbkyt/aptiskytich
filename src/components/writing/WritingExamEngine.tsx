@@ -83,7 +83,7 @@ const WritingExamEngine = ({
     if (partType === "task2" && part2Data) {
       return {
         text: textAnswer,
-        questions: [part2Data.socialPost.content, ...part2Data.promptQuestions],
+        questions: [part2Data.instruction, part2Data.question].filter(Boolean),
       };
     }
     if (partType === "task3" && part3Data) {
