@@ -300,42 +300,85 @@ const parseReadingPart3 = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Reading Part 4: Long Text (~750 words) — match 8 headings to 7 paragraphs ───
-// Columns: passage (row 1 only), paragraph_index (1-7), heading, is_extra (TRUE for the extra heading)
+// ─── Reading Part 4: Heading Matching — match headings to numbered paragraphs ───
+// New format: title (col A), paragraphs (col B, numbered "1. text\n2. text"), headings_answers (col C, "Heading\n" or "Heading: 1\n")
 const parseReadingPart4 = (rows: any[]): ParseResult => {
   const errors: { row: number; message: string }[] = [];
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
 
-  const passage = rows[0].passage?.toString().trim();
-  if (!passage) errors.push({ row: 2, message: "Dòng 2: Thiếu passage" });
+  const first = rows[0];
+  const title = first.title?.toString().trim() || "";
+  const paragraphsRaw = first.paragraphs?.toString().trim() || first.passage?.toString().trim() || "";
+  const headingsRaw = first.headings_answers?.toString().trim() || "";
 
-  const headings: { text: string; paragraphIndex: number | null }[] = [];
-
-  rows.forEach((r, i) => {
-    const rowNum = i + 2;
-    const heading = r.heading?.toString().trim();
-    if (!heading) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu heading` }); return; }
-    const isExtra = r.is_extra?.toString().toLowerCase() === "true" || r.is_extra === true;
-    const paraIdx = isExtra ? null : Number(r.paragraph_index);
-    if (!isExtra && (isNaN(paraIdx!) || paraIdx! < 1)) {
-      errors.push({ row: rowNum, message: `Dòng ${rowNum}: paragraph_index phải là số hoặc đánh dấu is_extra=TRUE` });
-      return;
+  // Parse paragraphs: split by numbered pattern "1. text", "2. text" etc.
+  const paragraphs: { index: number; text: string }[] = [];
+  if (paragraphsRaw) {
+    const parts = paragraphsRaw.split(/(?=^\d+\.\s)/m).filter((s: string) => s.trim());
+    for (const part of parts) {
+      const match = part.match(/^(\d+)\.\s*([\s\S]*)/);
+      if (match) {
+        paragraphs.push({ index: parseInt(match[1]), text: match[2].trim() });
+      }
     }
-    headings.push({ text: heading, paragraphIndex: isExtra ? null : paraIdx! });
-  });
+  }
+  if (paragraphs.length === 0) errors.push({ row: 2, message: "Không tách được đoạn văn. Dùng format: 1. Đoạn văn 1\\n2. Đoạn văn 2..." });
+
+  // Parse headings: each line is either "Heading text" (distractor) or "Heading text: N" (correct for paragraph N)
+  const headings: { text: string; paragraphIndex: number | null }[] = [];
+  if (headingsRaw) {
+    const lines = headingsRaw.split("\n").map((l: string) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      const match = line.match(/^(.+?):\s*(\d+)\s*$/);
+      if (match) {
+        headings.push({ text: match[1].trim(), paragraphIndex: parseInt(match[2]) });
+      } else {
+        headings.push({ text: line.trim(), paragraphIndex: null });
+      }
+    }
+  }
+  if (headings.length === 0) errors.push({ row: 2, message: "Không tách được headings. Dùng format: Heading text\\nHeading text: 1" });
+
+  // Also support legacy format with passage/heading/paragraph_index/is_extra columns
+  if (paragraphs.length === 0 && headings.length === 0 && first.passage && first.heading) {
+    const passage = first.passage?.toString().trim();
+    const legacyHeadings: { text: string; paragraphIndex: number | null }[] = [];
+    rows.forEach((r: any, i: number) => {
+      const heading = r.heading?.toString().trim();
+      if (!heading) return;
+      const isExtra = r.is_extra?.toString().toLowerCase() === "true" || r.is_extra === true;
+      const paraIdx = isExtra ? null : Number(r.paragraph_index);
+      legacyHeadings.push({ text: heading, paragraphIndex: isExtra ? null : (isNaN(paraIdx!) ? null : paraIdx!) });
+    });
+
+    return {
+      questions: [{
+        order_index: 0,
+        question_text: passage || "",
+        question_type: "long_reading",
+        options: legacyHeadings.map(h => h.text),
+        correct_answer: 0,
+        explanation: first.explanation?.toString().trim() || "",
+        audio_url: null, image_url: null, response_time: null,
+        extra_data: { passage, headings: legacyHeadings, instruction: "Match the headings to the correct paragraphs." },
+      }],
+      errors,
+    };
+  }
 
   const questions: ParsedQuestion[] = [{
     order_index: 0,
-    question_text: passage || "",
+    question_text: title || "Reading Part 4",
     question_type: "long_reading",
-    options: headings.map((h) => h.text),
+    options: headings.map(h => h.text),
     correct_answer: 0,
-    explanation: rows[0].explanation?.toString().trim() || "",
+    explanation: first.explanation?.toString().trim() || "",
     audio_url: null, image_url: null, response_time: null,
     extra_data: {
-      passage,
+      title,
+      paragraphs,
       headings,
-      instruction: "Match the headings to the correct paragraphs. One heading is extra.",
+      instruction: first.instruction?.toString().trim() || "Read the passage quickly. Choose a heading for each numbered paragraph from the drop-down box. There is one more heading than you need.",
     },
   }];
 
