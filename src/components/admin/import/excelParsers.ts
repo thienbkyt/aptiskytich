@@ -656,10 +656,12 @@ const parseWritingPart1 = (rows: any[]): ParseResult => {
 const parseWritingPart2 = (rows: any[]): ParseResult => {
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
   const r = rows[0];
+  const keys = Object.keys(r);
 
-  const instruction = (r.instruction || r.question_text || "").toString().trim();
-  const question = (r.question || r.prompt_question || "").toString().trim();
-  const sampleAnswer = (r.sample_answer || "").toString().trim();
+  // Col A = instruction, Col B = question, Col C = sample_answer
+  const instruction = (r.instruction || r.question_text || r[keys[0]] || "").toString().trim();
+  const question = (r.question || r.prompt_question || r[keys[1]] || "").toString().trim();
+  const sampleAnswer = (r.sample_answer || r[keys[2]] || "").toString().trim();
 
   return {
     questions: [{
