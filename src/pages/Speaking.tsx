@@ -49,7 +49,7 @@ interface FullPracticeState {
 const Speaking = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading, page, setPage, totalPages } = useExamSets("speaking");
+  const { examSets, loading } = useExamSets("speaking");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", loadingExam: false,
