@@ -67,6 +67,23 @@ export const toReadingPart4 = (rows: ExamQuestionRow[]): ReadingLongQuestion | n
   if (rows.length === 0) return null;
   const first = rows[0];
   const ed = first.extra_data || {};
+
+  // New heading-matching format
+  if (ed.paragraphs && ed.headings) {
+    return {
+      id: 1,
+      type: "long-reading" as const,
+      instruction: ed.instruction || "Read the passage quickly. Choose a heading for each numbered paragraph (1–7) from the drop-down box. There is one more heading than you need.",
+      passage: ed.passage || first.question_text,
+      title: ed.title || "",
+      paragraphs: ed.paragraphs,
+      headings: ed.headings,
+      questions: [],
+      explanation: first.explanation || "",
+    };
+  }
+
+  // Legacy MCQ format
   return {
     id: 1,
     type: "long-reading" as const,
