@@ -48,14 +48,15 @@ const ReadingExamEngine = ({
   const [p3Answers, setP3Answers] = useState<(number | null)[]>(
     new Array(part3Question?.statements.length || 0).fill(null)
   );
+  const p4Total = part4Question?.paragraphs?.length || part4Question?.questions.length || 0;
   const [p4Answers, setP4Answers] = useState<(number | null)[]>(
-    new Array(part4Question?.questions.length || 0).fill(null)
+    new Array(p4Total).fill(null)
   );
 
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
     : partType === "part2" ? (part2Question?.gaps.length || 0)
     : partType === "part3" ? (part3Question?.statements.length || 0)
-    : (part4Question?.questions.length || 0);
+    : p4Total;
 
   const currentAnswers = partType === "part1" ? p1Answers
     : partType === "part2" ? p2Answers
@@ -96,7 +97,15 @@ const ReadingExamEngine = ({
     } else if (partType === "part3" && part3Question) {
       correct = part3Question.statements.reduce((acc, s, i) => acc + (p3Answers[i] === s.correctPerson ? 1 : 0), 0);
     } else if (partType === "part4" && part4Question) {
-      correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
+      if (part4Question.paragraphs && part4Question.headings) {
+        // New heading-matching format
+        correct = part4Question.paragraphs.reduce((acc, para, pIdx) => {
+          const correctHeadingIdx = part4Question.headings!.findIndex(h => h.paragraphIndex === para.index);
+          return acc + (p4Answers[pIdx] === correctHeadingIdx ? 1 : 0);
+        }, 0);
+      } else {
+        correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
+      }
     }
     onComplete?.(correct, totalQuestions);
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Answers, p3Answers, p4Answers, totalQuestions, onComplete]);
@@ -237,13 +246,18 @@ const ReadingExamEngine = ({
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(qi, ai) => {
+            onAnswer={(pIdx, val) => {
               if (submitted) return;
               const n = [...p4Answers];
-              n[qi] = ai;
+              n[pIdx] = val;
               setP4Answers(n);
             }}
             {...navProps}
+            onPrevious={undefined}
+            onNext={undefined}
+            onSubmit={!submitted ? handleSubmit : undefined}
+            isFirst={true}
+            isLast={true}
           />
         )}
       </div>

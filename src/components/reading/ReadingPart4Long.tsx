@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingLongQuestion } from "@/data/readingQuestions";
@@ -12,7 +12,7 @@ interface Props {
   timeLeft: number;
   totalTime: number;
   submitted: boolean;
-  onAnswer: (qi: number, ai: number) => void;
+  onAnswer: (paragraphIdx: number, headingIdx: number) => void;
   onPrevious?: () => void;
   onNext?: () => void;
   onSubmit?: () => void;
@@ -27,18 +27,34 @@ const ReadingPart4Long = ({
   isFirst, isLast, sections,
 }: Props) => {
   const [bookmarked, setBookmarked] = useState(false);
-  const subQ = question.questions[currentIndex];
-  if (!subQ) return null;
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
 
-  const selected = answers[currentIndex];
+  // New format: paragraphs + headings dropdown
+  const paragraphs: { index: number; text: string }[] = question.paragraphs || [];
+  const headings: { text: string; paragraphIndex: number | null }[] = question.headings || [];
+  const allHeadingTexts = headings.map(h => h.text);
+  const title = question.title || "";
+
+  // Build correct answer map: paragraphArrayIdx -> headingIdx
+  const correctMap: Record<number, number> = {};
+  paragraphs.forEach((p, pIdx) => {
+    const hIdx = headings.findIndex(h => h.paragraphIndex === p.index);
+    if (hIdx >= 0) correctMap[pIdx] = hIdx;
+  });
+
+  const handleSelect = (paragraphArrayIdx: number, headingIdx: number) => {
+    if (submitted) return;
+    onAnswer(paragraphArrayIdx, headingIdx);
+    setOpenDropdown(null);
+  };
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading – Part 4</p>
-          <p className="text-sm text-foreground">
-            Question {currentIndex + 1} of {question.questions.length}
+          <p className="text-sm text-muted-foreground">
+            {paragraphs.length} paragraphs · {allHeadingTexts.length} headings
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -55,73 +71,114 @@ const ReadingPart4Long = ({
         </div>
       </div>
 
-      {/* Passage - always visible */}
-      <div className="bg-card border border-border rounded-xl p-6 mb-4 max-h-[40vh] overflow-y-auto">
-        <p className="text-xs text-muted-foreground mb-2">{question.instruction}</p>
-        <div className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-          {question.passage}
-        </div>
+      {/* Instruction */}
+      <div className="bg-card border border-border rounded-xl p-4 mb-4">
+        <p className="text-sm font-semibold text-foreground">{question.instruction}</p>
       </div>
 
-      {/* Question */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.25 }}
-          className="flex-1"
-        >
-          <div className="bg-background rounded-xl p-6 mb-6">
-            <h2 className="text-sm font-heading font-bold text-foreground mb-4">{subQ.text}</h2>
-            <div className="space-y-3">
-              {subQ.options.map((opt, i) => {
-                let cls = "border-border hover:border-primary/30 text-foreground hover:bg-muted/50";
-                if (submitted) {
-                  if (i === subQ.correct) cls = "border-success bg-success/10 text-success";
-                  else if (i === selected) cls = "border-destructive bg-destructive/10 text-destructive";
-                  else cls = "border-border text-muted-foreground";
-                } else if (selected === i) {
-                  cls = "border-accent bg-accent/15 text-accent-foreground ring-2 ring-accent";
-                }
-                return (
-                  <button
-                    key={i}
-                    onClick={() => !submitted && onAnswer(currentIndex, i)}
-                    disabled={submitted}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
-                  >
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-xs font-bold mr-3">
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                    {opt}
-                    {submitted && i === subQ.correct && <CheckCircle2 className="w-4 h-4 inline ml-2" />}
-                    {submitted && i === selected && i !== subQ.correct && <XCircle className="w-4 h-4 inline ml-2" />}
-                  </button>
-                );
-              })}
-            </div>
+      {/* Title */}
+      {title && (
+        <h2 className="text-2xl font-bold text-foreground mb-6">{title}</h2>
+      )}
 
-            {submitted && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className={`mt-4 p-4 rounded-lg ${
-                  selected === subQ.correct ? "bg-success/10 border border-success/20" : "bg-destructive/10 border border-destructive/20"
-                }`}
-              >
-                <p className={`text-sm font-semibold ${selected === subQ.correct ? "text-success" : "text-destructive"}`}>
-                  {selected === subQ.correct ? "✓ Chính xác!" : "✗ Sai rồi!"}
-                </p>
-                {submitted && question.explanation && (
-                  <p className="text-sm text-muted-foreground mt-1">{question.explanation}</p>
-                )}
-              </motion.div>
-            )}
-          </div>
+      {/* Paragraphs with dropdowns */}
+      <div className="space-y-6">
+        {paragraphs.map((para, pIdx) => {
+          const selected = answers[pIdx];
+          const correctHeadingIdx = correctMap[pIdx];
+          const isCorrect = submitted && selected === correctHeadingIdx;
+          const isWrong = submitted && selected !== null && selected !== correctHeadingIdx;
+
+          return (
+            <motion.div
+              key={pIdx}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: pIdx * 0.05 }}
+              className="bg-card border border-border rounded-xl p-5"
+            >
+              {/* Dropdown for heading selection */}
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-sm font-bold text-foreground min-w-[24px]">{para.index}.</span>
+                <div className="relative flex-1 max-w-sm">
+                  <button
+                    onClick={() => !submitted && setOpenDropdown(openDropdown === pIdx ? null : pIdx)}
+                    disabled={submitted}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border-2 text-sm text-left transition-all ${
+                      submitted
+                        ? isCorrect
+                          ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                          : isWrong
+                            ? "border-destructive bg-destructive/10 text-destructive"
+                            : "border-border text-muted-foreground"
+                        : selected !== null
+                          ? "border-accent bg-accent/15 text-accent-foreground ring-2 ring-accent"
+                          : "border-border text-muted-foreground hover:border-primary/30"
+                    }`}
+                  >
+                    <span className={selected !== null ? "font-medium" : "italic opacity-60"}>
+                      {selected !== null ? allHeadingTexts[selected] : "Choose a heading..."}
+                    </span>
+                    {!submitted && <ChevronDown className="w-4 h-4 shrink-0 ml-2" />}
+                    {submitted && isCorrect && <CheckCircle2 className="w-4 h-4 shrink-0 ml-2 text-green-500" />}
+                    {submitted && isWrong && <XCircle className="w-4 h-4 shrink-0 ml-2 text-destructive" />}
+                  </button>
+
+                  {openDropdown === pIdx && !submitted && (
+                    <div className="absolute z-50 left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                      {allHeadingTexts.map((heading, hIdx) => {
+                        const alreadyUsed = answers.some((a, aIdx) => a === hIdx && aIdx !== pIdx);
+                        return (
+                          <button
+                            key={hIdx}
+                            onClick={() => handleSelect(pIdx, hIdx)}
+                            disabled={alreadyUsed}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                              alreadyUsed
+                                ? "text-muted-foreground/40 cursor-not-allowed bg-muted/30"
+                                : selected === hIdx
+                                  ? "bg-accent/20 text-accent-foreground font-medium"
+                                  : "hover:bg-muted text-foreground"
+                            }`}
+                          >
+                            {heading}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Show correct answer when wrong */}
+              {submitted && isWrong && correctHeadingIdx !== undefined && (
+                <div className="flex items-center gap-2 mb-3 ml-9">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                    {allHeadingTexts[correctHeadingIdx]}
+                  </span>
+                </div>
+              )}
+
+              {/* Paragraph text */}
+              <div className="text-sm text-foreground leading-relaxed whitespace-pre-line pl-9">
+                {para.text}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Explanation */}
+      {submitted && question.explanation && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mt-4 p-4 rounded-lg bg-muted border border-border"
+        >
+          <p className="text-sm text-muted-foreground">{question.explanation}</p>
         </motion.div>
-      </AnimatePresence>
+      )}
 
       <BottomNavBar
         onPrevious={onPrevious}

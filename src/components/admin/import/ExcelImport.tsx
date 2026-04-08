@@ -101,14 +101,13 @@ const downloadTemplate = async () => {
     {
       name: "R_Part4",
       cols: [
-        { passage: "Paste your long reading passage here (~750 words). Each paragraph should be clearly separated.", heading: "The Beginning of Change", paragraph_index: 1, is_extra: false, explanation: "" },
-        { passage: "", heading: "Modern Solutions", paragraph_index: 2, is_extra: false, explanation: "" },
-        { passage: "", heading: "Community Response", paragraph_index: 3, is_extra: false, explanation: "" },
-        { passage: "", heading: "Financial Impact", paragraph_index: 4, is_extra: false, explanation: "" },
-        { passage: "", heading: "Future Plans", paragraph_index: 5, is_extra: false, explanation: "" },
-        { passage: "", heading: "Environmental Concerns", paragraph_index: 6, is_extra: false, explanation: "" },
-        { passage: "", heading: "Final Thoughts", paragraph_index: 7, is_extra: false, explanation: "" },
-        { passage: "", heading: "This heading does not match", paragraph_index: 0, is_extra: true, explanation: "Extra heading" },
+        {
+          title: "Mission to Mars",
+          paragraphs: "1. On 3 June 2010, an international crew of six astronauts entered a spaceship and prepared themselves for a 520-day voyage to the planet Mars and back.\n\n2. Emerging from the spaceship after an exhausting 520 days, Russian commander Alexei Sitev declared the mission finally over.\n\n3. Mars 500 was, in fact, a simulation exercise. The astronauts never even left the ground.\n\n4. All communications between the crew and mission control were subject to a twenty-minute delay.\n\n5. In addition to the discomforts of living in a confined space, the astronauts also had to endure the psychological stresses.\n\n6. The data collected by the experiment is further evidence that human beings are capable of overcoming the pressures of long space flight.\n\n7. Although the dry and dusty landscape of Mars may not be the most suitable spot for future habitation, there are other planets that could sustain human life.",
+          headings_answers: "Life on Mars: 1\nIs space the future for mankind?: 6\nThe difficulties of living in space: 5\nA successful outcome: 2\nA distant new world: 7\nImitating life in space: 3\nA long journey in space: 4\nOnly an experiment",
+          instruction: "Read the passage quickly. Choose a heading for each numbered paragraph (1–7) from the drop-down box. There is one more heading than you need.",
+          explanation: "Mỗi đoạn văn cần được gán một tiêu đề phù hợp. 'Only an experiment' là tiêu đề gây nhiễu."
+        },
       ],
     },
     {
