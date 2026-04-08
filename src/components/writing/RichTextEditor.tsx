@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
 
 interface Props {
@@ -18,6 +18,7 @@ const toolbarButtons = [
 
 const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answer here", minHeight = "120px", wordLimit }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const [wordCount, setWordCount] = useState(0);
 
   const execFormat = useCallback((cmd: string) => {
     document.execCommand(cmd, false);
@@ -25,13 +26,10 @@ const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answe
   }, []);
 
   const handleInput = useCallback(() => {
-    onTextChange(editorRef.current?.innerText || "");
-  }, [onTextChange]);
-
-  const wordCount = (() => {
     const text = editorRef.current?.innerText || "";
-    return text.trim() ? text.trim().split(/\s+/).length : 0;
-  })();
+    onTextChange(text);
+    setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0);
+  }, [onTextChange]);
 
   return (
     <div>
