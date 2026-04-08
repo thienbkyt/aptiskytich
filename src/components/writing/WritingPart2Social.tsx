@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
+import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { WritingPart2Data } from "@/data/writingQuestions";
-import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
 
 interface Props {
   data: WritingPart2Data;
@@ -14,6 +14,13 @@ interface Props {
   onSubmit: () => void;
   sections: any[];
 }
+
+const toolbarButtons = [
+  { cmd: "bold", icon: Bold },
+  { cmd: "italic", icon: Italic },
+  { cmd: "underline", icon: Underline },
+  { cmd: "strikeThrough", icon: Strikethrough },
+];
 
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
@@ -29,16 +36,8 @@ const WritingPart2Social = ({
   }, []);
 
   const handleInput = useCallback(() => {
-    const text = editorRef.current?.innerText || "";
-    onAnswerChange(text);
+    onAnswerChange(editorRef.current?.innerText || "");
   }, [onAnswerChange]);
-
-  const toolbarButtons = [
-    { cmd: "bold", icon: Bold, label: "B" },
-    { cmd: "italic", icon: Italic, label: "I" },
-    { cmd: "underline", icon: Underline, label: "U" },
-    { cmd: "strikeThrough", icon: Strikethrough, label: "S" },
-  ];
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
@@ -49,41 +48,23 @@ const WritingPart2Social = ({
         <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
       </div>
 
-      {/* Instruction (bold) */}
-      <p className="text-sm font-bold text-foreground mb-3 leading-relaxed">
-        {data.instruction}
-      </p>
+      <p className="text-sm font-bold text-foreground mb-3 leading-relaxed">{data.instruction}</p>
+      <p className="text-sm text-foreground mb-4">{data.question}</p>
 
-      {/* Question */}
-      <p className="text-sm text-foreground mb-4">
-        {data.question}
-      </p>
-
-      {/* Toolbar */}
       <div className="flex items-center gap-1 mb-0">
         {toolbarButtons.map(({ cmd, icon: Icon }) => (
-          <button
-            key={cmd}
-            type="button"
-            onClick={() => execFormat(cmd)}
-            disabled={submitted}
-            className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card hover:bg-muted transition-colors disabled:opacity-50"
-          >
+          <button key={cmd} type="button" onClick={() => execFormat(cmd)} disabled={submitted}
+            className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card hover:bg-muted transition-colors disabled:opacity-50">
             <Icon className="w-4 h-4 text-foreground" />
           </button>
         ))}
       </div>
 
-      {/* Editor area */}
       <div className="flex-1 relative">
-        <div
-          ref={editorRef}
-          contentEditable={!submitted}
-          onInput={handleInput}
+        <div ref={editorRef} contentEditable={!submitted} onInput={handleInput}
           data-placeholder="Type your answer here"
           className="min-h-[120px] w-full rounded-b-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
-          suppressContentEditableWarning
-        />
+          suppressContentEditableWarning />
         <div className="flex justify-end mt-1.5">
           <span className="text-xs text-muted-foreground">
             Words <span className="font-semibold text-foreground">{wordCount}</span> / {data.wordLimit}
@@ -98,13 +79,7 @@ const WritingPart2Social = ({
         </div>
       )}
 
-      <BottomNavBar
-        isFirst={true}
-        isLast={true}
-        onSubmit={!submitted ? onSubmit : undefined}
-        submitLabel="Submit"
-        sections={sections}
-      />
+      <BottomNavBar isFirst={true} isLast={true} onSubmit={!submitted ? onSubmit : undefined} submitLabel="Submit" sections={sections} />
     </div>
   );
 };

@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
-import { Textarea } from "@/components/ui/textarea";
-import { WordCounter } from "@/components/writing/WordCounter";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import RichTextEditor from "@/components/writing/RichTextEditor";
 import type { WritingPart3Data } from "@/data/writingQuestions";
 
 interface Props {
@@ -42,16 +41,13 @@ const WritingPart3Questions = ({
             <p className="text-sm font-medium text-foreground mb-3">
               {i + 1}. {q.text}
             </p>
-            <Textarea
-              value={answers[i] || ""}
-              onChange={(e) => onAnswerChange(i, e.target.value)}
-              placeholder="Write your answer here (30-40 words)..."
+            <RichTextEditor
+              onTextChange={(val) => onAnswerChange(i, val)}
               disabled={submitted}
-              className="min-h-[100px] text-sm resize-none"
+              placeholder="Write your answer here (30-40 words)..."
+              minHeight="100px"
+              wordLimit={data.wordLimit}
             />
-            <div className="mt-2">
-              <WordCounter text={answers[i] || ""} limit={data.wordLimit} />
-            </div>
             {submitted && (
               <div className="mt-3 bg-muted/50 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground">
@@ -63,13 +59,7 @@ const WritingPart3Questions = ({
         ))}
       </div>
 
-      <BottomNavBar
-        isFirst={true}
-        isLast={true}
-        onSubmit={!submitted ? onSubmit : undefined}
-        submitLabel="Submit"
-        sections={sections}
-      />
+      <BottomNavBar isFirst={true} isLast={true} onSubmit={!submitted ? onSubmit : undefined} submitLabel="Submit" sections={sections} />
     </div>
   );
 };

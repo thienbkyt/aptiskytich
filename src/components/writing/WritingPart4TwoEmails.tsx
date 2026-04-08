@@ -1,7 +1,6 @@
-import { Textarea } from "@/components/ui/textarea";
-import { WordCounter } from "@/components/writing/WordCounter";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import RichTextEditor from "@/components/writing/RichTextEditor";
 import type { WritingPart4Data } from "@/data/writingQuestions";
 
 interface Props {
@@ -32,7 +31,7 @@ const WritingPart4TwoEmails = ({
         <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
       </div>
 
-      {/* Section 1: Informal Email */}
+      {/* Informal Email */}
       <div className="mb-8">
         <h3 className="text-sm font-heading font-semibold text-foreground mb-3">
           📧 {data.informalEmail.label}
@@ -43,21 +42,16 @@ const WritingPart4TwoEmails = ({
         <div className="mb-3">
           <p className="text-xs text-muted-foreground mb-2">Include the following:</p>
           <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-            {data.informalEmail.bulletPoints.map((bp, i) => (
-              <li key={i}>{bp}</li>
-            ))}
+            {data.informalEmail.bulletPoints.map((bp, i) => <li key={i}>{bp}</li>)}
           </ul>
         </div>
-        <Textarea
-          value={informalAnswer}
-          onChange={(e) => onInformalChange(e.target.value)}
-          placeholder="Write your informal email here..."
+        <RichTextEditor
+          onTextChange={onInformalChange}
           disabled={submitted}
-          className="min-h-[140px] text-sm resize-none"
+          placeholder="Write your informal email here..."
+          minHeight="140px"
+          wordLimit={data.informalEmail.wordLimit}
         />
-        <div className="mt-2">
-          <WordCounter text={informalAnswer} limit={data.informalEmail.wordLimit} />
-        </div>
         {submitted && (
           <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">
             <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
@@ -66,7 +60,7 @@ const WritingPart4TwoEmails = ({
         )}
       </div>
 
-      {/* Section 2: Formal Email */}
+      {/* Formal Email */}
       <div className="mb-4">
         <h3 className="text-sm font-heading font-semibold text-foreground mb-3">
           📄 {data.formalEmail.label}
@@ -77,21 +71,16 @@ const WritingPart4TwoEmails = ({
         <div className="mb-3">
           <p className="text-xs text-muted-foreground mb-2">Include the following:</p>
           <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-            {data.formalEmail.bulletPoints.map((bp, i) => (
-              <li key={i}>{bp}</li>
-            ))}
+            {data.formalEmail.bulletPoints.map((bp, i) => <li key={i}>{bp}</li>)}
           </ul>
         </div>
-        <Textarea
-          value={formalAnswer}
-          onChange={(e) => onFormalChange(e.target.value)}
-          placeholder="Write your formal email here..."
+        <RichTextEditor
+          onTextChange={onFormalChange}
           disabled={submitted}
-          className="min-h-[220px] text-sm resize-none"
+          placeholder="Write your formal email here..."
+          minHeight="220px"
+          wordLimit={data.formalEmail.wordLimit}
         />
-        <div className="mt-2">
-          <WordCounter text={formalAnswer} limit={data.formalEmail.wordLimit} />
-        </div>
         {submitted && (
           <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">
             <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
@@ -100,13 +89,7 @@ const WritingPart4TwoEmails = ({
         )}
       </div>
 
-      <BottomNavBar
-        isFirst={true}
-        isLast={true}
-        onSubmit={!submitted ? onSubmit : undefined}
-        submitLabel="Submit"
-        sections={sections}
-      />
+      <BottomNavBar isFirst={true} isLast={true} onSubmit={!submitted ? onSubmit : undefined} submitLabel="Submit" sections={sections} />
     </div>
   );
 };
