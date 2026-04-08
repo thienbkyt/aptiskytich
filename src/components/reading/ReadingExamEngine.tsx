@@ -246,13 +246,18 @@ const ReadingExamEngine = ({
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(qi, ai) => {
+            onAnswer={(pIdx, val) => {
               if (submitted) return;
               const n = [...p4Answers];
-              n[qi] = ai;
+              n[pIdx] = val;
               setP4Answers(n);
             }}
             {...navProps}
+            onPrevious={undefined}
+            onNext={undefined}
+            onSubmit={!submitted ? handleSubmit : undefined}
+            isFirst={true}
+            isLast={true}
           />
         )}
       </div>
