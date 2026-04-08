@@ -31,12 +31,16 @@ export interface ReadingOpinionQuestion {
   explanation: string;
 }
 
-// Part 4: Long reading — read long text, answer MCQ
+// Part 4: Long reading — match headings to paragraphs via dropdown
 export interface ReadingLongQuestion {
   id: number;
   type: "long-reading";
   passage: string;
   instruction: string;
+  title?: string;
+  paragraphs?: { index: number; text: string }[];
+  headings?: { text: string; paragraphIndex: number | null }[];
+  // Legacy MCQ format (kept for backward compat)
   questions: { text: string; options: string[]; correct: number }[];
   explanation: string;
 }
