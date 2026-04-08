@@ -625,26 +625,26 @@ const parseSpeakingPart4 = (rows: any[]): ParseResult => {
   return { questions, errors };
 };
 
-// ─── Writing Part 1: Word-level — 5 text messages, answer with individual words ───
+// ─── Writing Part 1: Short Answers — 5 questions, 1-5 words each ───
+// Excel format: Col A = question_text, Col B = sample_answer
 const parseWritingPart1 = (rows: any[]): ParseResult => {
   const questions: ParsedQuestion[] = [];
   const errors: { row: number; message: string }[] = [];
 
   rows.forEach((r, i) => {
     const rowNum = i + 2;
-    const qt = r.message_text?.toString().trim() || r.question_text?.toString().trim();
-    if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu message_text` }); return; }
+    const keys = Object.keys(r);
+    const qt = r.question_text?.toString().trim() || r.message_text?.toString().trim() || r[keys[0]]?.toString().trim();
+    if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu question_text` }); return; }
+    const sa = r.sample_answer?.toString().trim() || r[keys[1]]?.toString().trim() || "";
     questions.push({
       order_index: i,
       question_text: qt,
       question_type: "writing",
       options: [], correct_answer: 0,
-      explanation: r.sample_answer?.toString().trim() || "",
+      explanation: sa,
       audio_url: null, image_url: null, response_time: null,
-      extra_data: {
-        sampleAnswer: r.sample_answer?.toString().trim() || "",
-        context: r.context?.toString().trim() || "",
-      },
+      extra_data: { sampleAnswer: sa },
     });
   });
 
@@ -680,23 +680,26 @@ const parseWritingPart2 = (rows: any[]): ParseResult => {
   };
 };
 
-// ─── Writing Part 3: Three Responses — 30-40 words each ───
+// ─── Writing Part 3: Three Questions — 30-40 words each ───
+// Excel format: Col A = question_text, Col B = sample_answer
 const parseWritingPart3 = (rows: any[]): ParseResult => {
   const questions: ParsedQuestion[] = [];
   const errors: { row: number; message: string }[] = [];
 
   rows.forEach((r, i) => {
     const rowNum = i + 2;
-    const qt = r.question_text?.toString().trim();
+    const keys = Object.keys(r);
+    const qt = r.question_text?.toString().trim() || r[keys[0]]?.toString().trim();
     if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu question_text` }); return; }
+    const sa = r.sample_answer?.toString().trim() || r[keys[1]]?.toString().trim() || "";
     questions.push({
       order_index: i,
       question_text: qt,
       question_type: "writing",
       options: [], correct_answer: 0,
-      explanation: r.sample_answer?.toString().trim() || "",
+      explanation: sa,
       audio_url: null, image_url: null, response_time: null,
-      extra_data: { sampleAnswer: r.sample_answer?.toString().trim() || "", wordLimit: 40 },
+      extra_data: { sampleAnswer: sa, wordLimit: 40 },
     });
   });
 
