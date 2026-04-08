@@ -7,12 +7,11 @@ export interface WritingPart1Data {
   questions: { id: number; text: string; sampleAnswer: string }[];
 }
 
-// Part 2: Social media response — write ~25 words responding to a post
+// Part 2: Form fill — write 20-30 words in sentences
 export interface WritingPart2Data {
-  type: "social-media";
+  type: "form-fill";
   instruction: string;
-  socialPost: { author: string; content: string };
-  promptQuestions: string[];
+  question: string;
   wordLimit: number;
   sampleAnswer: string;
 }
