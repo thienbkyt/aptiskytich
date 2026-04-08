@@ -48,14 +48,15 @@ const ReadingExamEngine = ({
   const [p3Answers, setP3Answers] = useState<(number | null)[]>(
     new Array(part3Question?.statements.length || 0).fill(null)
   );
+  const p4Total = part4Question?.paragraphs?.length || part4Question?.questions.length || 0;
   const [p4Answers, setP4Answers] = useState<(number | null)[]>(
-    new Array(part4Question?.questions.length || 0).fill(null)
+    new Array(p4Total).fill(null)
   );
 
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
     : partType === "part2" ? (part2Question?.gaps.length || 0)
     : partType === "part3" ? (part3Question?.statements.length || 0)
-    : (part4Question?.questions.length || 0);
+    : p4Total;
 
   const currentAnswers = partType === "part1" ? p1Answers
     : partType === "part2" ? p2Answers
