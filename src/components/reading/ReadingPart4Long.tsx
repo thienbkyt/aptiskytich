@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -28,14 +28,25 @@ const ReadingPart4Long = ({
 }: Props) => {
   const [bookmarked, setBookmarked] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // New format: paragraphs + headings dropdown
+  // Click outside to close
+  useEffect(() => {
+    if (openDropdown === null) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [openDropdown]);
+
   const paragraphs: { index: number; text: string }[] = question.paragraphs || [];
   const headings: { text: string; paragraphIndex: number | null }[] = question.headings || [];
   const allHeadingTexts = headings.map(h => h.text);
   const title = question.title || "";
 
-  // Build correct answer map: paragraphArrayIdx -> headingIdx
   const correctMap: Record<number, number> = {};
   paragraphs.forEach((p, pIdx) => {
     const hIdx = headings.findIndex(h => h.paragraphIndex === p.index);
@@ -49,7 +60,7 @@ const ReadingPart4Long = ({
   };
 
   return (
-    <div className="min-h-[70vh] flex flex-col pb-20">
+    <div className="min-h-[70vh] flex flex-col pb-20" ref={containerRef}>
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading – Part 4</p>
@@ -71,17 +82,14 @@ const ReadingPart4Long = ({
         </div>
       </div>
 
-      {/* Instruction */}
       <div className="bg-card border border-border rounded-xl p-4 mb-4">
         <p className="text-sm font-semibold text-foreground">{question.instruction}</p>
       </div>
 
-      {/* Title */}
       {title && (
         <h2 className="text-2xl font-bold text-foreground mb-6">{title}</h2>
       )}
 
-      {/* Paragraphs with dropdowns */}
       <div className="space-y-6">
         {paragraphs.map((para, pIdx) => {
           const selected = answers[pIdx];
@@ -97,60 +105,50 @@ const ReadingPart4Long = ({
               transition={{ delay: pIdx * 0.05 }}
               className="bg-card border border-border rounded-xl p-5"
             >
-              {/* Dropdown for heading selection */}
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-sm font-bold text-foreground min-w-[24px]">{para.index}.</span>
                 <div className="relative flex-1 max-w-sm">
                   <button
                     onClick={() => !submitted && setOpenDropdown(openDropdown === pIdx ? null : pIdx)}
                     disabled={submitted}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border-2 text-sm text-left transition-all ${
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm text-left transition-all ${
                       submitted
                         ? isCorrect
                           ? "border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
                           : isWrong
                             ? "border-destructive bg-destructive/10 text-destructive"
                             : "border-border text-muted-foreground"
-                        : selected !== null
-                          ? "border-accent bg-accent/15 text-accent-foreground ring-2 ring-accent"
-                          : "border-border text-muted-foreground hover:border-primary/30"
+                        : "border-border bg-background text-foreground hover:border-muted-foreground/50"
                     }`}
                   >
                     <span className={selected !== null ? "font-medium" : "italic opacity-60"}>
                       {selected !== null ? allHeadingTexts[selected] : "Choose a heading..."}
                     </span>
-                    {!submitted && <ChevronDown className="w-4 h-4 shrink-0 ml-2" />}
+                    {!submitted && <ChevronDown className="w-4 h-4 shrink-0 ml-2 text-muted-foreground" />}
                     {submitted && isCorrect && <CheckCircle2 className="w-4 h-4 shrink-0 ml-2 text-green-500" />}
                     {submitted && isWrong && <XCircle className="w-4 h-4 shrink-0 ml-2 text-destructive" />}
                   </button>
 
                   {openDropdown === pIdx && !submitted && (
                     <div className="absolute z-50 left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-64 overflow-y-auto">
-                      {allHeadingTexts.map((heading, hIdx) => {
-                        const alreadyUsed = answers.some((a, aIdx) => a === hIdx && aIdx !== pIdx);
-                        return (
-                          <button
-                            key={hIdx}
-                            onClick={() => handleSelect(pIdx, hIdx)}
-                            disabled={alreadyUsed}
-                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
-                              alreadyUsed
-                                ? "text-muted-foreground/40 cursor-not-allowed bg-muted/30"
-                                : selected === hIdx
-                                  ? "bg-accent/20 text-accent-foreground font-medium"
-                                  : "hover:bg-muted text-foreground"
-                            }`}
-                          >
-                            {heading}
-                          </button>
-                        );
-                      })}
+                      {allHeadingTexts.map((heading, hIdx) => (
+                        <button
+                          key={hIdx}
+                          onClick={() => handleSelect(pIdx, hIdx)}
+                          className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                            selected === hIdx
+                              ? "bg-muted font-medium text-foreground"
+                              : "hover:bg-muted text-foreground"
+                          }`}
+                        >
+                          {heading}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Show correct answer when wrong */}
               {submitted && isWrong && correctHeadingIdx !== undefined && (
                 <div className="flex items-center gap-2 mb-3 ml-9">
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
@@ -160,7 +158,6 @@ const ReadingPart4Long = ({
                 </div>
               )}
 
-              {/* Paragraph text */}
               <div className="text-sm text-foreground leading-relaxed whitespace-pre-line pl-9">
                 {para.text}
               </div>
@@ -169,7 +166,6 @@ const ReadingPart4Long = ({
         })}
       </div>
 
-      {/* Explanation */}
       {submitted && question.explanation && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
