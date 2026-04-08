@@ -106,6 +106,7 @@ const ReadingExamEngine = ({
       } else {
         correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
       }
+    }
     onComplete?.(correct, totalQuestions);
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Answers, p3Answers, p4Answers, totalQuestions, onComplete]);
 
