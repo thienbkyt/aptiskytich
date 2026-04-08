@@ -304,7 +304,7 @@ const Writing = () => {
             </>
           )}
 
-          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          
         </section>
       </main>
       <Footer />
