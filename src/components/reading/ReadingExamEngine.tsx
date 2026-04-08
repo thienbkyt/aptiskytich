@@ -97,8 +97,15 @@ const ReadingExamEngine = ({
     } else if (partType === "part3" && part3Question) {
       correct = part3Question.statements.reduce((acc, s, i) => acc + (p3Answers[i] === s.correctPerson ? 1 : 0), 0);
     } else if (partType === "part4" && part4Question) {
-      correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
-    }
+      if (part4Question.paragraphs && part4Question.headings) {
+        // New heading-matching format
+        correct = part4Question.paragraphs.reduce((acc, para, pIdx) => {
+          const correctHeadingIdx = part4Question.headings!.findIndex(h => h.paragraphIndex === para.index);
+          return acc + (p4Answers[pIdx] === correctHeadingIdx ? 1 : 0);
+        }, 0);
+      } else {
+        correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
+      }
     onComplete?.(correct, totalQuestions);
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Answers, p3Answers, p4Answers, totalQuestions, onComplete]);
 
