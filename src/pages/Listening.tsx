@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Headphones, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
-import ExamPagination from "@/components/ExamPagination";
+
 import ListeningResults from "@/components/listening/ListeningResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
@@ -49,7 +49,7 @@ interface FullPracticeState {
 const Listening = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading, page, setPage, totalPages } = useExamSets("listening");
+  const { examSets, loading } = useExamSets("listening");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("listening");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
@@ -302,7 +302,7 @@ const Listening = () => {
             </>
           )}
 
-          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          
         </section>
       </main>
       <Footer />

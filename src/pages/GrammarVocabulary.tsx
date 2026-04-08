@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookA, Search, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
-import ExamPagination from "@/components/ExamPagination";
+
 import GrammarResults from "@/components/grammar/GrammarResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
@@ -43,7 +43,7 @@ interface FullPracticeState {
 const GrammarVocabulary = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading, page, setPage, totalPages } = useExamSets("grammar_vocab");
+  const { examSets, loading } = useExamSets("grammar_vocab");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
   const [exam, setExam] = useState<ExamState>({
     active: false, questions: [], title: "", showResults: false,
@@ -284,7 +284,7 @@ const GrammarVocabulary = () => {
             </>
           )}
 
-          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          
         </section>
       </main>
       <Footer />

@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
-import ExamPagination from "@/components/ExamPagination";
+
 import ReadingResults from "@/components/reading/ReadingResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
@@ -49,7 +49,7 @@ interface FullPracticeState {
 const Reading = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
-  const { examSets, loading, page, setPage, totalPages } = useExamSets("reading");
+  const { examSets, loading } = useExamSets("reading");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
@@ -301,7 +301,7 @@ const Reading = () => {
             </>
           )}
 
-          <ExamPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+          
         </section>
       </main>
       <Footer />
