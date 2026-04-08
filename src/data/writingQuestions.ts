@@ -27,18 +27,17 @@ export interface WritingPart3Data {
 // Part 4: Two emails — informal + formal combined
 export interface WritingPart4Data {
   type: "two-emails";
-  instruction: string;
+  /** Role context, e.g. "You are a member of the Travel Club. You have received this email from the club:" */
+  scenarioIntro: string;
+  /** The full email body received from the club */
+  scenarioEmail: string;
   informalEmail: {
-    label: string;
-    scenario: string;
-    bulletPoints: string[];
+    instruction: string;
     wordLimit: number;
     sampleAnswer: string;
   };
   formalEmail: {
-    label: string;
-    scenario: string;
-    bulletPoints: string[];
+    instruction: string;
     wordLimit: number;
     sampleAnswer: string;
   };
