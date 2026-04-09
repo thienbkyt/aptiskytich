@@ -24,7 +24,7 @@ const WritingPart3Questions = ({
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Writing – Part 3</p>
-          <p className="text-sm text-muted-foreground max-w-lg">{data.instruction}</p>
+          <p className="text-sm max-w-lg text-secondary-foreground font-bold">{data.instruction}</p>
         </div>
         <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
       </div>
