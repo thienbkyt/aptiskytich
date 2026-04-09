@@ -24,7 +24,7 @@ const WritingPart1Short = ({
       <div className="flex items-start justify-between mb-6">
         <div>
          <p className="text-sm font-heading font-bold text-foreground">Writing – Part 1</p>
-         <p className="text-sm text-muted-foreground">{data.instruction || "Answer the following questions. Write between 1 and 5 words for each answer."}</p>
+         <p className="text-sm font-bold text-secondary-foreground text-left">{data.instruction || "Answer the following questions. Write between 1 and 5 words for each answer."}</p>
         </div>
         <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
       </div>
