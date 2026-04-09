@@ -692,17 +692,22 @@ const parseWritingPart2 = (rows: any[]): ParseResult => {
 };
 
 // ─── Writing Part 3: Three Questions — 30-40 words each ───
-// Excel format: Col A = question_text, Col B = sample_answer
+// Excel format: Col A = instruction, Col B = question_text, Col C = sample_answer
 const parseWritingPart3 = (rows: any[]): ParseResult => {
   const questions: ParsedQuestion[] = [];
   const errors: { row: number; message: string }[] = [];
 
+  const firstKeys = Object.keys(rows[0] || {});
+  const globalInstruction = (rows[0]?.instruction || rows[0]?.[firstKeys[0]] || "Answer the following three questions. Write between 30 and 40 words for each answer.").toString().trim();
+
   rows.forEach((r, i) => {
     const rowNum = i + 2;
     const keys = Object.keys(r);
-    const qt = r.question_text?.toString().trim() || r[keys[0]]?.toString().trim();
-    if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu question_text` }); return; }
-    const sa = r.sample_answer?.toString().trim() || r[keys[1]]?.toString().trim() || "";
+    const qt = (r.question_text || r[keys[1]] || "").toString().trim();
+    if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu question_text (Cột B)` }); return; }
+    const sa = (r.sample_answer || r[keys[2]] || "").toString().trim();
+    const instruction = (r.instruction || r[keys[0]] || globalInstruction).toString().trim();
+
     questions.push({
       order_index: i,
       question_text: qt,
@@ -710,7 +715,7 @@ const parseWritingPart3 = (rows: any[]): ParseResult => {
       options: [], correct_answer: 0,
       explanation: sa,
       audio_url: null, image_url: null, response_time: null,
-      extra_data: { sampleAnswer: sa, wordLimit: 40 },
+      extra_data: { sampleAnswer: sa, wordLimit: 40, instruction },
     });
   });
 

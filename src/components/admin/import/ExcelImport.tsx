@@ -198,9 +198,9 @@ const downloadTemplate = async () => {
     {
       name: "W_Part3",
       cols: [
-        { question_text: "What do you think about online learning?", sample_answer: "I think online learning is flexible and convenient because students can study anywhere and review lessons easily." },
-        { question_text: "How do you usually study for exams?", sample_answer: "I usually make a study plan, revise my notes every day, and practise with sample tests before the exam." },
-        { question_text: "Do you prefer studying alone or in groups?", sample_answer: "I prefer studying alone because it helps me focus better, but group study is useful for sharing ideas." },
+        { instruction: "Answer the following three questions. Write between 30 and 40 words for each answer.", question_text: "What do you think about online learning?", sample_answer: "I think online learning is flexible and convenient because students can study anywhere and review lessons easily." },
+        { instruction: "Answer the following three questions. Write between 30 and 40 words for each answer.", question_text: "How do you usually study for exams?", sample_answer: "I usually make a study plan, revise my notes every day, and practise with sample tests before the exam." },
+        { instruction: "Answer the following three questions. Write between 30 and 40 words for each answer.", question_text: "Do you prefer studying alone or in groups?", sample_answer: "I prefer studying alone because it helps me focus better, but group study is useful for sharing ideas." },
       ],
     },
     {
