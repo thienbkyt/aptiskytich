@@ -47,7 +47,9 @@ const getFormType = (skill: Skill, part: string): string => {
   if (skill === "reading" && part.includes("3")) return "reading_part3";
   if (skill === "reading" && part.includes("4")) return "reading_part4";
   if (skill === "speaking") return "speaking";
+  if (skill === "writing" && part.includes("1")) return "writing_part1";
   if (skill === "writing" && part.includes("2")) return "writing_part2";
+  if (skill === "writing" && part.includes("3")) return "writing_part3";
   if (skill === "writing" && part.includes("4")) return "writing_part4";
   return "mcq";
 };
