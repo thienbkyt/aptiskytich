@@ -199,8 +199,12 @@ const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions
         return <ReadingPart4Form questions={questions} setQuestions={setQuestions} onImageUpload={handleImageUpload} uploadingIdx={uploadingIdx} />;
       case "speaking":
         return <SpeakingForm questions={questions} setQuestions={setQuestions} part={part} onImageUpload={handleImageUpload} uploadingIdx={uploadingIdx} />;
+      case "writing_part1":
+        return <WritingPart1Form questions={questions} setQuestions={setQuestions} />;
       case "writing_part2":
         return <WritingPart2Form questions={questions} setQuestions={setQuestions} />;
+      case "writing_part3":
+        return <WritingPart3Form questions={questions} setQuestions={setQuestions} />;
       case "writing_part4":
         return <WritingPart4Form questions={questions} setQuestions={setQuestions} />;
       default:
