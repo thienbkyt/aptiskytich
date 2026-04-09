@@ -13,7 +13,9 @@ import ReadingPart2Form from "./forms/ReadingPart2Form";
 import ReadingPart3Form from "./forms/ReadingPart3Form";
 import ReadingPart4Form from "./forms/ReadingPart4Form";
 import SpeakingForm from "./forms/SpeakingForm";
+import WritingPart1Form from "./forms/WritingPart1Form";
 import WritingPart2Form from "./forms/WritingPart2Form";
+import WritingPart3Form from "./forms/WritingPart3Form";
 import WritingPart4Form from "./forms/WritingPart4Form";
 
 interface Props {
@@ -45,7 +47,9 @@ const getFormType = (skill: Skill, part: string): string => {
   if (skill === "reading" && part.includes("3")) return "reading_part3";
   if (skill === "reading" && part.includes("4")) return "reading_part4";
   if (skill === "speaking") return "speaking";
+  if (skill === "writing" && part.includes("1")) return "writing_part1";
   if (skill === "writing" && part.includes("2")) return "writing_part2";
+  if (skill === "writing" && part.includes("3")) return "writing_part3";
   if (skill === "writing" && part.includes("4")) return "writing_part4";
   return "mcq";
 };
@@ -195,8 +199,12 @@ const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions
         return <ReadingPart4Form questions={questions} setQuestions={setQuestions} onImageUpload={handleImageUpload} uploadingIdx={uploadingIdx} />;
       case "speaking":
         return <SpeakingForm questions={questions} setQuestions={setQuestions} part={part} onImageUpload={handleImageUpload} uploadingIdx={uploadingIdx} />;
+      case "writing_part1":
+        return <WritingPart1Form questions={questions} setQuestions={setQuestions} />;
       case "writing_part2":
         return <WritingPart2Form questions={questions} setQuestions={setQuestions} />;
+      case "writing_part3":
+        return <WritingPart3Form questions={questions} setQuestions={setQuestions} />;
       case "writing_part4":
         return <WritingPart4Form questions={questions} setQuestions={setQuestions} />;
       default:
