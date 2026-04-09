@@ -178,32 +178,40 @@ const downloadTemplate = async () => {
     {
       name: "W_Part1",
       cols: [
-        { context: "You have joined a photography club. Other members are chatting.", message_text: "Hi! What's your name?", sample_answer: "My name is..." },
-        { context: "", message_text: "Where are you from?", sample_answer: "Vietnam" },
-        { context: "", message_text: "How long have you been interested in photography?", sample_answer: "Two years" },
-        { context: "", message_text: "What kind of photos do you like?", sample_answer: "Landscape" },
-        { context: "", message_text: "When can you come to the next meeting?", sample_answer: "Saturday" },
+        { question_text: "What is your name?", sample_answer: "My name is Lan." },
+        { question_text: "Where are you from?", sample_answer: "I am from Hanoi." },
+        { question_text: "How long have you been interested in travel?", sample_answer: "For three years." },
+        { question_text: "What kind of trips do you like?", sample_answer: "I like beach holidays." },
+        { question_text: "When can you join the next club meeting?", sample_answer: "I can come on Saturday." },
       ],
     },
     {
       name: "W_Part2",
       cols: [
-        { social_post_author: "John", social_post_content: "Just visited a new café downtown. The coffee was amazing!", prompt_question: "Would you like to go there?", sample_answer: "That sounds great! I'd love to try it..." },
+        {
+          instruction: "You are a new member of the Travel Club. Fill in the form. Write in sentences. Use 20–30 words. Recommended time: 7 minutes.",
+          question: "Please tell us why you are interested in travel.",
+          sample_answer: "I am interested in travel because I enjoy discovering new places, meeting different people, and learning about other cultures.",
+        },
       ],
     },
     {
       name: "W_Part3",
       cols: [
-        { question_text: "What do you think about online learning?", sample_answer: "Online learning has many advantages..." },
-        { question_text: "How do you usually study for exams?", sample_answer: "I usually make a study plan..." },
-        { question_text: "Do you prefer studying alone or in groups?", sample_answer: "I prefer studying alone because..." },
+        { question_text: "What do you think about online learning?", sample_answer: "I think online learning is flexible and convenient because students can study anywhere and review lessons easily." },
+        { question_text: "How do you usually study for exams?", sample_answer: "I usually make a study plan, revise my notes every day, and practise with sample tests before the exam." },
+        { question_text: "Do you prefer studying alone or in groups?", sample_answer: "I prefer studying alone because it helps me focus better, but group study is useful for sharing ideas." },
       ],
     },
     {
       name: "W_Part4",
       cols: [
-        { email_type: "informal", change_info: "Your company has announced that the office will move to a new location next month.", scenario: "Write to your friend who works at the same company about the office move.", bullet_points: "your feelings about the move;how it affects your commute;suggestion to meet up", word_limit: 50, sample_answer: "Hi! Did you hear about the office move..." },
-        { email_type: "formal", change_info: "", scenario: "Write to your manager about the office relocation.", bullet_points: "ask about the new address;request for flexible hours during transition;offer to help with the move", word_limit: 150, sample_answer: "Dear Sir/Madam, I am writing regarding..." },
+        {
+          scenario_intro: "You are a member of the Travel Club. You have received this email from the club:",
+          scenario_email: "Dear Member,\n\nWe are writing to tell you that the famous travel writer Mr David Price will unfortunately not be able to attend our next club meeting. Although Mr Price will not be there to sign copies of his new book Around The World In Eighty Ways, members of the club will be able to buy a copy at the price of twenty five pounds. If you would like to reserve a copy of the book, please contact the club secretary.\n\nThe President",
+          informal_instruction: "Write an email to a friend. Tell your friend about the situation and say what you think about it.",
+          sample_answer: "Dear President,\n\nI am writing because I would like to reserve a copy of Mr David Price's book. Although I am disappointed that he cannot attend the meeting, I am still very interested in buying the book. Please let me know how I can collect it and when payment should be made.\n\nKind regards,\nLan",
+        },
       ],
     },
   ];
