@@ -13,7 +13,9 @@ import ReadingPart2Form from "./forms/ReadingPart2Form";
 import ReadingPart3Form from "./forms/ReadingPart3Form";
 import ReadingPart4Form from "./forms/ReadingPart4Form";
 import SpeakingForm from "./forms/SpeakingForm";
+import WritingPart1Form from "./forms/WritingPart1Form";
 import WritingPart2Form from "./forms/WritingPart2Form";
+import WritingPart3Form from "./forms/WritingPart3Form";
 import WritingPart4Form from "./forms/WritingPart4Form";
 
 interface Props {
