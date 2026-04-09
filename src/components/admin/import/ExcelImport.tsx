@@ -178,11 +178,11 @@ const downloadTemplate = async () => {
     {
       name: "W_Part1",
       cols: [
-        { question_text: "What is your name?", sample_answer: "My name is Lan." },
-        { question_text: "Where are you from?", sample_answer: "I am from Hanoi." },
-        { question_text: "How long have you been interested in travel?", sample_answer: "For three years." },
-        { question_text: "What kind of trips do you like?", sample_answer: "I like beach holidays." },
-        { question_text: "When can you join the next club meeting?", sample_answer: "I can come on Saturday." },
+        { instruction: "Answer the following questions. Write between 1 and 5 words for each answer.", question_text: "What is your name?", sample_answer: "My name is Lan." },
+        { instruction: "Answer the following questions. Write between 1 and 5 words for each answer.", question_text: "Where are you from?", sample_answer: "I am from Hanoi." },
+        { instruction: "Answer the following questions. Write between 1 and 5 words for each answer.", question_text: "How long have you been interested in travel?", sample_answer: "For three years." },
+        { instruction: "Answer the following questions. Write between 1 and 5 words for each answer.", question_text: "What kind of trips do you like?", sample_answer: "I like beach holidays." },
+        { instruction: "Answer the following questions. Write between 1 and 5 words for each answer.", question_text: "When can you join the next club meeting?", sample_answer: "I can come on Saturday." },
       ],
     },
     {
