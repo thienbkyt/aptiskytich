@@ -151,6 +151,7 @@ export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
   return {
     imageUrl: first?.image_url || "",
     prompt: first?.question_text || "",
+    questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 45,
     speakTime: ed.speakTime ?? 45,
   };
