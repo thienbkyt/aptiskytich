@@ -11,6 +11,7 @@ export interface SpeakingPart1Data {
 export interface SpeakingPart2Data {
   imageUrl: string;
   prompt: string;
+  questions: string[];
   prepTime: number;
   speakTime: number;
 }
@@ -48,6 +49,11 @@ export const mockSpeakingPart1: SpeakingPart1Data = {
 export const mockSpeakingPart2: SpeakingPart2Data = {
   imageUrl: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800",
   prompt: "Describe what you can see in this picture. You should talk about the people, the place, and what is happening.",
+  questions: [
+    "Describe what you can see in this picture.",
+    "Why do people enjoy visiting places like this?",
+    "Tell me about the last time you visited a similar place.",
+  ],
   prepTime: 45,
   speakTime: 45,
 };
