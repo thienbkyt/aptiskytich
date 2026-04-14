@@ -63,6 +63,11 @@ export const mockSpeakingPart3: SpeakingPart3Data = {
   imageUrl1: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800",
   imageUrl2: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800",
   prompt: "Compare these two pictures. Talk about the similarities and differences between them.",
+  questions: [
+    "Compare these two pictures. Talk about the similarities and differences between them.",
+    "Which of these activities do you think is more beneficial for health?",
+    "How popular are these activities in your country?",
+  ],
   prepTime: 45,
   speakTime: 60,
 };
