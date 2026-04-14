@@ -425,7 +425,6 @@ const SpeakingExamEngine = ({
             <p className="text-sm font-bold text-gray-900 mb-6">
               {(partType === "part1" || partType === "part2" || partType === "part3") ? "Question" : "Part"} {(partType === "part1" || partType === "part2" || partType === "part3") ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
             </p>
-            </p>
 
             {/* Part 2 image */}
             {partType === "part2" && (
