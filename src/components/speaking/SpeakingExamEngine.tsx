@@ -131,7 +131,7 @@ const SpeakingExamEngine = ({
   const getCurrentQuestion = () => {
     if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
     if (partType === "part2" && part2Data) return part2Data.questions?.[currentIndex] || part2Data.prompt;
-    if (partType === "part3" && part3Data) return part3Data.prompt;
+    if (partType === "part3" && part3Data) return part3Data.questions?.[currentIndex] || part3Data.prompt;
     if (partType === "part4" && part4Data) return part4Data.topic;
     return "";
   };
