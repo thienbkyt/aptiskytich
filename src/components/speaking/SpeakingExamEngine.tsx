@@ -166,7 +166,7 @@ const SpeakingExamEngine = ({
     const questionText = (() => {
       if (partType === "part1" && part1Data) return part1Data.questions[currentIndexRef.current];
       if (partType === "part2" && part2Data) return part2Data.questions?.[currentIndexRef.current] || part2Data.prompt;
-      if (partType === "part3" && part3Data) return part3Data.prompt;
+      if (partType === "part3" && part3Data) return part3Data.questions?.[currentIndexRef.current] || part3Data.prompt;
       if (partType === "part4" && part4Data) return part4Data.topic;
       return "";
     })();
