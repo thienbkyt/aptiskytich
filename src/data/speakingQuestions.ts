@@ -21,6 +21,7 @@ export interface SpeakingPart3Data {
   imageUrl1: string;
   imageUrl2: string;
   prompt: string;
+  questions: string[];
   prepTime: number;
   speakTime: number;
 }
