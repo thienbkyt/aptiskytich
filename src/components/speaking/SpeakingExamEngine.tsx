@@ -310,7 +310,7 @@ const SpeakingExamEngine = ({
     const questions = partType === "part1" && part1Data
       ? part1Data.questions
       : partType === "part2" && part2Data ? (part2Data.questions || [part2Data.prompt])
-      : partType === "part3" && part3Data ? [part3Data.prompt]
+      : partType === "part3" && part3Data ? (part3Data.questions || [part3Data.prompt])
       : partType === "part4" && part4Data ? part4Data.questions
       : [];
 
