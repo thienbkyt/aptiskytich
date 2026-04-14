@@ -108,6 +108,7 @@ const SpeakingExamEngine = ({
   const getTotalQuestions = () => {
     if (partType === "part1") return part1Data?.questions.length || 0;
     if (partType === "part2") return part2Data?.questions?.length || 1;
+    if (partType === "part3") return part3Data?.questions?.length || 1;
     return 1;
   };
 
@@ -130,7 +131,7 @@ const SpeakingExamEngine = ({
   const getCurrentQuestion = () => {
     if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
     if (partType === "part2" && part2Data) return part2Data.questions?.[currentIndex] || part2Data.prompt;
-    if (partType === "part3" && part3Data) return part3Data.prompt;
+    if (partType === "part3" && part3Data) return part3Data.questions?.[currentIndex] || part3Data.prompt;
     if (partType === "part4" && part4Data) return part4Data.topic;
     return "";
   };
@@ -165,7 +166,7 @@ const SpeakingExamEngine = ({
     const questionText = (() => {
       if (partType === "part1" && part1Data) return part1Data.questions[currentIndexRef.current];
       if (partType === "part2" && part2Data) return part2Data.questions?.[currentIndexRef.current] || part2Data.prompt;
-      if (partType === "part3" && part3Data) return part3Data.prompt;
+      if (partType === "part3" && part3Data) return part3Data.questions?.[currentIndexRef.current] || part3Data.prompt;
       if (partType === "part4" && part4Data) return part4Data.topic;
       return "";
     })();
@@ -309,7 +310,7 @@ const SpeakingExamEngine = ({
     const questions = partType === "part1" && part1Data
       ? part1Data.questions
       : partType === "part2" && part2Data ? (part2Data.questions || [part2Data.prompt])
-      : partType === "part3" && part3Data ? [part3Data.prompt]
+      : partType === "part3" && part3Data ? (part3Data.questions || [part3Data.prompt])
       : partType === "part4" && part4Data ? part4Data.questions
       : [];
 
@@ -422,7 +423,7 @@ const SpeakingExamEngine = ({
           <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
             <p className="text-xs text-gray-500 mb-1">Speaking</p>
             <p className="text-sm font-bold text-gray-900 mb-6">
-              {(partType === "part1" || partType === "part2") ? "Question" : "Part"} {(partType === "part1" || partType === "part2") ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
+              {(partType === "part1" || partType === "part2" || partType === "part3") ? "Question" : "Part"} {(partType === "part1" || partType === "part2" || partType === "part3") ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
             </p>
 
             {/* Part 2 image */}
