@@ -423,7 +423,8 @@ const SpeakingExamEngine = ({
           <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
             <p className="text-xs text-gray-500 mb-1">Speaking</p>
             <p className="text-sm font-bold text-gray-900 mb-6">
-              {(partType === "part1" || partType === "part2") ? "Question" : "Part"} {(partType === "part1" || partType === "part2") ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
+              {(partType === "part1" || partType === "part2" || partType === "part3") ? "Question" : "Part"} {(partType === "part1" || partType === "part2" || partType === "part3") ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
+            </p>
             </p>
 
             {/* Part 2 image */}
