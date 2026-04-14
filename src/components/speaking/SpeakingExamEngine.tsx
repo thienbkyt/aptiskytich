@@ -108,6 +108,7 @@ const SpeakingExamEngine = ({
   const getTotalQuestions = () => {
     if (partType === "part1") return part1Data?.questions.length || 0;
     if (partType === "part2") return part2Data?.questions?.length || 1;
+    if (partType === "part3") return part3Data?.questions?.length || 1;
     return 1;
   };
 
