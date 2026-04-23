@@ -72,6 +72,10 @@ const SkillPractice = () => {
   const [quizWords, setQuizWords] = useState<any[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [loadingGame, setLoadingGame] = useState(false);
+  /* ── Matching fullscreen state (My Vocab) ── */
+  const [matchingMode, setMatchingMode] = useState(false);
+  const [matchingWords, setMatchingWords] = useState<any[]>([]);
+  const [loadingMatching, setLoadingMatching] = useState(false);
 
   /* ── Quick view words ── */
   const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
