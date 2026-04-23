@@ -476,13 +476,20 @@ const SkillPractice = () => {
                   <h2 className="font-heading font-bold text-lg text-foreground mb-4 mt-10">
                     Luyện tập từ vựng
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <GameCard
                       title="Flashcards"
                       description="Lật thẻ để ôn lại các từ trong kho cá nhân của bạn"
                       icon={<Sparkles className="w-7 h-7" />}
                       onClick={handleLaunchMyFlashcards}
                       loading={loadingGame}
+                    />
+                    <GameCard
+                      title="Quiz"
+                      description="Kiểm tra từ vựng bằng trắc nghiệm 4 đáp án"
+                      icon={<Brain className="w-7 h-7" />}
+                      onClick={handleLaunchMyQuiz}
+                      loading={loadingQuiz}
                     />
                     <GameCard
                       title="Matching"
