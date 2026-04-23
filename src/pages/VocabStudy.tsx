@@ -41,6 +41,7 @@ const VocabStudy = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
   const [loadingStatus, setLoadingStatus] = useState(true);
+  const [mode, setMode] = useState<StudyMode>("browse");
 
   const { data: sets = [] } = useSystemVocabSets();
   const { data: words = [], isLoading: wordsLoading } = useSystemVocabWords(id);
