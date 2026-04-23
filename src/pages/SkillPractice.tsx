@@ -35,6 +35,7 @@ import { useSystemVocabSets } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import FlashcardMode from "@/components/vocab/FlashcardMode";
 
 /* ───── colour helpers ───── */
 const TEAL = {
@@ -59,6 +60,12 @@ const SkillPractice = () => {
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
+
+  /* ── Flashcard fullscreen state (My Vocab) ── */
+  const [flashcardMode, setFlashcardMode] = useState(false);
+  const [gameWords, setGameWords] = useState<any[]>([]);
+  const [gameLearned, setGameLearned] = useState<Set<string>>(new Set());
+  const [loadingGame, setLoadingGame] = useState(false);
 
   /* ── Quick view words ── */
   const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
@@ -165,6 +172,61 @@ const SkillPractice = () => {
       toast({ title: "Lỗi khi tạo danh sách", variant: "destructive" });
     }
     setCreating(false);
+  };
+
+  /* ── Launch Flashcard for My Vocab ── */
+  const handleLaunchMyFlashcards = async () => {
+    if (!user) {
+      toast({ title: "Vui lòng đăng nhập để dùng tính năng này", variant: "destructive" });
+      return;
+    }
+    setLoadingGame(true);
+    const { data, error } = await supabase
+      .from("vocab_items")
+      .select("id, word, phonetic, meaning, example_en, example_vi, word_family, status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    setLoadingGame(false);
+
+    if (error) {
+      toast({ title: "Không tải được kho từ", variant: "destructive" });
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast({
+        title: "Bạn chưa lưu từ nào. Hãy tra từ khi làm bài để thêm vào kho!",
+      });
+      return;
+    }
+
+    setGameWords(
+      data.map((w: any) => ({
+        id: w.id,
+        word: w.word,
+        phonetic: w.phonetic ?? "",
+        meaning: w.meaning ?? "",
+        example_en: w.example_en ?? "",
+        example_vi: w.example_vi ?? "",
+        word_family: Array.isArray(w.word_family) ? w.word_family : [],
+      })),
+    );
+    setGameLearned(new Set(data.filter((w: any) => w.status === "learned").map((w: any) => w.word)));
+    setFlashcardMode(true);
+  };
+
+  const handleMyFlashcardLearned = async (wordText: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("vocab_items")
+      .update({ status: "learned", last_reviewed_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .eq("word", wordText);
+    if (!error) {
+      setGameLearned((prev) => new Set(prev).add(wordText));
+      // Refresh stats lazily
+      setStats((s) => ({ ...s, learned: s.learned + 1, review: Math.max(0, s.review - 1) }));
+    }
   };
 
   return (
@@ -384,12 +446,10 @@ const SkillPractice = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <GameCard
                       title="Flashcards"
-                      description="Lật thẻ để ôn lại nghĩa và cách dùng từ"
+                      description="Lật thẻ để ôn lại các từ trong kho cá nhân của bạn"
                       icon={<Sparkles className="w-7 h-7" />}
-                      disabled={systemSets.length === 0}
-                      onClick={() =>
-                        systemSets[0] && navigate(`/vocabulary/${systemSets[0].id}?mode=flashcard`)
-                      }
+                      onClick={handleLaunchMyFlashcards}
+                      loading={loadingGame}
                     />
                     <GameCard
                       title="Matching"
@@ -406,6 +466,40 @@ const SkillPractice = () => {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Flashcard fullscreen overlay (My Vocab) */}
+        {flashcardMode && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
+            <div className="border-b border-border bg-card">
+              <div className="section-container py-4 flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFlashcardMode(false)}
+                  className="gap-1.5"
+                >
+                  <X className="w-4 h-4" /> Thoát
+                </Button>
+                <div className="flex-1 min-w-0 text-center">
+                  <h2 className="font-heading font-bold text-lg text-foreground truncate">
+                    Flashcard — {gameWords.length} từ
+                  </h2>
+                </div>
+                <div className="w-[88px]" />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto py-8">
+              <div className="section-container">
+                <FlashcardMode
+                  words={gameWords as any}
+                  learnedWords={gameLearned}
+                  onMarkLearned={handleMyFlashcardLearned}
+                  onBackToList={() => setFlashcardMode(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Create List Modal */}
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -552,31 +646,34 @@ function GameCard({
   icon,
   onClick,
   disabled,
+  loading,
 }: {
   title: string;
   description: string;
   icon: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  loading?: boolean;
 }) {
+  const isInactive = disabled || loading;
   return (
     <Card
-      onClick={disabled ? undefined : onClick}
+      onClick={isInactive ? undefined : onClick}
       className={`border border-border transition-shadow group ${
-        disabled
+        isInactive
           ? "opacity-60 cursor-not-allowed"
           : "hover:shadow-md cursor-pointer"
       }`}
     >
       <CardContent className="p-6 flex items-center gap-5">
         <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-105 transition-transform">
-          {icon}
+          {loading ? <Loader2 className="w-7 h-7 animate-spin" /> : icon}
         </div>
         <div className="flex-1">
           <h3 className="font-heading font-semibold text-foreground">{title}</h3>
           <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
-        {disabled && (
+        {disabled && !loading && (
           <Badge variant="outline" className="text-xs shrink-0">
             Cần có bộ từ
           </Badge>
