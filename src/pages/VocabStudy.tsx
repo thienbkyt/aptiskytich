@@ -189,7 +189,13 @@ const VocabStudy = () => {
         toast({ title: "Không thể lưu từ", description: error.message, variant: "destructive" });
         return;
       }
-      setSavedWords((prev) => new Set(prev).add(w.word));
+      setSavedWordLists((prev) => {
+        const next = new Map(prev);
+        const set = new Set(next.get(w.word) ?? []);
+        set.add(listId);
+        next.set(w.word, set);
+        return next;
+      });
       toast({ title: `Đã lưu "${w.word}" vào ${listName}` });
     },
     [user],
