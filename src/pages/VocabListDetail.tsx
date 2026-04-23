@@ -74,6 +74,7 @@ const VocabListDetail = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const abortRef = useRef(false);
+  const playSessionRef = useRef(0); // increments on every (re)start to invalidate older sessions
 
   /* ── Delete confirmation state ── */
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; word: string } | null>(null);
