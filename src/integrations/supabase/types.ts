@@ -257,6 +257,7 @@ export type Database = {
           created_at: string
           description: string | null
           exam_type: string
+          full_test_category: string | null
           full_test_id: string | null
           full_test_title: string | null
           id: string
@@ -271,6 +272,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           exam_type?: string
+          full_test_category?: string | null
           full_test_id?: string | null
           full_test_title?: string | null
           id?: string
@@ -285,6 +287,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           exam_type?: string
+          full_test_category?: string | null
           full_test_id?: string | null
           full_test_title?: string | null
           id?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.exam_sets ADD COLUMN IF NOT EXISTS full_test_category TEXT;
