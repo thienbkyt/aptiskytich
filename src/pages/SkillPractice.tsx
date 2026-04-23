@@ -611,31 +611,34 @@ function GameCard({
   icon,
   onClick,
   disabled,
+  loading,
 }: {
   title: string;
   description: string;
   icon: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  loading?: boolean;
 }) {
+  const isInactive = disabled || loading;
   return (
     <Card
-      onClick={disabled ? undefined : onClick}
+      onClick={isInactive ? undefined : onClick}
       className={`border border-border transition-shadow group ${
-        disabled
+        isInactive
           ? "opacity-60 cursor-not-allowed"
           : "hover:shadow-md cursor-pointer"
       }`}
     >
       <CardContent className="p-6 flex items-center gap-5">
         <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-105 transition-transform">
-          {icon}
+          {loading ? <Loader2 className="w-7 h-7 animate-spin" /> : icon}
         </div>
         <div className="flex-1">
           <h3 className="font-heading font-semibold text-foreground">{title}</h3>
           <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
         </div>
-        {disabled && (
+        {disabled && !loading && (
           <Badge variant="outline" className="text-xs shrink-0">
             Cần có bộ từ
           </Badge>
