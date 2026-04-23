@@ -87,10 +87,17 @@ const VocabStudy = () => {
         if (listIds.length > 0) {
           const { data: savedRows } = await supabase
             .from("vocab_items")
-            .select("word")
+            .select("word, vocab_set_id")
             .eq("user_id", user.id)
             .in("vocab_set_id", listIds);
-          if (savedRows) setSavedWords(new Set(savedRows.map((r: any) => r.word)));
+          if (savedRows) {
+            const map = new Map<string, Set<string>>();
+            for (const r of savedRows as { word: string; vocab_set_id: string }[]) {
+              if (!map.has(r.word)) map.set(r.word, new Set());
+              map.get(r.word)!.add(r.vocab_set_id);
+            }
+            setSavedWordLists(map);
+          }
         }
       }
       setLoadingStatus(false);
