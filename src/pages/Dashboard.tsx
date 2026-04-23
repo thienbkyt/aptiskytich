@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
@@ -7,29 +9,181 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08 } }),
 };
 
-const mockData = {
-  streak: 5,
-  totalQuestions: 127,
-  accuracy: 72,
-  grammarPct: 78,
-  readingPct: 65,
-  listeningPct: 70,
-  recentTests: [
-    { date: "08/03/2026", score: 16, total: 20, level: "B1" },
-    { date: "05/03/2026", score: 14, total: 20, level: "B1" },
-    { date: "01/03/2026", score: 11, total: 20, level: "A2" },
-  ],
-  weeklyActivity: [3, 5, 2, 8, 4, 6, 0],
+interface RecentTest {
+  date: string;
+  score: number;
+  total: number;
+  level: string;
+}
+
+interface DashboardData {
+  displayName: string;
+  streak: number;
+  totalQuestions: number;
+  accuracy: number;
+  currentLevel: string;
+  grammarPct: number;
+  readingPct: number;
+  listeningPct: number;
+  recentTests: RecentTest[];
+  weeklyActivity: number[];
+}
+
+// Get Monday (start of week) for a given date
+const getStartOfWeek = (date: Date) => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday as start
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getFullYear()}`;
+};
+
+const calcAccuracy = (rows: { is_correct: boolean }[]) => {
+  if (!rows.length) return 0;
+  const correct = rows.filter((r) => r.is_correct).length;
+  return Math.round((correct / rows.length) * 100);
 };
 
 const Dashboard = () => {
-  const d = mockData;
+  const { user, loading: authLoading } = useAuth();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    (async () => {
+      setLoading(true);
+      try {
+        const [profileRes, streakRes, practiceRes, testsRes] = await Promise.all([
+          supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+          supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
+          supabase.from("practice_history").select("skill,is_correct,created_at").eq("user_id", user.id),
+          supabase.from("test_results").select("score,total,level,created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+        ]);
+
+        if (cancelled) return;
+
+        const displayName =
+          profileRes.data?.display_name ||
+          user.email?.split("@")[0] ||
+          "bạn";
+
+        const practice = practiceRes.data || [];
+        const tests = testsRes.data || [];
+
+        // Weekly activity (Mon -> Sun)
+        const weekStart = getStartOfWeek(new Date());
+        const weeklyActivity = Array(7).fill(0);
+        practice.forEach((row) => {
+          const d = new Date(row.created_at);
+          const diffDays = Math.floor((d.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0 && diffDays < 7) {
+            weeklyActivity[diffDays] += 1;
+          }
+        });
+
+        // Skill accuracy
+        const grammarRows = practice.filter((r) => r.skill === "grammar");
+        const readingRows = practice.filter((r) => r.skill === "reading");
+        const listeningRows = practice.filter((r) => r.skill === "listening");
+
+        const recentTests: RecentTest[] = tests.slice(0, 3).map((t) => ({
+          date: formatDate(t.created_at),
+          score: t.score,
+          total: t.total,
+          level: t.level,
+        }));
+
+        setData({
+          displayName,
+          streak: streakRes.data?.current_streak ?? 0,
+          totalQuestions: practice.length,
+          accuracy: calcAccuracy(practice),
+          currentLevel: tests[0]?.level || "—",
+          grammarPct: calcAccuracy(grammarRows),
+          readingPct: calcAccuracy(readingRows),
+          listeningPct: calcAccuracy(listeningRows),
+          recentTests,
+          weeklyActivity,
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-20">
+          <div className="section-container">
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-5 w-96 mb-8" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (loading || !data) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-20">
+          <div className="section-container">
+            <Skeleton className="h-10 w-64 mb-2" />
+            <Skeleton className="h-5 w-96 mb-8" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+              {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="md:col-span-2 space-y-6">
+                <Skeleton className="h-40 rounded-xl" />
+                <Skeleton className="h-64 rounded-xl" />
+                <Skeleton className="h-48 rounded-xl" />
+              </div>
+              <div className="space-y-6">
+                <Skeleton className="h-56 rounded-xl" />
+                <Skeleton className="h-48 rounded-xl" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const d = data;
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,7 +192,7 @@ const Dashboard = () => {
         <div className="section-container">
           <motion.div initial="hidden" animate="visible" className="mb-8">
             <motion.h1 variants={fadeUp} custom={0} className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-1">
-              Xin chào! 👋
+              Xin chào, {d.displayName}! 👋
             </motion.h1>
             <motion.p variants={fadeUp} custom={1} className="text-muted-foreground">
               Tiếp tục luyện tập để đạt mục tiêu Aptis của bạn.
@@ -51,7 +205,7 @@ const Dashboard = () => {
               { icon: Flame, label: "Chuỗi ngày", value: `${d.streak} ngày`, accent: "text-primary" },
               { icon: CheckCircle2, label: "Tổng câu hỏi", value: d.totalQuestions.toString(), accent: "text-primary" },
               { icon: Target, label: "Độ chính xác", value: `${d.accuracy}%`, accent: "text-success" },
-              { icon: TrendingUp, label: "Trình độ", value: d.recentTests[0]?.level || "—", accent: "text-info" },
+              { icon: TrendingUp, label: "Trình độ", value: d.currentLevel, accent: "text-info" },
             ].map((s, i) => (
               <motion.div key={s.label} variants={fadeUp} custom={i + 2} className="glass-card p-6">
                 <s.icon className={`w-6 h-6 ${s.accent} mb-3`} />
@@ -94,51 +248,65 @@ const Dashboard = () => {
                 <h3 className="font-heading font-bold text-foreground mb-5 flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-primary" /> Tiến bộ theo kỹ năng
                 </h3>
-                {[
-                  { label: "Grammar & Vocabulary", pct: d.grammarPct, color: "bg-primary" },
-                  { label: "Reading", pct: d.readingPct, color: "bg-info" },
-                  { label: "Listening", pct: d.listeningPct, color: "bg-warning" },
-                ].map((s) => (
-                  <div key={s.label} className="mb-5 last:mb-0">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-foreground font-medium">{s.label}</span>
-                      <span className="text-muted-foreground">{s.pct}%</span>
-                    </div>
-                    <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${s.pct}%` }}
-                        transition={{ duration: 1, delay: 0.3 }}
-                        className={`h-full ${s.color} rounded-full`}
-                      />
-                    </div>
-                  </div>
-                ))}
-                <div className="mt-5 pt-4 border-t border-border">
-                  <p className="text-sm text-muted-foreground">
-                    <Zap className="w-4 h-4 inline text-primary mr-1" />
-                    Kỹ năng yếu nhất: <strong className="text-foreground">Reading</strong> – Nên luyện thêm!
-                  </p>
-                </div>
+                {(() => {
+                  const skills = [
+                    { label: "Grammar & Vocabulary", pct: d.grammarPct, color: "bg-primary" },
+                    { label: "Reading", pct: d.readingPct, color: "bg-info" },
+                    { label: "Listening", pct: d.listeningPct, color: "bg-warning" },
+                  ];
+                  const weakest = skills.reduce((min, s) => (s.pct < min.pct ? s : min), skills[0]);
+                  return (
+                    <>
+                      {skills.map((s) => (
+                        <div key={s.label} className="mb-5 last:mb-0">
+                          <div className="flex justify-between text-sm mb-2">
+                            <span className="text-foreground font-medium">{s.label}</span>
+                            <span className="text-muted-foreground">{s.pct}%</span>
+                          </div>
+                          <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${s.pct}%` }}
+                              transition={{ duration: 1, delay: 0.3 }}
+                              className={`h-full ${s.color} rounded-full`}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <div className="mt-5 pt-4 border-t border-border">
+                        <p className="text-sm text-muted-foreground">
+                          <Zap className="w-4 h-4 inline text-primary mr-1" />
+                          Kỹ năng yếu nhất: <strong className="text-foreground">{weakest.label}</strong> – Nên luyện thêm!
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </motion.div>
 
               {/* Recent tests */}
               <motion.div variants={fadeUp} custom={8} initial="hidden" animate="visible" className="glass-card p-6">
                 <h3 className="font-heading font-bold text-foreground mb-5">Kết quả gần đây</h3>
-                <div className="space-y-3">
-                  {d.recentTests.map((t, i) => (
-                    <div key={i} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{t.date}</span>
+                {d.recentTests.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Bạn chưa có kết quả thi nào. Hãy thử làm bài thi thử đầu tiên!
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {d.recentTests.map((t, i) => (
+                      <div key={i} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm text-foreground">{t.date}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-foreground">{t.score}/{t.total}</span>
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-primary/10 text-primary">{t.level}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-foreground">{t.score}/{t.total}</span>
-                        <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-primary/10 text-primary">{t.level}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             </div>
 
