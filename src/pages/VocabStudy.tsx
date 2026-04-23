@@ -130,6 +130,36 @@ const VocabStudy = () => {
     ) => {
       if (!user) return;
       setSavingWord(w.word);
+
+      // Check for existing entry in this list to avoid duplicates
+      const { data: existing, error: checkError } = await supabase
+        .from("vocab_items")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("vocab_set_id", listId)
+        .eq("word", w.word)
+        .maybeSingle();
+
+      if (checkError) {
+        setSavingWord(null);
+        toast({ title: "Không thể kiểm tra kho từ", description: checkError.message, variant: "destructive" });
+        return;
+      }
+
+      if (existing) {
+        // Already saved — refresh status to "new" so button reflects saved state
+        if (existing.status !== "new") {
+          await supabase
+            .from("vocab_items")
+            .update({ status: "new", updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        }
+        setSavingWord(null);
+        setSavedWords((prev) => new Set(prev).add(w.word));
+        toast({ title: `"${w.word}" đã có trong ${listName}` });
+        return;
+      }
+
       const { error } = await supabase.from("vocab_items").insert({
         user_id: user.id,
         vocab_set_id: listId,
