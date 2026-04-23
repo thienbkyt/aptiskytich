@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -21,11 +21,13 @@ import {
   Layers,
   List,
   Brain,
+  Shuffle,
 } from "lucide-react";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
+import MatchingMode from "@/components/vocab/MatchingMode";
 
-type StudyMode = "browse" | "flashcard" | "quiz";
+type StudyMode = "browse" | "flashcard" | "quiz" | "matching";
 
 function speak(text: string, lang: "en" | "vi") {
   if (!("speechSynthesis" in window)) return;
@@ -39,11 +41,15 @@ function speak(text: string, lang: "en" | "vi") {
 const VocabStudy = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialMode = (searchParams.get("mode") as StudyMode) || "browse";
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
   const [loadingStatus, setLoadingStatus] = useState(true);
-  const [mode, setMode] = useState<StudyMode>("browse");
+  const [mode, setMode] = useState<StudyMode>(
+    ["browse", "flashcard", "quiz", "matching"].includes(initialMode) ? initialMode : "browse",
+  );
 
   const { data: sets = [] } = useSystemVocabSets();
   const { data: words = [], isLoading: wordsLoading } = useSystemVocabWords(id);
@@ -170,6 +176,16 @@ const VocabStudy = () => {
               >
                 <Brain className="w-4 h-4" /> Quiz
               </button>
+              <button
+                onClick={() => setMode("matching")}
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  mode === "matching"
+                    ? "bg-[hsl(0,98%,40%)] text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Shuffle className="w-4 h-4" /> Matching
+              </button>
             </div>
           </div>
         </div>
@@ -266,9 +282,16 @@ const VocabStudy = () => {
               onBackToList={() => navigate("/vocabulary")}
             />
           </div>
-        ) : (
+        ) : mode === "quiz" ? (
           <div className="section-container py-8">
             <QuizMode
+              words={words}
+              onBackToList={() => navigate("/vocabulary")}
+            />
+          </div>
+        ) : (
+          <div className="section-container py-8">
+            <MatchingMode
               words={words}
               onBackToList={() => navigate("/vocabulary")}
             />
