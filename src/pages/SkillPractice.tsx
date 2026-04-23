@@ -526,12 +526,10 @@ const SkillPractice = () => {
                     />
                     <GameCard
                       title="Matching"
-                      description="Ghép từ với nghĩa đúng trong thời gian giới hạn"
+                      description="Ghép từ tiếng Anh với nghĩa tiếng Việt trong thời gian giới hạn"
                       icon={<Layers className="w-7 h-7" />}
-                      disabled={systemSets.length === 0}
-                      onClick={() =>
-                        systemSets[0] && navigate(`/vocabulary/${systemSets[0].id}?mode=matching`)
-                      }
+                      onClick={handleLaunchMyMatching}
+                      loading={loadingMatching}
                     />
                   </div>
                 </>
