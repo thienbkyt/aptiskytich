@@ -17,9 +17,12 @@ const SKILL_BREAKDOWN = [
   { label: "Writing", time: "50 phút", icon: PenLine, color: "text-pink-500" },
 ];
 
+type TabKey = "aptis" | "key";
+
 const FullTest = () => {
   const { tests, loading } = useFullTests();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>("aptis");
 
   const handleStartTest = (test: FullTestItem) => {
     setActiveTest(test);
