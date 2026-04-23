@@ -172,6 +172,16 @@ const VocabStudy = () => {
               >
                 <Brain className="w-4 h-4" /> Quiz
               </button>
+              <button
+                onClick={() => setMode("matching")}
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  mode === "matching"
+                    ? "bg-[hsl(0,98%,40%)] text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Shuffle className="w-4 h-4" /> Matching
+              </button>
             </div>
           </div>
         </div>
