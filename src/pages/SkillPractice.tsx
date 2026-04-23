@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
+import QuizMode from "@/components/vocab/QuizMode";
 
 /* ───── colour helpers ───── */
 const TEAL = {
@@ -65,6 +66,10 @@ const SkillPractice = () => {
   const [flashcardMode, setFlashcardMode] = useState(false);
   const [gameWords, setGameWords] = useState<any[]>([]);
   const [gameLearned, setGameLearned] = useState<Set<string>>(new Set());
+  /* ── Quiz fullscreen state (My Vocab) ── */
+  const [quizMode, setQuizMode] = useState(false);
+  const [quizWords, setQuizWords] = useState<any[]>([]);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [loadingGame, setLoadingGame] = useState(false);
 
   /* ── Quick view words ── */
@@ -227,6 +232,34 @@ const SkillPractice = () => {
       // Refresh stats lazily
       setStats((s) => ({ ...s, learned: s.learned + 1, review: Math.max(0, s.review - 1) }));
     }
+  };
+
+  /* ── Launch Quiz for My Vocab ── */
+  const handleLaunchMyQuiz = async () => {
+    if (!user) {
+      toast({ title: "Vui lòng đăng nhập để dùng tính năng này", variant: "destructive" });
+      return;
+    }
+    setLoadingQuiz(true);
+    const { data, error } = await supabase
+      .from("vocab_items")
+      .select("id, word, meaning")
+      .eq("user_id", user.id);
+    setLoadingQuiz(false);
+
+    if (error) {
+      toast({ title: "Không tải được kho từ", variant: "destructive" });
+      return;
+    }
+    if (!data || data.length < 4) {
+      toast({ title: "Cần ít nhất 4 từ để làm quiz!", variant: "destructive" });
+      return;
+    }
+
+    setQuizWords(
+      data.map((w: any) => ({ id: w.id, word: w.word, meaning: w.meaning ?? "" })),
+    );
+    setQuizMode(true);
   };
 
   return (
@@ -443,13 +476,20 @@ const SkillPractice = () => {
                   <h2 className="font-heading font-bold text-lg text-foreground mb-4 mt-10">
                     Luyện tập từ vựng
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <GameCard
                       title="Flashcards"
                       description="Lật thẻ để ôn lại các từ trong kho cá nhân của bạn"
                       icon={<Sparkles className="w-7 h-7" />}
                       onClick={handleLaunchMyFlashcards}
                       loading={loadingGame}
+                    />
+                    <GameCard
+                      title="Quiz"
+                      description="Kiểm tra từ vựng bằng trắc nghiệm 4 đáp án"
+                      icon={<Brain className="w-7 h-7" />}
+                      onClick={handleLaunchMyQuiz}
+                      loading={loadingQuiz}
                     />
                     <GameCard
                       title="Matching"
@@ -495,6 +535,36 @@ const SkillPractice = () => {
                   learnedWords={gameLearned}
                   onMarkLearned={handleMyFlashcardLearned}
                   onBackToList={() => setFlashcardMode(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quiz fullscreen overlay (My Vocab) */}
+        {quizMode && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
+            <div className="border-b border-border bg-card">
+              <div className="section-container py-4 flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuizMode(false)}
+                  className="gap-1.5"
+                >
+                  <X className="w-4 h-4" /> Thoát
+                </Button>
+                <div className="flex-1 min-w-0 text-center">
+                  <h2 className="font-heading font-bold text-lg text-foreground truncate">Quiz</h2>
+                </div>
+                <div className="w-[88px]" />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto py-8">
+              <div className="section-container">
+                <QuizMode
+                  words={quizWords as any}
+                  onBackToList={() => setQuizMode(false)}
                 />
               </div>
             </div>
