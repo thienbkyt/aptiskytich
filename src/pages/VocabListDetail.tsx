@@ -20,6 +20,7 @@ import {
   Headphones,
   GripVertical,
   Trash2,
+  Download,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
