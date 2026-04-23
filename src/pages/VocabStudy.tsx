@@ -49,7 +49,7 @@ const VocabStudy = () => {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
-  const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
+  const [savedWordLists, setSavedWordLists] = useState<Map<string, Set<string>>>(new Map());
   const [userLists, setUserLists] = useState<{ id: string; name: string }[]>([]);
   const [savingWord, setSavingWord] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
