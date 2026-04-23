@@ -23,6 +23,7 @@ import {
   FolderPlus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { speakWithTTS } from "@/lib/tts";
 
 /* ─── Types ─── */
 interface DictMeaning {
@@ -56,8 +57,6 @@ const DictionaryContext = createContext<DictionaryContextType | null>(null);
 export const useDictionary = () => useContext(DictionaryContext);
 
 /* ─── TTS (Google Cloud TTS via edge function) ─── */
-import { speakWithTTS } from "@/lib/tts";
-
 function speak(text: string, lang: "en" | "vi") {
   void speakWithTTS(text, lang);
 }
