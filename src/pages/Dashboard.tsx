@@ -37,14 +37,23 @@ interface DashboardData {
   weeklyActivity: number[];
 }
 
-// Get Monday (start of week) for a given date
-const getStartOfWeek = (date: Date) => {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday as start
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+// Vietnam timezone offset: UTC+7
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+// Convert any Date to a "Vietnam wall-clock" Date (values reflect VN local time when read in UTC)
+const toVNDate = (date: Date) => new Date(date.getTime() + VN_OFFSET_MS);
+
+// Returns 0..6 where 0 = Monday ... 6 = Sunday, based on Vietnam local time
+const vnWeekdayIndex = (date: Date) => {
+  const vn = toVNDate(date);
+  const day = vn.getUTCDay(); // 0=Sun ... 6=Sat in VN local
+  return day === 0 ? 6 : day - 1;
+};
+
+// YYYY-MM-DD key for a date in Vietnam local time
+const vnDayKey = (date: Date) => {
+  const vn = toVNDate(date);
+  return `${vn.getUTCFullYear()}-${vn.getUTCMonth()}-${vn.getUTCDate()}`;
 };
 
 const formatDate = (iso: string) => {
