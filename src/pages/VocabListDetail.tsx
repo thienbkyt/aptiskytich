@@ -243,6 +243,58 @@ const VocabListDetail = () => {
     };
   }, []);
 
+  /* ── Download bundled 3R audio ── */
+  const downloadAudio = useCallback(async () => {
+    if (!words.length || downloading) return;
+    setDownloading(true);
+    try {
+      const segments: Array<{ text: string; lang: "en" | "vi"; rate?: number; pauseMs?: number }> = [];
+      words.forEach((item, i) => {
+        segments.push({ text: `Number ${i + 1}.`, lang: "en", pauseMs: 300 });
+        segments.push({ text: item.word, lang: "en", pauseMs: 500 });
+        if (item.meaning) segments.push({ text: item.meaning, lang: "vi", pauseMs: 500 });
+        if (item.example_en) {
+          segments.push({ text: item.example_en, lang: "en", pauseMs: 1500 });
+          segments.push({ text: item.example_en, lang: "en", rate: 0.8, pauseMs: 1000 });
+        }
+      });
+
+      const { data, error } = await supabase.functions.invoke("tts-bundle", {
+        body: {
+          segments,
+          filename: (listName || "audio-3r").toLowerCase().replace(/\s+/g, "-"),
+        },
+      });
+
+      if (error || !data?.url) {
+        throw new Error(error?.message || "Không lấy được file audio");
+      }
+
+      // Trigger download
+      const res = await fetch(data.url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${(listName || "audio-3r").replace(/[^a-zA-Z0-9_-]+/g, "-")}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+      toast({ title: "Đã tải xuống audio 3R" });
+    } catch (e: any) {
+      console.error("[downloadAudio]", e);
+      toast({
+        title: "Không tải được audio",
+        description: e?.message || "Vui lòng thử lại sau.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  }, [words, listName, downloading]);
+
   if (!user) return <Navigate to="/auth" replace />;
 
   const progress = words.length > 0 && currentIndex >= 0
