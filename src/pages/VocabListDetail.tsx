@@ -213,21 +213,21 @@ const VocabListDetail = () => {
 
   const stopPlayback = useCallback(() => {
     abortRef.current = true;
-    window.speechSynthesis.cancel();
+    stopTTS();
     setIsPlaying(false);
     setCurrentIndex(-1);
   }, []);
 
   const skipNext = useCallback(() => {
     if (currentIndex < 0 || currentIndex >= words.length - 1) return;
-    window.speechSynthesis.cancel();
+    stopTTS();
     abortRef.current = true;
     setTimeout(() => playFrom(currentIndex + 1), 100);
   }, [currentIndex, words.length, playFrom]);
 
   const skipPrev = useCallback(() => {
     if (currentIndex <= 0) return;
-    window.speechSynthesis.cancel();
+    stopTTS();
     abortRef.current = true;
     setTimeout(() => playFrom(currentIndex - 1), 100);
   }, [currentIndex, playFrom]);
@@ -235,7 +235,7 @@ const VocabListDetail = () => {
   useEffect(() => {
     return () => {
       abortRef.current = true;
-      window.speechSynthesis.cancel();
+      stopTTS();
     };
   }, []);
 
