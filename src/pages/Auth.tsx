@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { BookOpen, Mail, Lock, User, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
@@ -73,10 +74,15 @@ const Auth = () => {
   };
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin + "/dashboard" },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin + "/dashboard",
     });
+    if (result.error) {
+      toast({ title: "Đăng nhập Google thất bại", description: result.error.message, variant: "destructive" });
+      return;
+    }
+    if (result.redirected) return;
+    navigate("/dashboard");
   };
 
   return (
