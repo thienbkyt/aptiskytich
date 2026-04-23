@@ -60,6 +60,12 @@ const SkillPractice = () => {
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
 
+  /* ── Flashcard fullscreen state (My Vocab) ── */
+  const [flashcardMode, setFlashcardMode] = useState(false);
+  const [gameWords, setGameWords] = useState<any[]>([]);
+  const [gameLearned, setGameLearned] = useState<Set<string>>(new Set());
+  const [loadingGame, setLoadingGame] = useState(false);
+
   /* ── Quick view words ── */
   const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
 
