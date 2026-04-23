@@ -234,6 +234,34 @@ const SkillPractice = () => {
     }
   };
 
+  /* ── Launch Quiz for My Vocab ── */
+  const handleLaunchMyQuiz = async () => {
+    if (!user) {
+      toast({ title: "Vui lòng đăng nhập để dùng tính năng này", variant: "destructive" });
+      return;
+    }
+    setLoadingQuiz(true);
+    const { data, error } = await supabase
+      .from("vocab_items")
+      .select("id, word, meaning")
+      .eq("user_id", user.id);
+    setLoadingQuiz(false);
+
+    if (error) {
+      toast({ title: "Không tải được kho từ", variant: "destructive" });
+      return;
+    }
+    if (!data || data.length < 4) {
+      toast({ title: "Cần ít nhất 4 từ để làm quiz!", variant: "destructive" });
+      return;
+    }
+
+    setQuizWords(
+      data.map((w: any) => ({ id: w.id, word: w.word, meaning: w.meaning ?? "" })),
+    );
+    setQuizMode(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
