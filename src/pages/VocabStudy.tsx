@@ -22,11 +22,18 @@ import {
   List,
   Brain,
   Shuffle,
+  Plus,
 } from "lucide-react";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
 import MatchingMode from "@/components/vocab/MatchingMode";
 import { speakWithTTS } from "@/lib/tts";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type StudyMode = "browse" | "flashcard" | "quiz" | "matching";
 
