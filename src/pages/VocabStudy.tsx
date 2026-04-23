@@ -49,6 +49,9 @@ const VocabStudy = () => {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
+  const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
+  const [userLists, setUserLists] = useState<{ id: string; name: string }[]>([]);
+  const [savingWord, setSavingWord] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [mode, setMode] = useState<StudyMode>(
     ["browse", "flashcard", "quiz", "matching"].includes(initialMode) ? initialMode : "browse",
