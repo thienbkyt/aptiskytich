@@ -36,6 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
+import QuizMode from "@/components/vocab/QuizMode";
 
 /* ───── colour helpers ───── */
 const TEAL = {
