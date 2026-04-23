@@ -278,9 +278,16 @@ const VocabStudy = () => {
               onBackToList={() => navigate("/vocabulary")}
             />
           </div>
-        ) : (
+        ) : mode === "quiz" ? (
           <div className="section-container py-8">
             <QuizMode
+              words={words}
+              onBackToList={() => navigate("/vocabulary")}
+            />
+          </div>
+        ) : (
+          <div className="section-container py-8">
+            <MatchingMode
               words={words}
               onBackToList={() => navigate("/vocabulary")}
             />
