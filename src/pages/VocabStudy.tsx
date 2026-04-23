@@ -21,11 +21,13 @@ import {
   Layers,
   List,
   Brain,
+  Shuffle,
 } from "lucide-react";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
+import MatchingMode from "@/components/vocab/MatchingMode";
 
-type StudyMode = "browse" | "flashcard" | "quiz";
+type StudyMode = "browse" | "flashcard" | "quiz" | "matching";
 
 function speak(text: string, lang: "en" | "vi") {
   if (!("speechSynthesis" in window)) return;
