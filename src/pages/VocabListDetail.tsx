@@ -78,6 +78,9 @@ const VocabListDetail = () => {
   /* ── Delete confirmation state ── */
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; word: string } | null>(null);
 
+  /* ── Download state ── */
+  const [downloading, setDownloading] = useState(false);
+
   /* ── Drag state ── */
   const dragIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
