@@ -41,11 +41,15 @@ function speak(text: string, lang: "en" | "vi") {
 const VocabStudy = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialMode = (searchParams.get("mode") as StudyMode) || "browse";
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [learnedWords, setLearnedWords] = useState<Set<string>>(new Set());
   const [loadingStatus, setLoadingStatus] = useState(true);
-  const [mode, setMode] = useState<StudyMode>("browse");
+  const [mode, setMode] = useState<StudyMode>(
+    ["browse", "flashcard", "quiz", "matching"].includes(initialMode) ? initialMode : "browse",
+  );
 
   const { data: sets = [] } = useSystemVocabSets();
   const { data: words = [], isLoading: wordsLoading } = useSystemVocabWords(id);
