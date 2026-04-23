@@ -37,14 +37,23 @@ interface DashboardData {
   weeklyActivity: number[];
 }
 
-// Get Monday (start of week) for a given date
-const getStartOfWeek = (date: Date) => {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday as start
-  d.setDate(diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+// Vietnam timezone offset: UTC+7
+const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+// Convert any Date to a "Vietnam wall-clock" Date (values reflect VN local time when read in UTC)
+const toVNDate = (date: Date) => new Date(date.getTime() + VN_OFFSET_MS);
+
+// Returns 0..6 where 0 = Monday ... 6 = Sunday, based on Vietnam local time
+const vnWeekdayIndex = (date: Date) => {
+  const vn = toVNDate(date);
+  const day = vn.getUTCDay(); // 0=Sun ... 6=Sat in VN local
+  return day === 0 ? 6 : day - 1;
+};
+
+// YYYY-MM-DD key for a date in Vietnam local time
+const vnDayKey = (date: Date) => {
+  const vn = toVNDate(date);
+  return `${vn.getUTCFullYear()}-${vn.getUTCMonth()}-${vn.getUTCDate()}`;
 };
 
 const formatDate = (iso: string) => {
@@ -89,16 +98,24 @@ const Dashboard = () => {
         const practice = practiceRes.data || [];
         const tests = testsRes.data || [];
 
-        // Weekly activity (Mon -> Sun)
-        const weekStart = getStartOfWeek(new Date());
-        const weeklyActivity = Array(7).fill(0);
+        // Weekly activity (Mon -> Sun) in Vietnam timezone
+        // Build the set of VN day-keys for the current VN week (Mon..Sun)
+        const nowVN = toVNDate(new Date());
+        const todayIdx = vnWeekdayIndex(new Date()); // 0..6 (Mon..Sun)
+        const weekDayKeys: string[] = [];
+        for (let i = 0; i < 7; i++) {
+          // Construct a UTC date that corresponds to VN day (Monday + i)
+          const dayMs = nowVN.getTime() - (todayIdx - i) * 24 * 60 * 60 * 1000;
+          const dvn = new Date(dayMs);
+          weekDayKeys.push(`${dvn.getUTCFullYear()}-${dvn.getUTCMonth()}-${dvn.getUTCDate()}`);
+        }
+
+        const activeDayKeys = new Set<string>();
         practice.forEach((row) => {
-          const d = new Date(row.created_at);
-          const diffDays = Math.floor((d.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
-          if (diffDays >= 0 && diffDays < 7) {
-            weeklyActivity[diffDays] += 1;
-          }
+          activeDayKeys.add(vnDayKey(new Date(row.created_at)));
         });
+
+        const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
 
         // Skill accuracy
         const grammarRows = practice.filter((r) => r.skill === "grammar");
