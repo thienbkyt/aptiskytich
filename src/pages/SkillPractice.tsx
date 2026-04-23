@@ -66,6 +66,10 @@ const SkillPractice = () => {
   const [flashcardMode, setFlashcardMode] = useState(false);
   const [gameWords, setGameWords] = useState<any[]>([]);
   const [gameLearned, setGameLearned] = useState<Set<string>>(new Set());
+  /* ── Quiz fullscreen state (My Vocab) ── */
+  const [quizMode, setQuizMode] = useState(false);
+  const [quizWords, setQuizWords] = useState<any[]>([]);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [loadingGame, setLoadingGame] = useState(false);
 
   /* ── Quick view words ── */
