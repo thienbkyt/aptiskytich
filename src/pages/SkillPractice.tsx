@@ -602,6 +602,14 @@ const SkillPractice = () => {
           </div>
         )}
 
+        {/* Matching fullscreen overlay (My Vocab) */}
+        {matchingMode && (
+          <MyMatchingMode
+            words={matchingWords as any}
+            onExit={() => setMatchingMode(false)}
+          />
+        )}
+
         {/* Create List Modal */}
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogContent className="sm:max-w-md">
