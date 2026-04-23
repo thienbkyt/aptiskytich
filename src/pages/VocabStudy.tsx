@@ -67,13 +67,32 @@ const VocabStudy = () => {
       return;
     }
     (async () => {
-      const { data } = await supabase
-        .from("vocab_items")
-        .select("word")
-        .eq("user_id", user.id)
-        .eq("vocab_set_id", id)
-        .eq("status", "learned");
-      if (data) setLearnedWords(new Set(data.map((d: any) => d.word)));
+      const [learnedRes, listsRes] = await Promise.all([
+        supabase
+          .from("vocab_items")
+          .select("word")
+          .eq("user_id", user.id)
+          .eq("vocab_set_id", id)
+          .eq("status", "learned"),
+        supabase
+          .from("vocab_lists")
+          .select("id, name")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true }),
+      ]);
+      if (learnedRes.data) setLearnedWords(new Set(learnedRes.data.map((d: any) => d.word)));
+      if (listsRes.data) {
+        setUserLists(listsRes.data as { id: string; name: string }[]);
+        const listIds = (listsRes.data as { id: string }[]).map((l) => l.id);
+        if (listIds.length > 0) {
+          const { data: savedRows } = await supabase
+            .from("vocab_items")
+            .select("word")
+            .eq("user_id", user.id)
+            .in("vocab_set_id", listIds);
+          if (savedRows) setSavedWords(new Set(savedRows.map((r: any) => r.word)));
+        }
+      }
       setLoadingStatus(false);
     })();
   }, [user, id]);
@@ -101,6 +120,65 @@ const VocabStudy = () => {
       }
     },
     [user, id],
+  );
+
+  const saveToList = useCallback(
+    async (
+      w: { word: string; phonetic: string; meaning: string; example_en: string; example_vi: string; word_family: string[] },
+      listId: string,
+      listName: string,
+    ) => {
+      if (!user) return;
+      setSavingWord(w.word);
+      const { error } = await supabase.from("vocab_items").insert({
+        user_id: user.id,
+        vocab_set_id: listId,
+        word: w.word,
+        phonetic: w.phonetic ?? "",
+        meaning: w.meaning ?? "",
+        example_en: w.example_en ?? "",
+        example_vi: w.example_vi ?? "",
+        word_family: w.word_family ?? [],
+        status: "new",
+      });
+      setSavingWord(null);
+      if (error) {
+        toast({ title: "Không thể lưu từ", description: error.message, variant: "destructive" });
+        return;
+      }
+      setSavedWords((prev) => new Set(prev).add(w.word));
+      toast({ title: `Đã lưu "${w.word}" vào ${listName}` });
+    },
+    [user],
+  );
+
+  const handleSaveSingleOrCreate = useCallback(
+    async (w: { word: string; phonetic: string; meaning: string; example_en: string; example_vi: string; word_family: string[] }) => {
+      if (!user) {
+        toast({ title: "Vui lòng đăng nhập để lưu từ vựng", variant: "destructive" });
+        return;
+      }
+      if (userLists.length === 0) {
+        setSavingWord(w.word);
+        const { data: created, error } = await supabase
+          .from("vocab_lists")
+          .insert({ user_id: user.id, name: "Kho từ của tôi" })
+          .select("id, name")
+          .single();
+        setSavingWord(null);
+        if (error || !created) {
+          toast({ title: "Không thể tạo kho từ", description: error?.message, variant: "destructive" });
+          return;
+        }
+        setUserLists([created as { id: string; name: string }]);
+        await saveToList(w, created.id, created.name);
+        return;
+      }
+      if (userLists.length === 1) {
+        await saveToList(w, userLists[0].id, userLists[0].name);
+      }
+    },
+    [user, userLists, saveToList],
   );
 
   if (wordsLoading || loadingStatus) {
