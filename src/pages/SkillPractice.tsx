@@ -37,6 +37,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
+import MyMatchingMode from "@/components/vocab/MyMatchingMode";
 
 /* ───── colour helpers ───── */
 const TEAL = {
