@@ -104,8 +104,6 @@ export const sampleQuestions: Question[] = [
 export const getQuestionsBySkill = (skill: Question["skill"]) =>
   sampleQuestions.filter((q) => q.skill === skill);
 
-export const getMockTestQuestions = () => sampleQuestions;
-
 export const getLevel = (score: number, total: number): string => {
   const pct = (score / total) * 100;
   if (pct >= 90) return "C1";

@@ -20,7 +20,6 @@ const Footer = () => (
         <div>
           <h4 className="font-heading font-semibold text-sidebar-foreground mb-4">Luyện tập</h4>
           <ul className="space-y-2.5 text-sm">
-            <li><Link to="/mock-test" className="hover:text-sidebar-foreground transition-colors">Thi thử Aptis</Link></li>
             <li><Link to="/practice" className="hover:text-sidebar-foreground transition-colors">Luyện Grammar</Link></li>
             <li><Link to="/practice" className="hover:text-sidebar-foreground transition-colors">Luyện Reading</Link></li>
             <li><Link to="/practice" className="hover:text-sidebar-foreground transition-colors">Luyện Listening</Link></li>

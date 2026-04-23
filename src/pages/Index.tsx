@@ -78,9 +78,9 @@ const Index = () => {
               Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. Theo dõi tiến bộ. Đạt B1–B2 nhanh nhất.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/mock-test">
+              <Link to="/practice">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-brand-brown btn-glow text-base px-8 h-13 gap-2 w-full sm:w-auto">
-                  Bắt đầu thi thử <ArrowRight className="w-5 h-5" />
+                  Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
               <Link to="/course">

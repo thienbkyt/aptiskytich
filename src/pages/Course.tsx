@@ -196,9 +196,9 @@ const Course = () => (
                 <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
               </Button>
             </a>
-            <Link to="/mock-test">
+            <Link to="/practice">
               <Button size="lg" className="bg-muted-foreground text-on-dark hover:bg-muted-foreground/80 text-base px-8 w-full sm:w-auto">
-                Thi thử trước
+                Luyện tập ngay
               </Button>
             </Link>
           </motion.div>
