@@ -98,16 +98,24 @@ const Dashboard = () => {
         const practice = practiceRes.data || [];
         const tests = testsRes.data || [];
 
-        // Weekly activity (Mon -> Sun)
-        const weekStart = getStartOfWeek(new Date());
-        const weeklyActivity = Array(7).fill(0);
+        // Weekly activity (Mon -> Sun) in Vietnam timezone
+        // Build the set of VN day-keys for the current VN week (Mon..Sun)
+        const nowVN = toVNDate(new Date());
+        const todayIdx = vnWeekdayIndex(new Date()); // 0..6 (Mon..Sun)
+        const weekDayKeys: string[] = [];
+        for (let i = 0; i < 7; i++) {
+          // Construct a UTC date that corresponds to VN day (Monday + i)
+          const dayMs = nowVN.getTime() - (todayIdx - i) * 24 * 60 * 60 * 1000;
+          const dvn = new Date(dayMs);
+          weekDayKeys.push(`${dvn.getUTCFullYear()}-${dvn.getUTCMonth()}-${dvn.getUTCDate()}`);
+        }
+
+        const activeDayKeys = new Set<string>();
         practice.forEach((row) => {
-          const d = new Date(row.created_at);
-          const diffDays = Math.floor((d.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24));
-          if (diffDays >= 0 && diffDays < 7) {
-            weeklyActivity[diffDays] += 1;
-          }
+          activeDayKeys.add(vnDayKey(new Date(row.created_at)));
         });
+
+        const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
 
         // Skill accuracy
         const grammarRows = practice.filter((r) => r.skill === "grammar");
