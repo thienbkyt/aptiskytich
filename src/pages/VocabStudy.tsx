@@ -257,12 +257,19 @@ const VocabStudy = () => {
               ))}
             </div>
           </div>
-        ) : (
+        ) : mode === "flashcard" ? (
           <div className="section-container py-8">
             <FlashcardMode
               words={words}
               learnedWords={learnedWords}
               onMarkLearned={markLearned}
+              onBackToList={() => navigate("/vocabulary")}
+            />
+          </div>
+        ) : (
+          <div className="section-container py-8">
+            <QuizMode
+              words={words}
               onBackToList={() => navigate("/vocabulary")}
             />
           </div>
