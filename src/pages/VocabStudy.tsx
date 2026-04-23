@@ -20,10 +20,12 @@ import {
   Loader2,
   Layers,
   List,
+  Brain,
 } from "lucide-react";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
+import QuizMode from "@/components/vocab/QuizMode";
 
-type StudyMode = "browse" | "flashcard";
+type StudyMode = "browse" | "flashcard" | "quiz";
 
 function speak(text: string, lang: "en" | "vi") {
   if (!("speechSynthesis" in window)) return;
@@ -158,6 +160,16 @@ const VocabStudy = () => {
               >
                 <Layers className="w-4 h-4" /> Flashcard
               </button>
+              <button
+                onClick={() => setMode("quiz")}
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  mode === "quiz"
+                    ? "bg-[hsl(0,98%,40%)] text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Brain className="w-4 h-4" /> Quiz
+              </button>
             </div>
           </div>
         </div>
@@ -245,12 +257,19 @@ const VocabStudy = () => {
               ))}
             </div>
           </div>
-        ) : (
+        ) : mode === "flashcard" ? (
           <div className="section-container py-8">
             <FlashcardMode
               words={words}
               learnedWords={learnedWords}
               onMarkLearned={markLearned}
+              onBackToList={() => navigate("/vocabulary")}
+            />
+          </div>
+        ) : (
+          <div className="section-container py-8">
+            <QuizMode
+              words={words}
               onBackToList={() => navigate("/vocabulary")}
             />
           </div>
