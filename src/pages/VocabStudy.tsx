@@ -20,10 +20,12 @@ import {
   Loader2,
   Layers,
   List,
+  Brain,
 } from "lucide-react";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
+import QuizMode from "@/components/vocab/QuizMode";
 
-type StudyMode = "browse" | "flashcard";
+type StudyMode = "browse" | "flashcard" | "quiz";
 
 function speak(text: string, lang: "en" | "vi") {
   if (!("speechSynthesis" in window)) return;
