@@ -333,18 +333,62 @@ const VocabStudy = () => {
             </Card>
 
             {/* Actions */}
-            <div className="flex items-center justify-between mt-6 gap-3">
+            <div className="flex items-center justify-between mt-6 gap-3 flex-wrap">
               <Button variant="outline" onClick={prev} disabled={currentIndex === 0} className="gap-1.5">
                 <ArrowLeft className="w-4 h-4" /> Trước
               </Button>
-              <Button
-                variant={isLearned ? "secondary" : "default"}
-                onClick={() => markLearned(word.word)}
-                disabled={isLearned}
-                className={isLearned ? "" : "bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"}
-              >
-                {isLearned ? <><Check className="w-4 h-4 mr-1.5" /> Đã thuộc</> : <><BookOpen className="w-4 h-4 mr-1.5" /> Đánh dấu đã thuộc</>}
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                <Button
+                  variant={isLearned ? "secondary" : "default"}
+                  onClick={() => markLearned(word.word)}
+                  disabled={isLearned}
+                  className={isLearned ? "" : "bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"}
+                >
+                  {isLearned ? <><Check className="w-4 h-4 mr-1.5" /> Đã thuộc</> : <><BookOpen className="w-4 h-4 mr-1.5" /> Đánh dấu đã thuộc</>}
+                </Button>
+                {savedWords.has(word.word) ? (
+                  <Button
+                    variant="secondary"
+                    disabled
+                    className="bg-[hsl(142,60%,45%)] hover:bg-[hsl(142,60%,45%)] text-white"
+                  >
+                    <Check className="w-4 h-4 mr-1.5" /> Đã lưu
+                  </Button>
+                ) : userLists.length > 1 ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" disabled={savingWord === word.word}>
+                        {savingWord === word.word ? (
+                          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                        ) : (
+                          <Plus className="w-4 h-4 mr-1.5" />
+                        )}
+                        Lưu vào kho
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+                      {userLists.map((l) => (
+                        <DropdownMenuItem key={l.id} onClick={() => saveToList(word, l.id, l.name)}>
+                          {l.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleSaveSingleOrCreate(word)}
+                    disabled={savingWord === word.word}
+                  >
+                    {savingWord === word.word ? (
+                      <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4 mr-1.5" />
+                    )}
+                    Lưu vào kho
+                  </Button>
+                )}
+              </div>
               <Button variant="outline" onClick={next} disabled={currentIndex === total - 1} className="gap-1.5">
                 Tiếp <ArrowRight className="w-4 h-4" />
               </Button>
