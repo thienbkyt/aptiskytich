@@ -445,12 +445,10 @@ const SkillPractice = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <GameCard
                       title="Flashcards"
-                      description="Lật thẻ để ôn lại nghĩa và cách dùng từ"
+                      description="Lật thẻ để ôn lại các từ trong kho cá nhân của bạn"
                       icon={<Sparkles className="w-7 h-7" />}
-                      disabled={systemSets.length === 0}
-                      onClick={() =>
-                        systemSets[0] && navigate(`/vocabulary/${systemSets[0].id}?mode=flashcard`)
-                      }
+                      onClick={handleLaunchMyFlashcards}
+                      loading={loadingGame}
                     />
                     <GameCard
                       title="Matching"
