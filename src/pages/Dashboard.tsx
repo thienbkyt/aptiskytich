@@ -148,14 +148,14 @@ const Dashboard = () => {
               <motion.div variants={fadeUp} custom={9} initial="hidden" animate="visible" className="glass-card p-6">
                 <h3 className="font-heading font-bold text-foreground mb-4">Hành động nhanh</h3>
                 <div className="space-y-3">
-                  <Link to="/mock-test" className="block">
+                  <Link to="/practice" className="block">
                     <Button className="w-full bg-primary text-primary-foreground gap-2 justify-start">
-                      <BookOpen className="w-4 h-4" /> Thi thử Aptis
+                      <Target className="w-4 h-4" /> Luyện tập kỹ năng
                     </Button>
                   </Link>
-                  <Link to="/practice" className="block">
+                  <Link to="/thi-thu" className="block">
                     <Button variant="outline" className="w-full gap-2 justify-start">
-                      <Target className="w-4 h-4" /> Luyện tập kỹ năng
+                      <BookOpen className="w-4 h-4" /> Thi thử Aptis
                     </Button>
                   </Link>
                   <Link to="/course" className="block">

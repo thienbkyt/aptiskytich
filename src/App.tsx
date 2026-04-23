@@ -7,7 +7,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
 import Index from "./pages/Index";
-import MockTest from "./pages/MockTest";
 import Practice from "./pages/Practice";
 import Dashboard from "./pages/Dashboard";
 import Course from "./pages/Course";
@@ -41,7 +40,6 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/mock-test" element={<MockTest />} />
             <Route path="/practice" element={<Practice />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/course" element={<Course />} />
