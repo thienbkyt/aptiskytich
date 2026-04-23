@@ -33,26 +33,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-/* ─── TTS helpers ─── */
+/* ─── TTS helpers (Google Cloud TTS via edge function) ─── */
+import { speakWithTTS, speakAsync as speakAsyncTTS } from "@/lib/tts";
+
 function speak(text: string, lang: "en" | "vi") {
-  if (!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang === "en" ? "en-US" : "vi-VN";
-  u.rate = 0.9;
-  window.speechSynthesis.speak(u);
+  void speakWithTTS(text, lang);
 }
 
-function speakAsync(text: string, lang: "en" | "vi", rate = 0.9): Promise<void> {
-  return new Promise((resolve) => {
-    if (!("speechSynthesis" in window)) { resolve(); return; }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang === "en" ? "en-US" : "vi-VN";
-    u.rate = rate;
-    u.onend = () => resolve();
-    u.onerror = () => resolve();
-    window.speechSynthesis.speak(u);
-  });
+function speakAsync(text: string, lang: "en" | "vi", _rate = 0.9): Promise<void> {
+  return speakAsyncTTS(text, lang);
 }
 
 function delay(ms: number): Promise<void> {

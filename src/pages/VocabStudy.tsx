@@ -26,16 +26,12 @@ import {
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
 import MatchingMode from "@/components/vocab/MatchingMode";
+import { speakWithTTS } from "@/lib/tts";
 
 type StudyMode = "browse" | "flashcard" | "quiz" | "matching";
 
 function speak(text: string, lang: "en" | "vi") {
-  if (!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang === "en" ? "en-US" : "vi-VN";
-  u.rate = 0.9;
-  window.speechSynthesis.speak(u);
+  void speakWithTTS(text, lang);
 }
 
 const VocabStudy = () => {

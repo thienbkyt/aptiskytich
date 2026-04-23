@@ -55,14 +55,11 @@ interface DictionaryContextType {
 const DictionaryContext = createContext<DictionaryContextType | null>(null);
 export const useDictionary = () => useContext(DictionaryContext);
 
-/* ─── TTS ─── */
+/* ─── TTS (Google Cloud TTS via edge function) ─── */
+import { speakWithTTS } from "@/lib/tts";
+
 function speak(text: string, lang: "en" | "vi") {
-  if (!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang === "en" ? "en-US" : "vi-VN";
-  u.rate = 0.9;
-  window.speechSynthesis.speak(u);
+  void speakWithTTS(text, lang);
 }
 
 /* ─── English word regex ─── */
