@@ -549,6 +549,21 @@ const VocabListDetail = () => {
               </Button>
             </div>
 
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={downloadAudio}
+              disabled={downloading || words.length === 0}
+              title="Tải xuống audio 3R (MP3)"
+            >
+              {downloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+            </Button>
+
             <div className="text-xs text-muted-foreground w-16 text-right shrink-0">
               {currentIndex >= 0 ? `${currentIndex + 1} / ${words.length}` : ""}
             </div>
