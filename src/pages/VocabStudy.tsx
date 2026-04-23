@@ -162,7 +162,13 @@ const VocabStudy = () => {
             .eq("id", existing.id);
         }
         setSavingWord(null);
-        setSavedWords((prev) => new Set(prev).add(w.word));
+        setSavedWordLists((prev) => {
+          const next = new Map(prev);
+          const set = new Set(next.get(w.word) ?? []);
+          set.add(listId);
+          next.set(w.word, set);
+          return next;
+        });
         toast({ title: `"${w.word}" đã có trong ${listName}` });
         return;
       }
