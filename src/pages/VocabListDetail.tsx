@@ -20,6 +20,7 @@ import {
   Headphones,
   GripVertical,
   Trash2,
+  Download,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -76,6 +77,9 @@ const VocabListDetail = () => {
 
   /* ── Delete confirmation state ── */
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; word: string } | null>(null);
+
+  /* ── Download state ── */
+  const [downloading, setDownloading] = useState(false);
 
   /* ── Drag state ── */
   const dragIndexRef = useRef<number | null>(null);
@@ -238,6 +242,58 @@ const VocabListDetail = () => {
       stopTTS();
     };
   }, []);
+
+  /* ── Download bundled 3R audio ── */
+  const downloadAudio = useCallback(async () => {
+    if (!words.length || downloading) return;
+    setDownloading(true);
+    try {
+      const segments: Array<{ text: string; lang: "en" | "vi"; rate?: number; pauseMs?: number }> = [];
+      words.forEach((item, i) => {
+        segments.push({ text: `Number ${i + 1}.`, lang: "en", pauseMs: 300 });
+        segments.push({ text: item.word, lang: "en", pauseMs: 500 });
+        if (item.meaning) segments.push({ text: item.meaning, lang: "vi", pauseMs: 500 });
+        if (item.example_en) {
+          segments.push({ text: item.example_en, lang: "en", pauseMs: 1500 });
+          segments.push({ text: item.example_en, lang: "en", rate: 0.8, pauseMs: 1000 });
+        }
+      });
+
+      const { data, error } = await supabase.functions.invoke("tts-bundle", {
+        body: {
+          segments,
+          filename: (listName || "audio-3r").toLowerCase().replace(/\s+/g, "-"),
+        },
+      });
+
+      if (error || !data?.url) {
+        throw new Error(error?.message || "Không lấy được file audio");
+      }
+
+      // Trigger download
+      const res = await fetch(data.url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${(listName || "audio-3r").replace(/[^a-zA-Z0-9_-]+/g, "-")}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+      toast({ title: "Đã tải xuống audio 3R" });
+    } catch (e: any) {
+      console.error("[downloadAudio]", e);
+      toast({
+        title: "Không tải được audio",
+        description: e?.message || "Vui lòng thử lại sau.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  }, [words, listName, downloading]);
 
   if (!user) return <Navigate to="/auth" replace />;
 
@@ -492,6 +548,21 @@ const VocabListDetail = () => {
                 <SkipForward className="w-4 h-4" />
               </Button>
             </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={downloadAudio}
+              disabled={downloading || words.length === 0}
+              title="Tải xuống audio 3R (MP3)"
+            >
+              {downloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+            </Button>
 
             <div className="text-xs text-muted-foreground w-16 text-right shrink-0">
               {currentIndex >= 0 ? `${currentIndex + 1} / ${words.length}` : ""}
