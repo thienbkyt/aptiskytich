@@ -541,6 +541,36 @@ const SkillPractice = () => {
           </div>
         )}
 
+        {/* Quiz fullscreen overlay (My Vocab) */}
+        {quizMode && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col animate-fade-in">
+            <div className="border-b border-border bg-card">
+              <div className="section-container py-4 flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setQuizMode(false)}
+                  className="gap-1.5"
+                >
+                  <X className="w-4 h-4" /> Thoát
+                </Button>
+                <div className="flex-1 min-w-0 text-center">
+                  <h2 className="font-heading font-bold text-lg text-foreground truncate">Quiz</h2>
+                </div>
+                <div className="w-[88px]" />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto py-8">
+              <div className="section-container">
+                <QuizMode
+                  words={quizWords as any}
+                  onBackToList={() => setQuizMode(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Create List Modal */}
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogContent className="sm:max-w-md">
