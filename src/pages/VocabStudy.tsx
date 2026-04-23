@@ -160,6 +160,16 @@ const VocabStudy = () => {
               >
                 <Layers className="w-4 h-4" /> Flashcard
               </button>
+              <button
+                onClick={() => setMode("quiz")}
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  mode === "quiz"
+                    ? "bg-[hsl(0,98%,40%)] text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Brain className="w-4 h-4" /> Quiz
+              </button>
             </div>
           </div>
         </div>
