@@ -18,7 +18,12 @@ import {
   BookOpen,
   ChevronLeft,
   Loader2,
+  Layers,
+  List,
 } from "lucide-react";
+import FlashcardMode from "@/components/vocab/FlashcardMode";
+
+type StudyMode = "browse" | "flashcard";
 
 function speak(text: string, lang: "en" | "vi") {
   if (!("speechSynthesis" in window)) return;
