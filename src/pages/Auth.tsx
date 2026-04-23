@@ -134,8 +134,8 @@ const Auth = () => {
           <div className="text-center mb-6">
             <p className="text-foreground font-semibold text-base">{subtitle}</p>
             {showSocialProof && (
-              <p className="text-xs text-muted-foreground mt-2">
-                🔥 5,000+ học viên đã tin dùng
+              <p className="text-xs mt-2 text-secondary-foreground">
+                🔥 96.03% học viên ôn luyện và đạt AIM trong lần thi đầu tiên
               </p>
             )}
           </div>
