@@ -17,9 +17,12 @@ const SKILL_BREAKDOWN = [
   { label: "Writing", time: "50 phút", icon: PenLine, color: "text-pink-500" },
 ];
 
+type TabKey = "aptis" | "key";
+
 const FullTest = () => {
   const { tests, loading } = useFullTests();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>("aptis");
 
   const handleStartTest = (test: FullTestItem) => {
     setActiveTest(test);
@@ -87,61 +90,88 @@ const FullTest = () => {
         {/* Test list */}
         <section className="section-container py-8 md:py-10">
           <div className="mb-6">
-            <h2 className="font-heading text-foreground text-4xl font-extrabold">
-              Bộ đề thi Aptis
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {loading ? "Đang tải..." : "​"}
+            <div className="inline-flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/30 rounded-lg border border-border">
+              <button
+                onClick={() => setActiveTab("aptis")}
+                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                  activeTab === "aptis"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Bộ đề thi Aptis
+              </button>
+              <button
+                onClick={() => setActiveTab("key")}
+                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                  activeTab === "key"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Bộ đề Key Aptis
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              {activeTab === "aptis" ? (loading ? "Đang tải..." : "​") : "​"}
             </p>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-52 rounded-xl" />
-              ))}
-            </div>
-          ) : tests.length === 0 ? (
+          {activeTab === "aptis" ? (
+            loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-52 rounded-xl" />
+                ))}
+              </div>
+            ) : tests.length === 0 ? (
+              <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
+                <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium mb-1">Chưa có đề thi Full Test nào được xuất bản</p>
+                <p className="text-sm text-muted-foreground">Đề thi sẽ xuất hiện ở đây khi được import vào hệ thống.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                {tests.map((test, index) => (
+                  <motion.div
+                    key={test.fullTestId}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, delay: index * 0.03 }}
+                  >
+                    <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                      <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
+                        Full Test
+                      </Badge>
+                      <h3 className="text-xl font-heading font-bold text-foreground mb-2">
+                        {test.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Đề thi thử Aptis Full Test – {test.skillCount} kỹ năng
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>162 phút • {test.skillCount} kỹ năng</span>
+                      </div>
+                      <div className="flex-1" />
+                      <Button
+                        onClick={() => handleStartTest(test)}
+                        disabled={!test.isReady}
+                        className="w-full bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
+                      >
+                        {test.isReady ? "Bắt đầu thi thử" : `Chưa đủ kỹ năng (${test.skillCount}/5)`}
+                        {test.isReady && <ArrowRight className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )
+          ) : (
             <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
               <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-              <p className="text-muted-foreground font-medium mb-1">Chưa có đề thi Full Test nào được xuất bản</p>
-              <p className="text-sm text-muted-foreground">Đề thi sẽ xuất hiện ở đây khi được import vào hệ thống.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {tests.map((test, index) => (
-                <motion.div
-                  key={test.fullTestId}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: index * 0.03 }}
-                >
-                  <div className="group relative bg-card border border-border rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
-                      Full Test
-                    </Badge>
-                    <h3 className="text-xl font-heading font-bold text-foreground mb-2">
-                      {test.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Đề thi thử Aptis Full Test – {test.skillCount} kỹ năng
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>162 phút • {test.skillCount} kỹ năng</span>
-                    </div>
-                    <div className="flex-1" />
-                    <Button
-                      onClick={() => handleStartTest(test)}
-                      disabled={!test.isReady}
-                      className="w-full bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
-                    >
-                      {test.isReady ? "Bắt đầu thi thử" : `Chưa đủ kỹ năng (${test.skillCount}/5)`}
-                      {test.isReady && <ArrowRight className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </motion.div>
-              ))}
+              <p className="text-muted-foreground font-medium mb-1">Bộ đề Key Aptis đang được cập nhật</p>
+              <p className="text-sm text-muted-foreground">Các đề sẽ xuất hiện sớm.</p>
             </div>
           )}
         </section>
