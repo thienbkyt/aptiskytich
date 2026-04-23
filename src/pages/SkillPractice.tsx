@@ -37,6 +37,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
+import MyMatchingMode from "@/components/vocab/MyMatchingMode";
 
 /* ───── colour helpers ───── */
 const TEAL = {
@@ -71,6 +72,10 @@ const SkillPractice = () => {
   const [quizWords, setQuizWords] = useState<any[]>([]);
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [loadingGame, setLoadingGame] = useState(false);
+  /* ── Matching fullscreen state (My Vocab) ── */
+  const [matchingMode, setMatchingMode] = useState(false);
+  const [matchingWords, setMatchingWords] = useState<any[]>([]);
+  const [loadingMatching, setLoadingMatching] = useState(false);
 
   /* ── Quick view words ── */
   const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
@@ -260,6 +265,34 @@ const SkillPractice = () => {
       data.map((w: any) => ({ id: w.id, word: w.word, meaning: w.meaning ?? "" })),
     );
     setQuizMode(true);
+  };
+
+  /* ── Launch Matching for My Vocab ── */
+  const handleLaunchMyMatching = async () => {
+    if (!user) {
+      toast({ title: "Vui lòng đăng nhập để dùng tính năng này", variant: "destructive" });
+      return;
+    }
+    setLoadingMatching(true);
+    const { data, error } = await supabase
+      .from("vocab_items")
+      .select("id, word, meaning")
+      .eq("user_id", user.id);
+    setLoadingMatching(false);
+
+    if (error) {
+      toast({ title: "Không tải được kho từ", variant: "destructive" });
+      return;
+    }
+    if (!data || data.length < 4) {
+      toast({ title: "Cần ít nhất 4 từ để chơi Matching!", variant: "destructive" });
+      return;
+    }
+
+    setMatchingWords(
+      data.map((w: any) => ({ id: w.id, word: w.word, meaning: w.meaning ?? "" })),
+    );
+    setMatchingMode(true);
   };
 
   return (
@@ -493,12 +526,10 @@ const SkillPractice = () => {
                     />
                     <GameCard
                       title="Matching"
-                      description="Ghép từ với nghĩa đúng trong thời gian giới hạn"
+                      description="Ghép từ tiếng Anh với nghĩa tiếng Việt trong thời gian giới hạn"
                       icon={<Layers className="w-7 h-7" />}
-                      disabled={systemSets.length === 0}
-                      onClick={() =>
-                        systemSets[0] && navigate(`/vocabulary/${systemSets[0].id}?mode=matching`)
-                      }
+                      onClick={handleLaunchMyMatching}
+                      loading={loadingMatching}
                     />
                   </div>
                 </>
@@ -569,6 +600,14 @@ const SkillPractice = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Matching fullscreen overlay (My Vocab) */}
+        {matchingMode && (
+          <MyMatchingMode
+            words={matchingWords as any}
+            onExit={() => setMatchingMode(false)}
+          />
         )}
 
         {/* Create List Modal */}
