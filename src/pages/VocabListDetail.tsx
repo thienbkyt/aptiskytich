@@ -197,20 +197,28 @@ const VocabListDetail = () => {
       await speakAsync(`Number ${i + 1}`, "en");
       if (isStale()) break;
 
-      await speakAsync(item.word, "en");
+      // Read English word 3 times in a row
+      for (let r = 0; r < 3; r++) {
+        await speakAsync(item.word, "en");
+        if (isStale()) break;
+      }
       if (isStale()) break;
 
+      // Read Vietnamese meaning 3 times in a row
       if (item.meaning) {
-        await speakAsync(item.meaning, "vi");
+        for (let r = 0; r < 3; r++) {
+          await speakAsync(item.meaning, "vi");
+          if (isStale()) break;
+        }
         if (isStale()) break;
       }
 
+      // Read English example 3 times in a row
       if (item.example_en) {
-        await speakAsync(item.example_en, "en");
-        if (isStale()) break;
-        await delay(2000);
-        if (isStale()) break;
-        await speakAsync(item.example_en, "en");
+        for (let r = 0; r < 3; r++) {
+          await speakAsync(item.example_en, "en");
+          if (isStale()) break;
+        }
         if (isStale()) break;
       }
 
