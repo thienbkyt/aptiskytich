@@ -181,43 +181,52 @@ const VocabListDetail = () => {
 
   /* ── 3R Playlist logic ── */
   const playFrom = useCallback(async (startIndex: number) => {
+    // Hard-stop any previous playback and bump the session id.
+    stopTTS();
     abortRef.current = false;
+    const session = ++playSessionRef.current;
     setIsPlaying(true);
 
+    const isStale = () => abortRef.current || session !== playSessionRef.current;
+
     for (let i = startIndex; i < words.length; i++) {
-      if (abortRef.current) break;
+      if (isStale()) break;
       setCurrentIndex(i);
       const item = words[i];
 
-      await speakAsync(`Number ${i + 1}`, "en", 1);
-      if (abortRef.current) break;
+      await speakAsync(`Number ${i + 1}`, "en");
+      if (isStale()) break;
 
       await speakAsync(item.word, "en");
-      if (abortRef.current) break;
+      if (isStale()) break;
 
       if (item.meaning) {
         await speakAsync(item.meaning, "vi");
-        if (abortRef.current) break;
+        if (isStale()) break;
       }
 
       if (item.example_en) {
         await speakAsync(item.example_en, "en");
-        if (abortRef.current) break;
+        if (isStale()) break;
         await delay(2000);
-        if (abortRef.current) break;
-        await speakAsync(item.example_en, "en", 0.8);
-        if (abortRef.current) break;
+        if (isStale()) break;
+        await speakAsync(item.example_en, "en");
+        if (isStale()) break;
       }
 
       await delay(1000);
     }
 
-    setIsPlaying(false);
-    setCurrentIndex(-1);
+    // Only the most recent session is allowed to clear UI state.
+    if (session === playSessionRef.current) {
+      setIsPlaying(false);
+      setCurrentIndex(-1);
+    }
   }, [words]);
 
   const stopPlayback = useCallback(() => {
     abortRef.current = true;
+    playSessionRef.current++; // invalidate any in-flight loop
     stopTTS();
     setIsPlaying(false);
     setCurrentIndex(-1);
@@ -225,21 +234,26 @@ const VocabListDetail = () => {
 
   const skipNext = useCallback(() => {
     if (currentIndex < 0 || currentIndex >= words.length - 1) return;
-    stopTTS();
     abortRef.current = true;
-    setTimeout(() => playFrom(currentIndex + 1), 100);
+    playSessionRef.current++;
+    stopTTS();
+    const next = currentIndex + 1;
+    setTimeout(() => playFrom(next), 120);
   }, [currentIndex, words.length, playFrom]);
 
   const skipPrev = useCallback(() => {
     if (currentIndex <= 0) return;
-    stopTTS();
     abortRef.current = true;
-    setTimeout(() => playFrom(currentIndex - 1), 100);
+    playSessionRef.current++;
+    stopTTS();
+    const prev = currentIndex - 1;
+    setTimeout(() => playFrom(prev), 120);
   }, [currentIndex, playFrom]);
 
   useEffect(() => {
     return () => {
       abortRef.current = true;
+      playSessionRef.current++;
       stopTTS();
     };
   }, []);
