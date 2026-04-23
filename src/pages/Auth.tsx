@@ -124,7 +124,7 @@ const Auth = () => {
         className="w-full max-w-md relative z-10"
       >
         <div className="text-center mb-6">
-          <img src="/logo-new.png" alt="Aptis Kỳ Tích" className="h-20 w-auto mx-auto mb-3 object-fill" />
+          <img src="/logo-new.png" alt="Aptis Kỳ Tích" className="h-24 w-auto mx-auto mb-3 object-contain" />
           <h1 className="text-3xl font-heading font-extrabold text-white drop-shadow-sm">
             Aptis <span style={{ color: "#FEAD5F" }}>Kỳ Tích</span>
           </h1>
