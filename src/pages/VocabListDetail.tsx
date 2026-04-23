@@ -32,7 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { speakWithTTS, speakAsync as speakAsyncTTS } from "@/lib/tts";
+import { speakWithTTS, speakAsync as speakAsyncTTS, stopTTS } from "@/lib/tts";
 
 /* ─── TTS helpers (Google Cloud TTS via edge function) ─── */
 function speak(text: string, lang: "en" | "vi") {
