@@ -173,6 +173,61 @@ const SkillPractice = () => {
     setCreating(false);
   };
 
+  /* ── Launch Flashcard for My Vocab ── */
+  const handleLaunchMyFlashcards = async () => {
+    if (!user) {
+      toast({ title: "Vui lòng đăng nhập để dùng tính năng này", variant: "destructive" });
+      return;
+    }
+    setLoadingGame(true);
+    const { data, error } = await supabase
+      .from("vocab_items")
+      .select("id, word, phonetic, meaning, example_en, example_vi, word_family, status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    setLoadingGame(false);
+
+    if (error) {
+      toast({ title: "Không tải được kho từ", variant: "destructive" });
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast({
+        title: "Bạn chưa lưu từ nào. Hãy tra từ khi làm bài để thêm vào kho!",
+      });
+      return;
+    }
+
+    setGameWords(
+      data.map((w: any) => ({
+        id: w.id,
+        word: w.word,
+        phonetic: w.phonetic ?? "",
+        meaning: w.meaning ?? "",
+        example_en: w.example_en ?? "",
+        example_vi: w.example_vi ?? "",
+        word_family: Array.isArray(w.word_family) ? w.word_family : [],
+      })),
+    );
+    setGameLearned(new Set(data.filter((w: any) => w.status === "learned").map((w: any) => w.word)));
+    setFlashcardMode(true);
+  };
+
+  const handleMyFlashcardLearned = async (wordText: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("vocab_items")
+      .update({ status: "learned", last_reviewed_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .eq("word", wordText);
+    if (!error) {
+      setGameLearned((prev) => new Set(prev).add(wordText));
+      // Refresh stats lazily
+      setStats((s) => ({ ...s, learned: s.learned + 1, review: Math.max(0, s.review - 1) }));
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
