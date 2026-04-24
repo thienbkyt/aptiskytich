@@ -54,7 +54,7 @@ const Navbar = () => {
       <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 mr-4">
-          <img src={logoImg} alt="Aptis Kỳ Tích" className="h-10 w-auto" />
+          <img src={logoImg} alt="Aptis Kỳ Tích" className="h-10 w-auto px-0 pb-0" />
           <span className="font-heading font-bold text-base text-foreground tracking-tight">
             Aptis <span className="text-primary">Kỳ Tích</span>
           </span>
