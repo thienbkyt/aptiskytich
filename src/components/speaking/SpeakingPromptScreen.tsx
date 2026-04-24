@@ -33,18 +33,9 @@ function playBeep(): Promise<void> {
   });
 }
 
-/** Speak text using Web Speech API and return a promise */
+/** Speak text using Google Cloud TTS (from src/lib/tts.ts) */
 function speakAsync(text: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (!("speechSynthesis" in window)) { resolve(); return; }
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-GB";
-    u.rate = 0.9;
-    u.onend = () => resolve();
-    u.onerror = () => resolve();
-    window.speechSynthesis.speak(u);
-  });
+  return ttsSpeakAsync(text, "en");
 }
 
 const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onNext, onExit }: SpeakingPromptScreenProps) => {
@@ -62,7 +53,7 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
     };
     run();
 
-    return () => { window.speechSynthesis.cancel(); };
+    return () => { stopTTS(); };
   }, []);
 
   return (
