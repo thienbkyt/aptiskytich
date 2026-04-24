@@ -23,6 +23,9 @@ const Footer = () => (
             <li><Link to="/practice" className="hover:text-sidebar-foreground transition-colors">Luyện Grammar</Link></li>
             <li><Link to="/practice" className="hover:text-sidebar-foreground transition-colors">Luyện Reading</Link></li>
             <li><Link to="/practice" className="hover:text-sidebar-foreground transition-colors">Luyện Listening</Link></li>
+            <li><Link to="/speaking" className="hover:text-sidebar-foreground transition-colors">Luyện Speaking</Link></li>
+            <li><Link to="/writing" className="hover:text-sidebar-foreground transition-colors">Luyện Writing</Link></li>
+            <li><Link to="/vocabulary" className="hover:text-sidebar-foreground transition-colors">Học từ vựng</Link></li>
           </ul>
         </div>
         <div>
