@@ -8,6 +8,7 @@ import SpeakingResults from "./SpeakingResults";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
+import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import type {
