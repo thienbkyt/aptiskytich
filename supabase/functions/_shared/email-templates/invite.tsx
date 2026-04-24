@@ -26,7 +26,9 @@ export const InviteEmail = ({
   confirmationUrl,
 }: InviteEmailProps) => (
   <Html lang="vi" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="utf-8" />
+    </Head>
     <Preview>Bạn được mời tham gia Aptis Kỳ Tích</Preview>
     <Body style={main}>
       <Container style={container}>

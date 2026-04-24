@@ -28,7 +28,9 @@ export const SignupEmail = ({
   confirmationUrl,
 }: SignupEmailProps) => (
   <Html lang="vi" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="utf-8" />
+    </Head>
     <Preview>Xác nhận email cho Aptis Kỳ Tích</Preview>
     <Body style={main}>
       <Container style={container}>
