@@ -18,7 +18,9 @@ interface ReauthenticationEmailProps {
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="vi" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="utf-8" />
+    </Head>
     <Preview>Mã xác thực của bạn</Preview>
     <Body style={main}>
       <Container style={container}>

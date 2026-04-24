@@ -28,7 +28,9 @@ export const EmailChangeEmail = ({
   confirmationUrl,
 }: EmailChangeEmailProps) => (
   <Html lang="vi" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="utf-8" />
+    </Head>
     <Preview>Xác nhận thay đổi email cho Aptis Kỳ Tích</Preview>
     <Body style={main}>
       <Container style={container}>

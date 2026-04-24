@@ -23,7 +23,9 @@ export const RecoveryEmail = ({
   confirmationUrl,
 }: RecoveryEmailProps) => (
   <Html lang="vi" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="utf-8" />
+    </Head>
     <Preview>Đặt lại mật khẩu Aptis Kỳ Tích</Preview>
     <Body style={main}>
       <Container style={container}>

@@ -23,7 +23,9 @@ export const MagicLinkEmail = ({
   confirmationUrl,
 }: MagicLinkEmailProps) => (
   <Html lang="vi" dir="ltr">
-    <Head />
+    <Head>
+      <meta charSet="utf-8" />
+    </Head>
     <Preview>Link đăng nhập Aptis Kỳ Tích</Preview>
     <Body style={main}>
       <Container style={container}>
