@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,23 +8,24 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
 import Index from "./pages/Index";
-import Practice from "./pages/Practice";
-import Dashboard from "./pages/Dashboard";
-import Course from "./pages/Course";
 
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import Admin from "./pages/Admin";
-import NotFound from "./pages/NotFound";
-import SkillPractice from "./pages/SkillPractice";
-import VocabStudy from "./pages/VocabStudy";
-import VocabListDetail from "./pages/VocabListDetail";
-import Speaking from "./pages/Speaking";
-import Writing from "./pages/Writing";
-import Listening from "./pages/Listening";
-import Reading from "./pages/Reading";
-import GrammarVocabulary from "./pages/GrammarVocabulary";
-import FullTest from "./pages/FullTest";
+// Lazy-load non-landing routes to reduce initial bundle size
+const Practice = lazy(() => import("./pages/Practice"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Course = lazy(() => import("./pages/Course"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Admin = lazy(() => import("./pages/Admin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SkillPractice = lazy(() => import("./pages/SkillPractice"));
+const VocabStudy = lazy(() => import("./pages/VocabStudy"));
+const VocabListDetail = lazy(() => import("./pages/VocabListDetail"));
+const Speaking = lazy(() => import("./pages/Speaking"));
+const Writing = lazy(() => import("./pages/Writing"));
+const Listening = lazy(() => import("./pages/Listening"));
+const Reading = lazy(() => import("./pages/Reading"));
+const GrammarVocabulary = lazy(() => import("./pages/GrammarVocabulary"));
+const FullTest = lazy(() => import("./pages/FullTest"));
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <DictionaryProvider>
+          <Suspense fallback={<div className="min-h-screen" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -55,6 +58,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           </DictionaryProvider>
         </AuthProvider>
       </BrowserRouter>
