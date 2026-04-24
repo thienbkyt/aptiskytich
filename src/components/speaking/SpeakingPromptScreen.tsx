@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 
 interface SpeakingPromptScreenProps {
   partNumber: number;
