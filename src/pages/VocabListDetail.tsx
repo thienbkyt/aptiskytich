@@ -179,7 +179,7 @@ const VocabListDetail = () => {
     dragIndexRef.current = null;
   }, []);
 
-  /* ── 3R Playlist logic ── */
+  /* ── Ám ảnh Playlist logic ── */
   const playFrom = useCallback(async (startIndex: number) => {
     // Hard-stop any previous playback and bump the session id.
     stopTTS();
@@ -266,7 +266,7 @@ const VocabListDetail = () => {
     };
   }, []);
 
-  /* ── Download bundled 3R audio ── */
+  /* ── Download bundled Ám ảnh audio ── */
   const downloadAudio = useCallback(async () => {
     if (!words.length || downloading) return;
     setDownloading(true);
@@ -305,7 +305,7 @@ const VocabListDetail = () => {
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 
-      toast({ title: "Đã tải xuống audio 3R" });
+      toast({ title: "Đã tải xuống audio Ám ảnh" });
     } catch (e: any) {
       console.error("[downloadAudio]", e);
       toast({
@@ -526,7 +526,7 @@ const VocabListDetail = () => {
                 <div className="flex items-center gap-2">
                   <Headphones className="w-4 h-4 text-muted-foreground shrink-0" />
                   <p className="text-sm text-muted-foreground">
-                    Audio 3R — {words.length} từ
+                    Audio Ám ảnh — {words.length} từ
                   </p>
                 </div>
               )}
@@ -578,7 +578,7 @@ const VocabListDetail = () => {
               className="h-9 w-9 shrink-0"
               onClick={downloadAudio}
               disabled={downloading || words.length === 0}
-              title="Tải xuống audio 3R (MP3)"
+              title="Tải xuống audio Ám ảnh (MP3)"
             >
               {downloading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
