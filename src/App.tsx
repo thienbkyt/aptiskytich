@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/vocab/:listId" element={<VocabListDetail />} />
             <Route path="/thi-thu" element={<FullTest />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/report" element={<AdminReport />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
