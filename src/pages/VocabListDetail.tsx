@@ -691,6 +691,44 @@ const VocabListDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Add word dialog */}
+      <Dialog
+        open={addOpen}
+        onOpenChange={(open) => {
+          if (adding) return;
+          setAddOpen(open);
+          if (!open) setAddInput("");
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Thêm từ vựng</DialogTitle>
+          </DialogHeader>
+          <Input
+            autoFocus
+            placeholder="Nhập từ tiếng Anh…"
+            value={addInput}
+            onChange={(e) => setAddInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && addInput.trim() && !adding) {
+                e.preventDefault();
+                handleAddWord();
+              }
+            }}
+            disabled={adding}
+          />
+          <DialogFooter>
+            <Button
+              onClick={handleAddWord}
+              disabled={!addInput.trim() || adding}
+            >
+              {adding && <Loader2 className="w-4 h-4 animate-spin" />}
+              Thêm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
