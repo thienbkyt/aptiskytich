@@ -46,6 +46,42 @@ export type Database = {
           },
         ]
       }
+      cost_records: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          currency: string
+          id: string
+          label: string
+          month: string
+          note: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          currency?: string
+          id?: string
+          label?: string
+          month: string
+          note?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          label?: string
+          month?: string
+          note?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dictionary_cache: {
         Row: {
           created_at: string
