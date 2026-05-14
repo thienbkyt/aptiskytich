@@ -22,6 +22,7 @@ import {
   Trash2,
   Download,
   Plus,
+  Pencil,
 } from "lucide-react";
 import {
   Dialog,
