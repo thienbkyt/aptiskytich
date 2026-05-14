@@ -91,6 +91,11 @@ const VocabListDetail = () => {
   /* ── Download state ── */
   const [downloading, setDownloading] = useState(false);
 
+  /* ── Add word state ── */
+  const [addOpen, setAddOpen] = useState(false);
+  const [addInput, setAddInput] = useState("");
+  const [adding, setAdding] = useState(false);
+
   /* ── Drag state ── */
   const dragIndexRef = useRef<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
