@@ -142,7 +142,58 @@ const VocabListDetail = () => {
     }
   }, []);
 
-  /* ── Drag & Drop ── */
+  /* ── Add word via dictionary lookup ── */
+  const handleAddWord = useCallback(async () => {
+    const w = addInput.trim();
+    if (!w || !user || !listId) return;
+    setAdding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("dictionary-lookup", {
+        body: { word: w },
+      });
+      if (error || !data || (data as any).error) {
+        throw new Error((data as any)?.error || error?.message || "Lookup failed");
+      }
+      const d: any = data;
+      const meaning = d.meanings?.[0]?.definition_vi || "";
+      const example_en = d.examples?.[0]?.en || "";
+      const example_vi = d.examples?.[0]?.vi || "";
+      const word_family = Array.isArray(d.wordFamily) ? d.wordFamily : [];
+      const phonetic = d.phonetic || "";
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("vocab_items")
+        .insert({
+          user_id: user.id,
+          vocab_set_id: listId,
+          word: d.word || w,
+          phonetic,
+          meaning,
+          example_en,
+          example_vi,
+          word_family,
+          sort_order: words.length,
+          status: "new",
+        })
+        .select()
+        .single();
+
+      if (insErr || !inserted) throw new Error(insErr?.message || "Insert failed");
+
+      setWords((prev) => [...prev, inserted as any]);
+      setAddInput("");
+      setAddOpen(false);
+      toast({ title: `✓ Đã thêm ${(inserted as any).word}` });
+    } catch (e: any) {
+      toast({
+        title: "Không thể thêm từ",
+        description: e?.message || "Đã có lỗi xảy ra",
+        variant: "destructive",
+      });
+    } finally {
+      setAdding(false);
+    }
+  }, [addInput, user, listId, words.length]);
   const handleDragStart = useCallback((index: number) => {
     dragIndexRef.current = index;
   }, []);
