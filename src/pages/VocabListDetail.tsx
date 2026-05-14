@@ -813,6 +813,68 @@ const VocabListDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Edit word dialog */}
+      <Dialog
+        open={!!editTarget}
+        onOpenChange={(open) => {
+          if (editSaving) return;
+          if (!open) setEditTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa từ vựng</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Từ vựng</label>
+              <Input
+                value={editForm.word}
+                onChange={(e) => setEditForm((f) => ({ ...f, word: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Nghĩa tiếng Việt</label>
+              <Input
+                value={editForm.meaning}
+                onChange={(e) => setEditForm((f) => ({ ...f, meaning: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Câu ví dụ tiếng Anh</label>
+              <Input
+                value={editForm.example_en}
+                onChange={(e) => setEditForm((f) => ({ ...f, example_en: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Câu ví dụ tiếng Việt</label>
+              <Input
+                value={editForm.example_vi}
+                onChange={(e) => setEditForm((f) => ({ ...f, example_vi: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditTarget(null)}
+              disabled={editSaving}
+            >
+              Huỷ
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={editSaving}>
+              {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Add word dialog — 2-step flow */}
       <Dialog
         open={addOpen}
