@@ -91,10 +91,82 @@ const VocabListDetail = () => {
   /* ── Download state ── */
   const [downloading, setDownloading] = useState(false);
 
-  /* ── Add word state ── */
+  /* ── Add word state (2-step flow) ── */
   const [addOpen, setAddOpen] = useState(false);
+  const [addStep, setAddStep] = useState<1 | 2>(1);
   const [addInput, setAddInput] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
   const [adding, setAdding] = useState(false);
+
+  const resetAddDialog = useCallback(() => {
+    setAddStep(1);
+    setAddInput("");
+    setSuggestions([]);
+    setSuggestLoading(false);
+    setPreviewLoading(false);
+    setPreviewData(null);
+  }, []);
+
+  /* ── Debounced suggestions from datamuse ── */
+  useEffect(() => {
+    if (!addOpen || addStep !== 1) return;
+    const q = addInput.trim();
+    if (!q) {
+      setSuggestions([]);
+      setSuggestLoading(false);
+      return;
+    }
+    setSuggestLoading(true);
+    const ctrl = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://api.datamuse.com/sug?s=${encodeURIComponent(q)}&max=8`,
+          { signal: ctrl.signal }
+        );
+        const data = await res.json();
+        setSuggestions(Array.isArray(data) ? data.map((x: any) => x.word) : []);
+      } catch (e) {
+        if ((e as any)?.name !== "AbortError") setSuggestions([]);
+      } finally {
+        setSuggestLoading(false);
+      }
+    }, 300);
+    return () => {
+      ctrl.abort();
+      clearTimeout(timer);
+    };
+  }, [addInput, addOpen, addStep]);
+
+  /* ── Lookup preview (step 1 → step 2) ── */
+  const lookupPreview = useCallback(async (word: string) => {
+    const w = word.trim();
+    if (!w) return;
+    setAddStep(2);
+    setPreviewLoading(true);
+    setPreviewData(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("dictionary-lookup", {
+        body: { word: w },
+      });
+      if (error || !data || (data as any).error) {
+        throw new Error((data as any)?.error || error?.message || "Lookup failed");
+      }
+      setPreviewData({ ...(data as any), _query: w });
+    } catch (e: any) {
+      toast({
+        title: "Không tra được từ này",
+        description: e?.message || "Đã có lỗi xảy ra",
+        variant: "destructive",
+      });
+      setAddStep(1);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, []);
 
   /* ── Drag state ── */
   const dragIndexRef = useRef<number | null>(null);
