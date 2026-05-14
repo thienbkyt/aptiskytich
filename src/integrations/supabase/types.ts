@@ -401,6 +401,51 @@ export type Database = {
           },
         ]
       }
+      pricing_config: {
+        Row: {
+          created_at: string
+          description: string
+          effective_from: string
+          id: string
+          is_active: boolean
+          model: string | null
+          price_per_unit: number
+          service: string
+          unit_scale: number
+          unit_type: string
+          updated_at: string
+          usd_to_vnd_rate: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          effective_from?: string
+          id?: string
+          is_active?: boolean
+          model?: string | null
+          price_per_unit: number
+          service: string
+          unit_scale?: number
+          unit_type: string
+          updated_at?: string
+          usd_to_vnd_rate?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          effective_from?: string
+          id?: string
+          is_active?: boolean
+          model?: string | null
+          price_per_unit?: number
+          service?: string
+          unit_scale?: number
+          unit_type?: string
+          updated_at?: string
+          usd_to_vnd_rate?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -662,6 +707,45 @@ export type Database = {
           time_limit?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      usage_events: {
+        Row: {
+          created_at: string
+          estimated_cost_vnd: number
+          event_type: string
+          id: string
+          metadata: Json
+          model: string | null
+          service: string
+          source_function: string | null
+          unit_type: string
+          units: number
+        }
+        Insert: {
+          created_at?: string
+          estimated_cost_vnd?: number
+          event_type: string
+          id?: string
+          metadata?: Json
+          model?: string | null
+          service: string
+          source_function?: string | null
+          unit_type: string
+          units?: number
+        }
+        Update: {
+          created_at?: string
+          estimated_cost_vnd?: number
+          event_type?: string
+          id?: string
+          metadata?: Json
+          model?: string | null
+          service?: string
+          source_function?: string | null
+          unit_type?: string
+          units?: number
         }
         Relationships: []
       }
