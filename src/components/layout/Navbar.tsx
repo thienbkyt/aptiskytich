@@ -27,13 +27,17 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillHover, setSkillHover] = useState(false);
+  const [adminHover, setAdminHover] = useState(false);
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
+  const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
+  const isAdminActive = isActive("/admin") || isActive("/admin/report");
 
   // Close mobile menu on route change
   useEffect(() => {
