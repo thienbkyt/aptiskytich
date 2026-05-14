@@ -757,40 +757,150 @@ const VocabListDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add word dialog */}
+      {/* Add word dialog — 2-step flow */}
       <Dialog
         open={addOpen}
         onOpenChange={(open) => {
-          if (adding) return;
+          if (adding || previewLoading) return;
           setAddOpen(open);
-          if (!open) setAddInput("");
+          if (!open) resetAddDialog();
         }}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Thêm từ vựng</DialogTitle>
+            <DialogTitle>
+              {addStep === 1 ? "Tìm từ vựng" : "Xem trước & xác nhận"}
+            </DialogTitle>
           </DialogHeader>
-          <Input
-            autoFocus
-            placeholder="Nhập từ tiếng Anh…"
-            value={addInput}
-            onChange={(e) => setAddInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && addInput.trim() && !adding) {
-                e.preventDefault();
-                handleAddWord();
-              }
-            }}
-            disabled={adding}
-          />
+
+          {addStep === 1 ? (
+            <div className="space-y-2">
+              <Input
+                autoFocus
+                placeholder="Gõ từ tiếng Anh..."
+                value={addInput}
+                onChange={(e) => setAddInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && addInput.trim()) {
+                    e.preventDefault();
+                    lookupPreview(addInput.trim());
+                  }
+                }}
+              />
+              <div className="border border-border rounded-md max-h-64 overflow-y-auto">
+                {suggestLoading && (
+                  <div className="px-3 py-3 text-sm text-muted-foreground flex items-center gap-2">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Đang tìm...
+                  </div>
+                )}
+                {!suggestLoading && addInput.trim() && suggestions.length === 0 && (
+                  <div className="px-3 py-3 text-sm text-muted-foreground">
+                    Không có gợi ý. Nhấn Enter để tra trực tiếp "{addInput.trim()}".
+                  </div>
+                )}
+                {!suggestLoading && !addInput.trim() && (
+                  <div className="px-3 py-3 text-sm text-muted-foreground">
+                    Bắt đầu gõ để xem gợi ý từ.
+                  </div>
+                )}
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-primary/10 border-b border-border last:border-b-0 transition-colors"
+                    onClick={() => lookupPreview(s)}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {previewLoading || !previewData ? (
+                <div className="py-10 flex flex-col items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="text-sm">Đang tra từ...</span>
+                </div>
+              ) : (
+                <Card className="border border-border">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <h3 className="text-primary font-heading font-bold text-xl">
+                        {previewData.word || previewData._query}
+                      </h3>
+                      {previewData.phonetic && (
+                        <span className="text-sm text-muted-foreground">
+                          {previewData.phonetic}
+                        </span>
+                      )}
+                    </div>
+                    {previewData.meanings?.[0]?.definition_vi && (
+                      <p className="text-sm text-foreground">
+                        <span className="font-medium">Nghĩa:</span>{" "}
+                        {previewData.meanings[0].definition_vi}
+                      </p>
+                    )}
+                    {previewData.examples?.[0]?.en && (
+                      <div className="text-sm space-y-1 border-l-2 border-primary/40 pl-3">
+                        <p className="italic text-foreground">
+                          {previewData.examples[0].en}
+                        </p>
+                        {previewData.examples[0].vi && (
+                          <p className="text-muted-foreground">
+                            {previewData.examples[0].vi}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {Array.isArray(previewData.wordFamily) &&
+                      previewData.wordFamily.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {previewData.wordFamily.map((wf: any, i: number) => (
+                            <Badge
+                              key={i}
+                              variant="outline"
+                              className="text-xs border-primary/30"
+                            >
+                              {wf.word}
+                              {wf.partOfSpeech && (
+                                <span className="ml-1 text-muted-foreground">
+                                  ({wf.partOfSpeech})
+                                </span>
+                              )}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
           <DialogFooter>
-            <Button
-              onClick={handleAddWord}
-              disabled={!addInput.trim() || adding}
-            >
-              {adding && <Loader2 className="w-4 h-4 animate-spin" />}
-              Thêm
-            </Button>
+            {addStep === 2 && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setAddStep(1);
+                    setPreviewData(null);
+                  }}
+                  disabled={adding || previewLoading}
+                >
+                  ← Chọn lại
+                </Button>
+                <Button
+                  onClick={handleAddWord}
+                  disabled={!previewData || adding || previewLoading}
+                >
+                  {adding && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Thêm vào danh sách
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
