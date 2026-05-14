@@ -102,6 +102,49 @@ const VocabListDetail = () => {
   const [previewData, setPreviewData] = useState<any>(null);
   const [adding, setAdding] = useState(false);
 
+  /* ── Edit word state ── */
+  const [editTarget, setEditTarget] = useState<VocabItem | null>(null);
+  const [editForm, setEditForm] = useState({ word: "", meaning: "", example_en: "", example_vi: "" });
+  const [editSaving, setEditSaving] = useState(false);
+
+  const openEdit = useCallback((item: VocabItem) => {
+    setEditTarget(item);
+    setEditForm({
+      word: item.word || "",
+      meaning: item.meaning || "",
+      example_en: item.example_en || "",
+      example_vi: item.example_vi || "",
+    });
+  }, []);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editTarget) return;
+    const payload = {
+      word: editForm.word.trim(),
+      meaning: editForm.meaning.trim(),
+      example_en: editForm.example_en.trim(),
+      example_vi: editForm.example_vi.trim(),
+    };
+    if (!payload.word) {
+      toast({ title: "Từ vựng không được để trống", variant: "destructive" });
+      return;
+    }
+    setEditSaving(true);
+    const { error } = await supabase
+      .from("vocab_items")
+      .update(payload as any)
+      .eq("id", editTarget.id);
+    setEditSaving(false);
+    if (error) {
+      toast({ title: "Không lưu được", description: error.message, variant: "destructive" });
+      return;
+    }
+    setWords((prev) => prev.map((w) => (w.id === editTarget.id ? { ...w, ...payload } : w)));
+    setEditTarget(null);
+    toast({ title: "✓ Đã cập nhật từ vựng" });
+  }, [editTarget, editForm]);
+
+
   const resetAddDialog = useCallback(() => {
     setAddStep(1);
     setAddInput("");
