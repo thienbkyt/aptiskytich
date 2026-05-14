@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,8 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  logInvocation("parse-exam").catch(() => {});
 
   try {
     const { rawText, skill } = await req.json();
@@ -99,6 +102,14 @@ IMPORTANT: Return ONLY a valid JSON array, no markdown, no explanation outside t
     }
 
     const data = await response.json();
+
+    logAIUsage({
+      model: "google/gemini-3-flash-preview",
+      usage: data.usage,
+      source_function: "parse-exam",
+      metadata: { skill },
+    }).catch(() => {});
+
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       const parsed = JSON.parse(toolCall.function.arguments);
