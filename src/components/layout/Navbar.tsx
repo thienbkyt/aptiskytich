@@ -52,6 +52,13 @@ const Navbar = () => {
   const handleSkillLeave = () => {
     hoverTimeout.current = setTimeout(() => setSkillHover(false), 150);
   };
+  const handleAdminEnter = () => {
+    if (adminHoverTimeout.current) clearTimeout(adminHoverTimeout.current);
+    setAdminHover(true);
+  };
+  const handleAdminLeave = () => {
+    adminHoverTimeout.current = setTimeout(() => setAdminHover(false), 150);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b-[3px] border-b-primary border-x-0 border-t-0">
