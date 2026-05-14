@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Shield, Plus, Pencil, Trash2, TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2, TrendingUp, TrendingDown, Minus, Loader2, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AutoCostTab from "@/components/admin/report/AutoCostTab";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
