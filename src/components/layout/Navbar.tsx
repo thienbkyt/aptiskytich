@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, LogOut, Shield, Flame, ChevronDown,
   BookText, GraduationCap, Book, Headphones, Mic, PenLine,
-  BookOpen, ClipboardCheck, type LucideIcon,
+  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.png";
 import { AnimatePresence, motion } from "framer-motion";
@@ -27,18 +27,23 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillHover, setSkillHover] = useState(false);
+  const [adminHover, setAdminHover] = useState(false);
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
+  const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
+  const isAdminActive = isActive("/admin") || isActive("/admin/report");
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
     setMobileSkillOpen(false);
+    setMobileAdminOpen(false);
   }, [location.pathname]);
 
   const handleSkillEnter = () => {
@@ -47,6 +52,13 @@ const Navbar = () => {
   };
   const handleSkillLeave = () => {
     hoverTimeout.current = setTimeout(() => setSkillHover(false), 150);
+  };
+  const handleAdminEnter = () => {
+    if (adminHoverTimeout.current) clearTimeout(adminHoverTimeout.current);
+    setAdminHover(true);
+  };
+  const handleAdminLeave = () => {
+    adminHoverTimeout.current = setTimeout(() => setAdminHover(false), 150);
   };
 
   return (
@@ -174,12 +186,70 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-1.5">
           <ThemeToggle />
           {isAdmin && (
-            <Link to="/admin">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-xs h-8 px-2.5">
+            <div
+              className="relative"
+              onMouseEnter={handleAdminEnter}
+              onMouseLeave={handleAdminLeave}
+            >
+              <button
+                className={`flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
+                  isAdminActive
+                    ? "text-primary"
+                    : "text-secondary-foreground"
+                }`}
+              >
                 <Shield className="w-3.5 h-3.5" />
                 Admin
-              </Button>
-            </Link>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${adminHover ? "rotate-180" : ""}`} />
+              </button>
+
+              <AnimatePresence>
+                {adminHover && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full right-0 pt-2 z-50"
+                  >
+                    <div className="w-56 bg-popover border border-border rounded-xl shadow-lg p-1.5">
+                      <Link
+                        to="/admin"
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive("/admin")
+                            ? "bg-primary/5 text-primary"
+                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileSpreadsheet className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">Import Center</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Quản lý đề thi & dữ liệu</p>
+                        </div>
+                      </Link>
+                      <Link
+                        to="/admin/report"
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive("/admin/report")
+                            ? "bg-primary/5 text-primary"
+                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <BarChart3 className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">Report</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Thống kê & báo cáo</p>
+                        </div>
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
           {user ? (
             <>
@@ -307,13 +377,57 @@ const Navbar = () => {
               {isAdmin && (
                 <>
                   <div className="my-1 mx-4 border-t border-border" />
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary"
+                  <button
+                    onClick={() => setMobileAdminOpen(!mobileAdminOpen)}
+                    className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isAdminActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                   >
-                    <Shield className="w-4 h-4" />
-                    Admin
-                  </Link>
+                    <span className="flex items-center gap-3">
+                      <Shield className="w-4 h-4" />
+                      Admin
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileAdminOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {mobileAdminOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pl-6 space-y-0.5">
+                          <Link
+                            to="/admin"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                              isActive("/admin")
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            Import Center
+                          </Link>
+                          <Link
+                            to="/admin/report"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                              isActive("/admin/report")
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                            Report
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </>
               )}
 

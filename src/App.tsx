@@ -16,6 +16,7 @@ const Course = lazy(() => import("./pages/Course"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminReport = lazy(() => import("./pages/AdminReport"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SkillPractice = lazy(() => import("./pages/SkillPractice"));
 const VocabStudy = lazy(() => import("./pages/VocabStudy"));
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/vocab/:listId" element={<VocabListDetail />} />
             <Route path="/thi-thu" element={<FullTest />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/report" element={<AdminReport />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
