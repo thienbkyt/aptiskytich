@@ -596,6 +596,18 @@ const VocabListDetail = () => {
                         <span className="text-sm font-medium text-foreground ml-auto mr-1">
                           {item.meaning || "—"}
                         </span>
+                        {/* Edit button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(item);
+                          }}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
                         {/* Delete button */}
                         <Button
                           variant="ghost"
