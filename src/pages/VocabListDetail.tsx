@@ -214,19 +214,13 @@ const VocabListDetail = () => {
     }
   }, []);
 
-  /* ── Add word via dictionary lookup ── */
+  /* ── Confirm add (uses previewData from step 2) ── */
   const handleAddWord = useCallback(async () => {
-    const w = addInput.trim();
-    if (!w || !user || !listId) return;
+    if (!previewData || !user || !listId) return;
     setAdding(true);
     try {
-      const { data, error } = await supabase.functions.invoke("dictionary-lookup", {
-        body: { word: w },
-      });
-      if (error || !data || (data as any).error) {
-        throw new Error((data as any)?.error || error?.message || "Lookup failed");
-      }
-      const d: any = data;
+      const d: any = previewData;
+      const w = d._query || d.word || "";
       const meaning = d.meanings?.[0]?.definition_vi || "";
       const example_en = d.examples?.[0]?.en || "";
       const example_vi = d.examples?.[0]?.vi || "";
@@ -253,8 +247,8 @@ const VocabListDetail = () => {
       if (insErr || !inserted) throw new Error(insErr?.message || "Insert failed");
 
       setWords((prev) => [...prev, inserted as any]);
-      setAddInput("");
       setAddOpen(false);
+      resetAddDialog();
       toast({ title: `✓ Đã thêm ${(inserted as any).word}` });
     } catch (e: any) {
       toast({
@@ -265,7 +259,7 @@ const VocabListDetail = () => {
     } finally {
       setAdding(false);
     }
-  }, [addInput, user, listId, words.length]);
+  }, [previewData, user, listId, words.length, resetAddDialog]);
   const handleDragStart = useCallback((index: number) => {
     dragIndexRef.current = index;
   }, []);
