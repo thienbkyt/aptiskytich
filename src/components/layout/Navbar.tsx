@@ -185,12 +185,70 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-1.5">
           <ThemeToggle />
           {isAdmin && (
-            <Link to="/admin">
-              <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-xs h-8 px-2.5">
+            <div
+              className="relative"
+              onMouseEnter={handleAdminEnter}
+              onMouseLeave={handleAdminLeave}
+            >
+              <button
+                className={`flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
+                  isAdminActive
+                    ? "text-primary"
+                    : "text-secondary-foreground"
+                }`}
+              >
                 <Shield className="w-3.5 h-3.5" />
                 Admin
-              </Button>
-            </Link>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${adminHover ? "rotate-180" : ""}`} />
+              </button>
+
+              <AnimatePresence>
+                {adminHover && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 6 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full right-0 pt-2 z-50"
+                  >
+                    <div className="w-56 bg-popover border border-border rounded-xl shadow-lg p-1.5">
+                      <Link
+                        to="/admin"
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive("/admin")
+                            ? "bg-primary/5 text-primary"
+                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileSpreadsheet className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">Import Center</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Quản lý đề thi & dữ liệu</p>
+                        </div>
+                      </Link>
+                      <Link
+                        to="/admin/report"
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive("/admin/report")
+                            ? "bg-primary/5 text-primary"
+                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <BarChart3 className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">Report</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Thống kê & báo cáo</p>
+                        </div>
+                      </Link>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
           {user ? (
             <>
