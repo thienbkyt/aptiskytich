@@ -906,6 +906,14 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_db_size_mb: { Args: never; Returns: number }
+      get_storage_size_mb: {
+        Args: never
+        Returns: {
+          bucket_id: string
+          size_mb: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
