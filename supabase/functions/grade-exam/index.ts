@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Fire-and-forget invocation log
+  logInvocation("grade-exam").catch(() => {});
 
   try {
     // --- Authentication ---
@@ -267,6 +271,15 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
     }
 
     const data = await response.json();
+
+    // Log AI usage (fire-and-forget)
+    logAIUsage({
+      model: "google/gemini-2.5-flash",
+      usage: data.usage,
+      source_function: "grade-exam",
+      metadata: { type, partType },
+    }).catch(() => {});
+
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
     if (!toolCall?.function?.arguments) {

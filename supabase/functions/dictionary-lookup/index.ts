@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,8 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders });
+
+  logInvocation("dictionary-lookup").catch(() => {});
 
   try {
     const { word } = await req.json();
@@ -94,6 +97,14 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
     }
 
     const data = await response.json();
+
+    logAIUsage({
+      model: "google/gemini-2.5-flash-lite",
+      usage: data.usage,
+      source_function: "dictionary-lookup",
+      metadata: { word: clean },
+    }).catch(() => {});
+
     let content = data.choices?.[0]?.message?.content || "";
 
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
