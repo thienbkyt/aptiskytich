@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Shield, Plus, Pencil, Trash2, TrendingUp, TrendingDown, Minus, Loader2 } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2, TrendingUp, TrendingDown, Minus, Loader2, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AutoCostTab from "@/components/admin/report/AutoCostTab";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -230,13 +233,28 @@ const AdminReport = () => {
       <Navbar />
       <div className="pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex items-center gap-3 mb-8">
-            <Shield className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-heading font-extrabold text-foreground">Admin Report</h1>
+          <div className="flex items-center justify-between gap-3 mb-8 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Shield className="w-6 h-6 text-primary" />
+              <h1 className="text-2xl font-heading font-extrabold text-foreground">Admin Report</h1>
+            </div>
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link to="/admin/report/pricing">
+                <Settings className="w-4 h-4" />
+                Quản lý đơn giá
+              </Link>
+            </Button>
           </div>
 
+          <Tabs defaultValue="manual" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="manual">Chi phí nhập tay</TabsTrigger>
+              <TabsTrigger value="auto">Chi phí ước lượng (tự động)</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="manual" className="space-y-8 mt-0">
           {/* PHẦN 1 — TỔNG QUAN THÁNG */}
-          <Card className="p-6 mb-8">
+          <Card className="p-6">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-heading font-bold text-foreground">Tổng quan tháng</h2>
@@ -374,6 +392,12 @@ const AdminReport = () => {
               </ResponsiveContainer>
             </div>
           </Card>
+            </TabsContent>
+
+            <TabsContent value="auto" className="mt-0">
+              <AutoCostTab />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
