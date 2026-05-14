@@ -376,13 +376,57 @@ const Navbar = () => {
               {isAdmin && (
                 <>
                   <div className="my-1 mx-4 border-t border-border" />
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary"
+                  <button
+                    onClick={() => setMobileAdminOpen(!mobileAdminOpen)}
+                    className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isAdminActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                   >
-                    <Shield className="w-4 h-4" />
-                    Admin
-                  </Link>
+                    <span className="flex items-center gap-3">
+                      <Shield className="w-4 h-4" />
+                      Admin
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileAdminOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {mobileAdminOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pl-6 space-y-0.5">
+                          <Link
+                            to="/admin"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                              isActive("/admin")
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <FileSpreadsheet className="w-4 h-4" />
+                            Import Center
+                          </Link>
+                          <Link
+                            to="/admin/report"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                              isActive("/admin/report")
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <BarChart3 className="w-4 h-4" />
+                            Report
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </>
               )}
 
