@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { logUsage, logInvocation } from "../_shared/usage-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -132,6 +133,16 @@ async function fetchOrGenerateSegment(
   const audioContent = json.audioContent as string | undefined;
   if (!audioContent) throw new Error("Google TTS returned no audio");
 
+  // Log Google TTS usage (chars) for this segment
+  logUsage({
+    service: "google_tts",
+    event_type: "tts_synthesis",
+    units: seg.text.length,
+    unit_type: "chars",
+    source_function: "tts-bundle",
+    metadata: { lang: seg.lang },
+  }).catch(() => {});
+
   const bytes = base64ToBytes(audioContent);
 
   // Cache it (best-effort, don't block on errors)
@@ -153,6 +164,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  logInvocation("tts-bundle").catch(() => {});
 
   try {
     const body = (await req.json().catch(() => ({}))) as RequestBody;
