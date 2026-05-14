@@ -17,6 +17,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminReport = lazy(() => import("./pages/AdminReport"));
+const AdminReportPricing = lazy(() => import("./pages/AdminReportPricing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SkillPractice = lazy(() => import("./pages/SkillPractice"));
 const VocabStudy = lazy(() => import("./pages/VocabStudy"));
