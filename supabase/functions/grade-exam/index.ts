@@ -271,6 +271,15 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
     }
 
     const data = await response.json();
+
+    // Log AI usage (fire-and-forget)
+    logAIUsage({
+      model: "google/gemini-2.5-flash",
+      usage: data.usage,
+      source_function: "grade-exam",
+      metadata: { type, partType },
+    }).catch(() => {});
+
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
     if (!toolCall?.function?.arguments) {
