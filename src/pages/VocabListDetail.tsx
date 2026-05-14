@@ -22,6 +22,7 @@ import {
   Trash2,
   Download,
   Plus,
+  Pencil,
 } from "lucide-react";
 import {
   Dialog,
@@ -100,6 +101,49 @@ const VocabListDetail = () => {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [adding, setAdding] = useState(false);
+
+  /* ── Edit word state ── */
+  const [editTarget, setEditTarget] = useState<VocabItem | null>(null);
+  const [editForm, setEditForm] = useState({ word: "", meaning: "", example_en: "", example_vi: "" });
+  const [editSaving, setEditSaving] = useState(false);
+
+  const openEdit = useCallback((item: VocabItem) => {
+    setEditTarget(item);
+    setEditForm({
+      word: item.word || "",
+      meaning: item.meaning || "",
+      example_en: item.example_en || "",
+      example_vi: item.example_vi || "",
+    });
+  }, []);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editTarget) return;
+    const payload = {
+      word: editForm.word.trim(),
+      meaning: editForm.meaning.trim(),
+      example_en: editForm.example_en.trim(),
+      example_vi: editForm.example_vi.trim(),
+    };
+    if (!payload.word) {
+      toast({ title: "Từ vựng không được để trống", variant: "destructive" });
+      return;
+    }
+    setEditSaving(true);
+    const { error } = await supabase
+      .from("vocab_items")
+      .update(payload as any)
+      .eq("id", editTarget.id);
+    setEditSaving(false);
+    if (error) {
+      toast({ title: "Không lưu được", description: error.message, variant: "destructive" });
+      return;
+    }
+    setWords((prev) => prev.map((w) => (w.id === editTarget.id ? { ...w, ...payload } : w)));
+    setEditTarget(null);
+    toast({ title: "✓ Đã cập nhật từ vựng" });
+  }, [editTarget, editForm]);
+
 
   const resetAddDialog = useCallback(() => {
     setAddStep(1);
@@ -552,6 +596,18 @@ const VocabListDetail = () => {
                         <span className="text-sm font-medium text-foreground ml-auto mr-1">
                           {item.meaning || "—"}
                         </span>
+                        {/* Edit button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(item);
+                          }}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
                         {/* Delete button */}
                         <Button
                           variant="ghost"
@@ -756,6 +812,68 @@ const VocabListDetail = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit word dialog */}
+      <Dialog
+        open={!!editTarget}
+        onOpenChange={(open) => {
+          if (editSaving) return;
+          if (!open) setEditTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa từ vựng</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Từ vựng</label>
+              <Input
+                value={editForm.word}
+                onChange={(e) => setEditForm((f) => ({ ...f, word: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Nghĩa tiếng Việt</label>
+              <Input
+                value={editForm.meaning}
+                onChange={(e) => setEditForm((f) => ({ ...f, meaning: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Câu ví dụ tiếng Anh</label>
+              <Input
+                value={editForm.example_en}
+                onChange={(e) => setEditForm((f) => ({ ...f, example_en: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Câu ví dụ tiếng Việt</label>
+              <Input
+                value={editForm.example_vi}
+                onChange={(e) => setEditForm((f) => ({ ...f, example_vi: e.target.value }))}
+                disabled={editSaving}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditTarget(null)}
+              disabled={editSaving}
+            >
+              Huỷ
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={editSaving}>
+              {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add word dialog — 2-step flow */}
       <Dialog
