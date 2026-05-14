@@ -43,6 +43,7 @@ const Navbar = () => {
   useEffect(() => {
     setMobileOpen(false);
     setMobileSkillOpen(false);
+    setMobileAdminOpen(false);
   }, [location.pathname]);
 
   const handleSkillEnter = () => {
