@@ -414,6 +414,14 @@ const VocabListDetail = () => {
             <Badge variant="outline" className="shrink-0">
               {words.length} từ
             </Badge>
+            <Button
+              size="sm"
+              className="shrink-0"
+              onClick={() => setAddOpen(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Thêm từ vựng
+            </Button>
           </div>
         </div>
 
