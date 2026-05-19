@@ -49,7 +49,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { speakWithTTS, speakAsync as speakAsyncTTS, stopTTS } from "@/lib/tts";
-import ExcelJS from "exceljs";
 import { createAndDownloadExcel, readExcelFile } from "@/lib/excelUtils";
 
 /* ─── TTS helpers (Google Cloud TTS via edge function) ─── */
