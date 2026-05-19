@@ -1302,6 +1302,215 @@ const VocabListDetail = () => {
         </DialogContent>
       </Dialog>
 
+      {/* ═══ Bulk Import Dialog ═══ */}
+      <Dialog
+        open={bulkOpen}
+        onOpenChange={(open) => {
+          if (bulkLoading || bulkInserting) return;
+          setBulkOpen(open);
+          if (!open) resetBulk();
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import nhiều từ</DialogTitle>
+          </DialogHeader>
+
+          <Tabs value={bulkTab} onValueChange={(v) => { setBulkTab(v as any); setBulkRows([]); setFileName(""); }}>
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="list">Nhập từ danh sách</TabsTrigger>
+              <TabsTrigger value="file">Upload file</TabsTrigger>
+            </TabsList>
+
+            {/* TAB 1 — text list */}
+            <TabsContent value="list" className="space-y-3">
+              <Textarea
+                rows={10}
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                placeholder={"Mỗi dòng 1 từ tiếng Anh. Ví dụ:\napple\nlove\nbeautiful"}
+                disabled={bulkLoading || bulkInserting}
+              />
+              {bulkRows.length === 0 ? (
+                <Button
+                  onClick={handleBulkLookupText}
+                  disabled={!bulkText.trim() || bulkLoading}
+                  className="w-full"
+                >
+                  {bulkLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Đang tra {bulkProgress.done}/{bulkProgress.total} từ...
+                    </>
+                  ) : (
+                    "Tra từ"
+                  )}
+                </Button>
+              ) : (
+                <>
+                  <div className="border border-border rounded-md max-h-[300px] overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted sticky top-0">
+                        <tr>
+                          <th className="px-2 py-2 text-left w-10"></th>
+                          <th className="px-2 py-2 text-left">Từ</th>
+                          <th className="px-2 py-2 text-left">Nghĩa</th>
+                          <th className="px-2 py-2 text-center w-20">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bulkRows.map((r, i) => (
+                          <tr key={i} className="border-t border-border">
+                            <td className="px-2 py-2">
+                              <Checkbox
+                                checked={r.selected}
+                                disabled={r.status === "error"}
+                                onCheckedChange={(c) =>
+                                  setBulkRows((prev) =>
+                                    prev.map((x, j) => (j === i ? { ...x, selected: !!c } : x))
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-2 py-2 font-bold text-primary">{r.word}</td>
+                            <td className="px-2 py-2 text-muted-foreground">
+                              {r.meaning || (r.error ? <span className="text-destructive text-xs">{r.error}</span> : "—")}
+                            </td>
+                            <td className="px-2 py-2 text-center">
+                              {r.status === "ok" ? (
+                                <span className="text-green-600">✓</span>
+                              ) : (
+                                <span className="text-destructive">✗</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setBulkRows([])}
+                      disabled={bulkInserting}
+                    >
+                      ← Tra lại
+                    </Button>
+                    <Button
+                      onClick={handleBulkInsertList}
+                      disabled={bulkInserting || !bulkRows.some((r) => r.selected && r.status === "ok")}
+                      className="flex-1"
+                    >
+                      {bulkInserting && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Thêm {bulkRows.filter((r) => r.selected && r.status === "ok").length} từ đã chọn
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
+            {/* TAB 2 — file upload */}
+            <TabsContent value="file" className="space-y-3">
+              <div className="flex items-center justify-between gap-2 p-3 border border-dashed border-border rounded-md bg-muted/30">
+                <div className="flex items-center gap-2 text-sm">
+                  <FileSpreadsheet className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">
+                    Định dạng: <code className="text-foreground">word</code> (bắt buộc), <code>meaning</code>, <code>example_en</code>, <code>example_vi</code>
+                  </span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={downloadTemplate}>
+                  <Download className="w-4 h-4" />
+                  Tải file mẫu
+                </Button>
+              </div>
+
+              <div>
+                <Input
+                  type="file"
+                  accept=".xlsx,.csv"
+                  disabled={bulkLoading || bulkInserting}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFileSelect(f);
+                  }}
+                />
+                {fileName && (
+                  <p className="text-xs text-muted-foreground mt-1">Đã chọn: {fileName}</p>
+                )}
+              </div>
+
+              {bulkLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang đọc file...
+                </div>
+              )}
+
+              {bulkRows.length > 0 && (
+                <>
+                  <div className="border border-border rounded-md overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="px-2 py-2 text-left w-10"></th>
+                          <th className="px-2 py-2 text-left">Từ</th>
+                          <th className="px-2 py-2 text-left">Nghĩa</th>
+                          <th className="px-2 py-2 text-left text-xs">AI?</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bulkRows.slice(0, 5).map((r, i) => (
+                          <tr key={i} className="border-t border-border">
+                            <td className="px-2 py-2">
+                              <Checkbox
+                                checked={r.selected}
+                                onCheckedChange={(c) =>
+                                  setBulkRows((prev) =>
+                                    prev.map((x, j) => (j === i ? { ...x, selected: !!c } : x))
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-2 py-2 font-bold text-primary">{r.word}</td>
+                            <td className="px-2 py-2 text-muted-foreground">{r.meaning || "—"}</td>
+                            <td className="px-2 py-2 text-xs text-muted-foreground">
+                              {!r.meaning ? "Sẽ tra AI" : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {bulkRows.length > 5 && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground bg-muted/50 border-t border-border">
+                        ... và {bulkRows.length - 5} dòng nữa
+                      </div>
+                    )}
+                  </div>
+
+                  {bulkInserting && bulkProgress.total > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">
+                        Đang xử lý {bulkProgress.done}/{bulkProgress.total} từ...
+                      </p>
+                      <Progress value={(bulkProgress.done / bulkProgress.total) * 100} className="h-2" />
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleBulkImportFile}
+                    disabled={bulkInserting || !bulkRows.some((r) => r.selected)}
+                    className="w-full"
+                  >
+                    {bulkInserting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Import {bulkRows.filter((r) => r.selected).length} từ
+                  </Button>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
