@@ -23,6 +23,8 @@ import {
   Download,
   Plus,
   Pencil,
+  Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +34,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
@@ -44,6 +49,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { speakWithTTS, speakAsync as speakAsyncTTS, stopTTS } from "@/lib/tts";
+import ExcelJS from "exceljs";
+import { createAndDownloadExcel, readExcelFile } from "@/lib/excelUtils";
 
 /* ─── TTS helpers (Google Cloud TTS via edge function) ─── */
 function speak(text: string, lang: "en" | "vi") {
