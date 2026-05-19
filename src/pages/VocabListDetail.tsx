@@ -151,6 +151,269 @@ const VocabListDetail = () => {
     toast({ title: "✓ Đã cập nhật từ vựng" });
   }, [editTarget, editForm]);
 
+  /* ── Bulk import state ── */
+  type BulkRow = {
+    word: string;
+    meaning?: string;
+    example_en?: string;
+    example_vi?: string;
+    phonetic?: string;
+    word_family?: any[];
+    status: "pending" | "ok" | "error";
+    error?: string;
+    selected: boolean;
+  };
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkTab, setBulkTab] = useState<"list" | "file">("list");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkInserting, setBulkInserting] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
+  const [fileName, setFileName] = useState("");
+
+  const resetBulk = useCallback(() => {
+    setBulkTab("list");
+    setBulkText("");
+    setBulkRows([]);
+    setBulkLoading(false);
+    setBulkInserting(false);
+    setBulkProgress({ done: 0, total: 0 });
+    setFileName("");
+  }, []);
+
+  const lookupOne = useCallback(async (word: string) => {
+    const { data, error } = await supabase.functions.invoke("dictionary-lookup", {
+      body: { word },
+    });
+    if (error || !data || (data as any).error) {
+      throw new Error((data as any)?.error || error?.message || "Lookup failed");
+    }
+    return data as any;
+  }, []);
+
+  const handleBulkLookupText = useCallback(async () => {
+    const words = Array.from(
+      new Set(
+        bulkText
+          .split(/\r?\n/)
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean)
+      )
+    );
+    if (!words.length) return;
+    setBulkLoading(true);
+    setBulkProgress({ done: 0, total: words.length });
+    let done = 0;
+    const results = await Promise.all(
+      words.map(async (w): Promise<BulkRow> => {
+        try {
+          const d = await lookupOne(w);
+          return {
+            word: d.word || w,
+            meaning: d.meanings?.[0]?.definition_vi || "",
+            example_en: d.examples?.[0]?.en || "",
+            example_vi: d.examples?.[0]?.vi || "",
+            phonetic: d.phonetic || "",
+            word_family: Array.isArray(d.wordFamily) ? d.wordFamily : [],
+            status: "ok",
+            selected: true,
+          };
+        } catch (e: any) {
+          return {
+            word: w,
+            status: "error",
+            error: e?.message || "Lỗi",
+            selected: false,
+          };
+        } finally {
+          done++;
+          setBulkProgress({ done, total: words.length });
+        }
+      })
+    );
+    setBulkRows(results);
+    setBulkLoading(false);
+  }, [bulkText, lookupOne]);
+
+  const handleFileSelect = useCallback(async (file: File) => {
+    setFileName(file.name);
+    setBulkLoading(true);
+    setBulkRows([]);
+    try {
+      let rows: Record<string, any>[] = [];
+      const buf = await file.arrayBuffer();
+      if (file.name.toLowerCase().endsWith(".csv")) {
+        const text = new TextDecoder().decode(buf);
+        const lines = text.split(/\r?\n/).filter((l) => l.trim());
+        const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, "").toLowerCase());
+        rows = lines.slice(1).map((line) => {
+          const cells = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+          const obj: Record<string, any> = {};
+          headers.forEach((h, i) => (obj[h] = cells[i] || ""));
+          return obj;
+        });
+      } else {
+        const { sheets, sheetNames } = await readExcelFile(buf);
+        rows = sheets[sheetNames[0]] || [];
+      }
+
+      const normalized: BulkRow[] = rows
+        .map((r) => {
+          const keys = Object.fromEntries(
+            Object.entries(r).map(([k, v]) => [k.toString().toLowerCase().trim(), v])
+          );
+          const word = String(keys.word ?? "").trim();
+          if (!word) return null;
+          const meaning = String(keys.meaning ?? "").trim();
+          return {
+            word,
+            meaning,
+            example_en: String(keys.example_en ?? "").trim(),
+            example_vi: String(keys.example_vi ?? "").trim(),
+            status: "pending" as const,
+            selected: true,
+          };
+        })
+        .filter(Boolean) as BulkRow[];
+
+      setBulkRows(normalized);
+    } catch (e: any) {
+      toast({
+        title: "Không đọc được file",
+        description: e?.message || "File không hợp lệ",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(false);
+    }
+  }, []);
+
+  const handleBulkImportFile = useCallback(async () => {
+    if (!user || !listId || !bulkRows.length) return;
+    const needLookup = bulkRows.filter((r) => r.selected && !r.meaning);
+    setBulkInserting(true);
+    setBulkProgress({ done: 0, total: needLookup.length });
+
+    let updated = [...bulkRows];
+    if (needLookup.length) {
+      let done = 0;
+      await Promise.all(
+        needLookup.map(async (row) => {
+          try {
+            const d = await lookupOne(row.word);
+            const idx = updated.findIndex((r) => r === row);
+            if (idx >= 0) {
+              updated[idx] = {
+                ...updated[idx],
+                meaning: d.meanings?.[0]?.definition_vi || "",
+                example_en: updated[idx].example_en || d.examples?.[0]?.en || "",
+                example_vi: updated[idx].example_vi || d.examples?.[0]?.vi || "",
+                phonetic: d.phonetic || "",
+                word_family: Array.isArray(d.wordFamily) ? d.wordFamily : [],
+                status: "ok",
+              };
+            }
+          } catch (e: any) {
+            const idx = updated.findIndex((r) => r === row);
+            if (idx >= 0) updated[idx] = { ...updated[idx], status: "error", error: e?.message };
+          } finally {
+            done++;
+            setBulkProgress({ done, total: needLookup.length });
+          }
+        })
+      );
+      setBulkRows(updated);
+    }
+
+    const toInsert = updated.filter((r) => r.selected && r.status !== "error");
+    const baseSort = words.length;
+    const payload = toInsert.map((r, i) => ({
+      user_id: user.id,
+      vocab_set_id: listId,
+      word: r.word,
+      phonetic: r.phonetic || "",
+      meaning: r.meaning || "",
+      example_en: r.example_en || "",
+      example_vi: r.example_vi || "",
+      word_family: r.word_family || [],
+      sort_order: baseSort + i,
+      status: "new",
+    }));
+
+    if (!payload.length) {
+      setBulkInserting(false);
+      toast({ title: "Không có từ nào để thêm", variant: "destructive" });
+      return;
+    }
+
+    const { data: inserted, error } = await supabase
+      .from("vocab_items")
+      .insert(payload as any)
+      .select();
+
+    setBulkInserting(false);
+    if (error) {
+      toast({ title: "Lỗi khi thêm từ", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (inserted) setWords((prev) => [...prev, ...(inserted as any[])]);
+    toast({ title: `✓ Đã import ${inserted?.length ?? payload.length} từ` });
+    setBulkOpen(false);
+    resetBulk();
+  }, [bulkRows, user, listId, words.length, lookupOne, resetBulk]);
+
+  const handleBulkInsertList = useCallback(async () => {
+    if (!user || !listId) return;
+    const toInsert = bulkRows.filter((r) => r.selected && r.status === "ok");
+    if (!toInsert.length) {
+      toast({ title: "Không có từ nào được chọn", variant: "destructive" });
+      return;
+    }
+    setBulkInserting(true);
+    const baseSort = words.length;
+    const payload = toInsert.map((r, i) => ({
+      user_id: user.id,
+      vocab_set_id: listId,
+      word: r.word,
+      phonetic: r.phonetic || "",
+      meaning: r.meaning || "",
+      example_en: r.example_en || "",
+      example_vi: r.example_vi || "",
+      word_family: r.word_family || [],
+      sort_order: baseSort + i,
+      status: "new",
+    }));
+    const { data: inserted, error } = await supabase
+      .from("vocab_items")
+      .insert(payload as any)
+      .select();
+    setBulkInserting(false);
+    if (error) {
+      toast({ title: "Lỗi khi thêm từ", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (inserted) setWords((prev) => [...prev, ...(inserted as any[])]);
+    toast({ title: `✓ Đã thêm ${inserted?.length ?? payload.length} từ` });
+    setBulkOpen(false);
+    resetBulk();
+  }, [bulkRows, user, listId, words.length, resetBulk]);
+
+  const downloadTemplate = useCallback(async () => {
+    await createAndDownloadExcel("vocab-template.xlsx", [
+      {
+        name: "Words",
+        cols: [
+          { word: "apple", meaning: "quả táo", example_en: "I eat an apple.", example_vi: "Tôi ăn một quả táo." },
+          { word: "love", meaning: "yêu", example_en: "I love you.", example_vi: "Tôi yêu bạn." },
+          { word: "beautiful", meaning: "đẹp", example_en: "She is beautiful.", example_vi: "Cô ấy thật đẹp." },
+        ],
+      },
+    ]);
+  }, []);
+
+
+
 
   const resetAddDialog = useCallback(() => {
     setAddStep(1);
