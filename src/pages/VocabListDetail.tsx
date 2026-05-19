@@ -23,6 +23,8 @@ import {
   Download,
   Plus,
   Pencil,
+  Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,6 +34,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog,
@@ -44,6 +49,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { speakWithTTS, speakAsync as speakAsyncTTS, stopTTS } from "@/lib/tts";
+import { createAndDownloadExcel, readExcelFile } from "@/lib/excelUtils";
 
 /* ─── TTS helpers (Google Cloud TTS via edge function) ─── */
 function speak(text: string, lang: "en" | "vi") {
@@ -143,6 +149,269 @@ const VocabListDetail = () => {
     setEditTarget(null);
     toast({ title: "✓ Đã cập nhật từ vựng" });
   }, [editTarget, editForm]);
+
+  /* ── Bulk import state ── */
+  type BulkRow = {
+    word: string;
+    meaning?: string;
+    example_en?: string;
+    example_vi?: string;
+    phonetic?: string;
+    word_family?: any[];
+    status: "pending" | "ok" | "error";
+    error?: string;
+    selected: boolean;
+  };
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkTab, setBulkTab] = useState<"list" | "file">("list");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkInserting, setBulkInserting] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
+  const [fileName, setFileName] = useState("");
+
+  const resetBulk = useCallback(() => {
+    setBulkTab("list");
+    setBulkText("");
+    setBulkRows([]);
+    setBulkLoading(false);
+    setBulkInserting(false);
+    setBulkProgress({ done: 0, total: 0 });
+    setFileName("");
+  }, []);
+
+  const lookupOne = useCallback(async (word: string) => {
+    const { data, error } = await supabase.functions.invoke("dictionary-lookup", {
+      body: { word },
+    });
+    if (error || !data || (data as any).error) {
+      throw new Error((data as any)?.error || error?.message || "Lookup failed");
+    }
+    return data as any;
+  }, []);
+
+  const handleBulkLookupText = useCallback(async () => {
+    const words = Array.from(
+      new Set(
+        bulkText
+          .split(/\r?\n/)
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean)
+      )
+    );
+    if (!words.length) return;
+    setBulkLoading(true);
+    setBulkProgress({ done: 0, total: words.length });
+    let done = 0;
+    const results = await Promise.all(
+      words.map(async (w): Promise<BulkRow> => {
+        try {
+          const d = await lookupOne(w);
+          return {
+            word: d.word || w,
+            meaning: d.meanings?.[0]?.definition_vi || "",
+            example_en: d.examples?.[0]?.en || "",
+            example_vi: d.examples?.[0]?.vi || "",
+            phonetic: d.phonetic || "",
+            word_family: Array.isArray(d.wordFamily) ? d.wordFamily : [],
+            status: "ok",
+            selected: true,
+          };
+        } catch (e: any) {
+          return {
+            word: w,
+            status: "error",
+            error: e?.message || "Lỗi",
+            selected: false,
+          };
+        } finally {
+          done++;
+          setBulkProgress({ done, total: words.length });
+        }
+      })
+    );
+    setBulkRows(results);
+    setBulkLoading(false);
+  }, [bulkText, lookupOne]);
+
+  const handleFileSelect = useCallback(async (file: File) => {
+    setFileName(file.name);
+    setBulkLoading(true);
+    setBulkRows([]);
+    try {
+      let rows: Record<string, any>[] = [];
+      const buf = await file.arrayBuffer();
+      if (file.name.toLowerCase().endsWith(".csv")) {
+        const text = new TextDecoder().decode(buf);
+        const lines = text.split(/\r?\n/).filter((l) => l.trim());
+        const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, "").toLowerCase());
+        rows = lines.slice(1).map((line) => {
+          const cells = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+          const obj: Record<string, any> = {};
+          headers.forEach((h, i) => (obj[h] = cells[i] || ""));
+          return obj;
+        });
+      } else {
+        const { sheets, sheetNames } = await readExcelFile(buf);
+        rows = sheets[sheetNames[0]] || [];
+      }
+
+      const normalized: BulkRow[] = rows
+        .map((r) => {
+          const keys = Object.fromEntries(
+            Object.entries(r).map(([k, v]) => [k.toString().toLowerCase().trim(), v])
+          );
+          const word = String(keys.word ?? "").trim();
+          if (!word) return null;
+          const meaning = String(keys.meaning ?? "").trim();
+          return {
+            word,
+            meaning,
+            example_en: String(keys.example_en ?? "").trim(),
+            example_vi: String(keys.example_vi ?? "").trim(),
+            status: "pending" as const,
+            selected: true,
+          };
+        })
+        .filter(Boolean) as BulkRow[];
+
+      setBulkRows(normalized);
+    } catch (e: any) {
+      toast({
+        title: "Không đọc được file",
+        description: e?.message || "File không hợp lệ",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(false);
+    }
+  }, []);
+
+  const handleBulkImportFile = useCallback(async () => {
+    if (!user || !listId || !bulkRows.length) return;
+    const needLookup = bulkRows.filter((r) => r.selected && !r.meaning);
+    setBulkInserting(true);
+    setBulkProgress({ done: 0, total: needLookup.length });
+
+    let updated = [...bulkRows];
+    if (needLookup.length) {
+      let done = 0;
+      await Promise.all(
+        needLookup.map(async (row) => {
+          try {
+            const d = await lookupOne(row.word);
+            const idx = updated.findIndex((r) => r === row);
+            if (idx >= 0) {
+              updated[idx] = {
+                ...updated[idx],
+                meaning: d.meanings?.[0]?.definition_vi || "",
+                example_en: updated[idx].example_en || d.examples?.[0]?.en || "",
+                example_vi: updated[idx].example_vi || d.examples?.[0]?.vi || "",
+                phonetic: d.phonetic || "",
+                word_family: Array.isArray(d.wordFamily) ? d.wordFamily : [],
+                status: "ok",
+              };
+            }
+          } catch (e: any) {
+            const idx = updated.findIndex((r) => r === row);
+            if (idx >= 0) updated[idx] = { ...updated[idx], status: "error", error: e?.message };
+          } finally {
+            done++;
+            setBulkProgress({ done, total: needLookup.length });
+          }
+        })
+      );
+      setBulkRows(updated);
+    }
+
+    const toInsert = updated.filter((r) => r.selected && r.status !== "error");
+    const baseSort = words.length;
+    const payload = toInsert.map((r, i) => ({
+      user_id: user.id,
+      vocab_set_id: listId,
+      word: r.word,
+      phonetic: r.phonetic || "",
+      meaning: r.meaning || "",
+      example_en: r.example_en || "",
+      example_vi: r.example_vi || "",
+      word_family: r.word_family || [],
+      sort_order: baseSort + i,
+      status: "new",
+    }));
+
+    if (!payload.length) {
+      setBulkInserting(false);
+      toast({ title: "Không có từ nào để thêm", variant: "destructive" });
+      return;
+    }
+
+    const { data: inserted, error } = await supabase
+      .from("vocab_items")
+      .insert(payload as any)
+      .select();
+
+    setBulkInserting(false);
+    if (error) {
+      toast({ title: "Lỗi khi thêm từ", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (inserted) setWords((prev) => [...prev, ...(inserted as any[])]);
+    toast({ title: `✓ Đã import ${inserted?.length ?? payload.length} từ` });
+    setBulkOpen(false);
+    resetBulk();
+  }, [bulkRows, user, listId, words.length, lookupOne, resetBulk]);
+
+  const handleBulkInsertList = useCallback(async () => {
+    if (!user || !listId) return;
+    const toInsert = bulkRows.filter((r) => r.selected && r.status === "ok");
+    if (!toInsert.length) {
+      toast({ title: "Không có từ nào được chọn", variant: "destructive" });
+      return;
+    }
+    setBulkInserting(true);
+    const baseSort = words.length;
+    const payload = toInsert.map((r, i) => ({
+      user_id: user.id,
+      vocab_set_id: listId,
+      word: r.word,
+      phonetic: r.phonetic || "",
+      meaning: r.meaning || "",
+      example_en: r.example_en || "",
+      example_vi: r.example_vi || "",
+      word_family: r.word_family || [],
+      sort_order: baseSort + i,
+      status: "new",
+    }));
+    const { data: inserted, error } = await supabase
+      .from("vocab_items")
+      .insert(payload as any)
+      .select();
+    setBulkInserting(false);
+    if (error) {
+      toast({ title: "Lỗi khi thêm từ", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (inserted) setWords((prev) => [...prev, ...(inserted as any[])]);
+    toast({ title: `✓ Đã thêm ${inserted?.length ?? payload.length} từ` });
+    setBulkOpen(false);
+    resetBulk();
+  }, [bulkRows, user, listId, words.length, resetBulk]);
+
+  const downloadTemplate = useCallback(async () => {
+    await createAndDownloadExcel("vocab-template.xlsx", [
+      {
+        name: "Words",
+        cols: [
+          { word: "apple", meaning: "quả táo", example_en: "I eat an apple.", example_vi: "Tôi ăn một quả táo." },
+          { word: "love", meaning: "yêu", example_en: "I love you.", example_vi: "Tôi yêu bạn." },
+          { word: "beautiful", meaning: "đẹp", example_en: "She is beautiful.", example_vi: "Cô ấy thật đẹp." },
+        ],
+      },
+    ]);
+  }, []);
+
+
 
 
   const resetAddDialog = useCallback(() => {
@@ -524,6 +793,15 @@ const VocabListDetail = () => {
             <Badge variant="outline" className="shrink-0">
               {words.length} từ
             </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setBulkOpen(true)}
+            >
+              <Upload className="w-4 h-4" />
+              Import nhiều từ
+            </Button>
             <Button
               size="sm"
               className="shrink-0"
@@ -1020,6 +1298,215 @@ const VocabListDetail = () => {
               </>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══ Bulk Import Dialog ═══ */}
+      <Dialog
+        open={bulkOpen}
+        onOpenChange={(open) => {
+          if (bulkLoading || bulkInserting) return;
+          setBulkOpen(open);
+          if (!open) resetBulk();
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import nhiều từ</DialogTitle>
+          </DialogHeader>
+
+          <Tabs value={bulkTab} onValueChange={(v) => { setBulkTab(v as any); setBulkRows([]); setFileName(""); }}>
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="list">Nhập từ danh sách</TabsTrigger>
+              <TabsTrigger value="file">Upload file</TabsTrigger>
+            </TabsList>
+
+            {/* TAB 1 — text list */}
+            <TabsContent value="list" className="space-y-3">
+              <Textarea
+                rows={10}
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                placeholder={"Mỗi dòng 1 từ tiếng Anh. Ví dụ:\napple\nlove\nbeautiful"}
+                disabled={bulkLoading || bulkInserting}
+              />
+              {bulkRows.length === 0 ? (
+                <Button
+                  onClick={handleBulkLookupText}
+                  disabled={!bulkText.trim() || bulkLoading}
+                  className="w-full"
+                >
+                  {bulkLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Đang tra {bulkProgress.done}/{bulkProgress.total} từ...
+                    </>
+                  ) : (
+                    "Tra từ"
+                  )}
+                </Button>
+              ) : (
+                <>
+                  <div className="border border-border rounded-md max-h-[300px] overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted sticky top-0">
+                        <tr>
+                          <th className="px-2 py-2 text-left w-10"></th>
+                          <th className="px-2 py-2 text-left">Từ</th>
+                          <th className="px-2 py-2 text-left">Nghĩa</th>
+                          <th className="px-2 py-2 text-center w-20">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bulkRows.map((r, i) => (
+                          <tr key={i} className="border-t border-border">
+                            <td className="px-2 py-2">
+                              <Checkbox
+                                checked={r.selected}
+                                disabled={r.status === "error"}
+                                onCheckedChange={(c) =>
+                                  setBulkRows((prev) =>
+                                    prev.map((x, j) => (j === i ? { ...x, selected: !!c } : x))
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-2 py-2 font-bold text-primary">{r.word}</td>
+                            <td className="px-2 py-2 text-muted-foreground">
+                              {r.meaning || (r.error ? <span className="text-destructive text-xs">{r.error}</span> : "—")}
+                            </td>
+                            <td className="px-2 py-2 text-center">
+                              {r.status === "ok" ? (
+                                <span className="text-green-600">✓</span>
+                              ) : (
+                                <span className="text-destructive">✗</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setBulkRows([])}
+                      disabled={bulkInserting}
+                    >
+                      ← Tra lại
+                    </Button>
+                    <Button
+                      onClick={handleBulkInsertList}
+                      disabled={bulkInserting || !bulkRows.some((r) => r.selected && r.status === "ok")}
+                      className="flex-1"
+                    >
+                      {bulkInserting && <Loader2 className="w-4 h-4 animate-spin" />}
+                      Thêm {bulkRows.filter((r) => r.selected && r.status === "ok").length} từ đã chọn
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
+            {/* TAB 2 — file upload */}
+            <TabsContent value="file" className="space-y-3">
+              <div className="flex items-center justify-between gap-2 p-3 border border-dashed border-border rounded-md bg-muted/30">
+                <div className="flex items-center gap-2 text-sm">
+                  <FileSpreadsheet className="w-4 h-4 text-primary" />
+                  <span className="text-muted-foreground">
+                    Định dạng: <code className="text-foreground">word</code> (bắt buộc), <code>meaning</code>, <code>example_en</code>, <code>example_vi</code>
+                  </span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={downloadTemplate}>
+                  <Download className="w-4 h-4" />
+                  Tải file mẫu
+                </Button>
+              </div>
+
+              <div>
+                <Input
+                  type="file"
+                  accept=".xlsx,.csv"
+                  disabled={bulkLoading || bulkInserting}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFileSelect(f);
+                  }}
+                />
+                {fileName && (
+                  <p className="text-xs text-muted-foreground mt-1">Đã chọn: {fileName}</p>
+                )}
+              </div>
+
+              {bulkLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang đọc file...
+                </div>
+              )}
+
+              {bulkRows.length > 0 && (
+                <>
+                  <div className="border border-border rounded-md overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted">
+                        <tr>
+                          <th className="px-2 py-2 text-left w-10"></th>
+                          <th className="px-2 py-2 text-left">Từ</th>
+                          <th className="px-2 py-2 text-left">Nghĩa</th>
+                          <th className="px-2 py-2 text-left text-xs">AI?</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bulkRows.slice(0, 5).map((r, i) => (
+                          <tr key={i} className="border-t border-border">
+                            <td className="px-2 py-2">
+                              <Checkbox
+                                checked={r.selected}
+                                onCheckedChange={(c) =>
+                                  setBulkRows((prev) =>
+                                    prev.map((x, j) => (j === i ? { ...x, selected: !!c } : x))
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-2 py-2 font-bold text-primary">{r.word}</td>
+                            <td className="px-2 py-2 text-muted-foreground">{r.meaning || "—"}</td>
+                            <td className="px-2 py-2 text-xs text-muted-foreground">
+                              {!r.meaning ? "Sẽ tra AI" : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {bulkRows.length > 5 && (
+                      <div className="px-3 py-2 text-xs text-muted-foreground bg-muted/50 border-t border-border">
+                        ... và {bulkRows.length - 5} dòng nữa
+                      </div>
+                    )}
+                  </div>
+
+                  {bulkInserting && bulkProgress.total > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">
+                        Đang xử lý {bulkProgress.done}/{bulkProgress.total} từ...
+                      </p>
+                      <Progress value={(bulkProgress.done / bulkProgress.total) * 100} className="h-2" />
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleBulkImportFile}
+                    disabled={bulkInserting || !bulkRows.some((r) => r.selected)}
+                    className="w-full"
+                  >
+                    {bulkInserting && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Import {bulkRows.filter((r) => r.selected).length} từ
+                  </Button>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
