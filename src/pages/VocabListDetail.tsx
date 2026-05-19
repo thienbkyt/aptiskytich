@@ -796,6 +796,15 @@ const VocabListDetail = () => {
             </Badge>
             <Button
               size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => setBulkOpen(true)}
+            >
+              <Upload className="w-4 h-4" />
+              Import nhiều từ
+            </Button>
+            <Button
+              size="sm"
               className="shrink-0"
               onClick={() => setAddOpen(true)}
             >
