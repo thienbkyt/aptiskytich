@@ -1331,20 +1331,34 @@ const VocabListDetail = () => {
                 disabled={bulkLoading || bulkInserting}
               />
               {bulkRows.length === 0 ? (
-                <Button
-                  onClick={handleBulkLookupText}
-                  disabled={!bulkText.trim() || bulkLoading}
-                  className="w-full"
-                >
-                  {bulkLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Đang tra {bulkProgress.done}/{bulkProgress.total} từ...
-                    </>
-                  ) : (
-                    "Tra từ"
+                <div className="space-y-2">
+                  <Button
+                    onClick={handleBulkLookupText}
+                    disabled={!bulkText.trim() || bulkLoading}
+                    className="w-full"
+                  >
+                    {bulkLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Đang tra {bulkProgress.done}/{bulkProgress.total} từ...
+                      </>
+                    ) : (
+                      "Tra từ"
+                    )}
+                  </Button>
+                  {bulkLoading && bulkProgress.total > 0 && (
+                    <div className="space-y-1">
+                      <Progress
+                        value={(bulkProgress.done / bulkProgress.total) * 100}
+                        className="h-2"
+                      />
+                      <div className="text-xs text-muted-foreground text-right">
+                        {Math.round((bulkProgress.done / bulkProgress.total) * 100)}%
+                      </div>
+                    </div>
                   )}
-                </Button>
+                </div>
+
               ) : (
                 <>
                   <div className="border border-border rounded-md max-h-[300px] overflow-y-auto">
