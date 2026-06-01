@@ -129,14 +129,20 @@ export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Questio
 };
 
 
-export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Question[] =>
-  rows.map((r, i) => ({
-    id: i + 1,
-    audioUrl: r.audio_url || "",
-    questionText: r.question_text,
-    options: r.options,
-    correct: r.correct_answer ?? 0,
-  }));
+export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Question[] => {
+  if (rows.length === 0) return [];
+  const first = rows[0];
+  return [{
+    id: 1,
+    audioUrl: first.audio_url || "",
+    questionText: first.question_text || "",
+    statements: rows.map((r) => ({
+      text: r.question_text || "",
+      correctAnswer: String(r.correct_answer ?? ""),
+    })),
+  }];
+};
+
 
 export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Question[] =>
   rows.map((r, i) => ({
