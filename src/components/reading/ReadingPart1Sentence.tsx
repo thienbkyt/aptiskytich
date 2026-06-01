@@ -73,15 +73,18 @@ const ReadingPart1Sentence = ({
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-10">
         <div>
-          <p className="text-sm font-heading font-bold text-foreground">Reading – Part 1</p>
+          <p className="text-sm text-foreground">Reading</p>
+          <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
+            Question 1 of 5
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setBookmarked(!bookmarked)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-              bookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm transition-colors ${
+              bookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:border-primary/30"
             }`}
           >
             <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-primary" : ""}`} />
@@ -91,31 +94,10 @@ const ReadingPart1Sentence = ({
         </div>
       </div>
 
-      <div className="flex-1 bg-card border border-border rounded-xl p-6 mb-6">
-        <p className="text-sm font-semibold text-foreground mb-4">{question.instruction}</p>
+      <div className="flex-1 max-w-4xl mx-auto w-full">
+        <p className="text-base font-bold text-foreground mb-8">{question.instruction}</p>
         {renderPassage()}
       </div>
-
-      {submitted && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-muted/50 rounded-xl p-4 mb-6 text-sm"
-        >
-          <p className="font-semibold text-foreground mb-2">Đáp án đúng:</p>
-          {question.gaps.map((gap, i) => (
-            <p key={i} className="text-muted-foreground">
-              Gap {i + 1}: <span className="text-success font-medium">{gap.options[gap.correct]}</span>
-              {answers[i] !== null && answers[i] !== gap.correct && (
-                <span className="text-destructive ml-2">
-                  (Bạn chọn: {answers[i] !== null ? gap.options[answers[i]!] : "—"})
-                </span>
-              )}
-            </p>
-          ))}
-          <p className="mt-2 text-muted-foreground">{question.explanation}</p>
-        </motion.div>
-      )}
 
       <BottomNavBar
         onPrevious={onPrevious}
