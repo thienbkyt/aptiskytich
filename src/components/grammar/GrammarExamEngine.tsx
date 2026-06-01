@@ -290,28 +290,37 @@ const GrammarExamEngine = ({
               transition={{ duration: 0.25 }}
               className="flex-1"
             >
-              {isSynonymGroup ? (
+              {isSynonymGroup ? (() => {
+                const gType = currentGroup.vocabType || "synonym";
+                const isDefinition = gType === "sentence_definition";
+                const badge = isDefinition ? "Definition Completion" : "Synonym Matching";
+                const instruction = isDefinition
+                  ? "Complete each definition using a word from the drop-down list."
+                  : "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.";
+                const separator = isDefinition ? "is to" : "=";
+                const exampleLeft = isDefinition ? "A person who teaches" : "big";
+                const exampleRight = isDefinition ? "teacher" : "large";
+                return (
                 <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#24085a]/10 text-[#24085a]">
-                      Synonym Matching
+                      {badge}
                     </span>
                   </div>
                   <p className="text-sm text-gray-800 mb-5 leading-relaxed">
-                    Select a word from each drop-down list on the right that has the
-                    same or very similar meaning to each word on the left.
+                    {instruction}
                   </p>
 
                   {/* Example row (muted, non-interactive) */}
                   <div className="flex items-center gap-3 mb-2 opacity-60">
                     <div className="w-24 text-xs text-gray-500">Example</div>
                     <div className="flex-1 flex items-center gap-3">
-                      <div className="w-32 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                        big
+                      <div className={`${isDefinition ? "flex-1" : "w-32"} px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
+                        {exampleLeft}
                       </div>
-                      <span className="text-gray-500">=</span>
+                      <span className="text-gray-500 whitespace-nowrap">{separator}</span>
                       <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                        large
+                        {exampleRight}
                       </div>
                     </div>
                   </div>
@@ -320,7 +329,7 @@ const GrammarExamEngine = ({
 
                   {/* Matching rows */}
                   <div className="space-y-3">
-                    {currentGroup.indices.map((idx, rowIdx) => {
+                    {currentGroup.indices.map((idx) => {
                       const item = questions[idx];
                       const opts = item.options || [];
                       const labels =
@@ -343,10 +352,10 @@ const GrammarExamEngine = ({
                             {idx + 1}.
                           </div>
                           <div className="flex-1 flex items-center gap-3">
-                            <div className="w-40 px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900">
+                            <div className={`${isDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
                               {item.question_text}
                             </div>
-                            <span className="text-gray-500">=</span>
+                            <span className="text-gray-500 whitespace-nowrap">{separator}</span>
                             <div className="w-56">
                               <Select
                                 value={userAns !== null ? String(userAns) : undefined}
@@ -378,6 +387,8 @@ const GrammarExamEngine = ({
                     })}
                   </div>
                 </div>
+                );
+              })()
               ) : (
                 <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
