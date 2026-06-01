@@ -41,13 +41,17 @@ export interface ListeningPart3Question {
   statements: ListeningPart3Statement[];
 }
 
-// Part 4: Monologues – Listen to a longer recording, answer MCQ
-export interface ListeningPart4Question {
-  id: number;
-  audioUrl: string;
-  questionText: string;
+// Part 4: Monologues – 2 clips, each with 1 audio + 2 MCQ questions
+export interface ListeningPart4ClipQuestion {
+  text: string;
   options: string[];
   correct: number;
+}
+
+export interface ListeningPart4Clip {
+  id: number;
+  audioUrl: string;
+  questions: ListeningPart4ClipQuestion[];
 }
 
 // Mock data – Part 1
