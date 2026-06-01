@@ -128,40 +128,38 @@ export const mockListeningPart3: ListeningPart3Question[] = [
 
 
 // Mock data – Part 4
-export const mockListeningPart4: ListeningPart4Question[] = [
+export const mockListeningPart4: ListeningPart4Clip[] = [
   {
     id: 1,
     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
-    questionText: "What is the main purpose of the talk?",
-    options: ["To introduce a new product", "To explain company policy", "To announce a schedule change", "To report financial results"],
-    correct: 0,
+    questions: [
+      {
+        text: "What is the main purpose of the talk?",
+        options: ["To introduce a new product", "To explain company policy", "To announce a schedule change"],
+        correct: 0,
+      },
+      {
+        text: "According to the speaker, what is the advantage of the new system?",
+        options: ["Lower cost", "Faster processing", "Better quality"],
+        correct: 1,
+      },
+    ],
   },
   {
     id: 2,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
-    questionText: "According to the speaker, what is the advantage of the new system?",
-    options: ["Lower cost", "Faster processing", "Better quality", "Easier maintenance"],
-    correct: 1,
-  },
-  {
-    id: 3,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
-    questionText: "When will the changes take effect?",
-    options: ["Next week", "Next month", "In three months", "Next year"],
-    correct: 1,
-  },
-  {
-    id: 4,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
-    questionText: "What should employees do if they have questions?",
-    options: ["Ask their manager", "Visit the website", "Send an email to HR", "Attend a meeting"],
-    correct: 2,
-  },
-  {
-    id: 5,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
-    questionText: "What does the speaker say about training?",
-    options: ["It's optional", "It starts immediately", "It will be provided online", "It's only for managers"],
-    correct: 2,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3",
+    questions: [
+      {
+        text: "When will the changes take effect?",
+        options: ["Next week", "Next month", "In three months"],
+        correct: 1,
+      },
+      {
+        text: "What should employees do if they have questions?",
+        options: ["Ask their manager", "Visit the website", "Send an email to HR"],
+        correct: 2,
+      },
+    ],
   },
 ];
+
