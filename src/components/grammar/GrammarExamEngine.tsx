@@ -49,7 +49,7 @@ const GrammarExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
-  const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill"] as const;
+  const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching"] as const;
   const groups = useMemo(() => {
     const g: {
       startIdx: number;
