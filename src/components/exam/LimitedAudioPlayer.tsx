@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { CircleDot, Circle } from "lucide-react";
+import { CircleDot, CirclePlay } from "lucide-react";
 import { resolveAudioUrl } from "@/lib/audioUrl";
 
 interface LimitedAudioPlayerProps {
