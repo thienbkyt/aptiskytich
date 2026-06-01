@@ -95,7 +95,10 @@ const ReadingExamEngine = ({
     if (partType === "part1" && part1Question) {
       correct = part1Question.gaps.reduce((acc, g, i) => acc + (p1Answers[i] === g.correct ? 1 : 0), 0);
     } else if (partType === "part2" && part2Question) {
-      correct = part2Question.gaps.reduce((acc, g, i) => acc + (p2Answers[i] === g.correct ? 1 : 0), 0);
+      correct = part2Question.sections.reduce((acc, sec, sIdx) => {
+        const placements = p2Placements[sIdx] || {};
+        return acc + sec.sentences.reduce((a, s) => a + (placements[s.correctPosition] === s.text ? 1 : 0), 0);
+      }, 0);
     } else if (partType === "part3" && part3Question) {
       correct = part3Question.statements.reduce((acc, s, i) => acc + (p3Answers[i] === s.correctPerson ? 1 : 0), 0);
     } else if (partType === "part4" && part4Question) {
@@ -110,7 +113,7 @@ const ReadingExamEngine = ({
       }
     }
     onComplete?.(correct, totalQuestions);
-  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Answers, p3Answers, p4Answers, totalQuestions, onComplete]);
+  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete]);
 
   const isAnswered = (qi: number) => currentAnswers[qi] !== null;
 
