@@ -322,18 +322,18 @@ const GrammarExamEngine = ({
                     {instruction}
                   </p>
 
-                  {/* Example row (muted, non-interactive) — only for non-gap_fill */}
-                  {!isGapFill && (
+                  {/* Example row (muted, non-interactive) — only for synonym */}
+                  {gType === "synonym" && (
                     <>
                       <div className="flex items-center gap-3 mb-2 opacity-60">
                         <div className="w-24 text-xs text-gray-500">Example</div>
                         <div className="flex-1 flex items-center gap-3">
-                          <div className={`${isDefinition ? "flex-1" : "w-32"} px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
-                            {exampleLeft}
+                          <div className={`w-32 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
+                            big
                           </div>
-                          <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                          <span className="text-gray-500 whitespace-nowrap">=</span>
                           <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                            {exampleRight}
+                            large
                           </div>
                         </div>
                       </div>
