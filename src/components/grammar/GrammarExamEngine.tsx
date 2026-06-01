@@ -49,7 +49,7 @@ const GrammarExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
-  const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill"] as const;
+  const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching"] as const;
   const groups = useMemo(() => {
     const g: {
       startIdx: number;
@@ -293,20 +293,22 @@ const GrammarExamEngine = ({
               {isSynonymGroup ? (() => {
                 const gType = currentGroup.vocabType || "synonym";
                 const isDefinition = gType === "sentence_definition";
+                const isDefinitionMatching = gType === "definition_matching";
                 const isGapFill = gType === "gap_fill";
+                const isAnyDefinition = isDefinition || isDefinitionMatching;
                 const badge = isGapFill
                   ? "Sentence Gap Fill"
+                  : isDefinitionMatching
+                  ? "Definition Matching"
                   : isDefinition
                   ? "Definition Completion"
                   : "Synonym Matching";
                 const instruction = isGapFill
                   ? "Complete each sentence using a word from each drop-down list."
-                  : isDefinition
+                  : isAnyDefinition
                   ? "Complete each definition using a word from the drop-down list."
                   : "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.";
                 const separator = isDefinition ? "is to" : "=";
-                const exampleLeft = isDefinition ? "A person who teaches" : "big";
-                const exampleRight = isDefinition ? "teacher" : "large";
                 return (
                 <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
@@ -318,18 +320,18 @@ const GrammarExamEngine = ({
                     {instruction}
                   </p>
 
-                  {/* Example row (muted, non-interactive) — only for non-gap_fill */}
-                  {!isGapFill && (
+                  {/* Example row (muted, non-interactive) — only for synonym */}
+                  {gType === "synonym" && (
                     <>
                       <div className="flex items-center gap-3 mb-2 opacity-60">
                         <div className="w-24 text-xs text-gray-500">Example</div>
                         <div className="flex-1 flex items-center gap-3">
-                          <div className={`${isDefinition ? "flex-1" : "w-32"} px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
-                            {exampleLeft}
+                          <div className={`w-32 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
+                            big
                           </div>
-                          <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                          <span className="text-gray-500 whitespace-nowrap">=</span>
                           <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                            {exampleRight}
+                            large
                           </div>
                         </div>
                       </div>
@@ -402,10 +404,12 @@ const GrammarExamEngine = ({
                             </div>
                           ) : (
                             <div className="flex-1 flex items-center gap-3">
-                              <div className={`${isDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
+                              <div className={`${isAnyDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
                                 {item.question_text}
                               </div>
-                              <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                              {!isDefinitionMatching && (
+                                <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                              )}
                               <div className="w-56">
                                 <Select
                                   value={userAns !== null ? String(userAns) : undefined}
