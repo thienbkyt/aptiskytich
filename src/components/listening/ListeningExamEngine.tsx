@@ -110,7 +110,14 @@ const ListeningExamEngine = ({
     } else if (partType === "part1" && part1Questions) {
       correct = part1Questions.reduce((acc, q, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
     }
-    onComplete?.(correct, totalQuestions);
+    const totalForScore = partType === "part4" && part4Questions
+      ? part4Questions.reduce((s, c) => s + c.questions.length, 0)
+      : partType === "part2" && part2Questions
+      ? part2Questions.reduce((s, q) => s + q.persons.length, 0)
+      : partType === "part3" && part3Questions
+      ? part3Questions.reduce((s, q) => s + q.statements.length, 0)
+      : totalQuestions;
+    onComplete?.(correct, totalForScore);
   }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete]);
 
   const handleAnswer = (qi: number, ai: any) => {
