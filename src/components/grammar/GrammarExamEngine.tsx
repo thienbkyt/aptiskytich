@@ -48,18 +48,46 @@ const GrammarExamEngine = ({
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    if (phase === "practice") {
-      setSeenQuestions((prev) => new Set(prev).add(currentIndex));
+  // Group consecutive synonym vocab_matching questions into one page
+  const groups = useMemo(() => {
+    const g: { startIdx: number; indices: number[]; isSynonym: boolean }[] = [];
+    let i = 0;
+    const isSyn = (q: Question | undefined) =>
+      q?.question_type === "vocab_matching" &&
+      (q.extra_data as any)?.vocabType === "synonym";
+    while (i < questions.length) {
+      if (isSyn(questions[i])) {
+        const indices = [i];
+        let j = i + 1;
+        while (j < questions.length && isSyn(questions[j])) {
+          indices.push(j);
+          j++;
+        }
+        g.push({ startIdx: i, indices, isSynonym: true });
+        i = j;
+      } else {
+        g.push({ startIdx: i, indices: [i], isSynonym: false });
+        i++;
+      }
     }
-  }, [phase, currentIndex]);
+    return g;
+  }, [questions]);
+
+  const currentGroupIdx = Math.max(
+    0,
+    groups.findIndex((g) => g.indices.includes(currentIndex))
+  );
+  const currentGroup = groups[currentGroupIdx];
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
-    const t = setInterval(() => {
-      setTimeLeft((p) => {
-        if (p <= 1) {
-          clearInterval(t);
+    if (phase === "practice" && currentGroup) {
+      setSeenQuestions((prev) => {
+        const next = new Set(prev);
+        currentGroup.indices.forEach((idx) => next.add(idx));
+        return next;
+      });
+    }
+  }, [phase, currentGroupIdx]);
           handleSubmit();
           return 0;
         }
