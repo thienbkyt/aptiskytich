@@ -1,7 +1,7 @@
 import type { ExamQuestionRow } from "@/hooks/useExamSets";
 import type { Question } from "@/data/questions";
 import type { ReadingSentenceQuestion, ReadingCohesionQuestion, ReadingOpinionQuestion, ReadingLongQuestion } from "@/data/readingQuestions";
-import type { ListeningPart1Question, ListeningPart2Question, ListeningPart3Question, ListeningPart4Question } from "@/data/listeningQuestions";
+import type { ListeningPart1Question, ListeningPart2Question, ListeningPart3Question, ListeningPart4Clip } from "@/data/listeningQuestions";
 import type { SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data } from "@/data/speakingQuestions";
 import type { WritingPart1Data, WritingPart2Data, WritingPart3Data, WritingPart4Data } from "@/data/writingQuestions";
 
