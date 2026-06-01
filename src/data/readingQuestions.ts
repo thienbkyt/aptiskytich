@@ -95,30 +95,31 @@ export const mockPart2Questions: ReadingCohesionQuestion[] = [
   {
     id: 10,
     type: "text-cohesion",
-    instruction: "Read the text below. Choose the correct sentence from the list to fill each gap.",
-    passage: `The city of Bath is one of the most popular tourist destinations in England.
-
-{0}
-
-The Romans built a temple and bathing complex here nearly 2,000 years ago.
-
-{1}
-
-Today, visitors can explore the Roman Baths museum and enjoy the natural hot springs.
-
-{2}
-
-The city is also famous for its beautiful Georgian architecture.`,
-    sentenceOptions: [
-      "It is known for its natural hot springs and Roman history.",
-      "The baths fell into disrepair after the Romans left Britain.",
-      "Every year, over a million tourists visit the city.",
-      "The weather in Bath is typically mild and pleasant.",
+    instruction: "The sentences below are from some instructions. Put the sentences in the right order. The first sentence is done for you.",
+    sections: [
+      {
+        sentences: [
+          { text: "If you are visiting our office for the first time, please follow these instructions.", correctPosition: 1 },
+          { text: "You should go to the front desk upon arrival and give your name and address.", correctPosition: 2 },
+          { text: "A member of staff will write this information in the visitor's book.", correctPosition: 3 },
+          { text: "Next, he or she will give you a visitor's identity card.", correctPosition: 4 },
+          { text: "You can then use the card to enter through the security gate.", correctPosition: 5 },
+        ],
+      },
+      {
+        sentences: [
+          { text: "Before you leave, please return the card to a member of staff at the front desk.", correctPosition: 1 },
+          { text: "The staff will record your departure time in the visitor's book.", correctPosition: 2 },
+          { text: "Please make sure you have collected all of your belongings before leaving.", correctPosition: 3 },
+          { text: "If you have any feedback, you can leave a note at reception.", correctPosition: 4 },
+          { text: "We hope you enjoyed your visit and look forward to seeing you again.", correctPosition: 5 },
+        ],
+      },
     ],
-    gaps: [{ correct: 0 }, { correct: 1 }, { correct: 2 }],
-    explanation: "Các câu cần được sắp xếp theo logic: giới thiệu → lịch sử → hiện tại.",
+    explanation: "Các câu cần được sắp xếp theo logic.",
   },
 ];
+
 
 export const mockPart3Questions: ReadingOpinionQuestion[] = [
   {
