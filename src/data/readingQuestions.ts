@@ -10,14 +10,19 @@ export interface ReadingSentenceQuestion {
   explanation: string;
 }
 
-// Part 2: Text cohesion — fill in missing sentences to complete a text
+// Part 2: Text cohesion — drag and drop sentences in the right order (2 sections)
+export interface ReadingPart2Sentence {
+  text: string;
+  correctPosition: number; // 1..5 (per section, normalized)
+}
+export interface ReadingPart2Section {
+  sentences: ReadingPart2Sentence[];
+}
 export interface ReadingCohesionQuestion {
   id: number;
   type: "text-cohesion";
-  passage: string; // with {0}, {1}... placeholders for missing sentences
   instruction: string;
-  sentenceOptions: string[]; // pool of sentences to choose from
-  gaps: { correct: number }[]; // correct sentence index for each gap
+  sections: ReadingPart2Section[];
   explanation: string;
 }
 
