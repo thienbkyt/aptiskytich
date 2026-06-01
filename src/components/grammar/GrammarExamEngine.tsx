@@ -293,8 +293,15 @@ const GrammarExamEngine = ({
               {isSynonymGroup ? (() => {
                 const gType = currentGroup.vocabType || "synonym";
                 const isDefinition = gType === "sentence_definition";
-                const badge = isDefinition ? "Definition Completion" : "Synonym Matching";
-                const instruction = isDefinition
+                const isGapFill = gType === "gap_fill";
+                const badge = isGapFill
+                  ? "Sentence Gap Fill"
+                  : isDefinition
+                  ? "Definition Completion"
+                  : "Synonym Matching";
+                const instruction = isGapFill
+                  ? "Complete each sentence using a word from each drop-down list."
+                  : isDefinition
                   ? "Complete each definition using a word from the drop-down list."
                   : "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.";
                 const separator = isDefinition ? "is to" : "=";
@@ -311,21 +318,24 @@ const GrammarExamEngine = ({
                     {instruction}
                   </p>
 
-                  {/* Example row (muted, non-interactive) */}
-                  <div className="flex items-center gap-3 mb-2 opacity-60">
-                    <div className="w-24 text-xs text-gray-500">Example</div>
-                    <div className="flex-1 flex items-center gap-3">
-                      <div className={`${isDefinition ? "flex-1" : "w-32"} px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
-                        {exampleLeft}
+                  {/* Example row (muted, non-interactive) — only for non-gap_fill */}
+                  {!isGapFill && (
+                    <>
+                      <div className="flex items-center gap-3 mb-2 opacity-60">
+                        <div className="w-24 text-xs text-gray-500">Example</div>
+                        <div className="flex-1 flex items-center gap-3">
+                          <div className={`${isDefinition ? "flex-1" : "w-32"} px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
+                            {exampleLeft}
+                          </div>
+                          <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                          <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
+                            {exampleRight}
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-gray-500 whitespace-nowrap">{separator}</span>
-                      <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                        {exampleRight}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border my-4" />
+                      <div className="border-t border-border my-4" />
+                    </>
+                  )}
 
                   {/* Matching rows */}
                   <div className="space-y-3">
@@ -346,42 +356,83 @@ const GrammarExamEngine = ({
                       else if (itemWrong)
                         triggerCls = "border-destructive bg-destructive/10 text-destructive";
 
+                      // Split sentence at the first ____ run for gap_fill
+                      const gapMatch = isGapFill
+                        ? item.question_text.match(/^([\s\S]*?)_{3,}([\s\S]*)$/)
+                        : null;
+                      const beforeGap = gapMatch ? gapMatch[1].trim() : item.question_text;
+                      const afterGap = gapMatch ? gapMatch[2].trim() : "";
+
                       return (
                         <div key={idx} className="flex items-center gap-3">
                           <div className="w-10 text-sm font-semibold text-gray-700">
                             {idx + 1}.
                           </div>
-                          <div className="flex-1 flex items-center gap-3">
-                            <div className={`${isDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
-                              {item.question_text}
+                          {isGapFill ? (
+                            <div className="flex-1 flex items-center gap-2 flex-wrap">
+                              <span className="text-sm text-gray-900">{beforeGap}</span>
+                              <div className="w-56">
+                                <Select
+                                  value={userAns !== null ? String(userAns) : undefined}
+                                  onValueChange={(v) =>
+                                    handleAnswerSelect(idx, parseInt(v, 10))
+                                  }
+                                  disabled={submitted}
+                                >
+                                  <SelectTrigger className={`h-10 ${triggerCls}`}>
+                                    <SelectValue placeholder="Select..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {opts.map((opt, oi) => (
+                                      <SelectItem key={oi} value={String(oi)}>
+                                        {labels[oi]}. {opt}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              {afterGap && (
+                                <span className="text-sm text-gray-900">{afterGap}</span>
+                              )}
+                              {submitted && itemWrong && (
+                                <span className="text-xs text-emerald-700">
+                                  ✓ {opts[item.correct_answer]}
+                                </span>
+                              )}
                             </div>
-                            <span className="text-gray-500 whitespace-nowrap">{separator}</span>
-                            <div className="w-56">
-                              <Select
-                                value={userAns !== null ? String(userAns) : undefined}
-                                onValueChange={(v) =>
-                                  handleAnswerSelect(idx, parseInt(v, 10))
-                                }
-                                disabled={submitted}
-                              >
-                                <SelectTrigger className={`h-10 ${triggerCls}`}>
-                                  <SelectValue placeholder="Select..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {opts.map((opt, oi) => (
-                                    <SelectItem key={oi} value={String(oi)}>
-                                      {labels[oi]}. {opt}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                          ) : (
+                            <div className="flex-1 flex items-center gap-3">
+                              <div className={`${isDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
+                                {item.question_text}
+                              </div>
+                              <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                              <div className="w-56">
+                                <Select
+                                  value={userAns !== null ? String(userAns) : undefined}
+                                  onValueChange={(v) =>
+                                    handleAnswerSelect(idx, parseInt(v, 10))
+                                  }
+                                  disabled={submitted}
+                                >
+                                  <SelectTrigger className={`h-10 ${triggerCls}`}>
+                                    <SelectValue placeholder="Select..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {opts.map((opt, oi) => (
+                                      <SelectItem key={oi} value={String(oi)}>
+                                        {labels[oi]}. {opt}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              {submitted && itemWrong && (
+                                <span className="text-xs text-emerald-700">
+                                  ✓ {opts[item.correct_answer]}
+                                </span>
+                              )}
                             </div>
-                            {submitted && itemWrong && (
-                              <span className="text-xs text-emerald-700">
-                                ✓ {opts[item.correct_answer]}
-                              </span>
-                            )}
-                          </div>
+                          )}
                         </div>
                       );
                     })}
