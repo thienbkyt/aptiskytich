@@ -28,13 +28,17 @@ export interface ListeningPart2Question {
   infoItems: ListeningPart2InfoItem[];
 }
 
-// Part 3: Short Conversations – Listen to a dialogue, answer MCQ
+// Part 3: Short Conversations – Two speakers, classify each statement (man/woman/both)
+export interface ListeningPart3Statement {
+  text: string;
+  correctAnswer: string; // "man" | "woman" | "both"
+}
+
 export interface ListeningPart3Question {
   id: number;
   audioUrl: string;
   questionText: string;
-  options: string[];
-  correct: number;
+  statements: ListeningPart3Statement[];
 }
 
 // Part 4: Monologues – Listen to a longer recording, answer MCQ
@@ -108,39 +112,16 @@ export const mockListeningPart3: ListeningPart3Question[] = [
   {
     id: 1,
     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
-    questionText: "Why is the woman calling?",
-    options: ["To make an appointment", "To cancel an order", "To ask for directions", "To complain about service"],
-    correct: 0,
-  },
-  {
-    id: 2,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
-    questionText: "What does the man suggest?",
-    options: ["Going to a restaurant", "Cooking at home", "Ordering delivery", "Skipping dinner"],
-    correct: 2,
-  },
-  {
-    id: 3,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
-    questionText: "What problem do they discuss?",
-    options: ["Traffic congestion", "A broken machine", "A delayed flight", "A missing document"],
-    correct: 3,
-  },
-  {
-    id: 4,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
-    questionText: "What will the speakers do next?",
-    options: ["Go to the library", "Visit a friend", "Call the office", "Send an email"],
-    correct: 1,
-  },
-  {
-    id: 5,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
-    questionText: "How does the woman feel?",
-    options: ["Excited", "Worried", "Bored", "Angry"],
-    correct: 1,
+    questionText: "You will hear a conversation between a man and a woman about travelling. Who expresses which opinion?",
+    statements: [
+      { text: "Travelling by train is the most comfortable option.", correctAnswer: "man" },
+      { text: "Flying is faster but more stressful.", correctAnswer: "woman" },
+      { text: "Public transport in cities is usually reliable.", correctAnswer: "both" },
+      { text: "Driving long distances can be tiring.", correctAnswer: "man" },
+    ],
   },
 ];
+
 
 // Mock data – Part 4
 export const mockListeningPart4: ListeningPart4Question[] = [

@@ -92,10 +92,17 @@ const ListeningExamEngine = ({
           if (correctItem && ans[p.name] === correctItem.text) correct += 1;
         });
       });
+    } else if (partType === "part3" && part3Questions) {
+      // Per-statement scoring
+      part3Questions.forEach((q, i) => {
+        const ans = (answers[i] || {}) as Record<number, string>;
+        q.statements.forEach((s, si) => {
+          if (ans[si] === s.correctAnswer) correct += 1;
+        });
+      });
     } else {
       const qs =
         partType === "part1" ? part1Questions :
-        partType === "part3" ? part3Questions :
         part4Questions;
       if (qs) {
         correct = qs.reduce((acc: number, q: any, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
