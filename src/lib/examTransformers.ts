@@ -112,14 +112,22 @@ export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Questio
   if (rows.length === 0) return [];
   const first = rows[0];
   const ed: any = first.extra_data || {};
+  const fallbackAudio = first.audio_url || "";
+  const rawPersons: Array<{ name: string; audioUrl: string }> = Array.isArray(ed.persons) ? ed.persons : [];
+  const byName = new Map(rawPersons.map((p) => [p.name, p]));
+  const persons = ["A", "B", "C", "D"].map((name) => {
+    const existing = byName.get(name);
+    return { name, audioUrl: existing?.audioUrl || fallbackAudio };
+  });
   return [{
     id: 1,
-    audioUrl: first.audio_url || "",
+    audioUrl: fallbackAudio,
     questionText: first.question_text || "",
-    persons: ed.persons || [],
+    persons,
     infoItems: ed.infoItems || [],
   }];
 };
+
 
 export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Question[] =>
   rows.map((r, i) => ({
