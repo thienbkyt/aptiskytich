@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { CircleDot, Circle } from "lucide-react";
+import { CircleDot, CirclePlay } from "lucide-react";
 import { resolveAudioUrl } from "@/lib/audioUrl";
 
 interface LimitedAudioPlayerProps {
@@ -73,7 +73,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
         {isPlaying ? (
           <CircleDot className="w-4 h-4 animate-pulse" />
         ) : (
-          <Circle className="w-4 h-4" />
+          <CirclePlay className="w-4 h-4" />
         )}
         <span>Play/Stop</span>
       </button>
