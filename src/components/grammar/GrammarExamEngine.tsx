@@ -49,7 +49,7 @@ const GrammarExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
-  const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching"] as const;
+  const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching", "collocation"] as const;
   const groups = useMemo(() => {
     const g: {
       startIdx: number;
@@ -295,6 +295,7 @@ const GrammarExamEngine = ({
                 const isDefinition = gType === "sentence_definition";
                 const isDefinitionMatching = gType === "definition_matching";
                 const isGapFill = gType === "gap_fill";
+                const isCollocation = gType === "collocation";
                 const isAnyDefinition = isDefinition || isDefinitionMatching;
                 const badge = isGapFill
                   ? "Sentence Gap Fill"
@@ -302,13 +303,17 @@ const GrammarExamEngine = ({
                   ? "Definition Matching"
                   : isDefinition
                   ? "Definition Completion"
+                  : isCollocation
+                  ? "Collocation Matching"
                   : "Synonym Matching";
                 const instruction = isGapFill
                   ? "Complete each sentence using a word from each drop-down list."
                   : isAnyDefinition
                   ? "Complete each definition using a word from the drop-down list."
+                  : isCollocation
+                  ? "Select a word from each drop-down list on the right that is most often used with each word on the left."
                   : "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.";
-                const separator = isDefinition ? "is to" : "=";
+                const separator = isDefinition ? "is to" : isCollocation ? "+" : "=";
                 return (
                 <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
