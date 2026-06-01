@@ -1,7 +1,7 @@
 import type { ExamQuestionRow } from "@/hooks/useExamSets";
 import type { Question } from "@/data/questions";
 import type { ReadingSentenceQuestion, ReadingCohesionQuestion, ReadingOpinionQuestion, ReadingLongQuestion } from "@/data/readingQuestions";
-import type { ListeningPart1Question, ListeningPart2Question, ListeningPart3Question, ListeningPart4Question } from "@/data/listeningQuestions";
+import type { ListeningPart1Question, ListeningPart2Question, ListeningPart3Question, ListeningPart4Clip } from "@/data/listeningQuestions";
 import type { SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data } from "@/data/speakingQuestions";
 import type { WritingPart1Data, WritingPart2Data, WritingPart3Data, WritingPart4Data } from "@/data/writingQuestions";
 
@@ -144,14 +144,25 @@ export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Questio
 };
 
 
-export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Question[] =>
-  rows.map((r, i) => ({
-    id: i + 1,
-    audioUrl: r.audio_url || "",
-    questionText: r.question_text,
-    options: r.options,
-    correct: r.correct_answer ?? 0,
-  }));
+export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] => {
+  const clips: ListeningPart4Clip[] = [];
+  for (let i = 0; i < rows.length; i += 2) {
+    const a = rows[i];
+    const b = rows[i + 1];
+    if (!a) break;
+    const questions = [a, b].filter(Boolean).map((r) => ({
+      text: r!.question_text || "",
+      options: r!.options || [],
+      correct: r!.correct_answer ?? 0,
+    }));
+    clips.push({
+      id: clips.length + 1,
+      audioUrl: a.audio_url || "",
+      questions,
+    });
+  }
+  return clips;
+};
 
 // ─── Speaking ───────────────────────────────────────────────
 export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {

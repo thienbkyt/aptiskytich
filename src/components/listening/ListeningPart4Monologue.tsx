@@ -4,7 +4,7 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ListeningPart4Question } from "@/data/listeningQuestions";
+import type { ListeningPart4Clip } from "@/data/listeningQuestions";
 
 interface QuestionSection {
   title: string;
@@ -15,13 +15,13 @@ interface QuestionSection {
 }
 
 interface Props {
-  questions: ListeningPart4Question[];
+  questions: ListeningPart4Clip[];
   currentIndex: number;
-  answers: (number | null)[];
+  answers: Array<Record<number, number> | null>;
   timeLeft: number;
   totalTime: number;
   submitted: boolean;
-  onAnswer: (qi: number, ai: number) => void;
+  onAnswer: (qi: number, ai: Record<number, number>) => void;
   onPrevious?: () => void;
   onNext?: () => void;
   onSubmit?: () => void;
@@ -34,13 +34,15 @@ const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
 }: Props) => {
-  const q = questions[currentIndex];
-  if (!q) return null;
+  const clip = questions[currentIndex];
+  if (!clip) return null;
 
-  const selected = answers[currentIndex];
+  const clipAnswers: Record<number, number> = answers[currentIndex] || {};
 
-  // Part 4: all questions share the same audio, show player only on first question
-  const showAudio = currentIndex === 0 || questions[currentIndex].audioUrl !== questions[currentIndex - 1]?.audioUrl;
+  const handleSelect = (qi: number, oi: number) => {
+    if (submitted) return;
+    onAnswer(currentIndex, { ...clipAnswers, [qi]: oi });
+  };
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
@@ -48,7 +50,7 @@ const ListeningPart4Monologue = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Listening – Part 4</p>
           <p className="text-sm text-foreground">
-            Question {currentIndex + 1} of {questions.length}
+            Recording {currentIndex + 1} of {questions.length}
           </p>
         </div>
         <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
@@ -63,40 +65,51 @@ const ListeningPart4Monologue = ({
           transition={{ duration: 0.25 }}
           className="flex-1"
         >
-          {/* Always show player - shared audio for all questions in Part 4 */}
-          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={`part4-${q.audioUrl}`} />
+          <LimitedAudioPlayer src={clip.audioUrl} maxPlays={2} questionKey={`part4-${clip.id}`} />
 
-          <div className="bg-background rounded-xl p-6 mb-6">
-            <h2 className="text-sm font-heading font-bold text-foreground mb-6">
-              {q.questionText}
-            </h2>
-            <div className="space-y-3">
-              {q.options.map((opt, i) => {
-                let cls = "border-border hover:border-primary/30 text-foreground hover:bg-muted/50";
-                if (submitted) {
-                  if (i === q.correct) cls = "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-                  else if (i === selected) cls = "border-destructive bg-destructive/10 text-destructive";
-                  else cls = "border-border text-muted-foreground";
-                } else if (selected === i) {
-                  cls = "border-accent bg-accent/15 text-accent-foreground ring-2 ring-accent";
-                }
-                return (
-                  <button
-                    key={i}
-                    onClick={() => !submitted && onAnswer(currentIndex, i)}
-                    disabled={submitted}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
-                  >
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-xs font-bold mr-3">
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                    {opt}
-                    {submitted && i === q.correct && <CheckCircle2 className="w-4 h-4 inline ml-2" />}
-                    {submitted && i === selected && i !== q.correct && <XCircle className="w-4 h-4 inline ml-2" />}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="space-y-8 mt-4">
+            {clip.questions.map((qq, qi) => {
+              const selected = clipAnswers[qi];
+              return (
+                <div key={qi}>
+                  <p className="text-sm font-heading font-bold text-foreground mb-3">
+                    {qi + 1}. {qq.text}
+                  </p>
+                  <div className="border border-border rounded-md overflow-hidden bg-background">
+                    {qq.options.map((opt, oi) => {
+                      const isLastRow = oi === qq.options.length - 1;
+                      let cls = "bg-background hover:bg-muted/50 text-foreground";
+                      if (submitted) {
+                        if (oi === qq.correct) cls = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
+                        else if (oi === selected) cls = "bg-destructive/10 text-destructive";
+                        else cls = "bg-background text-muted-foreground";
+                      } else if (selected === oi) {
+                        cls = "bg-muted-foreground/30 text-foreground";
+                      }
+                      return (
+                        <button
+                          key={oi}
+                          onClick={() => handleSelect(qi, oi)}
+                          disabled={submitted}
+                          className={`w-full flex items-stretch text-left transition-colors ${cls} ${
+                            !isLastRow ? "border-b border-border" : ""
+                          }`}
+                        >
+                          <span className="flex items-center justify-center w-14 shrink-0 bg-muted/60 text-foreground font-heading font-semibold text-lg border-r border-border py-3">
+                            {String.fromCharCode(65 + oi)}
+                          </span>
+                          <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
+                            <span>{opt}</span>
+                            {submitted && oi === qq.correct && <CheckCircle2 className="w-4 h-4" />}
+                            {submitted && oi === selected && oi !== qq.correct && <XCircle className="w-4 h-4" />}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </motion.div>
       </AnimatePresence>
