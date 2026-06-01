@@ -50,57 +50,50 @@ const ListeningPart3Conversation = ({
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-10">
         <div>
-          <p className="text-sm font-heading font-bold text-foreground">Listening – Part 3</p>
-          <p className="text-sm text-foreground">
+          <p className="text-base text-foreground mb-1">Listening</p>
+          <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground">
             Question {currentIndex + 1} of {questions.length}
-          </p>
+          </h2>
         </div>
         <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
       </div>
 
       <div className="flex-1">
-        <div className="bg-background rounded-xl p-6 mb-6">
-          <p className="text-sm text-foreground mb-2">{q.questionText}</p>
-          <p className="text-xs text-muted-foreground mb-4">Who expresses which opinion?</p>
+        <p className="text-base text-foreground leading-relaxed mb-4">{q.questionText}</p>
 
-          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+        <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
 
-          <div className="space-y-3 mt-4">
-            {q.statements.map((s, i) => {
-              const value = selected[i] || "";
-              let cls = "border-border";
-              if (submitted) {
-                if (value === s.correctAnswer) cls = "border-emerald-500 bg-emerald-500/10";
-                else cls = "border-destructive bg-destructive/10";
-              } else if (value) {
-                cls = "border-accent bg-accent/10";
-              }
-              return (
-                <div
-                  key={i}
-                  className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${cls}`}
+        <p className="text-sm text-foreground mt-8 mb-6">Who expresses which opinion?</p>
+
+        <div className="space-y-7">
+          {q.statements.map((s, i) => {
+            const value = selected[i] || "";
+            let selectCls = "border-border bg-background";
+            if (submitted) {
+              if (value === s.correctAnswer) selectCls = "border-emerald-500 bg-emerald-500/10";
+              else selectCls = "border-destructive bg-destructive/10";
+            }
+            return (
+              <div key={i} className="flex items-center gap-3 flex-wrap">
+                <p className="text-base text-foreground">
+                  {i + 1}. {s.text}
+                </p>
+                <select
+                  value={value}
+                  onChange={(e) => handleSelect(i, e.target.value)}
+                  disabled={submitted}
+                  className={`border rounded-md px-3 py-1.5 text-sm text-foreground disabled:opacity-70 ${selectCls}`}
                 >
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-xs font-bold flex-shrink-0">
-                    {i + 1}
-                  </span>
-                  <p className="flex-1 text-sm text-foreground">{s.text}</p>
-                  <select
-                    value={value}
-                    onChange={(e) => handleSelect(i, e.target.value)}
-                    disabled={submitted}
-                    className="border border-border bg-background rounded-md px-3 py-2 text-sm text-foreground disabled:opacity-70"
-                  >
-                    <option value="">--</option>
-                    {ANSWER_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-              );
-            })}
-          </div>
+                  <option value=""></option>
+                  {ANSWER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
         </div>
       </div>
 
