@@ -325,8 +325,8 @@ const GrammarExamEngine = ({
                     {instruction}
                   </p>
 
-                  {/* Example row (muted, non-interactive) — only for synonym */}
-                  {gType === "synonym" && (
+                  {/* Example row (muted, non-interactive) — only for synonym and collocation */}
+                  {(gType === "synonym" || gType === "collocation") && (
                     <>
                       <div className="flex items-center gap-3 mb-2 opacity-60">
                         <div className="w-24 text-xs text-gray-500">Example</div>
@@ -334,9 +334,9 @@ const GrammarExamEngine = ({
                           <div className={`w-32 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700`}>
                             big
                           </div>
-                          <span className="text-gray-500 whitespace-nowrap">=</span>
+                          <span className="text-gray-500 whitespace-nowrap">{separator}</span>
                           <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-700">
-                            large
+                            {isCollocation ? "house" : "large"}
                           </div>
                         </div>
                       </div>
