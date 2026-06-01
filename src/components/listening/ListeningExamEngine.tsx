@@ -52,7 +52,7 @@ const ListeningExamEngine = ({
     partType === "part3" ? (part3Questions?.length || 0) :
     (part4Questions?.length || 0);
 
-  const [answers, setAnswers] = useState<(number | null)[]>(
+  const [answers, setAnswers] = useState<any[]>(
     new Array(totalQuestions).fill(null)
   );
 
@@ -83,19 +83,28 @@ const ListeningExamEngine = ({
     setCurrentIndex(0);
 
     let correct = 0;
-    const qs =
-      partType === "part1" ? part1Questions :
-      partType === "part2" ? part2Questions :
-      partType === "part3" ? part3Questions :
-      part4Questions;
-
-    if (qs) {
-      correct = qs.reduce((acc, q, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
+    if (partType === "part2" && part2Questions) {
+      // Per-speaker scoring across all exercises
+      part2Questions.forEach((q, i) => {
+        const ans = (answers[i] || {}) as Record<string, string>;
+        q.persons.forEach((p) => {
+          const correctItem = q.infoItems.find((it) => it.correctPerson === p.name);
+          if (correctItem && ans[p.name] === correctItem.text) correct += 1;
+        });
+      });
+    } else {
+      const qs =
+        partType === "part1" ? part1Questions :
+        partType === "part3" ? part3Questions :
+        part4Questions;
+      if (qs) {
+        correct = qs.reduce((acc: number, q: any, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
+      }
     }
     onComplete?.(correct, totalQuestions);
   }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete]);
 
-  const handleAnswer = (qi: number, ai: number) => {
+  const handleAnswer = (qi: number, ai: any) => {
     if (submitted) return;
     const n = [...answers];
     n[qi] = ai;
