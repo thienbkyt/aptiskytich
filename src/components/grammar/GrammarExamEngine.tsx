@@ -238,18 +238,19 @@ const GrammarExamEngine = ({
 
                 {/* MCQ Options */}
                 {!isFillBlank && (
-                  <div className="space-y-3">
+                  <div className="border border-border rounded-md overflow-hidden bg-background">
                     {q.options.map((opt, i) => {
+                      const isLastOpt = i === q.options.length - 1;
                       let cls =
-                        "border-gray-200 hover:border-[#24085a]/30 text-gray-900 hover:bg-gray-50";
+                        "bg-background hover:bg-muted/50 text-foreground";
                       if (submitted) {
                         if (i === q.correct_answer)
-                          cls = "border-green-500 bg-green-50 text-green-700";
+                          cls = "bg-emerald-500/10 text-emerald-700";
                         else if (i === selected)
-                          cls = "border-red-500 bg-red-50 text-red-700";
-                        else cls = "border-gray-200 text-gray-400";
+                          cls = "bg-destructive/10 text-destructive";
+                        else cls = "bg-background text-muted-foreground";
                       } else if (selected === i) {
-                        cls = "border-[#FEAD5F] bg-[#FEAD5F]/15 text-gray-900 ring-2 ring-[#FEAD5F]";
+                        cls = "bg-muted-foreground/30 text-foreground";
                       }
                       return (
                         <button
@@ -258,20 +259,24 @@ const GrammarExamEngine = ({
                             !submitted && handleAnswerSelect(currentIndex, i)
                           }
                           disabled={submitted}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
+                          className={`w-full flex items-stretch text-left transition-colors ${cls} ${
+                            !isLastOpt ? "border-b border-border" : ""
+                          }`}
                         >
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 text-xs font-bold mr-3">
+                          <span className="flex items-center justify-center w-14 shrink-0 bg-muted/60 text-foreground font-heading font-semibold text-lg border-r border-border py-3">
                             {String.fromCharCode(65 + i)}
                           </span>
-                          {opt}
-                          {submitted && i === q.correct_answer && (
-                            <CheckCircle2 className="w-4 h-4 inline ml-2" />
-                          )}
-                          {submitted &&
-                            i === selected &&
-                            i !== q.correct_answer && (
-                              <XCircle className="w-4 h-4 inline ml-2" />
+                          <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
+                            <span>{opt}</span>
+                            {submitted && i === q.correct_answer && (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                             )}
+                            {submitted &&
+                              i === selected &&
+                              i !== q.correct_answer && (
+                                <XCircle className="w-4 h-4 text-destructive" />
+                              )}
+                          </span>
                         </button>
                       );
                     })}
