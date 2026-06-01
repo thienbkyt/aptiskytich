@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,6 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
-import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 
 interface GrammarExamEngineProps {
@@ -20,6 +19,46 @@ interface GrammarExamEngineProps {
 
 type Phase = "instructions" | "practice" | "review";
 
+type Page =
+  | { kind: "mcq"; index: number }
+  | { kind: "fill"; index: number }
+  | { kind: "vocab"; vocabType: string; indices: number[] };
+
+const VOCAB_META: Record<
+  string,
+  { instruction: string; example?: { left: string; sep: string; right: string }; sep: string; layout: "left-sep-right" | "gap-fill" | "left-right" }
+> = {
+  synonym: {
+    instruction:
+      "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.",
+    example: { left: "big", sep: "=", right: "large" },
+    sep: "=",
+    layout: "left-sep-right",
+  },
+  sentence_definition: {
+    instruction: "Complete each definition using a word from the drop-down list.",
+    sep: "is to",
+    layout: "left-sep-right",
+  },
+  definition_matching: {
+    instruction: "Complete each definition using a word from the drop-down list.",
+    sep: "",
+    layout: "left-right",
+  },
+  gap_fill: {
+    instruction: "Complete each sentence using a word from each drop-down list.",
+    sep: "",
+    layout: "gap-fill",
+  },
+  collocation: {
+    instruction:
+      "Select a word from each drop-down list on the right that is most often used with each word on the left.",
+    example: { left: "big", sep: "+", right: "house" },
+    sep: "+",
+    layout: "left-sep-right",
+  },
+};
+
 const GrammarExamEngine = ({
   questions,
   testTitle,
@@ -29,7 +68,7 @@ const GrammarExamEngine = ({
   onAnswersChange,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>("instructions");
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(
     new Array(questions.length).fill(null)
   );
@@ -41,11 +80,72 @@ const GrammarExamEngine = ({
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
-    if (phase === "practice") {
-      setSeenQuestions((prev) => new Set(prev).add(currentIndex));
+  // Build pages: group consecutive vocab_matching of same vocabType
+  const pages: Page[] = useMemo(() => {
+    const result: Page[] = [];
+    let i = 0;
+    while (i < questions.length) {
+      const q = questions[i];
+      const vt = q.extra_data?.vocabType;
+      if (q.question_type === "vocab_matching" && vt) {
+        const indices: number[] = [];
+        while (
+          i < questions.length &&
+          questions[i].question_type === "vocab_matching" &&
+          questions[i].extra_data?.vocabType === vt
+        ) {
+          indices.push(i);
+          i++;
+        }
+        result.push({ kind: "vocab", vocabType: vt, indices });
+      } else if (q.question_type === "fill-in-blank") {
+        result.push({ kind: "fill", index: i });
+        i++;
+      } else {
+        result.push({ kind: "mcq", index: i });
+        i++;
+      }
     }
-  }, [phase, currentIndex]);
+    return result;
+  }, [questions]);
+
+  const pageIndexFor = useCallback(
+    (qi: number) => {
+      for (let p = 0; p < pages.length; p++) {
+        const page = pages[p];
+        if (page.kind === "vocab") {
+          if (page.indices.includes(qi)) return p;
+        } else if (page.index === qi) return p;
+      }
+      return 0;
+    },
+    [pages]
+  );
+
+  useEffect(() => {
+    if (phase !== "practice") return;
+    const page = pages[currentPage];
+    if (!page) return;
+    const newSeen = new Set(seenQuestions);
+    if (page.kind === "vocab") page.indices.forEach((i) => newSeen.add(i));
+    else newSeen.add(page.index);
+    setSeenQuestions(newSeen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, currentPage]);
+
+  const handleSubmit = useCallback(() => {
+    setSubmitted(true);
+    setPhase("review");
+    setCurrentPage(0);
+    const correct = questions.reduce((acc, q, i) => {
+      if (q.question_type === "fill-in-blank") {
+        const correctText = q.options[q.correct_answer]?.toLowerCase().trim();
+        return acc + (fillAnswers[i]?.toLowerCase().trim() === correctText ? 1 : 0);
+      }
+      return acc + (answers[i] === q.correct_answer ? 1 : 0);
+    }, 0);
+    onComplete?.(correct, questions.length);
+  }, [questions, answers, fillAnswers, onComplete]);
 
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
@@ -60,36 +160,22 @@ const GrammarExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [phase, submitted, timeLeft, handleSubmit]);
 
-  const handleSubmit = useCallback(() => {
-    setSubmitted(true);
-    setPhase("review");
-    setCurrentIndex(0);
-    const correct = questions.reduce((acc, q, i) => {
-      if (q.question_type === "fill-in-blank") {
-        const correctText = q.options[q.correct_answer]?.toLowerCase().trim();
-        return acc + (fillAnswers[i]?.toLowerCase().trim() === correctText ? 1 : 0);
-      }
-      return acc + (answers[i] === q.correct_answer ? 1 : 0);
-    }, 0);
-    onComplete?.(correct, questions.length);
-  }, [questions, answers, fillAnswers, onComplete]);
-
-  const handleAnswerSelect = (qi: number, ai: number) => {
+  const setAnswerFor = (qi: number, ai: number) => {
     if (submitted) return;
-    const newAnswers = [...answers];
-    newAnswers[qi] = ai;
-    setAnswers(newAnswers);
-    onAnswersChange?.(newAnswers, fillAnswers);
+    const next = [...answers];
+    next[qi] = ai;
+    setAnswers(next);
+    onAnswersChange?.(next, fillAnswers);
   };
 
-  const handleFillAnswer = (qi: number, value: string) => {
+  const setFillFor = (qi: number, value: string) => {
     if (submitted) return;
-    const newFill = [...fillAnswers];
-    newFill[qi] = value;
-    setFillAnswers(newFill);
-    onAnswersChange?.(answers, newFill);
+    const next = [...fillAnswers];
+    next[qi] = value;
+    setFillAnswers(next);
+    onAnswersChange?.(answers, next);
   };
 
   const toggleBookmark = (qi: number) => {
@@ -103,9 +189,7 @@ const GrammarExamEngine = ({
 
   const isAnswered = (qi: number) => {
     const q = questions[qi];
-    if (q?.question_type === "fill-in-blank") {
-      return fillAnswers[qi]?.trim().length > 0;
-    }
+    if (q?.question_type === "fill-in-blank") return fillAnswers[qi]?.trim().length > 0;
     return answers[qi] !== null;
   };
 
@@ -130,16 +214,20 @@ const GrammarExamEngine = ({
       isCurrent: phase !== "instructions",
       onClick: () => {
         setPhase("practice");
-        setCurrentIndex(0);
+        setCurrentPage(0);
       },
       questions: questions.map((_, qi) => ({
         label: String(qi + 1).padStart(2, "0"),
         seen: seenQuestions.has(qi),
         attempted: isAnswered(qi),
-        isCurrent: phase === "practice" && currentIndex === qi,
+        isCurrent: phase === "practice" && pages[currentPage] && (
+          pages[currentPage].kind === "vocab"
+            ? (pages[currentPage] as any).indices.includes(qi)
+            : (pages[currentPage] as any).index === qi
+        ),
         onClick: () => {
           setPhase("practice");
-          setCurrentIndex(qi);
+          setCurrentPage(pageIndexFor(qi));
         },
       })),
     },
@@ -158,20 +246,30 @@ const GrammarExamEngine = ({
             totalMinutes={Math.ceil(timeLimit / 60)}
             onStart={() => setPhase("practice")}
             sections={sections}
-            description={`Bài luyện tập: ${testTitle}. Bao gồm câu hỏi trắc nghiệm và điền từ.`}
+            description={`Bài luyện tập: ${testTitle}. Bao gồm câu hỏi trắc nghiệm và từ vựng.`}
           />
         </div>
       </div>
     );
   }
 
-  const q = questions[currentIndex];
-  if (!q) return null;
+  const page = pages[currentPage];
+  if (!page) return null;
 
-  const selected = answers[currentIndex];
-  const isFillBlank = q.question_type === "fill-in-blank";
-  const qIsCorrect = submitted && isCorrect(currentIndex);
-  const qIsWrong = submitted && isAnswered(currentIndex) && !isCorrect(currentIndex);
+  const isLastPage = currentPage === pages.length - 1;
+  const isFirstPage = currentPage === 0;
+
+  // Header label
+  let headerRange = "";
+  if (page.kind === "vocab") {
+    const first = page.indices[0] + 1;
+    const last = page.indices[page.indices.length - 1] + 1;
+    headerRange = `Questions ${first}-${last} of ${questions.length}`;
+  } else {
+    headerRange = `Question ${page.index + 1} of ${questions.length}`;
+  }
+
+  const primaryQi = page.kind === "vocab" ? page.indices[0] : page.index;
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
@@ -181,182 +279,316 @@ const GrammarExamEngine = ({
           {/* Top bar */}
           <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-sm font-heading font-bold text-gray-900">
-                Grammar & Vocabulary
-              </p>
-              <p className="text-sm text-gray-700">
-                Question {currentIndex + 1} of {questions.length}
-              </p>
+              <p className="text-sm font-heading font-bold text-gray-900">Grammar & Vocabulary</p>
+              <p className="text-sm text-gray-700">{headerRange}</p>
             </div>
             <div className="flex items-center gap-4">
               <button
-                onClick={() => toggleBookmark(currentIndex)}
+                onClick={() => toggleBookmark(primaryQi)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-                  bookmarked.has(currentIndex)
+                  bookmarked.has(primaryQi)
                     ? "border-[#24085a] bg-[#24085a]/10 text-[#24085a]"
                     : "border-gray-300 text-gray-500 hover:border-[#24085a]/30"
                 }`}
               >
-                <Bookmark
-                  className={`w-4 h-4 ${
-                    bookmarked.has(currentIndex) ? "fill-[#24085a]" : ""
-                  }`}
-                />
+                <Bookmark className={`w-4 h-4 ${bookmarked.has(primaryQi) ? "fill-[#24085a]" : ""}`} />
                 Bookmark
               </button>
               <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
             </div>
           </div>
 
-          {/* Question */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={currentIndex}
+              key={currentPage}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.25 }}
               className="flex-1"
             >
-              <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  {isFillBlank && (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-600">
-                      Fill in the blank
-                    </span>
-                  )}
-                  {!isFillBlank && (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#24085a]/10 text-[#24085a]">
-                      Multiple Choice
-                    </span>
-                  )}
-                </div>
+              {page.kind === "mcq" && (
+                <McqPage
+                  q={questions[page.index]}
+                  qi={page.index}
+                  selected={answers[page.index]}
+                  submitted={submitted}
+                  onSelect={(ai) => setAnswerFor(page.index, ai)}
+                />
+              )}
 
-                <h2 className="text-sm font-heading font-bold text-gray-900 mb-6 leading-relaxed">
-                  {q.question_text}
-                </h2>
+              {page.kind === "fill" && (
+                <FillPage
+                  q={questions[page.index]}
+                  value={fillAnswers[page.index] || ""}
+                  submitted={submitted}
+                  onChange={(v) => setFillFor(page.index, v)}
+                />
+              )}
 
-                {/* MCQ Options */}
-                {!isFillBlank && (
-                  <div className="space-y-3">
-                    {q.options.map((opt, i) => {
-                      let cls =
-                        "border-gray-200 hover:border-[#24085a]/30 text-gray-900 hover:bg-gray-50";
-                      if (submitted) {
-                        if (i === q.correct_answer)
-                          cls = "border-green-500 bg-green-50 text-green-700";
-                        else if (i === selected)
-                          cls = "border-red-500 bg-red-50 text-red-700";
-                        else cls = "border-gray-200 text-gray-400";
-                      } else if (selected === i) {
-                        cls = "border-[#FEAD5F] bg-[#FEAD5F]/15 text-gray-900 ring-2 ring-[#FEAD5F]";
-                      }
-                      return (
-                        <button
-                          key={i}
-                          onClick={() =>
-                            !submitted && handleAnswerSelect(currentIndex, i)
-                          }
-                          disabled={submitted}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
-                        >
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gray-100 text-xs font-bold mr-3">
-                            {String.fromCharCode(65 + i)}
-                          </span>
-                          {opt}
-                          {submitted && i === q.correct_answer && (
-                            <CheckCircle2 className="w-4 h-4 inline ml-2" />
-                          )}
-                          {submitted &&
-                            i === selected &&
-                            i !== q.correct_answer && (
-                              <XCircle className="w-4 h-4 inline ml-2" />
-                            )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Fill in the blank */}
-                {isFillBlank && (
-                  <div className="space-y-4">
-                    <Input
-                      value={fillAnswers[currentIndex] || ""}
-                      onChange={(e) =>
-                        handleFillAnswer(currentIndex, e.target.value)
-                      }
-                      placeholder="Nhập đáp án của bạn..."
-                      disabled={submitted}
-                      className={`text-base h-12 ${
-                        submitted
-                          ? isCorrect(currentIndex)
-                            ? "border-green-500 bg-green-50"
-                            : "border-red-500 bg-red-50"
-                          : ""
-                      }`}
-                    />
-                    {submitted && (
-                      <p className="text-sm text-gray-500">
-                        Đáp án đúng:{" "}
-                        <span className="font-bold text-green-600">
-                          {q.options[q.correct_answer]}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Explanation */}
-                {submitted && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    className={`mt-4 p-4 rounded-lg ${
-                      qIsCorrect
-                        ? "bg-green-50 border border-green-200"
-                        : "bg-red-50 border border-red-200"
-                    }`}
-                  >
-                    <p
-                      className={`text-sm font-semibold mb-1 ${
-                        qIsCorrect ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {qIsCorrect ? "✓ Chính xác!" : "✗ Sai rồi!"}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {q.explanation}
-                    </p>
-                  </motion.div>
-                )}
-              </div>
+              {page.kind === "vocab" && (
+                <VocabPage
+                  vocabType={page.vocabType}
+                  items={page.indices.map((qi) => ({
+                    qi,
+                    q: questions[qi],
+                    selected: answers[qi],
+                  }))}
+                  submitted={submitted}
+                  onSelect={setAnswerFor}
+                />
+              )}
             </motion.div>
           </AnimatePresence>
 
-          {/* Bottom nav */}
           <BottomNavBar
-            onPrevious={
-              currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined
-            }
-            onNext={
-              currentIndex < questions.length - 1
-                ? () => setCurrentIndex((p) => p + 1)
-                : undefined
-            }
-            onSubmit={
-              currentIndex === questions.length - 1 && !submitted
-                ? handleSubmit
-                : undefined
-            }
-            isFirst={currentIndex === 0}
-            isLast={currentIndex === questions.length - 1}
+            onPrevious={!isFirstPage ? () => setCurrentPage((p) => p - 1) : undefined}
+            onNext={!isLastPage ? () => setCurrentPage((p) => p + 1) : undefined}
+            onSubmit={isLastPage && !submitted ? handleSubmit : undefined}
+            isFirst={isFirstPage}
+            isLast={isLastPage}
             submitLabel="Submit"
             sections={sections}
             bookmarkedCount={bookmarked.size}
           />
         </div>
       </div>
+    </div>
+  );
+};
+
+// ─── MCQ page (table-style, 3 rows) ───────────────────────────
+const McqPage = ({
+  q,
+  qi,
+  selected,
+  submitted,
+  onSelect,
+}: {
+  q: Question;
+  qi: number;
+  selected: number | null;
+  submitted: boolean;
+  onSelect: (ai: number) => void;
+}) => {
+  const qIsCorrect = submitted && selected === q.correct_answer;
+  return (
+    <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+      <h2 className="text-sm font-heading font-bold text-gray-900 mb-4 leading-relaxed">
+        {q.question_text}
+      </h2>
+
+      <div className="border border-gray-300 rounded-md overflow-hidden bg-white">
+        {q.options.map((opt, i) => {
+          const isLast = i === q.options.length - 1;
+          let cls = "bg-white hover:bg-gray-50 text-gray-900";
+          if (submitted) {
+            if (i === q.correct_answer) cls = "bg-emerald-500/10 text-emerald-700";
+            else if (i === selected) cls = "bg-red-500/10 text-red-700";
+            else cls = "bg-white text-gray-400";
+          } else if (selected === i) {
+            cls = "bg-gray-300 text-gray-900";
+          }
+          return (
+            <button
+              key={i}
+              onClick={() => !submitted && onSelect(i)}
+              disabled={submitted}
+              className={`w-full flex items-stretch text-left transition-colors ${cls} ${
+                !isLast ? "border-b border-gray-300" : ""
+              }`}
+            >
+              <span className="flex items-center justify-center w-14 shrink-0 bg-gray-100 text-gray-800 font-heading font-semibold text-lg border-r border-gray-300 py-3">
+                {String.fromCharCode(65 + i)}
+              </span>
+              <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
+                <span>{opt}</span>
+                {submitted && i === q.correct_answer && <CheckCircle2 className="w-4 h-4" />}
+                {submitted && i === selected && i !== q.correct_answer && (
+                  <XCircle className="w-4 h-4" />
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {submitted && q.explanation && (
+        <div
+          className={`mt-4 p-4 rounded-lg ${
+            qIsCorrect ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
+          }`}
+        >
+          <p className={`text-sm font-semibold mb-1 ${qIsCorrect ? "text-green-600" : "text-red-600"}`}>
+            {qIsCorrect ? "✓ Chính xác!" : "✗ Sai rồi!"}
+          </p>
+          <p className="text-sm text-gray-600">{q.explanation}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Fill-in-blank page ───────────────────────────────────────
+const FillPage = ({
+  q,
+  value,
+  submitted,
+  onChange,
+}: {
+  q: Question;
+  value: string;
+  submitted: boolean;
+  onChange: (v: string) => void;
+}) => {
+  const correctText = q.options[q.correct_answer]?.toLowerCase().trim();
+  const ok = value.toLowerCase().trim() === correctText;
+  return (
+    <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+      <h2 className="text-sm font-heading font-bold text-gray-900 mb-4 leading-relaxed">
+        {q.question_text}
+      </h2>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Nhập đáp án của bạn..."
+        disabled={submitted}
+        className={`text-base h-12 ${
+          submitted ? (ok ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50") : ""
+        }`}
+      />
+      {submitted && (
+        <p className="mt-3 text-sm text-gray-500">
+          Đáp án đúng:{" "}
+          <span className="font-bold text-green-600">{q.options[q.correct_answer]}</span>
+        </p>
+      )}
+    </div>
+  );
+};
+
+// ─── Vocab page (grouped 5 questions) ─────────────────────────
+const VocabPage = ({
+  vocabType,
+  items,
+  submitted,
+  onSelect,
+}: {
+  vocabType: string;
+  items: { qi: number; q: Question; selected: number | null }[];
+  submitted: boolean;
+  onSelect: (qi: number, ai: number) => void;
+}) => {
+  const meta = VOCAB_META[vocabType] || VOCAB_META.synonym;
+
+  const renderDropdown = (q: Question, qi: number, selected: number | null) => {
+    let borderCls = "border-gray-300";
+    if (submitted) {
+      if (selected === q.correct_answer) borderCls = "border-emerald-500 bg-emerald-50";
+      else borderCls = "border-red-500 bg-red-50";
+    } else if (selected !== null) {
+      borderCls = "border-gray-500";
+    }
+    return (
+      <select
+        value={selected ?? ""}
+        onChange={(e) => onSelect(qi, parseInt(e.target.value))}
+        disabled={submitted}
+        className={`min-w-[160px] h-9 px-2 rounded border bg-white text-sm text-gray-900 ${borderCls}`}
+      >
+        <option value="" disabled>
+          — Select —
+        </option>
+        {q.options.map((opt, i) => (
+          <option key={i} value={i}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    );
+  };
+
+  const renderRow = (q: Question, qi: number, selected: number | null) => {
+    const ok = submitted && selected === q.correct_answer;
+    if (meta.layout === "gap-fill") {
+      // split on _____
+      const parts = q.question_text.split(/_{2,}/);
+      const before = parts[0] || "";
+      const after = parts.slice(1).join("_____") || "";
+      return (
+        <div
+          key={qi}
+          className="flex items-center gap-2 flex-wrap py-3 border-b border-gray-200 last:border-b-0"
+        >
+          <span className="text-sm text-gray-900">{before}</span>
+          {renderDropdown(q, qi, selected)}
+          <span className="text-sm text-gray-900">{after}</span>
+          {submitted && (
+            <span className="ml-auto text-xs text-gray-500">
+              Đáp án:{" "}
+              <span className={ok ? "text-emerald-700 font-semibold" : "text-emerald-700 font-semibold"}>
+                {q.options[q.correct_answer]}
+              </span>
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    if (meta.layout === "left-right") {
+      return (
+        <div
+          key={qi}
+          className="flex items-start gap-3 py-3 border-b border-gray-200 last:border-b-0"
+        >
+          <p className="flex-1 text-sm text-gray-900 leading-relaxed">{q.question_text}</p>
+          <div className="shrink-0">{renderDropdown(q, qi, selected)}</div>
+          {submitted && (
+            <span className="text-xs text-gray-500 self-center">
+              <span className="text-emerald-700 font-semibold">
+                {q.options[q.correct_answer]}
+              </span>
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    // left-sep-right
+    return (
+      <div
+        key={qi}
+        className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-3 border-b border-gray-200 last:border-b-0"
+      >
+        <span className="text-sm text-gray-900 font-medium">{q.question_text}</span>
+        <span className="text-sm text-gray-500">{meta.sep}</span>
+        <div className="flex items-center gap-3">
+          {renderDropdown(q, qi, selected)}
+          {submitted && (
+            <span className="text-xs text-gray-500">
+              <span className="text-emerald-700 font-semibold">
+                {q.options[q.correct_answer]}
+              </span>
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
+      <p className="text-sm text-gray-700 mb-4 leading-relaxed">{meta.instruction}</p>
+
+      {meta.example && (
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-3 mb-2 text-gray-400 italic border-b border-dashed border-gray-200">
+          <span className="text-sm">{meta.example.left}</span>
+          <span className="text-sm">{meta.example.sep}</span>
+          <span className="text-sm">{meta.example.right}</span>
+        </div>
+      )}
+
+      <div>{items.map((it) => renderRow(it.q, it.qi, it.selected))}</div>
     </div>
   );
 };
