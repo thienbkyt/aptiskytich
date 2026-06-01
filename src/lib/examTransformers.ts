@@ -36,14 +36,19 @@ export const toReadingPart1 = (rows: ExamQuestionRow[]): ReadingSentenceQuestion
 export const toReadingPart2 = (rows: ExamQuestionRow[]): ReadingCohesionQuestion | null => {
   if (rows.length === 0) return null;
   const first = rows[0];
-  const ed = first.extra_data || {};
+  const ed: any = first.extra_data || {};
+  const raw: Array<{ text: string; correctPosition: number }> = Array.isArray(ed.sentences) ? ed.sentences : [];
+  const group1 = raw
+    .filter((s) => s.correctPosition >= 1 && s.correctPosition <= 5)
+    .map((s) => ({ text: s.text, correctPosition: s.correctPosition }));
+  const group2 = raw
+    .filter((s) => s.correctPosition >= 6 && s.correctPosition <= 10)
+    .map((s) => ({ text: s.text, correctPosition: s.correctPosition - 5 }));
   return {
     id: 1,
     type: "text-cohesion" as const,
-    instruction: ed.instruction || "Read the text below. Choose the correct sentence from the list to fill each gap.",
-    passage: ed.passage || first.question_text,
-    sentenceOptions: ed.sentenceOptions || first.options,
-    gaps: ed.gaps || [{ correct: 0 }],
+    instruction: ed.instruction || "The sentences below are from some instructions. Put the sentences in the right order. The first sentence is done for you.",
+    sections: [{ sentences: group1 }, { sentences: group2 }],
     explanation: first.explanation || "",
   };
 };
