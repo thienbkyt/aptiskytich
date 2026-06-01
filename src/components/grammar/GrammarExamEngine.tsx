@@ -388,8 +388,7 @@ const GrammarExamEngine = ({
                   </div>
                 </div>
                 );
-              })()
-              ) : (
+              })() : (
                 <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     {isFillBlank && (
