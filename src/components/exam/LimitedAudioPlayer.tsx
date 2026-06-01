@@ -40,16 +40,14 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
     if (!audio) return;
 
     if (isPlaying) {
+      // Stop: pause only, keep current position
       audio.pause();
       setIsPlaying(false);
     } else {
+      // Play: always reset to beginning and count as a new play
       if (disabled) return;
-      if (audio.currentTime >= audio.duration) {
-        audio.currentTime = 0;
-      }
-      if (audio.currentTime === 0) {
-        setPlayCount((prev) => prev + 1);
-      }
+      audio.currentTime = 0;
+      setPlayCount((prev) => prev + 1);
       audio.play();
       setIsPlaying(true);
     }
