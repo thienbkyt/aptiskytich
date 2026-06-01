@@ -42,8 +42,8 @@ const ReadingExamEngine = ({
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     new Array(part1Question?.gaps.length || 0).fill(null)
   );
-  const [p2Answers, setP2Answers] = useState<(number | null)[]>(
-    new Array(part2Question?.gaps.length || 0).fill(null)
+  const [p2Placements, setP2Placements] = useState<Record<number, string>[]>(
+    () => (part2Question?.sections || []).map(() => ({}))
   );
   const [p3Answers, setP3Answers] = useState<(number | null)[]>(
     new Array(part3Question?.statements.length || 0).fill(null)
@@ -53,13 +53,15 @@ const ReadingExamEngine = ({
     new Array(p4Total).fill(null)
   );
 
+  const part2TotalSentences = (part2Question?.sections || []).reduce((s, sec) => s + sec.sentences.length, 0);
+
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
-    : partType === "part2" ? (part2Question?.gaps.length || 0)
+    : partType === "part2" ? part2TotalSentences
     : partType === "part3" ? (part3Question?.statements.length || 0)
     : p4Total;
 
   const currentAnswers = partType === "part1" ? p1Answers
-    : partType === "part2" ? p2Answers
+    : partType === "part2" ? p1Answers /* unused for part2 nav */
     : partType === "part3" ? p3Answers
     : p4Answers;
 
