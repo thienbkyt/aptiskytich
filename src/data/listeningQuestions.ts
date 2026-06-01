@@ -4,6 +4,7 @@
 export interface ListeningPart1Question {
   id: number;
   audioUrl: string;
+  questionText?: string;
   options: string[];
   correct: number;
 }
