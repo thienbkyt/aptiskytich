@@ -255,7 +255,7 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
       });
 
       if (parsedResults.length === 0) {
-        toast({ title: "Không tìm thấy tab hợp lệ", description: "Tên tab phải theo format: G&V1-25, G&V26, G&V27, G&V28, G&V29, G&V30, R_Part1, L_Part2, S_Part3, W_Part4...", variant: "destructive" });
+        toast({ title: "Không tìm thấy tab hợp lệ", description: "Tên tab phải theo format: G&V1-25, G&V26, G&V27, G&V28, G&V29, G&V30 (hoặc Core_Grammar, V_Part1..V_Part5), R_Part1, L_Part2, S_Part3, W_Part4...", variant: "destructive" });
         return;
       }
 
