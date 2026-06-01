@@ -60,39 +60,42 @@ const ListeningPart1Word = ({
           transition={{ duration: 0.25 }}
           className="flex-1"
         >
+          <p className="text-sm text-foreground mb-1">
+            {q.questionText || "Which word do you hear?"}
+          </p>
           <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
 
-          <div className="bg-background rounded-xl p-6 mb-6">
-            <h2 className="text-sm font-heading font-bold text-foreground mb-6">
-              Which word do you hear?
-            </h2>
-            <div className="space-y-3">
-              {q.options.map((opt, i) => {
-                let cls = "border-border hover:border-primary/30 text-foreground hover:bg-muted/50";
-                if (submitted) {
-                  if (i === q.correct) cls = "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-                  else if (i === selected) cls = "border-destructive bg-destructive/10 text-destructive";
-                  else cls = "border-border text-muted-foreground";
-                } else if (selected === i) {
-                  cls = "border-accent bg-accent/15 text-accent-foreground ring-2 ring-accent";
-                }
-                return (
-                  <button
-                    key={i}
-                    onClick={() => !submitted && onAnswer(currentIndex, i)}
-                    disabled={submitted}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all text-sm font-medium ${cls}`}
-                  >
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-xs font-bold mr-3">
-                      {String.fromCharCode(65 + i)}
-                    </span>
-                    {opt}
-                    {submitted && i === q.correct && <CheckCircle2 className="w-4 h-4 inline ml-2" />}
-                    {submitted && i === selected && i !== q.correct && <XCircle className="w-4 h-4 inline ml-2" />}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="mt-4 border border-border rounded-md overflow-hidden bg-background">
+            {q.options.map((opt, i) => {
+              const isLast = i === q.options.length - 1;
+              let cls = "bg-background hover:bg-muted/50 text-foreground";
+              if (submitted) {
+                if (i === q.correct) cls = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
+                else if (i === selected) cls = "bg-destructive/10 text-destructive";
+                else cls = "bg-background text-muted-foreground";
+              } else if (selected === i) {
+                cls = "bg-muted-foreground/30 text-foreground";
+              }
+              return (
+                <button
+                  key={i}
+                  onClick={() => !submitted && onAnswer(currentIndex, i)}
+                  disabled={submitted}
+                  className={`w-full flex items-stretch text-left transition-colors ${cls} ${
+                    !isLast ? "border-b border-border" : ""
+                  }`}
+                >
+                  <span className="flex items-center justify-center w-14 shrink-0 bg-muted/60 text-foreground font-heading font-semibold text-lg border-r border-border py-3">
+                    {String.fromCharCode(65 + i)}
+                  </span>
+                  <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
+                    <span>{opt}</span>
+                    {submitted && i === q.correct && <CheckCircle2 className="w-4 h-4" />}
+                    {submitted && i === selected && i !== q.correct && <XCircle className="w-4 h-4" />}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </motion.div>
       </AnimatePresence>
