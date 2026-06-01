@@ -103,6 +103,7 @@ export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Questio
   rows.map((r, i) => ({
     id: i + 1,
     audioUrl: r.audio_url || "",
+    questionText: r.question_text || "",
     options: r.options,
     correct: r.correct_answer ?? 0,
   }));
