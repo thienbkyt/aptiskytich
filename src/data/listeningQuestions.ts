@@ -28,13 +28,17 @@ export interface ListeningPart2Question {
   infoItems: ListeningPart2InfoItem[];
 }
 
-// Part 3: Short Conversations – Listen to a dialogue, answer MCQ
+// Part 3: Short Conversations – Two speakers, classify each statement (man/woman/both)
+export interface ListeningPart3Statement {
+  text: string;
+  correctAnswer: string; // "man" | "woman" | "both"
+}
+
 export interface ListeningPart3Question {
   id: number;
   audioUrl: string;
   questionText: string;
-  options: string[];
-  correct: number;
+  statements: ListeningPart3Statement[];
 }
 
 // Part 4: Monologues – Listen to a longer recording, answer MCQ
