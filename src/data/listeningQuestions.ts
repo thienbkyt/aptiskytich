@@ -9,13 +9,23 @@ export interface ListeningPart1Question {
   correct: number;
 }
 
-// Part 2: Matching Information – Listen to a short monologue and match info
+// Part 2: Matching Information – 4 speakers, match each to one of 6 info items
+export interface ListeningPart2Person {
+  name: string; // "A" | "B" | "C" | "D"
+  audioUrl: string;
+}
+
+export interface ListeningPart2InfoItem {
+  text: string;
+  correctPerson: string; // "A" | "B" | "C" | "D" | "none"
+}
+
 export interface ListeningPart2Question {
   id: number;
   audioUrl: string;
   questionText: string;
-  options: string[];
-  correct: number;
+  persons: ListeningPart2Person[];
+  infoItems: ListeningPart2InfoItem[];
 }
 
 // Part 3: Short Conversations – Listen to a dialogue, answer MCQ
