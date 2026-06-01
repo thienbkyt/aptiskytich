@@ -84,38 +84,22 @@ export const mockListeningPart1: ListeningPart1Question[] = [
 export const mockListeningPart2: ListeningPart2Question[] = [
   {
     id: 1,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-    questionText: "What is the speaker's main topic?",
-    options: ["A holiday trip", "A business meeting", "A cooking class", "A sports event"],
-    correct: 0,
-  },
-  {
-    id: 2,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-    questionText: "When does the event take place?",
-    options: ["Monday morning", "Tuesday afternoon", "Wednesday evening", "Thursday night"],
-    correct: 2,
-  },
-  {
-    id: 3,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-    questionText: "What does the speaker recommend?",
-    options: ["Taking the bus", "Walking to the venue", "Driving a car", "Cycling"],
-    correct: 1,
-  },
-  {
-    id: 4,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
-    questionText: "How many people are expected to attend?",
-    options: ["About 20", "About 50", "About 100", "About 200"],
-    correct: 2,
-  },
-  {
-    id: 5,
-    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
-    questionText: "What is the cost of the ticket?",
-    options: ["Free", "$5", "$10", "$15"],
-    correct: 3,
+    audioUrl: "",
+    questionText: "Four people are talking about science. Complete the sentences below.",
+    persons: [
+      { name: "A", audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
+      { name: "B", audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
+      { name: "C", audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" },
+      { name: "D", audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3" },
+    ],
+    infoItems: [
+      { text: "enjoyed science experiments at school.", correctPerson: "A" },
+      { text: "finds science difficult to understand.", correctPerson: "B" },
+      { text: "wants to study science.", correctPerson: "C" },
+      { text: "likes reading science books.", correctPerson: "D" },
+      { text: "preferred non-science school subjects.", correctPerson: "none" },
+      { text: "now enjoys science.", correctPerson: "none" },
+    ],
   },
 ];
 
