@@ -5,8 +5,9 @@ export interface Question {
   options: string[];
   correct_answer: number;
   explanation: string;
-  question_type?: "mcq" | "gap-fill" | "fill-in-blank";
+  question_type?: "mcq" | "gap-fill" | "fill-in-blank" | "vocab_matching";
   audio_url?: string | null;
+  extra_data?: Record<string, any> | null;
 }
 
 export interface GapFillQuestion {
