@@ -309,8 +309,6 @@ const GrammarExamEngine = ({
                   ? "Complete each definition using a word from the drop-down list."
                   : "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.";
                 const separator = isDefinition ? "is to" : "=";
-                const exampleLeft = isDefinition ? "A person who teaches" : "big";
-                const exampleRight = isDefinition ? "teacher" : "large";
                 return (
                 <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
