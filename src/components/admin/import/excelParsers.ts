@@ -769,12 +769,12 @@ export const parseSheet = (sheetName: string, rows: any[]): ParseResult & { mapp
   let result: ParseResult;
 
   switch (key) {
-    case "Core_Grammar": result = parseCoreGrammar(rows); break;
-    case "V_Part1": result = parseVocabPart1(rows); break;
-    case "V_Part2": result = parseVocabPart2(rows); break;
-    case "V_Part3": result = parseVocabPart3(rows); break;
-    case "V_Part4": result = parseVocabPart4(rows); break;
-    case "V_Part5": result = parseVocabPart5(rows); break;
+    case "G&V1-25": result = parseCoreGrammar(rows); break;
+    case "G&V26": result = parseVocabPart1(rows); break;
+    case "G&V27": result = parseVocabPart2(rows); break;
+    case "G&V28": result = parseVocabPart3(rows); break;
+    case "G&V29": result = parseVocabPart4(rows); break;
+    case "G&V30": result = parseVocabPart5(rows); break;
     case "R_Part1": result = parseReadingPart1(rows); break;
     case "R_Part2": result = parseReadingPart2(rows); break;
     case "R_Part3": result = parseReadingPart3(rows); break;

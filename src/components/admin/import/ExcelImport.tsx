@@ -33,39 +33,39 @@ const downloadTemplate = async () => {
   const sheets: { name: string; cols: Record<string, string | number | boolean>[] }[] = [
     // ─── Core Grammar: 25 MCQ × 3 options ───
     {
-      name: "Core_Grammar",
+      name: "G&V1-25",
       cols: [
         { question_text: "She _____ to work every day.", option_a: "go", option_b: "goes", option_c: "going", correct_answer: "B", explanation: "Present Simple, ngôi 3 số ít" },
         { question_text: "I _____ seen that movie before.", option_a: "have", option_b: "has", option_c: "had", correct_answer: "A", explanation: "Present Perfect với I/you/we/they" },
       ],
     },
     {
-      name: "V_Part1",
+      name: "G&V26",
       cols: [
         { word: "happy", option_A: "joyful", option_B: "sad", option_C: "angry", option_D: "tired", option_E: "hungry", option_F: "clever", option_G: "brave", option_H: "lazy", option_I: "kind", option_J: "rude", option_K: "shy", correct_answer: "A", explanation: "joyful = happy (đồng nghĩa)" },
         { word: "fast", option_A: "joyful", option_B: "sad", option_C: "quick", option_D: "tired", option_E: "hungry", option_F: "clever", option_G: "brave", option_H: "lazy", option_I: "kind", option_J: "rude", option_K: "shy", correct_answer: "C", explanation: "quick = fast" },
       ],
     },
     {
-      name: "V_Part2",
+      name: "G&V27",
       cols: [
         { sentence: "A person who fixes water pipes is a _____.", option_A: "plumber", option_B: "teacher", option_C: "doctor", option_D: "lawyer", option_E: "driver", option_F: "painter", option_G: "chef", option_H: "nurse", option_I: "pilot", option_J: "farmer", option_K: "singer", correct_answer: "A", explanation: "plumber = thợ sửa ống nước" },
       ],
     },
     {
-      name: "V_Part3",
+      name: "G&V28",
       cols: [
         { definition: "feeling of great happiness", option_A: "joy", option_B: "anger", option_C: "fear", option_D: "pain", option_E: "hope", option_F: "pride", option_G: "shame", option_H: "guilt", option_I: "love", option_J: "hate", option_K: "envy", correct_answer: "A", explanation: "joy = feeling of great happiness" },
       ],
     },
     {
-      name: "V_Part4",
+      name: "G&V29",
       cols: [
         { sentence: "She _____ her coat because it was cold outside.", option_A: "put on", option_B: "took off", option_C: "gave up", option_D: "set out", option_E: "broke down", option_F: "turned on", option_G: "looked after", option_H: "ran into", option_I: "picked up", option_J: "held on", option_K: "went through", correct_answer: "A", explanation: "put on = mặc vào" },
       ],
     },
     {
-      name: "V_Part5",
+      name: "G&V30",
       cols: [
         { word: "make", option_A: "a decision", option_B: "a bath", option_C: "a sleep", option_D: "a walk", option_E: "a read", option_F: "a drive", option_G: "a cook", option_H: "a swim", option_I: "a run", option_J: "a fight", option_K: "a dream", correct_answer: "A", explanation: "make a decision = ra quyết định (collocation)" },
       ],
@@ -255,7 +255,7 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
       });
 
       if (parsedResults.length === 0) {
-        toast({ title: "Không tìm thấy tab hợp lệ", description: "Tên tab phải theo format: Core_Grammar, Core_Vocab, R_Part1, L_Part2, S_Part3, W_Part4...", variant: "destructive" });
+        toast({ title: "Không tìm thấy tab hợp lệ", description: "Tên tab phải theo format: G&V1-25, G&V26, G&V27, G&V28, G&V29, G&V30, R_Part1, L_Part2, S_Part3, W_Part4...", variant: "destructive" });
         return;
       }
 
