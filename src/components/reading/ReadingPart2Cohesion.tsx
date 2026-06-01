@@ -1,82 +1,88 @@
-import { useState, Fragment } from "react";
-import { motion } from "framer-motion";
-import { Bookmark } from "lucide-react";
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bookmark, GripVertical } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingCohesionQuestion } from "@/data/readingQuestions";
 
 interface Props {
   question: ReadingCohesionQuestion;
-  answers: (number | null)[];
+  placements: Record<number, string>[]; // one map per section: position(1..5) -> sentence text
+  onPlacementsChange: (sectionIdx: number, p: Record<number, string>) => void;
   timeLeft: number;
   totalTime: number;
   submitted: boolean;
-  onAnswer: (gapIndex: number, value: number) => void;
-  onPrevious?: () => void;
-  onNext?: () => void;
   onSubmit?: () => void;
-  isFirst: boolean;
-  isLast: boolean;
+  onExitToSections?: () => void;
   sections: any[];
 }
 
 const ReadingPart2Cohesion = ({
-  question, answers, timeLeft, totalTime,
-  submitted, onAnswer, onPrevious, onNext, onSubmit,
-  isFirst, isLast, sections,
+  question, placements, onPlacementsChange,
+  timeLeft, totalTime, submitted, onSubmit, sections,
 }: Props) => {
   const [bookmarked, setBookmarked] = useState(false);
+  const [currentSection, setCurrentSection] = useState(0);
+  const [dragging, setDragging] = useState<string | null>(null);
 
-  const renderPassage = () => {
-    const parts = question.passage.split(/\{(\d+)\}/g);
-    return (
-      <div className="text-sm text-foreground leading-relaxed whitespace-pre-line">
-        {parts.map((part, i) => {
-          if (i % 2 === 1) {
-            const gapIndex = parseInt(part);
-            const gap = question.gaps[gapIndex];
-            if (!gap) return null;
-            const selectedValue = answers[gapIndex];
-            const isCorrect = submitted && selectedValue === gap.correct;
-            const isWrong = submitted && selectedValue !== null && selectedValue !== gap.correct;
+  const totalSections = question.sections.length;
+  const section = question.sections[currentSection];
+  const current = placements[currentSection] || {};
 
-            return (
-              <select
-                key={`gap-${gapIndex}`}
-                value={selectedValue !== null && selectedValue !== undefined ? selectedValue : ""}
-                onChange={(e) => onAnswer(gapIndex, parseInt(e.target.value))}
-                disabled={submitted}
-                className={`inline-block mx-1 px-3 py-1.5 text-sm border rounded-lg bg-background appearance-auto cursor-pointer min-w-[200px]
-                  ${submitted
-                    ? isCorrect
-                      ? "border-success bg-success/10 text-success"
-                      : isWrong
-                        ? "border-destructive bg-destructive/10 text-destructive"
-                        : "border-border"
-                    : selectedValue !== null && selectedValue !== undefined
-                      ? "border-primary text-primary"
-                      : "border-border text-muted-foreground"
-                  }`}
-              >
-                <option value="" disabled>── Choose a sentence ──</option>
-                {question.sentenceOptions.map((opt, oi) => (
-                  <option key={oi} value={oi}>{opt}</option>
-                ))}
-              </select>
-            );
-          }
-          return <Fragment key={i}>{part}</Fragment>;
-        })}
-      </div>
-    );
+  // Sentences already placed (in this section)
+  const placedTexts = useMemo(() => new Set(Object.values(current)), [current]);
+  const unplaced = section.sentences.filter((s) => !placedTexts.has(s.text));
+
+  const correctTextForPosition = (pos: number) =>
+    section.sentences.find((s) => s.correctPosition === pos)?.text;
+
+  const handleDragStart = (text: string) => setDragging(text);
+  const handleDragEnd = () => setDragging(null);
+
+  const handleDropOnSlot = (pos: number, e: React.DragEvent) => {
+    e.preventDefault();
+    if (submitted) return;
+    const text = e.dataTransfer.getData("text/plain") || dragging;
+    if (!text) return;
+    const next: Record<number, string> = { ...current };
+    // Remove text from any other slot first
+    for (const k of Object.keys(next)) {
+      if (next[Number(k)] === text) delete next[Number(k)];
+    }
+    next[pos] = text;
+    onPlacementsChange(currentSection, next);
+    setDragging(null);
   };
+
+  const handleDropOnPool = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (submitted) return;
+    const text = e.dataTransfer.getData("text/plain") || dragging;
+    if (!text) return;
+    const next: Record<number, string> = { ...current };
+    for (const k of Object.keys(next)) {
+      if (next[Number(k)] === text) delete next[Number(k)];
+    }
+    onPlacementsChange(currentSection, next);
+    setDragging(null);
+  };
+
+  const allowDrop = (e: React.DragEvent) => e.preventDefault();
+
+  const goPrevSection = () => setCurrentSection((p) => Math.max(0, p - 1));
+  const goNextSection = () => setCurrentSection((p) => Math.min(totalSections - 1, p + 1));
+
+  const isFirst = currentSection === 0;
+  const isLast = currentSection === totalSections - 1;
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-sm font-heading font-bold text-foreground">Reading – Part 2</p>
-          <p className="text-sm text-foreground mt-1">{question.instruction}</p>
+          <p className="text-sm font-heading font-bold text-foreground">Reading</p>
+          <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
+            Question {currentSection + 1} of {totalSections}
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <button
@@ -92,35 +98,116 @@ const ReadingPart2Cohesion = ({
         </div>
       </div>
 
-      <div className="flex-1 bg-card border border-border rounded-xl p-6 mb-6">
-        {renderPassage()}
-      </div>
+      <p className="text-sm font-semibold text-foreground mb-4">{question.instruction}</p>
 
-      {submitted && (
+      <AnimatePresence mode="wait">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="bg-muted/50 rounded-xl p-4 mb-6 text-sm"
+          key={currentSection}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.2 }}
+          className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_auto_320px] gap-4 border border-border rounded-lg p-4 bg-card"
         >
-          <p className="font-semibold text-foreground mb-2">Đáp án đúng:</p>
-          {question.gaps.map((gap, i) => (
-            <p key={i} className="text-muted-foreground">
-              Gap {i + 1}: <span className="text-success font-medium">{question.sentenceOptions[gap.correct]}</span>
-              {answers[i] !== null && answers[i] !== gap.correct && (
-                <span className="text-destructive ml-2">
-                  (Bạn chọn: {answers[i] !== null ? question.sentenceOptions[answers[i]!] : "—"})
-                </span>
-              )}
-            </p>
-          ))}
-          <p className="mt-2 text-muted-foreground">{question.explanation}</p>
+          {/* Left: drop zone slots 1..5 */}
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((pos) => {
+              const placed = current[pos];
+              const correctText = correctTextForPosition(pos);
+              const isCorrect = submitted && placed && placed === correctText;
+              const isWrong = submitted && placed && placed !== correctText;
+              const slotCls = isCorrect
+                ? "border-success bg-success/10"
+                : isWrong
+                  ? "border-destructive bg-destructive/10"
+                  : "border-border";
+
+              // First slot of first section is "done for you" — show the correctPosition=1 sentence read-only
+              const isDoneForYou = currentSection === 0 && pos === 1;
+              const fixedText = isDoneForYou ? correctTextForPosition(1) : null;
+
+              if (isDoneForYou && fixedText) {
+                return (
+                  <div
+                    key={pos}
+                    className="border border-border rounded-md px-4 py-3 bg-muted/40 text-sm text-foreground"
+                  >
+                    {fixedText}
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={pos}
+                  onDragOver={allowDrop}
+                  onDrop={(e) => handleDropOnSlot(pos, e)}
+                  className={`min-h-[56px] border-2 border-dashed rounded-md px-4 py-3 text-sm flex items-center transition-colors ${slotCls} ${
+                    placed ? "bg-background" : "bg-transparent"
+                  }`}
+                >
+                  {placed ? (
+                    <div
+                      draggable={!submitted}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", placed);
+                        handleDragStart(placed);
+                      }}
+                      onDragEnd={handleDragEnd}
+                      className="flex items-start gap-2 w-full cursor-grab active:cursor-grabbing"
+                    >
+                      <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <span className="text-foreground">{placed}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground/50">&nbsp;</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Divider with arrow */}
+          <div className="hidden md:flex items-center">
+            <div className="w-px h-full bg-border relative">
+              <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-border" />
+            </div>
+          </div>
+
+          {/* Right: pool of unplaced sentences */}
+          <div
+            onDragOver={allowDrop}
+            onDrop={handleDropOnPool}
+            className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full"
+          >
+            {unplaced.length === 0 && (
+              <p className="text-xs text-muted-foreground text-center py-4">
+                All sentences placed.
+              </p>
+            )}
+            {unplaced.map((s) => (
+              <div
+                key={s.text}
+                draggable={!submitted}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", s.text);
+                  handleDragStart(s.text);
+                }}
+                onDragEnd={handleDragEnd}
+                className="bg-background border border-border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2"
+              >
+                <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <span>{s.text}</span>
+              </div>
+            ))}
+          </div>
         </motion.div>
-      )}
+      </AnimatePresence>
 
       <BottomNavBar
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onSubmit={onSubmit}
+        onPrevious={!isFirst ? goPrevSection : undefined}
+        onNext={!isLast ? goNextSection : undefined}
+        onSubmit={isLast && !submitted ? onSubmit : undefined}
         isFirst={isFirst}
         isLast={isLast}
         submitLabel="Submit"
