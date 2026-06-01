@@ -293,15 +293,19 @@ const GrammarExamEngine = ({
               {isSynonymGroup ? (() => {
                 const gType = currentGroup.vocabType || "synonym";
                 const isDefinition = gType === "sentence_definition";
+                const isDefinitionMatching = gType === "definition_matching";
                 const isGapFill = gType === "gap_fill";
+                const isAnyDefinition = isDefinition || isDefinitionMatching;
                 const badge = isGapFill
                   ? "Sentence Gap Fill"
+                  : isDefinitionMatching
+                  ? "Definition Matching"
                   : isDefinition
                   ? "Definition Completion"
                   : "Synonym Matching";
                 const instruction = isGapFill
                   ? "Complete each sentence using a word from each drop-down list."
-                  : isDefinition
+                  : isAnyDefinition
                   ? "Complete each definition using a word from the drop-down list."
                   : "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.";
                 const separator = isDefinition ? "is to" : "=";
