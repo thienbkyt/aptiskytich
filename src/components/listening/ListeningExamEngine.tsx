@@ -9,7 +9,7 @@ import type {
   ListeningPart1Question,
   ListeningPart2Question,
   ListeningPart3Question,
-  ListeningPart4Question,
+  ListeningPart4Clip,
 } from "@/data/listeningQuestions";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
@@ -21,7 +21,7 @@ interface ListeningExamEngineProps {
   part1Questions?: ListeningPart1Question[];
   part2Questions?: ListeningPart2Question[];
   part3Questions?: ListeningPart3Question[];
-  part4Questions?: ListeningPart4Question[];
+  part4Questions?: ListeningPart4Clip[];
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
 }
