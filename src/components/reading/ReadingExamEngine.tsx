@@ -201,22 +201,17 @@ const ReadingExamEngine = ({
         {partType === "part2" && part2Question && (
           <ReadingPart2Cohesion
             question={part2Question}
-            answers={p2Answers}
+            placements={p2Placements}
+            onPlacementsChange={(sIdx, p) => {
+              if (submitted) return;
+              setP2Placements((prev) => prev.map((x, i) => (i === sIdx ? p : x)));
+            }}
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(gi, val) => {
-              if (submitted) return;
-              const n = [...p2Answers];
-              n[gi] = val;
-              setP2Answers(n);
-            }}
-            {...navProps}
-            onPrevious={undefined}
-            onNext={undefined}
+            onExitToSections={() => {}}
             onSubmit={!submitted ? handleSubmit : undefined}
-            isFirst={true}
-            isLast={true}
+            sections={sections}
           />
         )}
 
