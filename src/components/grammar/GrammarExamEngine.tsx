@@ -406,10 +406,12 @@ const GrammarExamEngine = ({
                             </div>
                           ) : (
                             <div className="flex-1 flex items-center gap-3">
-                              <div className={`${isDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
+                              <div className={`${isAnyDefinition ? "flex-1" : "w-40"} px-3 py-2 rounded border border-gray-300 bg-white text-sm font-medium text-gray-900`}>
                                 {item.question_text}
                               </div>
-                              <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                              {!isDefinitionMatching && (
+                                <span className="text-gray-500 whitespace-nowrap">{separator}</span>
+                              )}
                               <div className="w-56">
                                 <Select
                                   value={userAns !== null ? String(userAns) : undefined}
