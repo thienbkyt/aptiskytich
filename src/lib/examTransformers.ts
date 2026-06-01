@@ -111,27 +111,13 @@ export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Questio
 export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] => {
   if (rows.length === 0) return [];
   const first = rows[0];
-
-  const getPersonName = (r: any): string =>
-    (r.person_name ?? r.extra_data?.person_name ?? "").toString().trim();
-  const getCorrect = (r: any): string =>
-    (r.correct_answer ?? r.extra_data?.correct_person ?? r.extra_data?.correctPerson ?? "").toString().trim();
-
-  const persons = rows
-    .filter((r) => getPersonName(r))
-    .map((r) => ({ name: getPersonName(r), audioUrl: r.audio_url || "" }));
-
-  const infoItems = rows.map((r) => ({
-    text: r.question_text || "",
-    correctPerson: getCorrect(r),
-  }));
-
+  const ed: any = first.extra_data || {};
   return [{
     id: 1,
     audioUrl: first.audio_url || "",
-    questionText: (first.extra_data as any)?.instruction || first.question_text || "",
-    persons,
-    infoItems,
+    questionText: first.question_text || "",
+    persons: ed.persons || [],
+    infoItems: ed.infoItems || [],
   }];
 };
 
