@@ -101,10 +101,10 @@ const ListeningExamEngine = ({
         });
       });
     } else if (partType === "part4" && part4Questions) {
-      const ans = (answers[0] || {}) as Record<string, number>;
       part4Questions.forEach((clip, ci) => {
+        const ans = (answers[ci] || {}) as Record<number, number>;
         clip.questions.forEach((qq, qi) => {
-          if (ans[`${ci}-${qi}`] === qq.correct) correct += 1;
+          if (ans[qi] === qq.correct) correct += 1;
         });
       });
     } else if (partType === "part1" && part1Questions) {
