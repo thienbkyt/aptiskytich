@@ -100,13 +100,15 @@ const ListeningExamEngine = ({
           if (ans[si] === s.correctAnswer) correct += 1;
         });
       });
-    } else {
-      const qs =
-        partType === "part1" ? part1Questions :
-        part4Questions;
-      if (qs) {
-        correct = qs.reduce((acc: number, q: any, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
-      }
+    } else if (partType === "part4" && part4Questions) {
+      const ans = (answers[0] || {}) as Record<string, number>;
+      part4Questions.forEach((clip, ci) => {
+        clip.questions.forEach((qq, qi) => {
+          if (ans[`${ci}-${qi}`] === qq.correct) correct += 1;
+        });
+      });
+    } else if (partType === "part1" && part1Questions) {
+      correct = part1Questions.reduce((acc, q, i) => acc + (answers[i] === q.correct ? 1 : 0), 0);
     }
     onComplete?.(correct, totalQuestions);
   }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete]);
