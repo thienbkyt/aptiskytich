@@ -48,22 +48,31 @@ const GrammarExamEngine = ({
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
 
-  // Group consecutive synonym vocab_matching questions into one page
+  // Group consecutive vocab_matching questions of same groupable vocabType into one page
+  const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition"] as const;
   const groups = useMemo(() => {
-    const g: { startIdx: number; indices: number[]; isSynonym: boolean }[] = [];
+    const g: {
+      startIdx: number;
+      indices: number[];
+      isSynonym: boolean;
+      vocabType?: string;
+    }[] = [];
     let i = 0;
-    const isSyn = (q: Question | undefined) =>
-      q?.question_type === "vocab_matching" &&
-      (q.extra_data as any)?.vocabType === "synonym";
+    const getGroupType = (q: Question | undefined): string | null => {
+      if (q?.question_type !== "vocab_matching") return null;
+      const vt = (q.extra_data as any)?.vocabType;
+      return (GROUPABLE_VOCAB_TYPES as readonly string[]).includes(vt) ? vt : null;
+    };
     while (i < questions.length) {
-      if (isSyn(questions[i])) {
+      const vt = getGroupType(questions[i]);
+      if (vt) {
         const indices = [i];
         let j = i + 1;
-        while (j < questions.length && isSyn(questions[j])) {
+        while (j < questions.length && getGroupType(questions[j]) === vt) {
           indices.push(j);
           j++;
         }
-        g.push({ startIdx: i, indices, isSynonym: true });
+        g.push({ startIdx: i, indices, isSynonym: true, vocabType: vt });
         i = j;
       } else {
         g.push({ startIdx: i, indices: [i], isSynonym: false });
@@ -72,6 +81,7 @@ const GrammarExamEngine = ({
     }
     return g;
   }, [questions]);
+
 
   const currentGroupIdx = Math.max(
     0,
