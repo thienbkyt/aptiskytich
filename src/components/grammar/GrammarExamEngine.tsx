@@ -88,6 +88,13 @@ const GrammarExamEngine = ({
       });
     }
   }, [phase, currentGroupIdx]);
+
+  useEffect(() => {
+    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    const t = setInterval(() => {
+      setTimeLeft((p) => {
+        if (p <= 1) {
+          clearInterval(t);
           handleSubmit();
           return 0;
         }
