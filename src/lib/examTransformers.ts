@@ -7,23 +7,16 @@ import type { WritingPart1Data, WritingPart2Data, WritingPart3Data, WritingPart4
 
 // ─── Grammar ────────────────────────────────────────────────
 export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] =>
-  rows.map((r, i) => {
-    let qt: Question["question_type"];
-    if (r.question_type === "fill_in_blank") qt = "fill-in-blank";
-    else if (r.question_type === "vocab_matching") qt = "vocab_matching";
-    else qt = "mcq";
-    return {
-      id: i + 1,
-      skill: "grammar" as const,
-      question_text: r.question_text,
-      options: r.options,
-      correct_answer: r.correct_answer ?? 0,
-      explanation: r.explanation || "",
-      question_type: qt,
-      audio_url: r.audio_url,
-      extra_data: r.extra_data || {},
-    };
-  });
+  rows.map((r, i) => ({
+    id: i + 1,
+    skill: "grammar" as const,
+    question_text: r.question_text,
+    options: r.options,
+    correct_answer: r.correct_answer ?? 0,
+    explanation: r.explanation || "",
+    question_type: (r.question_type === "fill_in_blank" ? "fill-in-blank" : "mcq") as Question["question_type"],
+    audio_url: r.audio_url,
+  }));
 
 // ─── Reading ────────────────────────────────────────────────
 export const toReadingPart1 = (rows: ExamQuestionRow[]): ReadingSentenceQuestion | null => {
