@@ -109,13 +109,16 @@ export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Questio
   }));
 
 export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] =>
-  rows.map((r, i) => ({
-    id: i + 1,
-    audioUrl: r.audio_url || "",
-    questionText: r.question_text,
-    options: r.options,
-    correct: r.correct_answer ?? 0,
-  }));
+  rows.map((r, i) => {
+    const ed = r.extra_data || {};
+    return {
+      id: i + 1,
+      audioUrl: r.audio_url || "",
+      questionText: r.question_text || "",
+      persons: ed.persons || [],
+      infoItems: ed.infoItems || [],
+    };
+  });
 
 export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Question[] =>
   rows.map((r, i) => ({
