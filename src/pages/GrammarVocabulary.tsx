@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const TABS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả" },
-  { id: "sets" as const, label: "Bộ đề lẻ", subtitle: "Grammar & Vocab" },
+  { id: "sets" as const, label: "Bộ đề", subtitle: "Grammar & Vocab" },
 ];
 
 type ExamState = {
