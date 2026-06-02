@@ -24,8 +24,27 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
   const [sets, setSets] = useState<ExamSetRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    const { error } = await supabase
+      .from("exam_sets")
+      .delete()
+      .eq("exam_type", examType)
+      .eq("skill", skill);
+    if (error) {
+      toast({ title: "Lỗi xóa", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Đã xóa ${sets.length} đề thi` });
+      setSets([]);
+    }
+    setDeletingAll(false);
+    setConfirmDeleteAll(false);
+  };
 
   useEffect(() => {
     const load = async () => {
