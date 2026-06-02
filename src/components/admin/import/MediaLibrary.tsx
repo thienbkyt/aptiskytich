@@ -32,7 +32,24 @@ const MediaLibrary = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleDeleteAll = async () => {
+    if (files.length === 0) return;
+    setDeletingAll(true);
+    const names = files.map((f) => f.name);
+    const { error } = await supabase.storage.from(activeBucket).remove(names);
+    if (error) {
+      toast({ title: "Lỗi xóa", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Đã xóa ${names.length} file` });
+      setFiles([]);
+    }
+    setDeletingAll(false);
+    setConfirmDeleteAll(false);
+  };
 
   const loadFiles = async (bucket: BucketType) => {
     setLoading(true);
@@ -131,7 +148,19 @@ const MediaLibrary = () => {
         </Button>
         <input ref={fileRef} type="file" accept={currentBucket.accept} multiple onChange={handleUpload} className="hidden" />
         <Badge variant="outline" className="self-center">{files.length} file</Badge>
+        {files.length > 0 && (
+          <Button
+            variant="outline"
+            className="gap-2 ml-auto text-destructive border-destructive/40 hover:bg-destructive/10"
+            onClick={() => setConfirmDeleteAll(true)}
+            disabled={deletingAll}
+          >
+            {deletingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Xóa toàn bộ
+          </Button>
+        )}
       </div>
+
 
       {/* File list */}
       {loading ? (
@@ -176,6 +205,23 @@ const MediaLibrary = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa toàn bộ {files.length} file?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Toàn bộ file trong {currentBucket.label} sẽ bị xóa vĩnh viễn khỏi storage. Không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground">
+              Xóa tất cả
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
