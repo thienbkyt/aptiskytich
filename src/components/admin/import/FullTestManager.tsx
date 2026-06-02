@@ -54,7 +54,7 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
         .from("exam_sets")
         .select("id, title, skill, part, is_published, full_test_id, full_test_title, exam_type")
         .eq("exam_type", examType)
-        .not("full_test_id", "is", null)
+        .not("full_test_category", "is", null)
         .order("created_at", { ascending: false });
 
       if (error || !data) {
