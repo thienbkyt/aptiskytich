@@ -171,11 +171,23 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         numberOfQuestions={totalQuestions}
         timeAllowedMinutes={Math.round(timeLimit / 60)}
         description={`This Writing test has ${totalQuestions} parts. You have ${Math.round(timeLimit / 60)} minutes to complete all parts.`}
-        onStart={() => setPhase("exam")}
+        onStart={() => setPhase("instructions")}
         onExit={onExit}
       />
     );
   }
+
+  // ── Writing Instructions (Aptis-style page 2) ──
+  if (phase === "instructions" && skill === "writing") {
+    return (
+      <AptisWritingInstructions
+        totalMinutes={Math.round(timeLimit / 60)}
+        onNext={() => setPhase("exam")}
+        onExit={onExit}
+      />
+    );
+  }
+
 
   // Grammar: merge all parts
   if (skill === "grammar_vocab") {
