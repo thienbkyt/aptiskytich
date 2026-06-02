@@ -32,7 +32,24 @@ const MediaLibrary = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleDeleteAll = async () => {
+    if (files.length === 0) return;
+    setDeletingAll(true);
+    const names = files.map((f) => f.name);
+    const { error } = await supabase.storage.from(activeBucket).remove(names);
+    if (error) {
+      toast({ title: "Lỗi xóa", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Đã xóa ${names.length} file` });
+      setFiles([]);
+    }
+    setDeletingAll(false);
+    setConfirmDeleteAll(false);
+  };
 
   const loadFiles = async (bucket: BucketType) => {
     setLoading(true);
