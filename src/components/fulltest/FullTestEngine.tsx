@@ -453,7 +453,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   }
 
   if (currentSkill === "writing") {
-    const partType = partNorm as "task1" | "task2" | "task3" | "task4";
+    // Map normalized "partN" → WritingExamEngine's "taskN" partType
+    const partMap: Record<string, "task1" | "task2" | "task3" | "task4"> = {
+      part1: "task1", part2: "task2", part3: "task3", part4: "task4",
+    };
+    const partType = partMap[partNorm];
+    if (!partType) return null;
     const writingProps: any = {};
     switch (partType) {
       case "task1": writingProps.part1Data = toWritingPart1(currentPart.questions); break;
