@@ -71,6 +71,8 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
             { role: "system", content: systemPrompt },
             { role: "user", content: clean },
           ],
+          max_tokens: 2048,
+          response_format: { type: "json_object" },
         }),
       }
     );
