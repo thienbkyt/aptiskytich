@@ -165,11 +165,15 @@ const MergeFullPart = () => {
 
     const skills = autoAllSkills ? ALL_SKILLS : [skill];
 
-    // Pre-fetch ALL existing prefix → full_test_id mappings (across every skill) so we can reuse UUIDs.
+    // Pre-fetch existing prefix → full_test_id mappings, but ONLY from rows that are also
+    // Full Part merges (full_test_category IS NULL). Reusing a full_test_id from a multi-skill
+    // Full Test merge (full_test_category = 'aptis'/'key') would pull the newly merged parts
+    // into the Aptis Full Test section instead of the per-skill Full Part section.
     const { data: existingAll, error: existingErr } = await supabase
       .from("exam_sets")
       .select("title, full_test_id")
-      .not("full_test_id", "is", null);
+      .not("full_test_id", "is", null)
+      .is("full_test_category", null);
 
     if (existingErr) {
       setAutoMerging(false);
