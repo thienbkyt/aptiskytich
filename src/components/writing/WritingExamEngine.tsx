@@ -26,6 +26,7 @@ interface WritingExamEngineProps {
   part4Data?: WritingPart4Data;
   onExit: () => void;
   onComplete?: () => void;
+  skipIntro?: boolean;
 }
 
 type Phase = "instructions" | "practice" | "grading" | "results";
