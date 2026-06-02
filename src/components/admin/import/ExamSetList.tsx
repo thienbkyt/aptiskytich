@@ -223,6 +223,23 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa toàn bộ {sets.length} đề thi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Toàn bộ đề thi {SKILL_LABELS[skill]} — {examType === "general" ? "General" : "Advanced"} cùng với câu hỏi sẽ bị xóa vĩnh viễn. Không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground">
+              Xóa tất cả
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
