@@ -106,6 +106,11 @@ const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions
 
   const formType = getFormType(skill, part);
 
+  // Update default time limit when part changes (only when creating new)
+  useEffect(() => {
+    if (!examSet) setTimeLimit(getDefaultTimeLimit(skill, part));
+  }, [part]);
+
   // Prefill from AI Parser
   useEffect(() => {
     if (prefillQuestions && prefillQuestions.length > 0) {
