@@ -149,19 +149,27 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
     const group = groups.find((g) => g.full_test_id === deleteId);
     if (!group) return;
 
-    for (const part of group.parts) {
-      await supabase.from("exam_questions").delete().eq("exam_set_id", part.id);
-      await supabase.from("exam_sets").delete().eq("id", part.id);
+    // Only delete the Full Test wrapper (cascades to full_test_members).
+    // The underlying exam_sets + questions stay so they remain available in per-skill practice.
+    const { error } = await supabase.from("full_tests").delete().eq("id", deleteId);
+    if (error) {
+      toast({ title: "Xóa thất bại", description: error.message, variant: "destructive" });
+      return;
     }
     setGroups((g) => g.filter((x) => x.full_test_id !== deleteId));
     setDeleteId(null);
-    toast({ title: "Đã xóa Full Test và tất cả câu hỏi liên quan" });
+    toast({ title: "Đã xóa Full Test", description: "Các bộ đề gốc vẫn được giữ ở phần luyện tập theo kỹ năng." });
     onRefresh();
   };
 
   const togglePublishAll = async (group: FullTestGroup, publish: boolean) => {
-    for (const part of group.parts) {
-      await supabase.from("exam_sets").update({ is_published: publish }).eq("id", part.id);
+    const { error } = await supabase
+      .from("full_tests")
+      .update({ is_published: publish })
+      .eq("id", group.full_test_id);
+    if (error) {
+      toast({ title: "Cập nhật thất bại", description: error.message, variant: "destructive" });
+      return;
     }
     setGroups((gs) =>
       gs.map((g) =>
@@ -212,13 +220,28 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
     if (!importTitle.trim() || !parsedFile) return;
     setImporting(true);
 
-    const fullTestId = crypto.randomUUID();
+    // 1) Create the Full Test wrapper.
+    const { data: ft, error: ftErr } = await supabase
+      .from("full_tests")
+      .insert({ title: importTitle.trim(), category: "aptis", is_published: true })
+      .select("id")
+      .single();
+
+    if (ftErr || !ft) {
+      setImporting(false);
+      toast({ title: "Lỗi tạo Full Test", description: ftErr?.message || "", variant: "destructive" });
+      return;
+    }
+
     let totalQuestions = 0;
     let setsCreated = 0;
+    const memberRows: { full_test_id: string; exam_set_id: string; position: number }[] = [];
 
     for (const sheet of parsedFile) {
       if (sheet.questions.length === 0) continue;
 
+      // Create the underlying exam_set WITHOUT mutating full_test_* fields so it
+      // also lives standalone in the per-skill practice section.
       const { data: setData, error: setErr } = await supabase
         .from("exam_sets")
         .insert({
@@ -226,14 +249,14 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
           exam_type: examType,
           skill: sheet.skill,
           part: sheet.part,
-          full_test_id: fullTestId,
-          full_test_title: importTitle,
+          is_published: true,
         } as any)
         .select("id")
         .single();
 
       if (setErr || !setData) continue;
       setsCreated++;
+      memberRows.push({ full_test_id: ft.id, exam_set_id: setData.id, position: setsCreated });
 
       const toInsert = sheet.questions.map((q: any) => ({
         ...q,
@@ -242,6 +265,10 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
 
       const { error } = await supabase.from("exam_questions").insert(toInsert as any);
       if (!error) totalQuestions += toInsert.length;
+    }
+
+    if (memberRows.length > 0) {
+      await supabase.from("full_test_members").insert(memberRows);
     }
 
     setImporting(false);
