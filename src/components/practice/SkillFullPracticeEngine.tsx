@@ -93,7 +93,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     setsWithQuestions.sort((a, b) => a.part.localeCompare(b.part));
 
     setParts(setsWithQuestions);
-    setPhase("exam");
+    setPhase(skill === "writing" ? "intro" : "exam");
   };
 
   const handlePartComplete = useCallback((correct?: number, total?: number) => {
