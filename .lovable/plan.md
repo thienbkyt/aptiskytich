@@ -1,127 +1,40 @@
-## Tracking chi phí vận hành tự động
+## Mục tiêu
 
-Mục tiêu: ngoài chi phí nhập tay (cố định như Lovable Pro, Supabase Pro), app sẽ tự đếm các khoản biến đổi (AI tokens, TTS chars, storage GB, edge invocations) và **ước lượng cost VND** dựa trên đơn giá admin tự cấu hình.
+Tự động ghép các bộ đề hiện có theo prefix tên (ví dụ `Đề 01`, `Đề 02`...) thành Full Part cho từng kỹ năng, để chúng hiện ra ở tab "Full Part" của từng trang luyện kỹ năng (Speaking/Listening/Reading/Writing/Grammar & Vocabulary).
 
-⚠️ Lưu ý: đây là **ước lượng dựa trên usage thực tế của app** — không phải hóa đơn từ Lovable. Số liệu sát nhưng có thể chênh ±10% so với billing thật vì không tính được overhead, free tier, network egress.
+Ví dụ Speaking:
+- `Đề 01 - Speaking - Speaking Part 1` + `... Part 2` + `... Part 3` + `... Part 4` → gộp thành Full Part tên **Đề 01**.
+- Tương tự cho Grammar & Vocabulary (6 parts), Listening (4), Reading (4), Writing (4).
 
----
+## Cách hoạt động
 
-### 1. Cấu trúc dữ liệu mới
+Thêm nút **"Tự động ghép theo tên đề"** trong tab `Ghép Full Part` (Admin → Import Center → Ghép & Quản lý → Ghép Full Part).
 
-**Bảng `usage_events`** — log từng sự kiện sử dụng tài nguyên:
-- service: `lovable_ai` | `gemini_direct` | `google_tts` | `supabase_storage` | `supabase_db` | `edge_function`
-- event_type: `chat_completion` | `tts_synthesis` | `storage_snapshot` | `function_invocation`...
-- model: tên model (vd `google/gemini-2.5-flash`) — nullable
-- units: số lượng (tokens / chars / MB / calls)
-- unit_type: `input_tokens` | `output_tokens` | `chars` | `mb_month` | `calls`
-- estimated_cost_vnd: numeric — tính sẵn lúc insert
-- source_function: tên edge function gọi (grade-exam, dictionary-lookup...)
-- metadata: jsonb (user_id, request_id, latency...)
-- created_at
+Khi bấm nút:
 
-RLS: chỉ admin xem. Edge function dùng service role để insert.
+1. Lấy toàn bộ `exam_sets` của kỹ năng đang chọn (theo dropdown Kỹ năng có sẵn).
+2. Với mỗi bộ đề, trích prefix từ `title` bằng regex `^Đề\s*(\d+)` → ví dụ `Đề 01`, `Đề 02`.
+3. Bỏ qua bộ đề không match prefix hoặc đã có `full_test_id`.
+4. Nhóm các bộ đề theo prefix. Chỉ ghép nhóm có **≥ 2 parts khác nhau** (đủ điều kiện Full Part).
+5. Với mỗi nhóm:
+   - Nếu đã tồn tại 1 `full_test_id` cho cùng prefix ở kỹ năng khác (ví dụ `Đề 01` của Listening đã có full_test_id) → **tái sử dụng** cùng UUID đó, để giữ liên kết Full Test 5 kỹ năng.
+   - Nếu chưa có → tạo `full_test_id` mới.
+   - Đặt `full_test_title = "Đề <NN>"` (ví dụ `Đề 01`).
+   - UPDATE `exam_sets` set `full_test_id` + `full_test_title` cho tất cả bộ đề trong nhóm.
+6. Hiển thị toast: `✓ Đã ghép N nhóm cho [kỹ năng] (M bộ đề)`.
+7. Refresh danh sách hiển thị bên dưới.
 
-**Bảng `pricing_config`** — đơn giá admin tự sửa:
-- service, model, unit_type
-- price_per_unit (USD)
-- usd_to_vnd_rate (default 25500)
-- effective_from (date) — cho phép giữ history khi giá đổi
-- is_active
+Có dialog xác nhận trước khi chạy để tránh nhấn nhầm, kèm preview số nhóm sẽ ghép.
 
-Seed mặc định:
-- `google/gemini-2.5-flash`: $0.075/1M input, $0.30/1M output
-- `google/gemini-2.5-pro`: $1.25/1M input, $5.00/1M output
-- Google TTS Standard: $4.00/1M chars
-- Supabase Storage: $0.021/GB/tháng
-- Supabase DB: $0.125/GB/tháng
-- Edge function invocation: $2.00/1M calls
+Tùy chọn thêm: checkbox **"Ghép cho tất cả 5 kỹ năng"** để chạy 1 lần cho mọi skill thay vì chỉ skill đang chọn.
 
-RLS: admin only.
+## File thay đổi
 
----
+- `src/components/admin/merge/MergeFullPart.tsx`: thêm nút + handler `handleAutoMerge`, dialog xác nhận, logic group-by-prefix và reuse full_test_id.
 
-### 2. Logging tự động trong edge functions
+Không thay đổi schema DB, không thay đổi flow hiển thị Full Part ở phía user — vì `useSkillFullSets` đã đọc theo `full_test_id` sẵn.
 
-**Edit `grade-exam`, `dictionary-lookup`, `parse-exam`**:
-Sau mỗi lần gọi Lovable AI Gateway, parse `usage` trong response (`prompt_tokens`, `completion_tokens`), gọi helper `logUsage()` insert vào `usage_events` với cost được tính từ `pricing_config`.
+## Câu cần xác nhận
 
-**Edit `tts` và `tts-bundle`**:
-Log `service: google_tts`, `units: text.length`, `unit_type: chars`.
-
-Helper chung `_shared/usage-logger.ts` — load pricing 1 lần, cache 5 phút trong memory edge function.
-
-Fail-soft: nếu logging lỗi không làm hỏng request chính (try/catch silent).
-
-**Đếm edge function invocation**: thay vì query analytics logs (tốn quota), tự increment trong helper — mỗi function log 1 dòng `function_invocation` ở đầu request.
-
----
-
-### 3. Snapshot storage + DB hàng ngày
-
-Edge function mới `snapshot-usage`:
-- Query `pg_database_size('postgres')` → DB size MB
-- Query `storage.objects` sum size theo bucket → storage MB
-- Insert 2 dòng `usage_events` với `service: supabase_storage|supabase_db`, `units: MB`, cost = MB × giá GB-month / 30 / 1024
-
-Không setup cron tự động (theo memory: no cron). Thay vào đó:
-- Nút **"Cập nhật snapshot"** trên trang Admin Report → admin bấm khi cần
-- Hoặc auto-trigger 1 lần/ngày khi admin mở trang (check last snapshot < 24h → skip)
-
----
-
-### 4. UI Admin Report — tabs song song
-
-Restructure trang `/admin/report` thành 3 tabs:
-
-**Tab 1: "Chi phí nhập tay"** (giữ nguyên cost_records hiện tại — bảng + form + chart năm)
-
-**Tab 2: "Chi phí ước lượng (tự động)"**
-- Card tổng: tổng VND tháng / so sánh tháng trước
-- Bảng breakdown theo service:
-  - Lovable AI — X tokens — Y VND
-  - Google TTS — X chars — Y VND
-  - Storage — X GB-month — Y VND
-  - Edge functions — X calls — Y VND
-- Bar chart 12 tháng stacked theo service
-- Nút "Cập nhật snapshot storage/DB"
-- Top 10 ngày tốn nhất (table)
-
-**Tab 3: "Tổng hợp"**
-- Tổng cộng = nhập tay + ước lượng
-- Pie chart phân bổ chi phí theo nguồn
-
-**Trang con `/admin/report/pricing`** — admin sửa bảng đơn giá:
-- List pricing_config rows với inline edit
-- Nút "Thêm dòng giá mới"
-- Hiển thị tỷ giá USD→VND có thể chỉnh
-
-Link "Cấu hình đơn giá" trong header tab 2.
-
----
-
-### 5. Routing & navbar
-
-Không thay đổi route chính, thêm:
-- `/admin/report` (đã có) — bổ sung tabs
-- `/admin/report/pricing` — sub page
-
----
-
-### Phạm vi không động vào
-
-- Logic Import Center
-- Bảng `cost_records` hiện có (giữ nguyên + dữ liệu seed)
-- Các edge function logic chính (chỉ thêm vài dòng `logUsage()` ở cuối)
-
----
-
-### Thứ tự thực hiện
-
-1. Migration: `usage_events` + `pricing_config` + seed đơn giá
-2. Helper `_shared/usage-logger.ts`
-3. Patch `grade-exam`, `dictionary-lookup`, `parse-exam`, `tts`, `tts-bundle`
-4. Edge function mới `snapshot-usage`
-5. Restructure `AdminReport.tsx` thành tabs
-6. Trang `AdminReportPricing.tsx`
-
-Sau khi xong, chạy thử vài lần grade Speaking → kiểm tra `usage_events` có log đúng → xem chart hiển thị.
+1. Title prefix mặc định là `Đề <số>` (1-2 chữ số). OK chứ, hay cần regex khác?
+2. Có muốn nút **"Ghép cho tất cả 5 kỹ năng"** trong 1 lần bấm không, hay chỉ ghép theo kỹ năng đang chọn?

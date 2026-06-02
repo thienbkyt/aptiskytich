@@ -4,7 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Loader2, Layers } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Save, Loader2, Layers, Wand2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type SkillKey = "speaking" | "listening" | "reading" | "writing" | "grammar_vocab";
@@ -17,6 +27,8 @@ const SKILL_OPTIONS: { value: SkillKey; label: string }[] = [
   { value: "grammar_vocab", label: "Grammar & Vocabulary" },
 ];
 
+const ALL_SKILLS: SkillKey[] = ["speaking", "listening", "reading", "writing", "grammar_vocab"];
+
 interface ExamSetItem {
   id: string;
   title: string;
@@ -25,6 +37,15 @@ interface ExamSetItem {
   full_test_id: string | null;
 }
 
+// Extract prefix like "Đề 01" / "Đề 1" from a title. Returns normalized "Đề NN" (zero-padded 2 digits) or null.
+const extractDePrefix = (title: string): string | null => {
+  const m = title?.match(/^\s*Đề\s*0*(\d+)/i);
+  if (!m) return null;
+  const num = parseInt(m[1], 10);
+  if (!Number.isFinite(num)) return null;
+  return `Đề ${String(num).padStart(2, "0")}`;
+};
+
 const MergeFullPart = () => {
   const [skill, setSkill] = useState<SkillKey>("speaking");
   const [sets, setSets] = useState<ExamSetItem[]>([]);
@@ -32,23 +53,31 @@ const MergeFullPart = () => {
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState("");
   const [selected, setSelected] = useState<Record<string, string>>({}); // partKey -> exam_set_id
+  const [autoMerging, setAutoMerging] = useState(false);
+  const [autoConfirmOpen, setAutoConfirmOpen] = useState(false);
+  const [autoAllSkills, setAutoAllSkills] = useState(false);
+  const [autoPreview, setAutoPreview] = useState<{ groups: number; sets: number }>({ groups: 0, sets: 0 });
+
+  const loadSetsForSkill = async (s: SkillKey) => {
+    const { data, error } = await supabase
+      .from("exam_sets")
+      .select("id, title, part, skill, full_test_id")
+      .eq("skill", s)
+      .order("part", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) {
+      toast({ title: "Lỗi tải bộ đề", description: error.message, variant: "destructive" });
+      return [] as ExamSetItem[];
+    }
+    return (data || []) as ExamSetItem[];
+  };
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       setSelected({});
-      const { data, error } = await supabase
-        .from("exam_sets")
-        .select("id, title, part, skill, full_test_id")
-        .eq("skill", skill)
-        .order("part", { ascending: true })
-        .order("created_at", { ascending: true });
-      if (error) {
-        toast({ title: "Lỗi tải bộ đề", description: error.message, variant: "destructive" });
-        setSets([]);
-      } else {
-        setSets((data || []) as ExamSetItem[]);
-      }
+      const data = await loadSetsForSkill(skill);
+      setSets(data);
       setLoading(false);
     })();
   }, [skill]);
@@ -91,25 +120,157 @@ const MergeFullPart = () => {
     toast({ title: "Đã ghép Full Part", description: `${ids.length} bộ đề đã được gán vào "${title}"` });
     setTitle("");
     setSelected({});
-    // Refresh
-    const { data } = await supabase
+    setSets(await loadSetsForSkill(skill));
+  };
+
+  // ---- Auto merge by "Đề NN" prefix ----
+  const computeAutoPreview = async (allSkills: boolean): Promise<{ groups: number; sets: number }> => {
+    const skills = allSkills ? ALL_SKILLS : [skill];
+    let totalGroups = 0;
+    let totalSets = 0;
+    for (const s of skills) {
+      const data = await loadSetsForSkill(s);
+      const groups = new Map<string, ExamSetItem[]>();
+      for (const item of data) {
+        if (item.full_test_id) continue;
+        const prefix = extractDePrefix(item.title);
+        if (!prefix) continue;
+        if (!groups.has(prefix)) groups.set(prefix, []);
+        groups.get(prefix)!.push(item);
+      }
+      for (const [, items] of groups) {
+        const uniqueParts = new Set(items.map((i) => i.part));
+        if (uniqueParts.size >= 2) {
+          totalGroups += 1;
+          totalSets += items.length;
+        }
+      }
+    }
+    return { groups: totalGroups, sets: totalSets };
+  };
+
+  const openAutoConfirm = async () => {
+    const preview = await computeAutoPreview(autoAllSkills);
+    setAutoPreview(preview);
+    setAutoConfirmOpen(true);
+  };
+
+  const runAutoMerge = async () => {
+    setAutoConfirmOpen(false);
+    setAutoMerging(true);
+
+    const skills = autoAllSkills ? ALL_SKILLS : [skill];
+
+    // Pre-fetch ALL existing prefix → full_test_id mappings (across every skill) so we can reuse UUIDs.
+    const { data: existingAll, error: existingErr } = await supabase
       .from("exam_sets")
-      .select("id, title, part, skill, full_test_id")
-      .eq("skill", skill)
-      .order("part", { ascending: true })
-      .order("created_at", { ascending: true });
-    setSets((data || []) as ExamSetItem[]);
+      .select("title, full_test_id")
+      .not("full_test_id", "is", null);
+
+    if (existingErr) {
+      setAutoMerging(false);
+      toast({ title: "Không tải được dữ liệu hiện có", description: existingErr.message, variant: "destructive" });
+      return;
+    }
+
+    const prefixToFullTestId = new Map<string, string>();
+    for (const row of existingAll || []) {
+      const p = extractDePrefix(row.title || "");
+      if (p && row.full_test_id && !prefixToFullTestId.has(p)) {
+        prefixToFullTestId.set(p, row.full_test_id as string);
+      }
+    }
+
+    let mergedGroups = 0;
+    let mergedSets = 0;
+    const errors: string[] = [];
+
+    for (const s of skills) {
+      const data = await loadSetsForSkill(s);
+      const groups = new Map<string, ExamSetItem[]>();
+      for (const item of data) {
+        if (item.full_test_id) continue;
+        const prefix = extractDePrefix(item.title);
+        if (!prefix) continue;
+        if (!groups.has(prefix)) groups.set(prefix, []);
+        groups.get(prefix)!.push(item);
+      }
+
+      for (const [prefix, items] of groups) {
+        const uniqueParts = new Set(items.map((i) => i.part));
+        if (uniqueParts.size < 2) continue;
+
+        let fullTestId = prefixToFullTestId.get(prefix);
+        if (!fullTestId) {
+          fullTestId = crypto.randomUUID();
+          prefixToFullTestId.set(prefix, fullTestId);
+        }
+
+        const ids = items.map((i) => i.id);
+        const { error } = await supabase
+          .from("exam_sets")
+          .update({ full_test_id: fullTestId, full_test_title: prefix })
+          .in("id", ids);
+
+        if (error) {
+          errors.push(`${s} / ${prefix}: ${error.message}`);
+          continue;
+        }
+        mergedGroups += 1;
+        mergedSets += ids.length;
+      }
+    }
+
+    setAutoMerging(false);
+
+    if (errors.length > 0) {
+      toast({
+        title: "Hoàn tất với lỗi",
+        description: `Ghép ${mergedGroups} nhóm (${mergedSets} bộ đề). Lỗi: ${errors.length}`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "✓ Tự động ghép xong",
+        description: `Đã ghép ${mergedGroups} nhóm (${mergedSets} bộ đề)${autoAllSkills ? " cho 5 kỹ năng" : ""}.`,
+      });
+    }
+
+    setSets(await loadSetsForSkill(skill));
   };
 
   return (
     <div className="space-y-5">
       <div className="border border-border rounded-xl p-5 bg-card space-y-4">
-        <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-primary" />
-          <h3 className="font-heading font-bold text-foreground">Ghép Full Part theo kỹ năng</h3>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Layers className="w-5 h-5 text-primary" />
+            <h3 className="font-heading font-bold text-foreground">Ghép Full Part theo kỹ năng</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={autoAllSkills}
+                onChange={(e) => setAutoAllSkills(e.target.checked)}
+                className="accent-primary"
+              />
+              Ghép cho cả 5 kỹ năng
+            </label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openAutoConfirm}
+              disabled={autoMerging}
+              className="gap-1.5"
+            >
+              {autoMerging ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+              Tự động ghép theo tên đề
+            </Button>
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Chọn 1 bộ đề cho mỗi Part, đặt tên rồi bấm Lưu. Full Part này sẽ tự xuất hiện ở tab "Full Part" của trang luyện kỹ năng tương ứng.
+          Chọn 1 bộ đề cho mỗi Part, đặt tên rồi bấm Lưu. Hoặc dùng <b>Tự động ghép theo tên đề</b> để gộp các bộ đề có cùng prefix <code className="text-xs">Đề NN</code> (ví dụ <code className="text-xs">Đề 01</code>) thành 1 Full Part.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -125,7 +286,7 @@ const MergeFullPart = () => {
             </Select>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground mb-1 block">Tên Full Part</Label>
+            <Label className="text-xs text-muted-foreground mb-1 block">Tên Full Part (ghép thủ công)</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -175,6 +336,26 @@ const MergeFullPart = () => {
           </Button>
         </div>
       )}
+
+      <AlertDialog open={autoConfirmOpen} onOpenChange={setAutoConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận tự động ghép</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sẽ ghép <b>{autoPreview.groups}</b> nhóm ({autoPreview.sets} bộ đề) theo prefix <code>Đề NN</code>
+              {autoAllSkills ? " trên cả 5 kỹ năng" : ` cho kỹ năng ${SKILL_OPTIONS.find((s) => s.value === skill)?.label}`}.
+              <br />
+              Bộ đề đã có <code>full_test_id</code> sẽ được bỏ qua. Nhóm cùng prefix nhưng khác kỹ năng sẽ dùng chung 1 <code>full_test_id</code> để giữ liên kết Full Test.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={runAutoMerge} disabled={autoPreview.groups === 0}>
+              Ghép ngay
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
