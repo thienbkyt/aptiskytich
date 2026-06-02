@@ -77,9 +77,16 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
         <h2 className="text-lg font-heading font-bold text-foreground">
           {SKILL_LABELS[skill]} — {examType === "general" ? "General" : "Advanced"}
         </h2>
-        <Button onClick={onCreateNew} className="gap-2">
-          <Plus className="w-4 h-4" /> Thêm đề thi mới
-        </Button>
+        <div className="flex items-center gap-2">
+          {sets.some((s) => !s.is_published) && (
+            <Button variant="outline" onClick={handlePublishAll} className="gap-2">
+              <Eye className="w-4 h-4" /> Xuất bản tất cả
+            </Button>
+          )}
+          <Button onClick={onCreateNew} className="gap-2">
+            <Plus className="w-4 h-4" /> Thêm đề thi mới
+          </Button>
+        </div>
       </div>
 
       {sets.length > 0 && (
