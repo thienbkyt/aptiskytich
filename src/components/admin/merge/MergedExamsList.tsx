@@ -91,7 +91,11 @@ const MergedExamsList = () => {
 
   const groups = useMemo<MergedGroup[]>(() => {
     const filtered =
-      skillFilter === "all" ? rows : rows.filter((r) => r.skill === skillFilter);
+      skillFilter === "all"
+        ? rows
+        : skillFilter === "full_test"
+          ? rows.filter((r) => r.full_test_category != null)
+          : rows.filter((r) => r.skill === skillFilter && r.full_test_category == null);
     const map = new Map<string, MergedGroup>();
     for (const r of filtered) {
       if (!map.has(r.full_test_id)) {
