@@ -19,12 +19,15 @@ export const useSkillFullSets = (skill: string) => {
   useEffect(() => {
     (async () => {
       setLoading(true);
+      // Exclude rows that belong to a 5-skill Full Test (full_test_category set).
+      // Those are shown on /thi-thu, not in the per-skill Full Part section.
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, full_test_id, full_test_title, part, skill")
+        .select("id, full_test_id, full_test_title, part, skill, full_test_category")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
+        .is("full_test_category", null)
         .order("part", { ascending: true });
 
       if (error || !data) {
