@@ -50,41 +50,76 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("exam_sets")
-        .select("id, title, skill, part, is_published, full_test_id, full_test_title, exam_type")
-        .eq("exam_type", examType)
-        .not("full_test_category", "is", null)
+
+      // 1) Load all full_tests (Full Test = standalone record on top of exam_sets)
+      const { data: ftRows, error: ftErr } = await supabase
+        .from("full_tests")
+        .select("id, title, is_published, category, created_at")
         .order("created_at", { ascending: false });
 
-      if (error || !data) {
+      if (ftErr || !ftRows) {
         setLoading(false);
         return;
       }
 
-      // Group by full_test_id
-      const map = new Map<string, FullTestGroup>();
-      for (const row of data as any[]) {
-        const ftId = row.full_test_id;
-        if (!map.has(ftId)) {
-          map.set(ftId, {
-            full_test_id: ftId,
-            full_test_title: row.full_test_title || "Full Test",
-            exam_type: row.exam_type,
-            parts: [],
-          });
-        }
-        map.get(ftId)!.parts.push({
-          id: row.id,
-          skill: row.skill,
-          part: row.part,
-          title: row.title,
-          is_published: row.is_published,
+      if (ftRows.length === 0) {
+        setGroups([]);
+        setLoading(false);
+        return;
+      }
+
+      const ftIds = ftRows.map((r) => r.id);
+
+      // 2) Load members + exam_sets joined
+      const { data: members } = await supabase
+        .from("full_test_members")
+        .select("full_test_id, exam_set_id, position")
+        .in("full_test_id", ftIds);
+
+      const memberSetIds = Array.from(new Set((members || []).map((m) => m.exam_set_id)));
+      const { data: sets } = memberSetIds.length
+        ? await supabase
+            .from("exam_sets")
+            .select("id, title, skill, part, is_published, exam_type")
+            .in("id", memberSetIds)
+        : { data: [] as any[] };
+
+      const setById = new Map<string, any>();
+      for (const s of sets || []) setById.set(s.id, s);
+
+      // Filter by exam_type: include Full Tests whose ANY member matches examType.
+      const groupsArr: FullTestGroup[] = [];
+      for (const ft of ftRows) {
+        const mine = (members || []).filter((m) => m.full_test_id === ft.id);
+        const parts = mine
+          .sort((a, b) => (a.position || 0) - (b.position || 0))
+          .map((m) => {
+            const s = setById.get(m.exam_set_id);
+            if (!s) return null;
+            return {
+              id: s.id,
+              skill: s.skill,
+              part: s.part,
+              title: s.title,
+              is_published: s.is_published,
+              exam_type: s.exam_type,
+            };
+          })
+          .filter(Boolean) as any[];
+
+        if (parts.length === 0) continue;
+        if (!parts.some((p) => p.exam_type === examType)) continue;
+
+        groupsArr.push({
+          full_test_id: ft.id,
+          full_test_title: ft.title,
+          exam_type: examType,
+          parts,
         });
       }
 
       // Load question counts
-      const allIds = data.map((r: any) => r.id);
+      const allIds = groupsArr.flatMap((g) => g.parts.map((p) => p.id));
       if (allIds.length > 0) {
         const { data: counts } = await supabase
           .from("exam_questions")
@@ -95,7 +130,7 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
           for (const c of counts) {
             countMap.set(c.exam_set_id, (countMap.get(c.exam_set_id) || 0) + 1);
           }
-          for (const group of map.values()) {
+          for (const group of groupsArr) {
             for (const p of group.parts) {
               p.question_count = countMap.get(p.id) || 0;
             }
@@ -103,7 +138,7 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
         }
       }
 
-      setGroups(Array.from(map.values()));
+      setGroups(groupsArr);
       setLoading(false);
     };
     load();
