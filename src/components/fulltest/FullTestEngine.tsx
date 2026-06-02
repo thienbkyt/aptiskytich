@@ -88,12 +88,21 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const loadAllData = async () => {
     setPhase("loading");
 
-    const { data: sets } = await supabase
-      .from("exam_sets")
-      .select("id, part, skill")
-      .eq("full_test_id", testId)
-      .eq("is_published", true)
-      .order("created_at", { ascending: true });
+    // Full Test → resolve member exam_set_ids via full_test_members join table.
+    const { data: members } = await supabase
+      .from("full_test_members")
+      .select("exam_set_id")
+      .eq("full_test_id", testId);
+
+    const memberIds = (members || []).map((m) => m.exam_set_id);
+    const { data: sets } = memberIds.length
+      ? await supabase
+          .from("exam_sets")
+          .select("id, part, skill, created_at")
+          .in("id", memberIds)
+          .eq("is_published", true)
+          .order("created_at", { ascending: true })
+      : { data: [] as any[] };
 
     if (!sets || sets.length === 0) {
       setPhase("completed");

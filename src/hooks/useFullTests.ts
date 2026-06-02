@@ -13,9 +13,8 @@ export interface FullTestItem {
 export type FullTestCategory = "aptis" | "key";
 
 /**
- * Fetches published Full Tests grouped by full_test_id, filtered by category.
- * - "aptis": rows with full_test_category = 'aptis' OR null (legacy data)
- * - "key": rows with full_test_category = 'key'
+ * Fetches published Full Tests from the new full_tests table (linked to exam_sets via full_test_members).
+ * This keeps Full Test as a layer on top of exam_sets so per-skill Full Part merges stay intact.
  */
 export const useFullTests = (category: FullTestCategory = "aptis") => {
   const [tests, setTests] = useState<FullTestItem[]>([]);
@@ -24,50 +23,56 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // Only include rows that were merged via "Ghép Full Test" (have explicit full_test_category).
-      // Single-skill Full Part merges leave full_test_category = NULL and must NOT show here.
-      const query = supabase
-        .from("exam_sets")
-        .select("id, full_test_id, full_test_title, skill, is_published, full_test_category")
-        .not("full_test_id", "is", null)
+
+      const { data: ftRows, error: ftErr } = await supabase
+        .from("full_tests")
+        .select("id, title, category, is_published")
+        .eq("category", category)
         .eq("is_published", true)
-        .eq("full_test_category", category)
         .order("created_at", { ascending: true });
 
-      const { data, error } = await query;
-
-      if (error || !data) {
+      if (ftErr || !ftRows || ftRows.length === 0) {
         setLoading(false);
         setTests([]);
         return;
       }
 
-      const grouped = new Map<string, { title: string; skills: Set<string>; category: "aptis" | "key" | null }>();
-      for (const row of data) {
-        if (!row.full_test_id) continue;
-        if (!grouped.has(row.full_test_id)) {
-          grouped.set(row.full_test_id, {
-            title: row.full_test_title || "Full Test",
-            skills: new Set(),
-            category: (row.full_test_category as "aptis" | "key" | null) ?? null,
-          });
-        }
-        grouped.get(row.full_test_id)!.skills.add(row.skill);
+      const ftIds = ftRows.map((r) => r.id);
+      const { data: members } = await supabase
+        .from("full_test_members")
+        .select("full_test_id, exam_set_id")
+        .in("full_test_id", ftIds);
+
+      const setIds = Array.from(new Set((members || []).map((m) => m.exam_set_id)));
+      const { data: sets } = await supabase
+        .from("exam_sets")
+        .select("id, skill, is_published")
+        .in("id", setIds.length ? setIds : ["00000000-0000-0000-0000-000000000000"]);
+
+      const setSkillMap = new Map<string, { skill: string; published: boolean }>();
+      for (const s of sets || []) {
+        setSkillMap.set(s.id, { skill: s.skill, published: s.is_published });
       }
 
       const requiredSkills = ["speaking", "listening", "grammar_vocab", "reading", "writing"];
       const result: FullTestItem[] = [];
-      for (const [ftId, info] of grouped) {
-        const skillArr = Array.from(info.skills);
+      for (const ft of ftRows) {
+        const memberIds = (members || []).filter((m) => m.full_test_id === ft.id).map((m) => m.exam_set_id);
+        const skillsSet = new Set<string>();
+        for (const sid of memberIds) {
+          const info = setSkillMap.get(sid);
+          if (info && info.published) skillsSet.add(info.skill);
+        }
+        const skillArr = Array.from(skillsSet);
         const isReady = requiredSkills.every((s) => skillArr.includes(s));
         if (!isReady) continue;
         result.push({
-          fullTestId: ftId,
-          title: info.title,
+          fullTestId: ft.id,
+          title: ft.title,
           skills: skillArr,
           skillCount: skillArr.length,
           isReady,
-          category: info.category,
+          category: (ft.category as "aptis" | "key") ?? null,
         });
       }
 
