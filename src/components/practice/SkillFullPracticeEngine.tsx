@@ -16,6 +16,7 @@ import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import AptisFullTestIntro from "@/components/practice/AptisFullTestIntro";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
