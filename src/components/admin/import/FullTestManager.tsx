@@ -48,22 +48,13 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
   const [parsedFile, setParsedFile] = useState<any>(null);
 
   useEffect(() => {
-    supabase
-      .from("exam_sets")
-      .update({ full_test_id: null, full_test_title: null })
-      .is("full_test_category", null)
-      .not("full_test_id", "is", null)
-      .then(() => {});
-  }, []);
-
-  useEffect(() => {
     const load = async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("exam_sets")
         .select("id, title, skill, part, is_published, full_test_id, full_test_title, exam_type")
         .eq("exam_type", examType)
-        .not("full_test_category", "is", null)
+        .not("full_test_id", "is", null)
         .order("created_at", { ascending: false });
 
       if (error || !data) {
