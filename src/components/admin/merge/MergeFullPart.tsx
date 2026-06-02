@@ -38,8 +38,12 @@ interface ExamSetItem {
 }
 
 // Extract prefix like "Đề 01" / "Đề 1" from a title. Returns normalized "Đề NN" (zero-padded 2 digits) or null.
+// IMPORTANT: titles in DB may be stored in decomposed Unicode (e.g. "Đ"+"e"+combining marks),
+// so we normalize to NFC first to ensure the regex matches both forms.
 const extractDePrefix = (title: string): string | null => {
-  const m = title?.match(/^\s*Đề\s*0*(\d+)/i);
+  if (!title) return null;
+  const normalized = title.normalize("NFC");
+  const m = normalized.match(/^\s*Đề\s*0*(\d+)/i);
   if (!m) return null;
   const num = parseInt(m[1], 10);
   if (!Number.isFinite(num)) return null;
