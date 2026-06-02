@@ -56,7 +56,17 @@ export const useExamSets = (skill: string) => {
         .order("created_at", { ascending: true });
 
       if (!error && data) {
-        setExamSets(data as unknown as ExamSetRow[]);
+        const rows = data as unknown as ExamSetRow[];
+        const numOf = (t: string) => {
+          const m = t.match(/\d+/);
+          return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
+        };
+        rows.sort((a, b) => {
+          const na = numOf(a.title), nb = numOf(b.title);
+          if (na !== nb) return na - nb;
+          return a.title.localeCompare(b.title);
+        });
+        setExamSets(rows);
       }
       setLoading(false);
     };
