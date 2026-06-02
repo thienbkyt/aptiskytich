@@ -19,15 +19,16 @@ export const useSkillFullSets = (skill: string) => {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // Include ALL merges (Full Part + Full Test) for this skill, so the per-skill
-      // Full Part section shows every grouped set of parts (e.g. Đề 01 ghép Full Test
-      // vẫn xuất hiện trong Full Part của Listening/Reading/...).
+      // Only include single-skill Full Part merges (full_test_category IS NULL).
+      // Multi-skill Full Tests (category = 'aptis' / 'key') belong to the Aptis/Key
+      // Full Test section, not to per-skill Full Part practice.
       const { data, error } = await supabase
         .from("exam_sets")
         .select("id, full_test_id, full_test_title, part, skill, full_test_category")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
+        .is("full_test_category", null)
         .order("part", { ascending: true });
 
       if (error || !data) {
