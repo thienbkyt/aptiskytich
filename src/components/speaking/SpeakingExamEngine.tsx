@@ -29,6 +29,7 @@ interface SpeakingExamEngineProps {
   part4Data?: SpeakingPart4Data;
   onExit: () => void;
   onComplete?: () => void;
+  skipIntro?: boolean;
 }
 
 type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
