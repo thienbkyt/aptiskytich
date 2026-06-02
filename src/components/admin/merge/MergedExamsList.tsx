@@ -48,6 +48,7 @@ interface PartRow {
   is_published: boolean;
   full_test_id: string;
   full_test_title: string | null;
+  full_test_category: string | null;
 }
 
 interface MergedGroup {
