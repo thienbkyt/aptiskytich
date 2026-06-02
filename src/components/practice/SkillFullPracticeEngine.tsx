@@ -50,7 +50,7 @@ interface SkillFullPracticeEngineProps {
   onExit: () => void;
 }
 
-type FlowPhase = "loading" | "exam" | "completed";
+type FlowPhase = "loading" | "intro" | "exam" | "completed";
 
 const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: SkillFullPracticeEngineProps) => {
   const [phase, setPhase] = useState<FlowPhase>("loading");
