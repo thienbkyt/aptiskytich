@@ -69,6 +69,23 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
     if (!error) setSets((s) => s.map((x) => x.id === set.id ? { ...x, is_published: !x.is_published } : x));
   };
 
+  const handlePublishAll = async () => {
+    const drafts = sets.filter((s) => !s.is_published);
+    if (drafts.length === 0) return;
+    const { error } = await supabase
+      .from("exam_sets")
+      .update({ is_published: true })
+      .eq("skill", skill)
+      .eq("exam_type", examType)
+      .eq("is_published", false);
+    if (error) {
+      toast({ title: "Lỗi xuất bản", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => ({ ...x, is_published: true })));
+    toast({ title: `✓ Đã xuất bản ${drafts.length} đề` });
+  };
+
   if (loading) return <div className="text-center py-8 text-muted-foreground">Đang tải...</div>;
 
   return (
@@ -77,9 +94,16 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
         <h2 className="text-lg font-heading font-bold text-foreground">
           {SKILL_LABELS[skill]} — {examType === "general" ? "General" : "Advanced"}
         </h2>
-        <Button onClick={onCreateNew} className="gap-2">
-          <Plus className="w-4 h-4" /> Thêm đề thi mới
-        </Button>
+        <div className="flex items-center gap-2">
+          {sets.some((s) => !s.is_published) && (
+            <Button variant="outline" onClick={handlePublishAll} className="gap-2">
+              <Eye className="w-4 h-4" /> Xuất bản tất cả
+            </Button>
+          )}
+          <Button onClick={onCreateNew} className="gap-2">
+            <Plus className="w-4 h-4" /> Thêm đề thi mới
+          </Button>
+        </div>
       </div>
 
       {sets.length > 0 && (
