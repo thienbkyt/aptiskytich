@@ -52,9 +52,11 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
       onNext();
     };
     run();
-
-    return () => { stopTTS(); };
+    // NOTE: do NOT call stopTTS() on unmount — onNext() triggers parent to
+    // start the question TTS immediately; cleanup would bump the play token
+    // and silently cancel that new audio.
   }, []);
+
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
