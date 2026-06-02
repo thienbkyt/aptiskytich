@@ -372,9 +372,6 @@ const GrammarExamEngine = ({
 
                       return (
                         <div key={idx} className="flex items-center gap-3">
-                          <div className="w-10 text-sm font-semibold text-gray-700">
-                            {idx + 1}.
-                          </div>
                           {isGapFill ? (
                             <div className="flex-1 flex items-center gap-2 flex-wrap">
                               <span className="text-sm text-gray-900">{beforeGap}</span>
