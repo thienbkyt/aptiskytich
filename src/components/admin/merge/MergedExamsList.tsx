@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-type SkillFilter = "all" | "speaking" | "listening" | "reading" | "writing" | "grammar_vocab";
+type SkillFilter = "all" | "full_test" | "speaking" | "listening" | "reading" | "writing" | "grammar_vocab";
 
 const SKILL_LABELS: Record<string, string> = {
   speaking: "Speaking",
@@ -48,6 +48,7 @@ interface PartRow {
   is_published: boolean;
   full_test_id: string;
   full_test_title: string | null;
+  full_test_category: string | null;
 }
 
 interface MergedGroup {
@@ -72,7 +73,7 @@ const MergedExamsList = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("exam_sets")
-      .select("id, title, part, skill, is_published, full_test_id, full_test_title")
+      .select("id, title, part, skill, is_published, full_test_id, full_test_title, full_test_category")
       .not("full_test_id", "is", null)
       .order("created_at", { ascending: true });
     if (error) {
@@ -90,7 +91,11 @@ const MergedExamsList = () => {
 
   const groups = useMemo<MergedGroup[]>(() => {
     const filtered =
-      skillFilter === "all" ? rows : rows.filter((r) => r.skill === skillFilter);
+      skillFilter === "all"
+        ? rows
+        : skillFilter === "full_test"
+          ? rows.filter((r) => r.full_test_category != null)
+          : rows.filter((r) => r.skill === skillFilter && r.full_test_category == null);
     const map = new Map<string, MergedGroup>();
     for (const r of filtered) {
       if (!map.has(r.full_test_id)) {
@@ -225,6 +230,7 @@ const MergedExamsList = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả kỹ năng</SelectItem>
+                <SelectItem value="full_test">Đề ghép Full Test</SelectItem>
                 <SelectItem value="speaking">Speaking</SelectItem>
                 <SelectItem value="listening">Listening</SelectItem>
                 <SelectItem value="reading">Reading</SelectItem>
