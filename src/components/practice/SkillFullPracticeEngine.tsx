@@ -170,7 +170,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         testTitle={testTitle}
         numberOfQuestions={totalQuestions}
         timeAllowedMinutes={Math.round(timeLimit / 60)}
-        description={`This Writing test has ${totalQuestions} parts. You have ${Math.round(timeLimit / 60)} minutes to complete all parts.`}
+        description=""
         onStart={() => setPhase("instructions")}
         onExit={onExit}
       />
