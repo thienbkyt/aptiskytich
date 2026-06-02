@@ -48,40 +48,105 @@ interface PartRow {
   is_published: boolean;
   full_test_id: string;
   full_test_title: string | null;
-  full_test_category: string | null;
 }
 
 interface MergedGroup {
-  full_test_id: string;
-  full_test_title: string;
+  kind: "full_part" | "full_test";
+  groupId: string; // full_tests.id OR full_test_id (full part)
+  title: string;
+  category?: string | null;
+  is_published?: boolean;
   skills: Set<string>;
   parts: PartRow[];
 }
 
 const MergedExamsList = () => {
   const [loading, setLoading] = useState(false);
-  const [rows, setRows] = useState<PartRow[]>([]);
+  const [fullPartRows, setFullPartRows] = useState<PartRow[]>([]);
+  const [fullTestGroups, setFullTestGroups] = useState<MergedGroup[]>([]);
   const [skillFilter, setSkillFilter] = useState<SkillFilter>("all");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteGroup, setDeleteGroup] = useState<MergedGroup | null>(null);
-  const [unlinkPart, setUnlinkPart] = useState<PartRow | null>(null);
+  const [unlinkPart, setUnlinkPart] = useState<{ part: PartRow; group: MergedGroup } | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+
+    // 1) Full Part groups → exam_sets with full_test_id but category IS NULL
+    const { data: fpData, error: fpErr } = await supabase
       .from("exam_sets")
-      .select("id, title, part, skill, is_published, full_test_id, full_test_title, full_test_category")
+      .select("id, title, part, skill, is_published, full_test_id, full_test_title")
       .not("full_test_id", "is", null)
+      .is("full_test_category", null)
       .order("created_at", { ascending: true });
-    if (error) {
-      toast({ title: "Lỗi tải dữ liệu", description: error.message, variant: "destructive" });
-      setRows([]);
+
+    if (fpErr) {
+      toast({ title: "Lỗi tải Full Part", description: fpErr.message, variant: "destructive" });
+      setFullPartRows([]);
     } else {
-      setRows((data || []) as PartRow[]);
+      setFullPartRows((fpData || []) as PartRow[]);
     }
+
+    // 2) Full Test groups → full_tests + members
+    const { data: ftRows } = await supabase
+      .from("full_tests")
+      .select("id, title, category, is_published, created_at")
+      .order("created_at", { ascending: true });
+
+    if (ftRows && ftRows.length > 0) {
+      const ftIds = ftRows.map((r) => r.id);
+      const { data: members } = await supabase
+        .from("full_test_members")
+        .select("full_test_id, exam_set_id, position")
+        .in("full_test_id", ftIds);
+
+      const memberSetIds = Array.from(new Set((members || []).map((m) => m.exam_set_id)));
+      const { data: sets } = memberSetIds.length
+        ? await supabase
+            .from("exam_sets")
+            .select("id, title, part, skill, is_published")
+            .in("id", memberSetIds)
+        : { data: [] as any[] };
+
+      const setById = new Map<string, any>();
+      for (const s of sets || []) setById.set(s.id, s);
+
+      const groups: MergedGroup[] = ftRows.map((ft) => {
+        const mine = (members || []).filter((m) => m.full_test_id === ft.id);
+        const parts: PartRow[] = mine
+          .sort((a, b) => (a.position || 0) - (b.position || 0))
+          .map((m) => {
+            const s = setById.get(m.exam_set_id);
+            if (!s) return null;
+            return {
+              id: s.id,
+              title: s.title,
+              part: s.part,
+              skill: s.skill,
+              is_published: s.is_published,
+              full_test_id: ft.id,
+              full_test_title: ft.title,
+            } as PartRow;
+          })
+          .filter(Boolean) as PartRow[];
+        return {
+          kind: "full_test",
+          groupId: ft.id,
+          title: ft.title,
+          category: ft.category,
+          is_published: ft.is_published,
+          skills: new Set(parts.map((p) => p.skill)),
+          parts,
+        };
+      });
+      setFullTestGroups(groups);
+    } else {
+      setFullTestGroups([]);
+    }
+
     setLoading(false);
   };
 
@@ -90,18 +155,20 @@ const MergedExamsList = () => {
   }, []);
 
   const groups = useMemo<MergedGroup[]>(() => {
+    if (skillFilter === "full_test") {
+      return [...fullTestGroups].sort((a, b) => a.title.localeCompare(b.title, "vi"));
+    }
     const filtered =
       skillFilter === "all"
-        ? rows
-        : skillFilter === "full_test"
-          ? rows.filter((r) => r.full_test_category != null)
-          : rows.filter((r) => r.skill === skillFilter && r.full_test_category == null);
+        ? fullPartRows
+        : fullPartRows.filter((r) => r.skill === skillFilter);
     const map = new Map<string, MergedGroup>();
     for (const r of filtered) {
       if (!map.has(r.full_test_id)) {
         map.set(r.full_test_id, {
-          full_test_id: r.full_test_id,
-          full_test_title: r.full_test_title || "(Không tên)",
+          kind: "full_part",
+          groupId: r.full_test_id,
+          title: r.full_test_title || "(Không tên)",
           skills: new Set(),
           parts: [],
         });
@@ -110,24 +177,35 @@ const MergedExamsList = () => {
       g.skills.add(r.skill);
       g.parts.push(r);
     }
-    return Array.from(map.values()).sort((a, b) =>
-      a.full_test_title.localeCompare(b.full_test_title, "vi"),
-    );
-  }, [rows, skillFilter]);
+    return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title, "vi"));
+  }, [fullPartRows, fullTestGroups, skillFilter]);
 
   const togglePublish = async (group: MergedGroup, publish: boolean) => {
-    setBusyId(group.full_test_id);
+    setBusyId(group.groupId);
+    if (group.kind === "full_test") {
+      const { error } = await supabase
+        .from("full_tests")
+        .update({ is_published: publish })
+        .eq("id", group.groupId);
+      setBusyId(null);
+      if (error) {
+        toast({ title: "Cập nhật thất bại", description: error.message, variant: "destructive" });
+        return;
+      }
+      setFullTestGroups((prev) =>
+        prev.map((g) => (g.groupId === group.groupId ? { ...g, is_published: publish } : g)),
+      );
+      toast({ title: publish ? "Đã xuất bản Full Test" : "Đã ẩn Full Test" });
+      return;
+    }
     const ids = group.parts.map((p) => p.id);
-    const { error } = await supabase
-      .from("exam_sets")
-      .update({ is_published: publish })
-      .in("id", ids);
+    const { error } = await supabase.from("exam_sets").update({ is_published: publish }).in("id", ids);
     setBusyId(null);
     if (error) {
       toast({ title: "Cập nhật thất bại", description: error.message, variant: "destructive" });
       return;
     }
-    setRows((prev) =>
+    setFullPartRows((prev) =>
       prev.map((r) => (ids.includes(r.id) ? { ...r, is_published: publish } : r)),
     );
     toast({ title: publish ? "Đã xuất bản" : "Đã ẩn", description: `${ids.length} bộ đề` });
@@ -136,21 +214,24 @@ const MergedExamsList = () => {
   const togglePublishOne = async (part: PartRow) => {
     setBusyId(part.id);
     const next = !part.is_published;
-    const { error } = await supabase
-      .from("exam_sets")
-      .update({ is_published: next })
-      .eq("id", part.id);
+    const { error } = await supabase.from("exam_sets").update({ is_published: next }).eq("id", part.id);
     setBusyId(null);
     if (error) {
       toast({ title: "Cập nhật thất bại", description: error.message, variant: "destructive" });
       return;
     }
-    setRows((prev) => prev.map((r) => (r.id === part.id ? { ...r, is_published: next } : r)));
+    setFullPartRows((prev) => prev.map((r) => (r.id === part.id ? { ...r, is_published: next } : r)));
+    setFullTestGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        parts: g.parts.map((p) => (p.id === part.id ? { ...p, is_published: next } : p)),
+      })),
+    );
   };
 
   const startEdit = (group: MergedGroup) => {
-    setEditingId(group.full_test_id);
-    setEditTitle(group.full_test_title);
+    setEditingId(group.groupId);
+    setEditTitle(group.title);
   };
 
   const saveEdit = async (group: MergedGroup) => {
@@ -159,18 +240,29 @@ const MergedExamsList = () => {
       toast({ title: "Tên không được để trống", variant: "destructive" });
       return;
     }
-    setBusyId(group.full_test_id);
+    setBusyId(group.groupId);
+    if (group.kind === "full_test") {
+      const { error } = await supabase.from("full_tests").update({ title }).eq("id", group.groupId);
+      setBusyId(null);
+      if (error) {
+        toast({ title: "Lưu thất bại", description: error.message, variant: "destructive" });
+        return;
+      }
+      setFullTestGroups((prev) =>
+        prev.map((g) => (g.groupId === group.groupId ? { ...g, title } : g)),
+      );
+      setEditingId(null);
+      toast({ title: "Đã đổi tên Full Test" });
+      return;
+    }
     const ids = group.parts.map((p) => p.id);
-    const { error } = await supabase
-      .from("exam_sets")
-      .update({ full_test_title: title })
-      .in("id", ids);
+    const { error } = await supabase.from("exam_sets").update({ full_test_title: title }).in("id", ids);
     setBusyId(null);
     if (error) {
       toast({ title: "Lưu thất bại", description: error.message, variant: "destructive" });
       return;
     }
-    setRows((prev) =>
+    setFullPartRows((prev) =>
       prev.map((r) => (ids.includes(r.id) ? { ...r, full_test_title: title } : r)),
     );
     setEditingId(null);
@@ -179,24 +271,55 @@ const MergedExamsList = () => {
 
   const doUnlink = async () => {
     if (!unlinkPart) return;
-    setBusyId(unlinkPart.id);
-    const { error } = await supabase
-      .from("exam_sets")
-      .update({ full_test_id: null, full_test_title: null })
-      .eq("id", unlinkPart.id);
-    setBusyId(null);
-    if (error) {
-      toast({ title: "Gỡ thất bại", description: error.message, variant: "destructive" });
-      return;
+    const { part, group } = unlinkPart;
+    setBusyId(part.id);
+    if (group.kind === "full_test") {
+      const { error } = await supabase
+        .from("full_test_members")
+        .delete()
+        .eq("full_test_id", group.groupId)
+        .eq("exam_set_id", part.id);
+      setBusyId(null);
+      if (error) {
+        toast({ title: "Gỡ thất bại", description: error.message, variant: "destructive" });
+        return;
+      }
+      setFullTestGroups((prev) =>
+        prev.map((g) =>
+          g.groupId === group.groupId ? { ...g, parts: g.parts.filter((p) => p.id !== part.id) } : g,
+        ),
+      );
+    } else {
+      const { error } = await supabase
+        .from("exam_sets")
+        .update({ full_test_id: null, full_test_title: null })
+        .eq("id", part.id);
+      setBusyId(null);
+      if (error) {
+        toast({ title: "Gỡ thất bại", description: error.message, variant: "destructive" });
+        return;
+      }
+      setFullPartRows((prev) => prev.filter((r) => r.id !== part.id));
     }
-    setRows((prev) => prev.filter((r) => r.id !== unlinkPart.id));
     setUnlinkPart(null);
     toast({ title: "Đã gỡ bộ đề khỏi nhóm ghép" });
   };
 
   const doDeleteGroup = async () => {
     if (!deleteGroup) return;
-    setBusyId(deleteGroup.full_test_id);
+    setBusyId(deleteGroup.groupId);
+    if (deleteGroup.kind === "full_test") {
+      const { error } = await supabase.from("full_tests").delete().eq("id", deleteGroup.groupId);
+      setBusyId(null);
+      if (error) {
+        toast({ title: "Xóa thất bại", description: error.message, variant: "destructive" });
+        return;
+      }
+      setFullTestGroups((prev) => prev.filter((g) => g.groupId !== deleteGroup.groupId));
+      setDeleteGroup(null);
+      toast({ title: "Đã xóa Full Test", description: "Các bộ đề gốc vẫn được giữ nguyên ở phần luyện tập theo kỹ năng." });
+      return;
+    }
     const ids = deleteGroup.parts.map((p) => p.id);
     const { error } = await supabase
       .from("exam_sets")
@@ -207,7 +330,7 @@ const MergedExamsList = () => {
       toast({ title: "Hủy ghép thất bại", description: error.message, variant: "destructive" });
       return;
     }
-    setRows((prev) => prev.filter((r) => !ids.includes(r.id)));
+    setFullPartRows((prev) => prev.filter((r) => !ids.includes(r.id)));
     setDeleteGroup(null);
     toast({ title: "Đã hủy ghép", description: `${ids.length} bộ đề được tách ra` });
   };
@@ -225,11 +348,11 @@ const MergedExamsList = () => {
           </div>
           <div className="flex items-center gap-2">
             <Select value={skillFilter} onValueChange={(v) => setSkillFilter(v as SkillFilter)}>
-              <SelectTrigger className="w-[180px] h-9">
+              <SelectTrigger className="w-[200px] h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả kỹ năng</SelectItem>
+                <SelectItem value="all">Tất cả Full Part</SelectItem>
                 <SelectItem value="full_test">Đề ghép Full Test</SelectItem>
                 <SelectItem value="speaking">Speaking</SelectItem>
                 <SelectItem value="listening">Listening</SelectItem>
@@ -260,19 +383,24 @@ const MergedExamsList = () => {
       ) : (
         <div className="space-y-3">
           {groups.map((g) => {
-            const isOpen = !!expanded[g.full_test_id];
+            const isOpen = !!expanded[g.groupId];
             const publishedCount = g.parts.filter((p) => p.is_published).length;
-            const allPublished = publishedCount === g.parts.length;
-            const nonePublished = publishedCount === 0;
-            const isEditing = editingId === g.full_test_id;
-            const isBusy = busyId === g.full_test_id;
+            const groupPublished = g.kind === "full_test"
+              ? !!g.is_published
+              : publishedCount === g.parts.length && g.parts.length > 0;
+            const allPublished = g.kind === "full_part"
+              ? publishedCount === g.parts.length
+              : !!g.is_published;
+            const nonePublished = g.kind === "full_part" ? publishedCount === 0 : !g.is_published;
+            const isEditing = editingId === g.groupId;
+            const isBusy = busyId === g.groupId;
 
             return (
-              <div key={g.full_test_id} className="rounded-xl border border-border bg-card overflow-hidden">
+              <div key={g.groupId} className="rounded-xl border border-border bg-card overflow-hidden">
                 <div className="flex items-center justify-between p-4 gap-3">
                   <button
                     type="button"
-                    onClick={() => setExpanded((s) => ({ ...s, [g.full_test_id]: !isOpen }))}
+                    onClick={() => setExpanded((s) => ({ ...s, [g.groupId]: !isOpen }))}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left hover:opacity-80"
                   >
                     <Layers className="w-5 h-5 text-primary shrink-0" />
@@ -294,12 +422,17 @@ const MergedExamsList = () => {
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-foreground truncate">{g.full_test_title}</h3>
+                          <h3 className="font-semibold text-foreground truncate">{g.title}</h3>
+                          {g.kind === "full_test" && (
+                            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                              Full Test
+                            </Badge>
+                          )}
                           <Badge
-                            variant={allPublished ? "default" : nonePublished ? "secondary" : "outline"}
+                            variant={groupPublished ? "default" : nonePublished ? "secondary" : "outline"}
                             className="text-xs"
                           >
-                            {allPublished
+                            {groupPublished
                               ? "Đã xuất bản"
                               : nonePublished
                                 ? "Nháp"
@@ -323,7 +456,7 @@ const MergedExamsList = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        title={allPublished ? "Ẩn tất cả" : "Xuất bản tất cả"}
+                        title={allPublished ? "Ẩn" : "Xuất bản"}
                         onClick={() => togglePublish(g, !allPublished)}
                         disabled={isBusy}
                       >
@@ -341,7 +474,7 @@ const MergedExamsList = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        title="Hủy ghép cả nhóm"
+                        title={g.kind === "full_test" ? "Xóa Full Test" : "Hủy ghép cả nhóm"}
                         className="text-destructive hover:text-destructive"
                         onClick={() => setDeleteGroup(g)}
                       >
@@ -350,7 +483,7 @@ const MergedExamsList = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setExpanded((s) => ({ ...s, [g.full_test_id]: !isOpen }))}
+                        onClick={() => setExpanded((s) => ({ ...s, [g.groupId]: !isOpen }))}
                       >
                         {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </Button>
@@ -373,27 +506,29 @@ const MergedExamsList = () => {
                           <Badge variant={p.is_published ? "default" : "secondary"} className="text-xs">
                             {p.is_published ? "✓ Xuất bản" : "Nháp"}
                           </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title={p.is_published ? "Ẩn" : "Xuất bản"}
-                            onClick={() => togglePublishOne(p)}
-                            disabled={busyId === p.id}
-                          >
-                            {busyId === p.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : p.is_published ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </Button>
+                          {g.kind === "full_part" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title={p.is_published ? "Ẩn" : "Xuất bản"}
+                              onClick={() => togglePublishOne(p)}
+                              disabled={busyId === p.id}
+                            >
+                              {busyId === p.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : p.is_published ? (
+                                <EyeOff className="w-4 h-4" />
+                              ) : (
+                                <Eye className="w-4 h-4" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
                             title="Gỡ khỏi nhóm ghép"
                             className="text-destructive hover:text-destructive"
-                            onClick={() => setUnlinkPart(p)}
+                            onClick={() => setUnlinkPart({ part: p, group: g })}
                           >
                             <Unlink className="w-4 h-4" />
                           </Button>
@@ -411,10 +546,13 @@ const MergedExamsList = () => {
       <AlertDialog open={!!deleteGroup} onOpenChange={(o) => !o && setDeleteGroup(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hủy ghép cả nhóm?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {deleteGroup?.kind === "full_test" ? "Xóa Full Test?" : "Hủy ghép cả nhóm?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteGroup?.parts.length} bộ đề trong nhóm "<b>{deleteGroup?.full_test_title}</b>" sẽ được tách ra
-              (xóa <code>full_test_id</code>). Các bộ đề gốc và câu hỏi <b>không bị xóa</b>.
+              {deleteGroup?.kind === "full_test"
+                ? <>Full Test "<b>{deleteGroup?.title}</b>" sẽ bị xóa. Các bộ đề gốc và câu hỏi <b>không bị xóa</b> và vẫn hiển thị ở phần luyện tập theo kỹ năng.</>
+                : <>{deleteGroup?.parts.length} bộ đề trong nhóm "<b>{deleteGroup?.title}</b>" sẽ được tách ra. Các bộ đề gốc và câu hỏi <b>không bị xóa</b>.</>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -423,7 +561,7 @@ const MergedExamsList = () => {
               onClick={doDeleteGroup}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Hủy ghép
+              {deleteGroup?.kind === "full_test" ? "Xóa" : "Hủy ghép"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -434,7 +572,7 @@ const MergedExamsList = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Gỡ bộ đề khỏi nhóm?</AlertDialogTitle>
             <AlertDialogDescription>
-              "<b>{unlinkPart?.title}</b>" sẽ được tách ra khỏi nhóm ghép. Bộ đề và câu hỏi <b>không bị xóa</b>.
+              "<b>{unlinkPart?.part.title}</b>" sẽ được tách ra khỏi nhóm ghép. Bộ đề và câu hỏi <b>không bị xóa</b>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
