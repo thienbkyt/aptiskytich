@@ -29,6 +29,7 @@ interface SpeakingExamEngineProps {
   part4Data?: SpeakingPart4Data;
   onExit: () => void;
   onComplete?: () => void;
+  skipIntro?: boolean;
 }
 
 type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
@@ -71,9 +72,9 @@ const PART_NUMBERS: Record<SpeakingPartType, number> = {
 const SpeakingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  onExit, onComplete,
+  onExit, onComplete, skipIntro = false,
 }: SpeakingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("mic-check");
+  const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "mic-check");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prepTimeLeft, setPrepTimeLeft] = useState(0);
   const [speakTimeLeft, setSpeakTimeLeft] = useState(0);
