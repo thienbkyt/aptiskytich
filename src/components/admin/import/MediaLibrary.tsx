@@ -148,7 +148,19 @@ const MediaLibrary = () => {
         </Button>
         <input ref={fileRef} type="file" accept={currentBucket.accept} multiple onChange={handleUpload} className="hidden" />
         <Badge variant="outline" className="self-center">{files.length} file</Badge>
+        {files.length > 0 && (
+          <Button
+            variant="outline"
+            className="gap-2 ml-auto text-destructive border-destructive/40 hover:bg-destructive/10"
+            onClick={() => setConfirmDeleteAll(true)}
+            disabled={deletingAll}
+          >
+            {deletingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Xóa toàn bộ
+          </Button>
+        )}
       </div>
+
 
       {/* File list */}
       {loading ? (
