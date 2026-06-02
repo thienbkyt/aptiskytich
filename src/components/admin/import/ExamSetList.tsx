@@ -69,6 +69,23 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
     if (!error) setSets((s) => s.map((x) => x.id === set.id ? { ...x, is_published: !x.is_published } : x));
   };
 
+  const handlePublishAll = async () => {
+    const drafts = sets.filter((s) => !s.is_published);
+    if (drafts.length === 0) return;
+    const { error } = await supabase
+      .from("exam_sets")
+      .update({ is_published: true })
+      .eq("skill", skill)
+      .eq("exam_type", examType)
+      .eq("is_published", false);
+    if (error) {
+      toast({ title: "Lỗi xuất bản", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => ({ ...x, is_published: true })));
+    toast({ title: `✓ Đã xuất bản ${drafts.length} đề` });
+  };
+
   if (loading) return <div className="text-center py-8 text-muted-foreground">Đang tải...</div>;
 
   return (
