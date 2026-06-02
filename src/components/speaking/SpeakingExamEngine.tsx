@@ -134,7 +134,8 @@ const SpeakingExamEngine = ({
     if (part2Data?.imageUrl) resolveImageUrl(part2Data.imageUrl).then(setResolvedImg1);
     if (part3Data?.imageUrl1) resolveImageUrl(part3Data.imageUrl1).then(setResolvedImg1);
     if (part3Data?.imageUrl2) resolveImageUrl(part3Data.imageUrl2).then(setResolvedImg2);
-  }, [part2Data, part3Data]);
+    if (part4Data?.imageUrl) resolveImageUrl(part4Data.imageUrl).then(setResolvedImg1);
+  }, [part2Data, part3Data, part4Data]);
 
   // Initialize recordings array
   useEffect(() => {
@@ -446,20 +447,32 @@ const SpeakingExamEngine = ({
               </div>
             )}
 
-            {/* Part 4 topic + questions */}
+            {/* Part 4 topic + image + questions */}
             {partType === "part4" && part4Data && (
               <div className="bg-gray-50 rounded-lg p-5 mb-4">
-                <p className="font-bold text-gray-900 mb-2">Topic: {part4Data.topic}</p>
-                <ul className="space-y-1.5">
+                <p className="font-bold text-gray-900 mb-3">Topic: {part4Data.topic}</p>
+                {part4Data.imageUrl && (
+                  <div className="mb-4 rounded-lg overflow-hidden border border-gray-200 max-w-md">
+                    <img
+                      src={resolvedImg1 || part4Data.imageUrl}
+                      alt="Part 4 topic"
+                      className="w-full h-56 object-cover"
+                    />
+                  </div>
+                )}
+                <ul className="space-y-1.5 mb-3">
                   {part4Data.questions.map((q, i) => (
                     <li key={i} className="text-sm text-gray-700">• {q}</li>
                   ))}
                 </ul>
+                <p className="text-sm font-bold text-gray-900">
+                  You now have one minute to think about your answers. You can make notes if you wish.
+                </p>
               </div>
             )}
 
             {/* Question text */}
-            <p className="text-sm text-gray-800 mt-4">{question}</p>
+            {partType !== "part4" && <p className="text-sm text-gray-800 mt-4">{question}</p>}
           </div>
         </div>
 
