@@ -24,8 +24,27 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
   const [sets, setSets] = useState<ExamSetRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+
+  const handleDeleteAll = async () => {
+    setDeletingAll(true);
+    const { error } = await supabase
+      .from("exam_sets")
+      .delete()
+      .eq("exam_type", examType)
+      .eq("skill", skill);
+    if (error) {
+      toast({ title: "Lỗi xóa", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Đã xóa ${sets.length} đề thi` });
+      setSets([]);
+    }
+    setDeletingAll(false);
+    setConfirmDeleteAll(false);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -106,6 +125,16 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
           <Button onClick={onCreateNew} className="gap-2">
             <Plus className="w-4 h-4" /> Thêm đề thi mới
           </Button>
+          {sets.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDeleteAll(true)}
+              disabled={deletingAll}
+              className="gap-2 text-destructive border-destructive/40 hover:bg-destructive/10"
+            >
+              <Trash2 className="w-4 h-4" /> Xóa toàn bộ
+            </Button>
+          )}
         </div>
       </div>
 
@@ -191,6 +220,23 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">Xóa</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa toàn bộ {sets.length} đề thi?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Toàn bộ đề thi {SKILL_LABELS[skill]} — {examType === "general" ? "General" : "Advanced"} cùng với câu hỏi sẽ bị xóa vĩnh viễn. Không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground">
+              Xóa tất cả
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
