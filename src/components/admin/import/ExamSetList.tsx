@@ -72,18 +72,21 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
   const handlePublishAll = async () => {
     const drafts = sets.filter((s) => !s.is_published);
     if (drafts.length === 0) return;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("exam_sets")
       .update({ is_published: true })
       .eq("skill", skill)
       .eq("exam_type", examType)
-      .eq("is_published", false);
+      .eq("is_published", false)
+      .select();
     if (error) {
       toast({ title: "Lỗi xuất bản", description: error.message, variant: "destructive" });
       return;
     }
-    setSets((s) => s.map((x) => ({ ...x, is_published: true })));
-    toast({ title: `✓ Đã xuất bản ${drafts.length} đề` });
+    const updatedCount = data?.length ?? 0;
+    const updatedIds = new Set((data ?? []).map((d: any) => d.id));
+    setSets((s) => s.map((x) => updatedIds.has(x.id) ? { ...x, is_published: true } : x));
+    toast({ title: `✓ Đã xuất bản ${updatedCount} đề` });
   };
 
   if (loading) return <div className="text-center py-8 text-muted-foreground">Đang tải...</div>;
