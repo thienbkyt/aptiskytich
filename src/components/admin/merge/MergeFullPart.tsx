@@ -35,6 +35,7 @@ interface ExamSetItem {
   part: string;
   skill: string;
   full_test_id: string | null;
+  full_test_category: string | null;
 }
 
 // Extract prefix like "Đề 01" / "Đề 1" from a title. Returns normalized "Đề NN" (zero-padded 2 digits) or null.
@@ -65,7 +66,7 @@ const MergeFullPart = () => {
   const loadSetsForSkill = async (s: SkillKey) => {
     const { data, error } = await supabase
       .from("exam_sets")
-      .select("id, title, part, skill, full_test_id")
+      .select("id, title, part, skill, full_test_id, full_test_category")
       .eq("skill", s)
       .order("part", { ascending: true })
       .order("created_at", { ascending: true });
@@ -113,7 +114,7 @@ const MergeFullPart = () => {
     const fullTestId = crypto.randomUUID();
     const { error } = await supabase
       .from("exam_sets")
-      .update({ full_test_id: fullTestId, full_test_title: title.trim() })
+      .update({ full_test_id: fullTestId, full_test_title: title.trim(), full_test_category: null })
       .in("id", ids);
 
     setSaving(false);
@@ -217,7 +218,7 @@ const MergeFullPart = () => {
         const ids = items.map((i) => i.id);
         const { error } = await supabase
           .from("exam_sets")
-          .update({ full_test_id: fullTestId, full_test_title: prefix })
+          .update({ full_test_id: fullTestId, full_test_title: prefix, full_test_category: null })
           .in("id", ids);
 
         if (error) {
