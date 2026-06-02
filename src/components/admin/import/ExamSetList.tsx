@@ -125,6 +125,16 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
           <Button onClick={onCreateNew} className="gap-2">
             <Plus className="w-4 h-4" /> Thêm đề thi mới
           </Button>
+          {sets.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDeleteAll(true)}
+              disabled={deletingAll}
+              className="gap-2 text-destructive border-destructive/40 hover:bg-destructive/10"
+            >
+              <Trash2 className="w-4 h-4" /> Xóa toàn bộ
+            </Button>
+          )}
         </div>
       </div>
 
