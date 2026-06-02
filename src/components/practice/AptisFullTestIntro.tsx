@@ -1,4 +1,4 @@
-import { LogOut, User, List, Info, Accessibility, ArrowRight } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AptisFullTestIntroProps {
@@ -24,14 +24,26 @@ const AptisFullTestIntro = ({
     <div className="min-h-screen bg-white flex flex-col">
       {/* Top bar */}
       <header className="w-full border-b border-neutral-200 px-6 py-3 flex items-center justify-between">
+        {/* British Council–style dots logo */}
         <div className="grid grid-cols-2 gap-1">
           <span className="w-3 h-3 rounded-full bg-[#24085a]" />
           <span className="w-3 h-3 rounded-full bg-[#24085a]" />
           <span className="w-3 h-3 rounded-full bg-[#24085a]" />
           <span className="w-3 h-3 rounded-full bg-[#24085a]" />
         </div>
-        <div className="w-7 h-7 rounded-full border border-[#24085a] flex items-center justify-center text-[#24085a]">
-          <User className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-[#24085a]">
+          <div className="w-7 h-7 rounded-full border border-[#24085a] flex items-center justify-center">
+            <User className="w-4 h-4" />
+          </div>
+          {onExit && (
+            <button
+              onClick={onExit}
+              className="flex items-center gap-1 text-xs text-neutral-500 hover:text-[#24085a] ml-2"
+              aria-label="Thoát"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -60,41 +72,15 @@ const AptisFullTestIntro = ({
               <p className="text-sm text-neutral-700 whitespace-pre-line">{description}</p>
             )}
           </div>
-        </div>
-      </main>
 
-      {/* Bottom bar — matches instructions page */}
-      <footer className="border-t border-neutral-200 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button className="w-10 h-10 rounded-md border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-50" aria-label="Sections">
-            <List className="w-4 h-4" />
-          </button>
-          <button className="w-10 h-10 rounded-md border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-50" aria-label="Info">
-            <Info className="w-4 h-4" />
-          </button>
-          <button className="w-10 h-10 rounded-md border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-50" aria-label="Accessibility">
-            <Accessibility className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {onExit && (
-            <button
-              onClick={onExit}
-              className="w-10 h-10 rounded-md border border-neutral-300 flex items-center justify-center text-neutral-700 hover:bg-neutral-50"
-              aria-label="Exit"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          )}
           <Button
             onClick={onStart}
-            className="bg-[#24085a] hover:bg-[#1a0644] text-white rounded-md px-5 py-5 text-sm font-semibold gap-2"
+            className="bg-[#24085a] hover:bg-[#1a0644] text-white rounded-md px-6 py-5 text-sm font-semibold"
           >
-            Next <ArrowRight className="w-4 h-4" />
+            Start Assessment
           </Button>
         </div>
-      </footer>
+      </main>
     </div>
   );
 };
