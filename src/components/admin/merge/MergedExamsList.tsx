@@ -73,7 +73,7 @@ const MergedExamsList = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("exam_sets")
-      .select("id, title, part, skill, is_published, full_test_id, full_test_title")
+      .select("id, title, part, skill, is_published, full_test_id, full_test_title, full_test_category")
       .not("full_test_id", "is", null)
       .order("created_at", { ascending: true });
     if (error) {
