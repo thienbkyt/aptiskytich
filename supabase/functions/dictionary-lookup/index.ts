@@ -107,26 +107,44 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
       metadata: { word: clean },
     }).catch(() => {});
 
+    const finishReason = data.choices?.[0]?.finish_reason;
     let content = data.choices?.[0]?.message?.content || "";
 
-    content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+    content = content.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
 
     if (!content) {
+      console.error("Empty AI response. finish_reason:", finishReason, "raw:", JSON.stringify(data).slice(0, 500));
       return new Response(
-        JSON.stringify({ error: "AI returned empty response" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "AI returned empty response", finishReason }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
+    const extractJson = (text: string): any => {
+      const start = text.search(/[\{\[]/);
+      const isArr = start !== -1 && text[start] === "[";
+      const end = text.lastIndexOf(isArr ? "]" : "}");
+      if (start === -1 || end === -1) throw new Error("no json boundaries");
+      let cleaned = text.substring(start, end + 1);
+      try { return JSON.parse(cleaned); } catch {
+        cleaned = cleaned
+          .replace(/,\s*}/g, "}")
+          .replace(/,\s*]/g, "]")
+          .replace(/[\x00-\x1F\x7F]/g, " ");
+        return JSON.parse(cleaned);
+      }
+    };
+
+    let parsed: any;
+    try {
+      parsed = extractJson(content);
+    } catch (parseErr) {
+      console.error("Parse failed. finish_reason:", finishReason, "content:", content.slice(0, 800));
       return new Response(
-        JSON.stringify({ error: "AI returned invalid format" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "AI returned invalid format", finishReason }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const parsed = JSON.parse(jsonMatch[0]);
 
     // Save to cache (fire-and-forget)
     supabase
