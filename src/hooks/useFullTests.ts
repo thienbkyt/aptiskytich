@@ -24,19 +24,15 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      let query = supabase
+      // Only include rows that were merged via "Ghép Full Test" (have explicit full_test_category).
+      // Single-skill Full Part merges leave full_test_category = NULL and must NOT show here.
+      const query = supabase
         .from("exam_sets")
         .select("id, full_test_id, full_test_title, skill, is_published, full_test_category")
         .not("full_test_id", "is", null)
         .eq("is_published", true)
+        .eq("full_test_category", category)
         .order("created_at", { ascending: true });
-
-      if (category === "key") {
-        query = query.eq("full_test_category", "key");
-      } else {
-        // aptis: include explicit 'aptis' or NULL (legacy)
-        query = query.or("full_test_category.eq.aptis,full_test_category.is.null");
-      }
 
       const { data, error } = await query;
 
