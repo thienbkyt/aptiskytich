@@ -54,11 +54,52 @@ const getFormType = (skill: Skill, part: string): string => {
   return "mcq";
 };
 
+const getDefaultTimeLimit = (skill: Skill, part: string): number => {
+  if (skill === "grammar_vocab") {
+    if (part.includes("Grammar")) return 15;
+    if (part.includes("Vocab Part 1")) return 2;
+    if (part.includes("Vocab Part 2")) return 2;
+    if (part.includes("Vocab Part 3")) return 2;
+    if (part.includes("Vocab Part 4")) return 2;
+    if (part.includes("Vocab Part 5")) return 2;
+    return 30;
+  }
+  if (skill === "reading") {
+    if (part.includes("1")) return 6;
+    if (part.includes("2")) return 7;
+    if (part.includes("3")) return 7;
+    if (part.includes("4")) return 15;
+    return 30;
+  }
+  if (skill === "listening") {
+    if (part.includes("1")) return 8;
+    if (part.includes("2")) return 10;
+    if (part.includes("3")) return 10;
+    if (part.includes("4")) return 12;
+    return 30;
+  }
+  if (skill === "writing") {
+    if (part.includes("1")) return 6;
+    if (part.includes("2")) return 12;
+    if (part.includes("3")) return 17;
+    if (part.includes("4")) return 15;
+    return 30;
+  }
+  if (skill === "speaking") {
+    if (part.includes("1")) return 4;
+    if (part.includes("2")) return 2;
+    if (part.includes("3")) return 3;
+    if (part.includes("4")) return 3;
+    return 30;
+  }
+  return 30;
+};
+
 const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions }: Props) => {
   const { toast } = useToast();
   const [title, setTitle] = useState(examSet?.title || "");
   const [part, setPart] = useState(examSet?.part || SKILL_PARTS[skill][0]);
-  const [timeLimit, setTimeLimit] = useState(examSet?.time_limit || 30);
+  const [timeLimit, setTimeLimit] = useState(examSet?.time_limit || getDefaultTimeLimit(skill, part));
   const [questions, setQuestions] = useState<Omit<ExamQuestionRow, "exam_set_id">[]>([EMPTY_Q()]);
   const [saving, setSaving] = useState(false);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
