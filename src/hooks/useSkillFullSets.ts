@@ -19,15 +19,16 @@ export const useSkillFullSets = (skill: string) => {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // Include both single-skill Full Part merges AND parts of multi-skill Full Tests.
-      // A writing part inside a 5-skill Full Test is still valid writing practice,
-      // and Đề NN merged at Full Test level should also be reachable via per-skill practice.
+      // Only include single-skill Full Part merges (full_test_category IS NULL).
+      // Multi-skill Full Tests (category = 'aptis' / 'key') belong to the Aptis/Key
+      // Full Test section, not to per-skill Full Part practice.
       const { data, error } = await supabase
         .from("exam_sets")
         .select("id, full_test_id, full_test_title, part, skill, full_test_category")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
+        .is("full_test_category", null)
         .order("part", { ascending: true });
 
       if (error || !data) {
