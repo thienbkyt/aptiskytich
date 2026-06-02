@@ -282,6 +282,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         onExit={onExit}
         onComplete={() => handlePartComplete()}
+        skipIntro
         {...writingProps}
       />
     );
