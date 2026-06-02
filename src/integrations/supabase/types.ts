@@ -336,6 +336,72 @@ export type Database = {
         }
         Relationships: []
       }
+      full_test_members: {
+        Row: {
+          created_at: string
+          exam_set_id: string
+          full_test_id: string
+          id: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          exam_set_id: string
+          full_test_id: string
+          id?: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          exam_set_id?: string
+          full_test_id?: string
+          id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "full_test_members_exam_set_id_fkey"
+            columns: ["exam_set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "full_test_members_full_test_id_fkey"
+            columns: ["full_test_id"]
+            isOneToOne: false
+            referencedRelation: "full_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      full_tests: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       learning_streaks: {
         Row: {
           created_at: string
