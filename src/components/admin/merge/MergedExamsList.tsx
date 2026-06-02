@@ -230,6 +230,7 @@ const MergedExamsList = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả kỹ năng</SelectItem>
+                <SelectItem value="full_test">Đề ghép Full Test</SelectItem>
                 <SelectItem value="speaking">Speaking</SelectItem>
                 <SelectItem value="listening">Listening</SelectItem>
                 <SelectItem value="reading">Reading</SelectItem>
