@@ -41,10 +41,12 @@ const MergeFullTest = () => {
 
   const loadGroups = async () => {
     setLoading(true);
+    // Load all per-skill Full Part groups (exam_sets with full_test_id + category IS NULL).
     const { data, error } = await supabase
       .from("exam_sets")
       .select("id, full_test_id, full_test_title, skill")
       .not("full_test_id", "is", null)
+      .is("full_test_category", null)
       .order("created_at", { ascending: true });
     if (error) {
       toast({ title: "Lỗi tải Full Part", description: error.message, variant: "destructive" });
@@ -54,7 +56,6 @@ const MergeFullTest = () => {
     const map = new Map<string, FullPartGroup>();
     for (const row of data || []) {
       if (!row.full_test_id) continue;
-      // Group key: full_test_id + skill (each skill within a full_test is a "Full Part" of that skill)
       const k = `${row.full_test_id}::${row.skill}`;
       if (!map.has(k)) {
         map.set(k, {
@@ -107,20 +108,31 @@ const MergeFullTest = () => {
     }
 
     setSaving(true);
-    const newFullTestId = crypto.randomUUID();
-    const { error } = await supabase
-      .from("exam_sets")
-      .update({
-        full_test_id: newFullTestId,
-        full_test_title: title.trim(),
-        full_test_category: category,
-        is_published: true,
-      })
-      .in("id", ids);
+    // Create the Full Test as a separate record; link to underlying exam_sets via full_test_members.
+    // This intentionally does NOT mutate exam_sets, so Full Part groupings stay intact.
+    const { data: ft, error: ftErr } = await supabase
+      .from("full_tests")
+      .insert({ title: title.trim(), category, is_published: true })
+      .select("id")
+      .single();
+
+    if (ftErr || !ft) {
+      setSaving(false);
+      toast({ title: "Lưu thất bại", description: ftErr?.message || "Không tạo được Full Test", variant: "destructive" });
+      return;
+    }
+
+    const rows = ids.map((examSetId, i) => ({
+      full_test_id: ft.id,
+      exam_set_id: examSetId,
+      position: i,
+    }));
+    const { error: memErr } = await supabase.from("full_test_members").insert(rows);
+
     setSaving(false);
 
-    if (error) {
-      toast({ title: "Lưu thất bại", description: error.message, variant: "destructive" });
+    if (memErr) {
+      toast({ title: "Lưu thất bại", description: memErr.message, variant: "destructive" });
       return;
     }
     toast({
