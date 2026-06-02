@@ -60,6 +60,7 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
       for (const [ftId, info] of grouped) {
         const skillArr = Array.from(info.skills);
         const isReady = requiredSkills.every((s) => skillArr.includes(s));
+        if (!isReady) continue;
         result.push({
           fullTestId: ftId,
           title: info.title,
