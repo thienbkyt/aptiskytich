@@ -87,17 +87,35 @@ const MergeFullPart = () => {
     })();
   }, [skill]);
 
-  // Group by Part number (extract "Part X" from part string)
+  // Group by Part. For grammar_vocab we MUST distinguish "Part 1 - Grammar" from
+  // "Vocab Part 1 - Word Synonyms" (both match /Part 1/), otherwise the dropdown
+  // merges 6 distinct parts into 5 buckets and only one of each pair can be chosen.
   const grouped = useMemo(() => {
     const map = new Map<string, ExamSetItem[]>();
     for (const s of sets) {
-      const m = s.part?.match(/Part\s*(\d+)/i);
-      const key = m ? `Part ${m[1]}` : s.part || "Khác";
+      let key: string;
+      if (skill === "grammar_vocab") {
+        const raw = (s.part || "").trim();
+        const isVocab = /vocab/i.test(raw);
+        const m = raw.match(/Part\s*(\d+)/i);
+        if (isVocab && m) key = `Vocab Part ${m[1]}`;
+        else if (m) key = `Grammar Part ${m[1]}`;
+        else key = raw || "Khác";
+      } else {
+        const m = s.part?.match(/Part\s*(\d+)/i);
+        key = m ? `Part ${m[1]}` : s.part || "Khác";
+      }
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(s);
     }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [sets]);
+    return Array.from(map.entries()).sort((a, b) => {
+      // Grammar before Vocab, then numeric order
+      const rank = (k: string) => (k.startsWith("Grammar") ? 0 : k.startsWith("Vocab") ? 1 : 2);
+      const ra = rank(a[0]), rb = rank(b[0]);
+      if (ra !== rb) return ra - rb;
+      return a[0].localeCompare(b[0], undefined, { numeric: true });
+    });
+  }, [sets, skill]);
 
   const handleSave = async () => {
     if (!title.trim()) {
