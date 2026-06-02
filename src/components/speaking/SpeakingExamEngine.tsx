@@ -464,13 +464,23 @@ const SpeakingExamEngine = ({
 
         {/* Right: Timer panel */}
         <div className="w-[220px] shrink-0">
-          <CircularTimer
-            timeLeft={isReading ? 0 : timeLeft}
-            totalTime={isReading ? 1 : totalTime}
-            label={isReading ? "Listening..." : isRec ? "Recording..." : "Preparation..."}
-            isRecording={isRec}
-            isPrep={phase === "prep" || isReading}
-          />
+          {isReading ? (
+            <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center min-h-[260px]">
+              <div className="w-16 h-16 rounded-full bg-[#24085a]/10 flex items-center justify-center mb-4 animate-pulse">
+                <span className="text-3xl">🔊</span>
+              </div>
+              <p className="text-sm font-semibold text-[#24085a] text-center">Đang đọc câu hỏi...</p>
+              <p className="text-xs text-gray-500 text-center mt-2">Nghe xong sẽ có tiếng bíp rồi bắt đầu ghi âm</p>
+            </div>
+          ) : (
+            <CircularTimer
+              timeLeft={timeLeft}
+              totalTime={totalTime}
+              label={isRec ? "Recording..." : "Preparation..."}
+              isRecording={isRec}
+              isPrep={phase === "prep"}
+            />
+          )}
 
           {/* Finish Recording button - only shows after 10s of recording */}
           {isRec && (
@@ -489,6 +499,7 @@ const SpeakingExamEngine = ({
             </motion.div>
           )}
         </div>
+
       </div>
 
       {/* Transitioning indicator */}
