@@ -45,11 +45,24 @@ const SpeakingForm = ({ questions, setQuestions, part, onImageUpload, uploadingI
 
   return (
     <div className="space-y-4">
-      {/* Part 4 topic */}
+      {/* Part 4 topic + image */}
       {isPart4 && (
-        <div className="p-4 rounded-xl border border-border bg-card">
-          <Label>Topic (chủ đề chung)</Label>
-          <Input value={questions[0]?.extra_data?.topic || ""} onChange={(e) => updateExtra(0, "topic", e.target.value)} placeholder="Education and technology" />
+        <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+          <div>
+            <Label>Topic (chủ đề chung)</Label>
+            <Input value={questions[0]?.extra_data?.topic || ""} onChange={(e) => updateExtra(0, "topic", e.target.value)} placeholder="Education and technology" />
+          </div>
+          <div>
+            <Label>Image URL (hình ảnh chung)</Label>
+            {questions[0]?.image_url ? (
+              <div className="flex items-center gap-2">
+                <img src={questions[0].image_url} alt="" className="w-20 h-20 object-cover rounded border border-border" />
+                <Button variant="outline" size="sm" onClick={() => updateQ(0, "image_url", null)}>Xóa</Button>
+              </div>
+            ) : (
+              <Input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) onImageUpload(0, f); }} disabled={uploadingIdx === 0} />
+            )}
+          </div>
         </div>
       )}
 

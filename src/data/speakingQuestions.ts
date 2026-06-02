@@ -29,6 +29,7 @@ export interface SpeakingPart3Data {
 // Part 4: Opinion Questions – Discuss abstract topic (60s prep, 120s speak)
 export interface SpeakingPart4Data {
   topic: string;
+  imageUrl?: string;
   questions: string[];
   prepTime: number;
   speakTime: number;

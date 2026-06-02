@@ -219,6 +219,7 @@ export const toSpeakingPart4 = (rows: ExamQuestionRow[]): SpeakingPart4Data => {
   const ed = first?.extra_data || {};
   return {
     topic: ed.topic || first?.question_text || "",
+    imageUrl: first?.image_url || "",
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 60,
     speakTime: ed.speakTime ?? 120,
