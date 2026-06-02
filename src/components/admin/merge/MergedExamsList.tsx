@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-type SkillFilter = "all" | "speaking" | "listening" | "reading" | "writing" | "grammar_vocab";
+type SkillFilter = "all" | "full_test" | "speaking" | "listening" | "reading" | "writing" | "grammar_vocab";
 
 const SKILL_LABELS: Record<string, string> = {
   speaking: "Speaking",
