@@ -257,6 +257,7 @@ const WritingExamEngine = ({
             totalTime={timeLimit}
             submitted={submitted}
             onSubmit={handleSubmit}
+            onPrevious={onPrevious}
             sections={sections}
           />
         )}
