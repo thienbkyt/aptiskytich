@@ -17,6 +17,7 @@ interface ExamInstructionsProps {
   onStart: () => void;
   sections?: QuestionSection[];
   testTitle?: string;
+  description?: string;
 }
 
 const ExamInstructions = ({
@@ -25,13 +26,18 @@ const ExamInstructions = ({
   totalMinutes,
   onStart,
   testTitle,
+  description,
 }: ExamInstructionsProps) => {
   return (
-    <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
+    <div className="min-h-screen bg-white pl-[60px] pt-[40px] font-sans text-black">
       <p className="text-sm text-gray-500 mb-2">Aptis General Practice Test</p>
-      <h1 className="text-xl font-bold mb-6 text-black">
-        {skillName} Practice Test {testTitle || ""}
+      <h1 className="text-xl font-bold text-black">
+        {skillName} Practice Test
       </h1>
+      {(description || testTitle) && (
+        <p className="text-sm text-gray-500 mt-1 mb-6">{description || testTitle}</p>
+      )}
+      {!(description || testTitle) && <div className="mb-6" />}
       <div className="flex gap-16 mb-6">
         <div>
           <p className="text-xs text-gray-500 mb-1">Number of Questions</p>

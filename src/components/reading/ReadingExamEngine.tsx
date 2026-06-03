@@ -163,18 +163,18 @@ const ReadingExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
-        <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+        <div className="flex-1 w-full">
           <ExamInstructions
-            skillName={`Reading Đề 01`}
+            skillName="Reading"
             timeLeft={timeLeft}
             totalTime={timeLimit}
             totalParts={totalQuestions}
             totalMinutes={Math.ceil(timeLimit / 60)}
             onStart={() => setPhase("practice")}
             sections={sections}
-            testTitle={testTitle}
+            description={testTitle}
           />
         </div>
       </div>
