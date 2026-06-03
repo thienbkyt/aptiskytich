@@ -256,6 +256,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         skipIntro={currentPartIndex > 0}
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
+        onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
         {...readingProps}
       />
     );

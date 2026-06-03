@@ -25,6 +25,7 @@ interface ReadingExamEngineProps {
   part4Question?: ReadingLongQuestion;
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
+  onPreviousPart?: () => void;
   initialTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
@@ -35,7 +36,7 @@ type Phase = "instructions" | "reading_intro" | "practice" | "review";
 const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
-  onExit, onComplete,
+  onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
@@ -151,7 +152,12 @@ const ReadingExamEngine = ({
     },
   ];
 
-  const goToPrevPhase = () => { setPhase("reading_intro"); };
+  // In full-part flow (skipIntro), Previous on first question jumps to previous part.
+  // Otherwise (single-part practice), Previous on first question goes back to reading_intro.
+  const goToPrevPhase = () => {
+    if (skipIntro && onPreviousPart) onPreviousPart();
+    else setPhase("reading_intro");
+  };
 
   const navProps = {
     onPrevious: currentIndex > 0
@@ -266,7 +272,7 @@ const ReadingExamEngine = ({
               setP3Answers(n);
             }}
             {...navProps}
-            onNext={currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : (!submitted ? handleSubmit : undefined)}
+            onNext={!submitted ? handleSubmit : undefined}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
@@ -288,7 +294,7 @@ const ReadingExamEngine = ({
               setP4Answers(n);
             }}
             {...navProps}
-            onNext={currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : (!submitted ? handleSubmit : undefined)}
+            onNext={!submitted ? handleSubmit : undefined}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
