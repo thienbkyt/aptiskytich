@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
+import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import ListeningPart1Word from "@/components/listening/ListeningPart1Word";
 import ListeningPart2Match from "@/components/listening/ListeningPart2Match";
@@ -26,7 +27,7 @@ interface ListeningExamEngineProps {
   onComplete?: (correct: number, total: number) => void;
 }
 
-type Phase = "instructions" | "practice" | "review";
+type Phase = "instructions" | "listening_intro" | "practice" | "review";
 
 const PART_LABELS: Record<ListeningPartType, string> = {
   part1: "Part 1 – Word Recognition",
@@ -167,12 +168,46 @@ const ListeningExamEngine = ({
           skillName="Listening"
           totalParts={totalQuestions}
           totalMinutes={Math.ceil(timeLimit / 60)}
-          onStart={() => setPhase("practice")}
+          onStart={() => setPhase("listening_intro")}
           description={testTitle}
         />
       </div>
     );
   }
+
+  if (phase === "listening_intro") {
+    const minutes = Math.ceil(timeLimit / 60);
+    const recordingsWord = (() => {
+      const map: Record<number, string> = {
+        1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight",
+        9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen",
+        15: "fifteen", 16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty",
+      };
+      return map[totalQuestions] || String(totalQuestions);
+    })();
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
+        <div className="flex-1 bg-white pl-20 pt-10 font-sans text-black">
+          <h1 className="text-xl mb-4">Aptis General Listening Instructions</h1>
+          <p className="font-bold mb-2">Listening</p>
+          <p className="text-sm mb-1">You will listen to {recordingsWord} recordings.</p>
+          <p className="text-sm mb-1">Click on the PLAY button to listen to each recording.</p>
+          <p className="text-sm mb-1">You can listen to each recording TWO TIMES ONLY.</p>
+          <p className="text-sm mb-1">You have {minutes} minutes to complete the test.</p>
+          <p className="text-sm mb-1">&nbsp;</p>
+          <p className="text-sm">When you click on the 'Next' button, the test will begin.</p>
+        </div>
+        <BottomNavBar
+          isFirst={false}
+          onPrevious={() => setPhase("instructions")}
+          onNext={() => setPhase("practice")}
+          sections={sections}
+        />
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
