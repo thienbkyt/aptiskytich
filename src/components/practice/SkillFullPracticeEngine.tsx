@@ -220,10 +220,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     }
     return (
       <ListeningExamEngine
-        key={`listening-${engineKey}`}
+        key="listening-full"
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
+        externalTimeLeft={listeningTimeLeft}
+        onTimeTick={(t) => setListeningTimeLeft(t)}
+        skipIntro={currentPartIndex > 0}
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         {...listeningProps}
