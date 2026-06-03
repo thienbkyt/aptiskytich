@@ -164,10 +164,10 @@ const ReadingExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
+        <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
           <ExamInstructions
-            skillName={`Reading – ${partLabel}`}
+            skillName={`Reading Đề 01`}
             timeLeft={timeLeft}
             totalTime={timeLimit}
             totalParts={totalQuestions}
@@ -183,7 +183,7 @@ const ReadingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
+      <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence

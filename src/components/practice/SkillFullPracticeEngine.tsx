@@ -164,7 +164,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   // ── Exam Phase ──
   if (parts.length === 0) return null;
 
-  const headerTitle = `${skillLabel} - Full Practice`;
+  const headerTitle = skill === "reading" ? "Reading Đề 01" : `${skillLabel} - Full Practice`;
 
   // Grammar: merge all parts
   if (skill === "grammar_vocab") {
