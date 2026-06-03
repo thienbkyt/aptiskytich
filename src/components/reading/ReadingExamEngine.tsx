@@ -252,6 +252,7 @@ const ReadingExamEngine = ({
             submitted={submitted}
             onExitToSections={() => {}}
             onSubmit={!submitted ? handleSubmit : undefined}
+            onPrevious={goToPrevPhase}
             sections={sections}
           />
         )}
