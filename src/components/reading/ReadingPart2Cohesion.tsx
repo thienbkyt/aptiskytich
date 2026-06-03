@@ -211,7 +211,7 @@ const ReadingPart2Cohesion = ({
       </AnimatePresence>
 
       <BottomNavBar
-        onPrevious={!isFirst ? goPrevSection : undefined}
+        onPrevious={!isFirst ? goPrevSection : onPrevious}
         onNext={!isLast ? goNextSection : (!submitted ? onSubmit : undefined)}
         onSubmit={undefined}
         isFirst={false}
