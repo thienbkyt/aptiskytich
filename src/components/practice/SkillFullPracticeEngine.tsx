@@ -263,10 +263,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     }
     return (
       <WritingExamEngine
-        key={`writing-${engineKey}`}
+        key="writing-full"
         partType={writingPartType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
+        externalTimeLeft={writingTimeLeft}
+        onTimeTick={(t) => setWritingTimeLeft(t)}
+        skipIntro={currentPartIndex > 0}
         onExit={onExit}
         onComplete={() => handlePartComplete()}
         {...writingProps}
