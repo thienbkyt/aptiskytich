@@ -273,6 +273,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         isLastPart={currentPartIndex >= parts.length - 1}
         onExit={onExit}
         onComplete={() => handlePartComplete()}
+        onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
         {...writingProps}
       />
     );
