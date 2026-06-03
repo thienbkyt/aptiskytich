@@ -66,6 +66,16 @@ const ListeningExamEngine = ({
     }
   }, [phase, currentIndex]);
 
+  // Reset internal state when partType changes (full-test flow keeps engine mounted)
+  useEffect(() => {
+    setPhase(skipIntro ? "practice" : "instructions");
+    setCurrentIndex(0);
+    setSubmitted(false);
+    setSeenQuestions(new Set());
+    setAnswers(new Array(totalQuestions).fill(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partType]);
+
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
