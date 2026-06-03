@@ -26,6 +26,9 @@ interface WritingExamEngineProps {
   part2Data?: WritingPart2Data;
   part3Data?: WritingPart3Data;
   part4Data?: WritingPart4Data;
+  externalTimeLeft?: number;
+  onTimeTick?: (t: number) => void;
+  skipIntro?: boolean;
   onExit: () => void;
   onComplete?: () => void;
 }
