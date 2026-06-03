@@ -13,13 +13,14 @@ interface Props {
   totalTime: number;
   submitted: boolean;
   onSubmit: () => void;
+  onPrevious?: () => void;
   sections: any[];
 }
 
 const WritingPart4TwoEmails = ({
   data, informalAnswer, formalAnswer,
   onInformalChange, onFormalChange,
-  timeLeft, totalTime, submitted, onSubmit, sections,
+  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
 }: Props) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
