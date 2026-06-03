@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
+import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import ListeningPart1Word from "@/components/listening/ListeningPart1Word";
 import ListeningPart2Match from "@/components/listening/ListeningPart2Match";
