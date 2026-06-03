@@ -152,10 +152,12 @@ const ReadingExamEngine = ({
 
   const navProps = {
     onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined,
-    onNext: currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : undefined,
-    onSubmit: currentIndex === totalQuestions - 1 && !submitted ? handleSubmit : undefined,
-    isFirst: currentIndex === 0,
-    isLast: currentIndex === totalQuestions - 1,
+    onNext: currentIndex < totalQuestions - 1
+      ? () => setCurrentIndex((p) => p + 1)
+      : (!submitted ? handleSubmit : undefined),
+    onSubmit: undefined,
+    isFirst: false,
+    isLast: false,
     sections,
   };
 
