@@ -127,13 +127,13 @@ const WritingExamEngine = ({
   const sections = [
     {
       title: "Aptis General Writing Instructions",
-      isCurrent: phase === "instructions",
+      isCurrent: phase === "instructions" || phase === "writing_intro",
       onClick: () => {},
     },
     {
       title: partLabel,
       questionCount: partType === "task1" ? (part1Data?.questions.length || 5) : partType === "task3" ? (part3Data?.questions.length || 3) : partType === "task4" ? 2 : 1,
-      isCurrent: phase !== "instructions",
+      isCurrent: phase === "practice" || phase === "grading" || phase === "results",
       onClick: () => {},
     },
   ];
