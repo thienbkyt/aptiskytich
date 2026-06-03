@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
+import BottomNavBar from "@/components/reading/BottomNavBar";
 import ReadingPart1Sentence from "@/components/reading/ReadingPart1Sentence";
 import ReadingPart2Cohesion from "@/components/reading/ReadingPart2Cohesion";
 import ReadingPart3Opinion from "@/components/reading/ReadingPart3Opinion";
@@ -29,7 +30,7 @@ interface ReadingExamEngineProps {
   skipIntro?: boolean;
 }
 
-type Phase = "instructions" | "practice" | "review";
+type Phase = "instructions" | "reading_intro" | "practice" | "review";
 
 const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
