@@ -32,6 +32,7 @@ interface WritingExamEngineProps {
   isLastPart?: boolean;
   onExit: () => void;
   onComplete?: () => void;
+  onPrevious?: () => void;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
@@ -47,7 +48,7 @@ const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
   externalTimeLeft, onTimeTick, skipIntro, isLastPart,
-  onExit, onComplete,
+  onExit, onComplete, onPrevious,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
@@ -256,6 +257,7 @@ const WritingExamEngine = ({
             totalTime={timeLimit}
             submitted={submitted}
             onSubmit={handleSubmit}
+            onPrevious={onPrevious}
             sections={sections}
           />
         )}
@@ -269,6 +271,7 @@ const WritingExamEngine = ({
             totalTime={timeLimit}
             submitted={submitted}
             onSubmit={handleSubmit}
+            onPrevious={onPrevious}
             sections={sections}
           />
         )}
@@ -286,6 +289,7 @@ const WritingExamEngine = ({
             totalTime={timeLimit}
             submitted={submitted}
             onSubmit={handleSubmit}
+            onPrevious={onPrevious}
             sections={sections}
           />
         )}
@@ -301,6 +305,7 @@ const WritingExamEngine = ({
             totalTime={timeLimit}
             submitted={submitted}
             onSubmit={handleSubmit}
+            onPrevious={onPrevious}
             sections={sections}
           />
         )}

@@ -12,12 +12,13 @@ interface Props {
   totalTime: number;
   submitted: boolean;
   onSubmit: () => void;
+  onPrevious?: () => void;
   sections: any[];
 }
 
 const WritingPart3Questions = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
-  submitted, onSubmit, sections,
+  submitted, onSubmit, onPrevious, sections,
 }: Props) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
@@ -59,7 +60,7 @@ const WritingPart3Questions = ({
         ))}
       </div>
 
-      <BottomNavBar isFirst={true} isLast={true} onSubmit={!submitted ? onSubmit : undefined} submitLabel="Submit" sections={sections} />
+      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} />
     </div>
   );
 };

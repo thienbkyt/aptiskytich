@@ -12,6 +12,7 @@ interface Props {
   totalTime: number;
   submitted: boolean;
   onSubmit: () => void;
+  onPrevious?: () => void;
   sections: any[];
 }
 
@@ -24,7 +25,7 @@ const toolbarButtons = [
 
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
-  submitted, onSubmit, sections,
+  submitted, onSubmit, onPrevious, sections,
 }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -79,7 +80,7 @@ const WritingPart2Social = ({
         </div>
       )}
 
-      <BottomNavBar isFirst={true} isLast={true} onSubmit={!submitted ? onSubmit : undefined} submitLabel="Submit" sections={sections} />
+      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} />
     </div>
   );
 };
