@@ -182,12 +182,6 @@ const ReadingExamEngine = ({
             description={testTitle}
           />
         </div>
-        <BottomNavBar
-          isFirst={false}
-          onPrevious={onExit}
-          onNext={() => setPhase("reading_intro")}
-          sections={sections}
-        />
       </div>
     );
   }
