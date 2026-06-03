@@ -174,7 +174,7 @@ const ReadingExamEngine = ({
             totalMinutes={Math.ceil(timeLimit / 60)}
             onStart={() => setPhase("practice")}
             sections={sections}
-            description={`Bài luyện tập: ${testTitle}`}
+            testTitle={testTitle}
           />
         </div>
       </div>
