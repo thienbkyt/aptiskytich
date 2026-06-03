@@ -24,6 +24,9 @@ interface ReadingExamEngineProps {
   part4Question?: ReadingLongQuestion;
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
+  initialTimeLeft?: number;
+  onTimeTick?: (t: number) => void;
+  skipIntro?: boolean;
 }
 
 type Phase = "instructions" | "practice" | "review";
@@ -32,11 +35,12 @@ const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete,
+  initialTimeLeft, onTimeTick, skipIntro,
 }: ReadingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("instructions");
+  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
@@ -78,9 +82,12 @@ const ReadingExamEngine = ({
         if (p <= 1) {
           clearInterval(t);
           handleSubmit();
+          onTimeTick?.(0);
           return 0;
         }
-        return p - 1;
+        const next = p - 1;
+        onTimeTick?.(next);
+        return next;
       });
     }, 1000);
     return () => clearInterval(t);
@@ -145,10 +152,12 @@ const ReadingExamEngine = ({
 
   const navProps = {
     onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined,
-    onNext: currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : undefined,
-    onSubmit: currentIndex === totalQuestions - 1 && !submitted ? handleSubmit : undefined,
-    isFirst: currentIndex === 0,
-    isLast: currentIndex === totalQuestions - 1,
+    onNext: currentIndex < totalQuestions - 1
+      ? () => setCurrentIndex((p) => p + 1)
+      : (!submitted ? handleSubmit : undefined),
+    onSubmit: undefined,
+    isFirst: false,
+    isLast: false,
     sections,
   };
 
@@ -190,11 +199,11 @@ const ReadingExamEngine = ({
               setP1Answers(n);
             }}
             {...navProps}
+            onNext={!submitted ? handleSubmit : undefined}
             onPrevious={undefined}
-            onNext={undefined}
-            onSubmit={!submitted ? handleSubmit : undefined}
-            isFirst={true}
-            isLast={true}
+            onSubmit={undefined}
+            isFirst={false}
+            isLast={false}
           />
         )}
 
@@ -230,11 +239,11 @@ const ReadingExamEngine = ({
               setP3Answers(n);
             }}
             {...navProps}
+            onNext={!submitted ? handleSubmit : undefined}
             onPrevious={undefined}
-            onNext={undefined}
-            onSubmit={!submitted ? handleSubmit : undefined}
-            isFirst={true}
-            isLast={true}
+            onSubmit={undefined}
+            isFirst={false}
+            isLast={false}
           />
         )}
 
@@ -253,11 +262,11 @@ const ReadingExamEngine = ({
               setP4Answers(n);
             }}
             {...navProps}
+            onNext={!submitted ? handleSubmit : undefined}
             onPrevious={undefined}
-            onNext={undefined}
-            onSubmit={!submitted ? handleSubmit : undefined}
-            isFirst={true}
-            isLast={true}
+            onSubmit={undefined}
+            isFirst={false}
+            isLast={false}
           />
         )}
       </div>

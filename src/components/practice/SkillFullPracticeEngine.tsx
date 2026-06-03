@@ -59,6 +59,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
+  const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
@@ -94,6 +95,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     setsWithQuestions.sort((a, b) => a.part.localeCompare(b.part));
 
     setParts(setsWithQuestions);
+    if (skill === "reading") setReadingTimeLeft(SKILL_TIMES.reading);
     setPhase("exam");
   };
 
@@ -249,6 +251,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
+        initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
+        onTimeTick={(t) => setReadingTimeLeft(t)}
+        skipIntro={currentPartIndex > 0}
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         {...readingProps}
