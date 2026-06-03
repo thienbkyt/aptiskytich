@@ -57,6 +57,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [currentPartIndex, setCurrentPartIndex] = useState(0);
   const [scores, setScores] = useState({ correct: 0, total: 0 });
   const [engineKey, setEngineKey] = useState(0);
+  const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
@@ -109,7 +110,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setPhase("completed");
     } else {
       setCurrentPartIndex(prev => prev + 1);
-      setEngineKey(prev => prev + 1);
+      // Writing keeps the same engine mounted to preserve timer + skip intros
+      if (skill !== "writing") {
+        setEngineKey(prev => prev + 1);
+      }
     }
   }, [currentPartIndex, parts.length, skill]);
 
@@ -259,10 +263,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     }
     return (
       <WritingExamEngine
-        key={`writing-${engineKey}`}
+        key="writing-full"
         partType={writingPartType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
+        externalTimeLeft={writingTimeLeft}
+        onTimeTick={(t) => setWritingTimeLeft(t)}
+        skipIntro={currentPartIndex > 0}
         onExit={onExit}
         onComplete={() => handlePartComplete()}
         {...writingProps}

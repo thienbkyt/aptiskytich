@@ -26,6 +26,9 @@ interface WritingExamEngineProps {
   part2Data?: WritingPart2Data;
   part3Data?: WritingPart3Data;
   part4Data?: WritingPart4Data;
+  externalTimeLeft?: number;
+  onTimeTick?: (t: number) => void;
+  skipIntro?: boolean;
   onExit: () => void;
   onComplete?: () => void;
 }
@@ -42,10 +45,12 @@ const PART_LABELS: Record<WritingPartType, string> = {
 const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
+  externalTimeLeft, onTimeTick, skipIntro,
   onExit, onComplete,
 }: WritingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("instructions");
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
+  const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
+  const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(false);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
@@ -63,17 +68,32 @@ const WritingExamEngine = ({
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
-      setTimeLeft((p) => {
-        if (p <= 1) {
-          clearInterval(t);
-          handleSubmit();
-          return 0;
-        }
-        return p - 1;
-      });
+      const next = timeLeft - 1;
+      if (onTimeTick) onTimeTick(Math.max(0, next));
+      if (externalTimeLeft === undefined) {
+        setInternalTimeLeft((p) => (p <= 1 ? 0 : p - 1));
+      }
+      if (next <= 0) {
+        clearInterval(t);
+        handleSubmit();
+      }
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [phase, submitted, timeLeft, externalTimeLeft, onTimeTick]);
+
+  // Full-test flow: when parent advances partType, reset to practice for the new part
+  useEffect(() => {
+    if (!skipIntro) return;
+    setPhase("practice");
+    setSubmitted(false);
+    setShortAnswers(new Array(part1Data?.questions.length || 5).fill(""));
+    setTextAnswer("");
+    setPart3Answers(new Array(part3Data?.questions.length || 3).fill(""));
+    setInformalAnswer("");
+    setFormalAnswer("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partType]);
+
 
   const getTextAndQuestions = (): { text: string; questions: string[] } => {
     if (partType === "task1" && part1Data) {
