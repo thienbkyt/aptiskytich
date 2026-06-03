@@ -151,8 +151,12 @@ const ReadingExamEngine = ({
     },
   ];
 
+  const goToPrevPhase = () => { setPhase("reading_intro"); };
+
   const navProps = {
-    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined,
+    onPrevious: currentIndex > 0
+      ? () => setCurrentIndex((p) => p - 1)
+      : goToPrevPhase,
     onNext: currentIndex < totalQuestions - 1
       ? () => setCurrentIndex((p) => p + 1)
       : (!submitted ? handleSubmit : undefined),
@@ -166,7 +170,7 @@ const ReadingExamEngine = ({
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full pb-20">
           <ExamInstructions
             skillName="Reading"
             timeLeft={timeLeft}
@@ -178,6 +182,12 @@ const ReadingExamEngine = ({
             description={testTitle}
           />
         </div>
+        <BottomNavBar
+          isFirst={false}
+          onPrevious={onExit}
+          onNext={() => setPhase("reading_intro")}
+          sections={sections}
+        />
       </div>
     );
   }
@@ -242,6 +252,7 @@ const ReadingExamEngine = ({
             submitted={submitted}
             onExitToSections={() => {}}
             onSubmit={!submitted ? handleSubmit : undefined}
+            onPrevious={goToPrevPhase}
             sections={sections}
           />
         )}

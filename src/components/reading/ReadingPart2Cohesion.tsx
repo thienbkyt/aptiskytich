@@ -13,13 +13,14 @@ interface Props {
   totalTime: number;
   submitted: boolean;
   onSubmit?: () => void;
+  onPrevious?: () => void;
   onExitToSections?: () => void;
   sections: any[];
 }
 
 const ReadingPart2Cohesion = ({
   question, placements, onPlacementsChange,
-  timeLeft, totalTime, submitted, onSubmit, sections,
+  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
 }: Props) => {
   const [bookmarked, setBookmarked] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
@@ -210,7 +211,7 @@ const ReadingPart2Cohesion = ({
       </AnimatePresence>
 
       <BottomNavBar
-        onPrevious={!isFirst ? goPrevSection : undefined}
+        onPrevious={!isFirst ? goPrevSection : onPrevious}
         onNext={!isLast ? goNextSection : (!submitted ? onSubmit : undefined)}
         onSubmit={undefined}
         isFirst={false}
