@@ -161,20 +161,15 @@ const ListeningExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
-        <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
-          <ExamInstructions
-            skillName={`Listening – ${partLabel}`}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
-            totalParts={totalQuestions}
-            totalMinutes={Math.ceil(timeLimit / 60)}
-            onStart={() => setPhase("practice")}
-            sections={sections}
-            description={`Bài luyện tập: ${testTitle}. Mỗi đoạn audio chỉ được nghe tối đa 2 lần.`}
-          />
-        </div>
+        <ExamInstructions
+          skillName="Listening"
+          totalParts={totalQuestions}
+          totalMinutes={Math.ceil(timeLimit / 60)}
+          onStart={() => setPhase("practice")}
+          description={testTitle}
+        />
       </div>
     );
   }
