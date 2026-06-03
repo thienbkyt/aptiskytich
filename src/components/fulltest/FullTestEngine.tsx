@@ -78,6 +78,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // Key to force re-mount engines on part change
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
+  const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
@@ -171,8 +172,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     } else {
       // Move to next part within same skill
       setCurrentPartIndex(prev => prev + 1);
-      // Writing keeps the same engine mounted to preserve timer + skip intros
-      if (skill !== "writing") {
+      // Writing & Listening keep the same engine mounted to preserve timer + skip intros
+      if (skill !== "writing" && skill !== "listening") {
         setEngineKey(prev => prev + 1);
       }
     }
@@ -420,11 +421,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       <>
         {progressBar}
         <ListeningExamEngine
-          key={`listening-${engineKey}`}
+          key="listening-full"
           partType={partType}
           testTitle={`${testTitle} – Listening ${currentPart.part}`}
           timeLimit={SKILL_TIMES.listening}
           onExit={handleExit}
+          externalTimeLeft={listeningTimeLeft}
+          onTimeTick={setListeningTimeLeft}
+          skipIntro={currentPartIndex > 0}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           {...listeningProps}
         />
