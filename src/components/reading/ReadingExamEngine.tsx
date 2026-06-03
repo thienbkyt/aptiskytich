@@ -223,7 +223,6 @@ const ReadingExamEngine = ({
             }}
             {...navProps}
             onNext={!submitted ? handleSubmit : undefined}
-            onPrevious={undefined}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
@@ -262,8 +261,7 @@ const ReadingExamEngine = ({
               setP3Answers(n);
             }}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
-            onPrevious={undefined}
+            onNext={currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : (!submitted ? handleSubmit : undefined)}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
@@ -285,8 +283,7 @@ const ReadingExamEngine = ({
               setP4Answers(n);
             }}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
-            onPrevious={undefined}
+            onNext={currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : (!submitted ? handleSubmit : undefined)}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}

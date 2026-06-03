@@ -211,11 +211,10 @@ const ReadingPart2Cohesion = ({
 
       <BottomNavBar
         onPrevious={!isFirst ? goPrevSection : undefined}
-        onNext={!isLast ? goNextSection : undefined}
-        onSubmit={isLast && !submitted ? onSubmit : undefined}
-        isFirst={isFirst}
-        isLast={isLast}
-        submitLabel="Submit"
+        onNext={!isLast ? goNextSection : (!submitted ? onSubmit : undefined)}
+        onSubmit={undefined}
+        isFirst={false}
+        isLast={false}
         sections={sections}
       />
     </div>
