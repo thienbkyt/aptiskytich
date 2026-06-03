@@ -25,6 +25,7 @@ interface ReadingExamEngineProps {
   part4Question?: ReadingLongQuestion;
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
+  onPreviousPart?: () => void;
   initialTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
@@ -35,7 +36,7 @@ type Phase = "instructions" | "reading_intro" | "practice" | "review";
 const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
-  onExit, onComplete,
+  onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
