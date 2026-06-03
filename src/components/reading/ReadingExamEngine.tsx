@@ -294,7 +294,7 @@ const ReadingExamEngine = ({
               setP4Answers(n);
             }}
             {...navProps}
-            onNext={currentIndex < totalQuestions - 1 ? () => setCurrentIndex((p) => p + 1) : (!submitted ? handleSubmit : undefined)}
+            onNext={!submitted ? handleSubmit : undefined}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
