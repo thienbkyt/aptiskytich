@@ -29,7 +29,7 @@ interface WritingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "instructions" | "practice" | "grading" | "results";
+type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
 
 const PART_LABELS: Record<WritingPartType, string> = {
   task1: "Part 1 – Short Answers",
