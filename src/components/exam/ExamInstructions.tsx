@@ -30,7 +30,7 @@ const ExamInstructions = ({
     <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
       <p className="text-sm text-gray-700 mb-2">Aptis General Practice Test</p>
       <h1 className="text-xl font-bold mb-6">
-        {skillName} Practice Test {description || ""}
+        {skillName}
       </h1>
       <div className="flex gap-16 mb-6">
         <div>

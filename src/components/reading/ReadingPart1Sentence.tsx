@@ -75,9 +75,9 @@ const ReadingPart1Sentence = ({
     <div className="min-h-[70vh] flex flex-col pb-20">
       <div className="flex items-start justify-between mb-10">
         <div>
-          <p className="text-sm text-foreground">Reading</p>
+          <p className="text-sm text-foreground">Reading Đề 01</p>
           <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
-            Question 1 of 5
+            Question 1 of ​5
           </p>
         </div>
         <div className="flex items-center gap-4">
