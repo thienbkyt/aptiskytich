@@ -421,11 +421,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       <>
         {progressBar}
         <ListeningExamEngine
-          key={`listening-${engineKey}`}
+          key="listening-full"
           partType={partType}
           testTitle={`${testTitle} – Listening ${currentPart.part}`}
           timeLimit={SKILL_TIMES.listening}
           onExit={handleExit}
+          externalTimeLeft={listeningTimeLeft}
+          onTimeTick={setListeningTimeLeft}
+          skipIntro={currentPartIndex > 0}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           {...listeningProps}
         />
