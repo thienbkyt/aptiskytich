@@ -46,7 +46,7 @@ const PART_LABELS: Record<WritingPartType, string> = {
 const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  externalTimeLeft, onTimeTick, skipIntro,
+  externalTimeLeft, onTimeTick, skipIntro, isLastPart,
   onExit, onComplete,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
