@@ -239,11 +239,11 @@ const ReadingExamEngine = ({
               setP3Answers(n);
             }}
             {...navProps}
+            onNext={!submitted ? handleSubmit : undefined}
             onPrevious={undefined}
-            onNext={undefined}
-            onSubmit={!submitted ? handleSubmit : undefined}
-            isFirst={true}
-            isLast={true}
+            onSubmit={undefined}
+            isFirst={false}
+            isLast={false}
           />
         )}
 
