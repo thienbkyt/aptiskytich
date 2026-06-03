@@ -111,8 +111,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setPhase("completed");
     } else {
       setCurrentPartIndex(prev => prev + 1);
-      // Writing keeps the same engine mounted to preserve timer + skip intros
-      if (skill !== "writing") {
+      // Writing & Listening keep the same engine mounted to preserve timer + skip intros
+      if (skill !== "writing" && skill !== "listening") {
         setEngineKey(prev => prev + 1);
       }
     }
