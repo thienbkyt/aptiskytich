@@ -80,7 +80,7 @@ const WritingPart2Social = ({
         </div>
       )}
 
-      <BottomNavBar isFirst={true} isLast={true} onSubmit={!submitted ? onSubmit : undefined} submitLabel="Submit" sections={sections} />
+      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} />
     </div>
   );
 };
