@@ -25,6 +25,9 @@ interface ListeningExamEngineProps {
   part4Questions?: ListeningPart4Clip[];
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
+  externalTimeLeft?: number;
+  onTimeTick?: (t: number) => void;
+  skipIntro?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -39,12 +42,12 @@ const PART_LABELS: Record<ListeningPartType, string> = {
 const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
-  onExit, onComplete,
+  onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro,
 }: ListeningExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("instructions");
+  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
 
   const totalQuestions =
@@ -67,12 +70,14 @@ const ListeningExamEngine = ({
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
+        const next = p - 1;
+        onTimeTick?.(Math.max(0, next));
         if (p <= 1) {
           clearInterval(t);
           handleSubmit();
           return 0;
         }
-        return p - 1;
+        return next;
       });
     }, 1000);
     return () => clearInterval(t);

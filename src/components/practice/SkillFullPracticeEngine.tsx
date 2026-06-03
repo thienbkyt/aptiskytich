@@ -58,6 +58,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [scores, setScores] = useState({ correct: 0, total: 0 });
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
+  const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
@@ -110,8 +111,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setPhase("completed");
     } else {
       setCurrentPartIndex(prev => prev + 1);
-      // Writing keeps the same engine mounted to preserve timer + skip intros
-      if (skill !== "writing") {
+      // Writing & Listening keep the same engine mounted to preserve timer + skip intros
+      if (skill !== "writing" && skill !== "listening") {
         setEngineKey(prev => prev + 1);
       }
     }
@@ -219,10 +220,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     }
     return (
       <ListeningExamEngine
-        key={`listening-${engineKey}`}
+        key="listening-full"
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
+        externalTimeLeft={listeningTimeLeft}
+        onTimeTick={(t) => setListeningTimeLeft(t)}
+        skipIntro={currentPartIndex > 0}
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         {...listeningProps}
