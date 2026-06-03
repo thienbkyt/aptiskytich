@@ -25,6 +25,9 @@ interface ListeningExamEngineProps {
   part4Questions?: ListeningPart4Clip[];
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
+  externalTimeLeft?: number;
+  onTimeTick?: (t: number) => void;
+  skipIntro?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
