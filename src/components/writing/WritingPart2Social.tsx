@@ -25,7 +25,7 @@ const toolbarButtons = [
 
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
-  submitted, onSubmit, sections,
+  submitted, onSubmit, onPrevious, sections,
 }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
