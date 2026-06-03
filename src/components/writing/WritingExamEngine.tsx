@@ -129,6 +129,13 @@ const WritingExamEngine = ({
 
   const handleSubmit = useCallback(async () => {
     setSubmitted(true);
+
+    // Full-test mode, not last part: just advance without grading/results
+    if (skipIntro && isLastPart === false) {
+      onComplete?.();
+      return;
+    }
+
     setPhase("grading");
     onComplete?.();
 
@@ -142,7 +149,7 @@ const WritingExamEngine = ({
     });
 
     setPhase("results");
-  }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType]);
+  }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart]);
 
   const partLabel = PART_LABELS[partType];
 
