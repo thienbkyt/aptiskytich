@@ -251,6 +251,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
+        initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
+        onTimeTick={(t) => setReadingTimeLeft(t)}
+        skipIntro={currentPartIndex > 0}
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         {...readingProps}
