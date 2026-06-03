@@ -95,6 +95,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     setsWithQuestions.sort((a, b) => a.part.localeCompare(b.part));
 
     setParts(setsWithQuestions);
+    if (skill === "reading") setReadingTimeLeft(SKILL_TIMES.reading);
     setPhase("exam");
   };
 
