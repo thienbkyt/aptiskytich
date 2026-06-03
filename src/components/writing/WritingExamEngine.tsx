@@ -45,10 +45,12 @@ const PART_LABELS: Record<WritingPartType, string> = {
 const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
+  externalTimeLeft, onTimeTick, skipIntro,
   onExit, onComplete,
 }: WritingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("instructions");
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
+  const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
+  const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(false);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
@@ -66,17 +68,18 @@ const WritingExamEngine = ({
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
-      setTimeLeft((p) => {
-        if (p <= 1) {
-          clearInterval(t);
-          handleSubmit();
-          return 0;
-        }
-        return p - 1;
-      });
+      const next = timeLeft - 1;
+      if (onTimeTick) onTimeTick(Math.max(0, next));
+      if (externalTimeLeft === undefined) {
+        setInternalTimeLeft((p) => (p <= 1 ? 0 : p - 1));
+      }
+      if (next <= 0) {
+        clearInterval(t);
+        handleSubmit();
+      }
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [phase, submitted, timeLeft, externalTimeLeft, onTimeTick]);
 
   const getTextAndQuestions = (): { text: string; questions: string[] } => {
     if (partType === "task1" && part1Data) {
