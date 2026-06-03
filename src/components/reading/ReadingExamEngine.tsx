@@ -152,7 +152,12 @@ const ReadingExamEngine = ({
     },
   ];
 
-  const goToPrevPhase = () => { setPhase("reading_intro"); };
+  // In full-part flow (skipIntro), Previous on first question jumps to previous part.
+  // Otherwise (single-part practice), Previous on first question goes back to reading_intro.
+  const goToPrevPhase = () => {
+    if (skipIntro && onPreviousPart) onPreviousPart();
+    else setPhase("reading_intro");
+  };
 
   const navProps = {
     onPrevious: currentIndex > 0
