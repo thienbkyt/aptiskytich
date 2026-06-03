@@ -78,6 +78,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // Key to force re-mount engines on part change
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
+  const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
