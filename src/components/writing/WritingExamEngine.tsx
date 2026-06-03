@@ -26,7 +26,6 @@ interface WritingExamEngineProps {
   part4Data?: WritingPart4Data;
   onExit: () => void;
   onComplete?: () => void;
-  skipIntro?: boolean;
 }
 
 type Phase = "instructions" | "practice" | "grading" | "results";
@@ -41,9 +40,9 @@ const PART_LABELS: Record<WritingPartType, string> = {
 const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  onExit, onComplete, skipIntro = false,
+  onExit, onComplete,
 }: WritingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
+  const [phase, setPhase] = useState<Phase>("instructions");
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [submitted, setSubmitted] = useState(false);
 

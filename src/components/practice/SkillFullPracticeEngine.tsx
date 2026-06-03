@@ -16,8 +16,6 @@ import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
-import AptisFullTestIntro from "@/components/practice/AptisFullTestIntro";
-import AptisWritingInstructions from "@/components/practice/AptisWritingInstructions";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -51,7 +49,7 @@ interface SkillFullPracticeEngineProps {
   onExit: () => void;
 }
 
-type FlowPhase = "loading" | "intro" | "instructions" | "exam" | "completed";
+type FlowPhase = "loading" | "exam" | "completed";
 
 const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: SkillFullPracticeEngineProps) => {
   const [phase, setPhase] = useState<FlowPhase>("loading");
@@ -94,7 +92,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     setsWithQuestions.sort((a, b) => a.part.localeCompare(b.part));
 
     setParts(setsWithQuestions);
-    setPhase(skill === "writing" ? "intro" : "exam");
+    setPhase("exam");
   };
 
   const handlePartComplete = useCallback((correct?: number, total?: number) => {
@@ -160,34 +158,6 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   if (parts.length === 0) return null;
 
   const headerTitle = `${skillLabel} - Full Practice`;
-
-  // ── Writing Intro (Aptis-style) ──
-  if (phase === "intro" && skill === "writing") {
-    const totalQuestions = parts.length;
-    return (
-      <AptisFullTestIntro
-        skillLabel={skillLabel}
-        testTitle={testTitle}
-        numberOfQuestions={totalQuestions}
-        timeAllowedMinutes={Math.round(timeLimit / 60)}
-        description=""
-        onStart={() => setPhase("instructions")}
-        onExit={onExit}
-      />
-    );
-  }
-
-  // ── Writing Instructions (Aptis-style page 2) ──
-  if (phase === "instructions" && skill === "writing") {
-    return (
-      <AptisWritingInstructions
-        totalMinutes={Math.round(timeLimit / 60)}
-        onNext={() => setPhase("exam")}
-        onExit={onExit}
-      />
-    );
-  }
-
 
   // Grammar: merge all parts
   if (skill === "grammar_vocab") {
@@ -295,7 +265,6 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         onExit={onExit}
         onComplete={() => handlePartComplete()}
-        skipIntro
         {...writingProps}
       />
     );
