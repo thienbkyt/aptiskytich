@@ -223,7 +223,6 @@ const ReadingExamEngine = ({
             }}
             {...navProps}
             onNext={!submitted ? handleSubmit : undefined}
-            onPrevious={undefined}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
