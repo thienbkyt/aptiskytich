@@ -82,9 +82,12 @@ const ReadingExamEngine = ({
         if (p <= 1) {
           clearInterval(t);
           handleSubmit();
+          onTimeTick?.(0);
           return 0;
         }
-        return p - 1;
+        const next = p - 1;
+        onTimeTick?.(next);
+        return next;
       });
     }, 1000);
     return () => clearInterval(t);
