@@ -151,8 +151,12 @@ const ReadingExamEngine = ({
     },
   ];
 
+  const goToPrevPhase = () => { setPhase("reading_intro"); };
+
   const navProps = {
-    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined,
+    onPrevious: currentIndex > 0
+      ? () => setCurrentIndex((p) => p - 1)
+      : goToPrevPhase,
     onNext: currentIndex < totalQuestions - 1
       ? () => setCurrentIndex((p) => p + 1)
       : (!submitted ? handleSubmit : undefined),
