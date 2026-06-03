@@ -219,7 +219,7 @@ const ReadingExamEngine = ({
             totalTime={timeLimit}
             submitted={submitted}
             onExitToSections={() => {}}
-            onSubmit={!submitted ? handleSubmit : undefined}
+            onNext={!submitted ? handleSubmit : undefined}
             sections={sections}
           />
         )}
