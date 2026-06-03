@@ -1,5 +1,3 @@
-import TimerDisplay from "@/components/reading/TimerDisplay";
-import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 
 interface QuestionSection {
@@ -23,47 +21,34 @@ interface ExamInstructionsProps {
 
 const ExamInstructions = ({
   skillName,
-  timeLeft,
-  totalTime = 600,
   totalParts,
   totalMinutes,
   onStart,
-  sections = [],
   description,
 }: ExamInstructionsProps) => {
   return (
-    <div className="min-h-[70vh] flex flex-col pb-20">
-      {timeLeft !== undefined && (
-        <div className="flex justify-end mb-8">
-          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+    <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
+      <p className="text-sm text-gray-700 mb-2">Aptis General Practice Test</p>
+      <h1 className="text-xl font-bold mb-6">
+        {skillName} Practice Test {description || ""}
+      </h1>
+      <div className="flex gap-16 mb-6">
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Number of Questions</p>
+          <p className="text-base font-bold text-black">{totalParts}</p>
         </div>
-      )}
-
-      <div className="flex-1 flex flex-col justify-start max-w-2xl mx-auto w-full">
-        <h1 className="text-xl font-heading font-bold text-foreground mb-2">
-          Aptis General {skillName} Instructions
-        </h1>
-        <h2 className="text-base font-heading font-bold text-foreground mb-4">{skillName}</h2>
-        <p className="text-sm text-foreground mb-2">
-          The test has {totalParts} parts.
-        </p>
-        <p className="text-sm text-foreground mb-6">
-          You have {totalMinutes} minutes to complete the test.
-        </p>
-        {description && (
-          <p className="text-sm text-muted-foreground mb-6">{description}</p>
-        )}
-        <p className="text-sm text-foreground">
-          When you click on the 'Next' button, the test will begin.
-        </p>
+        <div>
+          <p className="text-xs text-gray-500 mb-1">Time Allowed</p>
+          <p className="text-base font-bold text-black">{totalMinutes} min</p>
+        </div>
       </div>
-
-      <BottomNavBar
-        isFirst={true}
-        isLast={false}
-        onNext={onStart}
-        sections={sections}
-      />
+      <p className="text-sm font-bold mb-6">Assessment Description</p>
+      <button
+        onClick={onStart}
+        className="bg-[#2D1B69] text-white text-sm rounded-md px-6 py-2.5 hover:bg-[#1f1149] transition-colors"
+      >
+        Start Assessment
+      </button>
     </div>
   );
 };
