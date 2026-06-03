@@ -26,7 +26,7 @@ interface ListeningExamEngineProps {
   onComplete?: (correct: number, total: number) => void;
 }
 
-type Phase = "instructions" | "practice" | "review";
+type Phase = "instructions" | "listening_intro" | "practice" | "review";
 
 const PART_LABELS: Record<ListeningPartType, string> = {
   part1: "Part 1 – Word Recognition",
