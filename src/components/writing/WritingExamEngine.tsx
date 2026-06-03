@@ -7,6 +7,7 @@ import WritingPart3Questions from "@/components/writing/WritingPart3Questions";
 import WritingPart4TwoEmails from "@/components/writing/WritingPart4TwoEmails";
 import WritingResults from "@/components/writing/WritingResults";
 import SpeakingFooter from "@/components/speaking/SpeakingFooter";
+import BottomNavBar from "@/components/reading/BottomNavBar";
 import { useExamGrading } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
