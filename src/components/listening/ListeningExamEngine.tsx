@@ -186,7 +186,7 @@ const ListeningExamEngine = ({
           totalParts={totalQuestions}
           totalMinutes={Math.ceil(timeLimit / 60)}
           onStart={() => setPhase("listening_intro")}
-          description={testTitle}
+          testTitle={testTitle}
         />
       </div>
     );

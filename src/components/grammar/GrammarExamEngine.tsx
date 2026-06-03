@@ -210,7 +210,7 @@ const GrammarExamEngine = ({
             totalMinutes={Math.ceil(timeLimit / 60)}
             onStart={() => setPhase("practice")}
             sections={sections}
-            description={`Bài luyện tập: ${testTitle}. Bao gồm câu hỏi trắc nghiệm và điền từ.`}
+            testTitle={testTitle}
           />
         </div>
       </div>
