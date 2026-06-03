@@ -12,12 +12,13 @@ interface Props {
   totalTime: number;
   submitted: boolean;
   onSubmit: () => void;
+  onPrevious?: () => void;
   sections: any[];
 }
 
 const WritingPart1Short = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
-  submitted, onSubmit, sections,
+  submitted, onSubmit, onPrevious, sections,
 }: Props) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
