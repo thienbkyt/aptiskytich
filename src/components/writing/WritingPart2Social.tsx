@@ -12,6 +12,7 @@ interface Props {
   totalTime: number;
   submitted: boolean;
   onSubmit: () => void;
+  onPrevious?: () => void;
   sections: any[];
 }
 
