@@ -172,8 +172,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     } else {
       // Move to next part within same skill
       setCurrentPartIndex(prev => prev + 1);
-      // Writing keeps the same engine mounted to preserve timer + skip intros
-      if (skill !== "writing") {
+      // Writing & Listening keep the same engine mounted to preserve timer + skip intros
+      if (skill !== "writing" && skill !== "listening") {
         setEngineKey(prev => prev + 1);
       }
     }
