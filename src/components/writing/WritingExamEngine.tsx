@@ -32,6 +32,7 @@ interface WritingExamEngineProps {
   isLastPart?: boolean;
   onExit: () => void;
   onComplete?: () => void;
+  onPrevious?: () => void;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
