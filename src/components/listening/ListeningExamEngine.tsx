@@ -70,12 +70,14 @@ const ListeningExamEngine = ({
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
+        const next = p - 1;
+        onTimeTick?.(Math.max(0, next));
         if (p <= 1) {
           clearInterval(t);
           handleSubmit();
           return 0;
         }
-        return p - 1;
+        return next;
       });
     }, 1000);
     return () => clearInterval(t);
