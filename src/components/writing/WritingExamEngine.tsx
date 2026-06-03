@@ -183,14 +183,12 @@ const WritingExamEngine = ({
             </p>
           </div>
         </div>
-        <div className="fixed bottom-0 left-0 right-0 z-50">
-          <SpeakingFooter
-            onNext={() => setPhase("practice")}
-            nextDisabled={false}
-            onExit={onExit}
-            showNext={true}
-          />
-        </div>
+        <BottomNavBar
+          isFirst={true}
+          isLast={false}
+          onNext={() => setPhase("practice")}
+          sections={sections}
+        />
       </div>
     );
   }
