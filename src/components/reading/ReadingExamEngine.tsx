@@ -173,11 +173,33 @@ const ReadingExamEngine = ({
             totalTime={timeLimit}
             totalParts={totalQuestions}
             totalMinutes={Math.ceil(timeLimit / 60)}
-            onStart={() => setPhase("practice")}
+            onStart={() => setPhase("reading_intro")}
             sections={sections}
             description={testTitle}
           />
         </div>
+      </div>
+    );
+  }
+
+  if (phase === "reading_intro") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+        <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
+          <h1 className="text-xl mb-6">Aptis General Reading Instructions</h1>
+          <p className="font-bold mb-2">Reading</p>
+          <p className="mb-2">The test has five parts.</p>
+          <p className="mb-2">You have 35 minutes to complete the test.</p>
+          <div className="h-6" />
+          <p>When you click on the &apos;Next&apos; button, the test will begin.</p>
+        </div>
+        <BottomNavBar
+          isFirst={false}
+          onNext={() => setPhase("practice")}
+          onPrevious={() => setPhase("instructions")}
+          sections={sections}
+        />
       </div>
     );
   }
