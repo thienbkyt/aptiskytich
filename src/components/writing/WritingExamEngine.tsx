@@ -130,8 +130,8 @@ const WritingExamEngine = ({
   const handleSubmit = useCallback(async () => {
     setSubmitted(true);
 
-    // Full-test mode: skip grading/results entirely, just advance
-    if (skipIntro) {
+    // Full-test mode (parent passes isLastPart): skip grading/results entirely
+    if (isLastPart !== undefined) {
       onComplete?.();
       return;
     }
