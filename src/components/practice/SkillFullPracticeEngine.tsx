@@ -110,7 +110,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setPhase("completed");
     } else {
       setCurrentPartIndex(prev => prev + 1);
-      setEngineKey(prev => prev + 1);
+      // Writing keeps the same engine mounted to preserve timer + skip intros
+      if (skill !== "writing") {
+        setEngineKey(prev => prev + 1);
+      }
     }
   }, [currentPartIndex, parts.length, skill]);
 
