@@ -170,7 +170,7 @@ const ReadingExamEngine = ({
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
-        <div className="flex-1 w-full">
+        <div className="flex-1 w-full pb-20">
           <ExamInstructions
             skillName="Reading"
             timeLeft={timeLeft}
@@ -182,6 +182,12 @@ const ReadingExamEngine = ({
             description={testTitle}
           />
         </div>
+        <BottomNavBar
+          isFirst={false}
+          onPrevious={onExit}
+          onNext={() => setPhase("reading_intro")}
+          sections={sections}
+        />
       </div>
     );
   }
