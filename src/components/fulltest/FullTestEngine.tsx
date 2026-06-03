@@ -77,6 +77,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   // Key to force re-mount engines on part change
   const [engineKey, setEngineKey] = useState(0);
+  const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
@@ -170,7 +171,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     } else {
       // Move to next part within same skill
       setCurrentPartIndex(prev => prev + 1);
-      setEngineKey(prev => prev + 1);
+      // Writing keeps the same engine mounted to preserve timer + skip intros
+      if (skill !== "writing") {
+        setEngineKey(prev => prev + 1);
+      }
     }
   }, [currentSkillIndex, currentPartIndex, skillData]);
 
@@ -471,12 +475,17 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       <>
         {progressBar}
         <WritingExamEngine
-          key={`writing-${engineKey}`}
+          key="writing-full"
           partType={partType}
           testTitle={`${testTitle} – Writing ${currentPart.part}`}
           timeLimit={SKILL_TIMES.writing}
+          externalTimeLeft={writingTimeLeft}
+          onTimeTick={(t) => setWritingTimeLeft(t)}
+          skipIntro={currentPartIndex > 0}
+          isLastPart={currentPartIndex >= partsForSkill.length - 1}
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
+          onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
           {...writingProps}
         />
       </>
