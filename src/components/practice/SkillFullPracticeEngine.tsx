@@ -58,6 +58,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [scores, setScores] = useState({ correct: 0, total: 0 });
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
+  const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
