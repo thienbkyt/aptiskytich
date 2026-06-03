@@ -6,6 +6,7 @@ import WritingPart2Social from "@/components/writing/WritingPart2Social";
 import WritingPart3Questions from "@/components/writing/WritingPart3Questions";
 import WritingPart4TwoEmails from "@/components/writing/WritingPart4TwoEmails";
 import WritingResults from "@/components/writing/WritingResults";
+import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import { useExamGrading } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
@@ -28,7 +29,7 @@ interface WritingExamEngineProps {
   onComplete?: () => void;
 }
 
-type Phase = "instructions" | "practice" | "grading" | "results";
+type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
 
 const PART_LABELS: Record<WritingPartType, string> = {
   task1: "Part 1 – Short Answers",
@@ -126,13 +127,13 @@ const WritingExamEngine = ({
   const sections = [
     {
       title: "Aptis General Writing Instructions",
-      isCurrent: phase === "instructions",
+      isCurrent: phase === "instructions" || phase === "writing_intro",
       onClick: () => {},
     },
     {
       title: partLabel,
       questionCount: partType === "task1" ? (part1Data?.questions.length || 5) : partType === "task3" ? (part3Data?.questions.length || 3) : partType === "task4" ? 2 : 1,
-      isCurrent: phase !== "instructions",
+      isCurrent: phase === "practice" || phase === "grading" || phase === "results",
       onClick: () => {},
     },
   ];
@@ -148,9 +149,46 @@ const WritingExamEngine = ({
             totalTime={timeLimit}
             totalParts={1}
             totalMinutes={Math.ceil(timeLimit / 60)}
-            onStart={() => setPhase("practice")}
+            onStart={() => setPhase("writing_intro")}
             sections={sections}
             description={`Bài luyện tập: ${testTitle}`}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "writing_intro") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
+        <div className="flex-1 flex flex-col items-center justify-start pt-12 px-4 pb-24">
+          <div className="w-full max-w-[600px]">
+            <h1 className="text-xl font-heading font-bold text-foreground mb-6">
+              Aptis General Writing Instructions
+            </h1>
+            <h2 className="text-base font-heading font-bold text-foreground mb-4">Writing</h2>
+            <p className="text-sm text-foreground mb-4">
+              The test has four parts and takes up to 50 minutes.
+            </p>
+            <p className="text-sm font-semibold text-foreground mb-2">Recommended times:</p>
+            <div className="text-sm text-foreground space-y-1 mb-6 pl-4">
+              <p>Part One: 6 minutes</p>
+              <p>Part Two: 12 minutes</p>
+              <p>Part Three: 17 minutes</p>
+              <p>Part Four: 15 minutes</p>
+            </div>
+            <p className="text-sm text-foreground">
+              When you click on the &apos;Next&apos; button, the test will begin.
+            </p>
+          </div>
+        </div>
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+          <SpeakingFooter
+            onNext={() => setPhase("practice")}
+            nextDisabled={false}
+            onExit={onExit}
+            showNext={true}
           />
         </div>
       </div>
