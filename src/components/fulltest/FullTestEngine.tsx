@@ -475,12 +475,17 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       <>
         {progressBar}
         <WritingExamEngine
-          key={`writing-${engineKey}`}
+          key="writing-full"
           partType={partType}
           testTitle={`${testTitle} – Writing ${currentPart.part}`}
           timeLimit={SKILL_TIMES.writing}
+          externalTimeLeft={writingTimeLeft}
+          onTimeTick={(t) => setWritingTimeLeft(t)}
+          skipIntro={currentPartIndex > 0}
+          isLastPart={currentPartIndex >= partsForSkill.length - 1}
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
+          onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
           {...writingProps}
         />
       </>
