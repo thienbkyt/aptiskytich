@@ -291,30 +291,7 @@ const SpeakingExamEngine = ({
   }, [canFinish, doStopAndAdvance]);
 
   const handleFinish = async () => {
-    setPhase("grading");
     onComplete?.();
-
-    const validRecordings = recordings.filter(Boolean) as string[];
-    if (validRecordings.length === 0) {
-      setPhase("done");
-      return;
-    }
-
-    let audioBase64: string | undefined;
-    try {
-      audioBase64 = await blobUrlToBase64(validRecordings[0]);
-    } catch (e) {
-      console.error("Failed to convert audio:", e);
-    }
-
-    const questions = partType === "part1" && part1Data
-      ? part1Data.questions
-      : partType === "part2" && part2Data ? (part2Data.questions || [part2Data.prompt])
-      : partType === "part3" && part3Data ? (part3Data.questions || [part3Data.prompt])
-      : partType === "part4" && part4Data ? part4Data.questions
-      : [];
-
-    await gradeExam({ type: "speaking", audioBase64, questions, partType });
     setPhase("done");
   };
 
