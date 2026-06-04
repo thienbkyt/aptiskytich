@@ -345,6 +345,9 @@ const SpeakingExamEngine = ({
             </div>
           </div>
           <p className="text-sm font-bold text-black mb-4">Assessment Description</p>
+          <div className="max-w-md mb-6">
+            <SpeakingMicCheck />
+          </div>
           <button
             onClick={() => setPhase("mic-check")}
             className="bg-[#2D1B69] text-white text-sm rounded-md px-6 py-2.5 hover:bg-[#1f1149] transition-colors"
