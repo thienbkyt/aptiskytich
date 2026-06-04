@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Shield, Database, FileSpreadsheet, BookOpen, Combine, Users } from "lucide-react";
+import { Shield, Database, FileSpreadsheet, BookOpen, Combine } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
 import QuestionManager from "@/components/admin/QuestionManager";
 import ImportCenter from "@/components/admin/import/ImportCenter";
 import VocabManager from "@/components/admin/VocabManager";
 import MergeManager from "@/components/admin/merge/MergeManager";
-import StudentManager from "@/components/admin/StudentManager";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
