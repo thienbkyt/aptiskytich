@@ -111,7 +111,8 @@ const Reading = () => {
   };
 
   const handleComplete = (correct: number, total: number) => {
-    setExam((prev) => ({ ...prev, showResults: true, correct, total }));
+    setExam((prev) => ({ ...prev, correct, total }));
+    saveTestResult({ correct, total, skill: "reading" });
   };
 
   const handleExit = () => {
@@ -149,26 +150,10 @@ const Reading = () => {
       );
     }
 
-    if (exam.showResults) {
-      return (
-        <div className="min-h-screen flex flex-col bg-background">
-          <Navbar />
-          <main className="flex-1 pt-24 pb-20">
-            <div className="section-container">
-              <ReadingResults
-                correct={exam.correct} total={exam.total} partLabel={exam.testTitle}
-                onExit={handleExit} onRetry={() => setExam((prev) => ({ ...prev, showResults: false }))}
-              />
-            </div>
-          </main>
-        </div>
-      );
-    }
-
     return (
       <ReadingExamEngine
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={READING_TIME[exam.partType] ?? 2100}
-        onExit={handleExit} onComplete={handleComplete} {...exam.engineData}
+        onExit={handleExit} onComplete={handleComplete} showResultsOnSubmit {...exam.engineData}
       />
     );
   }
