@@ -407,13 +407,29 @@ const SpeakingExamEngine = ({
     );
   }
 
-  // Grading / Done
+  // Grading / Done — simple submitted screen, no scoring
   if (phase === "grading" || phase === "done") {
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
-        <div className="flex-1 px-4 pt-8">
-          <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
+      <div className="min-h-screen bg-background flex flex-col">
+        <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-md w-full text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-7 h-7 text-green-500" />
+            </div>
+            <h2 className="text-xl font-heading font-bold text-foreground mb-2">
+              Your answers have been submitted.
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Cảm ơn bạn đã hoàn thành phần Speaking.
+            </p>
+            <button
+              onClick={onExit}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+            >
+              Quay lại danh sách đề
+            </button>
+          </div>
         </div>
         {exitDialog}
       </div>
