@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -198,21 +199,10 @@ const Listening = () => {
         </section>
 
         <section className="border-b border-border">
-          <div className="section-container py-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border border-primary/20 rounded-xl p-5 md:p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
-                  <Shuffle className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="font-heading font-semibold text-foreground text-base">Luyện Listening ngẫu nhiên</h2>
-                  <p className="text-sm text-muted-foreground">Luyện 1 bộ đề Aptis Listening ngẫu nhiên</p>
-                </div>
-              </div>
-              <Button onClick={handleRandomPractice} className="bg-primary hover:bg-brand-brown text-white shrink-0">
-                Bắt đầu<ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
+          <div className="section-container py-4 flex justify-end">
+            <Link to="/history?skill=listening" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1.5">
+              Xem lịch sử làm bài <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </section>
 

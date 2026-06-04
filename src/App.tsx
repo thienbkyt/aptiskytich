@@ -28,6 +28,8 @@ const Listening = lazy(() => import("./pages/Listening"));
 const Reading = lazy(() => import("./pages/Reading"));
 const GrammarVocabulary = lazy(() => import("./pages/GrammarVocabulary"));
 const FullTest = lazy(() => import("./pages/FullTest"));
+const History = lazy(() => import("./pages/History"));
+const HistoryDetail = lazy(() => import("./pages/HistoryDetail"));
 
 const queryClient = new QueryClient();
 
@@ -57,6 +59,8 @@ const App = () => (
             <Route path="/vocabulary/:id" element={<VocabStudy />} />
             <Route path="/vocab/:listId" element={<VocabListDetail />} />
             <Route path="/thi-thu" element={<FullTest />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/history/:id" element={<HistoryDetail />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/report" element={<AdminReport />} />
             <Route path="/admin/report/pricing" element={<AdminReportPricing />} />

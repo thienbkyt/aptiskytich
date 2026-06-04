@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
-  BarChart3, CheckCircle2, Calendar, Zap
+  BarChart3, CheckCircle2, Calendar, Zap, History
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -303,7 +303,12 @@ const Dashboard = () => {
 
               {/* Recent tests */}
               <motion.div variants={fadeUp} custom={8} initial="hidden" animate="visible" className="glass-card p-6">
-                <h3 className="font-heading font-bold text-foreground mb-5">Kết quả gần đây</h3>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-heading font-bold text-foreground">Kết quả gần đây</h3>
+                  <Link to="/history" className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1">
+                    Xem tất cả <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
                 {d.recentTests.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">
                     Bạn chưa có kết quả thi nào. Hãy thử làm bài thi thử đầu tiên!
@@ -341,6 +346,11 @@ const Dashboard = () => {
                   <Link to="/thi-thu" className="block">
                     <Button variant="outline" className="w-full gap-2 justify-start">
                       <BookOpen className="w-4 h-4" /> Thi thử Aptis
+                    </Button>
+                  </Link>
+                  <Link to="/history" className="block">
+                    <Button variant="outline" className="w-full gap-2 justify-start">
+                      <History className="w-4 h-4" /> Lịch sử làm bài
                     </Button>
                   </Link>
                   <Link to="/course" className="block">
