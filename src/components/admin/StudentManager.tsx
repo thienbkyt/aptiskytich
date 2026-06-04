@@ -343,8 +343,40 @@ const StudentManager = () => {
           {selected && <StudentHistoryPanel student={selected} />}
         </SheetContent>
       </Sheet>
+
+      <AlertDialog
+        open={!!roleTarget}
+        onOpenChange={(o) => !o && setRoleTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {roleTarget?.is_admin ? "Gỡ quyền admin?" : "Cấp quyền admin?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {roleTarget?.is_admin
+                ? `Người dùng "${roleTarget?.display_name || roleTarget?.email}" sẽ không còn truy cập được khu vực quản trị.`
+                : `Cấp quyền admin cho "${roleTarget?.display_name || roleTarget?.email}". Họ sẽ có toàn quyền quản trị nội dung và người dùng.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRole}
+              className={
+                roleTarget?.is_admin
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : ""
+              }
+            >
+              {roleTarget?.is_admin ? "Gỡ admin" : "Cấp admin"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
+
 };
 
 const StudentHistoryPanel = ({ student }: { student: Student }) => {
