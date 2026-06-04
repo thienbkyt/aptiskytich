@@ -62,6 +62,7 @@ const App = () => (
             <Route path="/thi-thu" element={<FullTest />} />
             <Route path="/history" element={<History />} />
             <Route path="/history/:id" element={<HistoryDetail />} />
+            <Route path="/progress" element={<ProgressPage />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/report" element={<AdminReport />} />
             <Route path="/admin/report/pricing" element={<AdminReportPricing />} />
