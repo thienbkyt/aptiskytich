@@ -115,6 +115,15 @@ const StudentManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Student | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [roleTarget, setRoleTarget] = useState<Student | null>(null);
+  const [roleLoadingId, setRoleLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,6 +143,33 @@ const StudentManager = () => {
       cancelled = true;
     };
   }, []);
+
+  const handleConfirmRole = async () => {
+    if (!roleTarget) return;
+    const target = roleTarget;
+    const action = target.is_admin ? "revoke" : "grant";
+    setRoleTarget(null);
+    setRoleLoadingId(target.user_id);
+    const { data, error } = await supabase.functions.invoke("set-user-role", {
+      body: { user_id: target.user_id, action },
+    });
+    setRoleLoadingId(null);
+    if (error || (data as any)?.error) {
+      toast.error(
+        (data as any)?.error || error?.message || "Không thể cập nhật quyền"
+      );
+      return;
+    }
+    setStudents((prev) =>
+      prev.map((s) =>
+        s.user_id === target.user_id ? { ...s, is_admin: action === "grant" } : s
+      )
+    );
+    toast.success(
+      action === "grant" ? "Đã cấp quyền admin" : "Đã gỡ quyền admin"
+    );
+  };
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
