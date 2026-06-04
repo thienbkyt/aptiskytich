@@ -291,16 +291,45 @@ const StudentManager = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5"
-                        onClick={() => setSelected(s)}
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Xem lịch sử</span>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant={s.is_admin ? "outline" : "default"}
+                          className="gap-1.5"
+                          disabled={
+                            roleLoadingId === s.user_id ||
+                            (s.is_admin && s.user_id === currentUserId)
+                          }
+                          onClick={() => setRoleTarget(s)}
+                          title={
+                            s.is_admin && s.user_id === currentUserId
+                              ? "Không thể tự gỡ quyền của chính mình"
+                              : undefined
+                          }
+                        >
+                          {roleLoadingId === s.user_id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : s.is_admin ? (
+                            <ShieldOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Shield className="w-3.5 h-3.5" />
+                          )}
+                          <span className="hidden sm:inline">
+                            {s.is_admin ? "Gỡ admin" : "Cấp admin"}
+                          </span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          onClick={() => setSelected(s)}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Lịch sử</span>
+                        </Button>
+                      </div>
                     </TableCell>
+
                   </TableRow>
                 );
               })
