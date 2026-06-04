@@ -34,7 +34,20 @@ import {
   Play,
   Pause,
   Loader2,
+  Shield,
+  ShieldOff,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { resolveAudioUrl } from "@/lib/audioUrl";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +61,9 @@ interface Student {
   current_streak: number;
   total_attempts: number;
   latest_level: string | null;
+  is_admin: boolean;
 }
+
 
 interface HistoryRow {
   id: string;
@@ -100,6 +115,15 @@ const StudentManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Student | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [roleTarget, setRoleTarget] = useState<Student | null>(null);
+  const [roleLoadingId, setRoleLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +143,33 @@ const StudentManager = () => {
       cancelled = true;
     };
   }, []);
+
+  const handleConfirmRole = async () => {
+    if (!roleTarget) return;
+    const target = roleTarget;
+    const action = target.is_admin ? "revoke" : "grant";
+    setRoleTarget(null);
+    setRoleLoadingId(target.user_id);
+    const { data, error } = await supabase.functions.invoke("set-user-role", {
+      body: { user_id: target.user_id, action },
+    });
+    setRoleLoadingId(null);
+    if (error || (data as any)?.error) {
+      toast.error(
+        (data as any)?.error || error?.message || "Không thể cập nhật quyền"
+      );
+      return;
+    }
+    setStudents((prev) =>
+      prev.map((s) =>
+        s.user_id === target.user_id ? { ...s, is_admin: action === "grant" } : s
+      )
+    );
+    toast.success(
+      action === "grant" ? "Đã cấp quyền admin" : "Đã gỡ quyền admin"
+    );
+  };
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -198,13 +249,21 @@ const StudentManager = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <div className="font-medium text-foreground truncate">
-                            {s.display_name || s.email.split("@")[0]}
+                          <div className="flex items-center gap-1.5">
+                            <div className="font-medium text-foreground truncate">
+                              {s.display_name || s.email.split("@")[0]}
+                            </div>
+                            {s.is_admin && (
+                              <Badge className="h-4 px-1.5 text-[9px] bg-primary/15 text-primary hover:bg-primary/20 border-0 shrink-0">
+                                ADMIN
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
                             {s.email}
                           </div>
                         </div>
+
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm">
@@ -232,16 +291,45 @@ const StudentManager = () => {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1.5"
-                        onClick={() => setSelected(s)}
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Xem lịch sử</span>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant={s.is_admin ? "outline" : "default"}
+                          className="gap-1.5"
+                          disabled={
+                            roleLoadingId === s.user_id ||
+                            (s.is_admin && s.user_id === currentUserId)
+                          }
+                          onClick={() => setRoleTarget(s)}
+                          title={
+                            s.is_admin && s.user_id === currentUserId
+                              ? "Không thể tự gỡ quyền của chính mình"
+                              : undefined
+                          }
+                        >
+                          {roleLoadingId === s.user_id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : s.is_admin ? (
+                            <ShieldOff className="w-3.5 h-3.5" />
+                          ) : (
+                            <Shield className="w-3.5 h-3.5" />
+                          )}
+                          <span className="hidden sm:inline">
+                            {s.is_admin ? "Gỡ admin" : "Cấp admin"}
+                          </span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          onClick={() => setSelected(s)}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Lịch sử</span>
+                        </Button>
+                      </div>
                     </TableCell>
+
                   </TableRow>
                 );
               })
@@ -255,8 +343,40 @@ const StudentManager = () => {
           {selected && <StudentHistoryPanel student={selected} />}
         </SheetContent>
       </Sheet>
+
+      <AlertDialog
+        open={!!roleTarget}
+        onOpenChange={(o) => !o && setRoleTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {roleTarget?.is_admin ? "Gỡ quyền admin?" : "Cấp quyền admin?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {roleTarget?.is_admin
+                ? `Người dùng "${roleTarget?.display_name || roleTarget?.email}" sẽ không còn truy cập được khu vực quản trị.`
+                : `Cấp quyền admin cho "${roleTarget?.display_name || roleTarget?.email}". Họ sẽ có toàn quyền quản trị nội dung và người dùng.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmRole}
+              className={
+                roleTarget?.is_admin
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : ""
+              }
+            >
+              {roleTarget?.is_admin ? "Gỡ admin" : "Cấp admin"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
+
 };
 
 const StudentHistoryPanel = ({ student }: { student: Student }) => {

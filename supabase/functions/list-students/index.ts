@@ -78,7 +78,7 @@ serve(async (req) => {
       });
     }
 
-    const [profilesRes, streaksRes, resultsRes] = await Promise.all([
+    const [profilesRes, streaksRes, resultsRes, rolesRes] = await Promise.all([
       admin.from("profiles").select("user_id,display_name,avatar_url").in("user_id", userIds),
       admin
         .from("learning_streaks")
@@ -89,7 +89,15 @@ serve(async (req) => {
         .select("user_id,level,created_at")
         .in("user_id", userIds)
         .order("created_at", { ascending: false }),
+      admin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin")
+        .in("user_id", userIds),
     ]);
+
+    const adminSet = new Set<string>((rolesRes.data ?? []).map((r: any) => r.user_id));
+
 
     const profilesMap = new Map<string, any>();
     (profilesRes.data ?? []).forEach((p: any) => profilesMap.set(p.user_id, p));
@@ -121,8 +129,10 @@ serve(async (req) => {
         current_streak: s?.current_streak ?? 0,
         total_attempts: r?.count ?? 0,
         latest_level: r?.lastLevel ?? null,
+        is_admin: adminSet.has(u.id),
       };
     });
+
 
     // Sort by created_at desc
     students.sort(
