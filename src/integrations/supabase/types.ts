@@ -229,6 +229,39 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_question_results: {
+        Row: {
+          created_at: string
+          exam_question_id: string
+          id: string
+          is_correct: boolean
+          skill: string
+          test_result_id: string | null
+          user_answer: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_question_id: string
+          id?: string
+          is_correct?: boolean
+          skill: string
+          test_result_id?: string | null
+          user_answer?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_question_id?: string
+          id?: string
+          is_correct?: boolean
+          skill?: string
+          test_result_id?: string | null
+          user_answer?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       exam_questions: {
         Row: {
           audio_url: string | null
@@ -595,6 +628,36 @@ export type Database = {
           },
         ]
       }
+      speaking_recordings: {
+        Row: {
+          audio_url: string
+          created_at: string
+          duration_seconds: number | null
+          exam_set_id: string | null
+          id: string
+          part: string
+          user_id: string
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string
+          duration_seconds?: number | null
+          exam_set_id?: string | null
+          id?: string
+          part: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string
+          duration_seconds?: number | null
+          exam_set_id?: string | null
+          id?: string
+          part?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -706,33 +769,39 @@ export type Database = {
         Row: {
           correct_answers: number
           created_at: string
+          exam_set_id: string | null
           id: string
           level: string
           score: number
           skill_scores: Json | null
           test_id: string | null
+          time_spent: number | null
           total: number
           user_id: string
         }
         Insert: {
           correct_answers?: number
           created_at?: string
+          exam_set_id?: string | null
           id?: string
           level: string
           score: number
           skill_scores?: Json | null
           test_id?: string | null
+          time_spent?: number | null
           total: number
           user_id: string
         }
         Update: {
           correct_answers?: number
           created_at?: string
+          exam_set_id?: string | null
           id?: string
           level?: string
           score?: number
           skill_scores?: Json | null
           test_id?: string | null
+          time_spent?: number | null
           total?: number
           user_id?: string
         }
