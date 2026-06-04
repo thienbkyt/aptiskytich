@@ -313,7 +313,28 @@ const SpeakingExamEngine = ({
     setPhase("done");
   };
 
-  const handleExit = () => setShowExitConfirm(true);
+  const handleExit = () => {
+    // Immediately stop any TTS/audio so the dialog feels responsive
+    try { stopTTS(); } catch { /* noop */ }
+    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+    setShowExitConfirm(true);
+  };
+
+  const handleConfirmExit = () => {
+    try { stopTTS(); } catch { /* noop */ }
+    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try { mediaRecorderRef.current.stop(); } catch { /* noop */ }
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setShowExitConfirm(false);
+    onExit();
+  };
 
   // ============ RENDER ============
   const exitDialog = showExitConfirm && (
@@ -321,7 +342,9 @@ const SpeakingExamEngine = ({
       title="Submit Test?"
       message="Once you submit your test you will no longer have access to the questions."
       buttonText="Submit test"
-      onSubmit={onExit}
+      cancelText="Cancel"
+      onSubmit={handleConfirmExit}
+      onCancel={() => setShowExitConfirm(false)}
     />
   );
 
