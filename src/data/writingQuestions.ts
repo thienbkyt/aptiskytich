@@ -101,12 +101,12 @@ export const mockWritingPart4: WritingPart4Data[] = [
     scenarioIntro: "You are a member of the Travel Club. You have received this email from the club:",
     scenarioEmail: "Dear Member,\n\nWe are writing to tell you that the famous travel writer Mr David Price will unfortunately not be able to attend our next club meeting. Although Mr Price will not be there to sign copies of his new book Around The World In Eighty Ways, members of the club will be able to buy a copy at the price of twenty five pounds. If you would like to reserve a copy of the book, please contact the club secretary.\n\nThe President",
     informalEmail: {
-      instruction: "Write an email to your friend. Write about your feelings and what you think the club should do about the situation. Write about 50 words. Recommended time: 10 minutes.",
+      instruction: "Write an email to your friend (about 50 words).",
       wordLimit: 75,
       sampleAnswer: "Hi Sarah,\n\nI'm really disappointed that Mr Price won't be at the meeting. I was looking forward to meeting him! I think the club should try to reschedule his visit. At least we can still buy the book. Are you going to get one?\n\nLet me know!\nAnna",
     },
     formalEmail: {
-      instruction: "Write an email to the president of the club. Write about your feelings and what you think the club should do about the situation. Write 120–150 words. Recommended time: 20 minutes.",
+      instruction: "Write an email to the president of the club (about 120-150 words).",
       wordLimit: 225,
       sampleAnswer: "Dear Mr/Ms President,\n\nI am writing to express my disappointment regarding the cancellation of Mr David Price's visit to our next club meeting. Many members, including myself, were very excited about this event and had been looking forward to it for some time.\n\nWhile I understand that these situations can be difficult to control, I believe the club should make every effort to reschedule Mr Price's visit in the near future. It would also be helpful if the club could communicate any updates about this matter to all members as soon as possible.\n\nIn the meantime, I appreciate that we will still have the opportunity to purchase his book. However, I would suggest that the club consider offering a small discount as a gesture of goodwill to those members who were particularly affected by this change.\n\nI look forward to hearing from you.\n\nYours sincerely,\nJohn Smith",
     },
