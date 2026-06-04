@@ -6,7 +6,7 @@ import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import { resolveImageUrl } from "@/lib/imageUrl";
-import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording } from "@/lib/saveExamResult";
@@ -313,7 +313,28 @@ const SpeakingExamEngine = ({
     setPhase("done");
   };
 
-  const handleExit = () => setShowExitConfirm(true);
+  const handleExit = () => {
+    // Immediately stop any TTS/audio so the dialog feels responsive
+    try { stopTTS(); } catch { /* noop */ }
+    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+    setShowExitConfirm(true);
+  };
+
+  const handleConfirmExit = () => {
+    try { stopTTS(); } catch { /* noop */ }
+    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try { mediaRecorderRef.current.stop(); } catch { /* noop */ }
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+    setShowExitConfirm(false);
+    onExit();
+  };
 
   // ============ RENDER ============
   const exitDialog = showExitConfirm && (
@@ -321,7 +342,9 @@ const SpeakingExamEngine = ({
       title="Submit Test?"
       message="Once you submit your test you will no longer have access to the questions."
       buttonText="Submit test"
-      onSubmit={onExit}
+      cancelText="Cancel"
+      onSubmit={handleConfirmExit}
+      onCancel={() => setShowExitConfirm(false)}
     />
   );
 
@@ -417,14 +440,17 @@ const SpeakingExamEngine = ({
   // Prompt/Instructions screen
   if (phase === "prompt") {
     return (
-      <SpeakingPromptScreen
-        partNumber={partNumber}
-        totalParts={totalParts}
-        title={`Speaking Part ${partNumber}`}
-        instructions={PART_PROMPTS[partType]}
-        onNext={() => startQuestionFlow()}
-        onExit={handleExit}
-      />
+      <>
+        <SpeakingPromptScreen
+          partNumber={partNumber}
+          totalParts={totalParts}
+          title={`Speaking Part ${partNumber}`}
+          instructions={PART_PROMPTS[partType]}
+          onNext={() => startQuestionFlow()}
+          onExit={handleExit}
+        />
+        {exitDialog}
+      </>
     );
   }
 
