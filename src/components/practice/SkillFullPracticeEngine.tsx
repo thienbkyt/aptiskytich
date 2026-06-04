@@ -229,6 +229,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         externalTimeLeft={listeningTimeLeft}
         onTimeTick={(t) => setListeningTimeLeft(t)}
         skipIntro={currentPartIndex > 0}
+        fullFlow
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         {...listeningProps}
