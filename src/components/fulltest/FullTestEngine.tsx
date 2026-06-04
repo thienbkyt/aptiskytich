@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,8 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
+import { saveTestResult } from "@/lib/testResults";
+import { getLevel, getLevelColor } from "@/data/questions";
 
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
