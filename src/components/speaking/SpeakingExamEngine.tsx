@@ -314,9 +314,7 @@ const SpeakingExamEngine = ({
   };
 
   const handleExit = () => {
-    // Immediately stop any TTS/audio so the dialog feels responsive
-    try { stopTTS(); } catch { /* noop */ }
-    try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
+    // Just open the confirm dialog — keep timer & TTS running in background
     setShowExitConfirm(true);
   };
 
