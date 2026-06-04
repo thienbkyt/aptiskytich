@@ -184,11 +184,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     // Check if there are more parts in this skill
     // For grammar, all parts are combined into one engine call, so always move to next skill
     if (skill === "grammar" || currentPartIndex >= parts.length - 1) {
-      // Skill completed - show transition or finish
+      // Skill completed - auto advance to next skill or finish
       if (currentSkillIndex >= SKILL_ORDER.length - 1) {
         setPhase("completed");
       } else {
-        setPhase("skill-transition");
+        setCurrentSkillIndex(prev => prev + 1);
+        setCurrentPartIndex(0);
+        setEngineKey(prev => prev + 1);
+        setPhase("exam");
       }
     } else {
       // Move to next part within same skill
