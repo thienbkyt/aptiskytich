@@ -282,6 +282,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         externalTimeLeft={writingTimeLeft}
         onTimeTick={(t) => setWritingTimeLeft(t)}
         skipIntro={currentPartIndex > 0}
+        fullFlow
         isLastPart={currentPartIndex >= parts.length - 1}
         onExit={onExit}
         onComplete={() => handlePartComplete()}
