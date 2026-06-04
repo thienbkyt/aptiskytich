@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
-  BarChart3, CheckCircle2, Calendar, Zap
+  BarChart3, CheckCircle2, Calendar, Zap, History
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
