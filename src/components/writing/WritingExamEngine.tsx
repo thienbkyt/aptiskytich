@@ -198,30 +198,18 @@ const WritingExamEngine = ({
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
-        <div className="flex-1 flex flex-col items-center justify-start pt-12 px-4 pb-24">
-          <div className="w-full max-w-[600px]">
-            <h1 className="text-xl font-heading font-bold text-foreground mb-6">
-              Aptis General Writing Instructions
-            </h1>
-            <h2 className="text-base font-heading font-bold text-foreground mb-4">Writing</h2>
-            <p className="text-sm text-foreground mb-4">
-              The test has four parts and takes up to 50 minutes.
-            </p>
-            <p className="text-sm font-semibold text-foreground mb-2">Recommended times:</p>
-            <div className="text-sm text-foreground space-y-1 mb-6 pl-4">
-              <p>Part One: 6 minutes</p>
-              <p>Part Two: 12 minutes</p>
-              <p>Part Three: 17 minutes</p>
-              <p>Part Four: 15 minutes</p>
-            </div>
-            <p className="text-sm text-foreground">
-              When you click on the &apos;Next&apos; button, the test will begin.
-            </p>
-          </div>
+        <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
+          <h1 className="text-xl mb-4">Aptis General Writing Instructions</h1>
+          <p className="font-bold mb-2">Writing</p>
+          <p className="text-sm mb-1">The test has four parts and takes up to 50 minutes.</p>
+          <p className="text-sm mb-1">Recommended times: Part One: 6 min / Part Two: 12 min / Part Three: 17 min / Part Four: 15 min</p>
+          <p className="text-sm mb-1">&nbsp;</p>
+          <p className="text-sm">When you click on the &apos;Next&apos; button, the test will begin.</p>
         </div>
         <BottomNavBar
-          isFirst={true}
+          isFirst={false}
           isLast={false}
+          onPrevious={() => setPhase("instructions")}
           onNext={() => setPhase("practice")}
           sections={sections}
         />
