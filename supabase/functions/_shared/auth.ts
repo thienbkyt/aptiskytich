@@ -26,8 +26,8 @@ export async function requireUser(
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } },
   );
-  const { data, error } = await client.auth.getClaims(token);
-  const sub = data?.claims?.sub as string | undefined;
+  const { data, error } = await client.auth.getUser(token);
+  const sub = data?.user?.id;
   if (error || !sub) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
