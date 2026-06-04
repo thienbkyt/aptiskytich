@@ -601,14 +601,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     );
   }
 
-  return showExitConfirm ? (
-    <ExamFinishScreen
-      title="Submit Test?"
-      message="Once you submit your test you will no longer have access to the questions."
-      buttonText="Submit test"
-      onSubmit={onExit}
-    />
-  ) : null;
+  return null;
 };
 
 export default FullTestEngine;
