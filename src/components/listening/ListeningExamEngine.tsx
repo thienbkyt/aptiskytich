@@ -28,6 +28,7 @@ interface ListeningExamEngineProps {
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
+  fullFlow?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
