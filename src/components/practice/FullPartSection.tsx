@@ -1,18 +1,21 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Layers } from "lucide-react";
+import { ArrowRight, Layers, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SkillFullSetItem } from "@/hooks/useSkillFullSets";
+import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
 
 interface FullPartSectionProps {
   skillName: string;
   sets: SkillFullSetItem[];
   loading: boolean;
   onStart: (set: SkillFullSetItem) => void;
+  progress?: ExamProgressMap;
 }
 
-const FullPartSection = ({ skillName, sets, loading, onStart }: FullPartSectionProps) => {
+const FullPartSection = ({ skillName, sets, loading, onStart, progress }: FullPartSectionProps) => {
+
   return (
     <div>
       <div className="mb-6">
@@ -36,7 +39,12 @@ const FullPartSection = ({ skillName, sets, loading, onStart }: FullPartSectionP
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 mb-8">
-          {sets.map((set, index) => (
+          {sets.map((set, index) => {
+            const doneCount = progress
+              ? set.examSetIds.filter((id) => progress.has(id)).length
+              : 0;
+            const allDone = doneCount > 0 && doneCount === set.examSetIds.length;
+            return (
             <motion.div
               key={set.fullTestId}
               initial={{ opacity: 0, y: 12 }}
@@ -54,10 +62,22 @@ const FullPartSection = ({ skillName, sets, loading, onStart }: FullPartSectionP
                   Full {skillName} • {set.partCount} Parts
                 </p>
                 <div className="mb-4">
-                  <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-                    Chưa bắt đầu
-                  </span>
+                  {allDone ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Đã hoàn thành tất cả {set.partCount} Part
+                    </span>
+                  ) : doneCount > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-info bg-info/10 px-2.5 py-1 rounded-full">
+                      Đã làm {doneCount}/{set.partCount} Part
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+                      Chưa bắt đầu
+                    </span>
+                  )}
                 </div>
+
                 <div className="flex-1" />
                 <div className="flex justify-end">
                   <Button
@@ -72,7 +92,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart }: FullPartSectionP
                 </div>
               </div>
             </motion.div>
-          ))}
+          );})}
         </div>
       )}
     </div>

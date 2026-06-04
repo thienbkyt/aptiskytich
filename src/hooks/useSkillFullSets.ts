@@ -6,7 +6,9 @@ export interface SkillFullSetItem {
   title: string;
   partCount: number;
   parts: string[];
+  examSetIds: string[];
 }
+
 
 /**
  * Fetches published exam_sets grouped by full_test_id for a specific skill.
@@ -37,16 +39,19 @@ export const useSkillFullSets = (skill: string) => {
       }
 
       // Group by full_test_id
-      const grouped = new Map<string, { title: string; parts: Set<string> }>();
+      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[] }>();
       for (const row of data) {
         if (!row.full_test_id) continue;
         if (!grouped.has(row.full_test_id)) {
           grouped.set(row.full_test_id, {
             title: row.full_test_title || "Full Practice",
             parts: new Set(),
+            ids: [],
           });
         }
-        grouped.get(row.full_test_id)!.parts.add(row.part);
+        const g = grouped.get(row.full_test_id)!;
+        g.parts.add(row.part);
+        g.ids.push(row.id);
       }
 
       const result: SkillFullSetItem[] = [];
@@ -59,9 +64,11 @@ export const useSkillFullSets = (skill: string) => {
             title: info.title,
             partCount: partsArr.length,
             parts: partsArr,
+            examSetIds: info.ids,
           });
         }
       }
+
 
       const numOf = (t: string) => {
         const m = t.match(/\d+/);

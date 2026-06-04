@@ -21,6 +21,8 @@ import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSet
 import { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
+import CompletionBadge from "@/components/practice/CompletionBadge";
+import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { saveTestResult } from "@/lib/testResults";
 import { saveExamResult } from "@/lib/saveExamResult";
 
@@ -63,6 +65,7 @@ const Reading = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("reading");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
+  const { progress } = useUserExamProgress();
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
@@ -230,6 +233,7 @@ const Reading = () => {
 
           {activeTab === "full" ? (
             <FullPartSection
+              progress={progress}
               skillName="Reading"
               sets={fullSets}
               loading={fullLoading}
@@ -260,7 +264,7 @@ const Reading = () => {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                           <span className="flex items-center gap-1.5">📖 {set.description || "Đề luyện tập"}</span>
                         </div>
-                        <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
+                        <div className="mb-4"><CompletionBadge item={progress.get(set.id)} /></div>
                         <div className="flex-1" />
                         <div className="flex justify-end">
                           <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">

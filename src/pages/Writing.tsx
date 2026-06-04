@@ -21,6 +21,8 @@ import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSet
 import { toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
+import CompletionBadge from "@/components/practice/CompletionBadge";
+import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { saveExamResult } from "@/lib/saveExamResult";
 
 const partToTask: Record<string, WritingPartType> = {
@@ -64,6 +66,7 @@ const Writing = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("writing");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("writing");
+  const { progress } = useUserExamProgress();
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
@@ -249,6 +252,7 @@ const Writing = () => {
 
           {activeTab === "full" ? (
             <FullPartSection
+              progress={progress}
               skillName="Writing"
               sets={fullSets}
               loading={fullLoading}
@@ -279,7 +283,7 @@ const Writing = () => {
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                           <span className="flex items-center gap-1.5">✍️ {set.description || "Đề luyện tập"}</span>
                         </div>
-                        <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
+                        <div className="mb-4"><CompletionBadge item={progress.get(set.id)} /></div>
                         <div className="flex-1" />
                         <div className="flex justify-end">
                           <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">

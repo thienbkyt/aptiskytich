@@ -21,6 +21,8 @@ import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSet
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
+import CompletionBadge from "@/components/practice/CompletionBadge";
+import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 
 const TASKS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -53,6 +55,7 @@ const Speaking = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("speaking");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
+  const { progress } = useUserExamProgress();
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", loadingExam: false,
   });
@@ -206,6 +209,7 @@ const Speaking = () => {
 
           {activeTab === "full" ? (
             <FullPartSection
+              progress={progress}
               skillName="Speaking"
               sets={fullSets}
               loading={fullLoading}
@@ -237,7 +241,7 @@ const Speaking = () => {
                           <span className="flex items-center gap-1.5">🎤 Ghi âm</span>
                           <span className="flex items-center gap-1.5">⏱️ Có thời gian chuẩn bị</span>
                         </div>
-                        <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
+                        <div className="mb-4"><CompletionBadge item={progress.get(set.id)} /></div>
                         <div className="flex-1" />
                         <div className="flex justify-end">
                           <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
