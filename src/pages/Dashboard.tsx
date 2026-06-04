@@ -242,9 +242,9 @@ const Dashboard = () => {
             ))}
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Left column */}
-            <div className="md:col-span-2 space-y-6">
+          <div className="space-y-6">
+            {/* Main content */}
+            <div className="space-y-6">
               {/* Streak motivation */}
               <motion.div variants={fadeUp} custom={6} initial="hidden" animate="visible"
                 className="glass-card p-6 border-primary/20"
@@ -346,52 +346,6 @@ const Dashboard = () => {
                     ))}
                   </div>
                 )}
-              </motion.div>
-            </div>
-
-            {/* Right column */}
-            <div className="space-y-6">
-              {/* Quick actions */}
-              <motion.div variants={fadeUp} custom={9} initial="hidden" animate="visible" className="glass-card p-6">
-                <h3 className="font-heading font-bold text-foreground mb-4">Hành động nhanh</h3>
-                <div className="space-y-3">
-                  <Link to="/practice" className="block">
-                    <Button className="w-full bg-primary text-primary-foreground gap-2 justify-start">
-                      <Target className="w-4 h-4" /> Luyện tập kỹ năng
-                    </Button>
-                  </Link>
-                  <Link to="/thi-thu" className="block">
-                    <Button variant="outline" className="w-full gap-2 justify-start">
-                      <BookOpen className="w-4 h-4" /> Thi thử Aptis
-                    </Button>
-                  </Link>
-                  <Link to="/history" className="block">
-                    <Button variant="outline" className="w-full gap-2 justify-start">
-                      <History className="w-4 h-4" /> Lịch sử làm bài
-                    </Button>
-                  </Link>
-                  <Link to="/course" className="block">
-                    <Button variant="outline" className="w-full gap-2 justify-start text-primary border-primary/30 hover:bg-primary/5">
-                      <Flame className="w-4 h-4" /> Khóa học 7 ngày
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-
-              {/* Course promo */}
-              <motion.div variants={fadeUp} custom={10} initial="hidden" animate="visible"
-                className="glass-card p-6 border-primary/20"
-              >
-                <Flame className="w-8 h-8 text-primary mb-3" />
-                <h3 className="font-heading font-bold text-foreground mb-2">Đạt B2 trong 7 ngày?</h3>
-                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                  Tham gia khóa Aptis Kỳ Tích với lộ trình tối ưu và hỗ trợ 1-1.
-                </p>
-                <Link to="/course">
-                  <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-1">
-                    Tìm hiểu <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
               </motion.div>
             </div>
           </div>
