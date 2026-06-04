@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -32,7 +32,21 @@ const History = lazy(() => import("./pages/History"));
 const HistoryDetail = lazy(() => import("./pages/HistoryDetail"));
 const ProgressPage = lazy(() => import("./pages/Progress"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Wrap pages that need inline dictionary lookup while taking an exam
+const WithDict = ({ children }: { children: ReactNode }) => (
+  <DictionaryProvider>{children}</DictionaryProvider>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -42,24 +56,23 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <DictionaryProvider>
           <Suspense fallback={<div className="min-h-screen" />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/practice" element={<Practice />} />
+            <Route path="/practice" element={<WithDict><Practice /></WithDict>} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/course" element={<Course />} />
-            <Route path="/grammar" element={<GrammarVocabulary />} />
-            <Route path="/reading" element={<Reading />} />
-            <Route path="/listening" element={<Listening />} />
-            <Route path="/speaking" element={<Speaking />} />
-            <Route path="/writing" element={<Writing />} />
+            <Route path="/grammar" element={<WithDict><GrammarVocabulary /></WithDict>} />
+            <Route path="/reading" element={<WithDict><Reading /></WithDict>} />
+            <Route path="/listening" element={<WithDict><Listening /></WithDict>} />
+            <Route path="/speaking" element={<WithDict><Speaking /></WithDict>} />
+            <Route path="/writing" element={<WithDict><Writing /></WithDict>} />
             <Route path="/vocabulary" element={<SkillPractice />} />
             <Route path="/vocabulary/:id" element={<VocabStudy />} />
             <Route path="/vocab/:listId" element={<VocabListDetail />} />
-            <Route path="/thi-thu" element={<FullTest />} />
+            <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
             <Route path="/history" element={<History />} />
             <Route path="/history/:id" element={<HistoryDetail />} />
             <Route path="/progress" element={<ProgressPage />} />
@@ -69,7 +82,6 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
-          </DictionaryProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
