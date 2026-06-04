@@ -54,6 +54,7 @@ const ListeningExamEngine = ({
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
+  const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
 
   const totalQuestions =
     partType === "part1" ? (part1Questions?.length || 0) :
@@ -138,8 +139,19 @@ const ListeningExamEngine = ({
       : partType === "part3" && part3Questions
       ? part3Questions.reduce((s, q) => s + q.statements.length, 0)
       : totalQuestions;
+    setResultStats({ correct, total: totalForScore });
     onComplete?.(correct, totalForScore);
   }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete]);
+
+  const handleRetry = () => {
+    setSubmitted(false);
+    setResultStats(null);
+    setPhase("practice");
+    setCurrentIndex(0);
+    setTimeLeft(timeLimit);
+    setSeenQuestions(new Set());
+    setAnswers(new Array(totalQuestions).fill(null));
+  };
 
   const handleAnswer = (qi: number, ai: any) => {
     if (submitted) return;
