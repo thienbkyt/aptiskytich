@@ -249,13 +249,21 @@ const StudentManager = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <div className="font-medium text-foreground truncate">
-                            {s.display_name || s.email.split("@")[0]}
+                          <div className="flex items-center gap-1.5">
+                            <div className="font-medium text-foreground truncate">
+                              {s.display_name || s.email.split("@")[0]}
+                            </div>
+                            {s.is_admin && (
+                              <Badge className="h-4 px-1.5 text-[9px] bg-primary/15 text-primary hover:bg-primary/20 border-0 shrink-0">
+                                ADMIN
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground truncate">
                             {s.email}
                           </div>
                         </div>
+
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm">
