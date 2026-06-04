@@ -109,7 +109,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     // For grammar, all parts combined into one engine call
     const isGrammar = skill === "grammar_vocab";
-    if (isGrammar || currentPartIndex >= parts.length - 1) {
+    const isLast = currentPartIndex >= parts.length - 1;
+    // Engines that render their own result screen on the final part — don't navigate to parent "completed".
+    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening");
+    if (engineHandlesResults) {
+      return;
+    }
+    if (isGrammar || isLast) {
       setPhase("completed");
     } else {
       setCurrentPartIndex(prev => prev + 1);
