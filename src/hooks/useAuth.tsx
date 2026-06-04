@@ -79,6 +79,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    try {
+      Object.keys(sessionStorage)
+        .filter((k) => k.startsWith("isAdmin:"))
+        .forEach((k) => sessionStorage.removeItem(k));
+    } catch {}
     await supabase.auth.signOut();
   };
 
