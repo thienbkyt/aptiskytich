@@ -425,28 +425,56 @@ const SpeakingExamEngine = ({
     );
   }
 
-  // Grading / Done — simple submitted screen, no scoring
+  // Grading / Done — submitted screen with per-question playback
   if (phase === "grading" || phase === "done") {
+    const promptsList: string[] = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions;
+      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
+      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
+      if (partType === "part4" && part4Data) return [part4Data.topic];
+      return [];
+    })();
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="max-w-md w-full text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
-            <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-              <Loader2 className="w-7 h-7 text-green-500" />
+        <div className="flex-1 px-4 py-8">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                <Loader2 className="w-7 h-7 text-green-500" />
+              </div>
+              <h2 className="text-xl font-heading font-bold text-foreground mb-2">
+                Bài Speaking đã được nộp
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Cảm ơn bạn đã hoàn thành phần Speaking. Bạn có thể nghe lại bài làm bên dưới.
+              </p>
+              <button
+                onClick={onExit}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+              >
+                Quay lại danh sách đề
+              </button>
             </div>
-            <h2 className="text-xl font-heading font-bold text-foreground mb-2">
-              Your answers have been submitted.
-            </h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Cảm ơn bạn đã hoàn thành phần Speaking.
-            </p>
-            <button
-              onClick={onExit}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
-            >
-              Quay lại danh sách đề
-            </button>
+
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <h3 className="text-base font-heading font-bold text-foreground mb-4">
+                🎙️ Bài ghi âm của bạn
+              </h3>
+              <div className="space-y-4">
+                {promptsList.map((prompt, i) => (
+                  <div key={i} className="border border-border rounded-xl p-4">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">Câu {i + 1}</p>
+                    <p className="text-sm text-foreground mb-3">{prompt}</p>
+                    {recordings[i] ? (
+                      <audio controls src={recordings[i]!} className="w-full h-9" />
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">Không có bài ghi âm</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         {exitDialog}
