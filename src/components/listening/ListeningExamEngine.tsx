@@ -43,7 +43,7 @@ const PART_LABELS: Record<ListeningPartType, string> = {
 const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
-  onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro,
+  onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
