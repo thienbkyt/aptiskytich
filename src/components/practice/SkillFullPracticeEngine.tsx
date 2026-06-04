@@ -178,6 +178,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
+        showResultsOnSubmit
       />
     );
   }
