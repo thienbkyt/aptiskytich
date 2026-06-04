@@ -590,12 +590,17 @@ const GrammarExamEngine = ({
 
           {/* Bottom nav */}
           <BottomNavBar
-            onPrevious={!isFirstGroup ? goPrevGroup : undefined}
-            onNext={!isLastGroup ? goNextGroup : undefined}
-            onSubmit={isLastGroup && !submitted ? handleSubmit : undefined}
-            isFirst={isFirstGroup}
-            isLast={isLastGroup}
-            submitLabel="Submit"
+            onPrevious={!isFirstGroup ? goPrevGroup : () => setPhase("grammar_intro")}
+            onNext={
+              !isLastGroup
+                ? goNextGroup
+                : !submitted
+                ? handleSubmit
+                : undefined
+            }
+            onSubmit={undefined}
+            isFirst={false}
+            isLast={false}
             sections={sections}
             bookmarkedCount={bookmarked.size}
           />
