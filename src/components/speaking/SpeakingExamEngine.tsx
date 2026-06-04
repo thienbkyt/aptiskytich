@@ -90,7 +90,7 @@ const SpeakingExamEngine = ({
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
 
-  const { grading, isGrading, gradeExam } = useExamGrading();
+
 
   const partNumber = PART_NUMBERS[partType];
   const totalParts = 4;
