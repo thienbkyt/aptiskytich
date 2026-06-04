@@ -181,7 +181,11 @@ export async function saveSpeakingRecording(opts: {
       audio_url: path,
       duration_seconds: opts.durationSeconds ?? null,
     } as any);
+
+    // Speaking sessions count as activity too
+    await updateLearningStreak(user.id);
   } catch (err) {
     console.warn("[saveSpeakingRecording] skipped:", err);
   }
 }
+
