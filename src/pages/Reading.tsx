@@ -167,7 +167,7 @@ const Reading = () => {
 
     return (
       <ReadingExamEngine
-        partType={exam.partType} testTitle={exam.testTitle} timeLimit={1800}
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={READING_TIME[exam.partType] ?? 2100}
         onExit={handleExit} onComplete={handleComplete} {...exam.engineData}
       />
     );

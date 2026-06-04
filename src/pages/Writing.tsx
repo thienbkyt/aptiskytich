@@ -171,7 +171,7 @@ const Writing = () => {
 
     return (
       <WritingExamEngine
-        partType={exam.partType} testTitle={exam.testTitle} timeLimit={3000}
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={WRITING_TIME[exam.partType] ?? 3000}
         onExit={handleExit} onComplete={() => setExam((p) => ({ ...p, completed: true }))}
         {...exam.engineData}
       />
