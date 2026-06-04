@@ -28,6 +28,8 @@ const Listening = lazy(() => import("./pages/Listening"));
 const Reading = lazy(() => import("./pages/Reading"));
 const GrammarVocabulary = lazy(() => import("./pages/GrammarVocabulary"));
 const FullTest = lazy(() => import("./pages/FullTest"));
+const History = lazy(() => import("./pages/History"));
+const HistoryDetail = lazy(() => import("./pages/HistoryDetail"));
 
 const queryClient = new QueryClient();
 
