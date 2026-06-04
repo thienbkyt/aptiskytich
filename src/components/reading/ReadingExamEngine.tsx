@@ -250,6 +250,15 @@ const ReadingExamEngine = ({
             partLabel={`${testTitle} – ${partLabel}`}
             onExit={onExit}
             onRetry={handleRetry}
+            partType={partType}
+            part1Question={part1Question}
+            part1Answers={p1Answers}
+            part2Question={part2Question}
+            part2Placements={p2Placements}
+            part3Question={part3Question}
+            part3Answers={p3Answers}
+            part4Question={part4Question}
+            part4Answers={p4Answers}
           />
         </main>
       </div>

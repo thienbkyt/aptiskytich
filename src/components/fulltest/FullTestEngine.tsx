@@ -247,7 +247,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   if (phase === "completed") {
     const totalCorrect = Object.values(scores).reduce((s, v) => s + v.correct, 0);
     const totalQ = Object.values(scores).reduce((s, v) => s + v.total, 0);
-    // Overall band level = average of per-skill levels (skills with answers only).
     const skillPercents = SKILL_ORDER
       .map((sk) => scores[sk])
       .filter((s) => s.total > 0)
@@ -257,57 +256,103 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       : 0;
     const overallLevel = totalQ > 0 ? getLevel(Math.round(avgPct * 100), 100) : "—";
 
+    const handleScrollTo = (id: string) => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     return (
-      <div className="min-h-[70vh]">
+      <div className="min-h-[70vh] pb-16">
         <div className="flex items-center mb-6">
           <button onClick={onExit} className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
             <ArrowLeft className="w-4 h-4" /> Quay lại
           </button>
         </div>
-        <div className="max-w-xl mx-auto text-center py-12">
+
+        {/* Header */}
+        <div className="max-w-4xl mx-auto text-center mb-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Trophy className="w-8 h-8 text-primary" />
           </div>
           <h2 className="text-2xl font-heading font-bold text-foreground mb-2">Hoàn thành bài thi thử!</h2>
-          <p className="text-muted-foreground mb-6">{testTitle}</p>
-
+          <p className="text-muted-foreground mb-4">{testTitle}</p>
           {totalQ > 0 && (
-            <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3 mb-6">
+            <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3">
               <span className="text-sm font-medium text-muted-foreground">Trình độ tổng thể:</span>
               <span className={`text-lg font-heading font-extrabold ${getLevelColor(overallLevel)}`}>{overallLevel}</span>
+              {totalQ > 0 && (
+                <span className="text-sm text-muted-foreground ml-2">• {totalCorrect}/{totalQ}</span>
+              )}
             </div>
           )}
+        </div>
 
-          <div className="bg-card border border-border rounded-xl p-6 mb-6 space-y-3 text-left">
-            {SKILL_ORDER.map((skill) => {
-              const s = scores[skill];
-              const Icon = SKILL_ICONS[skill];
-              const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-              const lvl = s.total > 0 ? getLevel(s.correct, s.total) : null;
-              return (
-                <div key={skill} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 font-medium text-foreground">
-                    <Icon className="w-4 h-4 text-muted-foreground" />
-                    {SKILL_LABELS[skill]}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {s.total > 0 ? (
-                      <>
-                        {s.correct}/{s.total} • {pct}%{" "}
-                        <span className={`font-bold ${lvl ? getLevelColor(lvl) : ""}`}>{lvl}</span>
-                      </>
-                    ) : "Đã hoàn thành"}
-                  </span>
+        {/* Skill summary cards */}
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
+          {SKILL_ORDER.map((skill) => {
+            const s = scores[skill];
+            const Icon = SKILL_ICONS[skill];
+            const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+            const lvl = s.total > 0 ? getLevel(s.correct, s.total) : null;
+            return (
+              <button
+                key={skill}
+                onClick={() => handleScrollTo(`skill-${skill}`)}
+                className="bg-card border border-border rounded-xl p-4 text-left hover:border-primary/40 hover:shadow-md transition-all group"
+              >
+                <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary mb-2" />
+                <p className="text-xs font-semibold text-foreground mb-1">{SKILL_LABELS[skill]}</p>
+                {s.total > 0 ? (
+                  <>
+                    <p className="text-lg font-heading font-bold text-foreground">
+                      {s.correct}/{s.total}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">{pct}% • <span className={`font-bold ${lvl ? getLevelColor(lvl) : ""}`}>{lvl}</span></p>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">—</p>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Per-skill review sections */}
+        <div className="max-w-4xl mx-auto space-y-8">
+          {SKILL_ORDER.map((skill) => {
+            const s = scores[skill];
+            const Icon = SKILL_ICONS[skill];
+            const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+            const lvl = s.total > 0 ? getLevel(s.correct, s.total) : null;
+            return (
+              <section
+                key={skill}
+                id={`skill-${skill}`}
+                className="bg-card border border-border rounded-xl p-6 scroll-mt-20"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-heading font-bold text-foreground">{SKILL_LABELS[skill]}</h3>
+                  </div>
+                  {s.total > 0 && (
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-foreground">{s.correct}/{s.total} • {pct}%</p>
+                      {lvl && <p className={`text-xs font-bold ${getLevelColor(lvl)}`}>Band {lvl}</p>}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-            {totalQ > 0 && (
-              <div className="border-t border-border pt-3 flex items-center justify-between font-semibold">
-                <span className="text-foreground">Tổng điểm</span>
-                <span className="text-primary">{totalCorrect}/{totalQ}</span>
-              </div>
-            )}
-          </div>
+                <p className="text-sm text-muted-foreground">
+                  {s.total > 0
+                    ? `Bạn đã hoàn thành phần ${SKILL_LABELS[skill]}. Xem chi tiết từng câu trong phần Lịch sử làm bài.`
+                    : `Không có dữ liệu cho phần này.`}
+                </p>
+              </section>
+            );
+          })}
+        </div>
+
+        <div className="text-center mt-8">
           <Button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             Quay lại danh sách đề
           </Button>

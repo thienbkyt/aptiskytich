@@ -1,40 +1,57 @@
 ## Mục tiêu
 
-Tự động ghép các bộ đề hiện có theo prefix tên (ví dụ `Đề 01`, `Đề 02`...) thành Full Part cho từng kỹ năng, để chúng hiện ra ở tab "Full Part" của từng trang luyện kỹ năng (Speaking/Listening/Reading/Writing/Grammar & Vocabulary).
+Bổ sung phần review chi tiết (câu hỏi, đáp án user chọn, đáp án đúng, giải thích, audio) vào tất cả màn hình kết quả hiện có. Không tạo trang mới — mở rộng trực tiếp trên các component đã có.
 
-Ví dụ Speaking:
-- `Đề 01 - Speaking - Speaking Part 1` + `... Part 2` + `... Part 3` + `... Part 4` → gộp thành Full Part tên **Đề 01**.
-- Tương tự cho Grammar & Vocabulary (6 parts), Listening (4), Reading (4), Writing (4).
+## Phạm vi từng bước
 
-## Cách hoạt động
+### Bước 1 — Grammar
+- Verify `GrammarResults.tsx` đã render review (đã có sẵn) và `GrammarExamEngine` truyền đủ `questions[]` + `userAnswers[]`.
+- Không thay đổi UI, chỉ đảm bảo prop chain đúng.
 
-Thêm nút **"Tự động ghép theo tên đề"** trong tab `Ghép Full Part` (Admin → Import Center → Ghép & Quản lý → Ghép Full Part).
+### Bước 2 — Reading
+- Thêm component con `ReadingReview` trong `ReadingResults.tsx` xử lý 4 part:
+  - Part 1 (gap fill): render text với từng ô điền được tô xanh (đúng) / đỏ (sai) + đáp án đúng dưới mỗi ô sai.
+  - Part 2 (cohesion/ordering): hiển thị thứ tự user vs đúng.
+  - Part 3 (opinion matching): bảng 2 cột — câu | người được ghép (user/đúng).
+  - Part 4 (long reading MCQ): list câu + option chọn (đỏ nếu sai) + option đúng (xanh) + giải thích.
+- Cập nhật `ReadingExamEngine` truyền `questions`, `userAnswers`, `partType` xuống `ReadingResults`.
 
-Khi bấm nút:
+### Bước 3 — Listening
+- Thêm review list trong `ListeningResults.tsx`: mỗi câu hiển thị mini audio player (nếu có `audio_url`), câu hỏi, đáp án user (đỏ sai/xanh đúng), đáp án đúng, giải thích.
+- Cập nhật `ListeningExamEngine` truyền đủ data.
 
-1. Lấy toàn bộ `exam_sets` của kỹ năng đang chọn (theo dropdown Kỹ năng có sẵn).
-2. Với mỗi bộ đề, trích prefix từ `title` bằng regex `^Đề\s*(\d+)` → ví dụ `Đề 01`, `Đề 02`.
-3. Bỏ qua bộ đề không match prefix hoặc đã có `full_test_id`.
-4. Nhóm các bộ đề theo prefix. Chỉ ghép nhóm có **≥ 2 parts khác nhau** (đủ điều kiện Full Part).
-5. Với mỗi nhóm:
-   - Nếu đã tồn tại 1 `full_test_id` cho cùng prefix ở kỹ năng khác (ví dụ `Đề 01` của Listening đã có full_test_id) → **tái sử dụng** cùng UUID đó, để giữ liên kết Full Test 5 kỹ năng.
-   - Nếu chưa có → tạo `full_test_id` mới.
-   - Đặt `full_test_title = "Đề <NN>"` (ví dụ `Đề 01`).
-   - UPDATE `exam_sets` set `full_test_id` + `full_test_title` cho tất cả bộ đề trong nhóm.
-6. Hiển thị toast: `✓ Đã ghép N nhóm cho [kỹ năng] (M bộ đề)`.
-7. Refresh danh sách hiển thị bên dưới.
+### Bước 4 — Writing
+- Trong `WritingResults.tsx`, thêm block phía trên phần AI grading: render lại từng đề (prompt) + bài viết user nộp (dạng card có scroll khi dài).
+- Cập nhật `WritingExamEngine` truyền `parts[]` (prompt + submission text).
 
-Có dialog xác nhận trước khi chạy để tránh nhấn nhầm, kèm preview số nhóm sẽ ghép.
+### Bước 5 — Speaking
+- Trong `SpeakingResults.tsx`, thêm list bên dưới AI grading: từng câu hỏi (text + part label) + audio player phát file recording (signed URL từ bucket `speaking-recordings` qua helper hiện có).
+- Cập nhật `SpeakingExamEngine` truyền `prompts[]` + `recordings[]` (blob URL local hoặc storage path).
 
-Tùy chọn thêm: checkbox **"Ghép cho tất cả 5 kỹ năng"** để chạy 1 lần cho mọi skill thay vì chỉ skill đang chọn.
+### Bước 6 — Full Test
+- Trong `FullTestEngine` màn finish: 
+  - Đầu trang: grid 5 card tóm tắt (Speaking/Listening/Grammar/Reading/Writing) — score + level + anchor link `#skill-xxx`.
+  - Dưới: 5 section liên tiếp theo thứ tự Speaking → Listening → Grammar → Reading → Writing. Mỗi section reuse đúng component review của từng kỹ năng (compact mode, ẩn nút action).
+  - Smooth scroll khi click card.
 
-## File thay đổi
+### Bước 7 — Lịch sử
+- Thêm util `loadHistoricalResult(testResultId)` trong `src/lib/testResults.ts`: fetch `test_results` + `exam_question_results` + `exam_questions` để dựng lại dataset review.
+- `HistoryDetail.tsx` (hoặc nút "Xem lại" trong `History.tsx`): mount đúng component result tương ứng với skill, truyền prop `mode="history"` để ẩn nút "Làm lại ngay", chỉ giữ nút "Quay lại".
+- Tất cả result component nhận thêm prop optional `mode?: "fresh" | "history"` (default "fresh").
 
-- `src/components/admin/merge/MergeFullPart.tsx`: thêm nút + handler `handleAutoMerge`, dialog xác nhận, logic group-by-prefix và reuse full_test_id.
+## Lưu ý kỹ thuật
 
-Không thay đổi schema DB, không thay đổi flow hiển thị Full Part ở phía user — vì `useSkillFullSets` đã đọc theo `full_test_id` sẵn.
+- Tóm tắt điểm giữ nguyên ở trên, phần review nằm dưới — scroll bình thường.
+- Dùng semantic tokens: `bg-green-500/10 text-green-600`, `bg-red-500/10 text-red-600`, `border-border`, `bg-card`, `text-foreground`, `text-muted-foreground`.
+- Responsive: grid `grid-cols-1 md:grid-cols-2` cho card kỹ năng, full-test card grid `grid-cols-2 md:grid-cols-5`.
+- Toàn bộ label tiếng Việt.
+- Speaking recordings: nếu là blob URL local (vừa nộp) → dùng trực tiếp; nếu storage path (từ history) → resolve qua signed URL bucket `speaking-recordings`.
+- Writing/Speaking từ history: nội dung bài viết và recording URL hiện chưa được lưu vào `exam_question_results`. Sẽ lưu thêm vào `user_answer` field (text/JSON) khi submit để có thể replay từ history. Audio recording sẽ resolve từ bảng `speaking_recordings` đã có.
 
-## Câu cần xác nhận
+## Phạm vi không bao gồm
 
-1. Title prefix mặc định là `Đề <số>` (1-2 chữ số). OK chứ, hay cần regex khác?
-2. Có muốn nút **"Ghép cho tất cả 5 kỹ năng"** trong 1 lần bấm không, hay chỉ ghép theo kỹ năng đang chọn?
+- Không tạo route mới, không sửa schema database (dùng cột `user_answer` hiện có).
+- Không đổi logic chấm điểm.
+- Không thay đổi visual identity / màu sắc theme.
+
+Bạn xác nhận để mình bắt đầu triển khai cả 7 bước nhé?

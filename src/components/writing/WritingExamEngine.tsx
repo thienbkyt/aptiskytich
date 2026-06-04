@@ -225,11 +225,29 @@ const WritingExamEngine = ({
   }
 
   if (phase === "grading" || phase === "results") {
+    const submission = (() => {
+      if (partType === "task1" && part1Data) {
+        return part1Data.questions.map((q, i) => ({ prompt: q.text, answer: shortAnswers[i] || "" }));
+      }
+      if (partType === "task2" && part2Data) {
+        return [{ prompt: `${part2Data.instruction}\n${part2Data.question || ""}`.trim(), answer: textAnswer }];
+      }
+      if (partType === "task3" && part3Data) {
+        return part3Data.questions.map((q, i) => ({ prompt: q.text, answer: part3Answers[i] || "" }));
+      }
+      if (partType === "task4" && part4Data) {
+        return [
+          { prompt: `Informal Email: ${part4Data.informalEmail.instruction}`, answer: informalAnswer },
+          { prompt: `Formal Email: ${part4Data.formalEmail.instruction}`, answer: formalAnswer },
+        ];
+      }
+      return [];
+    })();
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
-        <div className="flex-1 px-4 pt-8">
-          <WritingResults isGrading={isGrading} grading={grading} onExit={onExit} />
+        <div className="flex-1 px-4 pt-8 pb-10">
+          <WritingResults isGrading={isGrading} grading={grading} onExit={onExit} submission={submission} />
         </div>
       </div>
     );
