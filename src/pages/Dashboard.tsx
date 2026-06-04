@@ -33,6 +33,9 @@ interface DashboardData {
   grammarPct: number;
   readingPct: number;
   listeningPct: number;
+  speakingPct: number;
+  writingPct: number;
+
   recentTests: RecentTest[];
   weeklyActivity: number[];
 }
