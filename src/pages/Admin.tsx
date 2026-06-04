@@ -48,7 +48,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="import-center" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="import-center" className="gap-2">
                 <FileSpreadsheet className="w-4 h-4" /> Import Center
               </TabsTrigger>
@@ -57,6 +57,9 @@ const Admin = () => {
               </TabsTrigger>
               <TabsTrigger value="vocab" className="gap-2">
                 <BookOpen className="w-4 h-4" /> Từ vựng
+              </TabsTrigger>
+              <TabsTrigger value="students" className="gap-2">
+                <Users className="w-4 h-4" /> Người dùng
               </TabsTrigger>
               <TabsTrigger value="legacy" className="gap-2">
                 <Database className="w-4 h-4" /> Quản lý bộ đề cũ
@@ -73,6 +76,10 @@ const Admin = () => {
 
             <TabsContent value="vocab">
               <VocabManager />
+            </TabsContent>
+
+            <TabsContent value="students">
+              <StudentManager />
             </TabsContent>
 
             <TabsContent value="legacy">
