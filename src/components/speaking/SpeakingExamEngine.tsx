@@ -32,7 +32,7 @@ interface SpeakingExamEngineProps {
   skipIntro?: boolean;
 }
 
-type Phase = "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
+type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
 
 /** Play a short beep using Web Audio API */
 function playBeep(): Promise<void> {
@@ -74,7 +74,7 @@ const SpeakingExamEngine = ({
   part1Data, part2Data, part3Data, part4Data,
   onExit, onComplete, skipIntro = false,
 }: SpeakingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "mic-check");
+  const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prepTimeLeft, setPrepTimeLeft] = useState(0);
   const [speakTimeLeft, setSpeakTimeLeft] = useState(0);
@@ -330,6 +330,38 @@ const SpeakingExamEngine = ({
     />
   );
 
+  // Start Assessment (info) screen
+  if (phase === "start") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
+        <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
+          <p className="text-sm text-gray-500 mb-2">Aptis General Practice Test</p>
+          <h1 className="text-xl font-bold text-black mb-1">Speaking Practice Test</h1>
+          <p className="text-sm text-gray-500 mb-6">{testTitle}</p>
+          <div className="flex gap-16 mb-6">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Number of Questions</p>
+              <p className="text-sm font-bold text-black">4</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Time Allowed</p>
+              <p className="text-sm font-bold text-black">12 min</p>
+            </div>
+          </div>
+          <p className="text-sm font-bold text-black mb-4">Assessment Description</p>
+          <button
+            onClick={() => setPhase("mic-check")}
+            className="bg-[#2D1B69] text-white text-sm rounded-md px-6 py-2.5 hover:bg-[#1f1149] transition-colors"
+          >
+            Start Assessment
+          </button>
+        </div>
+        {exitDialog}
+      </div>
+    );
+  }
+
   // Mic check
   if (phase === "mic-check") {
     return (
@@ -373,7 +405,12 @@ const SpeakingExamEngine = ({
             </div>
           </div>
         </div>
-        <BottomNavBar onNext={() => setPhase("prompt")} isFirst={true} isLast={false} />
+        <BottomNavBar
+          onPrevious={() => setPhase("start")}
+          onNext={() => setPhase("prompt")}
+          isFirst={false}
+          isLast={false}
+        />
         {exitDialog}
       </div>
     );
