@@ -29,6 +29,7 @@ interface ReadingExamEngineProps {
   initialTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
+  fullFlow?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
