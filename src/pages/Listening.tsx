@@ -29,6 +29,13 @@ const PARTS = [
   { id: "part4" as const, label: "Part 4", subtitle: "Monologues" },
 ];
 
+const LISTENING_TIME: Record<string, number> = {
+  part1: 480,
+  part2: 600,
+  part3: 600,
+  part4: 720,
+};
+
 interface ExamState {
   active: boolean;
   partType: ListeningPartType;
@@ -161,7 +168,7 @@ const Listening = () => {
 
     return (
       <ListeningExamEngine
-        partType={exam.partType} testTitle={exam.testTitle} timeLimit={2100}
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={LISTENING_TIME[exam.partType] ?? 2400}
         onExit={handleExit} onComplete={handleComplete} {...exam.engineData}
       />
     );

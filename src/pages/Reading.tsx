@@ -29,6 +29,13 @@ const PARTS = [
   { id: "part4" as const, label: "Part 4", subtitle: "Long reading" },
 ];
 
+const READING_TIME: Record<string, number> = {
+  part1: 360,
+  part2: 420,
+  part3: 420,
+  part4: 900,
+};
+
 interface ExamState {
   active: boolean;
   partType: ReadingPartType;
@@ -160,7 +167,7 @@ const Reading = () => {
 
     return (
       <ReadingExamEngine
-        partType={exam.partType} testTitle={exam.testTitle} timeLimit={1800}
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={READING_TIME[exam.partType] ?? 2100}
         onExit={handleExit} onComplete={handleComplete} {...exam.engineData}
       />
     );

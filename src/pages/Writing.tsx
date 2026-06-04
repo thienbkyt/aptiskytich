@@ -24,6 +24,13 @@ const partToTask: Record<string, WritingPartType> = {
   part1: "task1", part2: "task2", part3: "task3", part4: "task4",
 };
 
+const WRITING_TIME: Record<string, number> = {
+  task1: 360,
+  task2: 720,
+  task3: 1020,
+  task4: 900,
+};
+
 const TASKS = [
   { id: "full" as const, partKey: "full", label: "Full Part", subtitle: "Tất cả các Part" },
   { id: "task1" as const, partKey: "part1", label: "Part 1", subtitle: "Short answers" },
@@ -164,7 +171,7 @@ const Writing = () => {
 
     return (
       <WritingExamEngine
-        partType={exam.partType} testTitle={exam.testTitle} timeLimit={3000}
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={WRITING_TIME[exam.partType] ?? 3000}
         onExit={handleExit} onComplete={() => setExam((p) => ({ ...p, completed: true }))}
         {...exam.engineData}
       />
