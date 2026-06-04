@@ -491,6 +491,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           externalTimeLeft={writingTimeLeft}
           onTimeTick={(t) => setWritingTimeLeft(t)}
           skipIntro={currentPartIndex > 0}
+          fullFlow
           isLastPart={currentPartIndex >= partsForSkill.length - 1}
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
