@@ -11,6 +11,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import ProgressChart from "@/components/dashboard/ProgressChart";
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
