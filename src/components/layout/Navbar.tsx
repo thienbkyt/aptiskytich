@@ -430,6 +430,17 @@ const Navbar = () => {
                             Import Center
                           </Link>
                           <Link
+                            to="/admin/students"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                              isActive("/admin/students")
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <Users className="w-4 h-4" />
+                            Người dùng
+                          </Link>
+                          <Link
                             to="/admin/report"
                             className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
                               isActive("/admin/report")
