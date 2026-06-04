@@ -92,7 +92,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress }: FullPa
                 </div>
               </div>
             </motion.div>
-          ))}
+          );})}
         </div>
       )}
     </div>
