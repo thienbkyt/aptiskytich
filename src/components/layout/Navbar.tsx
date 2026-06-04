@@ -37,7 +37,7 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
-  const isAdminActive = isActive("/admin") || isActive("/admin/report");
+  const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students");
 
   // Close mobile menu on route change
   useEffect(() => {
