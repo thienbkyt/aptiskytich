@@ -371,6 +371,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           timeLimit={SKILL_TIMES.grammar}
           onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
+          skipIntro={currentPartIndex > 0}
         />
       </>
     );
