@@ -33,6 +33,9 @@ interface DashboardData {
   grammarPct: number;
   readingPct: number;
   listeningPct: number;
+  speakingPct: number;
+  writingPct: number;
+
   recentTests: RecentTest[];
   weeklyActivity: number[];
 }
@@ -121,6 +124,8 @@ const Dashboard = () => {
         const grammarRows = practice.filter((r) => r.skill === "grammar");
         const readingRows = practice.filter((r) => r.skill === "reading");
         const listeningRows = practice.filter((r) => r.skill === "listening");
+        const speakingRows = practice.filter((r) => r.skill === "speaking");
+        const writingRows = practice.filter((r) => r.skill === "writing");
 
         const recentTests: RecentTest[] = tests.slice(0, 3).map((t) => ({
           date: formatDate(t.created_at),
@@ -138,9 +143,12 @@ const Dashboard = () => {
           grammarPct: calcAccuracy(grammarRows),
           readingPct: calcAccuracy(readingRows),
           listeningPct: calcAccuracy(listeningRows),
+          speakingPct: calcAccuracy(speakingRows),
+          writingPct: calcAccuracy(writingRows),
           recentTests,
           weeklyActivity,
         });
+
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -270,7 +278,10 @@ const Dashboard = () => {
                     { label: "Grammar & Vocabulary", pct: d.grammarPct, color: "bg-primary" },
                     { label: "Reading", pct: d.readingPct, color: "bg-info" },
                     { label: "Listening", pct: d.listeningPct, color: "bg-warning" },
+                    { label: "Speaking", pct: d.speakingPct, color: "bg-accent" },
+                    { label: "Writing", pct: d.writingPct, color: "bg-success" },
                   ];
+
                   const weakest = skills.reduce((min, s) => (s.pct < min.pct ? s : min), skills[0]);
                   return (
                     <>
