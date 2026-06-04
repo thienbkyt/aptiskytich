@@ -163,7 +163,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     }
 
     setSkillData(grouped);
-    setPhase("skill-intro");
+    setPhase("exam");
   };
 
   const handlePartComplete = useCallback((correct?: number, total?: number) => {
@@ -204,7 +204,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     setCurrentSkillIndex(prev => prev + 1);
     setCurrentPartIndex(0);
     setEngineKey(prev => prev + 1);
-    setPhase("skill-intro");
+    setPhase("exam");
   };
 
   const handleStartSkill = () => {
