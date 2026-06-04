@@ -6,6 +6,7 @@ import ReadingPart1Sentence from "@/components/reading/ReadingPart1Sentence";
 import ReadingPart2Cohesion from "@/components/reading/ReadingPart2Cohesion";
 import ReadingPart3Opinion from "@/components/reading/ReadingPart3Opinion";
 import ReadingPart4Long from "@/components/reading/ReadingPart4Long";
+import ReadingResults from "@/components/reading/ReadingResults";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
@@ -30,6 +31,8 @@ interface ReadingExamEngineProps {
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
+  /** When true, render ReadingResults after submission instead of the locked review UI. */
+  showResultsOnSubmit?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -38,7 +41,7 @@ const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
-  initialTimeLeft, onTimeTick, skipIntro, fullFlow,
+  initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
