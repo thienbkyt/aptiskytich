@@ -278,7 +278,10 @@ const Dashboard = () => {
                     { label: "Grammar & Vocabulary", pct: d.grammarPct, color: "bg-primary" },
                     { label: "Reading", pct: d.readingPct, color: "bg-info" },
                     { label: "Listening", pct: d.listeningPct, color: "bg-warning" },
+                    { label: "Speaking", pct: d.speakingPct, color: "bg-accent" },
+                    { label: "Writing", pct: d.writingPct, color: "bg-success" },
                   ];
+
                   const weakest = skills.reduce((min, s) => (s.pct < min.pct ? s : min), skills[0]);
                   return (
                     <>
