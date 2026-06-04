@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { logUsage, logInvocation } from "../_shared/usage-logger.ts";
+import { requireUser } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -164,6 +166,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
 
   logInvocation("tts-bundle").catch(() => {});
 

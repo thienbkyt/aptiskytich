@@ -1,6 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireAdmin } from "../_shared/auth.ts";
 
-Deno.serve(async () => {
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  const auth = await requireAdmin(req, corsHeaders);
+  if (auth instanceof Response) return auth;
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -12,7 +26,7 @@ Deno.serve(async () => {
     .from("exam_questions")
     .select("audio_url, image_url, exam_sets!inner(skill)")
     .in("exam_sets.skill", skills);
-  if (qErr) return new Response(JSON.stringify({ step: "query", error: qErr.message }), { status: 500 });
+  if (qErr) return new Response(JSON.stringify({ step: "query", error: qErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const audioPaths = new Set<string>();
   const imagePaths = new Set<string>();
@@ -54,7 +68,7 @@ Deno.serve(async () => {
     .from("exam_sets")
     .select("id")
     .in("skill", skills);
-  if (sErr) return new Response(JSON.stringify({ step: "list sets", error: sErr.message }), { status: 500 });
+  if (sErr) return new Response(JSON.stringify({ step: "list sets", error: sErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   const setIds = (targetSets ?? []).map((s: any) => s.id);
 
   let questionsDeleted = 0;
@@ -83,6 +97,6 @@ Deno.serve(async () => {
       setsDeleted: setsDeleted ?? 0,
       errors: errs,
     }),
-    { headers: { "Content-Type": "application/json" } }
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
