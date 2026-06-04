@@ -292,6 +292,23 @@ const SpeakingExamEngine = ({
   }, [canFinish, doStopAndAdvance]);
 
   const handleFinish = async () => {
+    // Best-effort upload of all recordings — never block UI on failure
+    try {
+      const currentRecordings = recordings;
+      await Promise.all(
+        currentRecordings.map(async (url, idx) => {
+          if (!url) return;
+          try {
+            const blob = await fetch(url).then((r) => r.blob());
+            await saveSpeakingRecording({
+              examSetId: examSetId ?? null,
+              part: `${partType}_q${idx + 1}`,
+              blob,
+            });
+          } catch { /* ignore individual upload failures */ }
+        })
+      );
+    } catch { /* swallow */ }
     onComplete?.();
     setPhase("done");
   };

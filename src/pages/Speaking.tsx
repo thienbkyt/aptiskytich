@@ -67,7 +67,7 @@ const Speaking = () => {
 
   const handleStartFromDB = async (set: ExamSetRow) => {
     const partType = normalizePart(set.part) as SpeakingPartType;
-    setExam({ active: true, partType, testTitle: set.title, loadingExam: true });
+    setExam({ active: true, partType, testTitle: set.title, loadingExam: true, ...( { examSetId: set.id } as any) });
     const questions = await fetchExamQuestions(set.id);
     let engineData: any = {};
     switch (partType) {
@@ -141,6 +141,7 @@ const Speaking = () => {
       <SpeakingExamEngine
         partType={exam.partType} testTitle={exam.testTitle}
         timeLimit={TIME_LIMITS[exam.partType]} onExit={handleExit} onComplete={() => {}}
+        examSetId={(exam as any).examSetId ?? null}
         {...exam.engineData}
       />
     );
