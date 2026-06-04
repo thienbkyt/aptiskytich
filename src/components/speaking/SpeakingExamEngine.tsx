@@ -9,6 +9,7 @@ import { resolveImageUrl } from "@/lib/imageUrl";
 import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { saveSpeakingRecording } from "@/lib/saveExamResult";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -25,6 +26,7 @@ interface SpeakingExamEngineProps {
   part2Data?: SpeakingPart2Data;
   part3Data?: SpeakingPart3Data;
   part4Data?: SpeakingPart4Data;
+  examSetId?: string | null;
   onExit: () => void;
   onComplete?: () => void;
   skipIntro?: boolean;
@@ -70,6 +72,7 @@ const PART_NUMBERS: Record<SpeakingPartType, number> = {
 const SpeakingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
+  examSetId,
   onExit, onComplete, skipIntro = false,
 }: SpeakingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
