@@ -86,11 +86,34 @@ const Dashboard = () => {
     (async () => {
       setLoading(true);
       try {
-        const [profileRes, streakRes, practiceRes, testsRes] = await Promise.all([
+        // Only need a week of practice_history rows for weekday activity dots.
+        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+
+        const headCount = (skill?: string, correctOnly = false) => {
+          let q = supabase
+            .from("practice_history")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id);
+          if (skill) q = q.eq("skill", skill);
+          if (correctOnly) q = q.eq("is_correct", true);
+          return q;
+        };
+
+        const [
+          profileRes, streakRes, weekRes, testsRes,
+          totalRes, correctRes,
+          gT, gC, rT, rC, lT, lC, sT, sC, wT, wC,
+        ] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
-          supabase.from("practice_history").select("skill,is_correct,created_at").eq("user_id", user.id),
-          supabase.from("test_results").select("score,total,level,created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("practice_history").select("created_at").eq("user_id", user.id).gte("created_at", weekAgo),
+          supabase.from("test_results").select("score,total,level,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(3),
+          headCount(), headCount(undefined, true),
+          headCount("grammar"),   headCount("grammar", true),
+          headCount("reading"),   headCount("reading", true),
+          headCount("listening"), headCount("listening", true),
+          headCount("speaking"),  headCount("speaking", true),
+          headCount("writing"),   headCount("writing", true),
         ]);
 
         if (cancelled) return;
@@ -100,36 +123,25 @@ const Dashboard = () => {
           user.email?.split("@")[0] ||
           "bạn";
 
-        const practice = practiceRes.data || [];
         const tests = testsRes.data || [];
 
         // Weekly activity (Mon -> Sun) in Vietnam timezone
-        // Build the set of VN day-keys for the current VN week (Mon..Sun)
         const nowVN = toVNDate(new Date());
-        const todayIdx = vnWeekdayIndex(new Date()); // 0..6 (Mon..Sun)
+        const todayIdx = vnWeekdayIndex(new Date());
         const weekDayKeys: string[] = [];
         for (let i = 0; i < 7; i++) {
-          // Construct a UTC date that corresponds to VN day (Monday + i)
           const dayMs = nowVN.getTime() - (todayIdx - i) * 24 * 60 * 60 * 1000;
           const dvn = new Date(dayMs);
           weekDayKeys.push(`${dvn.getUTCFullYear()}-${dvn.getUTCMonth()}-${dvn.getUTCDate()}`);
         }
-
         const activeDayKeys = new Set<string>();
-        practice.forEach((row) => {
-          activeDayKeys.add(vnDayKey(new Date(row.created_at)));
-        });
-
+        (weekRes.data || []).forEach((row) => activeDayKeys.add(vnDayKey(new Date(row.created_at))));
         const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
 
-        // Skill accuracy
-        const grammarRows = practice.filter((r) => r.skill === "grammar");
-        const readingRows = practice.filter((r) => r.skill === "reading");
-        const listeningRows = practice.filter((r) => r.skill === "listening");
-        const speakingRows = practice.filter((r) => r.skill === "speaking");
-        const writingRows = practice.filter((r) => r.skill === "writing");
+        const pct = (correct: number | null, total: number | null) =>
+          total && total > 0 ? Math.round(((correct ?? 0) / total) * 100) : 0;
 
-        const recentTests: RecentTest[] = tests.slice(0, 3).map((t) => ({
+        const recentTests: RecentTest[] = tests.map((t) => ({
           date: formatDate(t.created_at),
           score: t.score,
           total: t.total,
@@ -139,14 +151,14 @@ const Dashboard = () => {
         setData({
           displayName,
           streak: streakRes.data?.current_streak ?? 0,
-          totalQuestions: practice.length,
-          accuracy: calcAccuracy(practice),
+          totalQuestions: totalRes.count ?? 0,
+          accuracy: pct(correctRes.count, totalRes.count),
           currentLevel: tests[0]?.level || "—",
-          grammarPct: calcAccuracy(grammarRows),
-          readingPct: calcAccuracy(readingRows),
-          listeningPct: calcAccuracy(listeningRows),
-          speakingPct: calcAccuracy(speakingRows),
-          writingPct: calcAccuracy(writingRows),
+          grammarPct:   pct(gC.count, gT.count),
+          readingPct:   pct(rC.count, rT.count),
+          listeningPct: pct(lC.count, lT.count),
+          speakingPct:  pct(sC.count, sT.count),
+          writingPct:   pct(wC.count, wT.count),
           recentTests,
           weeklyActivity,
         });
