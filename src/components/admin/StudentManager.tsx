@@ -34,7 +34,20 @@ import {
   Play,
   Pause,
   Loader2,
+  Shield,
+  ShieldOff,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { resolveAudioUrl } from "@/lib/audioUrl";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +61,9 @@ interface Student {
   current_streak: number;
   total_attempts: number;
   latest_level: string | null;
+  is_admin: boolean;
 }
+
 
 interface HistoryRow {
   id: string;
