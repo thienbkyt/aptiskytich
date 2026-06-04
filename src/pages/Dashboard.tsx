@@ -348,6 +348,11 @@ const Dashboard = () => {
                       <BookOpen className="w-4 h-4" /> Thi thử Aptis
                     </Button>
                   </Link>
+                  <Link to="/history" className="block">
+                    <Button variant="outline" className="w-full gap-2 justify-start">
+                      <History className="w-4 h-4" /> Lịch sử làm bài
+                    </Button>
+                  </Link>
                   <Link to="/course" className="block">
                     <Button variant="outline" className="w-full gap-2 justify-start text-primary border-primary/30 hover:bg-primary/5">
                       <Flame className="w-4 h-4" /> Khóa học 7 ngày
