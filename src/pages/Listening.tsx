@@ -20,6 +20,7 @@ import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSet
 import { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { saveTestResult } from "@/lib/testResults";
+import { saveExamResult } from "@/lib/saveExamResult";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -45,6 +46,8 @@ interface ExamState {
   total: number;
   engineData?: any;
   loadingExam: boolean;
+  examSetId?: string | null;
+  startedAt?: number;
 }
 
 interface FullPracticeState {
@@ -75,7 +78,7 @@ const Listening = () => {
 
   const handleStartFromDB = async (set: ExamSetRow) => {
     const partType = normalizePart(set.part) as ListeningPartType;
-    setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0 }));
+    setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now() }));
     const questions = await fetchExamQuestions(set.id);
     let engineData: any = {};
     switch (partType) {
@@ -107,11 +110,20 @@ const Listening = () => {
     setExam({
       active: true, partType, testTitle: `${PARTS.find(p => p.id === partType)?.label} – Đề mẫu`,
       showResults: false, correct: 0, total: 0, engineData: mockData, loadingExam: false,
+      examSetId: null, startedAt: Date.now(),
     });
   };
 
   const handleComplete = (correct: number, total: number) => {
-    setExam((prev) => ({ ...prev, correct, total }));
+    setExam((prev) => {
+      const timeSpent = prev.startedAt ? Math.floor((Date.now() - prev.startedAt) / 1000) : undefined;
+      saveExamResult({
+        examSetId: prev.examSetId ?? null,
+        skill: "listening",
+        correct, total, timeSpent,
+      });
+      return { ...prev, correct, total };
+    });
     saveTestResult({ correct, total, skill: "listening" });
   };
 

@@ -22,7 +22,11 @@ interface GrammarExamEngineProps {
   testTitle: string;
   timeLimit: number;
   onExit: () => void;
-  onComplete?: (correct: number, total: number) => void;
+  onComplete?: (
+    correct: number,
+    total: number,
+    perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>
+  ) => void;
   onAnswersChange?: (answers: (number | null)[], fillAnswers: string[]) => void;
   skipIntro?: boolean;
   /** When true (default), render GrammarResults after submission instead of the locked review UI. */
@@ -124,14 +128,22 @@ const GrammarExamEngine = ({
     setSubmitted(true);
     setPhase("review");
     setCurrentIndex(0);
-    const correct = questions.reduce((acc, q, i) => {
+    let correct = 0;
+    const perQuestion = questions.map((q, i) => {
+      let ok = false;
+      let userAnswer: string | null = null;
       if (q.question_type === "fill-in-blank") {
         const correctText = q.options[q.correct_answer]?.toLowerCase().trim();
-        return acc + (fillAnswers[i]?.toLowerCase().trim() === correctText ? 1 : 0);
+        userAnswer = fillAnswers[i] ?? null;
+        ok = (fillAnswers[i]?.toLowerCase().trim() ?? "") === correctText;
+      } else {
+        userAnswer = answers[i] !== null ? String(answers[i]) : null;
+        ok = answers[i] === q.correct_answer;
       }
-      return acc + (answers[i] === q.correct_answer ? 1 : 0);
-    }, 0);
-    onComplete?.(correct, questions.length);
+      if (ok) correct++;
+      return { exam_question_id: (q as any).id, user_answer: userAnswer, is_correct: ok };
+    });
+    onComplete?.(correct, questions.length, perQuestion);
   }, [questions, answers, fillAnswers, onComplete]);
 
   const handleAnswerSelect = (qi: number, ai: number) => {
