@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { Skeleton } from "@/components/ui/skeleton";
+import ProgressBanner from "@/components/practice/ProgressBanner";
 
 interface FullPracticeState {
   active: boolean;
@@ -75,12 +76,8 @@ const GrammarVocabulary = () => {
           </div>
         </section>
 
-        <section className="border-b border-border">
-          <div className="section-container py-4 flex justify-end">
-            <Link to="/history?skill=grammar" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1.5">
-              Xem lịch sử làm bài <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+        <section className="section-container pt-6 md:pt-8">
+          <ProgressBanner skill="grammar" skillLabel="Grammar & Vocabulary" />
         </section>
 
         <section className="section-container py-8 md:py-10">

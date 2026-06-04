@@ -20,6 +20,7 @@ import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from 
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
+import ProgressBanner from "@/components/practice/ProgressBanner";
 import { saveTestResult } from "@/lib/testResults";
 import { saveExamResult } from "@/lib/saveExamResult";
 
@@ -198,12 +199,8 @@ const Reading = () => {
           </div>
         </section>
 
-        <section className="border-b border-border">
-          <div className="section-container py-4 flex justify-end">
-            <Link to="/history?skill=reading" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1.5">
-              Xem lịch sử làm bài <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+        <section className="section-container pt-6 md:pt-8">
+          <ProgressBanner skill="reading" skillLabel="Reading" />
         </section>
 
         <section className="section-container py-8 md:py-10">
