@@ -250,6 +250,12 @@ const ListeningExamEngine = ({
             partLabel={`${testTitle} – ${partLabel}`}
             onExit={onExit}
             onRetry={handleRetry}
+            partType={partType}
+            part1Questions={part1Questions}
+            part2Questions={part2Questions}
+            part3Questions={part3Questions}
+            part4Questions={part4Questions}
+            userAnswers={answers}
           />
         </main>
       </div>
