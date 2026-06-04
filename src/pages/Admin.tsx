@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Shield, Database, FileSpreadsheet, BookOpen, Combine } from "lucide-react";
+import { Shield, Database, FileSpreadsheet, BookOpen, Combine, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
 import QuestionManager from "@/components/admin/QuestionManager";
 import ImportCenter from "@/components/admin/import/ImportCenter";
 import VocabManager from "@/components/admin/VocabManager";
 import MergeManager from "@/components/admin/merge/MergeManager";
+import StudentManager from "@/components/admin/StudentManager";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +48,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="import-center" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="import-center" className="gap-2">
                 <FileSpreadsheet className="w-4 h-4" /> Import Center
               </TabsTrigger>
@@ -56,6 +57,9 @@ const Admin = () => {
               </TabsTrigger>
               <TabsTrigger value="vocab" className="gap-2">
                 <BookOpen className="w-4 h-4" /> Từ vựng
+              </TabsTrigger>
+              <TabsTrigger value="students" className="gap-2">
+                <Users className="w-4 h-4" /> Người dùng
               </TabsTrigger>
               <TabsTrigger value="legacy" className="gap-2">
                 <Database className="w-4 h-4" /> Quản lý bộ đề cũ
@@ -72,6 +76,10 @@ const Admin = () => {
 
             <TabsContent value="vocab">
               <VocabManager />
+            </TabsContent>
+
+            <TabsContent value="students">
+              <StudentManager />
             </TabsContent>
 
             <TabsContent value="legacy">
