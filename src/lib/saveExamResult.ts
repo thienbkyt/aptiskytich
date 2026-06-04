@@ -95,42 +95,55 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
 async function updateLearningStreak(userId: string) {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const { data } = await supabase
+
+    const { data: existing, error: selErr } = await supabase
       .from("learning_streaks")
       .select("id,current_streak,longest_streak,last_activity_date")
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (!data) {
-      await supabase.from("learning_streaks").insert({
+    if (selErr) {
+      console.warn("[updateLearningStreak] select failed:", selErr);
+    }
+
+    if (!existing) {
+      const { error: insErr } = await supabase.from("learning_streaks").insert({
         user_id: userId,
         current_streak: 1,
         longest_streak: 1,
         last_activity_date: today,
       } as any);
+      if (insErr) console.warn("[updateLearningStreak] insert failed:", insErr);
       return;
     }
 
-    if (data.last_activity_date === today) return;
+    // Same day → nothing to update
+    if (existing.last_activity_date === today) return;
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const y = yesterday.toISOString().slice(0, 10);
-    const newCurrent = data.last_activity_date === y ? (data.current_streak || 0) + 1 : 1;
-    const newLongest = Math.max(data.longest_streak || 0, newCurrent);
+    // Compute yesterday (UTC date math is fine for day diff)
+    const todayD = new Date(today + "T00:00:00Z").getTime();
+    const lastD = existing.last_activity_date
+      ? new Date(existing.last_activity_date + "T00:00:00Z").getTime()
+      : 0;
+    const diffDays = lastD ? Math.round((todayD - lastD) / 86400000) : Infinity;
 
-    await supabase
+    const newCurrent = diffDays === 1 ? (existing.current_streak || 0) + 1 : 1;
+    const newLongest = Math.max(existing.longest_streak || 0, newCurrent);
+
+    const { error: updErr } = await supabase
       .from("learning_streaks")
       .update({
         current_streak: newCurrent,
         longest_streak: newLongest,
         last_activity_date: today,
       } as any)
-      .eq("id", data.id);
+      .eq("id", existing.id);
+    if (updErr) console.warn("[updateLearningStreak] update failed:", updErr);
   } catch (err) {
     console.warn("[updateLearningStreak] skipped:", err);
   }
 }
+
 
 /**
  * Upload a single speaking recording for the signed-in user and persist a
