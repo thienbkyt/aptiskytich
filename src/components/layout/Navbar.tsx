@@ -6,7 +6,7 @@ import {
   BookText, GraduationCap, Book, Headphones, Mic, PenLine,
   BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, type LucideIcon,
 } from "lucide-react";
-import logoImg from "@/assets/logo.png";
+import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
