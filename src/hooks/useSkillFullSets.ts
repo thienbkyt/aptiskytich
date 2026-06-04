@@ -6,7 +6,9 @@ export interface SkillFullSetItem {
   title: string;
   partCount: number;
   parts: string[];
+  examSetIds: string[];
 }
+
 
 /**
  * Fetches published exam_sets grouped by full_test_id for a specific skill.
