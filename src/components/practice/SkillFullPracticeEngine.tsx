@@ -16,6 +16,7 @@ import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import { saveExamResult } from "@/lib/saveExamResult";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -99,18 +100,29 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     setPhase("exam");
   };
 
-  const handlePartComplete = useCallback((correct?: number, total?: number) => {
+  const handlePartComplete = useCallback((
+    correct?: number,
+    total?: number,
+    perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>
+  ) => {
     if (correct !== undefined && total !== undefined) {
       setScores(prev => ({
         correct: prev.correct + correct,
         total: prev.total + total,
       }));
+      // Persist for the current part's exam_set
+      const setIdForGrammar = parts[0]?.id ?? null;
+      const examSetId = skill === "grammar_vocab" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
+      saveExamResult({
+        examSetId,
+        skill,
+        correct, total,
+        perQuestion,
+      });
     }
 
-    // For grammar, all parts combined into one engine call
     const isGrammar = skill === "grammar_vocab";
     const isLast = currentPartIndex >= parts.length - 1;
-    // Engines that render their own result screen on the final part — don't navigate to parent "completed".
     const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening");
     if (engineHandlesResults) {
       return;
@@ -119,12 +131,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setPhase("completed");
     } else {
       setCurrentPartIndex(prev => prev + 1);
-      // Writing & Listening keep the same engine mounted to preserve timer + skip intros
       if (skill !== "writing" && skill !== "listening") {
         setEngineKey(prev => prev + 1);
       }
     }
-  }, [currentPartIndex, parts.length, skill]);
+  }, [currentPartIndex, parts, skill]);
 
   // ── Loading ──
   if (phase === "loading") {
@@ -183,7 +194,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         testTitle={headerTitle}
         timeLimit={timeLimit}
         onExit={onExit}
-        onComplete={(correct, total) => handlePartComplete(correct, total)}
+        onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         showResultsOnSubmit
       />
     );
