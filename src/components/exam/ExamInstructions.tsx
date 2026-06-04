@@ -34,10 +34,11 @@ const ExamInstructions = ({
       <h1 className="text-xl font-bold text-black">
         {skillName} Practice Test
       </h1>
-      {(description || testTitle) && (
-        <p className="text-sm text-gray-500 mt-1 mb-6">{description || testTitle}</p>
+      {description ? (
+        <p className="text-sm text-gray-500 mt-1 mb-6">{description}</p>
+      ) : (
+        <div className="mb-6" />
       )}
-      {!(description || testTitle) && <div className="mb-6" />}
       <div className="flex gap-16 mb-6">
         <div>
           <p className="text-xs text-gray-500 mb-1">Number of Questions</p>
