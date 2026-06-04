@@ -126,8 +126,22 @@ const ReadingExamEngine = ({
         correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
       }
     }
+    setResultStats({ correct, total: totalQuestions });
     onComplete?.(correct, totalQuestions);
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete]);
+
+  const handleRetry = () => {
+    setSubmitted(false);
+    setResultStats(null);
+    setPhase("practice");
+    setCurrentIndex(0);
+    setTimeLeft(timeLimit);
+    setSeenQuestions(new Set());
+    setP1Answers(new Array(part1Question?.gaps.length || 0).fill(null));
+    setP2Placements((part2Question?.sections || []).map(() => ({})));
+    setP3Answers(new Array(part3Question?.statements.length || 0).fill(null));
+    setP4Answers(new Array(p4Total).fill(null));
+  };
 
   const isAnswered = (qi: number) => currentAnswers[qi] !== null;
 
