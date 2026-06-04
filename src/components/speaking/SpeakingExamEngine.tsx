@@ -440,14 +440,17 @@ const SpeakingExamEngine = ({
   // Prompt/Instructions screen
   if (phase === "prompt") {
     return (
-      <SpeakingPromptScreen
-        partNumber={partNumber}
-        totalParts={totalParts}
-        title={`Speaking Part ${partNumber}`}
-        instructions={PART_PROMPTS[partType]}
-        onNext={() => startQuestionFlow()}
-        onExit={handleExit}
-      />
+      <>
+        <SpeakingPromptScreen
+          partNumber={partNumber}
+          totalParts={totalParts}
+          title={`Speaking Part ${partNumber}`}
+          instructions={PART_PROMPTS[partType]}
+          onNext={() => startQuestionFlow()}
+          onExit={handleExit}
+        />
+        {exitDialog}
+      </>
     );
   }
 
