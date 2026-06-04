@@ -239,6 +239,23 @@ const ListeningExamEngine = ({
   }
 
 
+  if (phase === "review" && showResultsOnSubmit && resultStats) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
+        <main className="flex-1 py-10 px-4">
+          <ListeningResults
+            correct={resultStats.correct}
+            total={resultStats.total}
+            partLabel={`${testTitle} – ${partLabel}`}
+            onExit={onExit}
+            onRetry={handleRetry}
+          />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
