@@ -6,7 +6,7 @@ import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import { resolveImageUrl } from "@/lib/imageUrl";
-import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording } from "@/lib/saveExamResult";
