@@ -124,6 +124,8 @@ const Dashboard = () => {
         const grammarRows = practice.filter((r) => r.skill === "grammar");
         const readingRows = practice.filter((r) => r.skill === "reading");
         const listeningRows = practice.filter((r) => r.skill === "listening");
+        const speakingRows = practice.filter((r) => r.skill === "speaking");
+        const writingRows = practice.filter((r) => r.skill === "writing");
 
         const recentTests: RecentTest[] = tests.slice(0, 3).map((t) => ({
           date: formatDate(t.created_at),
@@ -141,9 +143,12 @@ const Dashboard = () => {
           grammarPct: calcAccuracy(grammarRows),
           readingPct: calcAccuracy(readingRows),
           listeningPct: calcAccuracy(listeningRows),
+          speakingPct: calcAccuracy(speakingRows),
+          writingPct: calcAccuracy(writingRows),
           recentTests,
           weeklyActivity,
         });
+
       } finally {
         if (!cancelled) setLoading(false);
       }
