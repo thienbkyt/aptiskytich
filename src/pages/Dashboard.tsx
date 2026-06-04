@@ -242,9 +242,9 @@ const Dashboard = () => {
             ))}
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Left column */}
-            <div className="md:col-span-2 space-y-6">
+          <div className="space-y-6">
+            {/* Main content */}
+            <div className="space-y-6">
               {/* Streak motivation */}
               <motion.div variants={fadeUp} custom={6} initial="hidden" animate="visible"
                 className="glass-card p-6 border-primary/20"
