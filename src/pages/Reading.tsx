@@ -29,6 +29,13 @@ const PARTS = [
   { id: "part4" as const, label: "Part 4", subtitle: "Long reading" },
 ];
 
+const READING_TIME: Record<string, number> = {
+  part1: 360,
+  part2: 420,
+  part3: 420,
+  part4: 900,
+};
+
 interface ExamState {
   active: boolean;
   partType: ReadingPartType;
