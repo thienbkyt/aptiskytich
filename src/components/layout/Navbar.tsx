@@ -230,6 +230,22 @@ const Navbar = () => {
                         </div>
                       </Link>
                       <Link
+                        to="/admin/students"
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive("/admin/students")
+                            ? "bg-primary/5 text-primary"
+                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Users className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">Người dùng</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Xem lịch sử người dùng</p>
+                        </div>
+                      </Link>
+                      <Link
                         to="/admin/report"
                         className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                           isActive("/admin/report")
