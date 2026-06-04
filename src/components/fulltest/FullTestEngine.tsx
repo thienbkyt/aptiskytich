@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,8 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
+import { saveTestResult } from "@/lib/testResults";
+import { getLevel, getLevelColor } from "@/data/questions";
 
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
@@ -79,6 +81,25 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
+  const savedRef = useRef(false);
+
+  // Persist final result once when the user finishes the full test.
+  useEffect(() => {
+    if (phase !== "completed" || savedRef.current) return;
+    savedRef.current = true;
+    const totalCorrect = Object.values(scores).reduce((s, v) => s + v.correct, 0);
+    const totalQ = Object.values(scores).reduce((s, v) => s + v.total, 0);
+    if (totalQ === 0) return;
+    const skillScores: Record<string, { correct: number; total: number }> = {};
+    SKILL_ORDER.forEach((sk) => { skillScores[sk] = scores[sk]; });
+    saveTestResult({
+      correct: totalCorrect,
+      total: totalQ,
+      skill: "full_test",
+      testId: testId,
+      skillScores,
+    });
+  }, [phase, scores, testId]);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
@@ -226,6 +247,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   if (phase === "completed") {
     const totalCorrect = Object.values(scores).reduce((s, v) => s + v.correct, 0);
     const totalQ = Object.values(scores).reduce((s, v) => s + v.total, 0);
+    // Overall band level = average of per-skill levels (skills with answers only).
+    const skillPercents = SKILL_ORDER
+      .map((sk) => scores[sk])
+      .filter((s) => s.total > 0)
+      .map((s) => s.correct / s.total);
+    const avgPct = skillPercents.length
+      ? skillPercents.reduce((a, b) => a + b, 0) / skillPercents.length
+      : 0;
+    const overallLevel = totalQ > 0 ? getLevel(Math.round(avgPct * 100), 100) : "—";
+
     return (
       <div className="min-h-[70vh]">
         <div className="flex items-center mb-6">
@@ -234,17 +265,38 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           </button>
         </div>
         <div className="max-w-xl mx-auto text-center py-12">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Trophy className="w-8 h-8 text-primary" />
+          </div>
           <h2 className="text-2xl font-heading font-bold text-foreground mb-2">Hoàn thành bài thi thử!</h2>
           <p className="text-muted-foreground mb-6">{testTitle}</p>
-          <div className="bg-card border border-border rounded-xl p-6 mb-6 space-y-3">
+
+          {totalQ > 0 && (
+            <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3 mb-6">
+              <span className="text-sm font-medium text-muted-foreground">Trình độ tổng thể:</span>
+              <span className={`text-lg font-heading font-extrabold ${getLevelColor(overallLevel)}`}>{overallLevel}</span>
+            </div>
+          )}
+
+          <div className="bg-card border border-border rounded-xl p-6 mb-6 space-y-3 text-left">
             {SKILL_ORDER.map((skill) => {
               const s = scores[skill];
+              const Icon = SKILL_ICONS[skill];
+              const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+              const lvl = s.total > 0 ? getLevel(s.correct, s.total) : null;
               return (
                 <div key={skill} className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-foreground">{SKILL_LABELS[skill]}</span>
+                  <span className="flex items-center gap-2 font-medium text-foreground">
+                    <Icon className="w-4 h-4 text-muted-foreground" />
+                    {SKILL_LABELS[skill]}
+                  </span>
                   <span className="text-muted-foreground">
-                    {s.total > 0 ? `${s.correct}/${s.total}` : "Đã hoàn thành"}
+                    {s.total > 0 ? (
+                      <>
+                        {s.correct}/{s.total} • {pct}%{" "}
+                        <span className={`font-bold ${lvl ? getLevelColor(lvl) : ""}`}>{lvl}</span>
+                      </>
+                    ) : "Đã hoàn thành"}
                   </span>
                 </div>
               );
@@ -256,7 +308,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               </div>
             )}
           </div>
-          <Button onClick={onExit} className="bg-primary hover:bg-brand-brown text-white">
+          <Button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             Quay lại danh sách đề
           </Button>
         </div>

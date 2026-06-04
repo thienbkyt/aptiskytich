@@ -4,9 +4,7 @@ import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
-import SpeakingResults from "./SpeakingResults";
 import SpeakingMicCheck from "./SpeakingMicCheck";
-import { useExamGrading, blobUrlToBase64 } from "@/hooks/useExamGrading";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
@@ -92,7 +90,7 @@ const SpeakingExamEngine = ({
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
 
-  const { grading, isGrading, gradeExam } = useExamGrading();
+
 
   const partNumber = PART_NUMBERS[partType];
   const totalParts = 4;
@@ -291,30 +289,7 @@ const SpeakingExamEngine = ({
   }, [canFinish, doStopAndAdvance]);
 
   const handleFinish = async () => {
-    setPhase("grading");
     onComplete?.();
-
-    const validRecordings = recordings.filter(Boolean) as string[];
-    if (validRecordings.length === 0) {
-      setPhase("done");
-      return;
-    }
-
-    let audioBase64: string | undefined;
-    try {
-      audioBase64 = await blobUrlToBase64(validRecordings[0]);
-    } catch (e) {
-      console.error("Failed to convert audio:", e);
-    }
-
-    const questions = partType === "part1" && part1Data
-      ? part1Data.questions
-      : partType === "part2" && part2Data ? (part2Data.questions || [part2Data.prompt])
-      : partType === "part3" && part3Data ? (part3Data.questions || [part3Data.prompt])
-      : partType === "part4" && part4Data ? part4Data.questions
-      : [];
-
-    await gradeExam({ type: "speaking", audioBase64, questions, partType });
     setPhase("done");
   };
 
@@ -430,13 +405,29 @@ const SpeakingExamEngine = ({
     );
   }
 
-  // Grading / Done
+  // Grading / Done — simple submitted screen, no scoring
   if (phase === "grading" || phase === "done") {
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-        <SpeakingHeader partLabel="Speaking Results" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
-        <div className="flex-1 px-4 pt-8">
-          <SpeakingResults isGrading={isGrading} grading={grading} onExit={onExit} />
+      <div className="min-h-screen bg-background flex flex-col">
+        <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-md w-full text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
+            <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-7 h-7 text-green-500" />
+            </div>
+            <h2 className="text-xl font-heading font-bold text-foreground mb-2">
+              Your answers have been submitted.
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Cảm ơn bạn đã hoàn thành phần Speaking.
+            </p>
+            <button
+              onClick={onExit}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+            >
+              Quay lại danh sách đề
+            </button>
+          </div>
         </div>
         {exitDialog}
       </div>

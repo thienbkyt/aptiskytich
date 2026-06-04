@@ -109,7 +109,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     // For grammar, all parts combined into one engine call
     const isGrammar = skill === "grammar_vocab";
-    if (isGrammar || currentPartIndex >= parts.length - 1) {
+    const isLast = currentPartIndex >= parts.length - 1;
+    // Engines that render their own result screen on the final part — don't navigate to parent "completed".
+    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening");
+    if (engineHandlesResults) {
+      return;
+    }
+    if (isGrammar || isLast) {
       setPhase("completed");
     } else {
       setCurrentPartIndex(prev => prev + 1);
@@ -178,6 +184,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
+        showResultsOnSubmit
       />
     );
   }
@@ -185,6 +192,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const currentPart = parts[currentPartIndex];
   if (!currentPart) return null;
   const partNorm = currentPart.partNorm;
+  const isLastPart = currentPartIndex >= parts.length - 1;
 
   // Progress indicator removed — engines render full-screen like individual parts
 
@@ -232,6 +240,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         fullFlow
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
+        showResultsOnSubmit={isLastPart}
         {...listeningProps}
       />
     );
@@ -259,6 +268,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
+        showResultsOnSubmit={isLastPart}
         {...readingProps}
       />
     );

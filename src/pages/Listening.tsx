@@ -9,7 +9,6 @@ import { Headphones, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-
 import { motion } from "framer-motion";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 
-import ListeningResults from "@/components/listening/ListeningResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { ListeningPartType } from "@/components/listening/ListeningExamEngine";
@@ -20,6 +19,7 @@ import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from 
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
+import { saveTestResult } from "@/lib/testResults";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -111,7 +111,8 @@ const Listening = () => {
   };
 
   const handleComplete = (correct: number, total: number) => {
-    setExam((prev) => ({ ...prev, showResults: true, correct, total }));
+    setExam((prev) => ({ ...prev, correct, total }));
+    saveTestResult({ correct, total, skill: "listening" });
   };
 
   const handleExit = () => {
@@ -150,26 +151,10 @@ const Listening = () => {
       );
     }
 
-    if (exam.showResults) {
-      return (
-        <div className="min-h-screen flex flex-col bg-background">
-          <Navbar />
-          <main className="flex-1 pt-24 pb-20">
-            <div className="section-container">
-              <ListeningResults
-                correct={exam.correct} total={exam.total} partLabel={exam.testTitle}
-                onExit={handleExit} onRetry={() => setExam((prev) => ({ ...prev, showResults: false }))}
-              />
-            </div>
-          </main>
-        </div>
-      );
-    }
-
     return (
       <ListeningExamEngine
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={LISTENING_TIME[exam.partType] ?? 2400}
-        onExit={handleExit} onComplete={handleComplete} {...exam.engineData}
+        onExit={handleExit} onComplete={handleComplete} showResultsOnSubmit {...exam.engineData}
       />
     );
   }
