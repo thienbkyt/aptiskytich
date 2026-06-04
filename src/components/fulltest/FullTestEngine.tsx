@@ -456,6 +456,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Reading ${currentPart.part}`}
           timeLimit={SKILL_TIMES.reading}
           skipIntro={currentPartIndex > 0}
+          fullFlow
           onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
