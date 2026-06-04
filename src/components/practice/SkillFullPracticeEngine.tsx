@@ -229,6 +229,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         externalTimeLeft={listeningTimeLeft}
         onTimeTick={(t) => setListeningTimeLeft(t)}
         skipIntro={currentPartIndex > 0}
+        fullFlow
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         {...listeningProps}
@@ -254,6 +255,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
         onTimeTick={(t) => setReadingTimeLeft(t)}
         skipIntro={currentPartIndex > 0}
+        fullFlow
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
         onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
@@ -280,6 +282,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         externalTimeLeft={writingTimeLeft}
         onTimeTick={(t) => setWritingTimeLeft(t)}
         skipIntro={currentPartIndex > 0}
+        fullFlow
         isLastPart={currentPartIndex >= parts.length - 1}
         onExit={onExit}
         onComplete={() => handlePartComplete()}

@@ -430,6 +430,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           externalTimeLeft={listeningTimeLeft}
           onTimeTick={setListeningTimeLeft}
           skipIntro={currentPartIndex > 0}
+          fullFlow
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           {...listeningProps}
         />
@@ -455,6 +456,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Reading ${currentPart.part}`}
           timeLimit={SKILL_TIMES.reading}
           skipIntro={currentPartIndex > 0}
+          fullFlow
           onExit={handleExit}
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
@@ -489,6 +491,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           externalTimeLeft={writingTimeLeft}
           onTimeTick={(t) => setWritingTimeLeft(t)}
           skipIntro={currentPartIndex > 0}
+          fullFlow
           isLastPart={currentPartIndex >= partsForSkill.length - 1}
           onExit={handleExit}
           onComplete={() => handlePartComplete()}

@@ -28,6 +28,7 @@ interface ListeningExamEngineProps {
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
+  fullFlow?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -42,7 +43,7 @@ const PART_LABELS: Record<ListeningPartType, string> = {
 const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
-  onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro,
+  onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -199,10 +200,14 @@ const ListeningExamEngine = ({
         <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-4">Aptis General Listening Instructions</h1>
           <p className="font-bold mb-2">Listening</p>
-          <p className="text-sm mb-1">You will listen to seventeen recordings.</p>
+          {fullFlow && (
+            <p className="text-sm mb-1">You will listen to seventeen recordings.</p>
+          )}
           <p className="text-sm mb-1">Click on the PLAY button to listen to each recording.</p>
           <p className="text-sm mb-1">You can listen to each recording TWO TIMES ONLY.</p>
-          <p className="text-sm mb-1">You have 40 minutes to complete the test.</p>
+          <p className="text-sm mb-1">
+            You have {Math.ceil(timeLimit / 60)} minutes to complete {fullFlow ? "the test" : "this part"}.
+          </p>
           <p className="text-sm mb-1">&nbsp;</p>
           <p className="text-sm">When you click on the 'Next' button, the test will begin.</p>
         </div>

@@ -29,6 +29,7 @@ interface ReadingExamEngineProps {
   initialTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
+  fullFlow?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -37,7 +38,7 @@ const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
-  initialTimeLeft, onTimeTick, skipIntro,
+  initialTimeLeft, onTimeTick, skipIntro, fullFlow,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -199,8 +200,14 @@ const ReadingExamEngine = ({
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Reading Instructions</h1>
           <p className="font-bold mb-2">Reading</p>
-          <p className="mb-2">The test has five parts.</p>
-          <p className="mb-2">You have 35 minutes to complete the test.</p>
+          {fullFlow ? (
+            <>
+              <p className="mb-2">The test has five parts.</p>
+              <p className="mb-2">You have {Math.ceil(timeLimit / 60)} minutes to complete the test.</p>
+            </>
+          ) : (
+            <p className="mb-2">You have {Math.ceil(timeLimit / 60)} minutes to complete this part.</p>
+          )}
           <div className="h-6" />
           <p>When you click on the &apos;Next&apos; button, the test will begin.</p>
         </div>

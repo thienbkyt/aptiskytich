@@ -29,6 +29,7 @@ interface WritingExamEngineProps {
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
+  fullFlow?: boolean;
   isLastPart?: boolean;
   onExit: () => void;
   onComplete?: () => void;
@@ -47,7 +48,7 @@ const PART_LABELS: Record<WritingPartType, string> = {
 const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  externalTimeLeft, onTimeTick, skipIntro, isLastPart,
+  externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
@@ -201,8 +202,14 @@ const WritingExamEngine = ({
         <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-4">Aptis General Writing Instructions</h1>
           <p className="font-bold mb-2">Writing</p>
-          <p className="text-sm mb-1">The test has four parts and takes up to 50 minutes.</p>
-          <p className="text-sm mb-1">Recommended times: Part One: 6 min / Part Two: 12 min / Part Three: 17 min / Part Four: 15 min</p>
+          {fullFlow ? (
+            <>
+              <p className="text-sm mb-1">The test has four parts and takes up to {Math.ceil(timeLimit / 60)} minutes.</p>
+              <p className="text-sm mb-1">Recommended times: Part One: 6 min / Part Two: 12 min / Part Three: 17 min / Part Four: 15 min</p>
+            </>
+          ) : (
+            <p className="text-sm mb-1">You have {Math.ceil(timeLimit / 60)} minutes to complete this part.</p>
+          )}
           <p className="text-sm mb-1">&nbsp;</p>
           <p className="text-sm">When you click on the &apos;Next&apos; button, the test will begin.</p>
         </div>
