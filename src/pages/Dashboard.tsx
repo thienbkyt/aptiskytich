@@ -303,7 +303,12 @@ const Dashboard = () => {
 
               {/* Recent tests */}
               <motion.div variants={fadeUp} custom={8} initial="hidden" animate="visible" className="glass-card p-6">
-                <h3 className="font-heading font-bold text-foreground mb-5">Kết quả gần đây</h3>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-heading font-bold text-foreground">Kết quả gần đây</h3>
+                  <Link to="/history" className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1">
+                    Xem tất cả <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
                 {d.recentTests.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-6">
                     Bạn chưa có kết quả thi nào. Hãy thử làm bài thi thử đầu tiên!
