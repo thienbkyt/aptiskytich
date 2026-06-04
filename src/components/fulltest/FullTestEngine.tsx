@@ -430,6 +430,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           externalTimeLeft={listeningTimeLeft}
           onTimeTick={setListeningTimeLeft}
           skipIntro={currentPartIndex > 0}
+          fullFlow
           onComplete={(correct, total) => handlePartComplete(correct, total)}
           {...listeningProps}
         />
