@@ -23,6 +23,7 @@ interface GrammarExamEngineProps {
   onExit: () => void;
   onComplete?: (correct: number, total: number) => void;
   onAnswersChange?: (answers: (number | null)[], fillAnswers: string[]) => void;
+  skipIntro?: boolean;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -34,8 +35,9 @@ const GrammarExamEngine = ({
   onExit,
   onComplete,
   onAnswersChange,
+  skipIntro,
 }: GrammarExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>("instructions");
+  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(
     new Array(questions.length).fill(null)
