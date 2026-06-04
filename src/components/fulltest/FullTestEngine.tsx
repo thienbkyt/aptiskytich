@@ -231,7 +231,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     </div>
   );
 
-  const handleExit = () => setShowExitConfirm(true);
+  // Inner engines (ExamHeader / SpeakingHeader) already show the confirm popup.
+  // On confirm they call onExit → just exit the full test.
+  const handleExit = () => onExit();
 
   // ── Loading ──
   if (phase === "loading") {
