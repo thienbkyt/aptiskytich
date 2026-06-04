@@ -20,6 +20,7 @@ import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from 
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
+import ProgressBanner from "@/components/practice/ProgressBanner";
 
 const TASKS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -174,12 +175,8 @@ const Speaking = () => {
           </div>
         </section>
 
-        <section className="border-b border-border">
-          <div className="section-container py-4 flex justify-end">
-            <Link to="/history?skill=speaking" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1.5">
-              Xem lịch sử làm bài <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+        <section className="section-container pt-6 md:pt-8">
+          <ProgressBanner skill="speaking" skillLabel="Speaking" />
         </section>
 
         <section className="section-container py-8 md:py-10">

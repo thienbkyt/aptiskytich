@@ -20,6 +20,7 @@ import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from 
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
+import ProgressBanner from "@/components/practice/ProgressBanner";
 import { saveTestResult } from "@/lib/testResults";
 import { saveExamResult } from "@/lib/saveExamResult";
 
@@ -198,12 +199,8 @@ const Listening = () => {
           </div>
         </section>
 
-        <section className="border-b border-border">
-          <div className="section-container py-4 flex justify-end">
-            <Link to="/history?skill=listening" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1.5">
-              Xem lịch sử làm bài <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+        <section className="section-container pt-6 md:pt-8">
+          <ProgressBanner skill="listening" skillLabel="Listening" />
         </section>
 
         <section className="section-container py-8 md:py-10">
