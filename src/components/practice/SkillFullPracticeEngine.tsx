@@ -186,6 +186,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const currentPart = parts[currentPartIndex];
   if (!currentPart) return null;
   const partNorm = currentPart.partNorm;
+  const isLastPart = currentPartIndex >= parts.length - 1;
 
   // Progress indicator removed — engines render full-screen like individual parts
 
