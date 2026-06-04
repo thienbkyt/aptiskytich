@@ -19,6 +19,7 @@ import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from 
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
+import { saveExamResult } from "@/lib/saveExamResult";
 
 const partToTask: Record<string, WritingPartType> = {
   part1: "task1", part2: "task2", part3: "task3", part4: "task4",
@@ -46,6 +47,8 @@ interface ExamState {
   completed: boolean;
   engineData?: any;
   loadingExam: boolean;
+  examSetId?: string | null;
+  startedAt?: number;
 }
 
 interface FullPracticeState {
@@ -78,7 +81,7 @@ const Writing = () => {
   const handleStartFromDB = async (set: ExamSetRow) => {
     const normalizedPart = normalizePart(set.part);
     const partType = partToTask[normalizedPart] || "task1";
-    setExam({ active: true, partType, testTitle: set.title, completed: false, loadingExam: true });
+    setExam({ active: true, partType, testTitle: set.title, completed: false, loadingExam: true, examSetId: set.id, startedAt: Date.now() });
     const questions = await fetchExamQuestions(set.id);
     let engineData: any = {};
     switch (normalizedPart) {
@@ -110,6 +113,7 @@ const Writing = () => {
     setExam({
       active: true, partType: taskId, testTitle: `${TASKS.find(p => p.id === taskId)?.label} – Đề mẫu`,
       completed: false, engineData: mockData, loadingExam: false,
+      examSetId: null, startedAt: Date.now(),
     });
   };
 
@@ -172,7 +176,17 @@ const Writing = () => {
     return (
       <WritingExamEngine
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={WRITING_TIME[exam.partType] ?? 3000}
-        onExit={handleExit} onComplete={() => setExam((p) => ({ ...p, completed: true }))}
+        onExit={handleExit} onComplete={() => {
+          setExam((p) => {
+            const timeSpent = p.startedAt ? Math.floor((Date.now() - p.startedAt) / 1000) : undefined;
+            saveExamResult({
+              examSetId: p.examSetId ?? null,
+              skill: "writing",
+              correct: 0, total: 0, timeSpent,
+            });
+            return { ...p, completed: true };
+          });
+        }}
         {...exam.engineData}
       />
     );
