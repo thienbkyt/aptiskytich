@@ -129,8 +129,10 @@ serve(async (req) => {
         current_streak: s?.current_streak ?? 0,
         total_attempts: r?.count ?? 0,
         latest_level: r?.lastLevel ?? null,
+        is_admin: adminSet.has(u.id),
       };
     });
+
 
     // Sort by created_at desc
     students.sort(
