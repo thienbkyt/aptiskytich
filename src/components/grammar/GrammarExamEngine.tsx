@@ -25,7 +25,7 @@ interface GrammarExamEngineProps {
   onAnswersChange?: (answers: (number | null)[], fillAnswers: string[]) => void;
 }
 
-type Phase = "instructions" | "practice" | "review";
+type Phase = "instructions" | "grammar_intro" | "practice" | "review";
 
 const GrammarExamEngine = ({
   questions,
@@ -208,11 +208,33 @@ const GrammarExamEngine = ({
             totalTime={timeLimit}
             totalParts={questions.length}
             totalMinutes={Math.ceil(timeLimit / 60)}
-            onStart={() => setPhase("practice")}
+            onStart={() => setPhase("grammar_intro")}
             sections={sections}
             description={testTitle}
           />
         </div>
+      </div>
+    );
+  }
+
+  if (phase === "grammar_intro") {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+        <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
+          <h1 className="text-xl mb-6">Aptis General Grammar & Vocabulary Instructions</h1>
+          <p className="font-bold mb-2">Grammar & Vocabulary</p>
+          <p className="mb-2">The test has {questions.length} questions.</p>
+          <p className="mb-2">You have {Math.ceil(timeLimit / 60)} minutes to complete the test.</p>
+          <div className="h-6" />
+          <p>When you click on the &apos;Next&apos; button, the test will begin.</p>
+        </div>
+        <BottomNavBar
+          isFirst={false}
+          onNext={() => setPhase("practice")}
+          onPrevious={() => setPhase("instructions")}
+          sections={sections}
+        />
       </div>
     );
   }
@@ -568,12 +590,17 @@ const GrammarExamEngine = ({
 
           {/* Bottom nav */}
           <BottomNavBar
-            onPrevious={!isFirstGroup ? goPrevGroup : undefined}
-            onNext={!isLastGroup ? goNextGroup : undefined}
-            onSubmit={isLastGroup && !submitted ? handleSubmit : undefined}
-            isFirst={isFirstGroup}
-            isLast={isLastGroup}
-            submitLabel="Submit"
+            onPrevious={!isFirstGroup ? goPrevGroup : () => setPhase("grammar_intro")}
+            onNext={
+              !isLastGroup
+                ? goNextGroup
+                : !submitted
+                ? handleSubmit
+                : undefined
+            }
+            onSubmit={undefined}
+            isFirst={false}
+            isLast={false}
             sections={sections}
             bookmarkedCount={bookmarked.size}
           />
