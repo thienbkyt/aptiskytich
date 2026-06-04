@@ -234,6 +234,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         fullFlow
         onExit={onExit}
         onComplete={(correct, total) => handlePartComplete(correct, total)}
+        showResultsOnSubmit={isLastPart}
         {...listeningProps}
       />
     );
