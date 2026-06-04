@@ -11,6 +11,8 @@ import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngi
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
+import CompletionBadge from "@/components/practice/CompletionBadge";
+import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 
 interface FullPracticeState {
   active: boolean;
@@ -21,6 +23,7 @@ interface FullPracticeState {
 const GrammarVocabulary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
+  const { progress } = useUserExamProgress();
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
@@ -111,7 +114,7 @@ const GrammarVocabulary = () => {
                     </Badge>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">{set.title}</h3>
                     <p className="text-sm text-muted-foreground mb-3">30 câu liên tiếp · {set.partCount} phần</p>
-                    <div className="mb-4"><span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span></div>
+                    <div className="mb-4">{(() => { const done = set.examSetIds.filter(id => progress.has(id)).length; if (done === set.examSetIds.length && done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">Đã hoàn thành tất cả {set.partCount} Part</span>; if (done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-info bg-info/10 px-2.5 py-1 rounded-full">Đã làm {done}/{set.partCount} Part</span>; return <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>; })()}</div>
                     <div className="flex-1" />
                     <div className="flex justify-end">
                       <Button variant="ghost" size="sm" onClick={() => handleStartFullPractice(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
