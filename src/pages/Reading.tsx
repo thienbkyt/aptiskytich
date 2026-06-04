@@ -9,7 +9,6 @@ import { BookOpen, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-re
 import { motion } from "framer-motion";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 
-import ReadingResults from "@/components/reading/ReadingResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { ReadingPartType } from "@/components/reading/ReadingExamEngine";
@@ -20,6 +19,7 @@ import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from 
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
+import { saveTestResult } from "@/lib/testResults";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
