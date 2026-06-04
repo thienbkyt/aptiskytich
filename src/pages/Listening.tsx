@@ -9,7 +9,6 @@ import { Headphones, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-
 import { motion } from "framer-motion";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 
-import ListeningResults from "@/components/listening/ListeningResults";
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { ListeningPartType } from "@/components/listening/ListeningExamEngine";
@@ -20,6 +19,7 @@ import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from 
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } from "@/lib/examTransformers";
 import { Skeleton } from "@/components/ui/skeleton";
+import { saveTestResult } from "@/lib/testResults";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
