@@ -6,6 +6,7 @@ import ListeningPart1Word from "@/components/listening/ListeningPart1Word";
 import ListeningPart2Match from "@/components/listening/ListeningPart2Match";
 import ListeningPart3Conversation from "@/components/listening/ListeningPart3Conversation";
 import ListeningPart4Monologue from "@/components/listening/ListeningPart4Monologue";
+import ListeningResults from "@/components/listening/ListeningResults";
 import type {
   ListeningPart1Question,
   ListeningPart2Question,
@@ -29,6 +30,8 @@ interface ListeningExamEngineProps {
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
+  /** When true, render ListeningResults after submission instead of locked review. */
+  showResultsOnSubmit?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -44,12 +47,14 @@ const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
+  showResultsOnSubmit = false,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
+  const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
 
   const totalQuestions =
     partType === "part1" ? (part1Questions?.length || 0) :
@@ -134,8 +139,19 @@ const ListeningExamEngine = ({
       : partType === "part3" && part3Questions
       ? part3Questions.reduce((s, q) => s + q.statements.length, 0)
       : totalQuestions;
+    setResultStats({ correct, total: totalForScore });
     onComplete?.(correct, totalForScore);
   }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete]);
+
+  const handleRetry = () => {
+    setSubmitted(false);
+    setResultStats(null);
+    setPhase("practice");
+    setCurrentIndex(0);
+    setTimeLeft(timeLimit);
+    setSeenQuestions(new Set());
+    setAnswers(new Array(totalQuestions).fill(null));
+  };
 
   const handleAnswer = (qi: number, ai: any) => {
     if (submitted) return;

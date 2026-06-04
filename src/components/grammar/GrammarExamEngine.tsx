@@ -13,6 +13,7 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
+import GrammarResults from "@/components/grammar/GrammarResults";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 
@@ -24,6 +25,8 @@ interface GrammarExamEngineProps {
   onComplete?: (correct: number, total: number) => void;
   onAnswersChange?: (answers: (number | null)[], fillAnswers: string[]) => void;
   skipIntro?: boolean;
+  /** When true (default), render GrammarResults after submission instead of the locked review UI. */
+  showResultsOnSubmit?: boolean;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -36,6 +39,7 @@ const GrammarExamEngine = ({
   onComplete,
   onAnswersChange,
   skipIntro,
+  showResultsOnSubmit = true,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -237,6 +241,33 @@ const GrammarExamEngine = ({
           onPrevious={() => setPhase("instructions")}
           sections={sections}
         />
+      </div>
+    );
+  }
+
+  if (phase === "review" && showResultsOnSubmit) {
+    const handleRetry = () => {
+      setAnswers(new Array(questions.length).fill(null));
+      setFillAnswers(new Array(questions.length).fill(""));
+      setSubmitted(false);
+      setPhase("practice");
+      setCurrentIndex(0);
+      setTimeLeft(timeLimit);
+      setSeenQuestions(new Set());
+      setBookmarked(new Set());
+    };
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+        <main className="flex-1 py-10 px-4">
+          <GrammarResults
+            questions={questions}
+            answers={answers}
+            fillAnswers={fillAnswers}
+            onExit={onExit}
+            onRetry={handleRetry}
+          />
+        </main>
       </div>
     );
   }

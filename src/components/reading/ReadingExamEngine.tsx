@@ -6,6 +6,7 @@ import ReadingPart1Sentence from "@/components/reading/ReadingPart1Sentence";
 import ReadingPart2Cohesion from "@/components/reading/ReadingPart2Cohesion";
 import ReadingPart3Opinion from "@/components/reading/ReadingPart3Opinion";
 import ReadingPart4Long from "@/components/reading/ReadingPart4Long";
+import ReadingResults from "@/components/reading/ReadingResults";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
@@ -30,6 +31,8 @@ interface ReadingExamEngineProps {
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
+  /** When true, render ReadingResults after submission instead of the locked review UI. */
+  showResultsOnSubmit?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -38,13 +41,14 @@ const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
-  initialTimeLeft, onTimeTick, skipIntro, fullFlow,
+  initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
+  const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     new Array(part1Question?.gaps.length || 0).fill(null)
@@ -122,8 +126,22 @@ const ReadingExamEngine = ({
         correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
       }
     }
+    setResultStats({ correct, total: totalQuestions });
     onComplete?.(correct, totalQuestions);
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete]);
+
+  const handleRetry = () => {
+    setSubmitted(false);
+    setResultStats(null);
+    setPhase("practice");
+    setCurrentIndex(0);
+    setTimeLeft(timeLimit);
+    setSeenQuestions(new Set());
+    setP1Answers(new Array(part1Question?.gaps.length || 0).fill(null));
+    setP2Placements((part2Question?.sections || []).map(() => ({})));
+    setP3Answers(new Array(part3Question?.statements.length || 0).fill(null));
+    setP4Answers(new Array(p4Total).fill(null));
+  };
 
   const isAnswered = (qi: number) => currentAnswers[qi] !== null;
 
@@ -217,6 +235,23 @@ const ReadingExamEngine = ({
           onPrevious={() => setPhase("instructions")}
           sections={sections}
         />
+      </div>
+    );
+  }
+
+  if (phase === "review" && showResultsOnSubmit && resultStats) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
+        <main className="flex-1 py-10 px-4">
+          <ReadingResults
+            correct={resultStats.correct}
+            total={resultStats.total}
+            partLabel={`${testTitle} – ${partLabel}`}
+            onExit={onExit}
+            onRetry={handleRetry}
+          />
+        </main>
       </div>
     );
   }
