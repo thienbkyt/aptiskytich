@@ -312,7 +312,11 @@ const Dashboard = () => {
                 })()}
               </motion.div>
 
+              {/* Progress over time */}
+              <ProgressChart userId={user.id} />
+
               {/* Recent tests */}
+
               <motion.div variants={fadeUp} custom={8} initial="hidden" animate="visible" className="glass-card p-6">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="font-heading font-bold text-foreground">Kết quả gần đây</h3>
