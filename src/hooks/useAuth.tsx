@@ -24,39 +24,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        // Defer async role check to avoid deadlocks; only flip loading off after it's done
+    let checkedUserId: string | null = null;
+
+    const handleSession = (newSession: Session | null) => {
+      setSession(newSession);
+      const uid = newSession?.user?.id ?? null;
+      if (uid) {
+        if (checkedUserId === uid) {
+          // already checked for this user in this tab session
+          setLoading(false);
+          return;
+        }
+        checkedUserId = uid;
+        // Defer async role check to avoid deadlocks
         setTimeout(async () => {
-          await checkAdmin(session.user.id);
+          await checkAdmin(uid);
           setLoading(false);
         }, 0);
       } else {
+        checkedUserId = null;
         setIsAdmin(false);
         setLoading(false);
       }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      handleSession(s);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        await checkAdmin(session.user.id);
-      }
-      setLoading(false);
-    });
+    supabase.auth.getSession().then(({ data: { session: s } }) => handleSession(s));
 
     return () => subscription.unsubscribe();
   }, []);
 
   const checkAdmin = async (userId: string) => {
+    // Cache admin status in sessionStorage to avoid repeat queries on route changes / remounts
+    const cacheKey = `isAdmin:${userId}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached !== null) {
+        setIsAdmin(cached === "1");
+        return;
+      }
+    } catch {}
     const { data } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
-    setIsAdmin(!!data);
+    const admin = !!data;
+    setIsAdmin(admin);
+    try { sessionStorage.setItem(cacheKey, admin ? "1" : "0"); } catch {}
   };
 
   const signOut = async () => {
