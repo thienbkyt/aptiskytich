@@ -30,6 +30,7 @@ const GrammarVocabulary = lazy(() => import("./pages/GrammarVocabulary"));
 const FullTest = lazy(() => import("./pages/FullTest"));
 const History = lazy(() => import("./pages/History"));
 const HistoryDetail = lazy(() => import("./pages/HistoryDetail"));
+const ProgressPage = lazy(() => import("./pages/Progress"));
 
 const queryClient = new QueryClient();
 
