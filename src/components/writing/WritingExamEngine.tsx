@@ -29,6 +29,7 @@ interface WritingExamEngineProps {
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
+  fullFlow?: boolean;
   isLastPart?: boolean;
   onExit: () => void;
   onComplete?: () => void;
