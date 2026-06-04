@@ -1,18 +1,21 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Layers } from "lucide-react";
+import { ArrowRight, Layers, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SkillFullSetItem } from "@/hooks/useSkillFullSets";
+import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
 
 interface FullPartSectionProps {
   skillName: string;
   sets: SkillFullSetItem[];
   loading: boolean;
   onStart: (set: SkillFullSetItem) => void;
+  progress?: ExamProgressMap;
 }
 
-const FullPartSection = ({ skillName, sets, loading, onStart }: FullPartSectionProps) => {
+const FullPartSection = ({ skillName, sets, loading, onStart, progress }: FullPartSectionProps) => {
+
   return (
     <div>
       <div className="mb-6">
