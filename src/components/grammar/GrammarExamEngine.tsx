@@ -25,7 +25,7 @@ interface GrammarExamEngineProps {
   onAnswersChange?: (answers: (number | null)[], fillAnswers: string[]) => void;
 }
 
-type Phase = "instructions" | "practice" | "review";
+type Phase = "instructions" | "grammar_intro" | "practice" | "review";
 
 const GrammarExamEngine = ({
   questions,
