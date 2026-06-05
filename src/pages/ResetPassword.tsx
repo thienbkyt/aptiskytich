@@ -4,25 +4,26 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, ArrowRight, AlertTriangle } from "lucide-react";
+import { Lock, ArrowRight, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const translateError = (msg: string): string => {
+  const m = msg.toLowerCase();
+  if (m.includes("password should be at least") || m.includes("password should contain")) return "Mật khẩu phải có ít nhất 6 ký tự";
+  if (m.includes("same password") || m.includes("new password should be different")) return "Mật khẩu mới phải khác mật khẩu cũ";
+  if (m.includes("session") || m.includes("expired") || m.includes("invalid")) return "Phiên đặt lại đã hết hạn, vui lòng yêu cầu lại email";
+  if (m.includes("rate limit") || m.includes("too many")) return "Bạn thao tác quá nhanh, vui lòng thử lại sau";
+  return "Đã có lỗi xảy ra, vui lòng thử lại";
+};
 
 const GradientBg = ({ children }: { children: React.ReactNode }) => (
   <div
     className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
     style={{ background: "linear-gradient(180deg, #4D0D0D 0%, #CC1C01 100%)" }}
   >
-    <div
-      aria-hidden
-      className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl opacity-20"
-      style={{ background: "#FEAD5F" }}
-    />
-    <div
-      aria-hidden
-      className="pointer-events-none absolute -bottom-40 -right-32 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-20"
-      style={{ background: "#FEAD5F" }}
-    />
+    <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: "#FEAD5F" }} />
+    <div aria-hidden className="pointer-events-none absolute -bottom-40 -right-32 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-20" style={{ background: "#FEAD5F" }} />
     {children}
   </div>
 );
@@ -34,10 +35,23 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [showPw, setShowPw] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check URL for explicit Supabase errors (expired/invalid link)
+    const hash = window.location.hash || "";
+    const params = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
+    const errCode = params.get("error") || params.get("error_code");
+    const errDesc = params.get("error_description");
+    if (errCode) {
+      setLinkError(errDesc ? decodeURIComponent(errDesc.replace(/\+/g, " ")) : "Link không hợp lệ hoặc đã hết hạn");
+      setChecking(false);
+      return;
+    }
+
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setReady(true);
@@ -45,13 +59,16 @@ const ResetPassword = () => {
       }
     });
 
-    const timeout = setTimeout(() => {
-      setChecking(false);
-    }, 3000);
+    // Also accept an existing session (event may have fired before mount)
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setReady(true);
+        setChecking(false);
+      }
+    });
 
     return () => {
       listener.subscription.unsubscribe();
-      clearTimeout(timeout);
     };
   }, []);
 
@@ -68,7 +85,7 @@ const ResetPassword = () => {
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) {
-      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+      toast({ title: "Lỗi", description: translateError(error.message), variant: "destructive" });
     } else {
       toast({ title: "Thành công!", description: "Mật khẩu đã được đặt lại. Vui lòng đăng nhập lại." });
       await supabase.auth.signOut();
