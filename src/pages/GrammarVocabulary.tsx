@@ -28,6 +28,21 @@ const GrammarVocabulary = () => {
     active: false, fullTestId: "", title: "",
   });
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoStartedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const setId = searchParams.get("set");
+    if (!setId || fullLoading || autoStartedRef.current === setId) return;
+    const target = fullSets.find((s) => s.examSetIds.includes(setId) || s.fullTestId === setId);
+    if (target) {
+      autoStartedRef.current = setId;
+      handleStartFullPractice(target);
+      const next = new URLSearchParams(searchParams);
+      next.delete("set");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, fullSets, fullLoading]);
+
   const filteredSets = useMemo(() => {
     if (!searchQuery.trim()) return fullSets;
     const q = searchQuery.toLowerCase();
