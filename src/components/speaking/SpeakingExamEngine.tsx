@@ -461,6 +461,13 @@ const SpeakingExamEngine = ({
       if (partType === "part4" && part4Data) return [part4Data.topic];
       return [];
     })();
+    const samples: string[] = (() => {
+      if (partType === "part1") return part1Data?.sampleAnswers || [];
+      if (partType === "part2") return part2Data?.sampleAnswers || [];
+      if (partType === "part3") return part3Data?.sampleAnswers || [];
+      if (partType === "part4") return part4Data?.sampleAnswers || [];
+      return [];
+    })();
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
@@ -474,7 +481,7 @@ const SpeakingExamEngine = ({
                 Bài Speaking đã được nộp
               </h2>
               <p className="text-sm text-muted-foreground mb-6">
-                Cảm ơn bạn đã hoàn thành phần Speaking. Bạn có thể nghe lại bài làm bên dưới.
+                Cảm ơn bạn đã hoàn thành phần Speaking. Bạn có thể nghe lại bài làm và tham khảo bài mẫu bên dưới.
               </p>
               <button
                 onClick={onExit}
@@ -486,17 +493,30 @@ const SpeakingExamEngine = ({
 
             <div className="bg-card border border-border rounded-2xl p-6">
               <h3 className="text-base font-heading font-bold text-foreground mb-4">
-                🎙️ Bài ghi âm của bạn
+                🎙️ Xem lại từng câu
               </h3>
               <div className="space-y-4">
                 {promptsList.map((prompt, i) => (
-                  <div key={i} className="border border-border rounded-xl p-4">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">Câu {i + 1}</p>
-                    <p className="text-sm text-foreground mb-3">{prompt}</p>
-                    {recordings[i] ? (
-                      <audio controls src={recordings[i]!} className="w-full h-9" />
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic">Không có bài ghi âm</p>
+                  <div key={i} className="border border-border rounded-xl p-4 space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground mb-1">Câu {i + 1}</p>
+                      <p className="text-sm text-foreground">{prompt}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground mb-1">Bài ghi âm của bạn</p>
+                      {recordings[i] ? (
+                        <audio controls src={recordings[i]!} className="w-full h-9" />
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">Không có bài ghi âm</p>
+                      )}
+                    </div>
+
+                    {samples[i] && (
+                      <div className="bg-success/5 border border-success/20 rounded-lg p-3">
+                        <p className="text-xs font-semibold text-success mb-1">💡 Bài nói mẫu</p>
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{samples[i]}</p>
+                      </div>
                     )}
                   </div>
                 ))}
