@@ -56,6 +56,7 @@ const ListeningExamEngine = ({
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const totalQuestions =
     partType === "part1" ? (part1Questions?.length || 0) :
