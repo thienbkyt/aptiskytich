@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 interface SubmissionPart {
   prompt: string;
   answer: string;
+  sampleAnswer?: string;
 }
 
 interface WritingResultsProps {
