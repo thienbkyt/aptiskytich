@@ -17,6 +17,12 @@ import type {
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
+export interface ListeningPerQuestion {
+  exam_question_id: string;
+  user_answer: string | null;
+  is_correct: boolean;
+}
+
 interface ListeningExamEngineProps {
   partType: ListeningPartType;
   testTitle: string;
@@ -26,13 +32,15 @@ interface ListeningExamEngineProps {
   part3Questions?: ListeningPart3Question[];
   part4Questions?: ListeningPart4Clip[];
   onExit: () => void;
-  onComplete?: (correct: number, total: number) => void;
+  onComplete?: (correct: number, total: number, perQuestion?: ListeningPerQuestion[]) => void;
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
   /** When true, render ListeningResults after submission instead of locked review. */
   showResultsOnSubmit?: boolean;
+  /** DB exam_questions.id list for this part — used to persist per-question results. */
+  sourceQuestionIds?: string[];
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
