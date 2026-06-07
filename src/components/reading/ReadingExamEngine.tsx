@@ -137,8 +137,23 @@ const ReadingExamEngine = ({
       }
     }
     setResultStats({ correct, total: totalQuestions });
-    onComplete?.(correct, totalQuestions);
-  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete]);
+    // Build perQuestion: 1 row per DB source question. Reading parts compress all
+    // sub-answers into a single DB row, so we store full answer state as JSON.
+    let perQuestion: ReadingPerQuestion[] | undefined;
+    if (sourceQuestionIds && sourceQuestionIds.length > 0) {
+      const allAnswers =
+        partType === "part1" ? p1Answers
+        : partType === "part2" ? p2Placements
+        : partType === "part3" ? p3Answers
+        : p4Answers;
+      perQuestion = [{
+        exam_question_id: sourceQuestionIds[0],
+        user_answer: JSON.stringify({ partType, answers: allAnswers }),
+        is_correct: correct === totalQuestions && totalQuestions > 0,
+      }];
+    }
+    onComplete?.(correct, totalQuestions, perQuestion);
+  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
     setSubmitted(false);
