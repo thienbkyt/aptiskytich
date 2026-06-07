@@ -240,7 +240,7 @@ const ReadingExamEngine = ({
     );
   }
 
-  if (phase === "review" && showResultsOnSubmit && resultStats) {
+  if (phase === "review" && showResultsOnSubmit && resultStats && !isReviewing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
@@ -251,6 +251,7 @@ const ReadingExamEngine = ({
             partLabel={`${testTitle} – ${partLabel}`}
             onExit={onExit}
             onRetry={handleRetry}
+            onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
             partType={partType}
             part1Question={part1Question}
             part1Answers={p1Answers}
