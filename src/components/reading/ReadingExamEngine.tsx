@@ -49,6 +49,7 @@ const ReadingExamEngine = ({
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     new Array(part1Question?.gaps.length || 0).fill(null)
