@@ -1,49 +1,102 @@
-## Mục tiêu
+Mục tiêu
 
-Mở rộng trang **Người dùng** (`/admin/students`) hiện có để admin có thể:
-- Xem ai đang là admin (hiển thị badge "Admin" trong bảng)
-- Cấp quyền admin / Gỡ quyền admin trực tiếp bằng một nút
+1. Mọi bài thi (Grammar / Reading / Listening / Writing / Speaking) đều lưu chi tiết từng câu vào `exam_question_results` để xem lại sau.
+2. Trang `/history/:id` có thêm nút "Xem lại từng câu" → render lại UI làm bài (submitted=true) với câu trả lời đã lưu.
 
-Không tạo trang mới — tận dụng `AdminStudents.tsx` + `StudentManager.tsx` đã có.
+---
 
-## Các thay đổi
+## Phần 1 — Lưu kết quả vào tất cả engine
 
-### 1. Edge function mới: `set-user-role`
-- File: `supabase/functions/set-user-role/index.ts`
-- Xác thực JWT, kiểm tra caller là admin (giống `list-students`)
-- Nhận `{ user_id: string, action: 'grant' | 'revoke' }`
-- Validate bằng Zod (user_id là UUID, action thuộc enum)
-- Chặn caller tự gỡ quyền của chính mình (`callerId === user_id && action === 'revoke'` → 400)
-- Dùng service role để `INSERT ... ON CONFLICT DO NOTHING` hoặc `DELETE FROM user_roles WHERE user_id = ? AND role = 'admin'`
-- Trả về `{ ok: true, is_admin: boolean }`
+### 1.1 Grammar
 
-### 2. Cập nhật `list-students` edge function
-- Sau khi load users, query `user_roles` lấy tất cả `user_id` có `role = 'admin'`
-- Gắn thêm `is_admin: boolean` vào mỗi record trả về
+- Đã có sẵn `onComplete(correct, total, perQuestion)` + `SkillFullPracticeEngine` đã gọi `saveExamResult` kèm `perQuestion`. **Không cần đổi.**
 
-### 3. UI trong `StudentManager.tsx`
-- Thêm field `is_admin` vào interface `Student`
-- Trong bảng:
-  - Thêm cột "Quyền" (hoặc badge cạnh tên) hiển thị "Admin" (variant primary) hoặc "User" (muted)
-  - Thêm nút trong cột "Hành động": **"Cấp admin"** (mặc định) hoặc **"Gỡ admin"** (variant destructive nếu đang là admin)
-  - Bấm nút → `AlertDialog` xác nhận → gọi `supabase.functions.invoke('set-user-role', ...)` → cập nhật state tại chỗ + toast
-  - Disable nút cho chính tài khoản đang đăng nhập (không tự gỡ mình)
-- Thêm ô tìm kiếm hoạt động sẵn có; thêm filter quick toggle "Chỉ hiển thị admin" (checkbox nhỏ) — optional, có thể bỏ nếu muốn gọn
-- Loading state per-row khi đang gọi function
+### 1.2 Reading
 
-### 4. Bảo mật
-- RLS của `user_roles` vẫn giữ nguyên (deny client write) — toàn bộ thay đổi đi qua edge function với service role
-- Không cần migration
+- Mở rộng `ReadingExamEngine.onComplete` thành `(correct, total, perQuestion)`.
+- Trong `handleSubmit`, build `perQuestion` theo từng part:
+  - Part 1 (gap fill): 1 DB question → nhiều gaps. Lưu 1 row với `user_answer = JSON.stringify(p1Answers)`, `is_correct = tất cả đúng`. Dùng `part1Question.id` (cần thêm `id` vào type — đã có ở transformer).
+  - Part 2: tương tự, 1 row tổng hợp cho cả part2Question.
+  - Part 3: 1 row gộp toàn bộ statements.
+  - Part 4: 1 row gộp toàn bộ.
+  - Lưu ý: cấu trúc reading được transform mất 1:1 với từng exam_question DB row, nên dùng cách "1 row tổng cho cả part" + lưu mảng đáp án trong `user_answer` (JSON string). Trang HistoryDetail sẽ parse lại JSON.
+- Cập nhật `Reading.tsx` và `SkillFullPracticeEngine` để forward `perQuestion`.
 
-## Kỹ thuật
+### 1.3 Listening
 
-```text
-[AdminStudents page]
-   └── StudentManager
-          ├── invoke('list-students')  → trả thêm is_admin
-          └── invoke('set-user-role', { user_id, action })
-                  → edge function (admin-guard + service role)
-                      → INSERT/DELETE user_roles
-```
+- Tương tự Reading: mở rộng signature, build `perQuestion` từ `answers` state, push lên wrapper.
+- Listening dễ hơn vì mỗi câu hỏi có DB id 1:1 (qua transformer).
 
-Sau khi user xác nhận plan, switch sang build mode để triển khai.
+### 1.4 Writing
+
+- Mở rộng `onComplete` thành `(perQuestion)` — không có đúng/sai.
+- Mỗi part: 1 row với `user_answer = bài viết của user`, `is_correct = false`, dùng DB id của câu hỏi đầu tiên trong part.
+- `Writing.tsx` forward lên `saveExamResult`.
+
+### 1.5 Speaking
+
+- Đã có `saveSpeakingRecording` từng câu. Thêm `saveExamResult` với `perQuestion` ghi `user_answer = "(recorded)"` để có row để hiện trong HistoryDetail.
+- Wrapper `Speaking.tsx` thêm import + gọi `saveExamResult` từ onComplete.
+
+### 1.6 FullTestEngine
+
+- Forward `perQuestion` lên từng `saveExamResult` call cho phần con.
+
+---
+
+## Phần 2 — "Xem lại từng câu" ở HistoryDetail
+
+### 2.1 Thêm nút
+
+- Bên cạnh "Làm lại": nút "👁 Xem lại từng câu" với style outline đỏ (`border-primary text-primary`), giống nút trong `/history`.
+- Hiển thị khi có `questions.length > 0` (Grammar/Reading/Listening/Writing) hoặc recordings (Speaking).
+
+### 2.2 Chế độ review
+
+Khi click:
+
+- State `mode = "review"` trong HistoryDetail.
+- Fetch `exam_questions` theo `exam_set_id` (đã fetch sẵn).
+- Dựa vào `setInfo.skill` + `setInfo.part`, dùng transformer `examTransformers.ts` (đã có) chuyển DB rows → cấu trúc engine cần.
+- Render đúng engine với props:
+  - `submitted={true}` (cần thêm prop `initialSubmitted` + `initialAnswers` vào mỗi engine, HOẶC tạo wrapper `ReviewMode` riêng).
+  - **Phương án nhẹ hơn**: dùng lại engine với `skipIntro`, set state qua prop mới `initialAnswers` + `initialPhase="review"`.
+- Trong header (`ExamHeader`), nút "Thoát" được thay bằng "← Quay lại lịch sử" qua prop mới (hoặc tận dụng `onBackToResults` đã có → đổi label sang "Quay lại lịch sử").
+
+### 2.3 Speaking review
+
+- Speaking đã có sẵn UI list recordings trong HistoryDetail → giữ nguyên, không cần render lại engine.
+- Nút "Xem lại từng câu" cho speaking sẽ scroll xuống phần recordings (hoặc ẩn nút này cho speaking).
+
+---
+
+## Files sẽ chạm
+
+**Engines (5):**
+
+- `src/components/grammar/GrammarExamEngine.tsx` — thêm props `initialAnswers`, `initialPhase`
+- `src/components/reading/ReadingExamEngine.tsx` — mở rộng `onComplete`, thêm initial state props
+- `src/components/listening/ListeningExamEngine.tsx` — tương tự
+- `src/components/writing/WritingExamEngine.tsx` — mở rộng `onComplete`, initial state
+- `src/components/speaking/SpeakingExamEngine.tsx` — thêm `saveExamResult` call
+
+**Wrappers (5):**
+
+- `src/pages/Reading.tsx`, `Listening.tsx`, `Writing.tsx`, `Speaking.tsx`
+- `src/components/practice/SkillFullPracticeEngine.tsx`
+- `src/components/fulltest/FullTestEngine.tsx`
+
+**History:**
+
+- `src/pages/HistoryDetail.tsx` — thêm mode review, render engine với initial state
+
+---
+
+## Cảnh báo & câu hỏi cho bạn
+
+1. **Reading Part 1–4 không 1:1 với DB rows.** Cách lưu sẽ là "1 row gộp / part" với `user_answer = JSON`. OK chứ?
+2. **Engine initial state**: thêm prop `initialAnswers` + `initialPhase="review"` vào từng engine. Đơn giản hơn nhiều so với tạo component review riêng.
+3. **Speaking review**: chỉ hiện list recordings (đã có), không render lại SpeakingExamEngine. OK chứ?
+4. Quy mô: ~10 file, ~600 dòng đổi. Tôi sẽ làm trong 1 lượt nếu bạn duyệt plan.
+
+Bạn duyệt plan này hay muốn điều chỉnh điểm nào trước khi tôi code?
