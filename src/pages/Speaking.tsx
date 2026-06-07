@@ -74,12 +74,13 @@ const Speaking = () => {
     const partType = normalizePart(set.part) as SpeakingPartType;
     setExam({ active: true, partType, testTitle: set.title, loadingExam: true, ...( { examSetId: set.id } as any) });
     const questions = await fetchExamQuestions(set.id);
-    let engineData: any = {};
+    const sourceQuestionIds = questions.map((q: any) => q.id);
+    let engineData: any = { sourceQuestionIds };
     switch (partType) {
-      case "part1": engineData = { part1Data: toSpeakingPart1(questions) }; break;
-      case "part2": engineData = { part2Data: toSpeakingPart2(questions) }; break;
-      case "part3": engineData = { part3Data: toSpeakingPart3(questions) }; break;
-      case "part4": engineData = { part4Data: toSpeakingPart4(questions) }; break;
+      case "part1": engineData.part1Data = toSpeakingPart1(questions); break;
+      case "part2": engineData.part2Data = toSpeakingPart2(questions); break;
+      case "part3": engineData.part3Data = toSpeakingPart3(questions); break;
+      case "part4": engineData.part4Data = toSpeakingPart4(questions); break;
     }
     setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };

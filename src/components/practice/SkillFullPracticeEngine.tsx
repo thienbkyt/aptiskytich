@@ -209,7 +209,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   if (skill === "speaking") {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
-    const speakingProps: any = {};
+    const speakingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
       case "part1": speakingProps.part1Data = toSpeakingPart1(currentPart.questions); break;
       case "part2": speakingProps.part2Data = toSpeakingPart2(currentPart.questions); break;
@@ -222,6 +222,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
+        examSetId={currentPart.id}
         onExit={onExit}
         onComplete={() => handlePartComplete()}
         skipIntro={currentPartIndex > 0}
@@ -232,7 +233,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   if (skill === "listening") {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
-    const listeningProps: any = {};
+    const listeningProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
       case "part1": listeningProps.part1Questions = toListeningPart1(currentPart.questions); break;
       case "part2": listeningProps.part2Questions = toListeningPart2(currentPart.questions); break;
@@ -250,7 +251,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         skipIntro={currentPartIndex > 0}
         fullFlow
         onExit={onExit}
-        onComplete={(correct, total) => handlePartComplete(correct, total)}
+        onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         showResultsOnSubmit={isLastPart}
         {...listeningProps}
       />
@@ -259,7 +260,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   if (skill === "reading") {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
-    const readingProps: any = {};
+    const readingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
       case "part1": readingProps.part1Question = toReadingPart1(currentPart.questions); break;
       case "part2": readingProps.part2Question = toReadingPart2(currentPart.questions); break;
@@ -277,7 +278,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         skipIntro={currentPartIndex > 0}
         fullFlow
         onExit={onExit}
-        onComplete={(correct, total) => handlePartComplete(correct, total)}
+        onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
         showResultsOnSubmit={isLastPart}
         {...readingProps}
@@ -287,7 +288,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   if (skill === "writing") {
     const writingPartType = partNorm.replace("part", "task") as "task1" | "task2" | "task3" | "task4";
-    const writingProps: any = {};
+    const writingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partNorm) {
       case "part1": writingProps.part1Data = toWritingPart1(currentPart.questions); break;
       case "part2": writingProps.part2Data = toWritingPart2(currentPart.questions); break;
@@ -306,7 +307,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         fullFlow
         isLastPart={currentPartIndex >= parts.length - 1}
         onExit={onExit}
-        onComplete={() => handlePartComplete()}
+        onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
         onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
         {...writingProps}
       />
