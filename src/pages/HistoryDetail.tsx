@@ -209,7 +209,7 @@ const HistoryDetail = () => {
 
               {/* Speaking recordings */}
               {skill === "speaking" && (
-                <div className="glass-card p-6 mb-6">
+                <div id="review-section" className="glass-card p-6 mb-6">
                   <h2 className="font-heading font-bold text-foreground mb-4">Bài ghi âm</h2>
                   {recordings.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Không có file ghi âm cho lần thi này.</p>
@@ -237,7 +237,7 @@ const HistoryDetail = () => {
 
               {/* Per-question list */}
               {skill !== "speaking" && questions.length > 0 && (
-                <div className="glass-card p-6 mb-6">
+                <div id="review-section" className="glass-card p-6 mb-6">
                   <h2 className="font-heading font-bold text-foreground mb-4">Chi tiết câu hỏi</h2>
                   <div className="space-y-5">
                     {questions.map((q, idx) => {
