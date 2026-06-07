@@ -5,7 +5,7 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -275,7 +275,24 @@ const HistoryDetail = () => {
                             </div>
                           )}
                           {q.user_answer && (!opts || opts.length === 0) && (
-                            <p className="text-xs text-muted-foreground mb-2">Đáp án của bạn: <span className="text-foreground">{q.user_answer}</span></p>
+                            <div className="text-xs text-muted-foreground mb-2">
+                              <span>Đáp án của bạn: </span>
+                              {(() => {
+                                const raw = q.user_answer!;
+                                try {
+                                  const parsed = JSON.parse(raw);
+                                  if (Array.isArray(parsed)) {
+                                    return <span className="text-foreground">{parsed.map((v, i) => `${i + 1}. ${v ?? "—"}`).join("  •  ")}</span>;
+                                  }
+                                  if (parsed && typeof parsed === "object") {
+                                    return <span className="text-foreground">{Object.entries(parsed).map(([k, v]) => `${k}: ${v ?? "—"}`).join("  •  ")}</span>;
+                                  }
+                                  return <span className="text-foreground whitespace-pre-wrap">{String(parsed)}</span>;
+                                } catch {
+                                  return <span className="text-foreground whitespace-pre-wrap">{raw}</span>;
+                                }
+                              })()}
+                            </div>
                           )}
                           {q.explanation && (
                             <div className="mt-2 text-xs text-muted-foreground bg-muted/40 rounded-md p-2.5">
@@ -322,7 +339,19 @@ const HistoryDetail = () => {
                 </div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex flex-wrap justify-end gap-3">
+                {(questions.length > 0 || recordings.length > 0) && (
+                  <Button
+                    variant="outline"
+                    className="gap-2 border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                    onClick={() => {
+                      const el = document.getElementById("review-section");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                  >
+                    <Eye className="w-4 h-4" /> Xem lại từng câu
+                  </Button>
+                )}
                 <Link to={SKILL_ROUTES[skill] || "/practice"}>
                   <Button className="gap-2"><RotateCcw className="w-4 h-4" />Làm lại</Button>
                 </Link>
