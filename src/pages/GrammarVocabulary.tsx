@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,21 @@ const GrammarVocabulary = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoStartedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const setId = searchParams.get("set");
+    if (!setId || fullLoading || autoStartedRef.current === setId) return;
+    const target = fullSets.find((s) => s.examSetIds.includes(setId) || s.fullTestId === setId);
+    if (target) {
+      autoStartedRef.current = setId;
+      handleStartFullPractice(target);
+      const next = new URLSearchParams(searchParams);
+      next.delete("set");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, fullSets, fullLoading]);
 
   const filteredSets = useMemo(() => {
     if (!searchQuery.trim()) return fullSets;

@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,21 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoStartedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const setId = searchParams.get("set");
+    if (!setId || loading || autoStartedRef.current === setId) return;
+    const target = examSets.find((s) => s.id === setId);
+    if (target) {
+      autoStartedRef.current = setId;
+      handleStartFromDB(target);
+      const next = new URLSearchParams(searchParams);
+      next.delete("set");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, examSets, loading]);
 
   const filteredSets = useMemo(() => {
     if (activeTab === "full") return [];
