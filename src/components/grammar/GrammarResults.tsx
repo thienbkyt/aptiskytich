@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, ArrowLeft, RotateCcw } from "lucide-react";
+import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Question } from "@/data/questions";
 import { getLevel, getLevelColor } from "@/data/questions";
@@ -10,6 +10,8 @@ interface GrammarResultsProps {
   fillAnswers: string[];
   onExit: () => void;
   onRetry: () => void;
+  /** When provided, render a "Xem lại từng câu →" button to review on the practice UI. */
+  onReview?: () => void;
 }
 
 const GrammarResults = ({
@@ -18,6 +20,7 @@ const GrammarResults = ({
   fillAnswers,
   onExit,
   onRetry,
+  onReview,
 }: GrammarResultsProps) => {
   const correct = questions.reduce((acc, q, i) => {
     if (q.question_type === "fill-in-blank") {
@@ -63,11 +66,17 @@ const GrammarResults = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-3 mt-8">
+        <div className="flex items-center justify-center gap-3 mt-8 flex-wrap">
           <Button variant="outline" onClick={onExit} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
             Quay lại
           </Button>
+          {onReview && (
+            <Button variant="secondary" onClick={onReview} className="gap-2">
+              <Eye className="w-4 h-4" />
+              Xem lại từng câu →
+            </Button>
+          )}
           <Button onClick={onRetry} className="gap-2">
             <RotateCcw className="w-4 h-4" />
             Làm lại
