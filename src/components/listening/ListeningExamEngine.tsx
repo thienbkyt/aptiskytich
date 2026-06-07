@@ -56,7 +56,7 @@ const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
-  showResultsOnSubmit = false,
+  showResultsOnSubmit = false, sourceQuestionIds,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
