@@ -269,7 +269,12 @@ const ReadingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+      <ExamHeader
+        skillLabel="Reading Đề 01"
+        partLabel={partLabel}
+        onExit={onExit}
+        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+      />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence
