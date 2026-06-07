@@ -240,7 +240,7 @@ const ListeningExamEngine = ({
   }
 
 
-  if (phase === "review" && showResultsOnSubmit && resultStats) {
+  if (phase === "review" && showResultsOnSubmit && resultStats && !isReviewing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
@@ -251,6 +251,7 @@ const ListeningExamEngine = ({
             partLabel={`${testTitle} – ${partLabel}`}
             onExit={onExit}
             onRetry={handleRetry}
+            onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
             partType={partType}
             part1Questions={part1Questions}
             part2Questions={part2Questions}
