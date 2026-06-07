@@ -16,6 +16,12 @@ import type {
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
+export interface ReadingPerQuestion {
+  exam_question_id: string;
+  user_answer: string | null;
+  is_correct: boolean;
+}
+
 interface ReadingExamEngineProps {
   partType: ReadingPartType;
   testTitle: string;
@@ -25,7 +31,7 @@ interface ReadingExamEngineProps {
   part3Question?: ReadingOpinionQuestion;
   part4Question?: ReadingLongQuestion;
   onExit: () => void;
-  onComplete?: (correct: number, total: number) => void;
+  onComplete?: (correct: number, total: number, perQuestion?: ReadingPerQuestion[]) => void;
   onPreviousPart?: () => void;
   initialTimeLeft?: number;
   onTimeTick?: (t: number) => void;
@@ -33,6 +39,8 @@ interface ReadingExamEngineProps {
   fullFlow?: boolean;
   /** When true, render ReadingResults after submission instead of the locked review UI. */
   showResultsOnSubmit?: boolean;
+  /** DB exam_questions.id for each source row in this part (used to persist per-question results). */
+  sourceQuestionIds?: string[];
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
