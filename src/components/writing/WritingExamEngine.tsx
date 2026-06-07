@@ -18,6 +18,12 @@ import type {
 
 export type WritingPartType = "task1" | "task2" | "task3" | "task4";
 
+export interface WritingPerQuestion {
+  exam_question_id: string;
+  user_answer: string | null;
+  is_correct: boolean;
+}
+
 interface WritingExamEngineProps {
   partType: WritingPartType;
   testTitle: string;
@@ -32,8 +38,10 @@ interface WritingExamEngineProps {
   fullFlow?: boolean;
   isLastPart?: boolean;
   onExit: () => void;
-  onComplete?: () => void;
+  onComplete?: (perQuestion?: WritingPerQuestion[]) => void;
   onPrevious?: () => void;
+  /** DB exam_questions.id list — used to persist the user's essay per part. */
+  sourceQuestionIds?: string[];
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
