@@ -119,13 +119,14 @@ const Reading = () => {
     });
   };
 
-  const handleComplete = (correct: number, total: number) => {
+  const handleComplete = (correct: number, total: number, perQuestion?: any[]) => {
     setExam((prev) => {
       const timeSpent = prev.startedAt ? Math.floor((Date.now() - prev.startedAt) / 1000) : undefined;
       saveExamResult({
         examSetId: prev.examSetId ?? null,
         skill: "reading",
         correct, total, timeSpent,
+        perQuestion,
       });
       return { ...prev, correct, total };
     });
