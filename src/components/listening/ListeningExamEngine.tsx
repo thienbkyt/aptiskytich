@@ -56,6 +56,7 @@ const ListeningExamEngine = ({
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const totalQuestions =
     partType === "part1" ? (part1Questions?.length || 0) :
@@ -239,7 +240,7 @@ const ListeningExamEngine = ({
   }
 
 
-  if (phase === "review" && showResultsOnSubmit && resultStats) {
+  if (phase === "review" && showResultsOnSubmit && resultStats && !isReviewing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
@@ -250,6 +251,7 @@ const ListeningExamEngine = ({
             partLabel={`${testTitle} – ${partLabel}`}
             onExit={onExit}
             onRetry={handleRetry}
+            onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
             partType={partType}
             part1Questions={part1Questions}
             part2Questions={part2Questions}
@@ -264,7 +266,12 @@ const ListeningExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
+      <ExamHeader
+        skillLabel="Listening"
+        partLabel={partLabel}
+        onExit={onExit}
+        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+      />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Questions && (
           <ListeningPart1Word

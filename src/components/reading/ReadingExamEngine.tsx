@@ -49,6 +49,7 @@ const ReadingExamEngine = ({
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     new Array(part1Question?.gaps.length || 0).fill(null)
@@ -239,7 +240,7 @@ const ReadingExamEngine = ({
     );
   }
 
-  if (phase === "review" && showResultsOnSubmit && resultStats) {
+  if (phase === "review" && showResultsOnSubmit && resultStats && !isReviewing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
@@ -250,6 +251,7 @@ const ReadingExamEngine = ({
             partLabel={`${testTitle} – ${partLabel}`}
             onExit={onExit}
             onRetry={handleRetry}
+            onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
             partType={partType}
             part1Question={part1Question}
             part1Answers={p1Answers}
@@ -267,7 +269,12 @@ const ReadingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+      <ExamHeader
+        skillLabel="Reading Đề 01"
+        partLabel={partLabel}
+        onExit={onExit}
+        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+      />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence

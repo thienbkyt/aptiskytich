@@ -227,18 +227,18 @@ const WritingExamEngine = ({
   if (phase === "grading" || phase === "results") {
     const submission = (() => {
       if (partType === "task1" && part1Data) {
-        return part1Data.questions.map((q, i) => ({ prompt: q.text, answer: shortAnswers[i] || "" }));
+        return part1Data.questions.map((q, i) => ({ prompt: q.text, answer: shortAnswers[i] || "", sampleAnswer: q.sampleAnswer }));
       }
       if (partType === "task2" && part2Data) {
-        return [{ prompt: `${part2Data.instruction}\n${part2Data.question || ""}`.trim(), answer: textAnswer }];
+        return [{ prompt: `${part2Data.instruction}\n${part2Data.question || ""}`.trim(), answer: textAnswer, sampleAnswer: part2Data.sampleAnswer }];
       }
       if (partType === "task3" && part3Data) {
-        return part3Data.questions.map((q, i) => ({ prompt: q.text, answer: part3Answers[i] || "" }));
+        return part3Data.questions.map((q, i) => ({ prompt: q.text, answer: part3Answers[i] || "", sampleAnswer: q.sampleAnswer }));
       }
       if (partType === "task4" && part4Data) {
         return [
-          { prompt: `Informal Email: ${part4Data.informalEmail.instruction}`, answer: informalAnswer },
-          { prompt: `Formal Email: ${part4Data.formalEmail.instruction}`, answer: formalAnswer },
+          { prompt: `Informal Email: ${part4Data.informalEmail.instruction}`, answer: informalAnswer, sampleAnswer: part4Data.informalEmail.sampleAnswer },
+          { prompt: `Formal Email: ${part4Data.formalEmail.instruction}`, answer: formalAnswer, sampleAnswer: part4Data.formalEmail.sampleAnswer },
         ];
       }
       return [];

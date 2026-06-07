@@ -57,6 +57,7 @@ const GrammarExamEngine = ({
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
+  const [isReviewing, setIsReviewing] = useState(false);
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
   const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching", "collocation"] as const;
@@ -257,7 +258,7 @@ const GrammarExamEngine = ({
     );
   }
 
-  if (phase === "review" && showResultsOnSubmit) {
+  if (phase === "review" && showResultsOnSubmit && !isReviewing) {
     const handleRetry = () => {
       setAnswers(new Array(questions.length).fill(null));
       setFillAnswers(new Array(questions.length).fill(""));
@@ -267,6 +268,7 @@ const GrammarExamEngine = ({
       setTimeLeft(timeLimit);
       setSeenQuestions(new Set());
       setBookmarked(new Set());
+      setIsReviewing(false);
     };
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -278,6 +280,7 @@ const GrammarExamEngine = ({
             fillAnswers={fillAnswers}
             onExit={onExit}
             onRetry={handleRetry}
+            onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
           />
         </main>
       </div>
@@ -312,7 +315,12 @@ const GrammarExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+      <ExamHeader
+        skillLabel="Grammar & Vocabulary"
+        partLabel={testTitle}
+        onExit={onExit}
+        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+      />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         <div className="min-h-[70vh] flex flex-col pb-20">
           {/* Top bar */}

@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 interface SubmissionPart {
   prompt: string;
   answer: string;
+  sampleAnswer?: string;
 }
 
 interface WritingResultsProps {
@@ -50,17 +51,28 @@ const WritingResults = ({ isGrading, grading, onExit, submission }: WritingResul
       {/* Submission display */}
       {submission && submission.length > 0 && (
         <div className="bg-card border border-border rounded-2xl p-6">
-          <h3 className="text-sm font-heading font-bold text-foreground mb-4">📝 Đề bài & Bài làm của bạn</h3>
+          <h3 className="text-sm font-heading font-bold text-foreground mb-4">📝 Đề bài, bài làm & bài viết mẫu</h3>
           <div className="space-y-4">
             {submission.map((s, i) => (
-              <div key={i} className="border border-border rounded-xl p-4">
-                <p className="text-xs font-semibold text-muted-foreground mb-1">Đề {i + 1}</p>
-                <p className="text-sm text-foreground mb-3 whitespace-pre-wrap">{s.prompt}</p>
-                <div className="bg-muted/40 rounded-lg p-3 max-h-64 overflow-y-auto">
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                    {s.answer || <span className="text-muted-foreground italic">(không có nội dung)</span>}
-                  </p>
+              <div key={i} className="border border-border rounded-xl p-4 space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Đề {i + 1}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{s.prompt}</p>
                 </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">Bài làm của bạn</p>
+                  <div className="bg-muted/40 rounded-lg p-3 max-h-64 overflow-y-auto">
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                      {s.answer || <span className="text-muted-foreground italic">(không có nội dung)</span>}
+                    </p>
+                  </div>
+                </div>
+                {s.sampleAnswer && (
+                  <div className="bg-success/5 border border-success/20 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-success mb-1">💡 Bài viết mẫu</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{s.sampleAnswer}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

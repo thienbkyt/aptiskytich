@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import ExamFinishScreen from "./ExamFinishScreen";
 
 interface ExamHeaderProps {
@@ -8,18 +8,20 @@ interface ExamHeaderProps {
   onExit?: () => void;
   /** If true, skip the confirm popup and exit immediately on click. */
   immediateExit?: boolean;
+  /** When provided, render a "← Quay lại kết quả" button (review mode). */
+  onBackToResults?: () => void;
 }
 
-const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false }: ExamHeaderProps) => {
+const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBackToResults }: ExamHeaderProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleClick = () => {
     if (!onExit) return;
-    if (immediateExit) {
+    // In review mode, exit immediately — the test is already submitted.
+    if (immediateExit || onBackToResults) {
       onExit();
       return;
     }
-    // Open confirm dialog — keep timers/audio running in background
     setShowConfirm(true);
   };
 
@@ -30,16 +32,28 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false }: Ex
           <p className="text-xs text-white/70">{skillLabel}</p>
           <p className="text-sm font-bold">{partLabel}</p>
         </div>
-        {onExit && (
-          <button
-            type="button"
-            onClick={handleClick}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
-          >
-            <LogOut className="w-4 h-4" />
-            Thoát
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onBackToResults && (
+            <button
+              type="button"
+              onClick={onBackToResults}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Quay lại kết quả
+            </button>
+          )}
+          {onExit && (
+            <button
+              type="button"
+              onClick={handleClick}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              Thoát
+            </button>
+          )}
+        </div>
       </div>
       {showConfirm && (
         <ExamFinishScreen
