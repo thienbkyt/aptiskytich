@@ -181,9 +181,19 @@ const HistoryDetail = () => {
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
         <div className="section-container max-w-4xl">
-          <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4">
-            <ArrowLeft className="w-4 h-4" /> Quay lại lịch sử
-          </Link>
+          {reviewing ? (
+            <button
+              type="button"
+              onClick={() => setReviewing(false)}
+              className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4"
+            >
+              <ArrowLeft className="w-4 h-4" /> Quay lại kết quả
+            </button>
+          ) : (
+            <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4">
+              <ArrowLeft className="w-4 h-4" /> Quay lại lịch sử
+            </Link>
+          )}
 
           {notFound ? (
             <div className="glass-card p-8 text-center">
