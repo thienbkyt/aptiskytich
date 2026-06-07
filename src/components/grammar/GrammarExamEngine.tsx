@@ -258,7 +258,7 @@ const GrammarExamEngine = ({
     );
   }
 
-  if (phase === "review" && showResultsOnSubmit) {
+  if (phase === "review" && showResultsOnSubmit && !isReviewing) {
     const handleRetry = () => {
       setAnswers(new Array(questions.length).fill(null));
       setFillAnswers(new Array(questions.length).fill(""));
@@ -268,6 +268,7 @@ const GrammarExamEngine = ({
       setTimeLeft(timeLimit);
       setSeenQuestions(new Set());
       setBookmarked(new Set());
+      setIsReviewing(false);
     };
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -279,6 +280,7 @@ const GrammarExamEngine = ({
             fillAnswers={fillAnswers}
             onExit={onExit}
             onRetry={handleRetry}
+            onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
           />
         </main>
       </div>
