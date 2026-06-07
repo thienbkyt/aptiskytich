@@ -315,7 +315,12 @@ const GrammarExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+      <ExamHeader
+        skillLabel="Grammar & Vocabulary"
+        partLabel={testTitle}
+        onExit={onExit}
+        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+      />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         <div className="min-h-[70vh] flex flex-col pb-20">
           {/* Top bar */}
