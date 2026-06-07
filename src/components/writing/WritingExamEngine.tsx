@@ -137,17 +137,28 @@ const WritingExamEngine = ({
     return { text: "", questions: [] };
   };
 
+  const buildPerQuestion = (): WritingPerQuestion[] | undefined => {
+    if (!sourceQuestionIds || sourceQuestionIds.length === 0) return undefined;
+    const { text } = getTextAndQuestions();
+    return [{
+      exam_question_id: sourceQuestionIds[0],
+      user_answer: text,
+      is_correct: false,
+    }];
+  };
+
   const handleSubmit = useCallback(async () => {
     setSubmitted(true);
+    const perQuestion = buildPerQuestion();
 
     // Full-test mode (parent passes isLastPart): skip grading/results entirely
     if (isLastPart !== undefined) {
-      onComplete?.();
+      onComplete?.(perQuestion);
       return;
     }
 
     setPhase("grading");
-    onComplete?.();
+    onComplete?.(perQuestion);
 
     const { text, questions } = getTextAndQuestions();
 
@@ -159,7 +170,7 @@ const WritingExamEngine = ({
     });
 
     setPhase("results");
-  }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart]);
+  }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
 
   const partLabel = PART_LABELS[partType];
 
