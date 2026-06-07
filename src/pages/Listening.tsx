@@ -85,12 +85,13 @@ const Listening = () => {
     const partType = normalizePart(set.part) as ListeningPartType;
     setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now() }));
     const questions = await fetchExamQuestions(set.id);
-    let engineData: any = {};
+    const sourceQuestionIds = questions.map((q: any) => q.id);
+    let engineData: any = { sourceQuestionIds };
     switch (partType) {
-      case "part1": engineData = { part1Questions: toListeningPart1(questions) }; break;
-      case "part2": engineData = { part2Questions: toListeningPart2(questions) }; break;
-      case "part3": engineData = { part3Questions: toListeningPart3(questions) }; break;
-      case "part4": engineData = { part4Questions: toListeningPart4(questions) }; break;
+      case "part1": engineData.part1Questions = toListeningPart1(questions); break;
+      case "part2": engineData.part2Questions = toListeningPart2(questions); break;
+      case "part3": engineData.part3Questions = toListeningPart3(questions); break;
+      case "part4": engineData.part4Questions = toListeningPart4(questions); break;
     }
     setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };
@@ -119,13 +120,14 @@ const Listening = () => {
     });
   };
 
-  const handleComplete = (correct: number, total: number) => {
+  const handleComplete = (correct: number, total: number, perQuestion?: any[]) => {
     setExam((prev) => {
       const timeSpent = prev.startedAt ? Math.floor((Date.now() - prev.startedAt) / 1000) : undefined;
       saveExamResult({
         examSetId: prev.examSetId ?? null,
         skill: "listening",
         correct, total, timeSpent,
+        perQuestion,
       });
       return { ...prev, correct, total };
     });

@@ -17,6 +17,12 @@ import type {
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
+export interface ListeningPerQuestion {
+  exam_question_id: string;
+  user_answer: string | null;
+  is_correct: boolean;
+}
+
 interface ListeningExamEngineProps {
   partType: ListeningPartType;
   testTitle: string;
@@ -26,13 +32,15 @@ interface ListeningExamEngineProps {
   part3Questions?: ListeningPart3Question[];
   part4Questions?: ListeningPart4Clip[];
   onExit: () => void;
-  onComplete?: (correct: number, total: number) => void;
+  onComplete?: (correct: number, total: number, perQuestion?: ListeningPerQuestion[]) => void;
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
   /** When true, render ListeningResults after submission instead of locked review. */
   showResultsOnSubmit?: boolean;
+  /** DB exam_questions.id list for this part — used to persist per-question results. */
+  sourceQuestionIds?: string[];
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -48,7 +56,7 @@ const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
-  showResultsOnSubmit = false,
+  showResultsOnSubmit = false, sourceQuestionIds,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -142,8 +150,52 @@ const ListeningExamEngine = ({
       ? part3Questions.reduce((s, q) => s + q.statements.length, 0)
       : totalQuestions;
     setResultStats({ correct, total: totalForScore });
-    onComplete?.(correct, totalForScore);
-  }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete]);
+    // Build perQuestion: 1 row per DB source question. Listening Part1 is 1:1;
+    // Parts 2/3/4 compress all sub-answers per audio clip into one DB row, so
+    // we serialize the user's answer object for that clip.
+    let perQuestion: ListeningPerQuestion[] | undefined;
+    if (sourceQuestionIds && sourceQuestionIds.length > 0) {
+      if (partType === "part1" && part1Questions) {
+        perQuestion = part1Questions.map((q, i) => ({
+          exam_question_id: sourceQuestionIds[i] ?? sourceQuestionIds[0],
+          user_answer: answers[i] != null ? String(answers[i]) : null,
+          is_correct: answers[i] === q.correct,
+        }));
+      } else {
+        // 1 row per DB question; sourceQuestionIds[i] aligns to nth clip/exercise
+        const groupCount =
+          partType === "part2" ? (part2Questions?.length || 1)
+          : partType === "part3" ? (part3Questions?.length || 1)
+          : (part4Questions?.length || 1);
+        perQuestion = Array.from({ length: Math.min(groupCount, sourceQuestionIds.length) }, (_, i) => {
+          const ans = answers[i];
+          let groupCorrect = false;
+          if (partType === "part2" && part2Questions?.[i]) {
+            const q = part2Questions[i];
+            const a = (ans || {}) as Record<string, string>;
+            groupCorrect = q.persons.every((p) => {
+              const item = q.infoItems.find((it) => it.correctPerson === p.name);
+              return item ? a[p.name] === item.text : true;
+            });
+          } else if (partType === "part3" && part3Questions?.[i]) {
+            const q = part3Questions[i];
+            const a = (ans || {}) as Record<number, string>;
+            groupCorrect = q.statements.every((s, si) => a[si] === s.correctAnswer);
+          } else if (partType === "part4" && part4Questions?.[i]) {
+            const c = part4Questions[i];
+            const a = (ans || {}) as Record<number, number>;
+            groupCorrect = c.questions.every((qq, qi) => a[qi] === qq.correct);
+          }
+          return {
+            exam_question_id: sourceQuestionIds[i] ?? sourceQuestionIds[0],
+            user_answer: JSON.stringify({ partType, answer: ans ?? null }),
+            is_correct: groupCorrect,
+          };
+        });
+      }
+    }
+    onComplete?.(correct, totalForScore, perQuestion);
+  }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
     setSubmitted(false);

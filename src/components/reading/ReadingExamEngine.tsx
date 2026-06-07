@@ -16,6 +16,12 @@ import type {
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
+export interface ReadingPerQuestion {
+  exam_question_id: string;
+  user_answer: string | null;
+  is_correct: boolean;
+}
+
 interface ReadingExamEngineProps {
   partType: ReadingPartType;
   testTitle: string;
@@ -25,7 +31,7 @@ interface ReadingExamEngineProps {
   part3Question?: ReadingOpinionQuestion;
   part4Question?: ReadingLongQuestion;
   onExit: () => void;
-  onComplete?: (correct: number, total: number) => void;
+  onComplete?: (correct: number, total: number, perQuestion?: ReadingPerQuestion[]) => void;
   onPreviousPart?: () => void;
   initialTimeLeft?: number;
   onTimeTick?: (t: number) => void;
@@ -33,6 +39,8 @@ interface ReadingExamEngineProps {
   fullFlow?: boolean;
   /** When true, render ReadingResults after submission instead of the locked review UI. */
   showResultsOnSubmit?: boolean;
+  /** DB exam_questions.id for each source row in this part (used to persist per-question results). */
+  sourceQuestionIds?: string[];
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -42,6 +50,7 @@ const ReadingExamEngine = ({
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
+  sourceQuestionIds,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -128,8 +137,23 @@ const ReadingExamEngine = ({
       }
     }
     setResultStats({ correct, total: totalQuestions });
-    onComplete?.(correct, totalQuestions);
-  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete]);
+    // Build perQuestion: 1 row per DB source question. Reading parts compress all
+    // sub-answers into a single DB row, so we store full answer state as JSON.
+    let perQuestion: ReadingPerQuestion[] | undefined;
+    if (sourceQuestionIds && sourceQuestionIds.length > 0) {
+      const allAnswers =
+        partType === "part1" ? p1Answers
+        : partType === "part2" ? p2Placements
+        : partType === "part3" ? p3Answers
+        : p4Answers;
+      perQuestion = [{
+        exam_question_id: sourceQuestionIds[0],
+        user_answer: JSON.stringify({ partType, answers: allAnswers }),
+        is_correct: correct === totalQuestions && totalQuestions > 0,
+      }];
+    }
+    onComplete?.(correct, totalQuestions, perQuestion);
+  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
     setSubmitted(false);

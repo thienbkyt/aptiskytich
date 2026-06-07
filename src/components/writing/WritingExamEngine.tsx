@@ -18,6 +18,12 @@ import type {
 
 export type WritingPartType = "task1" | "task2" | "task3" | "task4";
 
+export interface WritingPerQuestion {
+  exam_question_id: string;
+  user_answer: string | null;
+  is_correct: boolean;
+}
+
 interface WritingExamEngineProps {
   partType: WritingPartType;
   testTitle: string;
@@ -32,8 +38,10 @@ interface WritingExamEngineProps {
   fullFlow?: boolean;
   isLastPart?: boolean;
   onExit: () => void;
-  onComplete?: () => void;
+  onComplete?: (perQuestion?: WritingPerQuestion[]) => void;
   onPrevious?: () => void;
+  /** DB exam_questions.id list — used to persist the user's essay per part. */
+  sourceQuestionIds?: string[];
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
@@ -49,7 +57,7 @@ const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
-  onExit, onComplete, onPrevious,
+  onExit, onComplete, onPrevious, sourceQuestionIds,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
@@ -129,17 +137,28 @@ const WritingExamEngine = ({
     return { text: "", questions: [] };
   };
 
+  const buildPerQuestion = (): WritingPerQuestion[] | undefined => {
+    if (!sourceQuestionIds || sourceQuestionIds.length === 0) return undefined;
+    const { text } = getTextAndQuestions();
+    return [{
+      exam_question_id: sourceQuestionIds[0],
+      user_answer: text,
+      is_correct: false,
+    }];
+  };
+
   const handleSubmit = useCallback(async () => {
     setSubmitted(true);
+    const perQuestion = buildPerQuestion();
 
     // Full-test mode (parent passes isLastPart): skip grading/results entirely
     if (isLastPart !== undefined) {
-      onComplete?.();
+      onComplete?.(perQuestion);
       return;
     }
 
     setPhase("grading");
-    onComplete?.();
+    onComplete?.(perQuestion);
 
     const { text, questions } = getTextAndQuestions();
 
@@ -151,7 +170,7 @@ const WritingExamEngine = ({
     });
 
     setPhase("results");
-  }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart]);
+  }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
 
   const partLabel = PART_LABELS[partType];
 
