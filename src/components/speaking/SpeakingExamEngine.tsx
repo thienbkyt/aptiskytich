@@ -9,7 +9,7 @@ import { resolveImageUrl } from "@/lib/imageUrl";
 import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { saveSpeakingRecording } from "@/lib/saveExamResult";
+import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -27,6 +27,7 @@ interface SpeakingExamEngineProps {
   part3Data?: SpeakingPart3Data;
   part4Data?: SpeakingPart4Data;
   examSetId?: string | null;
+  sourceQuestionIds?: string[];
   onExit: () => void;
   onComplete?: () => void;
   skipIntro?: boolean;
@@ -72,7 +73,7 @@ const PART_NUMBERS: Record<SpeakingPartType, number> = {
 const SpeakingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  examSetId,
+  examSetId, sourceQuestionIds,
   onExit, onComplete, skipIntro = false,
 }: SpeakingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
@@ -308,6 +309,21 @@ const SpeakingExamEngine = ({
           } catch { /* ignore individual upload failures */ }
         })
       );
+      // Persist per-question rows (for HistoryDetail review)
+      if (sourceQuestionIds && sourceQuestionIds.length > 0) {
+        const perQuestion = sourceQuestionIds.map((qid, idx) => ({
+          exam_question_id: qid,
+          user_answer: recordings[idx] ? "(recorded)" : null,
+          is_correct: false,
+        }));
+        await saveExamResult({
+          examSetId: examSetId ?? null,
+          skill: "speaking",
+          correct: 0,
+          total: sourceQuestionIds.length,
+          perQuestion,
+        });
+      }
     } catch { /* swallow */ }
     onComplete?.();
     setPhase("done");
