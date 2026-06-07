@@ -88,12 +88,13 @@ const Writing = () => {
     const partType = partToTask[normalizedPart] || "task1";
     setExam({ active: true, partType, testTitle: set.title, completed: false, loadingExam: true, examSetId: set.id, startedAt: Date.now() });
     const questions = await fetchExamQuestions(set.id);
-    let engineData: any = {};
+    const sourceQuestionIds = questions.map((q: any) => q.id);
+    let engineData: any = { sourceQuestionIds };
     switch (normalizedPart) {
-      case "part1": engineData = { part1Data: toWritingPart1(questions) }; break;
-      case "part2": engineData = { part2Data: toWritingPart2(questions) }; break;
-      case "part3": engineData = { part3Data: toWritingPart3(questions) }; break;
-      case "part4": engineData = { part4Data: toWritingPart4(questions) }; break;
+      case "part1": engineData.part1Data = toWritingPart1(questions); break;
+      case "part2": engineData.part2Data = toWritingPart2(questions); break;
+      case "part3": engineData.part3Data = toWritingPart3(questions); break;
+      case "part4": engineData.part4Data = toWritingPart4(questions); break;
     }
     setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };
@@ -181,13 +182,14 @@ const Writing = () => {
     return (
       <WritingExamEngine
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={WRITING_TIME[exam.partType] ?? 3000}
-        onExit={handleExit} onComplete={() => {
+        onExit={handleExit} onComplete={(perQuestion) => {
           setExam((p) => {
             const timeSpent = p.startedAt ? Math.floor((Date.now() - p.startedAt) / 1000) : undefined;
             saveExamResult({
               examSetId: p.examSetId ?? null,
               skill: "writing",
-              correct: 0, total: 0, timeSpent,
+              correct: 0, total: perQuestion?.length || 0, timeSpent,
+              perQuestion,
             });
             return { ...p, completed: true };
           });
