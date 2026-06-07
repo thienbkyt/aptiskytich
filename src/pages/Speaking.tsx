@@ -63,6 +63,21 @@ const Speaking = () => {
     active: false, fullTestId: "", title: "",
   });
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoStartedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const setId = searchParams.get("set");
+    if (!setId || loading || autoStartedRef.current === setId) return;
+    const target = examSets.find((s) => s.id === setId);
+    if (target) {
+      autoStartedRef.current = setId;
+      handleStartFromDB(target);
+      const next = new URLSearchParams(searchParams);
+      next.delete("set");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, examSets, loading]);
+
   const filteredSets = useMemo(() => {
     if (activeTab === "full") return [];
     return examSets
