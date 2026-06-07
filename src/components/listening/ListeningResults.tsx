@@ -1,4 +1,4 @@
-import { ArrowLeft, RotateCcw, Trophy, Target, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trophy, Target, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
@@ -17,6 +17,8 @@ interface ListeningResultsProps {
   partLabel: string;
   onExit: () => void;
   onRetry: () => void;
+  /** When provided, render a "Xem lại từng câu →" button. */
+  onReview?: () => void;
   mode?: "fresh" | "history";
   partType?: ListeningPartType;
   part1Questions?: ListeningPart1Question[];
@@ -35,7 +37,7 @@ const getLevel = (pct: number) => {
 };
 
 const ListeningResults = (props: ListeningResultsProps) => {
-  const { correct, total, partLabel, onExit, onRetry, mode = "fresh" } = props;
+  const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh" } = props;
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   const level = getLevel(pct);
 
@@ -79,7 +81,12 @@ const ListeningResults = (props: ListeningResultsProps) => {
           <span className={`text-lg font-heading font-extrabold ${level.color}`}>{level.label}</span>
         </div>
 
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-3 justify-center flex-wrap">
+          {onReview && (
+            <Button variant="secondary" onClick={onReview} className="gap-2">
+              <Eye className="w-4 h-4" /> Xem lại từng câu →
+            </Button>
+          )}
           {mode === "fresh" && (
             <Button variant="outline" onClick={onRetry} className="gap-2">
               <RotateCcw className="w-4 h-4" /> Làm lại
