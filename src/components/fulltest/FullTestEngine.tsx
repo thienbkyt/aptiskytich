@@ -12,6 +12,7 @@ import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
 import { saveTestResult } from "@/lib/testResults";
+import { saveExamResult } from "@/lib/saveExamResult";
 import { getLevel, getLevelColor } from "@/data/questions";
 
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
@@ -166,7 +167,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     setPhase("exam");
   };
 
-  const handlePartComplete = useCallback((correct?: number, total?: number) => {
+  const handlePartComplete = useCallback((
+    correct?: number,
+    total?: number,
+    perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>
+  ) => {
     const skill = SKILL_ORDER[currentSkillIndex];
     const parts = skillData[skill];
 
@@ -179,6 +184,15 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           total: prev[skill].total + total,
         },
       }));
+      // Persist per-set result so it appears in /history
+      const setIdForGrammar = parts[0]?.id ?? null;
+      const examSetId = skill === "grammar" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
+      saveExamResult({
+        examSetId,
+        skill: skill === "grammar" ? "grammar_vocab" : skill,
+        correct, total,
+        perQuestion,
+      });
     }
 
     // Check if there are more parts in this skill
