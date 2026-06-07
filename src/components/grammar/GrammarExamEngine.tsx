@@ -57,6 +57,7 @@ const GrammarExamEngine = ({
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
+  const [isReviewing, setIsReviewing] = useState(false);
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
   const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching", "collocation"] as const;
