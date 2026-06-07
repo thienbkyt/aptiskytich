@@ -179,6 +179,9 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
 };
 
 // ─── Speaking ───────────────────────────────────────────────
+const collectSampleAnswers = (rows: ExamQuestionRow[]): string[] =>
+  rows.map((r) => (r.extra_data as any)?.sampleAnswer || r.explanation || "");
+
 export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {
   const first = rows[0];
   const ed = first?.extra_data || {};
@@ -186,6 +189,7 @@ export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 0,
     speakTime: ed.speakTime ?? 30,
+    sampleAnswers: collectSampleAnswers(rows),
   };
 };
 
@@ -198,6 +202,7 @@ export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 45,
     speakTime: ed.speakTime ?? 45,
+    sampleAnswers: collectSampleAnswers(rows),
   };
 };
 
@@ -211,6 +216,7 @@ export const toSpeakingPart3 = (rows: ExamQuestionRow[]): SpeakingPart3Data => {
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 45,
     speakTime: ed.speakTime ?? 60,
+    sampleAnswers: collectSampleAnswers(rows),
   };
 };
 
@@ -223,6 +229,7 @@ export const toSpeakingPart4 = (rows: ExamQuestionRow[]): SpeakingPart4Data => {
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 60,
     speakTime: ed.speakTime ?? 120,
+    sampleAnswers: collectSampleAnswers(rows),
   };
 };
 
