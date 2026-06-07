@@ -69,6 +69,12 @@ const HistoryDetail = () => {
   const [history, setHistory] = useState<ResultRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+
+  // When toggling between summary/review, scroll to top.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, [reviewing]);
 
   useEffect(() => {
     if (!user || !id) return;
