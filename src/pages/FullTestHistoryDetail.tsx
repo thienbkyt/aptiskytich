@@ -56,8 +56,6 @@ const FullTestHistoryDetail = () => {
 
   // Review state — which row we are reviewing
   const [reviewRow, setReviewRow] = useState<SessionRow | null>(null);
-  const [reviewQResults, setReviewQResults] = useState<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }[]>([]);
-  const [reviewLoading, setReviewLoading] = useState(false);
 
   useEffect(() => {
     if (!user || !sessionId) return;
