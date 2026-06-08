@@ -242,19 +242,13 @@ const HistoryDetail = () => {
   const skill = setInfo?.skill || (result?.skill_scores as any)?.skill || "unknown";
   const pct = result && result.total > 0 ? Math.round((result.score / result.total) * 100) : 0;
 
-  // Review mode for non-speaking skills: render full-screen exam engine in submitted state.
-  if (reviewing && result && setInfo && skill !== "speaking" && result.exam_set_id) {
+  // Review mode: render via HistoryReviewPager (single or multi-part).
+  if (reviewing && result && reviewPages.length > 0) {
     return (
-      <HistoryReviewRenderer
-        examSetId={result.exam_set_id}
-        skill={skill}
-        part={setInfo.part}
-        testTitle={setInfo.title}
-        qResults={questions.map((q) => ({
-          exam_question_id: q.id,
-          user_answer: q.user_answer,
-          is_correct: q.is_correct,
-        }))}
+      <HistoryReviewPager
+        pages={reviewPages}
+        initialPageIdx={reviewInitialIdx}
+        userId={user.id}
         onExit={() => setReviewing(false)}
       />
     );
