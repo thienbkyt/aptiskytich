@@ -254,7 +254,7 @@ const WritingExamEngine = ({
     );
   }
 
-  if (phase === "grading" || phase === "results") {
+  if ((phase === "grading" || phase === "results") && !isReviewing) {
     const submission = (() => {
       if (partType === "task1" && part1Data) {
         return part1Data.questions.map((q, i) => ({ prompt: q.text, answer: shortAnswers[i] || "", sampleAnswer: q.sampleAnswer }));
