@@ -12,7 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getLevel, getLevelColor } from "@/data/questions";
-import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
+import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 
 interface SessionRow {
   id: string;
