@@ -72,6 +72,8 @@ const HistoryDetail = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [reviewPages, setReviewPages] = useState<ReviewPage[]>([]);
+  const [reviewInitialIdx, setReviewInitialIdx] = useState(0);
 
   // When toggling between summary/review, scroll to top.
   useEffect(() => {
