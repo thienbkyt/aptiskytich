@@ -291,7 +291,12 @@ const WritingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
+      <ExamHeader
+        skillLabel="Writing"
+        partLabel={partLabel}
+        onExit={onExit}
+        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+      />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "task1" && part1Data && (
           <WritingPart1Short
