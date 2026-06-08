@@ -104,7 +104,7 @@ const WritingExamEngine = ({
 
   // Full-test flow: when parent advances partType, reset to practice for the new part
   useEffect(() => {
-    if (!skipIntro) return;
+    if (!skipIntro || reviewMode) return;
     setPhase("practice");
     setSubmitted(false);
     setShortAnswers(new Array(part1Data?.questions.length || 5).fill(""));
