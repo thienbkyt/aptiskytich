@@ -12,7 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getLevel, getLevelColor } from "@/data/questions";
-import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
+import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 
 interface SessionRow {
   id: string;
@@ -56,8 +56,6 @@ const FullTestHistoryDetail = () => {
 
   // Review state — which row we are reviewing
   const [reviewRow, setReviewRow] = useState<SessionRow | null>(null);
-  const [reviewQResults, setReviewQResults] = useState<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }[]>([]);
-  const [reviewLoading, setReviewLoading] = useState(false);
 
   useEffect(() => {
     if (!user || !sessionId) return;
@@ -134,19 +132,36 @@ const FullTestHistoryDetail = () => {
     ? getLevel(Math.round((totals.correct / totals.total) * 100), 100)
     : "—";
 
-  const handleReview = async (r: SessionRow) => {
-    setReviewRow(r);
-    setReviewLoading(true);
-    setReviewQResults([]);
-    try {
-      const { data } = await supabase
-        .from("exam_question_results")
-        .select("exam_question_id,user_answer,is_correct")
-        .eq("test_result_id", r.id);
-      setReviewQResults((data || []) as any);
-    } finally {
-      setReviewLoading(false);
+  // Build cross-skill pages ordered: Speaking -> Listening -> Grammar -> Reading -> Writing,
+  // and within each skill by part number.
+  const allPages: ReviewPage[] = useMemo(() => {
+    const partNum = (p: string) => {
+      const m = (p || "").match(/(\d)/);
+      return m ? parseInt(m[1], 10) : 99;
+    };
+    const ordered: ReviewPage[] = [];
+    for (const sk of SKILL_ORDER) {
+      const skRows = rows.filter((r) => r.skill === sk);
+      skRows.sort((a, b) => partNum(a.setPart || "") - partNum(b.setPart || ""));
+      for (const r of skRows) {
+        if (!r.exam_set_id) continue;
+        ordered.push({
+          testResultId: r.id,
+          examSetId: r.exam_set_id,
+          skill: sk,
+          part: r.setPart || "",
+          testTitle: `${title} – ${SKILL_LABELS[sk]}`,
+          attemptCreatedAt: r.created_at,
+        });
+      }
     }
+    return ordered;
+  }, [rows, title]);
+
+  const [reviewSkillStart, setReviewSkillStart] = useState<SkillKey | null>(null);
+  const handleReview = (r: SessionRow) => {
+    setReviewSkillStart(r.skill as SkillKey);
+    setReviewRow(r);
   };
 
   if (authLoading) {
@@ -159,45 +174,18 @@ const FullTestHistoryDetail = () => {
   }
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Full-screen review of one skill/row
-  if (reviewRow) {
-    if (reviewLoading || !reviewRow.exam_set_id) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <Skeleton className="h-32 w-64" />
-        </div>
-      );
-    }
-    if (reviewRow.skill === "speaking") {
-      // Speaking review uses the standard HistoryDetail page; fallback navigate.
-      return (
-        <div className="min-h-screen bg-background">
-          <Navbar />
-          <main className="flex-1 pt-24 pb-16">
-            <div className="section-container max-w-4xl">
-              <button onClick={() => setReviewRow(null)} className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4">
-                <ArrowLeft className="w-4 h-4" /> Quay lại kết quả
-              </button>
-              <div className="glass-card p-8 text-center">
-                <p className="text-muted-foreground mb-4">Xem chi tiết phần Speaking trong trang lịch sử riêng.</p>
-                <Link to={`/history/${reviewRow.id}`}>
-                  <Button>Mở chi tiết Speaking</Button>
-                </Link>
-              </div>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      );
-    }
+  // Full-screen cross-skill review with pager
+  if (reviewRow && allPages.length > 0) {
+    const initialIdx = Math.max(
+      0,
+      allPages.findIndex((p) => p.skill === (reviewSkillStart || reviewRow.skill)),
+    );
     return (
-      <HistoryReviewRenderer
-        examSetId={reviewRow.exam_set_id}
-        skill={reviewRow.skill}
-        part={reviewRow.setPart || ""}
-        testTitle={`${title} – ${SKILL_LABELS[reviewRow.skill as SkillKey] || reviewRow.skill}`}
-        qResults={reviewQResults}
-        onExit={() => setReviewRow(null)}
+      <HistoryReviewPager
+        pages={allPages}
+        initialPageIdx={initialIdx}
+        userId={user.id}
+        onExit={() => { setReviewRow(null); setReviewSkillStart(null); }}
       />
     );
   }
