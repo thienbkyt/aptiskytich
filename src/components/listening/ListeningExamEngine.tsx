@@ -41,6 +41,9 @@ interface ListeningExamEngineProps {
   showResultsOnSubmit?: boolean;
   /** DB exam_questions.id list for this part — used to persist per-question results. */
   sourceQuestionIds?: string[];
+  /** Open in read-only review mode (pre-submitted, intros skipped). */
+  reviewMode?: boolean;
+  initialAnswers?: any[];
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -56,15 +59,15 @@ const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
-  showResultsOnSubmit = false, sourceQuestionIds,
+  showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers,
 }: ListeningExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
+  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
-  const [isReviewing, setIsReviewing] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(!!reviewMode);
 
   const totalQuestions =
     partType === "part1" ? (part1Questions?.length || 0) :
@@ -73,7 +76,7 @@ const ListeningExamEngine = ({
     (part4Questions?.length || 0);
 
   const [answers, setAnswers] = useState<any[]>(
-    new Array(totalQuestions).fill(null)
+    reviewMode && initialAnswers ? initialAnswers : new Array(totalQuestions).fill(null)
   );
 
   useEffect(() => {
