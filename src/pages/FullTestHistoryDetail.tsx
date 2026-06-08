@@ -191,9 +191,6 @@ const FullTestHistoryDetail = () => {
       />
     );
   }
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
