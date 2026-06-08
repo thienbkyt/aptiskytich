@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
 
 interface Props {
@@ -7,6 +7,8 @@ interface Props {
   placeholder?: string;
   minHeight?: string;
   wordLimit?: number;
+  /** Initial text shown in the editor (e.g. when reviewing saved answers). */
+  initialValue?: string;
 }
 
 const toolbarButtons = [
@@ -16,9 +18,25 @@ const toolbarButtons = [
   { cmd: "strikeThrough", icon: Strikethrough },
 ];
 
-const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answer here", minHeight = "120px", wordLimit }: Props) => {
+const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answer here", minHeight = "120px", wordLimit, initialValue }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [wordCount, setWordCount] = useState(0);
+  const seededRef = useRef(false);
+
+  // Seed initial content once (avoid clobbering user typing on re-renders).
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (!editorRef.current) return;
+    if (initialValue && initialValue.length > 0) {
+      editorRef.current.innerText = initialValue;
+      const wc = initialValue.trim() ? initialValue.trim().split(/\s+/).length : 0;
+      setWordCount(wc);
+      seededRef.current = true;
+    } else if (initialValue === "" || initialValue === undefined) {
+      // Mark as seeded once we get a definitive empty value to avoid re-seeding.
+      seededRef.current = true;
+    }
+  }, [initialValue]);
 
   const execFormat = useCallback((cmd: string) => {
     document.execCommand(cmd, false);
@@ -52,7 +70,7 @@ const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answe
         onInput={handleInput}
         data-placeholder={placeholder}
         style={{ minHeight }}
-        className="w-full rounded-b-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+        className="w-full rounded-b-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground whitespace-pre-wrap"
         suppressContentEditableWarning
       />
       {wordLimit != null && (

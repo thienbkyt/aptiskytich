@@ -48,6 +48,7 @@ const WritingPart4TwoEmails = ({
           placeholder="Type your answer here"
           minHeight="140px"
           wordLimit={data.informalEmail.wordLimit}
+          initialValue={informalAnswer}
         />
         {submitted && data.informalEmail.sampleAnswer && (
           <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">
@@ -66,6 +67,7 @@ const WritingPart4TwoEmails = ({
           placeholder="Type your answer here"
           minHeight="220px"
           wordLimit={data.formalEmail.wordLimit}
+          initialValue={formalAnswer}
         />
         {submitted && data.formalEmail.sampleAnswer && (
           <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">

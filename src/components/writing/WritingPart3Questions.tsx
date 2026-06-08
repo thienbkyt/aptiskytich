@@ -48,6 +48,7 @@ const WritingPart3Questions = ({
               placeholder="Write your answer here (30-40 words)..."
               minHeight="100px"
               wordLimit={data.wordLimit}
+              initialValue={answers[i] || ""}
             />
             {submitted && (
               <div className="mt-3 bg-muted/50 rounded-lg p-3">

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -39,6 +39,18 @@ const WritingPart2Social = ({
   const handleInput = useCallback(() => {
     onAnswerChange(editorRef.current?.innerText || "");
   }, [onAnswerChange]);
+
+  // Seed the editor with the initial saved answer (review mode).
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (seededRef.current || !editorRef.current) return;
+    if (answer && answer.length > 0) {
+      editorRef.current.innerText = answer;
+      seededRef.current = true;
+    } else if (answer === "") {
+      seededRef.current = true;
+    }
+  }, [answer]);
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
