@@ -45,7 +45,8 @@ const SKILL_LABELS: Record<string, string> = {
   speaking: "Speaking", writing: "Writing",
 };
 const SKILL_ROUTES: Record<string, string> = {
-  grammar: "/grammar", reading: "/reading", listening: "/listening",
+  grammar: "/grammar", grammar_vocab: "/grammar", grammar_vocabulary: "/grammar",
+  reading: "/reading", listening: "/listening",
   speaking: "/speaking", writing: "/writing",
 };
 
