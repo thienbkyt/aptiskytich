@@ -47,6 +47,7 @@ const WritingPart1Short = ({
               disabled={submitted}
               placeholder="Type your answer..."
               minHeight="60px"
+              initialValue={answers[i] || ""}
             />
             {submitted && (
               <p className="text-xs text-muted-foreground mt-2">
