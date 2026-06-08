@@ -1,5 +1,5 @@
 import type { GradingResult } from "@/hooks/useExamGrading";
-import { Loader2 } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";
 
 interface SubmissionPart {
   prompt: string;
@@ -12,6 +12,8 @@ interface WritingResultsProps {
   grading: GradingResult | null;
   onExit: () => void;
   submission?: SubmissionPart[];
+  /** When provided, render a "Xem lại từng câu →" button. */
+  onReview?: () => void;
 }
 
 const levelColors: Record<string, string> = {
@@ -22,7 +24,7 @@ const levelColors: Record<string, string> = {
   C1: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
 };
 
-const WritingResults = ({ isGrading, grading, onExit, submission }: WritingResultsProps) => {
+const WritingResults = ({ isGrading, grading, onExit, submission, onReview }: WritingResultsProps) => {
   if (isGrading) {
     return (
       <div className="max-w-lg mx-auto bg-card border border-border rounded-2xl p-8 text-center">
