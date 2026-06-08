@@ -85,8 +85,10 @@ const ListeningExamEngine = ({
     }
   }, [phase, currentIndex]);
 
-  // Reset internal state when partType changes (full-test flow keeps engine mounted)
+  // Reset internal state when partType changes (full-test flow keeps engine mounted).
+  // Skip in reviewMode so pre-filled answers aren't wiped.
   useEffect(() => {
+    if (reviewMode) return;
     setPhase(skipIntro ? "practice" : "instructions");
     setCurrentIndex(0);
     setSubmitted(false);
