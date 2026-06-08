@@ -73,6 +73,7 @@ const WritingExamEngine = ({
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(!!reviewMode);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
     reviewMode && initialAnswers?.shortAnswers ? initialAnswers.shortAnswers : new Array(part1Data?.questions.length || 5).fill("")
