@@ -99,7 +99,7 @@ const HistoryDetail = () => {
         let skill = (r.skill_scores as any)?.skill || "unknown";
         if (r.exam_set_id) {
           const { data: s } = await supabase
-            .from("exam_sets").select("title,skill,part").eq("id", r.exam_set_id).maybeSingle();
+            .from("exam_sets").select("title,skill,part,full_test_id").eq("id", r.exam_set_id).maybeSingle();
           if (s) { setSetInfo(s as any); skill = (s as any).skill; }
           // History of attempts on same set
           const { data: hist } = await supabase
@@ -108,6 +108,68 @@ const HistoryDetail = () => {
             .eq("user_id", user.id).eq("exam_set_id", r.exam_set_id)
             .order("created_at", { ascending: false });
           if (!cancelled) setHistory((hist || []) as any);
+
+          // Build review pages: if exam_set is part of a single-skill Full Part group,
+          // include all sibling parts under the same full_test_id as separate pages.
+          const ftId = (s as any)?.full_test_id ?? null;
+          const norm = (sk: string) => (sk === "grammar_vocab" || sk === "grammar_vocabulary" ? "grammar" : sk);
+          let pages: ReviewPage[] = [{
+            testResultId: r.id,
+            examSetId: r.exam_set_id,
+            skill: norm((s as any)?.skill || skill),
+            part: (s as any)?.part || "",
+            testTitle: (s as any)?.title || "",
+            attemptCreatedAt: r.created_at,
+          }];
+          let initialIdx = 0;
+          if (ftId) {
+            // Fetch all sets in the same full_test group
+            const { data: sibSets } = await supabase
+              .from("exam_sets")
+              .select("id,title,skill,part")
+              .eq("full_test_id", ftId);
+            const setIds = (sibSets || []).map((x: any) => x.id);
+            if (setIds.length > 1) {
+              // Find latest test_result per sibling set for this user, in the same attempt window
+              const target = new Date(r.created_at).getTime();
+              const { data: sibResults } = await supabase
+                .from("test_results")
+                .select("id,exam_set_id,created_at")
+                .eq("user_id", user.id)
+                .in("exam_set_id", setIds);
+              const setMap: Record<string, any> = {};
+              (sibSets || []).forEach((x: any) => { setMap[x.id] = x; });
+              const partNum = (p: string) => {
+                const m = (p || "").match(/(\d)/);
+                return m ? parseInt(m[1], 10) : 99;
+              };
+              // For each sibling set, pick closest result within 4h window; else skip
+              const picked: { resultId: string; setId: string; createdAt: string; setRow: any }[] = [];
+              for (const sid of setIds) {
+                const matches = (sibResults || [])
+                  .filter((x: any) => x.exam_set_id === sid)
+                  .map((x: any) => ({ ...x, delta: Math.abs(new Date(x.created_at).getTime() - target) }))
+                  .sort((a: any, b: any) => a.delta - b.delta);
+                const best = matches[0];
+                if (best && best.delta < 4 * 60 * 60 * 1000) {
+                  picked.push({ resultId: best.id, setId: sid, createdAt: best.created_at, setRow: setMap[sid] });
+                }
+              }
+              picked.sort((a, b) => partNum(a.setRow?.part || "") - partNum(b.setRow?.part || ""));
+              if (picked.length > 1) {
+                pages = picked.map((p) => ({
+                  testResultId: p.resultId,
+                  examSetId: p.setId,
+                  skill: norm(p.setRow?.skill || skill),
+                  part: p.setRow?.part || "",
+                  testTitle: p.setRow?.title || "",
+                  attemptCreatedAt: p.createdAt,
+                }));
+                initialIdx = Math.max(0, pages.findIndex((pg) => pg.testResultId === r.id));
+              }
+            }
+          }
+          if (!cancelled) { setReviewPages(pages); setReviewInitialIdx(initialIdx); }
         }
 
         // Per-question results
