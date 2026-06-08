@@ -131,7 +131,15 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview }: Wr
         </div>
       )}
 
-      <div className="text-center pt-2">
+      <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
+        {onReview && (
+          <button
+            onClick={onReview}
+            className="inline-flex items-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground px-6 py-2.5 rounded-lg font-medium transition-colors"
+          >
+            <Eye className="w-4 h-4" /> Xem lại từng câu →
+          </button>
+        )}
         <button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-medium transition-colors">
           Quay lại danh sách
         </button>
