@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 
 interface ResultRow {
   id: string;
@@ -175,6 +176,24 @@ const HistoryDetail = () => {
 
   const skill = setInfo?.skill || (result?.skill_scores as any)?.skill || "unknown";
   const pct = result && result.total > 0 ? Math.round((result.score / result.total) * 100) : 0;
+
+  // Review mode for non-speaking skills: render full-screen exam engine in submitted state.
+  if (reviewing && result && setInfo && skill !== "speaking" && result.exam_set_id) {
+    return (
+      <HistoryReviewRenderer
+        examSetId={result.exam_set_id}
+        skill={skill}
+        part={setInfo.part}
+        testTitle={setInfo.title}
+        qResults={questions.map((q) => ({
+          exam_question_id: q.id,
+          user_answer: q.user_answer,
+          is_correct: q.is_correct,
+        }))}
+        onExit={() => setReviewing(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

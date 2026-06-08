@@ -42,6 +42,15 @@ interface WritingExamEngineProps {
   onPrevious?: () => void;
   /** DB exam_questions.id list — used to persist the user's essay per part. */
   sourceQuestionIds?: string[];
+  /** Open in read-only review mode (pre-submitted, intros skipped). */
+  reviewMode?: boolean;
+  initialAnswers?: {
+    shortAnswers?: string[];
+    textAnswer?: string;
+    part3Answers?: string[];
+    informalAnswer?: string;
+    formalAnswer?: string;
+  };
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
@@ -58,21 +67,22 @@ const WritingExamEngine = ({
   part1Data, part2Data, part3Data, part4Data,
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious, sourceQuestionIds,
+  reviewMode, initialAnswers,
 }: WritingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
+  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!reviewMode);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
-    new Array(part1Data?.questions.length || 5).fill("")
+    reviewMode && initialAnswers?.shortAnswers ? initialAnswers.shortAnswers : new Array(part1Data?.questions.length || 5).fill("")
   );
-  const [textAnswer, setTextAnswer] = useState("");
+  const [textAnswer, setTextAnswer] = useState(reviewMode ? (initialAnswers?.textAnswer || "") : "");
   const [part3Answers, setPart3Answers] = useState<string[]>(
-    new Array(part3Data?.questions.length || 3).fill("")
+    reviewMode && initialAnswers?.part3Answers ? initialAnswers.part3Answers : new Array(part3Data?.questions.length || 3).fill("")
   );
-  const [informalAnswer, setInformalAnswer] = useState("");
-  const [formalAnswer, setFormalAnswer] = useState("");
+  const [informalAnswer, setInformalAnswer] = useState(reviewMode ? (initialAnswers?.informalAnswer || "") : "");
+  const [formalAnswer, setFormalAnswer] = useState(reviewMode ? (initialAnswers?.formalAnswer || "") : "");
 
   const { grading, isGrading, gradeExam } = useExamGrading();
 
@@ -94,7 +104,7 @@ const WritingExamEngine = ({
 
   // Full-test flow: when parent advances partType, reset to practice for the new part
   useEffect(() => {
-    if (!skipIntro) return;
+    if (!skipIntro || reviewMode) return;
     setPhase("practice");
     setSubmitted(false);
     setShortAnswers(new Array(part1Data?.questions.length || 5).fill(""));

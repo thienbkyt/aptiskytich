@@ -41,6 +41,14 @@ interface ReadingExamEngineProps {
   showResultsOnSubmit?: boolean;
   /** DB exam_questions.id for each source row in this part (used to persist per-question results). */
   sourceQuestionIds?: string[];
+  /** Open in read-only review mode (pre-submitted, intros skipped). */
+  reviewMode?: boolean;
+  initialAnswers?: {
+    p1?: (number | null)[];
+    p2?: Record<number, string>[];
+    p3?: (number | null)[];
+    p4?: (number | null)[];
+  };
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -50,28 +58,28 @@ const ReadingExamEngine = ({
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
-  sourceQuestionIds,
+  sourceQuestionIds, reviewMode, initialAnswers,
 }: ReadingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
+  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
-  const [isReviewing, setIsReviewing] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(!!reviewMode);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
-    new Array(part1Question?.gaps.length || 0).fill(null)
+    reviewMode && initialAnswers?.p1 ? initialAnswers.p1 : new Array(part1Question?.gaps.length || 0).fill(null)
   );
   const [p2Placements, setP2Placements] = useState<Record<number, string>[]>(
-    () => (part2Question?.sections || []).map(() => ({}))
+    () => reviewMode && initialAnswers?.p2 ? initialAnswers.p2 : (part2Question?.sections || []).map(() => ({}))
   );
   const [p3Answers, setP3Answers] = useState<(number | null)[]>(
-    new Array(part3Question?.statements.length || 0).fill(null)
+    reviewMode && initialAnswers?.p3 ? initialAnswers.p3 : new Array(part3Question?.statements.length || 0).fill(null)
   );
   const p4Total = part4Question?.paragraphs?.length || part4Question?.questions.length || 0;
   const [p4Answers, setP4Answers] = useState<(number | null)[]>(
-    new Array(p4Total).fill(null)
+    reviewMode && initialAnswers?.p4 ? initialAnswers.p4 : new Array(p4Total).fill(null)
   );
 
   const part2TotalSentences = (part2Question?.sections || []).reduce((s, sec) => s + sec.sentences.length, 0);

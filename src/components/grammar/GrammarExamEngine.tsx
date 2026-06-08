@@ -31,6 +31,10 @@ interface GrammarExamEngineProps {
   skipIntro?: boolean;
   /** When true (default), render GrammarResults after submission instead of the locked review UI. */
   showResultsOnSubmit?: boolean;
+  /** Open in read-only review mode (pre-submitted, intros skipped). */
+  reviewMode?: boolean;
+  initialAnswers?: (number | null)[];
+  initialFillAnswers?: string[];
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -44,16 +48,19 @@ const GrammarExamEngine = ({
   onAnswersChange,
   skipIntro,
   showResultsOnSubmit = true,
+  reviewMode,
+  initialAnswers,
+  initialFillAnswers,
 }: GrammarExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>(skipIntro ? "practice" : "instructions");
+  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(
-    new Array(questions.length).fill(null)
+    reviewMode && initialAnswers ? initialAnswers : new Array(questions.length).fill(null)
   );
   const [fillAnswers, setFillAnswers] = useState<string[]>(
-    new Array(questions.length).fill("")
+    reviewMode && initialFillAnswers ? initialFillAnswers : new Array(questions.length).fill("")
   );
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
