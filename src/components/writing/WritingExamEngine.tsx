@@ -277,7 +277,13 @@ const WritingExamEngine = ({
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
-          <WritingResults isGrading={isGrading} grading={grading} onExit={onExit} submission={submission} />
+          <WritingResults
+            isGrading={isGrading}
+            grading={grading}
+            onExit={onExit}
+            submission={submission}
+            onReview={!isGrading && grading ? () => setIsReviewing(true) : undefined}
+          />
         </div>
       </div>
     );
