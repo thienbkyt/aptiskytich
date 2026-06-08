@@ -73,6 +73,7 @@ const WritingExamEngine = ({
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(!!reviewMode);
+  const [isReviewing, setIsReviewing] = useState(false);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
     reviewMode && initialAnswers?.shortAnswers ? initialAnswers.shortAnswers : new Array(part1Data?.questions.length || 5).fill("")
@@ -253,7 +254,7 @@ const WritingExamEngine = ({
     );
   }
 
-  if (phase === "grading" || phase === "results") {
+  if ((phase === "grading" || phase === "results") && !isReviewing) {
     const submission = (() => {
       if (partType === "task1" && part1Data) {
         return part1Data.questions.map((q, i) => ({ prompt: q.text, answer: shortAnswers[i] || "", sampleAnswer: q.sampleAnswer }));
@@ -276,7 +277,13 @@ const WritingExamEngine = ({
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
-          <WritingResults isGrading={isGrading} grading={grading} onExit={onExit} submission={submission} />
+          <WritingResults
+            isGrading={isGrading}
+            grading={grading}
+            onExit={onExit}
+            submission={submission}
+            onReview={!isGrading && grading ? () => setIsReviewing(true) : undefined}
+          />
         </div>
       </div>
     );
@@ -284,7 +291,12 @@ const WritingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
+      <ExamHeader
+        skillLabel="Writing"
+        partLabel={partLabel}
+        onExit={onExit}
+        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+      />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "task1" && part1Data && (
           <WritingPart1Short

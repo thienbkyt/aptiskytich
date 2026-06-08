@@ -173,27 +173,6 @@ const Writing = () => {
       );
     }
 
-    if (exam.completed) {
-      return (
-        <div className="min-h-screen flex flex-col bg-background">
-          <Navbar />
-          <main className="flex-1 pt-24 pb-20">
-            <div className="section-container max-w-3xl">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-border rounded-xl p-8 text-center">
-                <h2 className="text-2xl font-heading font-bold text-foreground mb-2">Bài viết đã được nộp! ✍️</h2>
-                <p className="text-sm text-muted-foreground mb-6">{exam.testTitle}</p>
-                <p className="text-muted-foreground text-sm mb-8">Bài viết của bạn đã được ghi nhận. Hãy so sánh với bài mẫu để cải thiện kỹ năng viết.</p>
-                <div className="flex items-center justify-center gap-3">
-                  <Button variant="outline" onClick={handleExit} className="gap-2"><ArrowLeft className="w-4 h-4" /> Quay lại</Button>
-                  <Button onClick={() => setExam((p) => ({ ...p, completed: false }))} className="gap-2"><RotateCcw className="w-4 h-4" /> Làm lại</Button>
-                </div>
-              </motion.div>
-            </div>
-          </main>
-        </div>
-      );
-    }
-
     return (
       <WritingExamEngine
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={WRITING_TIME[exam.partType] ?? 3000}
@@ -206,7 +185,7 @@ const Writing = () => {
               correct: 0, total: perQuestion?.length || 0, timeSpent,
               perQuestion,
             });
-            return { ...p, completed: true };
+            return p;
           });
         }}
         {...exam.engineData}
