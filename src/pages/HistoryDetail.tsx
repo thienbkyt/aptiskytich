@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
+import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 
 interface ResultRow {
   id: string;
