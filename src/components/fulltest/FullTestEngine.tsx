@@ -525,6 +525,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Speaking ${currentPart.part}`}
           timeLimit={SKILL_TIMES.speaking}
           examSetId={currentPart.id}
+          fullTestSessionId={sessionIdRef.current}
+          fullTestId={testId}
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
           skipIntro={currentPartIndex > 0}
