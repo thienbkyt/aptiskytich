@@ -83,6 +83,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const savedRef = useRef(false);
+  // Unique id for this Full Test attempt — groups all 5 skills' rows in /history.
+  const sessionIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 
   // Persist final result once when the user finishes the full test.
   useEffect(() => {
@@ -192,6 +198,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         skill: skill === "grammar" ? "grammar_vocab" : skill,
         correct, total,
         perQuestion,
+        fullTestSessionId: sessionIdRef.current,
+        fullTestId: testId,
       });
     }
 
@@ -517,6 +525,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Speaking ${currentPart.part}`}
           timeLimit={SKILL_TIMES.speaking}
           examSetId={currentPart.id}
+          fullTestSessionId={sessionIdRef.current}
+          fullTestId={testId}
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
           skipIntro={currentPartIndex > 0}

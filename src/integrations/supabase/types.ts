@@ -770,6 +770,8 @@ export type Database = {
           correct_answers: number
           created_at: string
           exam_set_id: string | null
+          full_test_id: string | null
+          full_test_session_id: string | null
           id: string
           level: string
           score: number
@@ -783,6 +785,8 @@ export type Database = {
           correct_answers?: number
           created_at?: string
           exam_set_id?: string | null
+          full_test_id?: string | null
+          full_test_session_id?: string | null
           id?: string
           level: string
           score: number
@@ -796,6 +800,8 @@ export type Database = {
           correct_answers?: number
           created_at?: string
           exam_set_id?: string | null
+          full_test_id?: string | null
+          full_test_session_id?: string | null
           id?: string
           level?: string
           score?: number

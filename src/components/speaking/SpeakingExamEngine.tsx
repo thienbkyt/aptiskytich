@@ -28,6 +28,8 @@ interface SpeakingExamEngineProps {
   part4Data?: SpeakingPart4Data;
   examSetId?: string | null;
   sourceQuestionIds?: string[];
+  fullTestSessionId?: string | null;
+  fullTestId?: string | null;
   onExit: () => void;
   onComplete?: () => void;
   skipIntro?: boolean;
@@ -73,7 +75,7 @@ const PART_NUMBERS: Record<SpeakingPartType, number> = {
 const SpeakingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  examSetId, sourceQuestionIds,
+  examSetId, sourceQuestionIds, fullTestSessionId, fullTestId,
   onExit, onComplete, skipIntro = false,
 }: SpeakingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
@@ -322,6 +324,8 @@ const SpeakingExamEngine = ({
           correct: 0,
           total: sourceQuestionIds.length,
           perQuestion,
+          fullTestSessionId: fullTestSessionId ?? null,
+          fullTestId: fullTestId ?? null,
         });
       }
     } catch { /* swallow */ }

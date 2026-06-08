@@ -14,6 +14,9 @@ export interface SaveExamResultOpts {
   total: number;
   timeSpent?: number;
   perQuestion?: PerQuestionResult[];
+  /** When set, this row is part of a Full Test session — always inserted (no best-score dedup) and tagged for grouping. */
+  fullTestSessionId?: string | null;
+  fullTestId?: string | null;
 }
 
 /**
@@ -35,15 +38,16 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
     const correct = Math.max(opts.correct, 0);
     const level = total > 0 ? getLevel(correct, total) : "A1";
 
-    // Best score check (per user + exam_set_id)
+    // Best-score dedup (skipped for Full Test sessions: every part is recorded).
     let shouldInsert = true;
     let testResultId: string | null = null;
-    if (opts.examSetId) {
+    if (opts.examSetId && !opts.fullTestSessionId) {
       const { data: prev } = await supabase
         .from("test_results")
         .select("score")
         .eq("user_id", user.id)
         .eq("exam_set_id", opts.examSetId)
+        .is("full_test_session_id", null)
         .order("score", { ascending: false })
         .limit(1);
       const bestPrev = prev?.[0]?.score ?? -1;
@@ -62,6 +66,8 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
           exam_set_id: opts.examSetId ?? null,
           time_spent: opts.timeSpent ?? null,
           skill_scores: { skill: opts.skill, correct, total } as any,
+          full_test_session_id: opts.fullTestSessionId ?? null,
+          full_test_id: opts.fullTestId ?? null,
         } as any)
         .select("id")
         .single();
