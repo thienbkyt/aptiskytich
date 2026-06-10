@@ -6,7 +6,7 @@ import { X } from "lucide-react";
  * Visible after a short delay, dismissible per-session.
  * Hidden inside the full-screen exam UI (body.exam-mode) to avoid covering controls.
  */
-const ZALO_URL = "https://zalo.me/0386556128"; // TODO: thay bằng số Zalo chính thức nếu khác
+const ZALO_URL = "https://zalo.me/0867833227"; // Số Zalo Aptis Kỳ Tích
 
 const ZaloFab = () => {
   const [hidden, setHidden] = useState(true);
