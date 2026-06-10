@@ -172,14 +172,14 @@ const Index = () => {
                 variants={fadeUp} custom={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }}
               >
-                <GlowCard className="p-5 text-center h-full">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center mx-auto mb-3 shadow-glow-soft">
+                <SpotlightCard className="p-5 text-center h-full group">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center mx-auto mb-3 shadow-glow-soft transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
                     <BookOpen className="w-5 h-5 text-primary-foreground" />
                   </div>
                   <h3 className="font-heading font-bold text-sm text-foreground mb-2">{s.skill}</h3>
                   <p className="text-xs text-muted-foreground">{s.questions}</p>
                   <p className="text-xs text-muted-foreground">{s.time}</p>
-                </GlowCard>
+                </SpotlightCard>
               </motion.div>
             ))}
           </div>
