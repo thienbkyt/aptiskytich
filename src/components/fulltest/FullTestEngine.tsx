@@ -185,8 +185,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     const skill = SKILL_ORDER[currentSkillIndex];
     const parts = skillData[skill];
 
+    // Idempotency guard: ignore duplicate onComplete calls for the same part
+    const key = `${skill}-${currentPartIndex}`;
+    if (completedKeysRef.current.has(key)) return;
+    completedKeysRef.current.add(key);
+
     // Accumulate scores
     if (correct !== undefined && total !== undefined) {
+
       setScores(prev => ({
         ...prev,
         [skill]: {
