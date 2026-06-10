@@ -10,6 +10,7 @@ import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
+import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
 
 /* ── Nav data ── */
 const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
@@ -46,6 +47,20 @@ const Navbar = () => {
     setMobileAdminOpen(false);
   }, [location.pathname]);
 
+  // Warm up the most likely "next" routes once the browser is idle.
+  useEffect(() => {
+    prefetchOnIdle([
+      "/dashboard",
+      "/vocabulary",
+      "/thi-thu",
+      "/grammar",
+      "/reading",
+      "/listening",
+      "/speaking",
+      "/writing",
+    ]);
+  }, []);
+
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
     setSkillHover(true);
@@ -75,7 +90,7 @@ const Navbar = () => {
         {/* ── Desktop nav ── */}
         <div className="hidden md:flex items-center flex-1 justify-center gap-1">
           {/* 1. Thi thử Aptis - red CTA */}
-          <Link to="/thi-thu">
+          <Link to="/thi-thu" {...prefetchHandlers("/thi-thu")}>
             <Button
               size="sm"
               variant="glow"
@@ -89,6 +104,7 @@ const Navbar = () => {
           {/* 2. Học từ vựng */}
           <Link
             to="/vocabulary"
+            {...prefetchHandlers("/vocabulary")}
             className={`group relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
               isActive("/vocabulary")
                 ? "text-primary"
@@ -112,6 +128,7 @@ const Navbar = () => {
             className="relative"
             onMouseEnter={handleSkillEnter}
             onMouseLeave={handleSkillLeave}
+            onFocus={handleSkillEnter}
           >
             <button
               className={`group flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
@@ -139,6 +156,7 @@ const Navbar = () => {
                       <Link
                         key={link.path}
                         to={link.path}
+                        {...prefetchHandlers(link.path)}
                         className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                           isActive(link.path)
                             ? "bg-primary/5 text-primary"
@@ -165,6 +183,7 @@ const Navbar = () => {
             <Link
               key={link.path}
               to={link.path}
+              {...prefetchHandlers(link.path)}
               className={`group relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
                 isActive(link.path)
                   ? "text-primary"
@@ -272,7 +291,7 @@ const Navbar = () => {
           )}
           {user ? (
             <>
-              <Link to="/dashboard">
+              <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
                   <Flame className="w-3.5 h-3.5 text-primary" />
                   Dashboard
@@ -284,7 +303,7 @@ const Navbar = () => {
               </Button>
             </>
           ) : (
-            <Link to="/auth">
+            <Link to="/auth" {...prefetchHandlers("/auth")}>
               <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
                 <LogIn className="w-3.5 h-3.5" />
                 Đăng nhập
