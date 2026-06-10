@@ -194,21 +194,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20">
-          <div className="section-container space-y-6">
-            <Skeleton className="h-48 rounded-3xl" />
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {[0,1,2,3,4].map((i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
-            </div>
-            <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Skeleton className="h-48 rounded-2xl" />
-                <Skeleton className="h-64 rounded-2xl" />
-              </div>
-              <Skeleton className="h-96 rounded-2xl" />
-            </div>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </div>
     );
   }
