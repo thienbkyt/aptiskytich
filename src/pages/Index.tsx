@@ -80,16 +80,19 @@ const Index = () => {
           >
             <motion.div
               variants={fadeUp} custom={0}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-on-dark text-xs font-semibold mb-6 backdrop-blur-sm animate-glow-pulse"
+              className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-on-dark text-xs font-semibold mb-6 backdrop-blur-sm overflow-hidden"
             >
               <Sparkles className="w-3.5 h-3.5 text-primary-glow" /> Nền tảng luyện Aptis có AI · Miễn phí
+              <BorderBeam size={120} duration={6} />
             </motion.div>
             <motion.h1
               variants={fadeUp} custom={1}
               className="text-4xl md:text-6xl font-heading font-extrabold text-on-dark leading-[1.1] mb-6"
             >
               Thi thử Aptis miễn phí –{" "}
-              <GradientText>Kiểm tra trình độ</GradientText>{" "}
+              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary-glow animate-gradient-shift">
+                Kiểm tra trình độ
+              </span>{" "}
               trong 10 phút
             </motion.h1>
             <motion.p
@@ -99,16 +102,20 @@ const Index = () => {
               Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. AI chấm Speaking & Writing. Đạt B1–B2 nhanh nhất.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/grammar">
-                <Button size="lg" variant="glow" className="text-base px-8 h-12 gap-2 w-full sm:w-auto rounded-full">
-                  Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link to="/course">
-                <Button size="lg" variant="glow-outline" className="text-base px-8 h-12 w-full sm:w-auto rounded-full">
-                  Xem khóa học 7 ngày
-                </Button>
-              </Link>
+              <MagneticButton>
+                <Link to="/grammar">
+                  <Button size="lg" variant="glow" className="text-base px-8 h-12 gap-2 w-full sm:w-auto rounded-full animate-glow-pulse">
+                    Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+              </MagneticButton>
+              <MagneticButton>
+                <Link to="/course">
+                  <Button size="lg" variant="glow-outline" className="text-base px-8 h-12 w-full sm:w-auto rounded-full">
+                    Xem khóa học 7 ngày
+                  </Button>
+                </Link>
+              </MagneticButton>
             </motion.div>
 
             {/* Trust badges */}
