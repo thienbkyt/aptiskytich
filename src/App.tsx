@@ -92,6 +92,7 @@ const App = () => (
           </Routes>
           </Suspense>
           <ZaloFab />
+          <AICoachFab />
         </AuthProvider>
       </BrowserRouter>
 
