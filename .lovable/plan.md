@@ -1,91 +1,101 @@
-
 ## Mục tiêu
-Nâng cấp UI toàn site theo phong cách **Tech Dark + Red Glow**: nền tối sâu (#0F0F10 → #1A1A2E), accent đỏ #CC1C01 phát sáng, cam #FEAD5F làm điểm nhấn phụ, font **Montserrat** xuyên suốt, animation mức vừa phải (không gây nặng).
+Làm lại trang Dashboard cho mang tính **công nghệ, mượt, thân thiện** hơn — đồng bộ với design system "Tech Dark + Red Glow" đã build ở Sprint 1. Không đổi data/logic, chỉ thay UI/layout.
 
-**Loại trừ tuyệt đối**: Giao diện làm bài (Exam UI full-screen Navy) và trang Review/Preview bài (`/history/review/*`, các component trong `src/components/exam/*` và `src/components/history/*`).
-
----
-
-## 1. Design System (nền tảng)
-
-Cập nhật `src/index.css` và `tailwind.config.ts`:
-
-**Tokens mới (HSL):**
-- `--background`: #0F0F10 (dark mặc định), `--background-elevated`: #1A1A2E
-- `--surface-glass`: hsl với alpha cho card kính mờ
-- `--primary`: #CC1C01 (giữ), `--primary-glow`: lighter red cho shadow/glow
-- `--accent`: #FEAD5F
-- `--border-glow`: viền đỏ mờ phát sáng
-- Gradients: `--gradient-hero` (đỏ → cam → tím navy), `--gradient-card` (radial glow), `--gradient-text` (đỏ → cam cho heading)
-- Shadows: `--shadow-glow-red`, `--shadow-glow-soft`, `--shadow-elevated`
-
-**Font:**
-- Import Montserrat (300, 400, 500, 600, 700, 800) qua `<link>` ở `index.html`
-- `font-sans` = Montserrat; heading dùng weight 700/800 + letter-spacing chặt
-
-**Light mode**: vẫn giữ, nhưng dark là mặc định và được tối ưu kỹ nhất.
+## Vấn đề hiện tại (theo screenshot)
+- Hero "Xin chào" lạnh, thiếu điểm nhấn.
+- 4 stat cards đơn điệu, icon nhỏ, không có glow.
+- Khối streak + skill progress + chart + recent results xếp dọc 1 cột → trang dài lê thê, scroll mệt.
+- Không có **Quick Actions** rõ ràng — user vào dashboard không biết bấm gì tiếp theo.
+- Chart "Tiến bộ theo thời gian" nền sáng, lệch tone với phần còn lại.
+- Card "Kết quả gần đây" dạng list xám, thiếu sinh động.
 
 ---
 
-## 2. Component dùng chung mới
+## Layout mới
 
-Tạo trong `src/components/ui/`:
-- `GlowCard.tsx` — card nền tối + border gradient + hover glow đỏ
-- `GradientText.tsx` — heading gradient đỏ→cam
-- `AnimatedGridBg.tsx` — nền grid pattern mờ (MagicUI animated-grid-pattern), dùng cho Hero/Dashboard
-- `GlowButton` variant bổ sung trong `button.tsx` (shimmer khi hover)
-- `StatPill.tsx` — pill số liệu có icon + glow
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  HERO BANNER (AnimatedGrid bg)                              │
+│  Xin chào, {name} 👋                                         │
+│  Gradient subtitle + 4 stat pills inline (streak/Qs/acc/lvl)│
+└─────────────────────────────────────────────────────────────┘
 
-Animation mức 3: dùng `fade-in`, `scale-in`, `hover-scale` có sẵn + thêm `glow-pulse` (keyframe nhẹ cho CTA chính). Không dùng particles/meteors (tiết kiệm hiệu năng).
+┌──────────────── QUICK ACTIONS (5 cards lưới) ───────────────┐
+│  [Thi thử] [Luyện kỹ năng] [Học từ vựng] [Lịch sử] [Khóa h]│
+└─────────────────────────────────────────────────────────────┘
 
----
-
-## 3. Phạm vi & thay đổi cụ thể
-
-### 3.1 Landing + Navbar + Footer
-- **Navbar** (`src/components/layout/Navbar.tsx`): nền `bg-background/80 backdrop-blur-xl`, viền dưới đỏ glow thay vì 3px solid, logo + nav item hover underline gradient, CTA "Đăng ký" dùng GlowButton.
-- **Hero** (`src/pages/Index.tsx`): nền AnimatedGridBg + radial glow đỏ ở góc, heading GradientText cỡ lớn, sub-CTA dạng pill. Thêm hàng "trust badges" (AI chấm / 1000+ học viên / Sát đề thật).
-- **Sections**: features dạng bento-grid 3-2 với GlowCard + icon Lucide trong vòng tròn đỏ glow.
-- **Footer**: nền tối elevated, layout 4 cột, social icon dạng glow, copyright + Zalo CTA.
-
-### 3.2 Dashboard + Practice/Skill pages
-- **Dashboard** (`src/pages/Dashboard.tsx`): hero greeting gradient text, streak widget biến thành "command center" — card lớn có ring progress + flame icon glow. Stat row dùng StatPill 3 ô (streak, từ đã học, bài đã làm). Lưới Quick Action 5 skill dạng GlowCard với icon riêng.
-- **Practice index** (`src/pages/Practice.tsx`) + 5 trang skill (`Grammar.tsx`, `Reading.tsx`, `Listening.tsx`, `Writing.tsx`, `Speaking.tsx`): header sticky + breadcrumb glow, danh sách bài luyện convert sang GlowCard grid, badge "Mới / Đã làm / Điểm cao nhất".
-
-### 3.3 Vocabulary + History
-- **Vocabulary** (`src/pages/Vocabulary.tsx`, các trang con `/vocab/*`): vẫn giữ accent teal cho riêng vocab (theo mem://style/vocabulary-theme) nhưng nâng cấp về cấu trúc card glow + nền dark đồng bộ. Trang flashcard/3R: card lớn có border gradient teal→đỏ nhẹ.
-- **History list** (`src/pages/History.tsx`): bảng kết quả thành danh sách card có sparkline điểm, badge band CEFR màu, nút "Xem lại" dùng GlowButton. **KHÔNG đụng** `HistoryReviewPager`, `ReviewAnswerPanel`, `SpeakingReviewPage`, `WritingFeedbackCard`, `AIGradingCard`.
-
-### 3.4 Auth + Admin
-- **Auth** (`src/pages/Auth.tsx` hoặc Login/Signup): layout split — nửa trái panel gradient đỏ→navy với tagline + logo lớn; nửa phải form trên nền dark, input dạng glow border khi focus, nút Google Auth icon rõ.
-- **Admin** (`src/pages/admin/*`, `src/components/admin/*`): sidebar tối elevated + active state glow đỏ, header có search + breadcrumb, các card thống kê dạng GlowCard, table dùng zebra `bg-background-elevated/50`, button hành động dùng variant mới. Áp dụng cho: Dashboard admin, Import Center, Reports, Quản lý exam_sets, User management. **KHÔNG đụng** form preview câu hỏi của admin nếu nó hiển thị y hệt giao diện làm bài.
+┌──────────────── 2-COLUMN GRID (lg:grid-cols-3) ─────────────┐
+│  LEFT (col-span-2)              │  RIGHT (col-span-1)       │
+│  • Streak command center        │  • Recent results card    │
+│  • Skill progress (ring/bar)    │  • CTA "Tiếp tục học"     │
+│  • Progress chart (dark theme)  │  • Tip nhỏ / mẹo học      │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 4. Các khu vực KHÔNG sửa
-- `src/components/exam/*` (toàn bộ UI làm bài, ExamHeader Navy)
-- `src/components/history/HistoryReviewPager.tsx`, `ReviewAnswerPanel.tsx`, `SpeakingReviewPage.tsx`, `WritingFeedbackCard.tsx`, `AIGradingCard.tsx`
-- Các route exam (`/exam/*`, `/practice/*/take`, `/full-test/*/take`) và route review (`/history/review/*`)
-- Logic nghiệp vụ, query, edge functions — chỉ thay UI/CSS/component presentation
+## Thay đổi cụ thể
+
+### 1. Hero banner mới
+- Wrap trong `relative overflow-hidden rounded-3xl border border-border bg-card/60`, bên trong đặt `<AnimatedGrid />` làm background.
+- Heading: `GradientText` cỡ 3xl–4xl, weight 800.
+- Sub: nói rõ trạng thái hôm nay ("Bạn đang ở band {level} • streak {n} ngày").
+- Inline **StatPill row** (4 ô): Streak 🔥, Câu đã làm, Chính xác %, Trình độ. Mỗi pill có icon trong tròn glow nhỏ.
+
+### 2. Quick Actions (mới — phần thân thiện nhất)
+- 5 `GlowCard` ngang nhau (grid 2/3/5 cột responsive):
+  - **Thi thử Aptis** → `/thi-thu` (icon Zap, gradient đỏ-cam)
+  - **Luyện kỹ năng** → `/practice` (icon Target)
+  - **Học từ vựng** → `/vocab` (icon BookOpen, accent teal giữ theme vocab)
+  - **Lịch sử bài làm** → `/history` (icon History)
+  - **Khóa học 7 ngày** → `/course` (icon GraduationCap)
+- Hover: lift + glow đỏ + icon scale, có mô tả 1 dòng dưới label.
+
+### 3. Streak Command Center (cải tiến)
+- Card lớn 2 phần:
+  - **Trái**: Flame icon to + số streak khổng lồ + thanh tuần T2–CN với dot glow (hôm nay nhấp nháy `animate-glow-pulse`).
+  - **Phải**: Mini progress ring SVG hiển thị accuracy hoặc % goal tuần. CTA "Luyện ngay".
+- Atrisk state: viền đỏ glow đậm hơn + nút glow-pulse.
+
+### 4. Skill Progress
+- Đổi 5 progress bar dọc thành **2 cột grid** với mini bar có gradient theo skill + số % to.
+- Highlight skill yếu nhất bằng badge cảnh báo có icon Zap glow.
+
+### 5. ProgressChart (dark theme)
+- Edit `src/components/dashboard/ProgressChart.tsx`:
+  - Bỏ `glass-card`, thay bằng container đồng bộ với GlowCard.
+  - CartesianGrid: `stroke="hsl(var(--border) / 0.3)"`.
+  - Tooltip: `background: hsl(var(--background-elevated))`, border glow đỏ.
+  - Line stroke giữ màu skill, thêm `strokeWidth={2.5}`, dot lớn hơn + glow.
+  - Nền card có radial gradient nhẹ ở góc.
+
+### 6. Recent Results (column phải)
+- Mỗi item: avatar tròn gradient theo level (A1/A2/B1/B2/C1) + date + score + level badge glow.
+- Hover row → border-l-2 đỏ + slide nhẹ.
+- Empty state giữ nguyên nhưng dùng `GlowCard` + CTA `glow` variant.
+
+### 7. Sidekick cards (column phải, dưới Recent)
+- **CTA card** "Tiếp tục từ chỗ bạn dừng" với gradient bg + nút glow.
+- **Tip card** xoay vòng mẹo học (tĩnh, hardcode 3-4 tip, random 1 cái mỗi reload — chỉ frontend).
+
+### 8. Animation & micro-interactions
+- Stagger fade-in cho từng section (`framer-motion`, đã có sẵn).
+- Stat pills count-up khi mount (dùng tween đơn giản, không thêm lib).
+- Tất cả card có `transition-all duration-300`, hover `-translate-y-0.5 shadow-glow-red`.
 
 ---
 
-## 5. Thứ tự triển khai (chia sprint nhỏ)
-1. **Foundation**: Cập nhật `index.css`, `tailwind.config.ts`, import Montserrat, tạo components dùng chung (GlowCard, GradientText, AnimatedGridBg, GlowButton variant).
-2. **Landing + Navbar + Footer**: redesign theo design system mới.
-3. **Dashboard + Practice/Skill pages**.
-4. **Vocabulary + History list**.
-5. **Auth + Admin panel**.
-6. **QA**: kiểm tra dark/light, mobile (375/414), kiểm xem có vô tình ảnh hưởng exam/review không.
+## Files dự kiến chỉnh sửa
+- `src/pages/Dashboard.tsx` — rewrite layout (chính)
+- `src/components/dashboard/ProgressChart.tsx` — dark theme + GlowCard
+- (Mới) `src/components/dashboard/StatPill.tsx` — pill stat dùng chung
+- (Mới) `src/components/dashboard/QuickActionCard.tsx` — card action với glow
+- (Mới) `src/components/dashboard/StreakRing.tsx` — SVG ring nhỏ
+- Có thể thêm 1 keyframe `count-up-fade` vào `tailwind.config.ts` nếu cần
 
----
+## KHÔNG đụng
+- Logic fetch data, supabase queries, hooks.
+- Exam UI, Review pages.
+- `Navbar`, `Footer` (đã làm Sprint 1).
 
-## 6. Chi tiết kỹ thuật
-- Giữ shadcn components, chỉ mở rộng `variants` qua `cva` — không viết class màu cứng trong component.
-- Animation: chỉ dùng Tailwind animations có sẵn + 1 keyframe `glow-pulse` mới (2s ease-in-out infinite, box-shadow đỏ).
-- Không thêm thư viện nặng: chỉ cài MagicUI's `animated-grid-pattern` (single component copy-paste, không phải package).
-- Performance: backdrop-blur chỉ dùng ở navbar + dialog, tránh dùng tràn lan trên list dài.
-- Đảm bảo body class `exam-mode` (đã có) tiếp tục ẩn ZaloFab và không bị design mới override.
-- Cập nhật `mem://style/visual-identity` và `mem://style/style-guidelines` sau khi build xong để phản ánh design system mới.
-
-Bấm **Implement plan** để bắt đầu Sprint 1 (Foundation + Landing).
+Bấm **Implement plan** để mình bắt tay vào Dashboard.

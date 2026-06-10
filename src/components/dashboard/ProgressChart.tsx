@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { LineChart as LineIcon, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import GlowCard from "@/components/ui/glow-card";
 
 interface Props {
   userId: string;
@@ -19,7 +20,7 @@ const SKILL_META: { key: string; label: string; color: string }[] = [
 ];
 
 interface ChartPoint {
-  date: string; // dd/mm
+  date: string;
   ts: number;
   [skill: string]: number | string;
 }
@@ -50,7 +51,6 @@ const ProgressChart = ({ userId }: Props) => {
         return;
       }
 
-      // Resolve skill per row via exam_sets if needed
       const setIds = Array.from(new Set(rows.map((r: any) => r.exam_set_id).filter(Boolean)));
       const skillMap = new Map<string, string>();
       if (setIds.length > 0) {
@@ -61,7 +61,6 @@ const ProgressChart = ({ userId }: Props) => {
         (sets || []).forEach((s: any) => skillMap.set(s.id, s.skill));
       }
 
-      // Group by (yyyy-mm-dd, skill) -> avg pct
       const buckets = new Map<string, Map<string, { sum: number; n: number; ts: number }>>();
       rows.forEach((r: any) => {
         const skill = r.exam_set_id ? skillMap.get(r.exam_set_id) : r.skill_scores?.skill;
@@ -107,55 +106,55 @@ const ProgressChart = ({ userId }: Props) => {
   if (loading || !hasData) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-6"
-    >
-      <div className="flex items-center justify-between mb-5">
-        <h3 className="font-heading font-bold text-foreground flex items-center gap-2">
-          <LineIcon className="w-5 h-5 text-primary" /> Tiến bộ theo thời gian
-        </h3>
-      </div>
-      <div className="h-72 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={points} margin={{ top: 5, right: 16, left: -8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-            <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `${v}%`} />
-            <Tooltip
-              contentStyle={{
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: 8,
-                fontSize: 12,
-              }}
-              formatter={(v: any) => `${v}%`}
-            />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            {SKILL_META.map((s) => (
-              <Line
-                key={s.key}
-                type="monotone"
-                dataKey={s.key}
-                name={s.label}
-                stroke={s.color}
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
-                connectNulls
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+      <GlowCard className="p-6 overflow-hidden" spotlight>
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-heading font-bold text-foreground flex items-center gap-2">
+            <LineIcon className="w-5 h-5 text-primary" /> Tiến bộ theo thời gian
+          </h3>
+        </div>
+        <div className="h-72 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={points} margin={{ top: 5, right: 16, left: -8, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.4)" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+              <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `${v}%`} />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(var(--background-elevated))",
+                  border: "1px solid hsl(var(--primary) / 0.4)",
+                  borderRadius: 10,
+                  fontSize: 12,
+                  boxShadow: "var(--shadow-glow-soft)",
+                  color: "hsl(var(--foreground))",
+                }}
+                formatter={(v: any) => `${v}%`}
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="mt-4 flex justify-end">
-        <Link to="/progress">
-          <Button variant="ghost" size="sm" className="text-primary gap-1.5">
-            Xem tiến độ đầy đủ <ArrowRight className="w-4 h-4" />
-          </Button>
-        </Link>
-      </div>
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              {SKILL_META.map((s) => (
+                <Line
+                  key={s.key}
+                  type="monotone"
+                  dataKey={s.key}
+                  name={s.label}
+                  stroke={s.color}
+                  strokeWidth={2.5}
+                  dot={{ r: 3, strokeWidth: 0, fill: s.color }}
+                  activeDot={{ r: 6, strokeWidth: 2, stroke: "hsl(var(--background))" }}
+                  connectNulls
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Link to="/progress">
+            <Button variant="ghost" size="sm" className="text-primary gap-1.5 hover:bg-primary/10">
+              Xem tiến độ đầy đủ <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+        </div>
+      </GlowCard>
     </motion.div>
   );
 };
