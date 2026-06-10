@@ -95,6 +95,12 @@ const SpeakingExamEngine = ({
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
+  // Guards to prevent doStopAndAdvance / handleFinish firing twice
+  // (e.g. timer reaching 0 at the same instant the user clicks "Finish Recording")
+  const advancingRef = useRef(false);
+  const finishedRef = useRef(false);
+
+
 
 
 
