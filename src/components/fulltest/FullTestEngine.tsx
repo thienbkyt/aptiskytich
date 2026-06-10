@@ -83,12 +83,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const savedRef = useRef(false);
+  // Prevent double-advancing if a child engine fires onComplete twice
+  // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
+  const completedKeysRef = useRef<Set<string>>(new Set());
   // Unique id for this Full Test attempt — groups all 5 skills' rows in /history.
   const sessionIdRef = useRef<string>(
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
+
 
   // Persist final result once when the user finishes the full test.
   useEffect(() => {
