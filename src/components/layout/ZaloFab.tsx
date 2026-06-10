@@ -23,20 +23,19 @@ const ZaloFab = () => {
 
   // Auto-hide during exams / review (full-screen takeover).
   useEffect(() => {
+    if (dismissed) return;
     const update = () => {
       const isExam =
         document.body.classList.contains("exam-mode") ||
         document.body.classList.contains("history-review-mode");
-      setHidden((h) => (isExam ? true : h && false ? true : h));
-      // Simpler: directly reflect state
-      if (isExam) setHidden(true);
-      else if (!dismissed) setHidden(false);
+      setHidden(isExam);
     };
     update();
     const obs = new MutationObserver(update);
     obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
     return () => obs.disconnect();
   }, [dismissed]);
+
 
   if (dismissed || hidden) return null;
 
