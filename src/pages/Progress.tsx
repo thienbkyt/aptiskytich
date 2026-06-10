@@ -213,7 +213,7 @@ const ProgressPage = () => {
             ))}
           </div>
           {loading ? (
-            <Skeleton className="h-72 w-full" />
+            <TechSkeleton variant="card" className="h-72 w-full" />
           ) : linePoints.length === 0 ? (
             <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
               Chưa có dữ liệu trong khoảng thời gian này
