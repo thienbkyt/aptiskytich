@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
+import AnimatedGrid from "@/components/ui/animated-grid";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
