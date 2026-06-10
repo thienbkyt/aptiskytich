@@ -4,7 +4,6 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Trophy, RotateCcw, Eye,
   Mic, Headphones, Brain, BookOpen, PenLine, Calendar,
@@ -13,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getLevel, getLevelColor } from "@/data/questions";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 
 interface SessionRow {
   id: string;
