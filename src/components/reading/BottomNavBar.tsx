@@ -356,20 +356,20 @@ const BottomNavBar = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
+            <button className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
-              <Button variant="outline" onClick={onPrevious} className="gap-2 border-foreground text-foreground hover:bg-muted">
+              <Button variant="outline" onClick={onPrevious} className="exam-nav-prev-next gap-2 border-foreground text-foreground hover:bg-muted">
                 <ArrowLeft className="w-4 h-4" /> Previous
               </Button>
             )}
             {isLast && onSubmit ? (
-              <Button onClick={onSubmit} className="text-background gap-2 px-6 bg-[#230859]">
+              <Button onClick={onSubmit} className="exam-nav-submit text-background gap-2 px-6 bg-[#230859]">
                 {submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
-              <Button onClick={onNext} className="text-background gap-2 px-6 bg-[#230859]">
+              <Button onClick={onNext} className="exam-nav-prev-next text-background gap-2 px-6 bg-[#230859]">
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : null}

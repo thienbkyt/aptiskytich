@@ -1,103 +1,107 @@
-# Sửa navigation chế độ "Xem lại từng câu"
 
-## Bối cảnh & vấn đề
+# Tối ưu UX luồng "Xem lại bài đã làm"
 
-Hiện tại mỗi engine (Grammar/Reading/Listening/Writing) khi mở ở `reviewMode` vẫn dùng đúng UI thi bình thường: render **một câu / một sub-question / một clip tại một thời điểm**, có nav prev/next ở thanh dưới để nhảy giữa các sub-question.
+Phạm vi: chỉ sau khi nộp (HistoryDetail, HistoryReviewPager, các Engine ở `reviewMode`). Không đụng UI làm bài thật, không đụng phối màu, không đụng logic chấm điểm.
 
-User yêu cầu chia 3 chế độ rõ ràng, đơn vị "trang" là **PART**, không phải sub-question.
+Đã xác nhận:
+- Layout 1 part = 1 trang scroll dọc (không click-through từng câu).
+- Explanation: **70% có, 30% rỗng** → ẩn block "Giải thích" khi rỗng, chỉ hiện block "Đáp án đúng".
+- Speaking review: chỉ band tổng + nhận xét ngắn (CEFR breakdown để Step 5 sau).
 
-## 3 chế độ cần hỗ trợ
+---
 
-### 1) Đề đơn lẻ (single part)
-- Mở từ `/history/:id` cho một test_result thuộc 1 exam_set 1 part.
-- Render **toàn bộ part trên 1 trang dài cuộn được**, mọi câu hỏi/đáp án highlight đúng/sai hiện hết.
-- **Không có** nút prev/next ở thanh dưới (chỉ còn nút Thoát + Question Review Modal nếu cần).
+## 1. Vấn đề hiện tại
 
-### 2) Full Part (1 kỹ năng nhiều part)
-- Mở từ `/history/:id` khi test_result thuộc exam_set có `full_test_id` (single-skill merge).
-- Phải gom tất cả test_result của cùng `full_test_id` + cùng user thành các trang.
-- Mỗi part = 1 trang dài (như chế độ 1).
-- Prev/Next ở thanh dưới chuyển **giữa các part**.
-- Part đầu: ẩn Previous. Part cuối: Next thay bằng "Hoàn tất" (thoát).
-- Không có intro/instructions screen.
+1. **2 thanh nav đè nhau**: Pager bar (sticky top tím) + BottomNavBar nội bộ của engine (fixed bottom) cùng có Previous/Next → user dễ bấm nhầm.
+2. **Vẫn render timer + nút Submit** trong `reviewMode` (Reading/Listening/Grammar) — thừa và gây hiểu nhầm.
+3. **Không hiện đáp án đúng + giải thích ngay tại câu** — `exam_questions.explanation` đã có nhưng không truyền vào engine; user phải scroll xuống danh sách rời ở dưới.
+4. **HistoryDetail summary**: nút "Làm lại" và "Xem lại" cùng cấp; bảng "Các lần làm" không click được.
+5. **Speaking review**: ghi âm render trùng (cả trong nhánh `reviewing` của HistoryDetail lẫn SpeakingReviewPage).
+6. **Micro**: 2 thanh tím chồng top, không có transition khi đổi page, không có phím tắt ←/→.
 
-### 3) Full Test (5 kỹ năng)
-- Mở từ `/history-fulltest/:sessionId` (đã có `FullTestHistoryDetail`).
-- Khi user bấm "Xem lại" trên 1 skill card → vào chế độ review xuyên suốt toàn bộ 5 kỹ năng (không chỉ skill đó).
-- Thứ tự: Speaking → Listening → Grammar → Reading → Writing (theo SKILL_ORDER hiện tại). Trong mỗi skill, theo part order.
-- Mỗi part = 1 trang dài.
-- Prev/Next xuyên suốt mọi part của mọi kỹ năng.
-- Trang đầu Speaking (= trang đầu tiên cả Full Test): ẩn Previous.
-- Trang đầu của các kỹ năng sau (Listening, Grammar, Reading, Writing): Previous quay về trang cuối kỹ năng trước.
-- Trang cuối Writing: Next thay bằng "Hoàn tất".
-- Không có intro giữa các kỹ năng.
-- Speaking trong review: hiện audio recordings + transcript/grading của part đó trên 1 trang (vì Speaking không có UI làm bài kiểu chọn đáp án).
+---
 
-## Kỹ thuật
+## 2. Giải pháp
 
-### Engine: thêm `reviewAllInOne` prop
-Mỗi engine (Grammar/Reading/Listening/Writing) nhận prop mới `reviewAllInOne?: boolean`. Khi true + `reviewMode`:
-- Bỏ vòng lặp `currentIndex`, render toàn bộ questions/clips/parts trong 1 view dài.
-- Bỏ `BottomNavBar` nội bộ (hoặc chỉ giữ thanh trống/Thoát) — nav được quản lý bởi parent.
-- Vẫn áp dụng `submitted=true` để highlight xanh/đỏ.
+### A. Thống nhất nav trong review
+- Thêm prop `reviewMode` cho `BottomNavBar` → khi true: ẩn nút Submit, ẩn Previous/Next câu (chỉ giữ Question List + Info + Accessibility + Thoát).
+- `HistoryReviewPager` là nơi DUY NHẤT có Prev/Next giữa các part.
+- Render hết câu trong 1 part trên 1 trang dài (bỏ `currentIndex` loop khi reviewMode trong Reading Part 1/3/4, Listening, Grammar). Writing đã 1 trang.
 
-Cụ thể:
-- **Grammar**: map qua `questions[]`, render mỗi câu inline với option highlight.
-- **Reading**: Part 1/3/4 hiện đang loop `currentIndex` → đổi sang render hết các gap/statement/paragraph trên 1 trang. Part 2 vốn đã single-page.
-- **Listening**: render hết các clip/exercise, mỗi clip có audio player + câu hỏi đã chấm.
-- **Writing**: vốn đã single-page mỗi task — chỉ cần đảm bảo `submitted=true` để hiện full bài viết user.
+### B. ReviewAnswerPanel (component dùng chung)
+Tạo `src/components/history/ReviewAnswerPanel.tsx`. Gắn dưới mỗi câu/clip:
+- Chip ✓/✗ + "Đáp án của bạn: X" + "Đáp án đúng: Y".
+- Block "Giải thích" — **chỉ render khi có `explanation` không rỗng** (xử lý 30% null).
+- Style nhẹ: bg `muted/40`, border-left primary 3px, padding 12px.
 
-### Wrapper mới: `HistoryReviewPager`
-Component bao ngoài engine, quản lý nav giữa các "page" (mỗi page = 1 part).
+### C. Truyền explanation vào engine
+- `HistoryReviewPager` fetch thêm `exam_questions.explanation` cùng lúc với qResults → build `explanationMap: Record<questionId, string>`.
+- Truyền `explanationMap` xuống `HistoryReviewRenderer` → từng engine → render `ReviewAnswerPanel`.
 
-```ts
-interface PageDef {
-  examSetId: string;
-  skill: "grammar" | "reading" | "listening" | "writing" | "speaking";
-  part: string;
-  testTitle: string;
-  qResults: QResult[];
-}
+### D. Ẩn nhiễu khi reviewMode
+Trong mỗi engine khi `reviewMode=true`:
+- Ẩn `TimerDisplay` (thay bằng badge "Đã nộp · {ngày}").
+- Không gọi `handleSubmit` cho nút Next câu cuối.
+- ExamHeader: ẩn nút "Thoát", chỉ giữ "Quay lại kết quả".
 
-interface Props {
-  pages: PageDef[];   // length 1, hoặc nhiều
-  onExit: () => void;
-}
-```
-- Giữ state `pageIdx`.
-- Render engine tương ứng với `pages[pageIdx]` ở `reviewMode + reviewAllInOne`.
-- Render footer Prev/Next chung:
-  - `pageIdx === 0` → ẩn Previous.
-  - `pageIdx === pages.length - 1` → Next đổi thành "Hoàn tất" gọi `onExit`.
-- Speaking page → render component riêng (audio list + grading) thay vì engine.
+### E. HistoryDetail summary
+- `Làm lại` = primary đỏ; `Xem lại từng câu` = outline secondary → phân cấp rõ.
+- Thêm 3 chip dưới điểm số: **Đúng X · Sai Y · Bỏ trống Z**.
+- Bảng "Các lần làm bộ đề này" → mỗi dòng wrap `<Link to="/history/{id}">`, hover bg muted.
+- **Xoá** block per-question list cũ ở dưới (đã thay bằng panel trong engine).
+- **Xoá** block render recordings trùng ở nhánh `reviewing` (SpeakingReviewPage đã xử lý).
 
-### Tích hợp `HistoryDetail.tsx`
-Thay vì gọi `HistoryReviewRenderer` cho 1 row, build danh sách pages:
-1. Query exam_set của result hiện tại. Nếu có `full_test_id` (single-skill merge) → load tất cả test_results cùng `full_test_id` cùng user → tạo `pages[]` theo part order.
-2. Nếu không có `full_test_id` → 1 page duy nhất.
-3. Truyền vào `HistoryReviewPager`.
+### F. SpeakingReviewPage — thêm grading ngắn
+- Query `exam_gradings` cho exam_set + user + cùng cửa sổ 2h.
+- Trên cùng: card "Band tổng: B2" + 2-3 dòng nhận xét rút gọn (`overall_feedback` cắt 200 ký tự).
+- Audio list giữ nguyên.
 
-### Tích hợp `FullTestHistoryDetail.tsx`
-Khi click "Xem lại" trên bất kỳ skill card nào:
-- Build `pages[]` từ TẤT CẢ rows của session (đã có trong `skillAgg`), order = SKILL_ORDER × part order.
-- Load `exam_question_results` cho tất cả rows một lượt (parallel queries).
-- Set `pageIdx` ban đầu = trang đầu tiên của skill được click (UX: user click Listening card → mở thẳng trang Listening part 1, nhưng vẫn có Prev để về Speaking).
-- Render `HistoryReviewPager`.
+### G. Micro-UX
+- Pager bar đổi từ nền tím `#24085a` → `bg-background border-b border-border` với chữ tím (tránh 2 thanh tím chồng).
+- Thêm fade 150ms khi đổi page.
+- Hook `useReviewKeyboard`: ←/→ chuyển part, Esc thoát.
+- Scroll-to-top smooth thay vì instant.
 
-### Xoá `HistoryReviewRenderer`
-Logic gộp vào `HistoryReviewPager` + giữ các transformer/parse-answer helpers tách riêng (`buildEngineProps(page)`).
+---
 
-## Phạm vi file
-- Mới: `src/components/history/HistoryReviewPager.tsx`
-- Mới: `src/components/history/buildReviewEngineProps.ts` (tách logic parse từ HistoryReviewRenderer)
-- Mới: `src/components/history/SpeakingReviewPage.tsx` (audio + grading view)
-- Sửa: `GrammarExamEngine.tsx`, `ReadingExamEngine.tsx`, `ListeningExamEngine.tsx`, `WritingExamEngine.tsx` — thêm `reviewAllInOne` mode (render all + ẩn bottom nav).
-- Sửa: `HistoryDetail.tsx` — build pages theo full_test_id.
-- Sửa: `FullTestHistoryDetail.tsx` — review mode dùng pager xuyên suốt 5 kỹ năng.
-- Xoá: `HistoryReviewRenderer.tsx`.
+## 3. Files
 
-## Câu hỏi xác nhận
+### Tạo mới
+- `src/components/history/ReviewAnswerPanel.tsx`
+- `src/hooks/useReviewKeyboard.ts`
 
-1. **Single-part "1 trang dài"**: confirm là render TẤT CẢ câu hỏi của part đó cuộn dọc, không còn click-through từng câu? (Reading Part 1 có 4 gap, Part 4 có 7 đoạn — sẽ thành 1 trang dài hết.)
-2. **Speaking trong Full Test review**: hiển thị gì trên "trang Speaking"? Audio recordings + AI grading của từng part? (4 audio cho 4 part Speaking, mỗi part 1 trang riêng — hay gộp 4 part Speaking vào 1 trang?)
-3. **Writing 4 part trong Full Test**: 4 trang riêng (Task1/2/3/4) hay 1 trang gộp?
+### Sửa
+- `src/components/history/HistoryReviewPager.tsx` — bar mới, fetch explanation, transition, keyboard.
+- `src/components/history/HistoryReviewRenderer.tsx` — nhận + forward `explanationMap`.
+- `src/components/history/SpeakingReviewPage.tsx` — thêm grading card.
+- `src/components/reading/BottomNavBar.tsx` — prop `reviewMode` (ẩn nav câu + Submit).
+- `src/components/exam/ExamHeader.tsx` — prop `reviewMode` (ẩn Thoát).
+- `src/components/reading/ReadingExamEngine.tsx` — `reviewMode` render all-in-one + ReviewAnswerPanel.
+- `src/components/listening/ListeningExamEngine.tsx` — tương tự.
+- `src/components/grammar/GrammarExamEngine.tsx` — tương tự.
+- `src/components/writing/WritingExamEngine.tsx` — gắn ReviewAnswerPanel (1 panel/part).
+- `src/pages/HistoryDetail.tsx` — phân cấp nút, chip Đ/S/Bỏ trống, bảng clickable, xoá block trùng.
+
+### KHÔNG đụng
+- Phối màu thi gốc, logic chấm, DB schema, các Engine ngoài reviewMode, FullTestEngine khi đang thi.
+
+---
+
+## 4. Thứ tự build (chạy từng bước, test ở `/history/:id` trước khi qua bước sau)
+
+1. `ReviewAnswerPanel` + fetch explanationMap.
+2. Reading Engine: render all-in-one + gắn panel + ẩn timer/submit.
+3. Listening Engine: tương tự (chú ý audio player vẫn play được).
+4. Grammar + Writing Engine: tương tự.
+5. Pager bar mới (style, transition, keyboard).
+6. HistoryDetail summary cleanup.
+7. SpeakingReviewPage grading card.
+
+---
+
+## 5. Rủi ro & lưu ý
+
+- **Reading Part 2** dùng drag-and-drop sentence → ở review mode chỉ cần render kết quả tĩnh, không cần DnD active. Sẽ check `submitted=true` để disable DnD.
+- **Listening audio**: trong review mode bỏ giới hạn 2 lần play (user cần nghe lại tự do).
+- **Grammar 50 câu**: render 1 trang dài có thể nặng → dùng `content-visibility: auto` cho từng câu để giảm tải scroll.
+- **Writing Part 4** (2 emails) — panel sẽ render 2 lần (informal + formal), mỗi block có sample answer riêng.

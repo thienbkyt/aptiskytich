@@ -147,6 +147,14 @@
   }
 }
 
+/* History review mode — hide live-exam controls that are meaningless after submission. */
+body.history-review-mode .exam-header-exit-btn,
+body.history-review-mode .exam-nav-submit,
+body.history-review-mode .exam-nav-prev-next,
+body.history-review-mode .exam-timer-display {
+  display: none !important;
+}
+
 @layer utilities {
   .animate-float {
     animation: float 6s ease-in-out infinite;
