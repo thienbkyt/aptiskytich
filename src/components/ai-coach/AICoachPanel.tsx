@@ -383,8 +383,8 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
           {messages.length === 0 ? (
             <div className="space-y-4 pt-2">
               <div className="text-center space-y-2">
-                <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 items-center justify-center mb-2">
-                  <Bot className="w-7 h-7 text-primary" />
+                <div className="inline-flex w-16 h-16 rounded-2xl overflow-hidden items-center justify-center mb-2 shadow-lg shadow-primary/30">
+                  <img src={aiCoachLogo.url} alt="Coach Kỳ Tích" className="w-full h-full object-cover" />
                 </div>
                 <h4 className="font-bold">Xin chào! 👋</h4>
                 <p className="text-sm text-muted-foreground px-4">
