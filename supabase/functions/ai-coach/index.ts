@@ -289,13 +289,17 @@ Deno.serve(async (req: Request) => {
       if (role === "user" && (imgs.length > 0 || pageText)) {
         const parts: any[] = [];
         let textBlock = text;
-        if (pageText) textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM ---\n${pageText}\n--- HẾT ---`;
-        parts.push({ type: "text", text: textBlock || "Xem giúp mình nhé." });
+        if (imgs.length > 0) {
+          textBlock = `[User đã đính kèm ${imgs.length} ảnh chụp màn hình của câu hỏi/trang đang làm. Hãy ĐỌC ẢNH (OCR) để lấy đề bài và đáp án, rồi trả lời câu hỏi bên dưới.]\n\n` + textBlock;
+        }
+        if (pageText) textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM (đã trích tự động, hãy dùng để trả lời) ---\n${pageText}\n--- HẾT NỘI DUNG TRANG ---`;
+        parts.push({ type: "text", text: textBlock || "Hãy đọc ảnh/nội dung đính kèm và giải thích câu hỏi cho mình." });
         for (const url of imgs) parts.push({ type: "image_url", image_url: { url } });
         return { role, content: parts };
       }
       return { role, content: text };
     });
+
 
     // Smart model routing: pro when images present or large page text
     const hasImage = body.messages.some((m) => Array.isArray(m.images) && m.images.length > 0);
