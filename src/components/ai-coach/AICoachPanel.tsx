@@ -429,28 +429,6 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
                     )}
                   </div>
 
-                  {/* Quick actions on the latest finished assistant msg */}
-                  {m.role === "assistant" && m.content && !m.content.startsWith("_") && m.id === lastAssistantId && status === "idle" && (
-                    <div className="flex flex-wrap gap-1 pt-0.5">
-                      <button onClick={() => speak(m.id, m.content)}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted hover:bg-muted/80 transition-colors">
-                        {speakingId === m.id ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                        {speakingId === m.id ? "Dừng đọc" : "Nghe"}
-                      </button>
-                      <button onClick={() => quickAction("Giải thích đơn giản hơn cho người mất gốc.")}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted hover:bg-muted/80 transition-colors">
-                        <Lightbulb className="w-3 h-3" /> Đơn giản hơn
-                      </button>
-                      <button onClick={() => quickAction("Cho mình thêm 2 ví dụ khác để mình hiểu hơn.")}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted hover:bg-muted/80 transition-colors">
-                        <RefreshCw className="w-3 h-3" /> Ví dụ khác
-                      </button>
-                      <button onClick={() => quickAction("Dịch toàn bộ câu trả lời vừa rồi sang tiếng Việt thuần.")}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded-md bg-muted hover:bg-muted/80 transition-colors">
-                        <Languages className="w-3 h-3" /> Dịch tiếng Việt
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             ))
