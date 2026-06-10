@@ -9,7 +9,7 @@ import { BookA, Search, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CompletionBadge from "@/components/practice/CompletionBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
@@ -118,7 +118,7 @@ const GrammarVocabulary = () => {
 
           {fullLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
+              {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
             </div>
           ) : filteredSets.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">

@@ -4,7 +4,6 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft, Trophy, RotateCcw, Eye,
   Mic, Headphones, Brain, BookOpen, PenLine, Calendar,
@@ -13,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getLevel, getLevelColor } from "@/data/questions";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 
 interface SessionRow {
   id: string;
@@ -168,7 +168,7 @@ const FullTestHistoryDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20 section-container"><Skeleton className="h-64 w-full" /></div>
+        <div className="pt-24 pb-20 section-container"><TechSkeleton variant="card" className="h-64 w-full" /></div>
       </div>
     );
   }
@@ -204,7 +204,7 @@ const FullTestHistoryDetail = () => {
               <p className="text-muted-foreground">Không tìm thấy lần thi Full Test này.</p>
             </div>
           ) : loading || rows.length === 0 ? (
-            <Skeleton className="h-96 w-full rounded-xl" />
+            <TechSkeleton variant="card" className="h-96 w-full" />
           ) : (
             <>
               {/* Summary */}

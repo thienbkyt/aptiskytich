@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain } from "lucide-react";
 import { motion } from "framer-motion";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
 import { useFullTests, type FullTestItem } from "@/hooks/useFullTests";
 import ParticlesBackground from "@/components/ui/particles-background";
@@ -125,7 +125,7 @@ const FullTest = () => {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-52 rounded-xl" />
+                <TechSkeleton key={i} variant="card" className="h-52" />
               ))}
             </div>
           ) : tests.length === 0 ? (

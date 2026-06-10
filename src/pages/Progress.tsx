@@ -9,10 +9,10 @@ import { Calendar as CalendarIcon, LineChart as LineIcon, BarChart3, ArrowUp, Ar
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 
 const SKILL_META = [
   { key: "grammar",   label: "Grammar",   color: "hsl(var(--primary))" },
@@ -213,7 +213,7 @@ const ProgressPage = () => {
             ))}
           </div>
           {loading ? (
-            <Skeleton className="h-72 w-full" />
+            <TechSkeleton variant="card" className="h-72 w-full" />
           ) : linePoints.length === 0 ? (
             <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
               Chưa có dữ liệu trong khoảng thời gian này
@@ -253,7 +253,7 @@ const ProgressPage = () => {
             </div>
           </div>
           {loading ? (
-            <Skeleton className="h-32 w-full" />
+            <TechSkeleton variant="card" className="h-32 w-full" />
           ) : (
             <TooltipProvider delayDuration={100}>
               <div className="overflow-x-auto">
@@ -291,7 +291,7 @@ const ProgressPage = () => {
             <BarChart3 className="w-5 h-5 text-primary" /> So sánh tháng này với tháng trước
           </h2>
           {loading ? (
-            <Skeleton className="h-64 w-full" />
+            <TechSkeleton variant="card" className="h-64 w-full" />
           ) : (
             <>
               <div className="h-64 w-full mb-4">

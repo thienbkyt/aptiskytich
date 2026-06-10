@@ -19,7 +19,7 @@ import {
 import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CompletionBadge from "@/components/practice/CompletionBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
@@ -154,7 +154,10 @@ const Speaking = () => {
         <div className="min-h-screen flex flex-col bg-background">
           <Navbar />
           <main className="flex-1 pt-24 pb-20 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <div className="space-y-4 text-center">
+              <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
+              <TechSkeleton variant="text" className="w-32 mx-auto" />
+            </div>
           </main>
         </div>
       );
@@ -249,7 +252,7 @@ const Speaking = () => {
 
               {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
+                  {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
