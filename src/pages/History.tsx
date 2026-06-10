@@ -4,11 +4,11 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Eye, RotateCcw, History as HistoryIcon, Calendar, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 
 interface HistoryRow {
   id: string;
@@ -185,11 +185,7 @@ const History = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20 section-container">
-          <Skeleton className="h-10 w-64 mb-6" />
-          <Skeleton className="h-12 w-full mb-6" />
-          <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
-        </div>
+        <HistorySkeleton />
       </div>
     );
   }
@@ -229,7 +225,11 @@ const History = () => {
           </Tabs>
 
           {loading ? (
-            <div className="space-y-3">{[0,1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <TechSkeletonRow key={i} />
+              ))}
+            </div>
           ) : isFullTestTab ? (
             fullTestGroups.length === 0 ? (
               <EmptyState

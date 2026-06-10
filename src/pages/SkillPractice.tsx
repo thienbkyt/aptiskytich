@@ -40,6 +40,7 @@ import QuizMode from "@/components/vocab/QuizMode";
 import MyMatchingMode from "@/components/vocab/MyMatchingMode";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
+import { TechSkeleton, SkillVocabSkeleton } from "@/components/ui/tech-skeleton";
 
 
 /* ───── colour helpers ───── */
@@ -356,8 +357,10 @@ const SkillPractice = () => {
               </div>
 
               {setsLoading ? (
-                <div className="py-12 flex justify-center col-span-full">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <TechSkeleton key={i} variant="card" className="h-40" />
+                  ))}
                 </div>
               ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -469,8 +472,10 @@ const SkillPractice = () => {
 
                   {/* Lists grid */}
                   {listsLoading ? (
-                    <div className="py-12 flex justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <TechSkeleton key={i} variant="card" className="h-36" />
+                      ))}
                     </div>
                   ) : myLists.length === 0 ? (
                     <Card className="border border-dashed border-primary/30">

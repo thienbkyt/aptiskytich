@@ -1,7 +1,6 @@
 import { Link, Navigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
@@ -21,6 +20,7 @@ import QuickActionCard from "@/components/dashboard/QuickActionCard";
 import StreakRing from "@/components/dashboard/StreakRing";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
+import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -183,15 +183,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20">
-          <div className="section-container">
-            <Skeleton className="h-10 w-64 mb-2" />
-            <Skeleton className="h-5 w-96 mb-8" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
-            </div>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </div>
     );
   }
@@ -202,21 +194,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20">
-          <div className="section-container space-y-6">
-            <Skeleton className="h-48 rounded-3xl" />
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {[0,1,2,3,4].map((i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
-            </div>
-            <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <Skeleton className="h-48 rounded-2xl" />
-                <Skeleton className="h-64 rounded-2xl" />
-              </div>
-              <Skeleton className="h-96 rounded-2xl" />
-            </div>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </div>
     );
   }
