@@ -50,12 +50,27 @@ function fileToDataUrl(file: File): Promise<string> {
 }
 
 function extractPageText(): string {
-  const root = document.querySelector("main") || document.body;
+  // Try to prioritize an exam/question container; fall back to main/body.
+  const candidates = [
+    document.querySelector("[data-exam-content]"),
+    document.querySelector("[data-question-container]"),
+    document.querySelector("main"),
+    document.body,
+  ].filter(Boolean) as HTMLElement[];
+  const root = candidates[0];
+  if (!root) return "";
   const clone = root.cloneNode(true) as HTMLElement;
-  clone.querySelectorAll("aside, script, style, noscript, [data-coach-panel]").forEach((el) => el.remove());
-  const text = (clone.innerText || "").replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-  return text.slice(0, 6000);
+  clone.querySelectorAll("aside, script, style, noscript, [data-coach-panel], [data-coach-fab], nav, header > button, [aria-hidden='true']").forEach((el) => el.remove());
+  // Also extract value attributes from inputs / selected radios so we capture user choices.
+  const extras: string[] = [];
+  clone.querySelectorAll("input, textarea, select").forEach((el: any) => {
+    if (el.value) extras.push(`[${el.name || el.id || "input"}=${String(el.value).slice(0, 200)}]`);
+  });
+  const text = (clone.innerText || "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const combined = extras.length ? `${text}\n\n${extras.join(" ")}` : text;
+  return combined.slice(0, 8000);
 }
+
 
 function stripMarkdown(s: string): string {
   return s

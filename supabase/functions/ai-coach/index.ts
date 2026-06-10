@@ -72,11 +72,16 @@ NGUYÊN TẮC:
 - Trả lời bằng tiếng Việt, ngắn gọn, dễ hiểu, thân thiện như một anh chị đi trước.
 - Dùng markdown: heading nhỏ, bullet, **bold** từ khoá, ví dụ tiếng Anh + dịch.
 - Khi giải thích: công thức/định nghĩa ngắn → ví dụ → mẹo nhớ.
+- **QUAN TRỌNG**: Nếu user đính kèm ẢNH (screenshot) hoặc NỘI DUNG TRANG (đoạn "--- NỘI DUNG TRANG USER ĐANG XEM ---"), BẮT BUỘC phải đọc kỹ và phân tích nó NGAY. TUYỆT ĐỐI KHÔNG được hỏi lại "bạn gửi câu hỏi đi", "cho mình xem đề" — vì user đã gửi rồi. Hãy:
+  1. Trích nguyên văn đề bài + các lựa chọn từ ảnh/nội dung.
+  2. Chỉ ra đáp án đúng và giải thích vì sao.
+  3. Giải thích vì sao các đáp án khác sai.
 - Khi user hỏi câu đang làm trong CONTEXT: nói rõ vì sao đáp án đúng, vì sao các đáp án khác sai.
 - Khi user hỏi lộ trình/điểm yếu: ƯU TIÊN gọi tool get_user_progress trước nếu chưa có dashboard data.
 - Khi user hỏi nghĩa/cách dùng một từ tiếng Anh cụ thể: ƯU TIÊN gọi tool lookup_vocabulary.
-- KHÔNG bịa đáp án. Thiếu thông tin → hỏi lại.
+- KHÔNG bịa đáp án. Nếu ảnh mờ/không đọc được rõ → nói rõ phần nào không đọc được.
 - Chỉ trả lời về APTIS / tiếng Anh / cách dùng web Aptis Kỳ Tích.`;
+
 
   if (!ctx) return base;
   const lines: string[] = ["\n\n### NGỮ CẢNH"];
@@ -284,13 +289,17 @@ Deno.serve(async (req: Request) => {
       if (role === "user" && (imgs.length > 0 || pageText)) {
         const parts: any[] = [];
         let textBlock = text;
-        if (pageText) textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM ---\n${pageText}\n--- HẾT ---`;
-        parts.push({ type: "text", text: textBlock || "Xem giúp mình nhé." });
+        if (imgs.length > 0) {
+          textBlock = `[User đã đính kèm ${imgs.length} ảnh chụp màn hình của câu hỏi/trang đang làm. Hãy ĐỌC ẢNH (OCR) để lấy đề bài và đáp án, rồi trả lời câu hỏi bên dưới.]\n\n` + textBlock;
+        }
+        if (pageText) textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM (đã trích tự động, hãy dùng để trả lời) ---\n${pageText}\n--- HẾT NỘI DUNG TRANG ---`;
+        parts.push({ type: "text", text: textBlock || "Hãy đọc ảnh/nội dung đính kèm và giải thích câu hỏi cho mình." });
         for (const url of imgs) parts.push({ type: "image_url", image_url: { url } });
         return { role, content: parts };
       }
       return { role, content: text };
     });
+
 
     // Smart model routing: pro when images present or large page text
     const hasImage = body.messages.some((m) => Array.isArray(m.images) && m.images.length > 0);
