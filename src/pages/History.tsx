@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Eye, RotateCcw, History as HistoryIcon, Calendar, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { HistorySkeleton } from "@/components/ui/tech-skeleton";
+import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 
 interface HistoryRow {
   id: string;
