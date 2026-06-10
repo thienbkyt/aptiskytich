@@ -40,6 +40,7 @@ import QuizMode from "@/components/vocab/QuizMode";
 import MyMatchingMode from "@/components/vocab/MyMatchingMode";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
+import { TechSkeleton, SkillVocabSkeleton } from "@/components/ui/tech-skeleton";
 
 
 /* ───── colour helpers ───── */
