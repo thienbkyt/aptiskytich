@@ -169,7 +169,10 @@ const Writing = () => {
         <div className="min-h-screen flex flex-col bg-background">
           <Navbar />
           <main className="flex-1 pt-24 pb-20 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <div className="space-y-4 text-center">
+              <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
+              <TechSkeleton variant="text" className="w-32 mx-auto" />
+            </div>
           </main>
         </div>
       );
