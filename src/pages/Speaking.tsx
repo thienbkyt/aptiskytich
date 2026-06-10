@@ -19,7 +19,7 @@ import {
 import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CompletionBadge from "@/components/practice/CompletionBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
