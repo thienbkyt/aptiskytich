@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
 import PageLoadingSkeleton from "@/components/layout/PageLoadingSkeleton";
 import PageTransition from "@/components/layout/PageTransition";
+import RouteProgressBar from "@/components/layout/RouteProgressBar";
 
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 
@@ -64,6 +65,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <RouteProgressBar />
           <Suspense fallback={<PageLoadingSkeleton />}>
           <PageTransition>
           <Routes>
