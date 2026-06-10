@@ -9,7 +9,7 @@ import { BookA, Search, Shuffle, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CompletionBadge from "@/components/practice/CompletionBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
