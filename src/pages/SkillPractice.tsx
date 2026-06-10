@@ -38,6 +38,9 @@ import { toast } from "@/hooks/use-toast";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
 import MyMatchingMode from "@/components/vocab/MyMatchingMode";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
+
 
 /* ───── colour helpers ───── */
 const TEAL = {
