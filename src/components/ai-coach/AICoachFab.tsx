@@ -1,7 +1,8 @@
 import { lazy, Suspense, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Bot, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import aiCoachLogo from "@/assets/ai-coach-logo.png.asset.json";
 
 const AICoachPanel = lazy(() => import("./AICoachPanel"));
 
@@ -33,7 +34,7 @@ export default function AICoachFab() {
         )}
         style={{ animation: open ? undefined : "coach-pulse 2.5s ease-in-out infinite" }}
       >
-        {open ? <X className="w-6 h-6" /> : <Bot className="w-6 h-6" />}
+        {open ? <X className="w-6 h-6" /> : <img src={aiCoachLogo.url} alt="AI Coach" className="w-10 h-10 object-contain" />}
         {!open && (
           <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-background text-primary border border-primary/40">
             AI
