@@ -279,22 +279,31 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Build messages
-    const recent = body.messages.slice(-20).map((m) => {
+    // Build messages. Only keep images on the LAST user turn (saves context, avoids confusion from stale screenshots).
+    const lastUserIdx = (() => {
+      for (let i = body.messages.length - 1; i >= 0; i--) if (body.messages[i].role === "user") return i;
+      return -1;
+    })();
+    const recent = body.messages.slice(-20).map((m, idx) => {
+      const absoluteIdx = body.messages.length - Math.min(body.messages.length, 20) + idx;
       const role = m.role === "assistant" ? "assistant" : "user";
       const text = String(m.content ?? "").slice(0, 4000);
-      const imgs = Array.isArray(m.images) ? m.images.filter((u) => typeof u === "string" && u.length < 6_000_000).slice(0, 4) : [];
-      const pageText = typeof m.pageText === "string" ? m.pageText.slice(0, 6000) : "";
+      const isLastUser = absoluteIdx === lastUserIdx;
+      const imgs = isLastUser && Array.isArray(m.images)
+        ? m.images.filter((u) => typeof u === "string" && u.startsWith("data:image") && u.length < 6_000_000).slice(0, 4)
+        : [];
+      const pageText = isLastUser && typeof m.pageText === "string" ? m.pageText.slice(0, 6000) : "";
 
       if (role === "user" && (imgs.length > 0 || pageText)) {
         const parts: any[] = [];
-        let textBlock = text;
-        if (imgs.length > 0) {
-          textBlock = `[User đã đính kèm ${imgs.length} ảnh chụp màn hình của câu hỏi/trang đang làm. Hãy ĐỌC ẢNH (OCR) để lấy đề bài và đáp án, rồi trả lời câu hỏi bên dưới.]\n\n` + textBlock;
-        }
-        if (pageText) textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM (đã trích tự động, hãy dùng để trả lời) ---\n${pageText}\n--- HẾT NỘI DUNG TRANG ---`;
-        parts.push({ type: "text", text: textBlock || "Hãy đọc ảnh/nội dung đính kèm và giải thích câu hỏi cho mình." });
+        // Put IMAGES FIRST — Gemini vision performs better when image precedes the question.
         for (const url of imgs) parts.push({ type: "image_url", image_url: { url } });
+        let textBlock = text || "Hãy đọc đề trong ảnh và giải thích câu hỏi cho mình.";
+        if (imgs.length > 0) {
+          textBlock = `⚠️ HƯỚNG DẪN: Phía trên là ${imgs.length} ảnh chụp màn hình câu hỏi APTIS user đang làm. Hãy:\n1) Đọc kỹ ảnh và TRÍCH NGUYÊN VĂN đề + đáp án ra block code để user kiểm tra.\n2) Nếu KHÔNG đọc rõ được — nói thẳng "Mình chưa đọc rõ được đề trong ảnh, bạn gõ lại giúp mình nhé" — KHÔNG bịa đề khác.\n\nCâu hỏi của user: ${textBlock}`;
+        }
+        if (pageText) textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM (đã trích tự động) ---\n${pageText}\n--- HẾT ---`;
+        parts.push({ type: "text", text: textBlock });
         return { role, content: parts };
       }
       return { role, content: text };
@@ -302,7 +311,7 @@ Deno.serve(async (req: Request) => {
 
 
     // Smart model routing: pro when images present or large page text
-    const hasImage = body.messages.some((m) => Array.isArray(m.images) && m.images.length > 0);
+    const hasImage = body.messages.some((m, i) => i === lastUserIdx && Array.isArray(m.images) && m.images.length > 0);
     const longContext = body.messages.some((m) => (m.pageText?.length || 0) > 2000);
     const model = hasImage || longContext ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
 
@@ -311,11 +320,18 @@ Deno.serve(async (req: Request) => {
       ...recent,
     ];
 
+    // When user attached an image, skip the tool loop entirely — go straight to a single vision call.
+    // Tools (vocab/progress lookup) only make sense for pure text Q&A.
+    const useTools = !hasImage;
+
     // Tool loop: do up to 2 non-streaming tool rounds, then stream final.
     let toolRounds = 0;
     let toolsUsed: string[] = [];
-    while (toolRounds < 2) {
-      const probe = await callGateway({ model, stream: false, messages, tools: TOOL_DEFS, tool_choice: "auto" }, LOVABLE_API_KEY);
+    const maxRounds = useTools ? 2 : 1;
+    while (toolRounds < maxRounds) {
+      const payload: any = { model, stream: false, messages };
+      if (useTools) { payload.tools = TOOL_DEFS; payload.tool_choice = "auto"; }
+      const probe = await callGateway(payload, LOVABLE_API_KEY);
       if (!probe.ok) {
         const text = await probe.text().catch(() => "");
         const status = probe.status === 429 || probe.status === 402 ? probe.status : 400;
