@@ -91,7 +91,6 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
-          <ZaloFab />
           <AICoachFab />
         </AuthProvider>
       </BrowserRouter>
