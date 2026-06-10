@@ -16,6 +16,7 @@ import ExamInstructions from "@/components/exam/ExamInstructions";
 import GrammarResults from "@/components/grammar/GrammarResults";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
+import { setCoachExamContext } from "@/stores/coachStore";
 
 interface GrammarExamEngineProps {
   questions: Question[];
