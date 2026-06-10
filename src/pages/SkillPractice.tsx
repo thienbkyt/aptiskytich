@@ -364,8 +364,9 @@ const SkillPractice = () => {
                 {filtered.map((set) => (
                   <Card
                     key={set.id}
-                    className="group hover:shadow-lg transition-shadow border border-border"
+                    className="tech-card group border border-border"
                   >
+
                     <CardContent className="p-5 flex flex-col gap-3">
                       <Badge
                         variant="outline"
