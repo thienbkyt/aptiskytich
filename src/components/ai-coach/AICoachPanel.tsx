@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, Send, X, Sparkles, RotateCcw, Loader2, Paperclip, Monitor, FileText, Square, Volume2, VolumeX, RefreshCw, Languages, Lightbulb } from "lucide-react";
+import aiCoachLogo from "@/assets/ai-coach-logo.png.asset.json";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -354,8 +355,8 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
       >
         <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 via-transparent to-transparent md:rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/40">
-              <Bot className="w-5 h-5 text-primary-foreground" />
+            <div className="relative w-10 h-10 shrink-0">
+              <img src={aiCoachLogo.url} alt="Coach Kỳ Tích" className="w-full h-full object-cover rounded-full shadow-lg shadow-primary/40" />
               <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
             </div>
             <div>
@@ -382,8 +383,8 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
           {messages.length === 0 ? (
             <div className="space-y-4 pt-2">
               <div className="text-center space-y-2">
-                <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 items-center justify-center mb-2">
-                  <Bot className="w-7 h-7 text-primary" />
+                <div className="inline-flex w-16 h-16 rounded-2xl overflow-hidden items-center justify-center mb-2 shadow-lg shadow-primary/30">
+                  <img src={aiCoachLogo.url} alt="Coach Kỳ Tích" className="w-full h-full object-cover" />
                 </div>
                 <h4 className="font-bold">Xin chào! 👋</h4>
                 <p className="text-sm text-muted-foreground px-4">
