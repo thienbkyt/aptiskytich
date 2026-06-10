@@ -95,6 +95,12 @@ const SpeakingExamEngine = ({
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
+  // Guards to prevent doStopAndAdvance / handleFinish firing twice
+  // (e.g. timer reaching 0 at the same instant the user clicks "Finish Recording")
+  const advancingRef = useRef(false);
+  const finishedRef = useRef(false);
+
+
 
 
 
@@ -263,15 +269,19 @@ const SpeakingExamEngine = ({
 
   // Stop recording and move to next question/finish (uses refs to avoid stale closures)
   const doStopAndAdvance = useCallback(() => {
+    // Guard against double-invocation (timer + button race)
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
-    
+
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
 
     setIsTransitioning(true);
-    
+
     const total = getTotalQuestions();
     const idx = currentIndexRef.current;
     if (idx < total - 1) {
@@ -281,6 +291,7 @@ const SpeakingExamEngine = ({
         setCurrentIndex(nextIdx);
         setCanFinish(false);
         setIsTransitioning(false);
+        advancingRef.current = false;
         startQuestionFlow();
       }, 300);
     } else {
@@ -295,6 +306,10 @@ const SpeakingExamEngine = ({
   }, [canFinish, doStopAndAdvance]);
 
   const handleFinish = async () => {
+    // Guard: ensure onComplete fires exactly once per part
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+
     // Best-effort upload of all recordings — never block UI on failure
     try {
       const currentRecordings = recordings;
