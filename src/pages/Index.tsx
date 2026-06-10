@@ -259,13 +259,17 @@ const Index = () => {
       {/* Course CTA */}
       <section className="section-padding relative overflow-hidden bg-gradient-hero">
         <AnimatedGrid />
+        <ParticlesBackground count={30} />
+        <GradientOrb tone="orange" size={420} className="top-1/2 -translate-y-1/2 -left-32" />
+        <GradientOrb tone="red" size={420} className="top-1/2 -translate-y-1/2 -right-32" />
         <div className="section-container relative z-10">
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true }}
             className="max-w-2xl mx-auto text-center"
           >
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 text-sm font-semibold mb-6 text-accent backdrop-blur-sm">
+            <motion.div variants={fadeUp} custom={0} className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 text-sm font-semibold mb-6 text-accent backdrop-blur-sm overflow-hidden">
               <Flame className="w-4 h-4" /> Khóa học hot nhất
+              <BorderBeam size={100} duration={5} />
             </motion.div>
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold text-on-dark mb-4">
               <GradientText>Aptis Kỳ Tích</GradientText> – Đạt Aptis trong 7 ngày
@@ -274,16 +278,20 @@ const Index = () => {
               Lộ trình học tập tối ưu, cam kết đầu ra B1–B2. Hỗ trợ 1-1 từ giảng viên.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/course">
-                <Button size="lg" variant="glow" className="text-base px-8 gap-2 rounded-full">
-                  Xem chi tiết khóa học <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <a href="https://zalo.me/0867833227" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="glow-outline" className="text-base px-8 gap-2 rounded-full">
-                  <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
-                </Button>
-              </a>
+              <MagneticButton>
+                <Link to="/course">
+                  <Button size="lg" variant="glow" className="text-base px-8 gap-2 rounded-full animate-glow-pulse">
+                    Xem chi tiết khóa học <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+              </MagneticButton>
+              <MagneticButton>
+                <a href="https://zalo.me/0867833227" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" variant="glow-outline" className="text-base px-8 gap-2 rounded-full">
+                    <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
+                  </Button>
+                </a>
+              </MagneticButton>
             </motion.div>
           </motion.div>
         </div>
