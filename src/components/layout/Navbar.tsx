@@ -165,13 +165,13 @@ const Navbar = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
+              className={`group relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
                 isActive(link.path)
                   ? "text-primary"
-                  : "text-secondary-foreground"
+                  : "text-secondary-foreground hover:text-primary"
               }`}
             >
-              <link.icon className="w-3.5 h-3.5" />
+              <link.icon className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
               {link.label}
               {isActive(link.path) && (
                 <motion.div
@@ -180,6 +180,7 @@ const Navbar = () => {
                   transition={{ type: "spring", stiffness: 500, damping: 35 }}
                 />
               )}
+              <span className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-0 rounded-full bg-primary/50 transition-all duration-300 group-hover:w-[calc(100%-1.5rem)]" />
             </Link>
           ))}
         </div>
