@@ -299,9 +299,9 @@ const Dashboard = () => {
                     <div className="flex-1 min-w-0 w-full">
                       <div className="flex items-center gap-2 mb-1">
                         <Flame className={`w-6 h-6 ${atRisk ? "text-primary animate-pulse" : "text-primary"}`} />
-                        <h3 className="font-heading font-extrabold text-lg text-foreground">
+                        <h2 className="font-heading font-extrabold text-lg text-foreground">
                           {atRisk ? `Sắp mất chuỗi ${d.streak} ngày!` : `Chuỗi ${d.streak} ngày`}
-                        </h3>
+                        </h2>
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">
                         {atRisk
@@ -343,9 +343,9 @@ const Dashboard = () => {
               {/* SKILL PROGRESS */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
                 <GlowCard className="p-6">
-                  <h3 className="font-heading font-bold text-foreground mb-5 flex items-center gap-2">
+                  <h2 className="font-heading font-bold text-foreground mb-5 flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-primary" /> Tiến bộ theo kỹ năng
-                  </h3>
+                  </h2>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                     {skills.map((s) => (
                       <div key={s.label}>
@@ -385,7 +385,7 @@ const Dashboard = () => {
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
                 <GlowCard className="p-6">
                   <div className="flex items-center justify-between mb-5">
-                    <h3 className="font-heading font-bold text-foreground">Lịch sử học tập</h3>
+                    <h2 className="font-heading font-bold text-foreground">Lịch sử học tập</h2>
                     <Link to="/history" className="text-xs font-bold text-primary hover:text-primary-glow inline-flex items-center gap-1">
                       Tất cả <ArrowRight className="w-3 h-3" />
                     </Link>
@@ -439,7 +439,7 @@ const Dashboard = () => {
                     <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-[#7a0f00] text-primary-foreground mb-3 shadow-glow-soft">
                       <Mic className="w-5 h-5" />
                     </div>
-                    <h3 className="font-heading font-extrabold text-foreground mb-1">Tăng tốc Speaking</h3>
+                    <h2 className="font-heading font-extrabold text-foreground mb-1">Tăng tốc Speaking</h2>
                     <p className="text-sm text-muted-foreground mb-4">
                       AI chấm + feedback chi tiết. Chỉ 12 phút mỗi ngày.
                     </p>

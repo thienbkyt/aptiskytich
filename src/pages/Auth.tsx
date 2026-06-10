@@ -212,7 +212,7 @@ const Auth = () => {
         <div className="text-center mb-6">
           <img src="/9154f592-dfc4-4450-bbe4-e708202f75b4.png" alt="Aptis Kỳ Tích" className="h-32 w-32 mx-auto mb-3 object-contain my-0" />
           <h1 className="text-3xl font-heading font-extrabold text-white drop-shadow-sm">
-            Aptis <span style={{ color: "#FEAD5F" }}>Kỳ Tích</span>
+            Aptis <span style={{ color: "#FEAD5F" }}>Kỳ Tích</span> — Đăng nhập và Đăng ký
           </h1>
         </div>
 

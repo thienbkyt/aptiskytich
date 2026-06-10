@@ -92,6 +92,7 @@ const BottomNavBar = ({
                 <h2 className="font-heading font-bold text-foreground text-base">Question List</h2>
                 <button
                   onClick={() => setShowQuestionList(false)}
+                  aria-label="Đóng danh sách câu hỏi"
                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                 >
                   <X className="w-4 h-4" />
@@ -242,6 +243,7 @@ const BottomNavBar = ({
                 <h2 className="font-heading font-bold text-foreground text-base">Information</h2>
                 <button
                   onClick={() => setShowInfo(false)}
+                  aria-label="Đóng thông tin"
                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                 >
                   <X className="w-4 h-4" />
@@ -284,6 +286,7 @@ const BottomNavBar = ({
                 <h2 className="font-heading font-bold text-foreground text-base">Accessibility</h2>
                 <button
                   onClick={() => setShowAccessibility(false)}
+                  aria-label="Đóng tuỳ chỉnh hỗ trợ truy cập"
                   className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
                 >
                   <X className="w-4 h-4" />
@@ -313,12 +316,14 @@ const BottomNavBar = ({
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => adjustMagnification(-10)}
+                      aria-label="Giảm kích thước chữ"
                       className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
                     >
                       <Minus className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => adjustMagnification(10)}
+                      aria-label="Tăng kích thước chữ"
                       className="w-8 h-8 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -337,18 +342,21 @@ const BottomNavBar = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowQuestionList(true)}
+              aria-label="Mở danh sách câu hỏi"
               className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowInfo(true)}
+              aria-label="Xem thông tin bài thi"
               className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
             >
               <Info className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowAccessibility(true)}
+              aria-label="Mở tuỳ chỉnh hỗ trợ truy cập"
               className="w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
             >
               <PersonStanding className="w-4 h-4" />
@@ -356,7 +364,7 @@ const BottomNavBar = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
+            <button aria-label="Thoát bài thi" className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
