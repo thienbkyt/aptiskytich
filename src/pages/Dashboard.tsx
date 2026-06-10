@@ -183,15 +183,7 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20">
-          <div className="section-container">
-            <Skeleton className="h-10 w-64 mb-2" />
-            <Skeleton className="h-5 w-96 mb-8" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
-            </div>
-          </div>
-        </div>
+        <DashboardSkeleton />
       </div>
     );
   }
