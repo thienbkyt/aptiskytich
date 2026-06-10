@@ -29,13 +29,14 @@ import QuizMode from "@/components/vocab/QuizMode";
 import MatchingMode from "@/components/vocab/MatchingMode";
 import { speakWithTTS } from "@/lib/tts";
 import {
-import ParticlesBackground from "@/components/ui/particles-background";
-import GradientOrb from "@/components/ui/gradient-orb";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
+
 
 type StudyMode = "browse" | "flashcard" | "quiz" | "matching";
 
