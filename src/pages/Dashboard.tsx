@@ -1,7 +1,6 @@
 import { Link, Navigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
