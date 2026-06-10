@@ -1,7 +1,8 @@
 import { lazy, Suspense, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Bot, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import aiCoachLogo from "@/assets/ai-coach-logo.png.asset.json";
 
 const AICoachPanel = lazy(() => import("./AICoachPanel"));
 
