@@ -12,7 +12,7 @@ const TimerDisplay = ({ timeLeft, totalTime }: TimerDisplayProps) => {
   const progress = totalTime > 0 ? (timeLeft / totalTime) * 100 : 0;
 
   return (
-    <div className="text-right">
+    <div className="exam-timer-display text-right">
       <div className="font-heading text-2xl font-extrabold text-foreground tracking-wider leading-none">
         {formatTime(timeLeft)}
       </div>
