@@ -238,10 +238,7 @@ const VocabStudy = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
-        <main className="flex-1 pt-16 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </main>
-        <Footer />
+        <VocabStudySkeleton />
       </div>
     );
   }
