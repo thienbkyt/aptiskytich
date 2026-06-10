@@ -225,7 +225,11 @@ const History = () => {
           </Tabs>
 
           {loading ? (
-            <div className="space-y-3">{[0,1,2,3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <TechSkeletonRow key={i} />
+              ))}
+            </div>
           ) : isFullTestTab ? (
             fullTestGroups.length === 0 ? (
               <EmptyState
