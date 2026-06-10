@@ -355,10 +355,10 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
       >
         <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 via-transparent to-transparent md:rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/40">
-              <Bot className="w-5 h-5 text-primary-foreground" />
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+            <div className="relative w-10 h-10 rounded-full overflow-hidden shadow-lg shadow-primary/40">
+              <img src={aiCoachLogo.url} alt="Coach Kỳ Tích" className="w-full h-full object-cover" />
             </div>
+            <span className="absolute left-[3.25rem] top-3 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
             <div>
               <h3 className="font-bold text-sm leading-tight">Coach Kỳ Tích</h3>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
