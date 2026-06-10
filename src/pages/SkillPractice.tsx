@@ -357,8 +357,10 @@ const SkillPractice = () => {
               </div>
 
               {setsLoading ? (
-                <div className="py-12 flex justify-center col-span-full">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <TechSkeleton key={i} variant="card" className="h-40" />
+                  ))}
                 </div>
               ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
