@@ -356,11 +356,11 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
         <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 via-transparent to-transparent md:rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="relative w-10 h-10 shrink-0">
-              <img src={aiCoachLogo.url} alt="Coach Kỳ Tích" className="w-full h-full object-cover rounded-full shadow-lg shadow-primary/40" />
+              <img src={aiCoachLogo.url} alt="AI Kỳ Tích" className="w-full h-full object-cover rounded-full shadow-lg shadow-primary/40" />
               <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
             </div>
             <div>
-              <h3 className="font-bold text-sm leading-tight">Coach Kỳ Tích</h3>
+              <h3 className="font-bold text-sm leading-tight">AI Kỳ Tích</h3>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 {ctx.exam?.questionText ? `Đang xem câu ${(ctx.exam.questionIndex ?? 0) + 1}` : "AI luyện thi Aptis"}
@@ -384,11 +384,11 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
             <div className="space-y-4 pt-2">
               <div className="text-center space-y-2">
                 <div className="inline-flex w-16 h-16 rounded-2xl overflow-hidden items-center justify-center mb-2 shadow-lg shadow-primary/30">
-                  <img src={aiCoachLogo.url} alt="Coach Kỳ Tích" className="w-full h-full object-cover" />
+                  <img src={aiCoachLogo.url} alt="AI Kỳ Tích" className="w-full h-full object-cover" />
                 </div>
                 <h4 className="font-bold">Xin chào! 👋</h4>
                 <p className="text-sm text-muted-foreground px-4">
-                  Mình là Coach Kỳ Tích. Hỏi mình bất kỳ điều gì, hoặc <b>đính kèm ảnh / chụp màn hình</b> để mình hướng dẫn từng bước.
+                  Mình là AI Kỳ Tích. Hỏi mình bất kỳ điều gì, hoặc <b>đính kèm ảnh / chụp màn hình</b> để mình hướng dẫn từng bước.
                 </p>
                 {ctx.dashboard?.weakestSkill && (
                   <p className="text-xs text-primary/80 px-4">
