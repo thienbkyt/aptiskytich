@@ -205,7 +205,8 @@ const Auth = () => {
     >
       <div aria-hidden className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: "#FEAD5F" }} />
       <div aria-hidden className="pointer-events-none absolute -bottom-40 -right-32 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-20" style={{ background: "#FEAD5F" }} />
-      <div aria-hidden className="pointer-events-none absolute top-1/3 right-1/4 w-72 h-72 rounded-full blur-3xl opacity-20" style={{ background: "#CC1C01" }} />
+      <div aria-hidden className="pointer-events-none absolute top-1/3 right-1/4 w-72 h-72 rounded-full blur-3xl opacity-20 animate-breathing" style={{ background: "#CC1C01" }} />
+      <ParticlesBackground count={36} color="254, 173, 95" />
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md relative z-10">
         <div className="text-center mb-6">
