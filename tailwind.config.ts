@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Montserrat', 'system-ui', 'sans-serif'],
+        body: ['Montserrat', 'system-ui', 'sans-serif'],
+        sans: ['Montserrat', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -26,6 +27,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -70,6 +72,8 @@ export default {
         "brand-red": "hsl(var(--brand-red))",
         "brand-orange": "hsl(var(--brand-orange))",
         "brand-brown": "hsl(var(--brand-brown))",
+        "background-elevated": "hsl(var(--background-elevated))",
+        "border-glow": "hsl(var(--border-glow))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -80,6 +84,20 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+      },
+      backgroundImage: {
+        "gradient-primary": "var(--gradient-primary)",
+        "gradient-hero": "var(--gradient-hero)",
+        "gradient-card": "var(--gradient-card)",
+        "gradient-text-glow": "var(--gradient-text-glow)",
+        "gradient-aurora": "var(--gradient-aurora)",
+        "gradient-radial-red": "var(--gradient-radial-red)",
+      },
+      boxShadow: {
+        glow: "var(--shadow-glow)",
+        "glow-red": "var(--shadow-glow-red)",
+        "glow-soft": "var(--shadow-glow-soft)",
+        elevated: "var(--shadow-elevated)",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -99,11 +117,16 @@ export default {
           from: { opacity: "0", transform: "translateY(10px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 12px hsl(var(--primary) / 0.35), 0 0 28px hsl(var(--primary) / 0.15)" },
+          "50%": { boxShadow: "0 0 22px hsl(var(--primary) / 0.6), 0 0 56px hsl(var(--primary) / 0.28)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "count-up": "count-up 0.5s ease-out",
+        "glow-pulse": "glow-pulse 2.4s ease-in-out infinite",
       },
     },
   },
