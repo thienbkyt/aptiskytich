@@ -272,193 +272,114 @@ const HistoryDetail = () => {
             <Skeleton className="h-96 w-full rounded-xl" />
           ) : (
             <>
-              {!reviewing && (
-                <>
-                  {/* Summary */}
-                  <div className="glass-card p-6 md:p-8 mb-6">
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <Badge variant="secondary">{SKILL_LABELS[skill] || skill}</Badge>
-                      {setInfo?.part && <Badge variant="outline">{setInfo.part}</Badge>}
-                    </div>
-                    <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-4">
-                      {setInfo?.title || "Đề mẫu"}
-                    </h1>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <Stat label="Điểm số" value={`${result.score}/${result.total}`} />
-                      <Stat label="Tỉ lệ" value={`${pct}%`} />
-                      <Stat label="Band level" value={result.level} highlight />
-                      <Stat label="Thời gian" value={formatDuration(result.time_spent)} icon={<Clock className="w-3.5 h-3.5" />} />
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" /> Làm bài lúc {formatDateTime(result.created_at)}
-                    </div>
-                  </div>
+              {/* Summary */}
+              <div className="glass-card p-6 md:p-8 mb-6">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <Badge variant="secondary">{SKILL_LABELS[skill] || skill}</Badge>
+                  {setInfo?.part && <Badge variant="outline">{setInfo.part}</Badge>}
+                </div>
+                <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-4">
+                  {setInfo?.title || "Đề mẫu"}
+                </h1>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Stat label="Điểm số" value={`${result.score}/${result.total}`} />
+                  <Stat label="Tỉ lệ" value={`${pct}%`} />
+                  <Stat label="Band level" value={result.level} highlight />
+                  <Stat label="Thời gian" value={formatDuration(result.time_spent)} icon={<Clock className="w-3.5 h-3.5" />} />
+                </div>
 
-                  {/* Attempts comparison */}
-                  {history.length > 1 && (
-                    <div className="glass-card p-6 mb-6">
-                      <h2 className="font-heading font-bold text-foreground mb-4">Các lần làm bộ đề này</h2>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-xs text-muted-foreground border-b border-border">
-                              <th className="py-2 pr-4">Ngày làm</th>
-                              <th className="py-2 pr-4">Điểm</th>
-                              <th className="py-2 pr-4">Tỉ lệ</th>
-                              <th className="py-2">Band</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {history.map((h) => {
-                              const hp = h.total > 0 ? Math.round((h.score / h.total) * 100) : 0;
-                              const isCurrent = h.id === result.id;
-                              return (
-                                <tr key={h.id} className={`border-b border-border last:border-0 ${isCurrent ? "bg-primary/5" : ""}`}>
-                                  <td className="py-2.5 pr-4 text-foreground">{formatDateTime(h.created_at)}{isCurrent && <span className="ml-2 text-xs text-primary">(lần này)</span>}</td>
-                                  <td className="py-2.5 pr-4 text-foreground font-medium">{h.score}/{h.total}</td>
-                                  <td className="py-2.5 pr-4 text-muted-foreground">{hp}%</td>
-                                  <td className="py-2.5"><Badge className="bg-primary/10 text-primary border-0">{h.level}</Badge></td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
+                {/* Đúng / Sai / Bỏ trống chips */}
+                {questions.length > 0 && (() => {
+                  const correct = questions.filter((q) => q.is_correct).length;
+                  const attempted = questions.filter((q) => q.user_answer != null && q.user_answer !== "").length;
+                  const blank = questions.length - attempted;
+                  const wrong = attempted - correct;
+                  return (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Đúng {correct}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-destructive/5 text-destructive border border-destructive/20">
+                        <XCircle className="w-3.5 h-3.5" /> Sai {wrong}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+                        Bỏ trống {blank}
+                      </span>
                     </div>
-                  )}
+                  );
+                })()}
 
-                  <div className="flex flex-wrap justify-end gap-3">
-                    {(questions.length > 0 || recordings.length > 0) && (
-                      <Button
-                        variant="outline"
-                        className="gap-2 border-primary text-primary hover:bg-primary/10 hover:text-primary"
-                        onClick={() => setReviewing(true)}
-                      >
-                        <Eye className="w-4 h-4" /> Xem lại từng câu
-                      </Button>
-                    )}
-                    <Link
-                      to={
-                        result.exam_set_id
-                          ? `${SKILL_ROUTES[skill] || "/practice"}?set=${result.exam_set_id}`
-                          : SKILL_ROUTES[skill] || "/practice"
-                      }
-                    >
-                      <Button className="gap-2"><RotateCcw className="w-4 h-4" />Làm lại</Button>
-                    </Link>
-                  </div>
-                </>
-              )}
+                <div className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Làm bài lúc {formatDateTime(result.created_at)}
+                </div>
+              </div>
 
-              {reviewing && (
-                <>
-                  {/* Speaking recordings */}
-                  {skill === "speaking" && (
-                    <div className="glass-card p-6 mb-6">
-                      <h2 className="font-heading font-bold text-foreground mb-4">Bài ghi âm</h2>
-                      {recordings.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Không có file ghi âm cho lần thi này.</p>
-                      ) : (
-                        <div className="space-y-4">
-                          {recordings.map((rec) => (
-                            <div key={rec.id} className="p-3 rounded-lg bg-muted/40">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-foreground">{rec.part.toUpperCase()}</span>
-                                {rec.duration_seconds != null && (
-                                  <span className="text-xs text-muted-foreground">{rec.duration_seconds}s</span>
-                                )}
-                              </div>
-                              {rec.signed_url ? (
-                                <audio controls src={rec.signed_url} className="w-full" />
-                              ) : (
-                                <p className="text-xs text-muted-foreground">Không tải được file ghi âm.</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Per-question list */}
-                  {skill !== "speaking" && questions.length > 0 && (
-                    <div className="glass-card p-6 mb-6">
-                      <h2 className="font-heading font-bold text-foreground mb-4">Chi tiết câu hỏi</h2>
-                      <div className="space-y-5">
-                        {questions.map((q, idx) => {
-                          const opts = Array.isArray(q.options) ? q.options : [];
+              {/* Attempts comparison */}
+              {history.length > 1 && (
+                <div className="glass-card p-6 mb-6">
+                  <h2 className="font-heading font-bold text-foreground mb-4">Các lần làm bộ đề này</h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-muted-foreground border-b border-border">
+                          <th className="py-2 pr-4">Ngày làm</th>
+                          <th className="py-2 pr-4">Điểm</th>
+                          <th className="py-2 pr-4">Tỉ lệ</th>
+                          <th className="py-2">Band</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {history.map((h) => {
+                          const hp = h.total > 0 ? Math.round((h.score / h.total) * 100) : 0;
+                          const isCurrent = h.id === result.id;
+                          const rowCls = `border-b border-border last:border-0 transition-colors ${isCurrent ? "bg-primary/5" : "hover:bg-muted/40 cursor-pointer"}`;
+                          const cells = (
+                            <>
+                              <td className="py-2.5 pr-4 text-foreground">{formatDateTime(h.created_at)}{isCurrent && <span className="ml-2 text-xs text-primary">(lần này)</span>}</td>
+                              <td className="py-2.5 pr-4 text-foreground font-medium">{h.score}/{h.total}</td>
+                              <td className="py-2.5 pr-4 text-muted-foreground">{hp}%</td>
+                              <td className="py-2.5"><Badge className="bg-primary/10 text-primary border-0">{h.level}</Badge></td>
+                            </>
+                          );
+                          if (isCurrent) return <tr key={h.id} className={rowCls}>{cells}</tr>;
                           return (
-                            <div key={q.id} className="border border-border rounded-xl p-4">
-                              <div className="flex items-start gap-2 mb-3">
-                                <span className="text-xs font-bold text-muted-foreground mt-0.5">Câu {idx + 1}</span>
-                                {q.is_correct ? (
-                                  <CheckCircle2 className="w-4 h-4 text-success" />
-                                ) : (
-                                  <XCircle className="w-4 h-4 text-destructive" />
-                                )}
-                              </div>
-                              <p className="text-sm text-foreground mb-3 whitespace-pre-wrap">{q.question_text}</p>
-                              {opts.length > 0 && (
-                                <div className="space-y-1.5 mb-3">
-                                  {opts.map((opt: any, i: number) => {
-                                    const text = typeof opt === "string" ? opt : opt?.text ?? String(opt);
-                                    const isCorrect = q.correct_answer === i;
-                                    const userIdx = q.user_answer != null ? parseInt(q.user_answer, 10) : -1;
-                                    const isUser = userIdx === i;
-                                    return (
-                                      <div key={i} className={`text-sm px-3 py-1.5 rounded-md border ${
-                                        isCorrect ? "border-success/40 bg-success/10 text-foreground"
-                                        : isUser ? "border-destructive/40 bg-destructive/10 text-foreground"
-                                        : "border-border text-muted-foreground"
-                                      }`}>
-                                        <span className="font-medium mr-2">{String.fromCharCode(65 + i)}.</span>{text}
-                                        {isCorrect && <span className="ml-2 text-xs text-success font-medium">✓ Đáp án đúng</span>}
-                                        {isUser && !isCorrect && <span className="ml-2 text-xs text-destructive font-medium">Bạn chọn</span>}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                              {q.user_answer && (!opts || opts.length === 0) && (
-                                <div className="text-xs text-muted-foreground mb-2">
-                                  <span>Đáp án của bạn: </span>
-                                  {(() => {
-                                    const raw = q.user_answer!;
-                                    try {
-                                      const parsed = JSON.parse(raw);
-                                      if (Array.isArray(parsed)) {
-                                        return <span className="text-foreground">{parsed.map((v, i) => `${i + 1}. ${v ?? "—"}`).join("  •  ")}</span>;
-                                      }
-                                      if (parsed && typeof parsed === "object") {
-                                        return <span className="text-foreground">{Object.entries(parsed).map(([k, v]) => `${k}: ${v ?? "—"}`).join("  •  ")}</span>;
-                                      }
-                                      return <span className="text-foreground whitespace-pre-wrap">{String(parsed)}</span>;
-                                    } catch {
-                                      return <span className="text-foreground whitespace-pre-wrap">{raw}</span>;
-                                    }
-                                  })()}
-                                </div>
-                              )}
-                              {q.explanation && (
-                                <div className="mt-2 text-xs text-muted-foreground bg-muted/40 rounded-md p-2.5">
-                                  <strong className="text-foreground">Giải thích: </strong>{q.explanation}
-                                </div>
-                              )}
-                            </div>
+                            <tr
+                              key={h.id}
+                              className={rowCls}
+                              onClick={() => { window.location.href = `/history/${h.id}`; }}
+                            >
+                              {cells}
+                            </tr>
                           );
                         })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end">
-                    <Button variant="outline" className="gap-2" onClick={() => setReviewing(false)}>
-                      <ArrowLeft className="w-4 h-4" /> Quay lại kết quả
-                    </Button>
+                      </tbody>
+                    </table>
                   </div>
-                </>
+                </div>
               )}
+
+              <div className="flex flex-wrap justify-end gap-3">
+                {(questions.length > 0 || recordings.length > 0) && (
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => setReviewing(true)}
+                  >
+                    <Eye className="w-4 h-4" /> Xem lại từng câu
+                  </Button>
+                )}
+                <Link
+                  to={
+                    result.exam_set_id
+                      ? `${SKILL_ROUTES[skill] || "/practice"}?set=${result.exam_set_id}`
+                      : SKILL_ROUTES[skill] || "/practice"
+                  }
+                >
+                  <Button className="gap-2"><RotateCcw className="w-4 h-4" />Làm lại</Button>
+                </Link>
+              </div>
             </>
+
           )}
         </div>
       </main>
