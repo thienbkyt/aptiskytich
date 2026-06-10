@@ -18,11 +18,11 @@ const GlowCard = React.forwardRef<HTMLDivElement, GlowCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative rounded-2xl border border-border bg-card/80 backdrop-blur-sm",
-          "shadow-md transition-all duration-300",
-          interactive && "hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-glow-red",
+          "relative rounded-2xl border border-border bg-card/80 backdrop-blur-sm shadow-md",
+          interactive && "tech-card hover:border-primary/50 hover:shadow-glow-red",
           className,
         )}
+
         {...props}
       >
         {spotlight && (
