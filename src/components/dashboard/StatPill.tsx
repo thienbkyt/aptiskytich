@@ -20,22 +20,22 @@ const StatPill = ({ icon: Icon, label, value, accent = "red", className }: StatP
   return (
     <div
       className={cn(
-        "group relative flex items-center gap-3 rounded-2xl border border-border bg-card/70 backdrop-blur-sm px-4 py-3",
+        "group relative flex items-center gap-4 rounded-2xl border border-border bg-card/70 backdrop-blur-sm px-5 py-5",
         "transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-glow-soft",
         className,
       )}
     >
       <div
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ring-1 ring-inset ring-border",
+          "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ring-1 ring-inset ring-border",
           ACCENT_MAP[accent],
         )}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className="h-7 w-7" />
       </div>
       <div className="min-w-0">
-        <div className="text-xs text-muted-foreground truncate">{label}</div>
-        <div className="text-lg font-heading font-extrabold text-foreground leading-tight truncate">{value}</div>
+        <div className="text-sm text-muted-foreground truncate">{label}</div>
+        <div className="text-2xl font-heading font-extrabold text-foreground leading-tight truncate">{value}</div>
       </div>
     </div>
   );
