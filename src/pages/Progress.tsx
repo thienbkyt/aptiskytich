@@ -291,7 +291,7 @@ const ProgressPage = () => {
             <BarChart3 className="w-5 h-5 text-primary" /> So sánh tháng này với tháng trước
           </h2>
           {loading ? (
-            <Skeleton className="h-64 w-full" />
+            <TechSkeleton variant="card" className="h-64 w-full" />
           ) : (
             <>
               <div className="h-64 w-full mb-4">
