@@ -16,6 +16,7 @@ import ExamInstructions from "@/components/exam/ExamInstructions";
 import GrammarResults from "@/components/grammar/GrammarResults";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
+import { setCoachExamContext } from "@/stores/coachStore";
 
 interface GrammarExamEngineProps {
   questions: Question[];
@@ -131,6 +132,33 @@ const GrammarExamEngine = ({
     }, 1000);
     return () => clearInterval(t);
   }, [phase, submitted, timeLeft]);
+
+  // Push current question to AI Coach context (for "explain this question" feature)
+  useEffect(() => {
+    if (phase !== "practice" && phase !== "review") {
+      setCoachExamContext(null);
+      return;
+    }
+    const q = questions[currentIndex];
+    if (!q) return;
+    const userIdx = answers[currentIndex];
+    const userAns = q.options && userIdx != null ? q.options[userIdx] : (fillAnswers[currentIndex] || null);
+    const correctAns = q.options && q.correct_answer != null ? q.options[q.correct_answer] : null;
+    setCoachExamContext({
+      skill: "Grammar & Vocabulary",
+      part: testTitle,
+      questionIndex: currentIndex,
+      totalQuestions: questions.length,
+      questionText: q.question_text,
+      options: q.options,
+      userAnswer: userAns,
+      correctAnswer: correctAns,
+      explanation: q.explanation,
+      isSubmitted: submitted,
+    });
+  }, [phase, currentIndex, answers, fillAnswers, submitted, questions, testTitle]);
+
+  useEffect(() => () => { setCoachExamContext(null); }, []);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
