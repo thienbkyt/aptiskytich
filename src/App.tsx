@@ -7,7 +7,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
-import Index from "./pages/Index";
+import PageLoadingSkeleton from "@/components/layout/PageLoadingSkeleton";
+import ZaloFab from "@/components/layout/ZaloFab";
+
+const Index = lazy(() => import("./pages/Index"));
+
 
 // Lazy-load non-landing routes to reduce initial bundle size
 const Practice = lazy(() => import("./pages/Practice"));
@@ -58,7 +62,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={<div className="min-h-screen" />}>
+          <Suspense fallback={<PageLoadingSkeleton />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -86,8 +90,10 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
+          <ZaloFab />
         </AuthProvider>
       </BrowserRouter>
+
     </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
