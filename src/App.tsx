@@ -8,7 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
 import PageLoadingSkeleton from "@/components/layout/PageLoadingSkeleton";
-import ZaloFab from "@/components/layout/ZaloFab";
+
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 
 const Index = lazy(() => import("./pages/Index"));
