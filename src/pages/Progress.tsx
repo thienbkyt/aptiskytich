@@ -9,10 +9,10 @@ import { Calendar as CalendarIcon, LineChart as LineIcon, BarChart3, ArrowUp, Ar
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 
 const SKILL_META = [
   { key: "grammar",   label: "Grammar",   color: "hsl(var(--primary))" },
