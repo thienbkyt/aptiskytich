@@ -207,7 +207,7 @@ const Reading = () => {
           <ParticlesBackground className="opacity-60" count={28} />
           <GradientOrb tone="red" size={420} className="-top-32 -right-24" />
           <GradientOrb tone="red" size={320} className="-bottom-40 -left-20 opacity-70" />
-          <div className="section-container py-12 md:py-16">
+          <div className="section-container py-12 md:py-16 relative z-10">
             <div className="max-w-3xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
