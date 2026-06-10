@@ -7,7 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type ChatMessage = { role: "user" | "assistant"; content: string };
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  images?: string[]; // data URLs (image/jpeg base64) or https URLs
+  pageText?: string;
+};
 type CoachContext = {
   pathname?: string;
   pageTitle?: string;
@@ -130,11 +135,28 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Keep last 20 messages to bound token usage
-    const recent = body.messages.slice(-20).map((m) => ({
-      role: m.role === "assistant" ? "assistant" : "user",
-      content: String(m.content ?? "").slice(0, 4000),
-    }));
+    // Keep last 20 messages to bound token usage. Build multimodal content
+    // when an attached image or page-text snippet is present.
+    const recent = body.messages.slice(-20).map((m) => {
+      const role = m.role === "assistant" ? "assistant" : "user";
+      const text = String(m.content ?? "").slice(0, 4000);
+      const imgs = Array.isArray(m.images) ? m.images.filter((u) => typeof u === "string" && u.length < 6_000_000).slice(0, 4) : [];
+      const pageText = typeof m.pageText === "string" ? m.pageText.slice(0, 6000) : "";
+
+      if (role === "user" && (imgs.length > 0 || pageText)) {
+        const parts: any[] = [];
+        let textBlock = text;
+        if (pageText) {
+          textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM ---\n${pageText}\n--- HẾT ---`;
+        }
+        parts.push({ type: "text", text: textBlock || "Xem giúp mình nhé." });
+        for (const url of imgs) {
+          parts.push({ type: "image_url", image_url: { url } });
+        }
+        return { role, content: parts };
+      }
+      return { role, content: text };
+    });
 
     const payload = {
       model: "google/gemini-2.5-flash",
