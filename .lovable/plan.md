@@ -1,107 +1,66 @@
+## Vấn đề
 
-# Tối ưu UX luồng "Xem lại bài đã làm"
+Trong panel "Đáp án & Giải thích" của Reading Part 1 (gap-fill), đoạn văn đang hiển thị nguyên `{1}`, `{2}`, `{3}`… vì `ReviewAnswerPanel.tsx` chỉ in thô `question_text` từ DB. Đồng thời ô "Đáp án của bạn" chỉ hiện chuỗi JSON nên fallback ra "Đã trả lời (xem trên bài thi ở trên)".
 
-Phạm vi: chỉ sau khi nộp (HistoryDetail, HistoryReviewPager, các Engine ở `reviewMode`). Không đụng UI làm bài thật, không đụng phối màu, không đụng logic chấm điểm.
+Dữ liệu thật trong DB:
+- `question_text`: đoạn văn nhiều dòng có `{1}…{5}`
+- `extra_data.gaps`: `[{options: string[], correct: number}, …]` — gap 0 là "done for you" (options rỗng)
+- `user_answer`: `{"partType":"part1","answers":[null, idx, idx, …]}`
+- Một câu Part 1 = 1 row `exam_questions` duy nhất, `question_type = "gap_fill"`
 
-Đã xác nhận:
-- Layout 1 part = 1 trang scroll dọc (không click-through từng câu).
-- Explanation: **70% có, 30% rỗng** → ẩn block "Giải thích" khi rỗng, chỉ hiện block "Đáp án đúng".
-- Speaking review: chỉ band tổng + nhận xét ngắn (CEFR breakdown để Step 5 sau).
+## Mục tiêu
 
----
+Render lại đoạn văn trong panel review, thay `{n}` bằng **từ đáp án đúng được highlight**. Nếu user chọn sai, hiện kèm từ user đã chọn bị gạch ngang màu đỏ. Nếu bỏ trống thì hiện "—" mờ.
 
-## 1. Vấn đề hiện tại
+## Phạm vi
 
-1. **2 thanh nav đè nhau**: Pager bar (sticky top tím) + BottomNavBar nội bộ của engine (fixed bottom) cùng có Previous/Next → user dễ bấm nhầm.
-2. **Vẫn render timer + nút Submit** trong `reviewMode` (Reading/Listening/Grammar) — thừa và gây hiểu nhầm.
-3. **Không hiện đáp án đúng + giải thích ngay tại câu** — `exam_questions.explanation` đã có nhưng không truyền vào engine; user phải scroll xuống danh sách rời ở dưới.
-4. **HistoryDetail summary**: nút "Làm lại" và "Xem lại" cùng cấp; bảng "Các lần làm" không click được.
-5. **Speaking review**: ghi âm render trùng (cả trong nhánh `reviewing` của HistoryDetail lẫn SpeakingReviewPage).
-6. **Micro**: 2 thanh tím chồng top, không có transition khi đổi page, không có phím tắt ←/→.
+- Reading **Part 1** (gap_fill, `{n}` trong `question_text`, `extra_data.gaps`).
+- Áp dụng cùng renderer cho bất kỳ câu nào có pattern `{n}` + `extra_data.gaps` (phòng khi Part 3/4 cùng shape).
+- KHÔNG động vào engine làm bài, không đổi data, không đổi cách chấm điểm.
+- Các skill khác (Listening / Grammar / Writing / Speaking) giữ nguyên — panel hiện tại của họ đã ổn.
 
----
+## Thay đổi
 
-## 2. Giải pháp
+### 1. `HistoryReviewPager.tsx`
+- Khi query `exam_questions` cho panel, thêm cột `extra_data` vào `.select(...)`.
+- Truyền `extra_data` xuống `ReviewAnswerPanel` qua type `ReviewQuestion`.
 
-### A. Thống nhất nav trong review
-- Thêm prop `reviewMode` cho `BottomNavBar` → khi true: ẩn nút Submit, ẩn Previous/Next câu (chỉ giữ Question List + Info + Accessibility + Thoát).
-- `HistoryReviewPager` là nơi DUY NHẤT có Prev/Next giữa các part.
-- Render hết câu trong 1 part trên 1 trang dài (bỏ `currentIndex` loop khi reviewMode trong Reading Part 1/3/4, Listening, Grammar). Writing đã 1 trang.
+### 2. `ReviewAnswerPanel.tsx`
+- Mở rộng type `ReviewQuestion`: thêm `extra_data?: any`.
+- Helper mới `parseUserAnswers(raw)`:
+  - Nếu raw parse được JSON dạng `{partType, answers: number[]}` → trả về mảng `answers`.
+  - Nếu là số đơn → trả mảng 1 phần tử.
+  - Ngược lại → `null`.
+- Helper `isGapFillQuestion(q)`: `q.extra_data?.gaps` là mảng và `question_text` chứa `/\{\d+\}/`.
+- Render nhánh **gap-fill**:
+  - Split `question_text` theo `/\{(\d+)\}/`.
+  - Với mỗi gap index `n`:
+    - `gap = extra_data.gaps[n]`
+    - `userPick = parsedAnswers?.[n]`
+    - `correctText = gap.options[gap.correct]` (gap 0 có options rỗng → bỏ qua, render `{1}` gốc hoặc skip).
+    - Trạng thái:
+      - Gap "done for you" (options rỗng) → hiện literal hoặc bỏ.
+      - User đúng → chip xanh: `correctText` (✓).
+      - User sai → chip đỏ với `userText` gạch ngang + chip xanh `correctText` ngay sau.
+      - User bỏ trống → chip xanh `correctText` + nhãn nhỏ "(bỏ trống)".
+  - Mỗi dòng của passage là 1 `<p>` để giữ ngắt dòng đẹp.
+- Khối tóm tắt (Đúng/Sai/Bỏ trống) cho **gap-fill** tính trên từng gap (bỏ gap "done for you"), không phải trên row câu hỏi.
+- Ẩn hoàn toàn 2 box "Đáp án của bạn / Đáp án đúng" mặc định cho row gap-fill (đã thể hiện inline trong passage).
+- Khối "Giải thích" giữ nguyên — chỉ hiện nếu `explanation` non-empty.
+- Các loại câu khác (MCQ thường) giữ nguyên render hiện tại.
 
-### B. ReviewAnswerPanel (component dùng chung)
-Tạo `src/components/history/ReviewAnswerPanel.tsx`. Gắn dưới mỗi câu/clip:
-- Chip ✓/✗ + "Đáp án của bạn: X" + "Đáp án đúng: Y".
-- Block "Giải thích" — **chỉ render khi có `explanation` không rỗng** (xử lý 30% null).
-- Style nhẹ: bg `muted/40`, border-left primary 3px, padding 12px.
+### 3. Style chip inline (Tailwind, dùng token sẵn có)
+- Chip đúng: `inline-flex items-center rounded px-1.5 py-0.5 text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200`.
+- Chip sai (user pick): cùng layout, `bg-destructive/10 text-destructive border-destructive/20 line-through`.
+- Chip blank hint: `text-[10px] text-muted-foreground ml-1`.
 
-### C. Truyền explanation vào engine
-- `HistoryReviewPager` fetch thêm `exam_questions.explanation` cùng lúc với qResults → build `explanationMap: Record<questionId, string>`.
-- Truyền `explanationMap` xuống `HistoryReviewRenderer` → từng engine → render `ReviewAnswerPanel`.
+## Không làm trong bước này
 
-### D. Ẩn nhiễu khi reviewMode
-Trong mỗi engine khi `reviewMode=true`:
-- Ẩn `TimerDisplay` (thay bằng badge "Đã nộp · {ngày}").
-- Không gọi `handleSubmit` cho nút Next câu cuối.
-- ExamHeader: ẩn nút "Thoát", chỉ giữ "Quay lại kết quả".
+- Không refactor Part 2 (drag-order), Part 3 (matching), Part 4 (heading dropdowns) — sẽ làm sau nếu user thấy cần.
+- Không đổi UI engine làm bài.
+- Không đổi flow Pager hay logic chấm.
 
-### E. HistoryDetail summary
-- `Làm lại` = primary đỏ; `Xem lại từng câu` = outline secondary → phân cấp rõ.
-- Thêm 3 chip dưới điểm số: **Đúng X · Sai Y · Bỏ trống Z**.
-- Bảng "Các lần làm bộ đề này" → mỗi dòng wrap `<Link to="/history/{id}">`, hover bg muted.
-- **Xoá** block per-question list cũ ở dưới (đã thay bằng panel trong engine).
-- **Xoá** block render recordings trùng ở nhánh `reviewing` (SpeakingReviewPage đã xử lý).
+## File chạm
 
-### F. SpeakingReviewPage — thêm grading ngắn
-- Query `exam_gradings` cho exam_set + user + cùng cửa sổ 2h.
-- Trên cùng: card "Band tổng: B2" + 2-3 dòng nhận xét rút gọn (`overall_feedback` cắt 200 ký tự).
-- Audio list giữ nguyên.
-
-### G. Micro-UX
-- Pager bar đổi từ nền tím `#24085a` → `bg-background border-b border-border` với chữ tím (tránh 2 thanh tím chồng).
-- Thêm fade 150ms khi đổi page.
-- Hook `useReviewKeyboard`: ←/→ chuyển part, Esc thoát.
-- Scroll-to-top smooth thay vì instant.
-
----
-
-## 3. Files
-
-### Tạo mới
-- `src/components/history/ReviewAnswerPanel.tsx`
-- `src/hooks/useReviewKeyboard.ts`
-
-### Sửa
-- `src/components/history/HistoryReviewPager.tsx` — bar mới, fetch explanation, transition, keyboard.
-- `src/components/history/HistoryReviewRenderer.tsx` — nhận + forward `explanationMap`.
-- `src/components/history/SpeakingReviewPage.tsx` — thêm grading card.
-- `src/components/reading/BottomNavBar.tsx` — prop `reviewMode` (ẩn nav câu + Submit).
-- `src/components/exam/ExamHeader.tsx` — prop `reviewMode` (ẩn Thoát).
-- `src/components/reading/ReadingExamEngine.tsx` — `reviewMode` render all-in-one + ReviewAnswerPanel.
-- `src/components/listening/ListeningExamEngine.tsx` — tương tự.
-- `src/components/grammar/GrammarExamEngine.tsx` — tương tự.
-- `src/components/writing/WritingExamEngine.tsx` — gắn ReviewAnswerPanel (1 panel/part).
-- `src/pages/HistoryDetail.tsx` — phân cấp nút, chip Đ/S/Bỏ trống, bảng clickable, xoá block trùng.
-
-### KHÔNG đụng
-- Phối màu thi gốc, logic chấm, DB schema, các Engine ngoài reviewMode, FullTestEngine khi đang thi.
-
----
-
-## 4. Thứ tự build (chạy từng bước, test ở `/history/:id` trước khi qua bước sau)
-
-1. `ReviewAnswerPanel` + fetch explanationMap.
-2. Reading Engine: render all-in-one + gắn panel + ẩn timer/submit.
-3. Listening Engine: tương tự (chú ý audio player vẫn play được).
-4. Grammar + Writing Engine: tương tự.
-5. Pager bar mới (style, transition, keyboard).
-6. HistoryDetail summary cleanup.
-7. SpeakingReviewPage grading card.
-
----
-
-## 5. Rủi ro & lưu ý
-
-- **Reading Part 2** dùng drag-and-drop sentence → ở review mode chỉ cần render kết quả tĩnh, không cần DnD active. Sẽ check `submitted=true` để disable DnD.
-- **Listening audio**: trong review mode bỏ giới hạn 2 lần play (user cần nghe lại tự do).
-- **Grammar 50 câu**: render 1 trang dài có thể nặng → dùng `content-visibility: auto` cho từng câu để giảm tải scroll.
-- **Writing Part 4** (2 emails) — panel sẽ render 2 lần (informal + formal), mỗi block có sample answer riêng.
+- Sửa: `src/components/history/ReviewAnswerPanel.tsx`
+- Sửa: `src/components/history/HistoryReviewPager.tsx` (thêm `extra_data` vào select + truyền prop)

@@ -76,7 +76,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       if (qIds.length > 0) {
         const { data: qs } = await supabase
           .from("exam_questions")
-          .select("id,question_text,options,correct_answer,explanation,order_index,question_type")
+          .select("id,question_text,options,correct_answer,explanation,order_index,question_type,extra_data")
           .in("id", qIds);
         questions = (qs || []) as ReviewQuestion[];
       }
