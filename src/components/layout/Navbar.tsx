@@ -62,13 +62,13 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/95 backdrop-blur-xl border-b-[3px] border-b-primary border-x-0 border-t-0">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/70 backdrop-blur-xl border-b border-primary/40 shadow-[0_1px_0_0_hsl(var(--primary)/0.6),0_8px_24px_-8px_hsl(var(--primary)/0.25)]">
       <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0 mr-4">
-          <img src={logoImg} alt="Aptis Kỳ Tích" className="h-10 w-auto px-0 pb-0" />
+        <Link to="/" className="flex items-center gap-2 shrink-0 mr-4 group">
+          <img src={logoImg} alt="Aptis Kỳ Tích" className="h-10 w-auto px-0 pb-0 transition-transform group-hover:scale-105" />
           <span className="font-heading font-bold text-base text-foreground tracking-tight">
-            Aptis <span className="text-primary">Kỳ Tích</span>
+            Aptis <span className="gradient-text">Kỳ Tích</span>
           </span>
         </Link>
 
@@ -78,7 +78,8 @@ const Navbar = () => {
           <Link to="/thi-thu">
             <Button
               size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] px-4 py-2 h-auto text-xs font-semibold shadow-sm gap-1.5"
+              variant="glow"
+              className="rounded-full px-4 py-2 h-auto text-xs font-semibold gap-1.5"
             >
               <ClipboardCheck className="w-3.5 h-3.5" />
               Thi thử Aptis

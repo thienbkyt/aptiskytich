@@ -1,106 +1,91 @@
-## Audit tổng thể — Aptis Kỳ Tích
 
-Mình đã quét toàn bộ codebase. Site hiện đã ổn về visual và đúng chuẩn Aptis 2023, nhưng còn nhiều điểm có thể nâng cấp đáng kể. Dưới đây là báo cáo chi tiết theo 4 mảng + lộ trình triển khai 3 sprint.
+## Mục tiêu
+Nâng cấp UI toàn site theo phong cách **Tech Dark + Red Glow**: nền tối sâu (#0F0F10 → #1A1A2E), accent đỏ #CC1C01 phát sáng, cam #FEAD5F làm điểm nhấn phụ, font **Montserrat** xuyên suốt, animation mức vừa phải (không gây nặng).
 
----
-
-### Mảng 1 — UX & Performance (frontend)
-
-| # | Vấn đề | File |
-|---|---|---|
-| 1.1 | Trang `Index` (landing) là route DUY NHẤT không lazy-load → bundle initial bị phình | `src/App.tsx:10` |
-| 1.2 | `vite.config.ts` chưa tách chunk cho `@supabase/supabase-js` (~200KB) và `lucide-react` | `vite.config.ts:19-27` |
-| 1.3 | `resolveImageUrl` ký URL mới mỗi lần render — không cache (Speaking Part 2/3/4 ký lại liên tục) | `src/lib/imageUrl.ts` |
-| 1.4 | Dashboard bắn **17 query song song** mỗi lần mount, không dùng React Query | `src/pages/Dashboard.tsx:102-117` |
-| 1.5 | Question renderer (Reading/Listening/Grammar) không `React.memo` → timer tick mỗi giây làm re-render toàn bộ list câu hỏi | các `*ExamEngine.tsx` |
-| 1.6 | Ảnh trong Speaking thiếu `loading="lazy"`, `width/height` → CLS | `SpeakingPart2/3/4*.tsx` |
-| 1.7 | Suspense fallback là `<div>` trắng — slow connection thấy flash trắng | `src/App.tsx:61` |
-| 1.8 | `DictionaryProvider` parse lại localStorage mỗi lần lookup dù đã có Map in-memory | `DictionaryProvider.tsx:180` |
+**Loại trừ tuyệt đối**: Giao diện làm bài (Exam UI full-screen Navy) và trang Review/Preview bài (`/history/review/*`, các component trong `src/components/exam/*` và `src/components/history/*`).
 
 ---
 
-### Mảng 2 — Luồng làm bài & xem lại
+## 1. Design System (nền tảng)
 
-| # | Vấn đề | File |
-|---|---|---|
-| 2.1 | **Writing review chưa có UI hiển thị AI feedback** — chỉ Speaking có `SpeakingReviewPage` | thiếu `WritingReviewPage.tsx` |
-| 2.2 | `ReviewAnswerPanel` có thể hiển thị raw JSON khi parse fail (Listening/Grammar envelope) | `ReviewAnswerPanel.tsx:256-274` |
-| 2.3 | `SpeakingReviewPage` ký lại URL recording mỗi lần mở (không cache sessionStorage) | `SpeakingReviewPage.tsx:47-53` |
-| 2.4 | Speaking review chỉ show 3 suggestions, **bỏ phí toàn bộ `criteria` CEFR + `mistakes`** đã có sẵn trong DB | `SpeakingReviewPage.tsx:77-86` |
-| 2.5 | Timer state nằm chung với answer state → re-render mỗi giây | `ReadingExamEngine.tsx`, `ListeningExamEngine.tsx` |
-| 2.6 | Không có keyboard nav cho MCQ (A/B/C/D), thiếu `role="radio"` + focus ring | tất cả exam engines |
-| 2.7 | Không chống double-submit → có thể tạo trùng `test_results` | `src/lib/saveExamResult.ts` |
+Cập nhật `src/index.css` và `tailwind.config.ts`:
 
----
+**Tokens mới (HSL):**
+- `--background`: #0F0F10 (dark mặc định), `--background-elevated`: #1A1A2E
+- `--surface-glass`: hsl với alpha cho card kính mờ
+- `--primary`: #CC1C01 (giữ), `--primary-glow`: lighter red cho shadow/glow
+- `--accent`: #FEAD5F
+- `--border-glow`: viền đỏ mờ phát sáng
+- Gradients: `--gradient-hero` (đỏ → cam → tím navy), `--gradient-card` (radial glow), `--gradient-text` (đỏ → cam cho heading)
+- Shadows: `--shadow-glow-red`, `--shadow-glow-soft`, `--shadow-elevated`
 
-### Mảng 3 — Conversion & Retention
+**Font:**
+- Import Montserrat (300, 400, 500, 600, 700, 800) qua `<link>` ở `index.html`
+- `font-sans` = Montserrat; heading dùng weight 700/800 + letter-spacing chặt
 
-| # | Vấn đề | File |
-|---|---|---|
-| 3.1 | Streak card không cảnh báo khi user **sắp mất chuỗi** (chưa học hôm nay) | `Dashboard.tsx:261-283` |
-| 3.2 | **Không có CTA Zalo/Messenger ở bất kỳ đâu** — trái với chiến lược conversion sub-B2 đã ghi nhớ | toàn site |
-| 3.3 | Empty state user mới chỉ là 1 dòng text, không có CTA onboarding | `Dashboard.tsx:341-345` |
-| 3.4 | Không có gamification milestone (streak 7/30, 100 câu, badge) dù `longest_streak` đã lưu DB | thiếu logic milestone |
-| 3.5 | SEO meta hardcoded, không có per-page title/OG, không JSON-LD `Course` schema | `index.html:9-29` |
-| 3.6 | Không có widget "Bài học hôm nay" + chưa wire email reminder vào queue đã có sẵn | Dashboard |
+**Light mode**: vẫn giữ, nhưng dark là mặc định và được tối ưu kỹ nhất.
 
 ---
 
-### Mảng 4 — Backend cost & performance
+## 2. Component dùng chung mới
 
-| # | Vấn đề | File |
-|---|---|---|
-| 4.1 | `SELECT *` trên `exam_sets` / `exam_questions` (kéo cả `extra_data` JSONB lớn ở list view) | `useExamSets.ts:53,85`; `questions.ts:27,40` |
-| 4.2 | `practice_history` thiếu composite index `(user_id, skill, is_correct)` — Dashboard quét full table 10 lần | DB |
-| 4.3 | Edge function `tts` gọi `fetch HEAD` cache check qua HTTP mỗi lần (chậm hơn DB query) | `supabase/functions/tts/index.ts:71-79` |
-| 4.4 | `grade-exam` không check grading đã tồn tại trước khi gọi Gemini → user bấm lại = tốn AI quota | `supabase/functions/grade-exam/index.ts` |
-| 4.5 | `dictionary-lookup` tạo Supabase client mới mỗi request (lãng phí ~50ms cold path) | `supabase/functions/dictionary-lookup/index.ts:35` |
-| 4.6 | `SpeakingReviewPage` query 20 gradings rồi filter JS theo timestamp ±2h — không bền vững | thiếu cột `test_result_id` |
-| 4.7 | `has_role()` được gọi 67+ lần trong RLS, không cache → N+1 trên list lớn | DB policies |
+Tạo trong `src/components/ui/`:
+- `GlowCard.tsx` — card nền tối + border gradient + hover glow đỏ
+- `GradientText.tsx` — heading gradient đỏ→cam
+- `AnimatedGridBg.tsx` — nền grid pattern mờ (MagicUI animated-grid-pattern), dùng cho Hero/Dashboard
+- `GlowButton` variant bổ sung trong `button.tsx` (shimmer khi hover)
+- `StatPill.tsx` — pill số liệu có icon + glow
 
----
-
-### Lộ trình đề xuất — 3 sprint
-
-**Sprint 1 — Quick wins user thấy ngay (1-2 ngày)**
-1. Writing Review UI hiển thị AI feedback đầy đủ (mirror Speaking) — **#2.1**
-2. Speaking Review hiển thị band CEFR + mistakes/criteria — **#2.4**
-3. Cache signed URL (image + speaking recording) bằng Map/sessionStorage — **#1.3, #2.3**
-4. Chống double-submit — **#2.7**
-5. Streak "at-risk" warning + empty state CTA Dashboard — **#3.1, #3.3**
-6. Sticky Zalo CTA (Dashboard + sau khi xem kết quả, conditional theo level) — **#3.2**
-7. Replace Suspense fallback bằng skeleton — **#1.7**
-
-**Sprint 2 — Performance & cost (2-3 ngày)**
-8. Lazy-load `Index`, tách chunk supabase/lucide — **#1.1, #1.2**
-9. `React.memo` question renderers + tách Timer state — **#1.5, #2.5**
-10. Convert Dashboard query → 1 RPC `get_dashboard_stats` hoặc React Query — **#1.4**
-11. Add composite index `practice_history` — **#4.2**
-12. Replace `SELECT *` bằng cột cụ thể ở list views — **#4.1**
-13. Edge functions: client scope module-level + cache check qua DB row — **#4.3, #4.5**
-14. Idempotency guard cho `grade-exam` — **#4.4**
-
-**Sprint 3 — Retention & polish (2-3 ngày)**
-15. Gamification milestones + confetti — **#3.4**
-16. Widget "Bài học hôm nay" + email reminder streak-break — **#3.6**
-17. SEO per-page meta + JSON-LD — **#3.5**
-18. Keyboard nav A/B/C/D + ARIA roles — **#2.6**
-19. Lazy + width/height cho ảnh exam — **#1.6**
-20. Fix `ReviewAnswerPanel` parse guard — **#2.2**
-21. Add `test_result_id` column + index cho `exam_gradings`, migrate query — **#4.6**
-
-**Có thể hoãn (cần thảo luận):**
-- **#4.7** RLS `has_role` JWT custom claim — chạm auth flow, rủi ro cao, chỉ làm khi có dấu hiệu DB chậm thật.
+Animation mức 3: dùng `fade-in`, `scale-in`, `hover-scale` có sẵn + thêm `glow-pulse` (keyframe nhẹ cho CTA chính). Không dùng particles/meteors (tiết kiệm hiệu năng).
 
 ---
 
-### Đề xuất bắt đầu
+## 3. Phạm vi & thay đổi cụ thể
 
-Mình recommend **bắt đầu từ Sprint 1** vì 7 mục này:
-- User feel được ngay (Writing review, Zalo CTA, streak warning)
-- Không đụng schema DB
-- Risk thấp, ROI cao
+### 3.1 Landing + Navbar + Footer
+- **Navbar** (`src/components/layout/Navbar.tsx`): nền `bg-background/80 backdrop-blur-xl`, viền dưới đỏ glow thay vì 3px solid, logo + nav item hover underline gradient, CTA "Đăng ký" dùng GlowButton.
+- **Hero** (`src/pages/Index.tsx`): nền AnimatedGridBg + radial glow đỏ ở góc, heading GradientText cỡ lớn, sub-CTA dạng pill. Thêm hàng "trust badges" (AI chấm / 1000+ học viên / Sát đề thật).
+- **Sections**: features dạng bento-grid 3-2 với GlowCard + icon Lucide trong vòng tròn đỏ glow.
+- **Footer**: nền tối elevated, layout 4 cột, social icon dạng glow, copyright + Zalo CTA.
 
-Sau khi Sprint 1 xong và bạn confirm, mình sẽ tiếp Sprint 2 (perf) và Sprint 3 (retention).
+### 3.2 Dashboard + Practice/Skill pages
+- **Dashboard** (`src/pages/Dashboard.tsx`): hero greeting gradient text, streak widget biến thành "command center" — card lớn có ring progress + flame icon glow. Stat row dùng StatPill 3 ô (streak, từ đã học, bài đã làm). Lưới Quick Action 5 skill dạng GlowCard với icon riêng.
+- **Practice index** (`src/pages/Practice.tsx`) + 5 trang skill (`Grammar.tsx`, `Reading.tsx`, `Listening.tsx`, `Writing.tsx`, `Speaking.tsx`): header sticky + breadcrumb glow, danh sách bài luyện convert sang GlowCard grid, badge "Mới / Đã làm / Điểm cao nhất".
 
-**Bạn muốn mình triển khai theo thứ tự này, hay đảo ưu tiên?** Ví dụ nếu bạn muốn Sprint 2 trước (vì lo cost AI/DB) thì mình swap.
+### 3.3 Vocabulary + History
+- **Vocabulary** (`src/pages/Vocabulary.tsx`, các trang con `/vocab/*`): vẫn giữ accent teal cho riêng vocab (theo mem://style/vocabulary-theme) nhưng nâng cấp về cấu trúc card glow + nền dark đồng bộ. Trang flashcard/3R: card lớn có border gradient teal→đỏ nhẹ.
+- **History list** (`src/pages/History.tsx`): bảng kết quả thành danh sách card có sparkline điểm, badge band CEFR màu, nút "Xem lại" dùng GlowButton. **KHÔNG đụng** `HistoryReviewPager`, `ReviewAnswerPanel`, `SpeakingReviewPage`, `WritingFeedbackCard`, `AIGradingCard`.
+
+### 3.4 Auth + Admin
+- **Auth** (`src/pages/Auth.tsx` hoặc Login/Signup): layout split — nửa trái panel gradient đỏ→navy với tagline + logo lớn; nửa phải form trên nền dark, input dạng glow border khi focus, nút Google Auth icon rõ.
+- **Admin** (`src/pages/admin/*`, `src/components/admin/*`): sidebar tối elevated + active state glow đỏ, header có search + breadcrumb, các card thống kê dạng GlowCard, table dùng zebra `bg-background-elevated/50`, button hành động dùng variant mới. Áp dụng cho: Dashboard admin, Import Center, Reports, Quản lý exam_sets, User management. **KHÔNG đụng** form preview câu hỏi của admin nếu nó hiển thị y hệt giao diện làm bài.
+
+---
+
+## 4. Các khu vực KHÔNG sửa
+- `src/components/exam/*` (toàn bộ UI làm bài, ExamHeader Navy)
+- `src/components/history/HistoryReviewPager.tsx`, `ReviewAnswerPanel.tsx`, `SpeakingReviewPage.tsx`, `WritingFeedbackCard.tsx`, `AIGradingCard.tsx`
+- Các route exam (`/exam/*`, `/practice/*/take`, `/full-test/*/take`) và route review (`/history/review/*`)
+- Logic nghiệp vụ, query, edge functions — chỉ thay UI/CSS/component presentation
+
+---
+
+## 5. Thứ tự triển khai (chia sprint nhỏ)
+1. **Foundation**: Cập nhật `index.css`, `tailwind.config.ts`, import Montserrat, tạo components dùng chung (GlowCard, GradientText, AnimatedGridBg, GlowButton variant).
+2. **Landing + Navbar + Footer**: redesign theo design system mới.
+3. **Dashboard + Practice/Skill pages**.
+4. **Vocabulary + History list**.
+5. **Auth + Admin panel**.
+6. **QA**: kiểm tra dark/light, mobile (375/414), kiểm xem có vô tình ảnh hưởng exam/review không.
+
+---
+
+## 6. Chi tiết kỹ thuật
+- Giữ shadcn components, chỉ mở rộng `variants` qua `cva` — không viết class màu cứng trong component.
+- Animation: chỉ dùng Tailwind animations có sẵn + 1 keyframe `glow-pulse` mới (2s ease-in-out infinite, box-shadow đỏ).
+- Không thêm thư viện nặng: chỉ cài MagicUI's `animated-grid-pattern` (single component copy-paste, không phải package).
+- Performance: backdrop-blur chỉ dùng ở navbar + dialog, tránh dùng tràn lan trên list dài.
+- Đảm bảo body class `exam-mode` (đã có) tiếp tục ẩn ZaloFab và không bị design mới override.
+- Cập nhật `mem://style/visual-identity` và `mem://style/style-guidelines` sau khi build xong để phản ánh design system mới.
+
+Bấm **Implement plan** để bắt đầu Sprint 1 (Foundation + Landing).
