@@ -236,6 +236,23 @@ body.history-review-mode .exam-timer-display {
 }
 
 /* Exam bottom bar must stay identical in light and dark exam modes. */
+.exam-light-bottom-bar {
+  background-color: hsl(0 0% 100% / 0.95) !important;
+  border-top-color: hsl(260 83% 19%) !important;
+  color: hsl(0 0% 5%) !important;
+}
+
+.exam-light-bottom-bar button[aria-label],
+.exam-light-bottom-bar .exam-nav-prev-next {
+  border-color: hsl(214 32% 91%) !important;
+  background-color: hsl(0 0% 100%) !important;
+  color: hsl(215 16% 47%) !important;
+}
+
+.exam-light-bottom-bar button[aria-label]:hover {
+  background-color: hsl(210 40% 96%) !important;
+}
+
 .exam-light-bottom-bar .exam-nav-previous-button {
   border-color: hsl(0 0% 5%) !important;
   background-color: hsl(0 0% 100%) !important;
@@ -244,19 +261,20 @@ body.history-review-mode .exam-timer-display {
 
 .exam-light-bottom-bar .exam-nav-previous-button:hover {
   background-color: hsl(0 0% 96%) !important;
+  color: hsl(0 0% 5%) !important;
 }
 
-.exam-light-bottom-bar .exam-nav-next-button {
+.exam-light-bottom-bar .exam-nav-next-button,
+.exam-light-bottom-bar .exam-nav-submit {
   background-color: hsl(260 83% 19%) !important;
   color: hsl(0 0% 100%) !important;
+  border-color: hsl(260 83% 19%) !important;
 }
 
-.exam-light-bottom-bar .exam-nav-next-button:hover {
+.exam-light-bottom-bar .exam-nav-next-button:hover,
+.exam-light-bottom-bar .exam-nav-submit:hover {
   background-color: hsl(260 83% 15%) !important;
-}
-
-.dark .exam-light-bottom-bar {
-  background-color: hsl(0 0% 100% / 0.95) !important;
+  color: hsl(0 0% 100%) !important;
 }
 
 @layer utilities {
