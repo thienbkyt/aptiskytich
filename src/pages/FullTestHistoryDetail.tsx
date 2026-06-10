@@ -168,7 +168,7 @@ const FullTestHistoryDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20 section-container"><Skeleton className="h-64 w-full" /></div>
+        <div className="pt-24 pb-20 section-container"><TechSkeleton variant="card" className="h-64 w-full" /></div>
       </div>
     );
   }
@@ -204,7 +204,7 @@ const FullTestHistoryDetail = () => {
               <p className="text-muted-foreground">Không tìm thấy lần thi Full Test này.</p>
             </div>
           ) : loading || rows.length === 0 ? (
-            <Skeleton className="h-96 w-full rounded-xl" />
+            <TechSkeleton variant="card" className="h-96 w-full" />
           ) : (
             <>
               {/* Summary */}
