@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import DictionaryProvider from "@/components/dictionary/DictionaryProvider";
 import PageLoadingSkeleton from "@/components/layout/PageLoadingSkeleton";
+import PageTransition from "@/components/layout/PageTransition";
 
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 
@@ -64,6 +65,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Suspense fallback={<PageLoadingSkeleton />}>
+          <PageTransition>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -90,6 +92,7 @@ const App = () => (
             <Route path="/admin/students" element={<AdminStudents />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </PageTransition>
           </Suspense>
           <AICoachFab />
         </AuthProvider>
