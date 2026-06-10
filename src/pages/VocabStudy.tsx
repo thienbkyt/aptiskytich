@@ -29,6 +29,8 @@ import QuizMode from "@/components/vocab/QuizMode";
 import MatchingMode from "@/components/vocab/MatchingMode";
 import { speakWithTTS } from "@/lib/tts";
 import {
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -258,7 +260,10 @@ const VocabStudy = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 pt-16">
-        <div className="border-b border-border bg-card">
+        <div className="relative overflow-hidden border-b border-border bg-card">
+          <ParticlesBackground className="opacity-60" count={28} />
+          <GradientOrb tone="orange" size={420} className="-top-32 -right-24" />
+          <GradientOrb tone="red" size={320} className="-bottom-40 -left-20 opacity-70" />
           <div className="section-container py-4 flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate("/vocabulary")}>
               <ChevronLeft className="w-5 h-5" />
