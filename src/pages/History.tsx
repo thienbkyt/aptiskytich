@@ -185,11 +185,7 @@ const History = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20 section-container">
-          <Skeleton className="h-10 w-64 mb-6" />
-          <Skeleton className="h-12 w-full mb-6" />
-          <div className="space-y-3">{[0,1,2].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
-        </div>
+        <HistorySkeleton />
       </div>
     );
   }
