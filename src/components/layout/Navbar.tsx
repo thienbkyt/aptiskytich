@@ -10,6 +10,7 @@ import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
+import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
 
 /* ── Nav data ── */
 const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
@@ -45,6 +46,20 @@ const Navbar = () => {
     setMobileSkillOpen(false);
     setMobileAdminOpen(false);
   }, [location.pathname]);
+
+  // Warm up the most likely "next" routes once the browser is idle.
+  useEffect(() => {
+    prefetchOnIdle([
+      "/dashboard",
+      "/vocabulary",
+      "/thi-thu",
+      "/grammar",
+      "/reading",
+      "/listening",
+      "/speaking",
+      "/writing",
+    ]);
+  }, []);
 
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
