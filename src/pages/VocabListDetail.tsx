@@ -816,8 +816,10 @@ const VocabListDetail = () => {
 
         <div className="section-container py-8 max-w-3xl mx-auto">
           {loading ? (
-            <div className="py-16 flex justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            <div className="grid grid-cols-1 gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TechSkeleton key={i} variant="row" className="h-20" />
+              ))}
             </div>
           ) : words.length === 0 ? (
             <Card className="border border-dashed border-primary/30">
