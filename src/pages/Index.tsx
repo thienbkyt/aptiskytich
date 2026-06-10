@@ -11,6 +11,11 @@ import Footer from "@/components/layout/Footer";
 import GlowCard from "@/components/ui/glow-card";
 import GradientText from "@/components/ui/gradient-text";
 import AnimatedGrid from "@/components/ui/animated-grid";
+import ParticlesBackground from "@/components/ui/particles-background";
+import SpotlightCard from "@/components/ui/spotlight-card";
+import BorderBeam from "@/components/ui/border-beam";
+import MagneticButton from "@/components/ui/magnetic-button";
+import GradientOrb from "@/components/ui/gradient-orb";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
