@@ -69,6 +69,9 @@ const Index = () => {
       {/* Hero */}
       <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 overflow-hidden bg-gradient-hero">
         <AnimatedGrid />
+        <ParticlesBackground />
+        <GradientOrb tone="red" size={520} className="-top-40 -left-40" />
+        <GradientOrb tone="violet" size={460} className="-bottom-40 -right-40" />
         <div className="section-container relative z-10">
           <motion.div
             className="max-w-3xl mx-auto text-center"
