@@ -174,7 +174,7 @@ const Auth = () => {
 
   const showSocialProof = mode !== "forgot";
 
-  const PasswordInput = ({ id, value, onChange, placeholder, minLength }: { id: string; value: string; onChange: (v: string) => void; placeholder: string; minLength?: number }) => (
+  const renderPasswordInput = (id: string, value: string, onChange: (v: string) => void, placeholder: string, minLength?: number) => (
     <div className="relative">
       <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
       <Input
@@ -238,7 +238,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Mật khẩu</Label>
-                  <PasswordInput id="password" value={password} onChange={setPassword} placeholder="••••••••" />
+                  {renderPasswordInput("password", password, setPassword, "••••••••")}
                 </div>
 
                 {loginErr && (
@@ -290,7 +290,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password2">Mật khẩu</Label>
-                  <PasswordInput id="password2" value={password} onChange={setPassword} placeholder="Tối thiểu 6 ký tự" minLength={6} />
+                  {renderPasswordInput("password2", password, setPassword, "Tối thiểu 6 ký tự", 6)}
                   {password && (
                     <div className="space-y-1">
                       <div className="flex gap-1">
