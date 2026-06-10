@@ -332,7 +332,7 @@ const HistoryDetail = () => {
                         {history.map((h) => {
                           const hp = h.total > 0 ? Math.round((h.score / h.total) * 100) : 0;
                           const isCurrent = h.id === result.id;
-                          const rowCls = `border-b border-border last:border-0 transition-colors ${isCurrent ? "bg-primary/5" : "hover:bg-muted/40 cursor-pointer"}`;
+                          const rowCls = `border-b border-border last:border-0 ${isCurrent ? "bg-primary/5" : "tech-row cursor-pointer"}`;
                           const cells = (
                             <>
                               <td className="py-2.5 pr-4 text-foreground">{formatDateTime(h.created_at)}{isCurrent && <span className="ml-2 text-xs text-primary">(lần này)</span>}</td>

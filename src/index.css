@@ -324,7 +324,64 @@ body.history-review-mode .exam-timer-display {
       animation: none !important;
     }
   }
+
+  /* ── Tech micro-interactions ── */
+  .tech-card {
+    position: relative;
+    transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, border-color .35s;
+    overflow: hidden;
+  }
+  .tech-card::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / .65), transparent 45%, hsl(var(--accent) / .55));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    opacity: 0; transition: opacity .35s; pointer-events: none; z-index: 1;
+  }
+  .tech-card::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(120deg, transparent 30%, hsl(0 0% 100% / .14) 50%, transparent 70%);
+    transform: translateX(-110%); transition: transform .9s ease; pointer-events: none; z-index: 1;
+  }
+  .tech-card:hover::before { opacity: 1; }
+  .tech-card:hover::after { transform: translateX(110%); }
+  .tech-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 34px -14px hsl(var(--primary) / .35);
+  }
+  .tech-card:active { transform: translateY(-1px) scale(.995); }
+
+  .tech-btn {
+    position: relative; overflow: hidden;
+    transition: transform .2s ease, box-shadow .25s ease, filter .2s ease;
+  }
+  .tech-btn::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 30%, hsl(0 0% 100% / .28) 50%, transparent 70%);
+    transform: translateX(-110%); transition: transform .7s ease; pointer-events: none;
+  }
+  .tech-btn:hover::after { transform: translateX(110%); }
+  .tech-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -10px hsl(var(--primary) / .5); }
+  .tech-btn:active { transform: translateY(0) scale(.97); }
+
+  .tech-row {
+    position: relative;
+    transition: background-color .25s ease, transform .25s ease;
+  }
+  .tech-row:hover {
+    background: linear-gradient(90deg, hsl(var(--primary) / .07), transparent 70%);
+  }
+  .tech-row:hover td:first-child { box-shadow: inset 2px 0 0 hsl(var(--primary)); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tech-card, .tech-card::before, .tech-card::after,
+    .tech-btn, .tech-btn::after, .tech-row {
+      transition: none !important; animation: none !important;
+    }
+    .tech-card:hover, .tech-btn:hover, .tech-card:active, .tech-btn:active { transform: none !important; }
+  }
 }
+
 
 /* Hide decorative particles inside exam UI. */
 body.exam-mode .particles-bg,
