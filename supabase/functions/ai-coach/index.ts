@@ -310,8 +310,9 @@ Deno.serve(async (req: Request) => {
         for (const url of imgs) parts.push({ type: "image_url", image_url: { url } });
         let textBlock = text || "Hãy đọc đề trong ảnh và giải thích câu hỏi cho mình.";
         if (imgs.length > 0) {
-          textBlock = `⚠️ HƯỚNG DẪN: Phía trên là ${imgs.length} ảnh chụp màn hình câu hỏi APTIS user đang làm. Hãy:\n1) Đọc kỹ ảnh và TRÍCH NGUYÊN VĂN đề + đáp án ra block code để user kiểm tra.\n2) Nếu KHÔNG đọc rõ được — nói thẳng "Mình chưa đọc rõ được đề trong ảnh, bạn gõ lại giúp mình nhé" — KHÔNG bịa đề khác.\n\nCâu hỏi của user: ${textBlock}`;
+          textBlock = `Phía trên là ảnh chụp câu hỏi APTIS. Đọc kỹ rồi trả lời THEO ĐÚNG FORMAT MCQ trong system prompt (✅/❌, KHÔNG trích nguyên văn đề, KHÔNG heading, KHÔNG mẹo nhớ riêng). Nếu không đọc rõ → câu từ chối chuẩn.\n\nUser hỏi: ${textBlock}`;
         }
+
         if (pageText) textBlock += `\n\n--- NỘI DUNG TRANG USER ĐANG XEM (đã trích tự động) ---\n${pageText}\n--- HẾT ---`;
         parts.push({ type: "text", text: textBlock });
         return { role, content: parts };
