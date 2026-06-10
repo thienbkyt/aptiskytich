@@ -7,6 +7,9 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
+import AnimatedGrid from "@/components/ui/animated-grid";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -38,9 +41,10 @@ const Course = () => (
 
     {/* Hero */}
     <section className="gradient-hero pt-28 pb-20 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-15">
-        <div className="absolute top-10 right-20 w-80 h-80 bg-primary/30 rounded-full blur-3xl" />
-      </div>
+      <AnimatedGrid />
+      <ParticlesBackground count={32} />
+      <GradientOrb tone="red" size={420} className="-top-20 -right-20" />
+      <GradientOrb tone="orange" size={360} className="bottom-0 -left-20" />
       <div className="section-container relative z-10">
         <motion.div initial="hidden" animate="visible" className="max-w-3xl mx-auto text-center">
           <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6">

@@ -273,4 +273,61 @@ body.history-review-mode .exam-timer-display {
     0%   { background-position: 0 0; }
     100% { background-position: 48px 48px; }
   }
+
+  .animate-breathing {
+    animation: breathing 7s ease-in-out infinite;
+  }
+  @keyframes breathing {
+    0%, 100% { transform: scale(1); opacity: 0.55; }
+    50%      { transform: scale(1.12); opacity: 0.85; }
+  }
+
+  .animate-border-beam {
+    animation: border-beam var(--duration, 8s) linear infinite;
+  }
+  @keyframes border-beam {
+    100% { offset-distance: 100%; }
+  }
+
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+
+  .animate-aurora {
+    background: var(--gradient-aurora);
+    background-size: 300% 300%;
+    animation: aurora-drift 18s ease infinite;
+  }
+  @keyframes aurora-drift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+
+  .animate-spin-slow {
+    animation: spin 18s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-breathing,
+    .animate-border-beam,
+    .animate-gradient-shift,
+    .animate-aurora,
+    .animate-grid-drift,
+    .animate-spin-slow,
+    .animate-glow-pulse,
+    .animate-float {
+      animation: none !important;
+    }
+  }
+}
+
+/* Hide decorative particles inside exam UI. */
+body.exam-mode .particles-bg,
+.exam-fullscreen .particles-bg {
+  display: none !important;
 }

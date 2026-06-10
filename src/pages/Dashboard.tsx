@@ -19,6 +19,8 @@ import GlowCard from "@/components/ui/glow-card";
 import StatPill from "@/components/dashboard/StatPill";
 import QuickActionCard from "@/components/dashboard/QuickActionCard";
 import StreakRing from "@/components/dashboard/StreakRing";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -248,6 +250,9 @@ const Dashboard = () => {
             className="relative overflow-hidden rounded-3xl border border-border bg-card/60 backdrop-blur-sm p-6 md:p-8"
           >
             <AnimatedGrid />
+            <ParticlesBackground count={28} />
+            <GradientOrb tone="red" size={300} className="-top-20 -right-20" />
+            <GradientOrb tone="orange" size={260} className="-bottom-20 -left-20" />
             <div className="relative">
               <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
                 <div>

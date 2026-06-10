@@ -11,6 +11,11 @@ import Footer from "@/components/layout/Footer";
 import GlowCard from "@/components/ui/glow-card";
 import GradientText from "@/components/ui/gradient-text";
 import AnimatedGrid from "@/components/ui/animated-grid";
+import ParticlesBackground from "@/components/ui/particles-background";
+import SpotlightCard from "@/components/ui/spotlight-card";
+import BorderBeam from "@/components/ui/border-beam";
+import MagneticButton from "@/components/ui/magnetic-button";
+import GradientOrb from "@/components/ui/gradient-orb";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -64,6 +69,9 @@ const Index = () => {
       {/* Hero */}
       <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 overflow-hidden bg-gradient-hero">
         <AnimatedGrid />
+        <ParticlesBackground />
+        <GradientOrb tone="red" size={520} className="-top-40 -left-40" />
+        <GradientOrb tone="violet" size={460} className="-bottom-40 -right-40" />
         <div className="section-container relative z-10">
           <motion.div
             className="max-w-3xl mx-auto text-center"
@@ -72,16 +80,19 @@ const Index = () => {
           >
             <motion.div
               variants={fadeUp} custom={0}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-on-dark text-xs font-semibold mb-6 backdrop-blur-sm animate-glow-pulse"
+              className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-on-dark text-xs font-semibold mb-6 backdrop-blur-sm overflow-hidden"
             >
               <Sparkles className="w-3.5 h-3.5 text-primary-glow" /> Nền tảng luyện Aptis có AI · Miễn phí
+              <BorderBeam size={120} duration={6} />
             </motion.div>
             <motion.h1
               variants={fadeUp} custom={1}
               className="text-4xl md:text-6xl font-heading font-extrabold text-on-dark leading-[1.1] mb-6"
             >
               Thi thử Aptis miễn phí –{" "}
-              <GradientText>Kiểm tra trình độ</GradientText>{" "}
+              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary-glow animate-gradient-shift">
+                Kiểm tra trình độ
+              </span>{" "}
               trong 10 phút
             </motion.h1>
             <motion.p
@@ -91,16 +102,20 @@ const Index = () => {
               Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. AI chấm Speaking & Writing. Đạt B1–B2 nhanh nhất.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/grammar">
-                <Button size="lg" variant="glow" className="text-base px-8 h-12 gap-2 w-full sm:w-auto rounded-full">
-                  Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link to="/course">
-                <Button size="lg" variant="glow-outline" className="text-base px-8 h-12 w-full sm:w-auto rounded-full">
-                  Xem khóa học 7 ngày
-                </Button>
-              </Link>
+              <MagneticButton>
+                <Link to="/grammar">
+                  <Button size="lg" variant="glow" className="text-base px-8 h-12 gap-2 w-full sm:w-auto rounded-full animate-glow-pulse">
+                    Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+              </MagneticButton>
+              <MagneticButton>
+                <Link to="/course">
+                  <Button size="lg" variant="glow-outline" className="text-base px-8 h-12 w-full sm:w-auto rounded-full">
+                    Xem khóa học 7 ngày
+                  </Button>
+                </Link>
+              </MagneticButton>
             </motion.div>
 
             {/* Trust badges */}
@@ -157,14 +172,14 @@ const Index = () => {
                 variants={fadeUp} custom={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }}
               >
-                <GlowCard className="p-5 text-center h-full">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center mx-auto mb-3 shadow-glow-soft">
+                <SpotlightCard className="p-5 text-center h-full group">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center mx-auto mb-3 shadow-glow-soft transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
                     <BookOpen className="w-5 h-5 text-primary-foreground" />
                   </div>
                   <h3 className="font-heading font-bold text-sm text-foreground mb-2">{s.skill}</h3>
                   <p className="text-xs text-muted-foreground">{s.questions}</p>
                   <p className="text-xs text-muted-foreground">{s.time}</p>
-                </GlowCard>
+                </SpotlightCard>
               </motion.div>
             ))}
           </div>
@@ -190,13 +205,13 @@ const Index = () => {
                 variants={fadeUp} custom={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }}
               >
-                <GlowCard className="p-6 h-full group">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:shadow-glow-soft transition-all">
-                    <f.icon className="w-6 h-6 text-primary" />
+                <SpotlightCard className="p-6 h-full group">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:shadow-glow-soft group-hover:scale-110 transition-all duration-300">
+                    <f.icon className="w-6 h-6 text-primary group-hover:rotate-6 transition-transform" />
                   </div>
                   <h3 className="font-heading font-bold text-foreground mb-2">{f.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                </GlowCard>
+                </SpotlightCard>
               </motion.div>
             ))}
           </div>
@@ -244,13 +259,17 @@ const Index = () => {
       {/* Course CTA */}
       <section className="section-padding relative overflow-hidden bg-gradient-hero">
         <AnimatedGrid />
+        <ParticlesBackground count={30} />
+        <GradientOrb tone="orange" size={420} className="top-1/2 -translate-y-1/2 -left-32" />
+        <GradientOrb tone="red" size={420} className="top-1/2 -translate-y-1/2 -right-32" />
         <div className="section-container relative z-10">
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true }}
             className="max-w-2xl mx-auto text-center"
           >
-            <motion.div variants={fadeUp} custom={0} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 text-sm font-semibold mb-6 text-accent backdrop-blur-sm">
+            <motion.div variants={fadeUp} custom={0} className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/15 border border-primary/30 text-sm font-semibold mb-6 text-accent backdrop-blur-sm overflow-hidden">
               <Flame className="w-4 h-4" /> Khóa học hot nhất
+              <BorderBeam size={100} duration={5} />
             </motion.div>
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold text-on-dark mb-4">
               <GradientText>Aptis Kỳ Tích</GradientText> – Đạt Aptis trong 7 ngày
@@ -259,16 +278,20 @@ const Index = () => {
               Lộ trình học tập tối ưu, cam kết đầu ra B1–B2. Hỗ trợ 1-1 từ giảng viên.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/course">
-                <Button size="lg" variant="glow" className="text-base px-8 gap-2 rounded-full">
-                  Xem chi tiết khóa học <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <a href="https://zalo.me/0867833227" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="glow-outline" className="text-base px-8 gap-2 rounded-full">
-                  <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
-                </Button>
-              </a>
+              <MagneticButton>
+                <Link to="/course">
+                  <Button size="lg" variant="glow" className="text-base px-8 gap-2 rounded-full animate-glow-pulse">
+                    Xem chi tiết khóa học <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+              </MagneticButton>
+              <MagneticButton>
+                <a href="https://zalo.me/0867833227" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" variant="glow-outline" className="text-base px-8 gap-2 rounded-full">
+                    <MessageCircle className="w-5 h-5" /> Đăng ký qua Zalo
+                  </Button>
+                </a>
+              </MagneticButton>
             </motion.div>
           </motion.div>
         </div>
