@@ -92,6 +92,7 @@ const App = () => (
             <Route path="/admin/students" element={<AdminStudents />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </PageTransition>
           </Suspense>
           <AICoachFab />
         </AuthProvider>
