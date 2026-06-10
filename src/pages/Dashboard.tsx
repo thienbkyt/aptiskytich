@@ -402,7 +402,7 @@ const Dashboard = () => {
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
                 <GlowCard className="p-6">
                   <div className="flex items-center justify-between mb-5">
-                    <h3 className="font-heading font-bold text-foreground">Kết quả gần đây</h3>
+                    <h3 className="font-heading font-bold text-foreground">Lịch sử học tập</h3>
                     <Link to="/history" className="text-xs font-bold text-primary hover:text-primary-glow inline-flex items-center gap-1">
                       Tất cả <ArrowRight className="w-3 h-3" />
                     </Link>
