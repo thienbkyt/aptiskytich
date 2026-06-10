@@ -1,0 +1,19 @@
+# Aptis Kỳ Tích
+
+> Nền tảng luyện thi Aptis cho người Việt: ngân hàng đề sát thi thật, AI chấm Speaking & Writing, lộ trình 7 ngày đạt B1–B2.
+
+## Pages
+
+- [Trang chủ](/): Giới thiệu nền tảng Aptis Kỳ Tích.
+- [Khóa học](/course): Khóa luyện thi Aptis 7 ngày.
+- [Thi thử](/thi-thu): Thi thử Aptis full test sát đề thật.
+- [Grammar & Vocabulary](/grammar): Luyện Grammar & Vocabulary theo từng part.
+- [Reading](/reading): Luyện Reading theo 4 parts Aptis.
+- [Listening](/listening): Luyện Listening với audio chuẩn Aptis.
+- [Speaking](/speaking): Luyện Speaking với AI chấm theo CEFR.
+- [Writing](/writing): Luyện Writing với AI chấm theo CEFR.
+- [Vocabulary](/vocabulary): Học từ vựng theo bộ và kỹ thuật 3R.
+
+## Optional
+
+- [Đăng nhập / Đăng ký](/auth): Tạo tài khoản để lưu tiến độ.
