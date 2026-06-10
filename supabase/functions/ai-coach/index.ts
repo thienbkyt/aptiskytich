@@ -7,7 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type ChatMessage = { role: "user" | "assistant"; content: string };
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  images?: string[]; // data URLs (image/jpeg base64) or https URLs
+  pageText?: string;
+};
 type CoachContext = {
   pathname?: string;
   pageTitle?: string;
