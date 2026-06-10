@@ -91,7 +91,7 @@ const Index = () => {
               Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. AI chấm Speaking & Writing. Đạt B1–B2 nhanh nhất.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/practice">
+              <Link to="/grammar">
                 <Button size="lg" variant="glow" className="text-base px-8 h-12 gap-2 w-full sm:w-auto rounded-full">
                   Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
                 </Button>

@@ -14,7 +14,7 @@ const Index = lazy(() => import("./pages/Index"));
 
 
 // Lazy-load non-landing routes to reduce initial bundle size
-const Practice = lazy(() => import("./pages/Practice"));
+
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Course = lazy(() => import("./pages/Course"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -67,7 +67,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/practice" element={<WithDict><Practice /></WithDict>} />
+            
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/course" element={<Course />} />
             <Route path="/grammar" element={<WithDict><GrammarVocabulary /></WithDict>} />

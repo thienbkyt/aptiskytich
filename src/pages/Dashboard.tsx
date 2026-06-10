@@ -287,7 +287,7 @@ const Dashboard = () => {
           >
             {[
               { to: "/thi-thu",   icon: Zap,            title: "Thi thử Aptis",  desc: "Làm full test sát đề thật", tone: "red" as const },
-              { to: "/practice",  icon: Target,         title: "Luyện kỹ năng",  desc: "5 kỹ năng theo từng part",   tone: "orange" as const },
+              { to: "/grammar",   icon: Target,         title: "Luyện kỹ năng",  desc: "5 kỹ năng theo từng part",   tone: "orange" as const },
               { to: "/vocab",     icon: BookOpen,       title: "Học từ vựng",    desc: "Flashcard + 3R technique",    tone: "teal" as const },
               { to: "/history",   icon: History,        title: "Lịch sử bài",    desc: "Xem lại & rút kinh nghiệm",   tone: "info" as const },
               { to: "/course",    icon: GraduationCap,  title: "Khóa 7 ngày",    desc: "Lộ trình chinh phục Aptis",  tone: "violet" as const },
@@ -349,7 +349,7 @@ const Dashboard = () => {
                       </div>
                       {atRisk && (
                         <Button asChild variant="glow" size="sm" className="mt-4 w-full sm:w-auto">
-                          <Link to="/practice">Luyện ngay <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                          <Link to="/grammar">Luyện ngay <ArrowRight className="w-3 h-3 ml-1" /></Link>
                         </Button>
                       )}
                     </div>
