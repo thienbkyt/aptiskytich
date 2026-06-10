@@ -24,10 +24,10 @@ const QuickActionCard = ({ to, icon: Icon, title, description, tone = "red" }: Q
     <Link
       to={to}
       className={cn(
-        "group relative flex flex-col gap-3 rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-4",
-        "transition-all duration-300 hover:-translate-y-1",
+        "tech-card group relative flex flex-col gap-3 rounded-2xl border border-border bg-card/70 backdrop-blur-sm p-4",
         t.glow,
       )}
+
     >
       <div className="flex items-start justify-between">
         <div className={cn("flex h-11 w-11 items-center justify-center rounded-xl shadow-md transition-transform duration-300 group-hover:scale-110", t.icon)}>
