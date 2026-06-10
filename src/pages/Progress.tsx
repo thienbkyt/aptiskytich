@@ -253,7 +253,7 @@ const ProgressPage = () => {
             </div>
           </div>
           {loading ? (
-            <Skeleton className="h-32 w-full" />
+            <TechSkeleton variant="card" className="h-32 w-full" />
           ) : (
             <TooltipProvider delayDuration={100}>
               <div className="overflow-x-auto">
