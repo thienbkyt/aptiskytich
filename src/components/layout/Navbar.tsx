@@ -114,13 +114,13 @@ const Navbar = () => {
             onMouseLeave={handleSkillLeave}
           >
             <button
-              className={`flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
+              className={`group flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
                 isSkillActive
                   ? "text-primary"
-                  : "text-secondary-foreground"
+                  : "text-secondary-foreground hover:text-primary"
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5" />
+              <BookOpen className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110" />
               Luyện tập theo kỹ năng
               <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${skillHover ? "rotate-180" : ""}`} />
             </button>
