@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, Send, X, Sparkles, RotateCcw, Loader2, Paperclip, Monitor, FileText, Square, Volume2, VolumeX, RefreshCw, Languages, Lightbulb } from "lucide-react";
+import aiCoachLogo from "@/assets/ai-coach-logo.png.asset.json";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
