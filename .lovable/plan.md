@@ -1,73 +1,114 @@
-## AI Coach – Trợ lý hỏi đáp Aptis
 
-Floating chatbot ở góc phải toàn site (tương tự ZaloFab hiện có), trả lời mọi câu hỏi về Aptis: cấu trúc đề, mẹo làm bài, giải thích câu hỏi cụ thể, gợi ý lộ trình học. AI tự nhận ngữ cảnh trang user đang xem để trả lời chính xác mà không cần share màn hình.
+## Mục tiêu
 
-### 1. UI – Floating Coach (toàn site)
+Nâng cấp cảm giác "công nghệ" cho toàn bộ web Aptis Kỳ Tích bằng:
+- **Particle / network background** ở các trang chính
+- **Interactive effects**: mouse spotlight trên card, border beam quanh CTA, cursor glow nhẹ
+- **Micro-interactions**: hover lift, scale, shimmer cho button, fade-in stagger khi cuộn
 
-- **`AICoachFab.tsx`**: nút tròn glow đỏ ở góc phải-dưới (nằm trên ZaloFab), icon Bot/Sparkles, badge "AI".
-- **`AICoachPanel.tsx`**: panel chat trượt từ phải (width ~420px desktop, full-screen mobile), header có tên "Coach Kỳ Tích" + nút đóng + nút "Cuộc trò chuyện mới".
-- **Message list**: render `message.parts` qua `react-markdown` (hỗ trợ code block, list, bold).
-- **Composer**: textarea auto-resize + nút gửi, disable khi đang streaming, Enter để gửi (Shift+Enter xuống dòng).
-- **Empty state**: 4 suggested prompts theo trang hiện tại (vd ở `/grammar`: "Giải thích thì hiện tại hoàn thành", "Mẹo làm Grammar Part 1"...).
-- **Tone**: theo "Tech Dark + Red Glow" – nền `background-elevated`, viền glow đỏ, font Montserrat, animation slide-in mượt.
-- Mount trong `App.tsx` cạnh `ZaloFab` để hiện ở mọi route (ẩn trong exam full-screen để không phá tập trung).
+Mức độ: 6/10 — đủ "wow" nhưng không gây phân tâm hay nặng máy.
 
-### 2. Context Awareness (auto, không cần share màn hình)
+**Loại trừ:** Toàn bộ giao diện làm bài thi (ExamEngine, ExamHeader, các route khi đang trong trạng thái exam) — giữ nguyên sạch sẽ, không thêm hiệu ứng nào.
 
-Tạo `useCoachContext()` hook gom thông tin trang hiện tại và đính kèm vào mỗi request:
+---
 
-- **Route info**: pathname, tên skill (grammar/reading/...), part đang luyện.
-- **Question context** (khi đang ở exam/practice): question ID, đề bài, các đáp án, đáp án user chọn, đáp án đúng, explanation – đọc từ React context của exam engine hiện có.
-- **Dashboard context** (khi ở `/dashboard`): điểm yếu nhất, accuracy theo skill (đã có sẵn trong Dashboard).
-- **User profile nhẹ**: level mục tiêu (nếu có trong profile).
+## Phạm vi áp dụng
 
-Context được serialize thành JSON gọn và gửi kèm trong body request (không nhét vào messages để tránh phình history).
+Áp dụng (thêm animation):
+- Landing (`/`)
+- Dashboard (`/dashboard`)
+- Course (`/course`)
+- Auth, ResetPassword (`/auth`, `/reset-password`)
+- SkillPractice + các trang chọn part (`/grammar`, `/reading`, `/listening`, `/speaking`, `/writing`, `/vocabulary`, `/thi-thu`) — **chỉ phần chọn đề / part**, không vào ExamEngine
+- History, HistoryDetail, Progress
+- Admin (`/admin/*`)
+- NotFound
 
-### 3. Backend – Edge Function streaming
+Loại trừ (giữ nguyên):
+- Toàn bộ component `*ExamEngine`, `ExamHeader`, `ExamFooter`, `QuestionReviewModal`
+- Trang kết quả ngay sau khi nộp bài (giữ tối giản)
 
-- **`supabase/functions/ai-coach/index.ts`**: dùng AI SDK + Lovable AI Gateway helper (`createLovableAiGatewayProvider`), model mặc định `google/gemini-3-flash-preview`.
-- **System prompt** (tiếng Việt) định nghĩa: chuyên gia Aptis General, trả lời ngắn gọn dễ hiểu cho học viên VN trình độ A2–B2, ưu tiên ví dụ thực tế, format markdown, đính kèm tips học và CTA Zalo khi phù hợp.
-- Nhận `{ messages: UIMessage[], context: CoachContext }`, chèn context vào system message động.
-- Stream về client qua `toUIMessageStreamResponse()`. CORS headers chuẩn.
-- Rate limit nhẹ: max 30 req/phút/user (in-memory map theo user id từ JWT) để tránh đốt credit; trả 429 với message rõ ràng.
-- Verify JWT (yêu cầu đăng nhập). User chưa login → FAB hiện modal mời đăng nhập.
+---
 
-### 4. Client transport
+## Các component animation mới sẽ tạo
 
-- `useChat` từ `@ai-sdk/react` với `DefaultChatTransport`:
-  - `api`: `${VITE_SUPABASE_URL}/functions/v1/ai-coach`
-  - Header `Authorization: Bearer <session token>` (lấy từ supabase session, không dùng publishable key vì cần user identity).
-  - Truyền `body: () => ({ context: currentContext })` để mỗi lượt gửi đính kèm snapshot context mới nhất.
-- Status `submitted`/`streaming` → show shimmer "Đang suy nghĩ...".
-- Lưu messages ở React state (session-only, mất khi reload theo lựa chọn của bạn). Nút "Cuộc trò chuyện mới" clear state.
+Tạo trong `src/components/ui/`:
 
-### 5. Lộ trình học cá nhân hóa
+1. **`particles-background.tsx`** — Canvas particles (~40 hạt) trôi nhẹ + nối line khi gần nhau (network effect). Theo theme (light/dark), dùng màu primary với opacity thấp. `pointer-events-none`, `absolute inset-0`.
+2. **`spotlight-card.tsx`** — Card với radial gradient theo vị trí chuột (mouse-tracked spotlight). Wrap quanh `GlowCard` hiện có.
+3. **`border-beam.tsx`** — Border ánh sáng chạy quanh viền (CSS conic-gradient + animation). Dùng cho CTA chính, badge "Hot".
+4. **`magnetic-button.tsx`** — Button hơi "hút" theo chuột khi hover (translate nhẹ theo cursor). Optional wrapper.
+5. **`scroll-reveal.tsx`** — Wrapper dùng `useInView` của framer-motion để fade-up khi xuất hiện trong viewport, hỗ trợ stagger.
+6. **`gradient-orb.tsx`** — Orb gradient có animation "breathing" (scale + opacity). Đặt làm background section.
 
-Khi user hỏi "lộ trình học cho tôi" và context dashboard có sẵn → AI dùng dữ liệu accuracy/điểm yếu để gợi ý cụ thể (vd "Bạn yếu Listening Part 3, làm 3 bài/ngày trong 2 tuần..."). Không cần tool calling phức tạp; chỉ inject dữ liệu vào context.
+Cập nhật `src/index.css` + `tailwind.config.ts`:
+- Keyframes mới: `border-beam`, `gradient-shift`, `breathing`, `aurora-drift`, `scan-line`
+- Utility: `.animate-border-beam`, `.animate-breathing`, `.animate-aurora`, `.bg-aurora` (gradient động)
+- Class `.tech-card` áp dụng spotlight + hover glow nhất quán
 
-### 6. Files
+---
 
-**New**
-- `src/components/ai-coach/AICoachFab.tsx`
-- `src/components/ai-coach/AICoachPanel.tsx`
-- `src/components/ai-coach/MessageBubble.tsx`
-- `src/components/ai-coach/SuggestedPrompts.tsx`
-- `src/hooks/useCoachContext.ts`
-- `supabase/functions/ai-coach/index.ts`
+## Áp dụng vào từng trang
 
-**Edit**
-- `src/App.tsx` – mount FAB toàn cục, ẩn trên route exam full-screen.
-- `package.json` – thêm `ai`, `@ai-sdk/react`, `@ai-sdk/openai-compatible`, `react-markdown` nếu chưa có.
+### Landing (`src/pages/Index.tsx`)
+- Hero: thêm `<ParticlesBackground />` chồng lên `<AnimatedGrid />`, headline gradient có `gradient-shift` animation, badge dùng `<BorderBeam />`, CTA chính dùng `<MagneticButton />`
+- Stats: number đếm lên (count-up) khi vào viewport
+- Exam Structure & Features: card dùng `<SpotlightCard />` thay `GlowCard`, icon có hover rotate/scale
+- Testimonials: card hover tilt nhẹ 3D
+- CTA cuối: thêm gradient orb "breathing"
 
-### 7. Không làm trong MVP này
+### Dashboard (`src/pages/Dashboard.tsx`)
+- Hero block: thêm particles + aurora gradient nhẹ
+- StatPill: hover scale + glow đậm hơn, value có count-up khi load
+- QuickActionCard: spotlight follow chuột, icon glow khi hover
+- Skill progress bars: shimmer chạy qua bar (đã có animate-shimmer, áp dụng vào)
+- StreakRing: animation rotate nhẹ liên tục cho ring outline
 
-- Live screen share / WebRTC.
-- Lưu lịch sử chat vào DB (theo lựa chọn session-only).
-- Tool calling (web search, tra từ điển) – có thể thêm v2.
-- Voice input/output.
+### Course / SkillPractice / FullTest selection
+- Card chọn part/đề: spotlight + border beam khi hover
+- Page header: scroll-reveal stagger
 
-### Chi phí & rủi ro
+### Auth
+- Background particles + aurora orb
+- Card form: subtle border glow
 
-- Gemini Flash rất rẻ; rate limit 30/phút/user + giới hạn 20 message gần nhất gửi lên model để khống chế token.
-- Context exam có thể chứa đáp án đúng → AI sẽ giải thích đúng/sai chính xác (đây là mong muốn).
-- AI chỉ trigger khi user mở chat & gửi tin nhắn (tuân thủ rule "AI strictly user-triggered").
+### Admin
+- Stat cards & tables: hover row glow nhẹ, card spotlight
+- Không thêm particles (giữ nhanh, gọn cho admin)
+
+### Navbar / Footer
+- Navbar logo: subtle glow pulse
+- Nav link active: underline animation đã có, thêm hover scale
+- Footer: gradient line trên cùng với animation drift
+
+---
+
+## Đảm bảo không ảnh hưởng exam UI
+
+Cơ chế chặn:
+- Các animation mới **chỉ thêm trong các page component liệt kê ở trên**, không đụng đến bất kỳ file `*ExamEngine.tsx`, `ExamHeader.tsx`, `ExamFooter.tsx`, `ExamLayout.tsx`.
+- Trang results sau exam: chỉ giữ fade-in đơn giản, không particles.
+- Body class `exam-mode` (nếu có) sẽ disable particles globally qua CSS guard `body.exam-mode .particles-bg { display: none }`.
+
+---
+
+## Performance & Accessibility
+
+- Particles: throttle theo `requestAnimationFrame`, pause khi tab inactive, giảm số hạt trên mobile (<768px chỉ 20 hạt)
+- Respect `prefers-reduced-motion`: tắt particles, border beam, breathing — chỉ giữ fade nhẹ
+- Tất cả component decorative đều `pointer-events-none` và `aria-hidden`
+- Không import framer-motion thêm (đã có sẵn)
+
+---
+
+## Technical Details
+
+- **Files mới** (6): `src/components/ui/particles-background.tsx`, `spotlight-card.tsx`, `border-beam.tsx`, `magnetic-button.tsx`, `scroll-reveal.tsx`, `gradient-orb.tsx`
+- **Files sửa**:
+  - `src/index.css` — thêm keyframes & utilities
+  - `tailwind.config.ts` — đăng ký animation
+  - `src/pages/Index.tsx`, `Dashboard.tsx`, `Course.tsx`, `Auth.tsx`, `SkillPractice.tsx`, `FullTest.tsx`, `History.tsx`, `Progress.tsx`, `NotFound.tsx`
+  - `src/components/layout/Navbar.tsx`, `Footer.tsx`
+  - Admin pages (light touch)
+
+Không thêm dependency mới — dùng framer-motion (đã có), Canvas API, CSS thuần.
