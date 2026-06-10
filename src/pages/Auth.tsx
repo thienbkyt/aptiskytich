@@ -290,7 +290,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password2">Mật khẩu</Label>
-                  <PasswordInput id="password2" value={password} onChange={setPassword} placeholder="Tối thiểu 6 ký tự" minLength={6} />
+                  {renderPasswordInput("password2", password, setPassword, "Tối thiểu 6 ký tự", 6)}
                   {password && (
                     <div className="space-y-1">
                       <div className="flex gap-1">
