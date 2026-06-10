@@ -205,13 +205,13 @@ const Index = () => {
                 variants={fadeUp} custom={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }}
               >
-                <GlowCard className="p-6 h-full group">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:shadow-glow-soft transition-all">
-                    <f.icon className="w-6 h-6 text-primary" />
+                <SpotlightCard className="p-6 h-full group">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:shadow-glow-soft group-hover:scale-110 transition-all duration-300">
+                    <f.icon className="w-6 h-6 text-primary group-hover:rotate-6 transition-transform" />
                   </div>
                   <h3 className="font-heading font-bold text-foreground mb-2">{f.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                </GlowCard>
+                </SpotlightCard>
               </motion.div>
             ))}
           </div>
