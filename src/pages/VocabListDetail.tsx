@@ -26,6 +26,7 @@ import {
   Upload,
   FileSpreadsheet,
 } from "lucide-react";
+import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import {
   Dialog,
   DialogContent,
