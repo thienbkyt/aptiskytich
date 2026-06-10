@@ -174,7 +174,7 @@ const Auth = () => {
 
   const showSocialProof = mode !== "forgot";
 
-  const PasswordInput = ({ id, value, onChange, placeholder, minLength }: { id: string; value: string; onChange: (v: string) => void; placeholder: string; minLength?: number }) => (
+  const renderPasswordInput = (id: string, value: string, onChange: (v: string) => void, placeholder: string, minLength?: number) => (
     <div className="relative">
       <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
       <Input
