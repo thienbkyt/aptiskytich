@@ -25,16 +25,17 @@ export default function AICoachFab() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Đóng Coach AI" : "Mở Coach AI"}
         className={cn(
-          "fixed z-40 right-6 bottom-24 md:bottom-6 w-14 h-14 rounded-full",
-          "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground",
+          "fixed z-40 right-6 bottom-24 md:bottom-6 w-14 h-14 rounded-full overflow-hidden",
+          "text-primary-foreground",
           "shadow-lg shadow-primary/40 hover:shadow-xl hover:shadow-primary/60",
           "flex items-center justify-center transition-all duration-300",
           "hover:scale-110 active:scale-95",
           "ring-2 ring-primary/30 hover:ring-primary/50",
+          open && "bg-gradient-to-br from-primary to-primary/70",
         )}
         style={{ animation: open ? undefined : "coach-pulse 2.5s ease-in-out infinite" }}
       >
-        {open ? <X className="w-6 h-6" /> : <img src={aiCoachLogo.url} alt="AI Coach" className="w-10 h-10 object-contain" />}
+        {open ? <X className="w-6 h-6" /> : <img src={aiCoachLogo.url} alt="AI Coach" className="w-full h-full object-cover" />}
         {!open && (
           <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-background text-primary border border-primary/40">
             AI
