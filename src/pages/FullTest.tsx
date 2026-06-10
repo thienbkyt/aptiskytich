@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
 import { useFullTests, type FullTestItem } from "@/hooks/useFullTests";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -48,8 +50,11 @@ const FullTest = () => {
       <Navbar />
       <main className="flex-1 pt-16">
         {/* Header */}
-        <section className="border-b border-border bg-card">
-          <div className="section-container py-12 md:py-16">
+        <section className="relative overflow-hidden border-b border-border bg-card">
+          <ParticlesBackground className="opacity-60" count={28} />
+          <GradientOrb tone="red" size={420} className="-top-32 -right-24" />
+          <GradientOrb tone="red" size={320} className="-bottom-40 -left-20 opacity-70" />
+          <div className="section-container py-12 md:py-16 relative z-10">
             <div className="max-w-3xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">

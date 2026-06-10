@@ -24,6 +24,8 @@ import ProgressBanner from "@/components/practice/ProgressBanner";
 import CompletionBadge from "@/components/practice/CompletionBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { saveExamResult } from "@/lib/saveExamResult";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
 
 const partToTask: Record<string, WritingPartType> = {
   part1: "task1", part2: "task2", part3: "task3", part4: "task4",
@@ -200,8 +202,11 @@ const Writing = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <main className="flex-1 pt-16">
-        <section className="border-b border-border bg-card">
-          <div className="section-container py-12 md:py-16">
+        <section className="relative overflow-hidden border-b border-border bg-card">
+          <ParticlesBackground className="opacity-60" count={28} />
+          <GradientOrb tone="orange" size={420} className="-top-32 -right-24" />
+          <GradientOrb tone="red" size={320} className="-bottom-40 -left-20 opacity-70" />
+          <div className="section-container py-12 md:py-16 relative z-10">
             <div className="max-w-3xl">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">

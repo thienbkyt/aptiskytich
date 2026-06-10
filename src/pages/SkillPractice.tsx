@@ -38,6 +38,9 @@ import { toast } from "@/hooks/use-toast";
 import FlashcardMode from "@/components/vocab/FlashcardMode";
 import QuizMode from "@/components/vocab/QuizMode";
 import MyMatchingMode from "@/components/vocab/MyMatchingMode";
+import ParticlesBackground from "@/components/ui/particles-background";
+import GradientOrb from "@/components/ui/gradient-orb";
+
 
 /* ───── colour helpers ───── */
 const TEAL = {
@@ -300,8 +303,11 @@ const SkillPractice = () => {
       <Navbar />
       <main className="flex-1 pt-16">
         {/* ── Header ── */}
-        <section className="bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border-b border-border">
-          <div className="section-container py-10 md:py-14 flex flex-col md:flex-row items-center gap-6">
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border-b border-border">
+          <ParticlesBackground className="opacity-60" count={28} />
+          <GradientOrb tone="orange" size={420} className="-top-32 -right-24" />
+          <GradientOrb tone="red" size={320} className="-bottom-40 -left-20 opacity-70" />
+          <div className="section-container py-10 md:py-14 flex flex-col md:flex-row items-center gap-6 relative z-10">
             <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground shrink-0">
               <BookOpen className="w-8 h-8" />
             </div>
@@ -315,6 +321,7 @@ const SkillPractice = () => {
             </div>
           </div>
         </section>
+
 
         {/* ── Tabs ── */}
         <div className="section-container py-8">
