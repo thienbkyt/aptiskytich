@@ -236,27 +236,27 @@ body.history-review-mode .exam-timer-display {
 }
 
 /* Exam bottom bar must stay identical in light and dark exam modes. */
-.dark .exam-light-bottom-bar {
-  background-color: hsl(0 0% 100% / 0.95) !important;
-}
-
-.dark .exam-light-bottom-bar .exam-nav-previous-button {
+.exam-light-bottom-bar .exam-nav-previous-button {
   border-color: hsl(0 0% 5%) !important;
   background-color: hsl(0 0% 100%) !important;
   color: hsl(0 0% 5%) !important;
 }
 
-.dark .exam-light-bottom-bar .exam-nav-previous-button:hover {
+.exam-light-bottom-bar .exam-nav-previous-button:hover {
   background-color: hsl(0 0% 96%) !important;
 }
 
-.dark .exam-light-bottom-bar .exam-nav-next-button {
+.exam-light-bottom-bar .exam-nav-next-button {
   background-color: hsl(260 83% 19%) !important;
   color: hsl(0 0% 100%) !important;
 }
 
-.dark .exam-light-bottom-bar .exam-nav-next-button:hover {
+.exam-light-bottom-bar .exam-nav-next-button:hover {
   background-color: hsl(260 83% 15%) !important;
+}
+
+.dark .exam-light-bottom-bar {
+  background-color: hsl(0 0% 100% / 0.95) !important;
 }
 
 @layer utilities {
