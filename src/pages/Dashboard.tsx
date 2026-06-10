@@ -20,6 +20,7 @@ import QuickActionCard from "@/components/dashboard/QuickActionCard";
 import StreakRing from "@/components/dashboard/StreakRing";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
+import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
