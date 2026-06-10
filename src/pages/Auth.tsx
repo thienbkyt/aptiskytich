@@ -238,7 +238,7 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Mật khẩu</Label>
-                  <PasswordInput id="password" value={password} onChange={setPassword} placeholder="••••••••" />
+                  {renderPasswordInput("password", password, setPassword, "••••••••")}
                 </div>
 
                 {loginErr && (
