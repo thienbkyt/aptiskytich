@@ -337,7 +337,7 @@ const BottomNavBar = ({
       </AnimatePresence>
 
       {/* Bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t-[3px] bg-white/95 backdrop-blur-sm border-[#230859]">
+      <div className="exam-light-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t-[3px] bg-background/95 backdrop-blur-sm border-[#230859]">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
@@ -368,16 +368,16 @@ const BottomNavBar = ({
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
-              <Button variant="outline" onClick={onPrevious} className="exam-nav-prev-next gap-2 border-foreground text-foreground hover:bg-muted">
+              <Button variant="outline" onClick={onPrevious} className="exam-nav-prev-next exam-nav-previous-button gap-2">
                 <ArrowLeft className="w-4 h-4" /> Previous
               </Button>
             )}
             {isLast && onSubmit ? (
-              <Button onClick={onSubmit} className="exam-nav-submit text-background gap-2 px-6 bg-[#230859]">
+              <Button onClick={onSubmit} className="exam-nav-submit exam-nav-next-button gap-2 px-6">
                 {submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
-              <Button onClick={onNext} className="exam-nav-prev-next text-background gap-2 px-6 bg-[#230859]">
+              <Button onClick={onNext} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6">
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : null}
