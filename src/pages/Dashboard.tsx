@@ -263,23 +263,8 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* QUICK ACTIONS */}
-          <motion.div
-            initial="hidden" animate="visible"
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3"
-          >
-            {[
-              { to: "/thi-thu",   icon: Zap,            title: "Thi thử Aptis",  desc: "Làm full test sát đề thật", tone: "red" as const },
-              { to: "/grammar",   icon: Target,         title: "Luyện kỹ năng",  desc: "5 kỹ năng theo từng part",   tone: "orange" as const },
-              { to: "/vocab",     icon: BookOpen,       title: "Học từ vựng",    desc: "Flashcard + 3R technique",    tone: "teal" as const },
-              { to: "/history",   icon: History,        title: "Lịch sử bài",    desc: "Xem lại & rút kinh nghiệm",   tone: "info" as const },
-              { to: "/course",    icon: GraduationCap,  title: "Khóa 7 ngày",    desc: "Lộ trình chinh phục Aptis",  tone: "violet" as const },
-            ].map((a, i) => (
-              <motion.div key={a.to} variants={fadeUp} custom={i}>
-                <QuickActionCard {...a} description={a.desc} />
-              </motion.div>
-            ))}
-          </motion.div>
+
+
 
           {/* MAIN GRID */}
           <div className="grid lg:grid-cols-3 gap-6">
