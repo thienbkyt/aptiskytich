@@ -20,6 +20,13 @@ export interface SaveExamResultOpts {
 }
 
 /**
+ * In-flight guard against double-submit. Keyed by examSet+session so that
+ * different parts of a Full Test can still save in parallel, but a single
+ * part can't be inserted twice if the user spam-clicks "Nộp bài".
+ */
+const inFlight = new Set<string>();
+
+/**
  * Save an exam result for the signed-in user. Best-effort: errors are swallowed
  * so the UI never breaks if the user is logged-out or RLS/network fails.
  *
@@ -30,9 +37,16 @@ export interface SaveExamResultOpts {
  * - Updates `learning_streaks` (creates row / increments / resets).
  */
 export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
+  const lockKey = `${opts.examSetId || "noset"}::${opts.fullTestSessionId || "single"}::${opts.skill}`;
+  if (inFlight.has(lockKey)) {
+    console.warn("[saveExamResult] duplicate submit ignored:", lockKey);
+    return;
+  }
+  inFlight.add(lockKey);
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+
 
     const total = Math.max(opts.total, 0);
     const correct = Math.max(opts.correct, 0);
@@ -95,8 +109,11 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
     await updateLearningStreak(user.id);
   } catch (err) {
     console.warn("[saveExamResult] skipped:", err);
+  } finally {
+    inFlight.delete(lockKey);
   }
 }
+
 
 async function updateLearningStreak(userId: string) {
   try {

@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
+import WritingFeedbackCard from "@/components/history/WritingFeedbackCard";
 import ReviewAnswerPanel, { type ReviewQuestion } from "@/components/history/ReviewAnswerPanel";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
+
 
 export interface ReviewPage {
   testResultId: string;
@@ -204,6 +206,9 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       />
     ) : (
       <>
+        {current.skill === "writing" && (
+          <WritingFeedbackCard userId={userId} attemptCreatedAt={current.attemptCreatedAt} />
+        )}
         <HistoryReviewRenderer
           key={current.testResultId}
           examSetId={current.examSetId}
@@ -214,7 +219,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           onExit={onExit}
         />
         {/* Answer key + explanation panel — the heart of the review UX. */}
-        {questions.length > 0 && (
+        {questions.length > 0 && current.skill !== "writing" && (
           <div className="max-w-3xl mx-auto px-4 pb-24">
             <ReviewAnswerPanel
               questions={questions}
@@ -225,6 +230,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         )}
       </>
     );
+
 
   return (
     <div className="min-h-screen bg-background">

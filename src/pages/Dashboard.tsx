@@ -258,29 +258,61 @@ const Dashboard = () => {
             {/* Main content */}
             <div className="space-y-6">
               {/* Streak motivation */}
-              <motion.div variants={fadeUp} custom={6} initial="hidden" animate="visible"
-                className="glass-card p-6 border-primary/20"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <Flame className="w-8 h-8 text-primary streak-fire" />
-                  <div>
-                    <h3 className="font-heading font-bold text-foreground">Chuỗi {d.streak} ngày! 🔥</h3>
-                    <p className="text-sm text-muted-foreground">Tiếp tục học hôm nay để duy trì streak!</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-2">
-                  {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day, i) => (
-                    <div key={day} className="flex-1 text-center">
-                      <div className="text-xs text-muted-foreground mb-1.5">{day}</div>
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mx-auto text-xs font-bold ${
-                        d.weeklyActivity[i] > 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}>
-                        {d.weeklyActivity[i] > 0 ? "✓" : "–"}
+              {(() => {
+                const todayIdx = vnWeekdayIndex(new Date());
+                const practicedToday = d.weeklyActivity[todayIdx] > 0;
+                const atRisk = !practicedToday && d.streak > 0;
+                return (
+                  <motion.div
+                    variants={fadeUp}
+                    custom={6}
+                    initial="hidden"
+                    animate="visible"
+                    className={`glass-card p-6 ${atRisk ? "border-2 border-primary/60 bg-primary/5" : "border-primary/20"}`}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <Flame className={`w-8 h-8 ${atRisk ? "text-primary animate-pulse" : "text-primary streak-fire"}`} />
+                      <div className="flex-1">
+                        <h3 className="font-heading font-bold text-foreground">
+                          {atRisk ? `⚠️ Sắp mất chuỗi ${d.streak} ngày!` : `Chuỗi ${d.streak} ngày! 🔥`}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {atRisk
+                            ? "Luyện tập ngay hôm nay để giữ streak — chỉ cần 1 bài là đủ."
+                            : practicedToday
+                              ? "Hôm nay bạn đã luyện tập — tuyệt vời!"
+                              : "Tiếp tục học hôm nay để duy trì streak!"}
+                        </p>
                       </div>
+                      {atRisk && (
+                        <Link
+                          to="/practice"
+                          className="hidden sm:inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-colors"
+                        >
+                          Luyện ngay <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </motion.div>
+                    <div className="flex gap-2 mt-2">
+                      {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day, i) => (
+                        <div key={day} className="flex-1 text-center">
+                          <div className="text-xs text-muted-foreground mb-1.5">{day}</div>
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center mx-auto text-xs font-bold ${
+                            d.weeklyActivity[i] > 0
+                              ? "bg-primary text-primary-foreground"
+                              : i === todayIdx
+                                ? "bg-primary/20 text-primary border border-primary/40"
+                                : "bg-muted text-muted-foreground"
+                          }`}>
+                            {d.weeklyActivity[i] > 0 ? "✓" : i === todayIdx ? "•" : "–"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })()}
+
 
               {/* Skill progress */}
               <motion.div variants={fadeUp} custom={7} initial="hidden" animate="visible" className="glass-card p-6">
@@ -339,10 +371,23 @@ const Dashboard = () => {
                   </Link>
                 </div>
                 {d.recentTests.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-6">
-                    Bạn chưa có kết quả thi nào. Hãy thử làm bài thi thử đầu tiên!
-                  </p>
+                  <div className="text-center py-8 px-4">
+                    <BookOpen className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="text-sm text-foreground font-medium mb-1">Bạn chưa có kết quả thi nào</p>
+                    <p className="text-xs text-muted-foreground mb-5">
+                      Bắt đầu bằng 1 bài thi thử ngắn để đo trình độ hiện tại.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Button asChild className="bg-primary hover:bg-[#4D0D0D]">
+                        <Link to="/thi-thu">Thi thử miễn phí <ArrowRight className="w-4 h-4 ml-1" /></Link>
+                      </Button>
+                      <Button asChild variant="outline">
+                        <Link to="/practice">Luyện theo kỹ năng</Link>
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
+
                   <div className="space-y-3">
                     {d.recentTests.map((t, i) => (
                       <div key={i} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/50">

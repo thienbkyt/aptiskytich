@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, LogOut } from "lucide-react";
 import ExamFinishScreen from "./ExamFinishScreen";
+
 
 interface ExamHeaderProps {
   skillLabel: string;
@@ -14,6 +15,14 @@ interface ExamHeaderProps {
 
 const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBackToResults }: ExamHeaderProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Mark body so global floating UI (e.g. Zalo FAB) hides while in-exam.
+  useEffect(() => {
+    document.body.classList.add("exam-mode");
+    return () => document.body.classList.remove("exam-mode");
+  }, []);
+
+
 
   const handleClick = () => {
     if (!onExit) return;
