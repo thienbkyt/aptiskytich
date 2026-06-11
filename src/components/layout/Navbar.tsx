@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
+import ProfileModal from "@/components/layout/ProfileModal";
 
 /* ── Nav data ── */
 const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
@@ -31,6 +32,7 @@ const Navbar = () => {
   const [adminHover, setAdminHover] = useState(false);
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
@@ -297,6 +299,13 @@ const Navbar = () => {
                   Dashboard
                 </Button>
               </Link>
+              <button
+                onClick={() => setProfileOpen(true)}
+                aria-label="Thông tin tài khoản"
+                className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity"
+              >
+                {(user.email?.[0] ?? "U").toUpperCase()}
+              </button>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-2.5" onClick={signOut}>
                 <LogOut className="w-3.5 h-3.5" />
                 Đăng xuất
@@ -485,6 +494,15 @@ const Navbar = () => {
               <div className="px-2 pt-1 space-y-2">
                 {user ? (
                   <>
+                    <button
+                      onClick={() => setProfileOpen(true)}
+                      className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted transition-colors text-left"
+                    >
+                      <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
+                        {(user.email?.[0] ?? "U").toUpperCase()}
+                      </span>
+                      <span className="text-sm font-medium truncate">{user.email}</span>
+                    </button>
                     <Link to="/dashboard">
                       <Button variant="outline" className="w-full justify-center gap-2 text-sm">
                         <Flame className="w-4 h-4 text-primary" />
@@ -512,6 +530,7 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
     </nav>
   );
 };
