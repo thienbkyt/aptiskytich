@@ -240,6 +240,7 @@ const ReadingPart2Cohesion = ({
         isFirst={false}
         isLast={false}
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );
