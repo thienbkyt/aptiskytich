@@ -350,6 +350,8 @@ const ReadingExamEngine = ({
           onNext={() => setPhase("practice")}
           onPrevious={() => setPhase("instructions")}
           sections={sections}
+          isInstructionsPhase
+          onProceedFromInstructions={() => setPhase("practice")}
         />
       </div>
     );
