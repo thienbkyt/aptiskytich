@@ -294,23 +294,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     if (sk === "writing") setWritingTimeLeft(SKILL_TIMES.writing);
   };
 
-  const handleAdminSkipPart = () => {
-    const skill = SKILL_ORDER[currentSkillIndex];
-    const parts = skillData[skill];
-    const isLastPartOfSkill =
-      skill === "grammar" || currentPartIndex >= parts.length - 1;
-    if (!isLastPartOfSkill) {
-      goToPart(currentSkillIndex, currentPartIndex + 1);
-      return;
-    }
-    const nextSkill = findSkillIndex(currentSkillIndex, 1);
-    if (nextSkill === -1) {
-      setPhase("completed");
-    } else {
-      goToPart(nextSkill, 0);
-    }
-  };
-
   const handleAdminBackPart = () => {
     if (currentPartIndex > 0) {
       goToPart(currentSkillIndex, currentPartIndex - 1);
@@ -328,12 +311,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   const canGoBackPart =
     currentPartIndex > 0 || findSkillIndex(currentSkillIndex, -1) !== -1;
-
-  const adminLabel = `${SKILL_LABELS[currentSkill]}${
-    currentSkill === "grammar"
-      ? ""
-      : ` · Part ${currentPartIndex + 1}/${skillData[currentSkill].length || 1}`
-  }`;
 
   const adminOverlay = null;
 
