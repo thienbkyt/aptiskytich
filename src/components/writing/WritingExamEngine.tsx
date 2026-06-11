@@ -41,6 +41,7 @@ interface WritingExamEngineProps {
   onExit: () => void;
   onComplete?: (perQuestion?: WritingPerQuestion[]) => void;
   onPrevious?: () => void;
+  showResultsOnSubmit?: boolean;
   /** DB exam_questions.id list — used to persist the user's essay per part. */
   sourceQuestionIds?: string[];
   /** Open in read-only review mode (pre-submitted, intros skipped). */
@@ -68,6 +69,7 @@ const WritingExamEngine = ({
   part1Data, part2Data, part3Data, part4Data,
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious, sourceQuestionIds,
+  showResultsOnSubmit,
   reviewMode, initialAnswers,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
@@ -182,7 +184,7 @@ const WritingExamEngine = ({
     const perQuestion = buildPerQuestion();
 
     // Full-test mode (parent passes isLastPart): skip grading/results entirely
-    if (isLastPart !== undefined) {
+    if (isLastPart !== undefined && !showResultsOnSubmit) {
       onComplete?.(perQuestion);
       return;
     }

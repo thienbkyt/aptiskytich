@@ -125,7 +125,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const isGrammar = skill === "grammar_vocab";
     const isLast = currentPartIndex >= parts.length - 1;
-    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening");
+    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening" || skill === "writing");
     if (engineHandlesResults) {
       return;
     }
@@ -326,6 +326,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         skipIntro={currentPartIndex > 0}
         fullFlow
         isLastPart={currentPartIndex >= parts.length - 1}
+        showResultsOnSubmit={isLastPart}
         onExit={onExit}
         onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
         onPrevious={handleAdminPreviousPart}
