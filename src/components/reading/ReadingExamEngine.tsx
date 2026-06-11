@@ -205,8 +205,6 @@ const ReadingExamEngine = ({
     setP4Answers(new Array(p4Total).fill(null));
   };
 
-  const isAnswered = (qi: number) => currentAnswers[qi] !== null;
-
   const partLabel = partType === "part1" ? "Part 1 – Gap Fill"
     : partType === "part2" ? "Part 2 – Text Cohesion"
     : partType === "part3" ? "Part 3 – Opinion Matching"
@@ -227,6 +225,7 @@ const ReadingExamEngine = ({
         label: String(qi + 1).padStart(2, "0"),
         seen: seenQuestions.has(qi),
         attempted: isAnswered(qi),
+        bookmarked: bookmarked.has(qi),
         isCurrent: phase === "practice" && currentIndex === qi,
         onClick: () => { setPhase("practice"); setCurrentIndex(qi); },
       })),
