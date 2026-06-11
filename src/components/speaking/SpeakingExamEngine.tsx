@@ -448,11 +448,11 @@ const SpeakingExamEngine = ({
         Admin
       </span>
       <div className="flex items-center gap-1.5">
-        {onAdminPrevious && (
+        {(currentIndex > 0 || onAdminPrevious) && (
           <button
             onClick={handleAdminBack}
             className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
-            title="Quay lại part trước (admin)"
+            title="Quay lại câu trước (admin)"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             Quay lại
@@ -461,7 +461,7 @@ const SpeakingExamEngine = ({
         <button
           onClick={handleAdminSkip}
           className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
-          title="Bỏ qua phase / part hiện tại (admin)"
+          title="Bỏ qua sang câu tiếp theo (admin)"
         >
           <SkipForward className="w-3.5 h-3.5" />
           Bỏ qua
