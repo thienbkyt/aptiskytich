@@ -86,6 +86,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // Prevent double-advancing if a child engine fires onComplete twice
   // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
   const completedKeysRef = useRef<Set<string>>(new Set());
+  const adminNavigationRef = useRef(false);
   // Unique id for this Full Test attempt — groups all 5 skills' rows in /history.
   const sessionIdRef = useRef<string>(
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -182,6 +183,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     total?: number,
     perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>
   ) => {
+    if (adminNavigationRef.current) return;
     const skill = SKILL_ORDER[currentSkillIndex];
     const parts = skillData[skill];
 
@@ -282,6 +284,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   };
 
   const goToPart = (skillIdx: number, partIdx: number) => {
+    adminNavigationRef.current = true;
+    window.setTimeout(() => { adminNavigationRef.current = false; }, 800);
     // Clear idempotency keys for the target part so onComplete can re-fire.
     const sk = SKILL_ORDER[skillIdx];
     completedKeysRef.current.delete(`${sk}-${partIdx}`);
