@@ -540,6 +540,13 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
           skipIntro={currentPartIndex > 0}
+          onAdminPrevious={currentPartIndex > 0 ? () => {
+            const prev = currentPartIndex - 1;
+            completedKeysRef.current.delete(`speaking-${prev}`);
+            completedKeysRef.current.delete(`speaking-${currentPartIndex}`);
+            setCurrentPartIndex(prev);
+            setEngineKey(k => k + 1);
+          } : undefined}
           {...speakingProps}
         />
       </>
