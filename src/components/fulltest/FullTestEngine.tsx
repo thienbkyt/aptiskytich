@@ -20,6 +20,7 @@ import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
@@ -316,7 +317,24 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const canGoBackPart =
     currentPartIndex > 0 || findSkillIndex(currentSkillIndex, -1) !== -1;
 
-  const adminOverlay = null;
+  const handleParentAdminSkip = () => {
+    if (phase === "skill-intro") {
+      if (skillData[currentSkill].length > 0) setPhase("exam");
+      else if (currentSkillIndex >= SKILL_ORDER.length - 1) setPhase("completed");
+      else handleNextSkill();
+    } else if (phase === "skill-transition") {
+      if (currentSkillIndex >= SKILL_ORDER.length - 1) setPhase("completed");
+      else handleNextSkill();
+    }
+  };
+
+  const adminOverlay = phase !== "exam" && phase !== "loading" && phase !== "completed" ? (
+    <AdminExamControls
+      label={`${SKILL_LABELS[currentSkill]} · Chuyển kỹ năng`}
+      onSkip={handleParentAdminSkip}
+      onBack={canGoBackPart ? handleAdminBackPart : undefined}
+    />
+  ) : null;
 
   // ── Loading ──
   if (phase === "loading") {
