@@ -139,6 +139,7 @@ const ReadingPart3Opinion = ({
         isLast={isLast}
         submitLabel="Submit"
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );
