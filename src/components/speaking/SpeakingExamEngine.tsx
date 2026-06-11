@@ -244,6 +244,7 @@ const SpeakingExamEngine = ({
 
   // Start recording
   const startRecording = useCallback(async () => {
+    const token = flowTokenRef.current;
     const speakTime = getSpeakTime();
     const recordingIndex = currentIndexRef.current;
     setSpeakTimeLeft(speakTime);
@@ -252,6 +253,10 @@ const SpeakingExamEngine = ({
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
       streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -262,7 +267,7 @@ const SpeakingExamEngine = ({
       };
 
       mediaRecorder.onstop = () => {
-        if (suppressRecordingSaveRef.current) {
+        if (suppressRecordingSaveRef.current || token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
           suppressRecordingSaveRef.current = false;
           chunksRef.current = [];
           stream.getTracks().forEach(t => t.stop());
