@@ -44,6 +44,7 @@ const ReadingPart1Sentence = ({
             return (
               <select
                 key={`gap-${gapIndex}`}
+                data-question-index={gapIndex}
                 value={selectedValue !== null && selectedValue !== undefined ? selectedValue : ""}
                 onChange={(e) => onAnswer(gapIndex, parseInt(e.target.value))}
                 disabled={submitted}
