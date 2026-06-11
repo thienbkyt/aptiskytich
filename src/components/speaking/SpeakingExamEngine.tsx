@@ -440,27 +440,27 @@ const SpeakingExamEngine = ({
   };
 
   const adminControls = isAdmin ? (
-    <div className="fixed top-3 right-3 z-[60] flex flex-col items-end gap-1 pointer-events-auto">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70 bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded">
+    <div className="fixed top-2 right-28 z-[100] flex flex-col items-end gap-0.5 pointer-events-auto">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-300 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-yellow-300/40">
         Admin
       </span>
       <div className="flex items-center gap-1.5">
         {onAdminPrevious && (
           <button
             onClick={handleAdminBack}
-            className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-white/40 bg-white/10 text-white/90 hover:bg-white/20 backdrop-blur-sm transition-colors"
+            className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
             title="Quay lại part trước (admin)"
           >
-            <ChevronLeft className="w-3 h-3" />
+            <ChevronLeft className="w-3.5 h-3.5" />
             Quay lại
           </button>
         )}
         <button
           onClick={handleAdminSkip}
-          className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-white/40 bg-white/10 text-white/90 hover:bg-white/20 backdrop-blur-sm transition-colors"
+          className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
           title="Bỏ qua phase / part hiện tại (admin)"
         >
-          <SkipForward className="w-3 h-3" />
+          <SkipForward className="w-3.5 h-3.5" />
           Bỏ qua
         </button>
       </div>
