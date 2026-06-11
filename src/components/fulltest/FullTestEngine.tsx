@@ -487,6 +487,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       return (
         <div className="min-h-[70vh]">
           {progressBar}
+        {adminOverlay}
           <div className="max-w-xl mx-auto text-center py-12">
             <p className="text-muted-foreground mb-4">
               Chưa có dữ liệu cho phần {SKILL_LABELS[currentSkill]}.
@@ -508,6 +509,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <div className="min-h-[70vh]">
         {progressBar}
+        {adminOverlay}
         <div className="max-w-lg mx-auto text-center py-16">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
             <Icon className="w-8 h-8 text-primary" />
@@ -543,6 +545,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <div className="min-h-[70vh]">
         {progressBar}
+        {adminOverlay}
         <div className="max-w-lg mx-auto text-center py-16">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <h2 className="text-xl font-heading font-bold text-foreground mb-2">
@@ -574,6 +577,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <GrammarExamEngine
           key={`grammar-${engineKey}`}
           questions={grammarQuestions}
@@ -605,6 +609,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <SpeakingExamEngine
           key={`speaking-${engineKey}`}
           partType={partType}
@@ -641,6 +646,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <ListeningExamEngine
           key="listening-full"
           partType={partType}
@@ -670,6 +676,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <ReadingExamEngine
           key={`reading-${engineKey}`}
           partType={partType}
@@ -703,6 +710,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <WritingExamEngine
           key="writing-full"
           partType={partType}
