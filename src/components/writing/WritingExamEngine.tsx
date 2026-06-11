@@ -370,6 +370,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
 
@@ -386,6 +387,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
 
@@ -406,6 +408,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
 
@@ -424,6 +427,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
       </div>
