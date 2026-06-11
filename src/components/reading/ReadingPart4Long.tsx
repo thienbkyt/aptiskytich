@@ -102,6 +102,7 @@ const ReadingPart4Long = ({
           return (
             <motion.div
               key={pIdx}
+              data-question-index={pIdx}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: pIdx * 0.05 }}
