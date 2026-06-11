@@ -210,6 +210,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     const allQuestions = parts.flatMap(p => p.questions);
     const grammarQuestions = toGrammarQuestions(allQuestions);
     return (
+      <>{adminOverlay}
       <GrammarExamEngine
         key={`grammar-${engineKey}`}
         questions={grammarQuestions}
@@ -218,7 +219,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         showResultsOnSubmit
-      />
+      /></>
     );
   }
 
@@ -239,6 +240,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": speakingProps.part4Data = toSpeakingPart4(currentPart.questions); break;
     }
     return (
+      <>{adminOverlay}
       <SpeakingExamEngine
         key={`speaking-${engineKey}`}
         partType={partType}
@@ -249,7 +251,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onComplete={() => handlePartComplete()}
         skipIntro={currentPartIndex > 0}
         {...speakingProps}
-      />
+      /></>
     );
   }
 
@@ -263,6 +265,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": listeningProps.part4Questions = toListeningPart4(currentPart.questions); break;
     }
     return (
+      <>{adminOverlay}
       <ListeningExamEngine
         key="listening-full"
         partType={partType}
@@ -276,7 +279,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         showResultsOnSubmit={isLastPart}
         {...listeningProps}
-      />
+      /></>
     );
   }
 
@@ -290,6 +293,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;
     }
     return (
+      <>{adminOverlay}
       <ReadingExamEngine
         key={`reading-${engineKey}`}
         partType={partType}
@@ -304,7 +308,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
         showResultsOnSubmit={isLastPart}
         {...readingProps}
-      />
+      /></>
     );
   }
 
@@ -318,6 +322,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": writingProps.part4Data = toWritingPart4(currentPart.questions); break;
     }
     return (
+      <>{adminOverlay}
       <WritingExamEngine
         key="writing-full"
         partType={writingPartType}
@@ -332,7 +337,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
         onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
         {...writingProps}
-      />
+      /></>
     );
   }
 
