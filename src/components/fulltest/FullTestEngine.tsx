@@ -21,7 +21,6 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import { normalizePart } from "@/hooks/useExamSets";
-import AdminExamControls from "@/components/exam/AdminExamControls";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -336,15 +335,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       : ` · Part ${currentPartIndex + 1}/${skillData[currentSkill].length || 1}`
   }`;
 
-  const adminOverlay =
-    phase === "exam" ? (
-      <AdminExamControls
-        position="top-left"
-        label={adminLabel}
-        onSkip={handleAdminSkipPart}
-        onBack={canGoBackPart ? handleAdminBackPart : undefined}
-      />
-    ) : null;
+  const adminOverlay = null;
 
   // ── Loading ──
   if (phase === "loading") {
