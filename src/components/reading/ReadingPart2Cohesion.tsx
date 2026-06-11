@@ -17,6 +17,7 @@ interface Props {
   onPrevious?: () => void;
   onExitToSections?: () => void;
   sections: any[];
+  onSubmitTest?: () => void;
   currentSection?: number;
   onSectionChange?: (idx: number) => void;
   isBookmarked?: boolean;

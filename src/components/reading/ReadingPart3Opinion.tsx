@@ -18,6 +18,7 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
 }
