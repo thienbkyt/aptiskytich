@@ -576,6 +576,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           timeLimit={SKILL_TIMES.grammar}
           onExit={handleExit}
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
+          onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           skipIntro={currentPartIndex > 0}
         />
       </>
@@ -612,13 +613,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
           skipIntro={currentPartIndex > 0}
-          onAdminPrevious={currentPartIndex > 0 ? () => {
-            const prev = currentPartIndex - 1;
-            completedKeysRef.current.delete(`speaking-${prev}`);
-            completedKeysRef.current.delete(`speaking-${currentPartIndex}`);
-            setCurrentPartIndex(prev);
-            setEngineKey(k => k + 1);
-          } : undefined}
+          onAdminPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...speakingProps}
         />
       </>
@@ -649,6 +644,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           skipIntro={currentPartIndex > 0}
           fullFlow
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
+          onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           {...listeningProps}
         />
       </>
@@ -677,7 +673,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           fullFlow
           onExit={handleExit}
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
-          onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
+          onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           {...readingProps}
         />
       </>
@@ -714,7 +710,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           isLastPart={currentPartIndex >= partsForSkill.length - 1}
           onExit={handleExit}
           onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
-          onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
+          onPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...writingProps}
         />
       </>
