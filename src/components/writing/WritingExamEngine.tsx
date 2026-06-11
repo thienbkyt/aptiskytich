@@ -41,6 +41,7 @@ interface WritingExamEngineProps {
   onExit: () => void;
   onComplete?: (perQuestion?: WritingPerQuestion[]) => void;
   onPrevious?: () => void;
+  showResultsOnSubmit?: boolean;
   /** DB exam_questions.id list — used to persist the user's essay per part. */
   sourceQuestionIds?: string[];
   /** Open in read-only review mode (pre-submitted, intros skipped). */
