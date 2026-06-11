@@ -226,20 +226,39 @@ const ReadingExamEngine = ({
   };
 
   const isSinglePagePart = partType === "part1" || partType === "part3" || partType === "part4";
-  const adminControls = phase === "practice" && !submitted && partType !== "part2" ? (
+  const adminControls = !submitted && !reviewMode && partType !== "part2" ? (
     <AdminExamControls
-      label={isSinglePagePart ? `Reading · ${partLabel}` : `Reading · Câu ${currentIndex + 1}/${totalQuestions || 1}`}
+      label={
+        phase === "instructions"
+          ? "Reading · Hướng dẫn"
+          : phase === "reading_intro"
+          ? "Reading · Bắt đầu"
+          : isSinglePagePart
+          ? `Reading · ${partLabel}`
+          : `Reading · Câu ${currentIndex + 1}/${totalQuestions || 1}`
+      }
       onSkip={() => {
-        if (!isSinglePagePart && currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+        if (phase === "instructions") setPhase("reading_intro");
+        else if (phase === "reading_intro") setPhase("practice");
+        else if (!isSinglePagePart && currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
         else handleSubmit();
       }}
-      onBack={!isSinglePagePart && currentIndex > 0 ? () => setCurrentIndex((p) => Math.max(0, p - 1)) : goToPrevPhase}
+      onBack={
+        phase === "instructions"
+          ? onPreviousPart
+          : phase === "reading_intro"
+          ? () => setPhase("instructions")
+          : !isSinglePagePart && currentIndex > 0
+          ? () => setCurrentIndex((p) => Math.max(0, p - 1))
+          : goToPrevPhase
+      }
     />
   ) : null;
 
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 w-full pb-20">
           <ExamInstructions
@@ -260,6 +279,7 @@ const ReadingExamEngine = ({
   if (phase === "reading_intro") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Reading Instructions</h1>
