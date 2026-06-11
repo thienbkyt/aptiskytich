@@ -530,6 +530,8 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </AnimatePresence>
+      <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
     </nav>
   );
 };
