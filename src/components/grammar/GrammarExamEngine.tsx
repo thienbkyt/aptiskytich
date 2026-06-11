@@ -308,6 +308,8 @@ const GrammarExamEngine = ({
           onNext={() => setPhase("practice")}
           onPrevious={() => setPhase("instructions")}
           sections={sections}
+          isInstructionsPhase
+          onProceedFromInstructions={() => setPhase("practice")}
         />
       </div>
     );
@@ -718,6 +720,7 @@ const GrammarExamEngine = ({
             isLast={false}
             sections={sections}
             bookmarkedCount={bookmarked.size}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         </div>
       </div>

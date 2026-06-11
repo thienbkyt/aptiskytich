@@ -301,6 +301,8 @@ const WritingExamEngine = ({
           onPrevious={() => setPhase("instructions")}
           onNext={() => setPhase("practice")}
           sections={sections}
+          isInstructionsPhase
+          onProceedFromInstructions={() => setPhase("practice")}
         />
       </div>
     );
