@@ -17,12 +17,13 @@ interface Props {
   sections: any[];
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  onSubmitTest?: () => void;
 }
 
 const WritingPart1Short = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark,
+  isBookmarked = false, onToggleBookmark, onSubmitTest,
 }: Props) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
@@ -73,7 +74,7 @@ const WritingPart1Short = ({
         ))}
       </div>
 
-      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} />
+      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />
     </div>
   );
 };
