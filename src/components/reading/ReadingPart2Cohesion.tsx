@@ -26,7 +26,7 @@ interface Props {
 
 const ReadingPart2Cohesion = ({
   question, placements, onPlacementsChange,
-  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
+  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections, onSubmitTest,
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
 }: Props) => {
