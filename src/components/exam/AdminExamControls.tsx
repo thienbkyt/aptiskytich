@@ -30,7 +30,7 @@ const AdminExamControls = ({
 }: AdminExamControlsProps) => {
   const { isAdmin: authIsAdmin } = useAuth();
   const clickLockRef = useRef(false);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(true);
   // Fallback: scan sessionStorage for any cached `isAdmin:*` = "1"
   const [sessionIsAdmin, setSessionIsAdmin] = useState(false);
   useEffect(() => {
@@ -44,6 +44,16 @@ const AdminExamControls = ({
       }
     } catch {}
   }, [authIsAdmin]);
+
+  useEffect(() => {
+    clickLockRef.current = true;
+    const timer = window.setTimeout(() => {
+      clickLockRef.current = false;
+      setIsLocked(false);
+    }, ADMIN_NAV_LOCK_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const isAdmin = authIsAdmin || sessionIsAdmin;
   if (!isAdmin) return null;
 
