@@ -31,7 +31,7 @@ const AdminExamControls = ({
   const { isAdmin: authIsAdmin } = useAuth();
   const clickLockRef = useRef(false);
   const [isLocked, setIsLocked] = useState(true);
-  // Fallback: scan sessionStorage for any cached `isAdmin:*` = "1"
+  // Fallback: support both cached `isAdmin:*` and `user_roles` formats.
   const [sessionIsAdmin, setSessionIsAdmin] = useState(false);
   useEffect(() => {
     try {
@@ -40,6 +40,14 @@ const AdminExamControls = ({
         if (k.startsWith("isAdmin:") && sessionStorage.getItem(k) === "1") {
           setSessionIsAdmin(true);
           return;
+        }
+      }
+      const rawRoles = sessionStorage.getItem("user_roles");
+      if (rawRoles) {
+        const parsed = JSON.parse(rawRoles);
+        const roles = Array.isArray(parsed) ? parsed : parsed?.roles;
+        if (Array.isArray(roles) && roles.some((r) => (typeof r === "string" ? r : r?.role) === "admin")) {
+          setSessionIsAdmin(true);
         }
       }
     } catch {}
