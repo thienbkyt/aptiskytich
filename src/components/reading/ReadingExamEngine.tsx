@@ -66,6 +66,7 @@ const ReadingExamEngine = ({
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
+  const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
 
@@ -83,17 +84,44 @@ const ReadingExamEngine = ({
     reviewMode && initialAnswers?.p4 ? initialAnswers.p4 : new Array(p4Total).fill(null)
   );
 
-  const part2TotalSentences = (part2Question?.sections || []).reduce((s, sec) => s + sec.sentences.length, 0);
+  const part2SectionCount = part2Question?.sections.length || 0;
 
+  // Panel "questions": for part2 each section = 1 question; others = per item.
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
-    : partType === "part2" ? part2TotalSentences
+    : partType === "part2" ? part2SectionCount
     : partType === "part3" ? (part3Question?.statements.length || 0)
     : p4Total;
 
-  const currentAnswers = partType === "part1" ? p1Answers
-    : partType === "part2" ? p1Answers /* unused for part2 nav */
-    : partType === "part3" ? p3Answers
-    : p4Answers;
+  const toggleBookmark = useCallback((qi: number) => {
+    setBookmarked((prev) => {
+      const next = new Set(prev);
+      if (next.has(qi)) next.delete(qi);
+      else next.add(qi);
+      return next;
+    });
+  }, []);
+
+  // True only when there is an actual user-supplied value (not null/undefined/empty).
+  const isAnswered = (qi: number): boolean => {
+    if (partType === "part1") {
+      const v = p1Answers[qi];
+      return v !== null && v !== undefined;
+    }
+    if (partType === "part3") {
+      const v = p3Answers[qi];
+      return v !== null && v !== undefined;
+    }
+    if (partType === "part4") {
+      const v = p4Answers[qi];
+      return v !== null && v !== undefined;
+    }
+    if (partType === "part2") {
+      const placements = p2Placements[qi];
+      if (!placements) return false;
+      return Object.values(placements).some((t) => t != null && t !== "");
+    }
+    return false;
+  };
 
   useEffect(() => {
     if (phase === "practice") {
