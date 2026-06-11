@@ -14,13 +14,6 @@ interface Props {
 
 const SpeakingPart2Describe = ({ data, recording, onRecordingComplete }: Props) => {
   const [phase, setPhase] = useState<"prep" | "speak">(data.prepTime > 0 ? "prep" : "speak");
-  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (data.imageUrl) {
-      resolveImageUrl(data.imageUrl).then(setResolvedImageUrl);
-    }
-  }, [data.imageUrl]);
 
   const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
@@ -35,8 +28,9 @@ const SpeakingPart2Describe = ({ data, recording, onRecordingComplete }: Props) 
         {data.prompt}
       </h2>
       <div className="rounded-xl overflow-hidden border border-border mb-6">
-        <img src={resolvedImageUrl || data.imageUrl} alt="Describe this picture" className="w-full h-64 object-cover" />
+        <SignedImage src={data.imageUrl} alt="Describe this picture" className="w-full h-64 object-cover" />
       </div>
+
 
       {phase === "speak" && (
         <AudioRecorder
