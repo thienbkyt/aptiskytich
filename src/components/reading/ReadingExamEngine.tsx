@@ -225,14 +225,15 @@ const ReadingExamEngine = ({
     sections,
   };
 
+  const isSinglePagePart = partType === "part1" || partType === "part3" || partType === "part4";
   const adminControls = phase === "practice" && !submitted && partType !== "part2" ? (
     <AdminExamControls
-      label={`Reading · Câu ${currentIndex + 1}/${totalQuestions || 1}`}
+      label={isSinglePagePart ? `Reading · ${partLabel}` : `Reading · Câu ${currentIndex + 1}/${totalQuestions || 1}`}
       onSkip={() => {
-        if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+        if (!isSinglePagePart && currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
         else handleSubmit();
       }}
-      onBack={currentIndex > 0 ? () => setCurrentIndex((p) => Math.max(0, p - 1)) : goToPrevPhase}
+      onBack={!isSinglePagePart && currentIndex > 0 ? () => setCurrentIndex((p) => Math.max(0, p - 1)) : goToPrevPhase}
     />
   ) : null;
 

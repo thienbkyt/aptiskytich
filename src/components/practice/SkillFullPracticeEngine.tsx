@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +61,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
+  const adminNavigationRef = useRef(false);
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
@@ -105,6 +106,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     total?: number,
     perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>
   ) => {
+    if (adminNavigationRef.current) return;
     if (correct !== undefined && total !== undefined) {
       setScores(prev => ({
         correct: prev.correct + correct,
@@ -182,6 +184,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const adminOverlay = null;
 
   const handleAdminPreviousPart = currentPartIndex > 0 ? () => {
+    adminNavigationRef.current = true;
+    window.setTimeout(() => { adminNavigationRef.current = false; }, 800);
     setCurrentPartIndex((p) => Math.max(0, p - 1));
     setEngineKey((k) => k + 1);
   } : undefined;

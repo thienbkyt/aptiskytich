@@ -112,6 +112,7 @@ const SpeakingExamEngine = ({
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
@@ -176,9 +177,14 @@ const SpeakingExamEngine = ({
 
   // Cleanup on unmount
   useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       window.speechSynthesis?.cancel();
     };
@@ -238,6 +244,7 @@ const SpeakingExamEngine = ({
 
   // Start recording
   const startRecording = useCallback(async () => {
+    const token = flowTokenRef.current;
     const speakTime = getSpeakTime();
     const recordingIndex = currentIndexRef.current;
     setSpeakTimeLeft(speakTime);
@@ -246,6 +253,10 @@ const SpeakingExamEngine = ({
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
       streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -256,7 +267,7 @@ const SpeakingExamEngine = ({
       };
 
       mediaRecorder.onstop = () => {
-        if (suppressRecordingSaveRef.current) {
+        if (suppressRecordingSaveRef.current || token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
           suppressRecordingSaveRef.current = false;
           chunksRef.current = [];
           stream.getTracks().forEach(t => t.stop());
@@ -320,7 +331,9 @@ const SpeakingExamEngine = ({
     if (idx < total - 1) {
       const nextIdx = idx + 1;
       currentIndexRef.current = nextIdx;
-      setTimeout(() => {
+      const token = flowTokenRef.current;
+      transitionTimeoutRef.current = setTimeout(() => {
+        if (token !== flowTokenRef.current) return;
         setCurrentIndex(nextIdx);
         setCanFinish(false);
         setIsTransitioning(false);
@@ -391,6 +404,7 @@ const SpeakingExamEngine = ({
     try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+    if (transitionTimeoutRef.current) { clearTimeout(transitionTimeoutRef.current); transitionTimeoutRef.current = null; }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       try { mediaRecorderRef.current.stop(); } catch { /* noop */ }
     }
@@ -425,6 +439,26 @@ const SpeakingExamEngine = ({
     if (adminNavLockedRef.current) return;
     adminNavLockedRef.current = true;
     window.setTimeout(() => { adminNavLockedRef.current = false; }, 450);
+    if (phase === "start") {
+      setPhase("instructions");
+      return;
+    }
+    if (phase === "instructions") {
+      setPhase("prompt");
+      return;
+    }
+    if (phase === "prompt") {
+      stopEverything(true);
+      currentIndexRef.current = 0;
+      setCurrentIndex(0);
+      advancingRef.current = false;
+      finishedRef.current = false;
+      setCanFinish(false);
+      setIsTransitioning(false);
+      window.setTimeout(() => { startQuestionFlow(); }, 100);
+      return;
+    }
+    if (phase === "grading" || phase === "done") return;
     stopEverything(true);
     const total = getTotalQuestions();
     const idx = currentIndexRef.current;
@@ -450,6 +484,16 @@ const SpeakingExamEngine = ({
     if (adminNavLockedRef.current) return;
     adminNavLockedRef.current = true;
     window.setTimeout(() => { adminNavLockedRef.current = false; }, 450);
+    if (phase === "instructions") {
+      setPhase("start");
+      return;
+    }
+    if (phase === "prompt") {
+      if (skipIntro && onAdminPrevious) onAdminPrevious();
+      else setPhase("instructions");
+      return;
+    }
+    if (phase === "start" || phase === "grading" || phase === "done") return;
     stopEverything(true);
     const idx = currentIndexRef.current;
     if (idx > 0) {
@@ -467,11 +511,18 @@ const SpeakingExamEngine = ({
     }
   };
 
-  const adminControls = isAdmin ? (
+  const adminBackHandler = (() => {
+    if (phase === "start" || phase === "grading" || phase === "done") return undefined;
+    if (phase === "instructions") return handleAdminBack;
+    if (phase === "prompt") return (skipIntro && onAdminPrevious) || !skipIntro ? handleAdminBack : undefined;
+    return currentIndex > 0 || onAdminPrevious ? handleAdminBack : undefined;
+  })();
+
+  const adminControls = isAdmin && phase !== "grading" && phase !== "done" ? (
     <AdminExamControls
       position="top-right"
       onSkip={handleAdminSkip}
-      onBack={currentIndex > 0 || onAdminPrevious ? handleAdminBack : undefined}
+      onBack={adminBackHandler}
       label={`Speaking Part ${partNumber} · Câu ${currentIndex + 1}/${getTotalQuestions() || 1}`}
     />
   ) : null;
