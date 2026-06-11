@@ -25,7 +25,7 @@ interface Props {
 
 const ReadingPart3Opinion = ({
   question, answers, timeLeft, totalTime, submitted, currentStatement,
-  onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections,
+  onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
 }: Props) => {
 
