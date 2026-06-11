@@ -80,6 +80,52 @@ const BottomNavBar = ({
     [sections],
   );
 
+  // Sections containing only the unanswered questions (preserves original section indices)
+  const unansweredBySection = useMemo(
+    () =>
+      sections
+        .map((sec, sIdx) => ({
+          sIdx,
+          title: sec.title,
+          questions: (sec.questions || []).filter((q) => !q.attempted),
+        }))
+        .filter((s) => s.questions.length > 0),
+    [sections],
+  );
+  const totalUnanswered = useMemo(
+    () => unansweredBySection.reduce((a, s) => a + s.questions.length, 0),
+    [unansweredBySection],
+  );
+
+  const toggleReviewSection = (index: number) => {
+    setReviewExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const handleExitClick = () => {
+    if (isInstructionsPhase) {
+      setShowProceedDialog(true);
+      return;
+    }
+    if (totalUnanswered === 0) {
+      setShowSubmitConfirm(true);
+    } else {
+      // Default-expand all sections that have unanswered questions
+      setReviewExpanded(new Set(unansweredBySection.map((s) => s.sIdx)));
+      setShowReviewModal(true);
+    }
+  };
+
+  const jumpToFirstUnanswered = () => {
+    const first = unansweredBySection[0]?.questions[0];
+    setShowReviewModal(false);
+    first?.onClick?.();
+  };
+
   const isDarkMode = resolvedTheme === "dark";
 
   const toggleDarkMode = () => {
