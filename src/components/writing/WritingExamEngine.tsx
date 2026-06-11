@@ -88,6 +88,14 @@ const WritingExamEngine = ({
 
   const { grading, isGrading, gradeExam } = useExamGrading();
 
+  // Ensure exam-mode dark overrides apply during intro phase too
+  // (intro screen renders no ExamHeader, so the body class wouldn't be set).
+  useEffect(() => {
+    document.body.classList.add("exam-mode");
+    return () => document.body.classList.remove("exam-mode");
+  }, []);
+
+
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {

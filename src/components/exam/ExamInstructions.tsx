@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 
 interface QuestionSection {
