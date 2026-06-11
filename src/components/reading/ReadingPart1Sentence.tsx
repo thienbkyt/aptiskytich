@@ -1,5 +1,4 @@
-import { useState, Fragment } from "react";
-import { motion } from "framer-motion";
+import { Fragment } from "react";
 import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -18,14 +17,16 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const ReadingPart1Sentence = ({
   question, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
-  const [bookmarked, setBookmarked] = useState(false);
 
   const renderPassage = () => {
     const parts = question.passage.split(/\{(\d+)\}/g);
