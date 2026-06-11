@@ -34,6 +34,7 @@ interface SpeakingExamEngineProps {
   onExit: () => void;
   onComplete?: () => void;
   skipIntro?: boolean;
+  onAdminPrevious?: () => void;
 }
 
 type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
