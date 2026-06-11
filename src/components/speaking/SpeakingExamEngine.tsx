@@ -453,15 +453,20 @@ const SpeakingExamEngine = ({
   ) : null;
 
   // ============ RENDER ============
-  const exitDialog = showExitConfirm && (
-    <ExamFinishScreen
-      title="Submit Test?"
-      message="Once you submit your test you will no longer have access to the questions."
-      buttonText="Submit test"
-      cancelText="Cancel"
-      onSubmit={handleConfirmExit}
-      onCancel={() => setShowExitConfirm(false)}
-    />
+  const exitDialog = (
+    <>
+      {adminControls}
+      {showExitConfirm && (
+        <ExamFinishScreen
+          title="Submit Test?"
+          message="Once you submit your test you will no longer have access to the questions."
+          buttonText="Submit test"
+          cancelText="Cancel"
+          onSubmit={handleConfirmExit}
+          onCancel={() => setShowExitConfirm(false)}
+        />
+      )}
+    </>
   );
 
   // Start Assessment (info) screen
