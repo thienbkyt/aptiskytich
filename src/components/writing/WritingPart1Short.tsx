@@ -31,7 +31,18 @@ const WritingPart1Short = ({
          <p className="text-sm font-heading font-bold text-foreground">Writing – Part 1</p>
          <p className="text-sm font-bold text-secondary-foreground text-left">{data.instruction || "Answer the following questions. Write between 1 and 5 words for each answer."}</p>
         </div>
-        <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleBookmark}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+              isBookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:border-primary/30"
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
+            Bookmark
+          </button>
+          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        </div>
       </div>
 
       <div className="flex-1 space-y-4">
