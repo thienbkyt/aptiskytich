@@ -32,6 +32,7 @@ const Navbar = () => {
   const [adminHover, setAdminHover] = useState(false);
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
