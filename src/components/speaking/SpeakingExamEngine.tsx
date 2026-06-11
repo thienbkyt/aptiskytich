@@ -150,6 +150,13 @@ const SpeakingExamEngine = ({
     setRecordings(new Array(getTotalQuestions()).fill(null));
   }, [partType]);
 
+  // Ensure exam-mode dark overrides apply across ALL speaking phases
+  // (start/mic-check/instructions/prompt screens don't mount ExamHeader).
+  useEffect(() => {
+    document.body.classList.add("exam-mode");
+    return () => document.body.classList.remove("exam-mode");
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     currentIndexRef.current = currentIndex;

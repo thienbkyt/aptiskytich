@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 
 interface QuestionSection {
@@ -28,6 +29,11 @@ const ExamInstructions = ({
   testTitle,
   description,
 }: ExamInstructionsProps) => {
+  useEffect(() => {
+    document.body.classList.add("exam-mode");
+    return () => document.body.classList.remove("exam-mode");
+  }, []);
+
   return (
     <div className="min-h-screen bg-white pl-[60px] pt-[40px] font-sans text-black">
       <p className="text-sm text-gray-500 mb-2">Aptis General Practice Test</p>
