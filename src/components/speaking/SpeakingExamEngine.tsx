@@ -78,8 +78,9 @@ const SpeakingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
   examSetId, sourceQuestionIds, fullTestSessionId, fullTestId,
-  onExit, onComplete, skipIntro = false,
+  onExit, onComplete, skipIntro = false, onAdminPrevious,
 }: SpeakingExamEngineProps) => {
+  const { isAdmin } = useAuth();
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prepTimeLeft, setPrepTimeLeft] = useState(0);
