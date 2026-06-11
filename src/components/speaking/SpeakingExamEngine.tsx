@@ -422,7 +422,10 @@ const SpeakingExamEngine = ({
   // Skip → advance to the NEXT question (page) within the current part.
   // If already on the last question, finish the part (calls onComplete normally).
   const handleAdminSkip = () => {
-    stopEverything();
+    if (adminNavLockedRef.current) return;
+    adminNavLockedRef.current = true;
+    window.setTimeout(() => { adminNavLockedRef.current = false; }, 450);
+    stopEverything(true);
     const total = getTotalQuestions();
     const idx = currentIndexRef.current;
     if (idx < total - 1) {
@@ -433,7 +436,8 @@ const SpeakingExamEngine = ({
       setCurrentIndex(nextIdx);
       setCanFinish(false);
       setIsTransitioning(false);
-      setTimeout(() => { startQuestionFlow(); }, 100);
+      setPhase("reading-question");
+      window.setTimeout(() => { startQuestionFlow(); }, 100);
     } else {
       // Last question → finish part normally with whatever was recorded
       handleFinish();
@@ -443,7 +447,10 @@ const SpeakingExamEngine = ({
   // Back → return to the PREVIOUS question (page) within the current part.
   // If already on the first question, jump to the previous part (admin only, full test).
   const handleAdminBack = () => {
-    stopEverything();
+    if (adminNavLockedRef.current) return;
+    adminNavLockedRef.current = true;
+    window.setTimeout(() => { adminNavLockedRef.current = false; }, 450);
+    stopEverything(true);
     const idx = currentIndexRef.current;
     if (idx > 0) {
       const prevIdx = idx - 1;
@@ -453,38 +460,20 @@ const SpeakingExamEngine = ({
       setCurrentIndex(prevIdx);
       setCanFinish(false);
       setIsTransitioning(false);
-      setTimeout(() => { startQuestionFlow(); }, 100);
+      setPhase("reading-question");
+      window.setTimeout(() => { startQuestionFlow(); }, 100);
     } else if (onAdminPrevious) {
       onAdminPrevious();
     }
   };
 
   const adminControls = isAdmin ? (
-    <div className="fixed top-2 right-28 z-[100] flex flex-col items-end gap-0.5 pointer-events-auto">
-      <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-300 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded border border-yellow-300/40">
-        Admin
-      </span>
-      <div className="flex items-center gap-1.5">
-        {(currentIndex > 0 || onAdminPrevious) && (
-          <button
-            onClick={handleAdminBack}
-            className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
-            title="Quay lại câu trước (admin)"
-          >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            Quay lại
-          </button>
-        )}
-        <button
-          onClick={handleAdminSkip}
-          className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
-          title="Bỏ qua sang câu tiếp theo (admin)"
-        >
-          <SkipForward className="w-3.5 h-3.5" />
-          Bỏ qua
-        </button>
-      </div>
-    </div>
+    <AdminExamControls
+      position="top-right"
+      onSkip={handleAdminSkip}
+      onBack={currentIndex > 0 || onAdminPrevious ? handleAdminBack : undefined}
+      label={`Speaking Part ${partNumber} · Câu ${currentIndex + 1}/${getTotalQuestions() || 1}`}
+    />
   ) : null;
 
   // ============ RENDER ============
