@@ -17,6 +17,7 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import { saveExamResult } from "@/lib/saveExamResult";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -177,6 +178,27 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       </div>
     );
   }
+
+  // ── Admin-only part navigation overlay (within current skill) ──
+  const isLastPartGlobal = currentPartIndex >= parts.length - 1;
+  const adminOverlay = phase === "exam" ? (
+    <AdminExamControls
+      position="top-left"
+      label={`${skillLabel}${skill === "grammar_vocab" ? "" : ` · Part ${currentPartIndex + 1}/${parts.length || 1}`}`}
+      onSkip={() => {
+        if (skill === "grammar_vocab" || isLastPartGlobal) {
+          setPhase("completed");
+        } else {
+          setCurrentPartIndex((p) => p + 1);
+          setEngineKey((k) => k + 1);
+        }
+      }}
+      onBack={currentPartIndex > 0 ? () => {
+        setCurrentPartIndex((p) => Math.max(0, p - 1));
+        setEngineKey((k) => k + 1);
+      } : undefined}
+    />
+  ) : null;
 
   // ── Exam Phase ──
   if (parts.length === 0) return null;
