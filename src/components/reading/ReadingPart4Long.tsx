@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -19,14 +19,16 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const ReadingPart4Long = ({
   question, answers, currentIndex, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
-  const [bookmarked, setBookmarked] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
