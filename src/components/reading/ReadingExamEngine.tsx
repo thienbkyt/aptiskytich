@@ -220,6 +220,7 @@ const ReadingExamEngine = ({
     setCurrentIndex(0);
     setTimeLeft(timeLimit);
     setSeenQuestions(new Set());
+    setBookmarked(new Set());
     setP1Answers(new Array(part1Question?.gaps.length || 0).fill(null));
     setP2Placements((part2Question?.sections || []).map(() => ({})));
     setP3Answers(new Array(part3Question?.statements.length || 0).fill(null));
