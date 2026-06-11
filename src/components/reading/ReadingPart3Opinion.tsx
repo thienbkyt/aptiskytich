@@ -37,12 +37,12 @@ const ReadingPart3Opinion = ({
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setBookmarked(!bookmarked)}
+            onClick={onToggleBookmark}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-              bookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
+              isBookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
             }`}
           >
-            <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-primary" : ""}`} />
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
           <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
