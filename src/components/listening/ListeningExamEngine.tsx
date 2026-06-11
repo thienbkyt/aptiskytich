@@ -237,7 +237,7 @@ const ListeningExamEngine = ({
       questions: Array.from({ length: totalQuestions }, (_, qi) => ({
         label: String(qi + 1).padStart(2, "0"),
         seen: seenQuestions.has(qi),
-        attempted: answers[qi] !== null,
+        attempted: answers[qi] !== null && answers[qi] !== undefined,
         isCurrent: phase === "practice" && currentIndex === qi,
         onClick: () => { setPhase("practice"); setCurrentIndex(qi); },
       })),
