@@ -5,7 +5,7 @@ import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
-import { resolveImageUrl } from "@/lib/imageUrl";
+import SignedImage from "@/components/exam/SignedImage";
 import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -88,8 +88,6 @@ const SpeakingExamEngine = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [resolvedImg1, setResolvedImg1] = useState<string | null>(null);
-  const [resolvedImg2, setResolvedImg2] = useState<string | null>(null);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -145,13 +143,7 @@ const SpeakingExamEngine = ({
     return "";
   };
 
-  // Resolve images
-  useEffect(() => {
-    if (part2Data?.imageUrl) resolveImageUrl(part2Data.imageUrl).then(setResolvedImg1);
-    if (part3Data?.imageUrl1) resolveImageUrl(part3Data.imageUrl1).then(setResolvedImg1);
-    if (part3Data?.imageUrl2) resolveImageUrl(part3Data.imageUrl2).then(setResolvedImg2);
-    if (part4Data?.imageUrl) resolveImageUrl(part4Data.imageUrl).then(setResolvedImg1);
-  }, [part2Data, part3Data, part4Data]);
+  // Image resolution is handled by <SignedImage /> directly.
 
   // Initialize recordings array
   useEffect(() => {
@@ -731,10 +723,10 @@ const SpeakingExamEngine = ({
             </p>
 
             {/* Part 2 image */}
-            {partType === "part2" && (
+            {partType === "part2" && part2Data?.imageUrl && (
               <div className="mb-4">
-                <img
-                  src={resolvedImg1 || part2Data?.imageUrl}
+                <SignedImage
+                  src={part2Data.imageUrl}
                   alt="Describe this picture"
                   className="w-full max-w-md rounded-lg object-cover"
                 />
@@ -742,15 +734,15 @@ const SpeakingExamEngine = ({
             )}
 
             {/* Part 3 two images side by side */}
-            {partType === "part3" && (
+            {partType === "part3" && part3Data && (
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <img
-                  src={resolvedImg1 || part3Data?.imageUrl1}
+                <SignedImage
+                  src={part3Data.imageUrl1}
                   alt="Picture 1"
                   className="w-full rounded-lg object-cover h-56"
                 />
-                <img
-                  src={resolvedImg2 || part3Data?.imageUrl2}
+                <SignedImage
+                  src={part3Data.imageUrl2}
                   alt="Picture 2"
                   className="w-full rounded-lg object-cover h-56"
                 />
@@ -763,8 +755,8 @@ const SpeakingExamEngine = ({
                 <p className="font-bold text-gray-900 mb-3">Topic: {part4Data.topic}</p>
                 {part4Data.imageUrl && (
                   <div className="mb-4 rounded-lg overflow-hidden border border-gray-200 max-w-md">
-                    <img
-                      src={resolvedImg1 || part4Data.imageUrl}
+                    <SignedImage
+                      src={part4Data.imageUrl}
                       alt="Part 4 topic"
                       className="w-full h-56 object-cover"
                     />
