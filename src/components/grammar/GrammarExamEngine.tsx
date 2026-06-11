@@ -257,6 +257,13 @@ const GrammarExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {!reviewMode && !submitted && (
+          <AdminExamControls
+            label="Grammar · Hướng dẫn"
+            onSkip={() => setPhase("grammar_intro")}
+            onBack={onPreviousPart}
+          />
+        )}
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
         <div className="flex-1 w-full pb-20">
           <ExamInstructions
@@ -277,6 +284,13 @@ const GrammarExamEngine = ({
   if (phase === "grammar_intro") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {!reviewMode && !submitted && (
+          <AdminExamControls
+            label="Grammar · Bắt đầu"
+            onSkip={() => setPhase("practice")}
+            onBack={() => setPhase("instructions")}
+          />
+        )}
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Grammar & Vocabulary Instructions</h1>
