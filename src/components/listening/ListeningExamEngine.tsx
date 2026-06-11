@@ -255,20 +255,37 @@ const ListeningExamEngine = ({
     sections,
   };
 
-  const adminControls = phase === "practice" && !submitted ? (
+  const adminControls = !submitted && !reviewMode ? (
     <AdminExamControls
-      label={`Listening · Câu ${currentIndex + 1}/${totalQuestions || 1}`}
+      label={
+        phase === "instructions"
+          ? "Listening · Hướng dẫn"
+          : phase === "listening_intro"
+          ? "Listening · Bắt đầu"
+          : `Listening · Câu ${currentIndex + 1}/${totalQuestions || 1}`
+      }
       onSkip={() => {
-        if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+        if (phase === "instructions") setPhase("listening_intro");
+        else if (phase === "listening_intro") setPhase("practice");
+        else if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
         else handleSubmit();
       }}
-      onBack={currentIndex > 0 ? () => setCurrentIndex((p) => Math.max(0, p - 1)) : onPreviousPart}
+      onBack={
+        phase === "instructions"
+          ? onPreviousPart
+          : phase === "listening_intro"
+          ? () => setPhase("instructions")
+          : currentIndex > 0
+          ? () => setCurrentIndex((p) => Math.max(0, p - 1))
+          : onPreviousPart
+      }
     />
   ) : null;
 
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         <ExamInstructions
           skillName="Listening"
@@ -284,6 +301,7 @@ const ListeningExamEngine = ({
   if (phase === "listening_intro") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-4">Aptis General Listening Instructions</h1>
