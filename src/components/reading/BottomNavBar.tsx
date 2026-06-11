@@ -148,6 +148,17 @@ const BottomNavBar = ({
                     sections.map((section, i) => (
                       <div key={i}>
                         {/* Section header */}
+                  Bookmarked ({effectiveBookmarkedCount})
+                </button>
+              </div>
+
+              {/* Sections */}
+              <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
+                {listFilter === "all" ? (
+                  sections.length > 0 ? (
+                    sections.map((section, i) => (
+                      <div key={i}>
+                        {/* Section header */}
                         <div
                           className={`w-full text-left p-3 rounded-lg border transition-colors ${
                             section.isCurrent
@@ -208,7 +219,12 @@ const BottomNavBar = ({
                                         : "border-border hover:border-primary/30 hover:bg-muted/50"
                                     }`}
                                   >
-                                    <p className="text-sm font-bold text-foreground">{q.label}</p>
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-sm font-bold text-foreground">{q.label}</p>
+                                      {q.bookmarked && (
+                                        <Bookmark className="w-3.5 h-3.5 text-primary fill-primary" />
+                                      )}
+                                    </div>
                                     <div className="flex items-center justify-between mt-0.5">
                                       <span className="text-xs text-muted-foreground">
                                         {q.seen ? "Seen" : "Unseen"}
@@ -229,15 +245,44 @@ const BottomNavBar = ({
                     <p className="text-sm text-muted-foreground py-4 text-center">No sections available</p>
                   )
                 ) : (
-                  <p className="text-sm text-muted-foreground py-4 text-center">
-                    {bookmarkedCount === 0 ? "No bookmarked questions" : `${bookmarkedCount} bookmarked`}
-                  </p>
+                  bookmarkedFlat.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No bookmarked questions</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {bookmarkedFlat.map(({ q, qi, sectionTitle }, idx) => (
+                        <button
+                          key={`${sectionTitle}-${qi}-${idx}`}
+                          onClick={() => {
+                            q.onClick?.();
+                            setShowQuestionList(false);
+                          }}
+                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                            q.isCurrent
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/30 hover:bg-muted/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-bold text-foreground">{q.label}</p>
+                            <Bookmark className="w-3.5 h-3.5 text-primary fill-primary" />
+                          </div>
+                          <div className="flex items-center justify-between mt-0.5">
+                            <span className="text-xs text-muted-foreground">{sectionTitle}</span>
+                            <span className={`text-xs font-medium ${q.attempted ? "text-primary" : "text-muted-foreground"}`}>
+                              {q.attempted ? "Attempted" : "Not Attempted"}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )
                 )}
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
 
       {/* Information Panel */}
       <AnimatePresence>
