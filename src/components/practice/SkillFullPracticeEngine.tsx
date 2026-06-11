@@ -125,7 +125,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const isGrammar = skill === "grammar_vocab";
     const isLast = currentPartIndex >= parts.length - 1;
-    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening");
+    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening" || skill === "writing");
     if (engineHandlesResults) {
       return;
     }
