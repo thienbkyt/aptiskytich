@@ -439,6 +439,26 @@ const SpeakingExamEngine = ({
     if (adminNavLockedRef.current) return;
     adminNavLockedRef.current = true;
     window.setTimeout(() => { adminNavLockedRef.current = false; }, 450);
+    if (phase === "start") {
+      setPhase("instructions");
+      return;
+    }
+    if (phase === "instructions") {
+      setPhase("prompt");
+      return;
+    }
+    if (phase === "prompt") {
+      stopEverything(true);
+      currentIndexRef.current = 0;
+      setCurrentIndex(0);
+      advancingRef.current = false;
+      finishedRef.current = false;
+      setCanFinish(false);
+      setIsTransitioning(false);
+      window.setTimeout(() => { startQuestionFlow(); }, 100);
+      return;
+    }
+    if (phase === "grading" || phase === "done") return;
     stopEverything(true);
     const total = getTotalQuestions();
     const idx = currentIndexRef.current;
@@ -464,6 +484,16 @@ const SpeakingExamEngine = ({
     if (adminNavLockedRef.current) return;
     adminNavLockedRef.current = true;
     window.setTimeout(() => { adminNavLockedRef.current = false; }, 450);
+    if (phase === "instructions") {
+      setPhase("start");
+      return;
+    }
+    if (phase === "prompt") {
+      if (skipIntro && onAdminPrevious) onAdminPrevious();
+      else setPhase("instructions");
+      return;
+    }
+    if (phase === "start" || phase === "grading" || phase === "done") return;
     stopEverything(true);
     const idx = currentIndexRef.current;
     if (idx > 0) {
@@ -481,11 +511,18 @@ const SpeakingExamEngine = ({
     }
   };
 
-  const adminControls = isAdmin ? (
+  const adminBackHandler = (() => {
+    if (phase === "start" || phase === "grading" || phase === "done") return undefined;
+    if (phase === "instructions") return handleAdminBack;
+    if (phase === "prompt") return (skipIntro && onAdminPrevious) || !skipIntro ? handleAdminBack : undefined;
+    return currentIndex > 0 || onAdminPrevious ? handleAdminBack : undefined;
+  })();
+
+  const adminControls = isAdmin && phase !== "grading" && phase !== "done" ? (
     <AdminExamControls
       position="top-right"
       onSkip={handleAdminSkip}
-      onBack={currentIndex > 0 || onAdminPrevious ? handleAdminBack : undefined}
+      onBack={adminBackHandler}
       label={`Speaking Part ${partNumber} · Câu ${currentIndex + 1}/${getTotalQuestions() || 1}`}
     />
   ) : null;
