@@ -21,6 +21,7 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import { normalizePart } from "@/hooks/useExamSets";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -270,6 +271,81 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // On confirm they call onExit → just exit the full test.
   const handleExit = () => onExit();
 
+  // ===== Admin-only cross-skill navigation (part-level) =====
+  // Find next/previous non-empty skill index relative to a starting index.
+  const findSkillIndex = (from: number, dir: 1 | -1): number => {
+    let i = from + dir;
+    while (i >= 0 && i < SKILL_ORDER.length) {
+      if (skillData[SKILL_ORDER[i]].length > 0) return i;
+      i += dir;
+    }
+    return -1;
+  };
+
+  const goToPart = (skillIdx: number, partIdx: number) => {
+    // Clear idempotency keys for the target part so onComplete can re-fire.
+    const sk = SKILL_ORDER[skillIdx];
+    completedKeysRef.current.delete(`${sk}-${partIdx}`);
+    setCurrentSkillIndex(skillIdx);
+    setCurrentPartIndex(partIdx);
+    setEngineKey((k) => k + 1);
+    setPhase("exam");
+    // Reset shared timers when switching into a skill that uses one
+    if (sk === "listening") setListeningTimeLeft(SKILL_TIMES.listening);
+    if (sk === "writing") setWritingTimeLeft(SKILL_TIMES.writing);
+  };
+
+  const handleAdminSkipPart = () => {
+    const skill = SKILL_ORDER[currentSkillIndex];
+    const parts = skillData[skill];
+    const isLastPartOfSkill =
+      skill === "grammar" || currentPartIndex >= parts.length - 1;
+    if (!isLastPartOfSkill) {
+      goToPart(currentSkillIndex, currentPartIndex + 1);
+      return;
+    }
+    const nextSkill = findSkillIndex(currentSkillIndex, 1);
+    if (nextSkill === -1) {
+      setPhase("completed");
+    } else {
+      goToPart(nextSkill, 0);
+    }
+  };
+
+  const handleAdminBackPart = () => {
+    if (currentPartIndex > 0) {
+      goToPart(currentSkillIndex, currentPartIndex - 1);
+      return;
+    }
+    const prevSkill = findSkillIndex(currentSkillIndex, -1);
+    if (prevSkill === -1) return;
+    const prevSkillKey = SKILL_ORDER[prevSkill];
+    const prevParts = skillData[prevSkillKey];
+    // Grammar = single engine call → go to "part 0"
+    const targetPart =
+      prevSkillKey === "grammar" ? 0 : Math.max(0, prevParts.length - 1);
+    goToPart(prevSkill, targetPart);
+  };
+
+  const canGoBackPart =
+    currentPartIndex > 0 || findSkillIndex(currentSkillIndex, -1) !== -1;
+
+  const adminLabel = `${SKILL_LABELS[currentSkill]}${
+    currentSkill === "grammar"
+      ? ""
+      : ` · Part ${currentPartIndex + 1}/${skillData[currentSkill].length || 1}`
+  }`;
+
+  const adminOverlay =
+    phase === "exam" ? (
+      <AdminExamControls
+        position="top-left"
+        label={adminLabel}
+        onSkip={handleAdminSkipPart}
+        onBack={canGoBackPart ? handleAdminBackPart : undefined}
+      />
+    ) : null;
+
   // ── Loading ──
   if (phase === "loading") {
     return (
@@ -411,6 +487,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       return (
         <div className="min-h-[70vh]">
           {progressBar}
+        {adminOverlay}
           <div className="max-w-xl mx-auto text-center py-12">
             <p className="text-muted-foreground mb-4">
               Chưa có dữ liệu cho phần {SKILL_LABELS[currentSkill]}.
@@ -432,6 +509,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <div className="min-h-[70vh]">
         {progressBar}
+        {adminOverlay}
         <div className="max-w-lg mx-auto text-center py-16">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
             <Icon className="w-8 h-8 text-primary" />
@@ -467,6 +545,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <div className="min-h-[70vh]">
         {progressBar}
+        {adminOverlay}
         <div className="max-w-lg mx-auto text-center py-16">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <h2 className="text-xl font-heading font-bold text-foreground mb-2">
@@ -498,6 +577,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <GrammarExamEngine
           key={`grammar-${engineKey}`}
           questions={grammarQuestions}
@@ -529,6 +609,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <SpeakingExamEngine
           key={`speaking-${engineKey}`}
           partType={partType}
@@ -565,6 +646,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <ListeningExamEngine
           key="listening-full"
           partType={partType}
@@ -594,6 +676,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <ReadingExamEngine
           key={`reading-${engineKey}`}
           partType={partType}
@@ -627,6 +710,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     return (
       <>
         {progressBar}
+        {adminOverlay}
         <WritingExamEngine
           key="writing-full"
           partType={partType}
