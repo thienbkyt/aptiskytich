@@ -179,7 +179,6 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   }
 
   // ── Admin-only part navigation overlay (within current skill) ──
-  const isLastPartGlobal = currentPartIndex >= parts.length - 1;
   const adminOverlay = null;
 
   const handleAdminPreviousPart = currentPartIndex > 0 ? () => {
