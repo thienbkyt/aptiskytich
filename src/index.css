@@ -572,3 +572,12 @@ html.dark body.exam-mode .border-dashed {
 html.dark .fixed.inset-0 > .bg-white {
   background-color: #1E1E1E !important;
 }
+
+/* 10. Nút tím "Start Assessment" #2D1B69 → indigo dịu trong dark mode */
+html.dark body.exam-mode .bg-\[\#2D1B69\] {
+  background-color: #3B82F6 !important;
+}
+html.dark body.exam-mode .hover\:bg-\[\#1f1149\]:hover {
+  background-color: #2563EB !important;
+}
+
