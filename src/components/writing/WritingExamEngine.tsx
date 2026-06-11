@@ -185,11 +185,27 @@ const WritingExamEngine = ({
   }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
 
   const partLabel = PART_LABELS[partType];
-  const adminControls = phase === "practice" && !submitted ? (
+  const adminControls = !submitted && !reviewMode ? (
     <AdminExamControls
-      label={`Writing · ${partLabel}`}
-      onSkip={handleSubmit}
-      onBack={onPrevious}
+      label={
+        phase === "instructions"
+          ? "Writing · Hướng dẫn"
+          : phase === "writing_intro"
+          ? "Writing · Bắt đầu"
+          : `Writing · ${partLabel}`
+      }
+      onSkip={() => {
+        if (phase === "instructions") setPhase("writing_intro");
+        else if (phase === "writing_intro") setPhase("practice");
+        else handleSubmit();
+      }}
+      onBack={
+        phase === "instructions"
+          ? onPrevious
+          : phase === "writing_intro"
+          ? () => setPhase("instructions")
+          : onPrevious
+      }
     />
   ) : null;
 
@@ -210,6 +226,7 @@ const WritingExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
+        {adminControls}
         <p className="text-sm text-gray-700 mb-2">Aptis General Practice Test</p>
         <h1 className="text-xl font-bold mb-6">Writing Practice Test {testTitle}</h1>
         <div className="flex gap-16 mb-8">
@@ -236,6 +253,7 @@ const WritingExamEngine = ({
   if (phase === "writing_intro") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        {adminControls}
         <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
         <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-4">Aptis General Writing Instructions</h1>

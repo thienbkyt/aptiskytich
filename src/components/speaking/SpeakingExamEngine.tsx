@@ -10,7 +10,6 @@ import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
-import { useAuth } from "@/hooks/useAuth";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import type {
   SpeakingPartType,
@@ -81,22 +80,6 @@ const SpeakingExamEngine = ({
   examSetId, sourceQuestionIds, fullTestSessionId, fullTestId,
   onExit, onComplete, skipIntro = false, onAdminPrevious,
 }: SpeakingExamEngineProps) => {
-  const { isAdmin: authIsAdmin } = useAuth();
-  // Fallback: scan sessionStorage for any cached `isAdmin:*` = "1"
-  // (useAuth may still be loading when the exam mounts).
-  const [sessionIsAdmin, setSessionIsAdmin] = useState(false);
-  useEffect(() => {
-    try {
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const k = sessionStorage.key(i) || "";
-        if (k.startsWith("isAdmin:") && sessionStorage.getItem(k) === "1") {
-          setSessionIsAdmin(true);
-          return;
-        }
-      }
-    } catch {}
-  }, [authIsAdmin]);
-  const isAdmin = authIsAdmin || sessionIsAdmin;
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prepTimeLeft, setPrepTimeLeft] = useState(0);
@@ -518,7 +501,7 @@ const SpeakingExamEngine = ({
     return currentIndex > 0 || onAdminPrevious ? handleAdminBack : undefined;
   })();
 
-  const adminControls = isAdmin && phase !== "grading" && phase !== "done" ? (
+  const adminControls = phase !== "grading" && phase !== "done" ? (
     <AdminExamControls
       position="top-right"
       onSkip={handleAdminSkip}
