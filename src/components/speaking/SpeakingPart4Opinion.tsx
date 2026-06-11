@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import type { SpeakingPart4Data } from "@/data/speakingQuestions";
 import AudioRecorder from "@/components/speaking/AudioRecorder";
 import PrepTimer from "@/components/speaking/PrepTimer";
 import { useAudioRecording } from "@/hooks/useAudioRecording";
-import { resolveImageUrl } from "@/lib/imageUrl";
+import SignedImage from "@/components/exam/SignedImage";
 
 interface Props {
   data: SpeakingPart4Data;
@@ -14,13 +14,6 @@ interface Props {
 
 const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) => {
   const [phase, setPhase] = useState<"prep" | "speak">(data.prepTime > 0 ? "prep" : "speak");
-  const [resolvedImageUrl, setResolvedImageUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (data.imageUrl) {
-      resolveImageUrl(data.imageUrl).then(setResolvedImageUrl);
-    }
-  }, [data.imageUrl]);
 
   const { isRecording, audioUrl, timeLeft, micError, isRequestingMic, startRecording, stopRecording } = useAudioRecording({
     maxDuration: data.speakTime,
@@ -39,9 +32,10 @@ const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) =
 
       {data.imageUrl && (
         <div className="rounded-xl overflow-hidden border border-border mb-6 max-w-md">
-          <img src={resolvedImageUrl || data.imageUrl} alt="Part 4 topic" className="w-full h-64 object-cover" />
+          <SignedImage src={data.imageUrl} alt="Part 4 topic" className="w-full h-64 object-cover" />
         </div>
       )}
+
 
       <ul className="space-y-2 mb-4">
         {data.questions.map((q, i) => (
