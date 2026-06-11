@@ -27,7 +27,7 @@ interface Props {
 const ReadingPart4Long = ({
   question, answers, currentIndex, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit,
-  isFirst, isLast, sections,
+  isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
 }: Props) => {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
