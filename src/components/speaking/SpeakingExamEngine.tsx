@@ -402,41 +402,44 @@ const SpeakingExamEngine = ({
     }
   };
 
+  // Skip → advance to the NEXT question (page) within the current part.
+  // If already on the last question, finish the part (calls onComplete normally).
   const handleAdminSkip = () => {
-    if (finishedRef.current) return;
-    finishedRef.current = true;
-    advancingRef.current = true;
     stopEverything();
-    // Skip without uploading any recording for this part. Persist empty per-question rows
-    // so the part still appears in history with audio_url = null.
-    (async () => {
-      try {
-        if (sourceQuestionIds && sourceQuestionIds.length > 0) {
-          const perQuestion = sourceQuestionIds.map((qid) => ({
-            exam_question_id: qid,
-            user_answer: null,
-            is_correct: false,
-          }));
-          await saveExamResult({
-            examSetId: examSetId ?? null,
-            skill: "speaking",
-            correct: 0,
-            total: sourceQuestionIds.length,
-            perQuestion,
-            fullTestSessionId: fullTestSessionId ?? null,
-            fullTestId: fullTestId ?? null,
-          });
-        }
-      } catch {}
-      onComplete?.();
-      setPhase("done");
-    })();
+    const total = getTotalQuestions();
+    const idx = currentIndexRef.current;
+    if (idx < total - 1) {
+      const nextIdx = idx + 1;
+      currentIndexRef.current = nextIdx;
+      advancingRef.current = false;
+      finishedRef.current = false;
+      setCurrentIndex(nextIdx);
+      setCanFinish(false);
+      setIsTransitioning(false);
+      setTimeout(() => { startQuestionFlow(); }, 100);
+    } else {
+      // Last question → finish part normally with whatever was recorded
+      handleFinish();
+    }
   };
 
+  // Back → return to the PREVIOUS question (page) within the current part.
+  // If already on the first question, jump to the previous part (admin only, full test).
   const handleAdminBack = () => {
-    if (!onAdminPrevious) return;
     stopEverything();
-    onAdminPrevious();
+    const idx = currentIndexRef.current;
+    if (idx > 0) {
+      const prevIdx = idx - 1;
+      currentIndexRef.current = prevIdx;
+      advancingRef.current = false;
+      finishedRef.current = false;
+      setCurrentIndex(prevIdx);
+      setCanFinish(false);
+      setIsTransitioning(false);
+      setTimeout(() => { startQuestionFlow(); }, 100);
+    } else if (onAdminPrevious) {
+      onAdminPrevious();
+    }
   };
 
   const adminControls = isAdmin ? (
@@ -445,11 +448,11 @@ const SpeakingExamEngine = ({
         Admin
       </span>
       <div className="flex items-center gap-1.5">
-        {onAdminPrevious && (
+        {(currentIndex > 0 || onAdminPrevious) && (
           <button
             onClick={handleAdminBack}
             className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
-            title="Quay lại part trước (admin)"
+            title="Quay lại câu trước (admin)"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             Quay lại
@@ -458,7 +461,7 @@ const SpeakingExamEngine = ({
         <button
           onClick={handleAdminSkip}
           className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/50 bg-white/15 text-white hover:bg-white/30 backdrop-blur-sm transition-colors shadow-sm"
-          title="Bỏ qua phase / part hiện tại (admin)"
+          title="Bỏ qua sang câu tiếp theo (admin)"
         >
           <SkipForward className="w-3.5 h-3.5" />
           Bỏ qua
