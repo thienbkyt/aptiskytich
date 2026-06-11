@@ -68,8 +68,18 @@ const ListeningExamEngine = ({
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
+  const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
+
+  const toggleBookmark = useCallback((qi: number) => {
+    setBookmarked((prev) => {
+      const next = new Set(prev);
+      if (next.has(qi)) next.delete(qi);
+      else next.add(qi);
+      return next;
+    });
+  }, []);
 
   const totalQuestions =
     partType === "part1" ? (part1Questions?.length || 0) :
