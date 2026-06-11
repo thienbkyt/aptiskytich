@@ -188,6 +188,7 @@ const ReadingPart4Long = ({
         isLast={isLast}
         submitLabel="Submit"
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );
