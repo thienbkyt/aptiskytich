@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -19,13 +18,15 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const ReadingPart3Opinion = ({
   question, answers, timeLeft, totalTime, submitted, currentStatement,
   onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
-  const [bookmarked, setBookmarked] = useState(false);
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
