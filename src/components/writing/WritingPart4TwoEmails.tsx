@@ -1,3 +1,4 @@
+import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import RichTextEditor from "@/components/writing/RichTextEditor";
@@ -15,12 +16,15 @@ interface Props {
   onSubmit: () => void;
   onPrevious?: () => void;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const WritingPart4TwoEmails = ({
   data, informalAnswer, formalAnswer,
   onInformalChange, onFormalChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">

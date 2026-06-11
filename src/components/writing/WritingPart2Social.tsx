@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from "react";
-import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
+import {Bookmark, Bold, Italic, Underline, Strikethrough} from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { WritingPart2Data } from "@/data/writingQuestions";
@@ -14,6 +14,8 @@ interface Props {
   onSubmit: () => void;
   onPrevious?: () => void;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const toolbarButtons = [
@@ -26,6 +28,7 @@ const toolbarButtons = [
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
