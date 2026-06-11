@@ -272,6 +272,7 @@ const ReadingExamEngine = ({
     isFirst: false,
     isLast: false,
     sections,
+    onSubmitTest: !submitted ? handleSubmit : undefined,
   };
 
   const isSinglePagePart = partType === "part1" || partType === "part3" || partType === "part4";
