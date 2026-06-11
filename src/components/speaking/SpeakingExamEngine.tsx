@@ -145,13 +145,7 @@ const SpeakingExamEngine = ({
     return "";
   };
 
-  // Resolve images
-  useEffect(() => {
-    if (part2Data?.imageUrl) resolveImageUrl(part2Data.imageUrl).then(setResolvedImg1);
-    if (part3Data?.imageUrl1) resolveImageUrl(part3Data.imageUrl1).then(setResolvedImg1);
-    if (part3Data?.imageUrl2) resolveImageUrl(part3Data.imageUrl2).then(setResolvedImg2);
-    if (part4Data?.imageUrl) resolveImageUrl(part4Data.imageUrl).then(setResolvedImg1);
-  }, [part2Data, part3Data, part4Data]);
+  // Image resolution is handled by <SignedImage /> directly.
 
   // Initialize recordings array
   useEffect(() => {
