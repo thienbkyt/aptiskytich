@@ -29,7 +29,7 @@ const toolbarButtons = [
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark,
+  isBookmarked = false, onToggleBookmark, onSubmitTest,
 }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
