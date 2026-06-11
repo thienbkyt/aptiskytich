@@ -409,6 +409,8 @@ const ReadingExamEngine = ({
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -427,6 +429,10 @@ const ReadingExamEngine = ({
             onSubmit={!submitted ? handleSubmit : undefined}
             onPrevious={goToPrevPhase}
             sections={sections}
+            currentSection={currentIndex}
+            onSectionChange={(i) => setCurrentIndex(i)}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -449,6 +455,8 @@ const ReadingExamEngine = ({
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -471,6 +479,8 @@ const ReadingExamEngine = ({
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
       </div>
