@@ -221,6 +221,7 @@ const ListeningExamEngine = ({
     setCurrentIndex(0);
     setTimeLeft(timeLimit);
     setSeenQuestions(new Set());
+    setBookmarked(new Set());
     setAnswers(new Array(totalQuestions).fill(null));
   };
 
