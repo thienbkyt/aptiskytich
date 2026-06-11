@@ -9,6 +9,7 @@ export interface QuestionItem {
   label: string;
   seen: boolean;
   attempted: boolean;
+  bookmarked?: boolean;
   isCurrent?: boolean;
   onClick?: () => void;
 }
@@ -29,12 +30,13 @@ interface BottomNavBarProps {
   isLast?: boolean;
   submitLabel?: string;
   sections?: QuestionSection[];
+  /** Optional override; otherwise auto-computed from sections[].questions[].bookmarked */
   bookmarkedCount?: number;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
-  sections = [], bookmarkedCount = 0,
+  sections = [], bookmarkedCount,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -43,6 +45,22 @@ const BottomNavBar = ({
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const [magnification, setMagnification] = useState(100);
   const { resolvedTheme, setTheme } = useTheme();
+
+  const autoBookmarkedCount = useMemo(
+    () => sections.reduce((acc, sec) => acc + (sec.questions?.filter((q) => q.bookmarked).length || 0), 0),
+    [sections],
+  );
+  const effectiveBookmarkedCount = bookmarkedCount ?? autoBookmarkedCount;
+
+  const bookmarkedFlat = useMemo(
+    () =>
+      sections.flatMap((sec) =>
+        (sec.questions || [])
+          .map((q, qi) => ({ q, qi, sectionTitle: sec.title }))
+          .filter((x) => x.q.bookmarked),
+      ),
+    [sections],
+  );
 
   const isDarkMode = resolvedTheme === "dark";
 
