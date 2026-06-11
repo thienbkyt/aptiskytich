@@ -33,11 +33,18 @@ interface BottomNavBarProps {
   sections?: QuestionSection[];
   /** Optional override; otherwise auto-computed from sections[].questions[].bookmarked */
   bookmarkedCount?: number;
+  /** True while showing instructions/intro screens — Exit button opens "Proceed to next section?" dialog */
+  isInstructionsPhase?: boolean;
+  /** Called from "Proceed" in the instructions dialog */
+  onProceedFromInstructions?: () => void;
+  /** Called when user confirms "Submit test" in the Exit submission flow */
+  onSubmitTest?: () => void;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
   sections = [], bookmarkedCount,
+  isInstructionsPhase = false, onProceedFromInstructions, onSubmitTest,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -45,6 +52,10 @@ const BottomNavBar = ({
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const [magnification, setMagnification] = useState(100);
+  const [showProceedDialog, setShowProceedDialog] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewExpanded, setReviewExpanded] = useState<Set<number>>(new Set());
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
 
   const autoBookmarkedCount = useMemo(
