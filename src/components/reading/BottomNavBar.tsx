@@ -480,7 +480,11 @@ const BottomNavBar = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button aria-label="Thoát bài thi" className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
+            <button
+              onClick={handleExitClick}
+              aria-label="Thoát bài thi"
+              className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+            >
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
