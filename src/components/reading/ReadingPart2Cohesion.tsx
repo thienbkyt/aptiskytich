@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, GripVertical } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -17,14 +17,25 @@ interface Props {
   onPrevious?: () => void;
   onExitToSections?: () => void;
   sections: any[];
+  currentSection?: number;
+  onSectionChange?: (idx: number) => void;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const ReadingPart2Cohesion = ({
   question, placements, onPlacementsChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
+  currentSection: currentSectionProp, onSectionChange,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
-  const [bookmarked, setBookmarked] = useState(false);
-  const [currentSection, setCurrentSection] = useState(0);
+  const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
+  const currentSection = currentSectionProp ?? currentSectionLocal;
+  const setCurrentSection = (updater: number | ((p: number) => number)) => {
+    const next = typeof updater === "function" ? (updater as (p: number) => number)(currentSection) : updater;
+    if (onSectionChange) onSectionChange(next);
+    else setCurrentSectionLocal(next);
+  };
   const [dragging, setDragging] = useState<string | null>(null);
 
   const totalSections = question.sections.length;
@@ -103,12 +114,12 @@ const ReadingPart2Cohesion = ({
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setBookmarked(!bookmarked)}
+            onClick={onToggleBookmark}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
-              bookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
+              isBookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/30"
             }`}
           >
-            <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-primary" : ""}`} />
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
           <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />

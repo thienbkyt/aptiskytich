@@ -1,5 +1,4 @@
-import { useState, Fragment } from "react";
-import { motion } from "framer-motion";
+import { Fragment } from "react";
 import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -18,14 +17,16 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const ReadingPart1Sentence = ({
   question, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
-  const [bookmarked, setBookmarked] = useState(false);
 
   const renderPassage = () => {
     const parts = question.passage.split(/\{(\d+)\}/g);
@@ -43,6 +44,7 @@ const ReadingPart1Sentence = ({
             return (
               <select
                 key={`gap-${gapIndex}`}
+                data-question-index={gapIndex}
                 value={selectedValue !== null && selectedValue !== undefined ? selectedValue : ""}
                 onChange={(e) => onAnswer(gapIndex, parseInt(e.target.value))}
                 disabled={submitted}
@@ -82,12 +84,12 @@ const ReadingPart1Sentence = ({
         </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setBookmarked(!bookmarked)}
+            onClick={onToggleBookmark}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm transition-colors ${
-              bookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:border-primary/30"
+              isBookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:border-primary/30"
             }`}
           >
-            <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-primary" : ""}`} />
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
           <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />

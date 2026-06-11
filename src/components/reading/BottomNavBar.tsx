@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus } from "lucide-react";
+import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus, Bookmark } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 import britishCouncilLogo from "@/assets/british-council-aptis-logo.webp";
@@ -9,6 +9,7 @@ export interface QuestionItem {
   label: string;
   seen: boolean;
   attempted: boolean;
+  bookmarked?: boolean;
   isCurrent?: boolean;
   onClick?: () => void;
 }
@@ -29,12 +30,13 @@ interface BottomNavBarProps {
   isLast?: boolean;
   submitLabel?: string;
   sections?: QuestionSection[];
+  /** Optional override; otherwise auto-computed from sections[].questions[].bookmarked */
   bookmarkedCount?: number;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
-  sections = [], bookmarkedCount = 0,
+  sections = [], bookmarkedCount,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -43,6 +45,22 @@ const BottomNavBar = ({
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const [magnification, setMagnification] = useState(100);
   const { resolvedTheme, setTheme } = useTheme();
+
+  const autoBookmarkedCount = useMemo(
+    () => sections.reduce((acc, sec) => acc + (sec.questions?.filter((q) => q.bookmarked).length || 0), 0),
+    [sections],
+  );
+  const effectiveBookmarkedCount = bookmarkedCount ?? autoBookmarkedCount;
+
+  const bookmarkedFlat = useMemo(
+    () =>
+      sections.flatMap((sec) =>
+        (sec.questions || [])
+          .map((q, qi) => ({ q, qi, sectionTitle: sec.title }))
+          .filter((x) => x.q.bookmarked),
+      ),
+    [sections],
+  );
 
   const isDarkMode = resolvedTheme === "dark";
 
@@ -119,7 +137,7 @@ const BottomNavBar = ({
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  Bookmarked ({bookmarkedCount})
+                  Bookmarked ({effectiveBookmarkedCount})
                 </button>
               </div>
 
@@ -190,7 +208,12 @@ const BottomNavBar = ({
                                         : "border-border hover:border-primary/30 hover:bg-muted/50"
                                     }`}
                                   >
-                                    <p className="text-sm font-bold text-foreground">{q.label}</p>
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-sm font-bold text-foreground">{q.label}</p>
+                                      {q.bookmarked && (
+                                        <Bookmark className="w-3.5 h-3.5 text-primary fill-primary" />
+                                      )}
+                                    </div>
                                     <div className="flex items-center justify-between mt-0.5">
                                       <span className="text-xs text-muted-foreground">
                                         {q.seen ? "Seen" : "Unseen"}
@@ -211,15 +234,44 @@ const BottomNavBar = ({
                     <p className="text-sm text-muted-foreground py-4 text-center">No sections available</p>
                   )
                 ) : (
-                  <p className="text-sm text-muted-foreground py-4 text-center">
-                    {bookmarkedCount === 0 ? "No bookmarked questions" : `${bookmarkedCount} bookmarked`}
-                  </p>
+                  bookmarkedFlat.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No bookmarked questions</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {bookmarkedFlat.map(({ q, qi, sectionTitle }, idx) => (
+                        <button
+                          key={`${sectionTitle}-${qi}-${idx}`}
+                          onClick={() => {
+                            q.onClick?.();
+                            setShowQuestionList(false);
+                          }}
+                          className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                            q.isCurrent
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/30 hover:bg-muted/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-bold text-foreground">{q.label}</p>
+                            <Bookmark className="w-3.5 h-3.5 text-primary fill-primary" />
+                          </div>
+                          <div className="flex items-center justify-between mt-0.5">
+                            <span className="text-xs text-muted-foreground">{sectionTitle}</span>
+                            <span className={`text-xs font-medium ${q.attempted ? "text-primary" : "text-muted-foreground"}`}>
+                              {q.attempted ? "Attempted" : "Not Attempted"}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )
                 )}
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
 
       {/* Information Panel */}
       <AnimatePresence>

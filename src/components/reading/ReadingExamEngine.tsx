@@ -66,6 +66,7 @@ const ReadingExamEngine = ({
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
+  const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
 
@@ -83,23 +84,71 @@ const ReadingExamEngine = ({
     reviewMode && initialAnswers?.p4 ? initialAnswers.p4 : new Array(p4Total).fill(null)
   );
 
-  const part2TotalSentences = (part2Question?.sections || []).reduce((s, sec) => s + sec.sentences.length, 0);
+  const part2SectionCount = part2Question?.sections.length || 0;
 
+  // Panel "questions": for part2 each section = 1 question; others = per item.
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
-    : partType === "part2" ? part2TotalSentences
+    : partType === "part2" ? part2SectionCount
     : partType === "part3" ? (part3Question?.statements.length || 0)
     : p4Total;
 
-  const currentAnswers = partType === "part1" ? p1Answers
-    : partType === "part2" ? p1Answers /* unused for part2 nav */
-    : partType === "part3" ? p3Answers
-    : p4Answers;
+  const toggleBookmark = useCallback((qi: number) => {
+    setBookmarked((prev) => {
+      const next = new Set(prev);
+      if (next.has(qi)) next.delete(qi);
+      else next.add(qi);
+      return next;
+    });
+  }, []);
 
-  useEffect(() => {
-    if (phase === "practice") {
-      setSeenQuestions((prev) => new Set(prev).add(currentIndex));
+  // True only when there is an actual user-supplied value (not null/undefined/empty).
+  const isAnswered = (qi: number): boolean => {
+    if (partType === "part1") {
+      const v = p1Answers[qi];
+      return v !== null && v !== undefined;
     }
-  }, [phase, currentIndex]);
+    if (partType === "part3") {
+      const v = p3Answers[qi];
+      return v !== null && v !== undefined;
+    }
+    if (partType === "part4") {
+      const v = p4Answers[qi];
+      return v !== null && v !== undefined;
+    }
+    if (partType === "part2") {
+      const placements = p2Placements[qi];
+      if (!placements) return false;
+      return Object.values(placements).some((t) => t != null && t !== "");
+    }
+    return false;
+  };
+
+  // Mark questions as "Seen" whenever the user is viewing the practice screen.
+  // Single-page parts (1/3/4) show every question at once, so mark all as seen.
+  // Part 2 paginates by section: only the section currently on screen is seen.
+  useEffect(() => {
+    if (phase !== "practice") return;
+    setSeenQuestions((prev) => {
+      const next = new Set(prev);
+      if (partType === "part2") {
+        next.add(currentIndex);
+      } else {
+        for (let i = 0; i < totalQuestions; i++) next.add(i);
+      }
+      return next;
+    });
+  }, [phase, currentIndex, partType, totalQuestions]);
+
+  // When user jumps to a question via the panel, scroll its answer element into view.
+  useEffect(() => {
+    if (phase !== "practice") return;
+    if (partType === "part2") return; // part2 changes section, scroll naturally
+    const id = window.requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-question-index="${currentIndex}"]`) as HTMLElement | null;
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [phase, currentIndex, partType]);
 
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
@@ -171,13 +220,12 @@ const ReadingExamEngine = ({
     setCurrentIndex(0);
     setTimeLeft(timeLimit);
     setSeenQuestions(new Set());
+    setBookmarked(new Set());
     setP1Answers(new Array(part1Question?.gaps.length || 0).fill(null));
     setP2Placements((part2Question?.sections || []).map(() => ({})));
     setP3Answers(new Array(part3Question?.statements.length || 0).fill(null));
     setP4Answers(new Array(p4Total).fill(null));
   };
-
-  const isAnswered = (qi: number) => currentAnswers[qi] !== null;
 
   const partLabel = partType === "part1" ? "Part 1 – Gap Fill"
     : partType === "part2" ? "Part 2 – Text Cohesion"
@@ -199,6 +247,7 @@ const ReadingExamEngine = ({
         label: String(qi + 1).padStart(2, "0"),
         seen: seenQuestions.has(qi),
         attempted: isAnswered(qi),
+        bookmarked: bookmarked.has(qi),
         isCurrent: phase === "practice" && currentIndex === qi,
         onClick: () => { setPhase("practice"); setCurrentIndex(qi); },
       })),
@@ -360,6 +409,8 @@ const ReadingExamEngine = ({
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -378,6 +429,10 @@ const ReadingExamEngine = ({
             onSubmit={!submitted ? handleSubmit : undefined}
             onPrevious={goToPrevPhase}
             sections={sections}
+            currentSection={currentIndex}
+            onSectionChange={(i) => setCurrentIndex(i)}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -400,6 +455,8 @@ const ReadingExamEngine = ({
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -422,6 +479,8 @@ const ReadingExamEngine = ({
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
       </div>

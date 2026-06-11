@@ -213,9 +213,11 @@ const GrammarExamEngine = ({
   const isAnswered = (qi: number) => {
     const q = questions[qi];
     if (q?.question_type === "fill-in-blank") {
-      return fillAnswers[qi]?.trim().length > 0;
+      const v = fillAnswers[qi];
+      return typeof v === "string" && v.trim().length > 0;
     }
-    return answers[qi] !== null;
+    const v = answers[qi];
+    return v !== null && v !== undefined;
   };
 
   const isCorrect = (qi: number) => {
@@ -245,6 +247,7 @@ const GrammarExamEngine = ({
         label: String(qi + 1).padStart(2, "0"),
         seen: seenQuestions.has(qi),
         attempted: isAnswered(qi),
+        bookmarked: bookmarked.has(qi),
         isCurrent: phase === "practice" && currentIndex === qi,
         onClick: () => {
           setPhase("practice");
