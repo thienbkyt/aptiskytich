@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus, Bookmark } from "lucide-react";
+import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 import britishCouncilLogo from "@/assets/british-council-aptis-logo.webp";
@@ -32,11 +33,18 @@ interface BottomNavBarProps {
   sections?: QuestionSection[];
   /** Optional override; otherwise auto-computed from sections[].questions[].bookmarked */
   bookmarkedCount?: number;
+  /** True while showing instructions/intro screens — Exit button opens "Proceed to next section?" dialog */
+  isInstructionsPhase?: boolean;
+  /** Called from "Proceed" in the instructions dialog */
+  onProceedFromInstructions?: () => void;
+  /** Called when user confirms "Submit test" in the Exit submission flow */
+  onSubmitTest?: () => void;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
   sections = [], bookmarkedCount,
+  isInstructionsPhase = false, onProceedFromInstructions, onSubmitTest,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -44,6 +52,10 @@ const BottomNavBar = ({
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const [magnification, setMagnification] = useState(100);
+  const [showProceedDialog, setShowProceedDialog] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewExpanded, setReviewExpanded] = useState<Set<number>>(new Set());
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
 
   const autoBookmarkedCount = useMemo(
@@ -67,6 +79,52 @@ const BottomNavBar = ({
       ),
     [sections],
   );
+
+  // Sections containing only the unanswered questions (preserves original section indices)
+  const unansweredBySection = useMemo(
+    () =>
+      sections
+        .map((sec, sIdx) => ({
+          sIdx,
+          title: sec.title,
+          questions: (sec.questions || []).filter((q) => !q.attempted),
+        }))
+        .filter((s) => s.questions.length > 0),
+    [sections],
+  );
+  const totalUnanswered = useMemo(
+    () => unansweredBySection.reduce((a, s) => a + s.questions.length, 0),
+    [unansweredBySection],
+  );
+
+  const toggleReviewSection = (index: number) => {
+    setReviewExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const handleExitClick = () => {
+    if (isInstructionsPhase) {
+      setShowProceedDialog(true);
+      return;
+    }
+    if (totalUnanswered === 0) {
+      setShowSubmitConfirm(true);
+    } else {
+      // Default-expand all sections that have unanswered questions
+      setReviewExpanded(new Set(unansweredBySection.map((s) => s.sIdx)));
+      setShowReviewModal(true);
+    }
+  };
+
+  const jumpToFirstUnanswered = () => {
+    const first = unansweredBySection[0]?.questions[0];
+    setShowReviewModal(false);
+    first?.onClick?.();
+  };
 
   const isDarkMode = resolvedTheme === "dark";
 
@@ -422,7 +480,11 @@ const BottomNavBar = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button aria-label="Thoát bài thi" className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors">
+            <button
+              onClick={handleExitClick}
+              aria-label="Thoát bài thi"
+              className="exam-nav-prev-next w-9 h-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted transition-colors"
+            >
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
@@ -442,6 +504,125 @@ const BottomNavBar = ({
           </div>
         </div>
       </div>
+
+      {/* Proceed-to-next-section dialog (instructions phase) */}
+      {showProceedDialog && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowProceedDialog(false); }}
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-3">Proceed to the next section?</h2>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              The current section is timed and will be locked if you proceed. Please ensure you have reviewed each of your responses.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowProceedDialog(false)}
+                className="px-6 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowProceedDialog(false); onProceedFromInstructions?.(); }}
+                className="px-6 py-2.5 rounded-lg bg-[#24085a] hover:bg-[#1a0640] text-white text-sm font-semibold transition-colors"
+              >
+                Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Question Review modal (unanswered questions) */}
+      {showReviewModal && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowReviewModal(false); }}
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col">
+            <div className="p-6 pb-4">
+              <h2 className="text-lg font-bold text-gray-900">Question Review</h2>
+              <p className="text-sm text-gray-500 mt-1">Please review the following questions</p>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 space-y-3">
+              {unansweredBySection.map(({ sIdx, title, questions }) => {
+                const skill = title.split(" ")[2] || title;
+                const expanded = reviewExpanded.has(sIdx);
+                return (
+                  <div key={sIdx} className="border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4">
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{skill}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{questions.length} Questions</p>
+                      </div>
+                      <button
+                        onClick={() => toggleReviewSection(sIdx)}
+                        className="w-7 h-7 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                        aria-label={expanded ? "Thu gọn" : "Mở rộng"}
+                      >
+                        {expanded ? <Minus className="w-3.5 h-3.5 text-gray-700" /> : <Plus className="w-3.5 h-3.5 text-[#24085a]" />}
+                      </button>
+                    </div>
+                    <AnimatePresence>
+                      {expanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-3 pb-3 space-y-2">
+                            {questions.map((q, qi) => (
+                              <button
+                                key={qi}
+                                onClick={() => { setShowReviewModal(false); q.onClick?.(); }}
+                                className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-[#24085a]/40 hover:bg-gray-50 transition-colors"
+                              >
+                                <p className="text-sm font-bold text-gray-900">{q.label}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                  <span className="text-xs text-gray-500">{q.seen ? "Seen" : "Unseen"}</span>
+                                  <span className="text-xs text-gray-500">Not Attempted</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="p-6 pt-4 space-y-2">
+              <button
+                type="button"
+                onClick={jumpToFirstUnanswered}
+                className="w-full px-6 py-3 rounded-lg bg-[#24085a] hover:bg-[#1a0640] text-white text-sm font-semibold transition-colors"
+              >
+                Review Questions
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowReviewModal(false); setShowSubmitConfirm(true); }}
+                className="w-full px-6 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submit confirmation */}
+      {showSubmitConfirm && (
+        <ExamFinishScreen
+          onSubmit={() => { setShowSubmitConfirm(false); onSubmitTest?.(); }}
+          onCancel={() => setShowSubmitConfirm(false)}
+        />
+      )}
     </>
   );
 };

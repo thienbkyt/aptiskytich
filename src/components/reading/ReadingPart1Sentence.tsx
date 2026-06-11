@@ -17,6 +17,7 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
 }
@@ -24,7 +25,7 @@ interface Props {
 const ReadingPart1Sentence = ({
   question, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit,
-  isFirst, isLast, sections,
+  isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
 }: Props) => {
 
@@ -109,6 +110,7 @@ const ReadingPart1Sentence = ({
         isLast={isLast}
         submitLabel="Submit"
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );

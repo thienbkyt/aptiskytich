@@ -18,13 +18,14 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
 }
 
 const ReadingPart3Opinion = ({
   question, answers, timeLeft, totalTime, submitted, currentStatement,
-  onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections,
+  onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
 }: Props) => {
 
@@ -138,6 +139,7 @@ const ReadingPart3Opinion = ({
         isLast={isLast}
         submitLabel="Submit"
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );

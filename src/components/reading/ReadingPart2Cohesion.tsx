@@ -17,6 +17,7 @@ interface Props {
   onPrevious?: () => void;
   onExitToSections?: () => void;
   sections: any[];
+  onSubmitTest?: () => void;
   currentSection?: number;
   onSectionChange?: (idx: number) => void;
   isBookmarked?: boolean;
@@ -25,7 +26,7 @@ interface Props {
 
 const ReadingPart2Cohesion = ({
   question, placements, onPlacementsChange,
-  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
+  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections, onSubmitTest,
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
 }: Props) => {
@@ -239,6 +240,7 @@ const ReadingPart2Cohesion = ({
         isFirst={false}
         isLast={false}
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );

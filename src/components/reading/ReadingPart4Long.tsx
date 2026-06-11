@@ -19,6 +19,7 @@ interface Props {
   isFirst: boolean;
   isLast: boolean;
   sections: any[];
+  onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
 }
@@ -26,7 +27,7 @@ interface Props {
 const ReadingPart4Long = ({
   question, answers, currentIndex, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit,
-  isFirst, isLast, sections,
+  isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
 }: Props) => {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
@@ -187,6 +188,7 @@ const ReadingPart4Long = ({
         isLast={isLast}
         submitLabel="Submit"
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );
