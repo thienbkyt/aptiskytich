@@ -184,7 +184,7 @@ const WritingExamEngine = ({
     const perQuestion = buildPerQuestion();
 
     // Full-test mode (parent passes isLastPart): skip grading/results entirely
-    if (isLastPart !== undefined) {
+    if (isLastPart !== undefined && !showResultsOnSubmit) {
       onComplete?.(perQuestion);
       return;
     }
