@@ -123,11 +123,32 @@ const ReadingExamEngine = ({
     return false;
   };
 
+  // Mark questions as "Seen" whenever the user is viewing the practice screen.
+  // Single-page parts (1/3/4) show every question at once, so mark all as seen.
+  // Part 2 paginates by section: only the section currently on screen is seen.
   useEffect(() => {
-    if (phase === "practice") {
-      setSeenQuestions((prev) => new Set(prev).add(currentIndex));
-    }
-  }, [phase, currentIndex]);
+    if (phase !== "practice") return;
+    setSeenQuestions((prev) => {
+      const next = new Set(prev);
+      if (partType === "part2") {
+        next.add(currentIndex);
+      } else {
+        for (let i = 0; i < totalQuestions; i++) next.add(i);
+      }
+      return next;
+    });
+  }, [phase, currentIndex, partType, totalQuestions]);
+
+  // When user jumps to a question via the panel, scroll its answer element into view.
+  useEffect(() => {
+    if (phase !== "practice") return;
+    if (partType === "part2") return; // part2 changes section, scroll naturally
+    const id = window.requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-question-index="${currentIndex}"]`) as HTMLElement | null;
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [phase, currentIndex, partType]);
 
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
