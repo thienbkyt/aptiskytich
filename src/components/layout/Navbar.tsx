@@ -299,6 +299,13 @@ const Navbar = () => {
                   Dashboard
                 </Button>
               </Link>
+              <button
+                onClick={() => setProfileOpen(true)}
+                aria-label="Thông tin tài khoản"
+                className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity"
+              >
+                {(user.email?.[0] ?? "U").toUpperCase()}
+              </button>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-2.5" onClick={signOut}>
                 <LogOut className="w-3.5 h-3.5" />
                 Đăng xuất
