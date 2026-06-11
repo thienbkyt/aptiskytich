@@ -226,7 +226,7 @@ const ReadingExamEngine = ({
   };
 
   const isSinglePagePart = partType === "part1" || partType === "part3" || partType === "part4";
-  const adminControls = !submitted && !reviewMode && partType !== "part2" ? (
+  const adminControls = !submitted && !reviewMode && (partType !== "part2" || phase !== "practice") ? (
     <AdminExamControls
       label={
         phase === "instructions"
