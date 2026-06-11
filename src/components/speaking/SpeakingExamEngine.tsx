@@ -112,6 +112,7 @@ const SpeakingExamEngine = ({
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
@@ -176,9 +177,14 @@ const SpeakingExamEngine = ({
 
   // Cleanup on unmount
   useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
       if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
       window.speechSynthesis?.cancel();
     };
@@ -320,7 +326,9 @@ const SpeakingExamEngine = ({
     if (idx < total - 1) {
       const nextIdx = idx + 1;
       currentIndexRef.current = nextIdx;
-      setTimeout(() => {
+      const token = flowTokenRef.current;
+      transitionTimeoutRef.current = setTimeout(() => {
+        if (token !== flowTokenRef.current) return;
         setCurrentIndex(nextIdx);
         setCanFinish(false);
         setIsTransitioning(false);
@@ -391,6 +399,7 @@ const SpeakingExamEngine = ({
     try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+    if (transitionTimeoutRef.current) { clearTimeout(transitionTimeoutRef.current); transitionTimeoutRef.current = null; }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       try { mediaRecorderRef.current.stop(); } catch { /* noop */ }
     }
