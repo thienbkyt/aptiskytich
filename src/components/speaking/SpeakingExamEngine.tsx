@@ -372,6 +372,86 @@ const SpeakingExamEngine = ({
     onExit();
   };
 
+  // ===== Admin-only controls: skip current part / go to previous part =====
+  const stopEverything = () => {
+    try { stopTTS(); } catch {}
+    try { window.speechSynthesis?.cancel(); } catch {}
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      try { mediaRecorderRef.current.stop(); } catch {}
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const handleAdminSkip = () => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    advancingRef.current = true;
+    stopEverything();
+    // Skip without uploading any recording for this part. Persist empty per-question rows
+    // so the part still appears in history with audio_url = null.
+    (async () => {
+      try {
+        if (sourceQuestionIds && sourceQuestionIds.length > 0) {
+          const perQuestion = sourceQuestionIds.map((qid) => ({
+            exam_question_id: qid,
+            user_answer: null,
+            is_correct: false,
+          }));
+          await saveExamResult({
+            examSetId: examSetId ?? null,
+            skill: "speaking",
+            correct: 0,
+            total: sourceQuestionIds.length,
+            perQuestion,
+            fullTestSessionId: fullTestSessionId ?? null,
+            fullTestId: fullTestId ?? null,
+          });
+        }
+      } catch {}
+      onComplete?.();
+      setPhase("done");
+    })();
+  };
+
+  const handleAdminBack = () => {
+    if (!onAdminPrevious) return;
+    stopEverything();
+    onAdminPrevious();
+  };
+
+  const adminControls = isAdmin ? (
+    <div className="fixed top-3 right-3 z-[60] flex flex-col items-end gap-1 pointer-events-auto">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70 bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded">
+        Admin
+      </span>
+      <div className="flex items-center gap-1.5">
+        {onAdminPrevious && (
+          <button
+            onClick={handleAdminBack}
+            className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-white/40 bg-white/10 text-white/90 hover:bg-white/20 backdrop-blur-sm transition-colors"
+            title="Quay lại part trước (admin)"
+          >
+            <ChevronLeft className="w-3 h-3" />
+            Quay lại
+          </button>
+        )}
+        <button
+          onClick={handleAdminSkip}
+          className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md border border-white/40 bg-white/10 text-white/90 hover:bg-white/20 backdrop-blur-sm transition-colors"
+          title="Bỏ qua phase / part hiện tại (admin)"
+        >
+          <SkipForward className="w-3 h-3" />
+          Bỏ qua
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   // ============ RENDER ============
   const exitDialog = showExitConfirm && (
     <ExamFinishScreen
