@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus, Bookmark } from "lucide-react";
+import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 import britishCouncilLogo from "@/assets/british-council-aptis-logo.webp";
