@@ -8,8 +8,9 @@ import SpeakingMicCheck from "./SpeakingMicCheck";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, SkipForward, ChevronLeft } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
+import { useAuth } from "@/hooks/useAuth";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
