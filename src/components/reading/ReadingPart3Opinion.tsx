@@ -70,7 +70,7 @@ const ReadingPart3Opinion = ({
           const isWrong = submitted && selected !== null && selected !== stmt.correctPerson;
 
           return (
-            <div key={si} className="flex items-center gap-3 flex-wrap">
+            <div key={si} data-question-index={si} className="flex items-center gap-3 flex-wrap">
               <span className="text-sm font-medium text-foreground min-w-0 flex-1">
                 <span className="font-bold mr-1">{si + 1}.</span>
                 {stmt.text}
