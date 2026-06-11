@@ -137,17 +137,6 @@ const BottomNavBar = ({
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  Bookmarked ({bookmarkedCount})
-                </button>
-              </div>
-
-              {/* Sections */}
-              <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2">
-                {listFilter === "all" ? (
-                  sections.length > 0 ? (
-                    sections.map((section, i) => (
-                      <div key={i}>
-                        {/* Section header */}
                   Bookmarked ({effectiveBookmarkedCount})
                 </button>
               </div>
