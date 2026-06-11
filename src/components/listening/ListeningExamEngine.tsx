@@ -384,6 +384,8 @@ const ListeningExamEngine = ({
             submitted={submitted}
             onAnswer={handleAnswer}
             {...navProps}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -397,6 +399,8 @@ const ListeningExamEngine = ({
             submitted={submitted}
             onAnswer={handleAnswer}
             {...navProps}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -410,6 +414,8 @@ const ListeningExamEngine = ({
             submitted={submitted}
             onAnswer={handleAnswer}
             {...navProps}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
 
@@ -423,6 +429,8 @@ const ListeningExamEngine = ({
             submitted={submitted}
             onAnswer={handleAnswer}
             {...navProps}
+            isBookmarked={bookmarked.has(currentIndex)}
+            onToggleBookmark={() => toggleBookmark(currentIndex)}
           />
         )}
       </div>
