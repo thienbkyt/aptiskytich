@@ -29,6 +29,7 @@ interface Props {
   sections?: QuestionSection[];
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  onSubmitTest?: () => void;
 }
 
 const ANSWER_OPTIONS = [
@@ -40,7 +41,7 @@ const ANSWER_OPTIONS = [
 const ListeningPart3Conversation = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
-  isBookmarked = false, onToggleBookmark,
+  isBookmarked = false, onToggleBookmark, onSubmitTest,
 }: Props) => {
   const q = questions[currentIndex];
   if (!q) return null;
@@ -119,6 +120,7 @@ const ListeningPart3Conversation = ({
         isFirst={isFirst}
         isLast={isLast}
         sections={sections}
+        onSubmitTest={onSubmitTest}
       />
     </div>
   );
