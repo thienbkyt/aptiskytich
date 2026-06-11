@@ -21,7 +21,6 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import { normalizePart } from "@/hooks/useExamSets";
-import AdminExamControls from "@/components/exam/AdminExamControls";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -295,23 +294,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     if (sk === "writing") setWritingTimeLeft(SKILL_TIMES.writing);
   };
 
-  const handleAdminSkipPart = () => {
-    const skill = SKILL_ORDER[currentSkillIndex];
-    const parts = skillData[skill];
-    const isLastPartOfSkill =
-      skill === "grammar" || currentPartIndex >= parts.length - 1;
-    if (!isLastPartOfSkill) {
-      goToPart(currentSkillIndex, currentPartIndex + 1);
-      return;
-    }
-    const nextSkill = findSkillIndex(currentSkillIndex, 1);
-    if (nextSkill === -1) {
-      setPhase("completed");
-    } else {
-      goToPart(nextSkill, 0);
-    }
-  };
-
   const handleAdminBackPart = () => {
     if (currentPartIndex > 0) {
       goToPart(currentSkillIndex, currentPartIndex - 1);
@@ -330,21 +312,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const canGoBackPart =
     currentPartIndex > 0 || findSkillIndex(currentSkillIndex, -1) !== -1;
 
-  const adminLabel = `${SKILL_LABELS[currentSkill]}${
-    currentSkill === "grammar"
-      ? ""
-      : ` · Part ${currentPartIndex + 1}/${skillData[currentSkill].length || 1}`
-  }`;
-
-  const adminOverlay =
-    phase === "exam" ? (
-      <AdminExamControls
-        position="top-left"
-        label={adminLabel}
-        onSkip={handleAdminSkipPart}
-        onBack={canGoBackPart ? handleAdminBackPart : undefined}
-      />
-    ) : null;
+  const adminOverlay = null;
 
   // ── Loading ──
   if (phase === "loading") {
@@ -585,6 +553,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           timeLimit={SKILL_TIMES.grammar}
           onExit={handleExit}
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
+          onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           skipIntro={currentPartIndex > 0}
         />
       </>
@@ -621,13 +590,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onExit={handleExit}
           onComplete={() => handlePartComplete()}
           skipIntro={currentPartIndex > 0}
-          onAdminPrevious={currentPartIndex > 0 ? () => {
-            const prev = currentPartIndex - 1;
-            completedKeysRef.current.delete(`speaking-${prev}`);
-            completedKeysRef.current.delete(`speaking-${currentPartIndex}`);
-            setCurrentPartIndex(prev);
-            setEngineKey(k => k + 1);
-          } : undefined}
+          onAdminPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...speakingProps}
         />
       </>
@@ -658,6 +621,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           skipIntro={currentPartIndex > 0}
           fullFlow
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
+          onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           {...listeningProps}
         />
       </>
@@ -686,7 +650,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           fullFlow
           onExit={handleExit}
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
-          onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
+          onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           {...readingProps}
         />
       </>
@@ -723,7 +687,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           isLastPart={currentPartIndex >= partsForSkill.length - 1}
           onExit={handleExit}
           onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
-          onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
+          onPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...writingProps}
         />
       </>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, GripVertical } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 import type { ReadingCohesionQuestion } from "@/data/readingQuestions";
 
 interface Props {
@@ -83,6 +84,16 @@ const ReadingPart2Cohesion = ({
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
+      {!submitted && (
+        <AdminExamControls
+          label={`Reading Part 2 · Câu ${currentSection + 1}/${totalSections}`}
+          onSkip={() => {
+            if (!isLast) goNextSection();
+            else onSubmit?.();
+          }}
+          onBack={!isFirst ? goPrevSection : onPrevious}
+        />
+      )}
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading Đề 01</p>

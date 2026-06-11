@@ -17,7 +17,6 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import { saveExamResult } from "@/lib/saveExamResult";
-import AdminExamControls from "@/components/exam/AdminExamControls";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -180,25 +179,12 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   }
 
   // ── Admin-only part navigation overlay (within current skill) ──
-  const isLastPartGlobal = currentPartIndex >= parts.length - 1;
-  const adminOverlay = phase === "exam" ? (
-    <AdminExamControls
-      position="top-left"
-      label={`${skillLabel}${skill === "grammar_vocab" ? "" : ` · Part ${currentPartIndex + 1}/${parts.length || 1}`}`}
-      onSkip={() => {
-        if (skill === "grammar_vocab" || isLastPartGlobal) {
-          setPhase("completed");
-        } else {
-          setCurrentPartIndex((p) => p + 1);
-          setEngineKey((k) => k + 1);
-        }
-      }}
-      onBack={currentPartIndex > 0 ? () => {
-        setCurrentPartIndex((p) => Math.max(0, p - 1));
-        setEngineKey((k) => k + 1);
-      } : undefined}
-    />
-  ) : null;
+  const adminOverlay = null;
+
+  const handleAdminPreviousPart = currentPartIndex > 0 ? () => {
+    setCurrentPartIndex((p) => Math.max(0, p - 1));
+    setEngineKey((k) => k + 1);
+  } : undefined;
 
   // ── Exam Phase ──
   if (parts.length === 0) return null;
@@ -218,6 +204,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
+        onPreviousPart={handleAdminPreviousPart}
         showResultsOnSubmit
       /></>
     );
@@ -250,6 +237,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onExit={onExit}
         onComplete={() => handlePartComplete()}
         skipIntro={currentPartIndex > 0}
+        onAdminPrevious={handleAdminPreviousPart}
         {...speakingProps}
       /></>
     );
@@ -277,6 +265,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         fullFlow
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
+        onPreviousPart={handleAdminPreviousPart}
         showResultsOnSubmit={isLastPart}
         {...listeningProps}
       /></>
@@ -305,7 +294,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         fullFlow
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
-        onPreviousPart={currentPartIndex > 0 ? () => setCurrentPartIndex((p) => Math.max(0, p - 1)) : undefined}
+        onPreviousPart={handleAdminPreviousPart}
         showResultsOnSubmit={isLastPart}
         {...readingProps}
       /></>
@@ -335,7 +324,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         isLastPart={currentPartIndex >= parts.length - 1}
         onExit={onExit}
         onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
-        onPrevious={currentPartIndex > 0 ? () => setCurrentPartIndex(prev => Math.max(0, prev - 1)) : undefined}
+        onPrevious={handleAdminPreviousPart}
         {...writingProps}
       /></>
     );

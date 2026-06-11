@@ -8,6 +8,7 @@ import WritingPart4TwoEmails from "@/components/writing/WritingPart4TwoEmails";
 import WritingResults from "@/components/writing/WritingResults";
 import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 import { useExamGrading } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
@@ -184,6 +185,13 @@ const WritingExamEngine = ({
   }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
 
   const partLabel = PART_LABELS[partType];
+  const adminControls = phase === "practice" && !submitted ? (
+    <AdminExamControls
+      label={`Writing · ${partLabel}`}
+      onSkip={handleSubmit}
+      onBack={onPrevious}
+    />
+  ) : null;
 
   const sections = [
     {
@@ -291,6 +299,7 @@ const WritingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      {adminControls}
       <ExamHeader
         skillLabel="Writing"
         partLabel={partLabel}

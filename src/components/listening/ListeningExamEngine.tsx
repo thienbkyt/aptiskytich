@@ -7,6 +7,7 @@ import ListeningPart2Match from "@/components/listening/ListeningPart2Match";
 import ListeningPart3Conversation from "@/components/listening/ListeningPart3Conversation";
 import ListeningPart4Monologue from "@/components/listening/ListeningPart4Monologue";
 import ListeningResults from "@/components/listening/ListeningResults";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
 import type {
   ListeningPart1Question,
@@ -33,6 +34,7 @@ interface ListeningExamEngineProps {
   part4Questions?: ListeningPart4Clip[];
   onExit: () => void;
   onComplete?: (correct: number, total: number, perQuestion?: ListeningPerQuestion[]) => void;
+  onPreviousPart?: () => void;
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   skipIntro?: boolean;
@@ -58,7 +60,7 @@ const PART_LABELS: Record<ListeningPartType, string> = {
 const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
-  onExit, onComplete, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
+  onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
@@ -243,7 +245,7 @@ const ListeningExamEngine = ({
   ];
 
   const navProps = {
-    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : undefined,
+    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : onPreviousPart,
     onNext: currentIndex < totalQuestions - 1
       ? () => setCurrentIndex((p) => p + 1)
       : (!submitted ? handleSubmit : undefined),
@@ -252,6 +254,17 @@ const ListeningExamEngine = ({
     isLast: false,
     sections,
   };
+
+  const adminControls = phase === "practice" && !submitted ? (
+    <AdminExamControls
+      label={`Listening · Câu ${currentIndex + 1}/${totalQuestions || 1}`}
+      onSkip={() => {
+        if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+        else handleSubmit();
+      }}
+      onBack={currentIndex > 0 ? () => setCurrentIndex((p) => Math.max(0, p - 1)) : onPreviousPart}
+    />
+  ) : null;
 
   if (phase === "instructions") {
     return (
@@ -323,6 +336,7 @@ const ListeningExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      {adminControls}
       <ExamHeader
         skillLabel="Listening"
         partLabel={partLabel}

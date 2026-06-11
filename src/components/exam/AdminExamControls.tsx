@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SkipForward, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -26,6 +26,8 @@ const AdminExamControls = ({
   position = "top-left",
 }: AdminExamControlsProps) => {
   const { isAdmin: authIsAdmin } = useAuth();
+  const clickLockRef = useRef(false);
+  const [isLocked, setIsLocked] = useState(false);
   // Fallback: scan sessionStorage for any cached `isAdmin:*` = "1"
   const [sessionIsAdmin, setSessionIsAdmin] = useState(false);
   useEffect(() => {
@@ -45,6 +47,17 @@ const AdminExamControls = ({
   const posClass =
     position === "top-right" ? "top-2 right-2" : "top-2 left-2";
 
+  const runOnce = (action?: () => void) => {
+    if (!action || clickLockRef.current) return;
+    clickLockRef.current = true;
+    setIsLocked(true);
+    action();
+    window.setTimeout(() => {
+      clickLockRef.current = false;
+      setIsLocked(false);
+    }, 450);
+  };
+
   return (
     <div className={`fixed ${posClass} z-[100] flex flex-col items-start gap-0.5 pointer-events-auto`}>
       <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-300 bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded border border-yellow-300/40">
@@ -53,18 +66,20 @@ const AdminExamControls = ({
       <div className="flex items-center gap-1.5">
         {onBack && (
           <button
-            onClick={onBack}
+            onClick={() => runOnce(onBack)}
+            disabled={isLocked}
             className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/60 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm transition-colors shadow-sm"
-            title="Quay lại phần trước (admin)"
+            title="Quay lại trang trước (admin)"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
             Quay lại
           </button>
         )}
         <button
-          onClick={onSkip}
+          onClick={() => runOnce(onSkip)}
+          disabled={isLocked}
           className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-white/60 bg-black/40 text-white hover:bg-black/60 backdrop-blur-sm transition-colors shadow-sm"
-          title="Bỏ qua sang phần tiếp theo (admin)"
+          title="Chuyển sang trang tiếp theo (admin)"
         >
           <SkipForward className="w-3.5 h-3.5" />
           Bỏ qua

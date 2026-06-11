@@ -7,6 +7,7 @@ import ReadingPart2Cohesion from "@/components/reading/ReadingPart2Cohesion";
 import ReadingPart3Opinion from "@/components/reading/ReadingPart3Opinion";
 import ReadingPart4Long from "@/components/reading/ReadingPart4Long";
 import ReadingResults from "@/components/reading/ReadingResults";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
@@ -224,6 +225,17 @@ const ReadingExamEngine = ({
     sections,
   };
 
+  const adminControls = phase === "practice" && !submitted && partType !== "part2" ? (
+    <AdminExamControls
+      label={`Reading · Câu ${currentIndex + 1}/${totalQuestions || 1}`}
+      onSkip={() => {
+        if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+        else handleSubmit();
+      }}
+      onBack={currentIndex > 0 ? () => setCurrentIndex((p) => Math.max(0, p - 1)) : goToPrevPhase}
+    />
+  ) : null;
+
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
@@ -301,6 +313,7 @@ const ReadingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      {adminControls}
       <ExamHeader
         skillLabel="Reading Đề 01"
         partLabel={partLabel}

@@ -14,6 +14,7 @@ import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import GrammarResults from "@/components/grammar/GrammarResults";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
@@ -29,6 +30,7 @@ interface GrammarExamEngineProps {
     perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>
   ) => void;
   onAnswersChange?: (answers: (number | null)[], fillAnswers: string[]) => void;
+  onPreviousPart?: () => void;
   skipIntro?: boolean;
   /** When true (default), render GrammarResults after submission instead of the locked review UI. */
   showResultsOnSubmit?: boolean;
@@ -47,6 +49,7 @@ const GrammarExamEngine = ({
   onExit,
   onComplete,
   onAnswersChange,
+  onPreviousPart,
   skipIntro,
   showResultsOnSubmit = true,
   reviewMode,
@@ -350,6 +353,13 @@ const GrammarExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      {phase === "practice" && !submitted && (
+        <AdminExamControls
+          label={`Grammar · Câu ${groupStartLabel}/${questions.length}`}
+          onSkip={!isLastGroup ? goNextGroup : handleSubmit}
+          onBack={!isFirstGroup ? goPrevGroup : onPreviousPart}
+        />
+      )}
       <ExamHeader
         skillLabel="Grammar & Vocabulary"
         partLabel={testTitle}
