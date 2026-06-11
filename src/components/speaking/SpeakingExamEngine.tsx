@@ -8,9 +8,10 @@ import SpeakingMicCheck from "./SpeakingMicCheck";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, SkipForward, ChevronLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import { useAuth } from "@/hooks/useAuth";
+import AdminExamControls from "@/components/exam/AdminExamControls";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -113,6 +114,9 @@ const SpeakingExamEngine = ({
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
+  const flowTokenRef = useRef(0);
+  const adminNavLockedRef = useRef(false);
+  const suppressRecordingSaveRef = useRef(false);
   // Guards to prevent doStopAndAdvance / handleFinish firing twice
   // (e.g. timer reaching 0 at the same instant the user clicks "Finish Recording")
   const advancingRef = useRef(false);
@@ -182,6 +186,7 @@ const SpeakingExamEngine = ({
 
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
+    const token = ++flowTokenRef.current;
     setPhase("reading-question");
     
     // Get the question text for current index
@@ -202,8 +207,11 @@ const SpeakingExamEngine = ({
     if (questionText) {
       await speakAsync(questionText);
     }
+    if (token !== flowTokenRef.current) return;
     await playBeep();
+    if (token !== flowTokenRef.current) return;
     await new Promise(r => setTimeout(r, 500));
+    if (token !== flowTokenRef.current) return;
 
     // Now start prep or recording
     const prepTime = getPrepTime();
@@ -231,6 +239,7 @@ const SpeakingExamEngine = ({
   // Start recording
   const startRecording = useCallback(async () => {
     const speakTime = getSpeakTime();
+    const recordingIndex = currentIndexRef.current;
     setSpeakTimeLeft(speakTime);
     setCanFinish(false);
     setPhase("recording");
@@ -247,12 +256,18 @@ const SpeakingExamEngine = ({
       };
 
       mediaRecorder.onstop = () => {
+        if (suppressRecordingSaveRef.current) {
+          suppressRecordingSaveRef.current = false;
+          chunksRef.current = [];
+          stream.getTracks().forEach(t => t.stop());
+          streamRef.current = null;
+          return;
+        }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
-        const idx = currentIndexRef.current;
         setRecordings(prev => {
           const next = [...prev];
-          next[idx] = url;
+          next[recordingIndex] = url;
           return next;
         });
         stream.getTracks().forEach(t => t.stop());
@@ -388,12 +403,14 @@ const SpeakingExamEngine = ({
   };
 
   // ===== Admin-only controls: skip current part / go to previous part =====
-  const stopEverything = () => {
+  const stopEverything = (suppressCurrentRecording = false) => {
+    flowTokenRef.current += 1;
     try { stopTTS(); } catch {}
     try { window.speechSynthesis?.cancel(); } catch {}
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      suppressRecordingSaveRef.current = suppressCurrentRecording;
       try { mediaRecorderRef.current.stop(); } catch {}
     }
     if (streamRef.current) {
