@@ -301,6 +301,8 @@ const WritingExamEngine = ({
           onPrevious={() => setPhase("instructions")}
           onNext={() => setPhase("practice")}
           sections={sections}
+          isInstructionsPhase
+          onProceedFromInstructions={() => setPhase("practice")}
         />
       </div>
     );
@@ -368,6 +370,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
 
@@ -384,6 +387,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
 
@@ -404,6 +408,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
 
@@ -422,6 +427,7 @@ const WritingExamEngine = ({
             sections={sections}
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
+            onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
       </div>

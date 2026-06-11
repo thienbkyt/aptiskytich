@@ -16,6 +16,7 @@ interface Props {
   sections: any[];
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  onSubmitTest?: () => void;
 }
 
 const toolbarButtons = [
@@ -28,7 +29,7 @@ const toolbarButtons = [
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark,
+  isBookmarked = false, onToggleBookmark, onSubmitTest,
 }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -106,7 +107,7 @@ const WritingPart2Social = ({
         </div>
       )}
 
-      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} />
+      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />
     </div>
   );
 };

@@ -265,6 +265,7 @@ const ListeningExamEngine = ({
     isFirst: false,
     isLast: false,
     sections,
+    onSubmitTest: !submitted ? handleSubmit : undefined,
   };
 
   const adminControls = !submitted && !reviewMode ? (
@@ -334,6 +335,8 @@ const ListeningExamEngine = ({
           onPrevious={() => setPhase("instructions")}
           onNext={() => setPhase("practice")}
           sections={sections}
+          isInstructionsPhase
+          onProceedFromInstructions={() => setPhase("practice")}
         />
       </div>
     );
