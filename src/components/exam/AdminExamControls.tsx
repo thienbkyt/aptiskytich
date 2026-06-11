@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { SkipForward, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
+const ADMIN_NAV_LOCK_MS = 700;
+let adminNavLockedUntil = 0;
+
 interface AdminExamControlsProps {
   onSkip: () => void;
   onBack?: () => void;
@@ -48,14 +51,16 @@ const AdminExamControls = ({
     position === "top-right" ? "top-2 right-2" : "top-2 left-2";
 
   const runOnce = (action?: () => void) => {
-    if (!action || clickLockRef.current) return;
+    const now = Date.now();
+    if (!action || clickLockRef.current || now < adminNavLockedUntil) return;
+    adminNavLockedUntil = now + ADMIN_NAV_LOCK_MS;
     clickLockRef.current = true;
     setIsLocked(true);
     action();
     window.setTimeout(() => {
       clickLockRef.current = false;
       setIsLocked(false);
-    }, 450);
+    }, ADMIN_NAV_LOCK_MS);
   };
 
   return (
