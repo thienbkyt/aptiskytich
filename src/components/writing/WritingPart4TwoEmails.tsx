@@ -1,3 +1,4 @@
+import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import RichTextEditor from "@/components/writing/RichTextEditor";
@@ -15,12 +16,15 @@ interface Props {
   onSubmit: () => void;
   onPrevious?: () => void;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const WritingPart4TwoEmails = ({
   data, informalAnswer, formalAnswer,
   onInformalChange, onFormalChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
@@ -28,7 +32,18 @@ const WritingPart4TwoEmails = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Writing – Part 4</p>
         </div>
-        <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleBookmark}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+              isBookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:border-primary/30"
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
+            Bookmark
+          </button>
+          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        </div>
       </div>
 
       {/* Scenario intro + email */}

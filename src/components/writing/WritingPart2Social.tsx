@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect } from "react";
-import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
+import {Bookmark, Bold, Italic, Underline, Strikethrough} from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { WritingPart2Data } from "@/data/writingQuestions";
@@ -14,6 +14,8 @@ interface Props {
   onSubmit: () => void;
   onPrevious?: () => void;
   sections: any[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const toolbarButtons = [
@@ -26,6 +28,7 @@ const toolbarButtons = [
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -58,7 +61,18 @@ const WritingPart2Social = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Writing – Part 2</p>
         </div>
-        <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleBookmark}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+              isBookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:border-primary/30"
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
+            Bookmark
+          </button>
+          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        </div>
       </div>
 
       <p className="text-sm font-bold text-foreground mb-3 leading-relaxed">{data.instruction}</p>

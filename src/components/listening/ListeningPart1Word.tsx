@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle } from "lucide-react";
+import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
 import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -28,11 +28,14 @@ interface Props {
   isFirst?: boolean;
   isLast?: boolean;
   sections?: QuestionSection[];
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
 const ListeningPart1Word = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
+  isBookmarked = false, onToggleBookmark,
 }: Props) => {
   const q = questions[currentIndex];
   if (!q) return null;
@@ -48,7 +51,18 @@ const ListeningPart1Word = ({
             Question {currentIndex + 1} of {questions.length}
           </p>
         </div>
-        <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleBookmark}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-colors ${
+              isBookmarked ? "border-primary bg-primary/10 text-primary" : "border-border text-foreground hover:border-primary/30"
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
+            Bookmark
+          </button>
+          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+        </div>
       </div>
 
       <AnimatePresence mode="wait">

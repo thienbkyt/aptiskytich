@@ -75,6 +75,16 @@ const WritingExamEngine = ({
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [bookmarked, setBookmarked] = useState<Set<WritingPartType>>(new Set());
+  const isBookmarked = bookmarked.has(partType);
+  const toggleBookmark = useCallback(() => {
+    setBookmarked((prev) => {
+      const next = new Set(prev);
+      if (next.has(partType)) next.delete(partType);
+      else next.add(partType);
+      return next;
+    });
+  }, [partType]);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
     reviewMode && initialAnswers?.shortAnswers ? initialAnswers.shortAnswers : new Array(part1Data?.questions.length || 5).fill("")
@@ -228,6 +238,14 @@ const WritingExamEngine = ({
       questionCount: partType === "task1" ? (part1Data?.questions.length || 5) : partType === "task3" ? (part3Data?.questions.length || 3) : partType === "task4" ? 2 : 1,
       isCurrent: phase === "practice" || phase === "grading" || phase === "results",
       onClick: () => {},
+      questions: [{
+        label: "01",
+        seen: phase === "practice" || phase === "grading" || phase === "results",
+        attempted: submitted,
+        bookmarked: isBookmarked,
+        isCurrent: phase === "practice",
+        onClick: () => {},
+      }],
     },
   ];
 
@@ -348,6 +366,8 @@ const WritingExamEngine = ({
             onSubmit={handleSubmit}
             onPrevious={onPrevious}
             sections={sections}
+            isBookmarked={isBookmarked}
+            onToggleBookmark={toggleBookmark}
           />
         )}
 
@@ -362,6 +382,8 @@ const WritingExamEngine = ({
             onSubmit={handleSubmit}
             onPrevious={onPrevious}
             sections={sections}
+            isBookmarked={isBookmarked}
+            onToggleBookmark={toggleBookmark}
           />
         )}
 
@@ -380,6 +402,8 @@ const WritingExamEngine = ({
             onSubmit={handleSubmit}
             onPrevious={onPrevious}
             sections={sections}
+            isBookmarked={isBookmarked}
+            onToggleBookmark={toggleBookmark}
           />
         )}
 
@@ -396,6 +420,8 @@ const WritingExamEngine = ({
             onSubmit={handleSubmit}
             onPrevious={onPrevious}
             sections={sections}
+            isBookmarked={isBookmarked}
+            onToggleBookmark={toggleBookmark}
           />
         )}
       </div>
