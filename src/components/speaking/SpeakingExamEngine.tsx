@@ -197,6 +197,7 @@ const SpeakingExamEngine = ({
     }
     if (token !== flowTokenRef.current) return;
 
+    const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
     await playBeep();
     if (token !== flowTokenRef.current) return;
