@@ -326,30 +326,40 @@ const SpeakingExamEngine = ({
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
 
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-
-    setIsTransitioning(true);
-
     const total = getTotalQuestions();
     const idx = currentIndexRef.current;
-    if (idx < total - 1) {
-      const nextIdx = idx + 1;
-      currentIndexRef.current = nextIdx;
-      const token = flowTokenRef.current;
-      transitionTimeoutRef.current = setTimeout(() => {
-        if (token !== flowTokenRef.current) return;
-        setCurrentIndex(nextIdx);
-        setCanFinish(false);
-        setIsTransitioning(false);
-        advancingRef.current = false;
-        startQuestionFlow();
-      }, 300);
-    } else {
+    const isLast = idx >= total - 1;
+
+    const recorder = mediaRecorderRef.current;
+    const recorderActive = recorder && recorder.state !== "inactive";
+
+    if (isLast) {
       setIsTransitioning(false);
-      handleFinish();
+      // Defer handleFinish until onstop has written the last blob into recordingsRef.
+      if (recorderActive) {
+        finishAfterStopRef.current = true;
+        try { recorder!.stop(); } catch { handleFinish(); }
+      } else {
+        handleFinish();
+      }
+      return;
     }
+
+    if (recorderActive) {
+      try { recorder!.stop(); } catch { /* noop */ }
+    }
+    setIsTransitioning(true);
+    const nextIdx = idx + 1;
+    currentIndexRef.current = nextIdx;
+    const token = flowTokenRef.current;
+    transitionTimeoutRef.current = setTimeout(() => {
+      if (token !== flowTokenRef.current) return;
+      setCurrentIndex(nextIdx);
+      setCanFinish(false);
+      setIsTransitioning(false);
+      advancingRef.current = false;
+      startQuestionFlow();
+    }, 300);
   }, [partType]);
 
   const handleFinishRecording = useCallback(() => {
