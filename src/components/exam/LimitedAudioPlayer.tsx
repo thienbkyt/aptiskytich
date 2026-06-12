@@ -99,7 +99,11 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
         await resolve(true);
       }
       audio.currentTime = 0;
-      setPlayCount((prev) => prev + 1);
+      setPlayCount((prev) => {
+        const next = prev + 1;
+        playCountStore.set(storeKey(questionKey, src), next);
+        return next;
+      });
       try {
         await audio.play();
         setIsPlaying(true);
