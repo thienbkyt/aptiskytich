@@ -103,6 +103,10 @@ const SpeakingExamEngine = ({
   // (e.g. timer reaching 0 at the same instant the user clicks "Finish Recording")
   const advancingRef = useRef(false);
   const finishedRef = useRef(false);
+  // Synchronously-updated recordings store (avoids stale state when finishing on last question).
+  const recordingsRef = useRef<(Blob | null)[]>([]);
+  // When true, the next onstop should trigger handleFinish after writing the blob.
+  const finishAfterStopRef = useRef(false);
 
 
 
