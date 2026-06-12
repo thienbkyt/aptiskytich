@@ -197,14 +197,11 @@ const SpeakingExamEngine = ({
     }
     if (token !== flowTokenRef.current) return;
 
-    // Only beep immediately for parts with no prep time
-    const prepTime = getPrepTime();
-    if (prepTime <= 0) {
-      await playBeep();
-      if (token !== flowTokenRef.current) return;
-      await new Promise(r => setTimeout(r, 500));
-      if (token !== flowTokenRef.current) return;
-    }
+    // Beep after reading question: signals start of prep (if any) or start of recording
+    await playBeep();
+    if (token !== flowTokenRef.current) return;
+    await new Promise(r => setTimeout(r, 500));
+    if (token !== flowTokenRef.current) return;
 
     // Now start prep or recording
     if (prepTime <= 0) {
