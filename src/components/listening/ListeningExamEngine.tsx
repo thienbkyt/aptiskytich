@@ -107,6 +107,7 @@ const ListeningExamEngine = ({
     setSubmitted(false);
     setSeenQuestions(new Set());
     setAnswers(new Array(totalQuestions).fill(null));
+    resetLimitedAudioPlays();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partType]);
 
