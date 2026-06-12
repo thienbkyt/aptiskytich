@@ -52,23 +52,11 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
     const correct = Math.max(opts.correct, 0);
     const level = total > 0 ? getLevel(correct, total) : "A1";
 
-    // Best-score dedup (skipped for Full Test sessions: every part is recorded).
-    let shouldInsert = true;
+    // Always insert a new test_results row per attempt (no best-score dedup).
+    // History pages support multiple attempts and need a non-null test_result_id
+    // for per-question detail lookup.
     let testResultId: string | null = null;
-    if (opts.examSetId && !opts.fullTestSessionId) {
-      const { data: prev } = await supabase
-        .from("test_results")
-        .select("score")
-        .eq("user_id", user.id)
-        .eq("exam_set_id", opts.examSetId)
-        .is("full_test_session_id", null)
-        .order("score", { ascending: false })
-        .limit(1);
-      const bestPrev = prev?.[0]?.score ?? -1;
-      if (correct <= bestPrev) shouldInsert = false;
-    }
-
-    if (shouldInsert) {
+    {
       const { data: inserted, error } = await supabase
         .from("test_results")
         .insert({
