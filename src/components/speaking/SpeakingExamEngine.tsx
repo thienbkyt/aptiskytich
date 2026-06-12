@@ -265,10 +265,19 @@ const SpeakingExamEngine = ({
           chunksRef.current = [];
           stream.getTracks().forEach(t => t.stop());
           streamRef.current = null;
+          // Even when suppressed, honor a pending finish so we don't hang.
+          if (finishAfterStopRef.current) {
+            finishAfterStopRef.current = false;
+            handleFinish();
+          }
           return;
         }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
+        // Update the ref synchronously BEFORE any async finish flow reads it.
+        const arr = recordingsRef.current.slice();
+        arr[recordingIndex] = blob;
+        recordingsRef.current = arr;
         setRecordings(prev => {
           const next = [...prev];
           next[recordingIndex] = url;
@@ -276,6 +285,10 @@ const SpeakingExamEngine = ({
         });
         stream.getTracks().forEach(t => t.stop());
         streamRef.current = null;
+        if (finishAfterStopRef.current) {
+          finishAfterStopRef.current = false;
+          handleFinish();
+        }
       };
 
       mediaRecorder.start();
