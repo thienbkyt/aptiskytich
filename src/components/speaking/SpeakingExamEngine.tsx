@@ -196,13 +196,17 @@ const SpeakingExamEngine = ({
       await speakAsync(questionText);
     }
     if (token !== flowTokenRef.current) return;
-    await playBeep();
-    if (token !== flowTokenRef.current) return;
-    await new Promise(r => setTimeout(r, 500));
-    if (token !== flowTokenRef.current) return;
+
+    // Only beep immediately for parts with no prep time
+    const prepTime = getPrepTime();
+    if (prepTime <= 0) {
+      await playBeep();
+      if (token !== flowTokenRef.current) return;
+      await new Promise(r => setTimeout(r, 500));
+      if (token !== flowTokenRef.current) return;
+    }
 
     // Now start prep or recording
-    const prepTime = getPrepTime();
     if (prepTime <= 0) {
       startRecording();
       return;
@@ -216,7 +220,10 @@ const SpeakingExamEngine = ({
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
           timerRef.current = null;
-          startRecording();
+          // Beep right before recording starts (prep just ended)
+          playBeep().then(() => {
+            startRecording();
+          });
           return 0;
         }
         return prev - 1;
