@@ -8,10 +8,23 @@ interface LimitedAudioPlayerProps {
   questionKey?: string | number;
 }
 
+// Module-level store: persists play counts across remounts within one session.
+// Keyed by `${questionKey}::${src}` (or just src when no key).
+// Reset via resetLimitedAudioPlays() when starting a new attempt.
+const playCountStore = new Map<string, number>();
+const storeKey = (qk: string | number | undefined, src: string) =>
+  `${qk ?? "_"}::${src}`;
+
+export const resetLimitedAudioPlays = () => {
+  playCountStore.clear();
+};
+
 const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playCount, setPlayCount] = useState(0);
+  const [playCount, setPlayCount] = useState<number>(
+    () => playCountStore.get(storeKey(questionKey, src)) ?? 0
+  );
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const retryCountRef = useRef(0);
@@ -39,8 +52,10 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
     return () => { cancelled = true; };
   }, [src]);
 
+  // Sync playCount from persistent store when question/src changes.
+  // Do NOT reset to 0 — remembered per question across navigation.
   useEffect(() => {
-    setPlayCount(0);
+    setPlayCount(playCountStore.get(storeKey(questionKey, src)) ?? 0);
     setIsPlaying(false);
     setErrorMsg("");
     retryCountRef.current = 0;
