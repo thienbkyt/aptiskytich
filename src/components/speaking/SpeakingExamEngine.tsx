@@ -103,6 +103,10 @@ const SpeakingExamEngine = ({
   // (e.g. timer reaching 0 at the same instant the user clicks "Finish Recording")
   const advancingRef = useRef(false);
   const finishedRef = useRef(false);
+  // Synchronously-updated recordings store (avoids stale state when finishing on last question).
+  const recordingsRef = useRef<(Blob | null)[]>([]);
+  // When true, the next onstop should trigger handleFinish after writing the blob.
+  const finishAfterStopRef = useRef(false);
 
 
 
@@ -147,7 +151,9 @@ const SpeakingExamEngine = ({
 
   // Initialize recordings array
   useEffect(() => {
-    setRecordings(new Array(getTotalQuestions()).fill(null));
+    const total = getTotalQuestions();
+    setRecordings(new Array(total).fill(null));
+    recordingsRef.current = new Array(total).fill(null);
   }, [partType]);
 
   // Ensure exam-mode dark overrides apply across ALL speaking phases
@@ -259,10 +265,19 @@ const SpeakingExamEngine = ({
           chunksRef.current = [];
           stream.getTracks().forEach(t => t.stop());
           streamRef.current = null;
+          // Even when suppressed, honor a pending finish so we don't hang.
+          if (finishAfterStopRef.current) {
+            finishAfterStopRef.current = false;
+            handleFinish();
+          }
           return;
         }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
+        // Update the ref synchronously BEFORE any async finish flow reads it.
+        const arr = recordingsRef.current.slice();
+        arr[recordingIndex] = blob;
+        recordingsRef.current = arr;
         setRecordings(prev => {
           const next = [...prev];
           next[recordingIndex] = url;
@@ -270,6 +285,10 @@ const SpeakingExamEngine = ({
         });
         stream.getTracks().forEach(t => t.stop());
         streamRef.current = null;
+        if (finishAfterStopRef.current) {
+          finishAfterStopRef.current = false;
+          handleFinish();
+        }
       };
 
       mediaRecorder.start();
@@ -307,30 +326,40 @@ const SpeakingExamEngine = ({
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
 
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-
-    setIsTransitioning(true);
-
     const total = getTotalQuestions();
     const idx = currentIndexRef.current;
-    if (idx < total - 1) {
-      const nextIdx = idx + 1;
-      currentIndexRef.current = nextIdx;
-      const token = flowTokenRef.current;
-      transitionTimeoutRef.current = setTimeout(() => {
-        if (token !== flowTokenRef.current) return;
-        setCurrentIndex(nextIdx);
-        setCanFinish(false);
-        setIsTransitioning(false);
-        advancingRef.current = false;
-        startQuestionFlow();
-      }, 300);
-    } else {
+    const isLast = idx >= total - 1;
+
+    const recorder = mediaRecorderRef.current;
+    const recorderActive = recorder && recorder.state !== "inactive";
+
+    if (isLast) {
       setIsTransitioning(false);
-      handleFinish();
+      // Defer handleFinish until onstop has written the last blob into recordingsRef.
+      if (recorderActive) {
+        finishAfterStopRef.current = true;
+        try { recorder!.stop(); } catch { handleFinish(); }
+      } else {
+        handleFinish();
+      }
+      return;
     }
+
+    if (recorderActive) {
+      try { recorder!.stop(); } catch { /* noop */ }
+    }
+    setIsTransitioning(true);
+    const nextIdx = idx + 1;
+    currentIndexRef.current = nextIdx;
+    const token = flowTokenRef.current;
+    transitionTimeoutRef.current = setTimeout(() => {
+      if (token !== flowTokenRef.current) return;
+      setCurrentIndex(nextIdx);
+      setCanFinish(false);
+      setIsTransitioning(false);
+      advancingRef.current = false;
+      startQuestionFlow();
+    }, 300);
   }, [partType]);
 
   const handleFinishRecording = useCallback(() => {
@@ -345,12 +374,11 @@ const SpeakingExamEngine = ({
 
     // Best-effort upload of all recordings — never block UI on failure
     try {
-      const currentRecordings = recordings;
+      const currentRecordings = recordingsRef.current;
       await Promise.all(
-        currentRecordings.map(async (url, idx) => {
-          if (!url) return;
+        currentRecordings.map(async (blob, idx) => {
+          if (!blob) return;
           try {
-            const blob = await fetch(url).then((r) => r.blob());
             await saveSpeakingRecording({
               examSetId: examSetId ?? null,
               part: `${partType}_q${idx + 1}`,
@@ -363,7 +391,7 @@ const SpeakingExamEngine = ({
       if (sourceQuestionIds && sourceQuestionIds.length > 0) {
         const perQuestion = sourceQuestionIds.map((qid, idx) => ({
           exam_question_id: qid,
-          user_answer: recordings[idx] ? "(recorded)" : null,
+          user_answer: recordingsRef.current[idx] ? "(recorded)" : null,
           is_correct: false,
         }));
         await saveExamResult({
