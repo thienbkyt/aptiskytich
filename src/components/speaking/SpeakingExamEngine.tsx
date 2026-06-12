@@ -151,7 +151,9 @@ const SpeakingExamEngine = ({
 
   // Initialize recordings array
   useEffect(() => {
-    setRecordings(new Array(getTotalQuestions()).fill(null));
+    const total = getTotalQuestions();
+    setRecordings(new Array(total).fill(null));
+    recordingsRef.current = new Array(total).fill(null);
   }, [partType]);
 
   // Ensure exam-mode dark overrides apply across ALL speaking phases
