@@ -99,31 +99,11 @@ const Dashboard = () => {
       try {
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-        const headCount = (skill?: string, correctOnly = false) => {
-          let q = supabase
-            .from("practice_history")
-            .select("id", { count: "exact", head: true })
-            .eq("user_id", user.id);
-          if (skill) q = q.eq("skill", skill);
-          if (correctOnly) q = q.eq("is_correct", true);
-          return q;
-        };
-
-        const [
-          profileRes, streakRes, weekRes, testsRes,
-          totalRes, correctRes,
-          gT, gC, rT, rC, lT, lC, sT, sC, wT, wC,
-        ] = await Promise.all([
+        const [profileRes, streakRes, testsRes, allResultsRes] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
-          supabase.from("practice_history").select("created_at").eq("user_id", user.id).gte("created_at", weekAgo),
           supabase.from("test_results").select("score,total,level,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(4),
-          headCount(), headCount(undefined, true),
-          headCount("grammar"),   headCount("grammar", true),
-          headCount("reading"),   headCount("reading", true),
-          headCount("listening"), headCount("listening", true),
-          headCount("speaking"),  headCount("speaking", true),
-          headCount("writing"),   headCount("writing", true),
+          supabase.from("test_results").select("skill_scores,created_at").eq("user_id", user.id),
         ]);
 
         if (cancelled) return;
@@ -134,6 +114,30 @@ const Dashboard = () => {
           "bạn";
 
         const tests = testsRes.data || [];
+        const allResults = allResultsRes.data || [];
+
+        // Aggregate skill totals from test_results.skill_scores
+        const skillAgg: Record<string, { correct: number; total: number }> = {};
+        let grandCorrect = 0;
+        let grandTotal = 0;
+        allResults.forEach((row: any) => {
+          const ss = row.skill_scores;
+          if (!ss || typeof ss !== "object") return;
+          const skill = ss.skill;
+          const correct = Number(ss.correct) || 0;
+          const total = Number(ss.total) || 0;
+          if (!skill || total <= 0) return;
+          if (!skillAgg[skill]) skillAgg[skill] = { correct: 0, total: 0 };
+          skillAgg[skill].correct += correct;
+          skillAgg[skill].total += total;
+          grandCorrect += correct;
+          grandTotal += total;
+        });
+
+        const pctOf = (key: string) => {
+          const a = skillAgg[key];
+          return a && a.total > 0 ? Math.round((a.correct / a.total) * 100) : 0;
+        };
 
         const nowVN = toVNDate(new Date());
         const todayIdx = vnWeekdayIndex(new Date());
@@ -144,11 +148,12 @@ const Dashboard = () => {
           weekDayKeys.push(`${dvn.getUTCFullYear()}-${dvn.getUTCMonth()}-${dvn.getUTCDate()}`);
         }
         const activeDayKeys = new Set<string>();
-        (weekRes.data || []).forEach((row) => activeDayKeys.add(vnDayKey(new Date(row.created_at))));
+        allResults.forEach((row: any) => {
+          if (row.created_at && new Date(row.created_at).toISOString() >= weekAgo) {
+            activeDayKeys.add(vnDayKey(new Date(row.created_at)));
+          }
+        });
         const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
-
-        const pct = (correct: number | null, total: number | null) =>
-          total && total > 0 ? Math.round(((correct ?? 0) / total) * 100) : 0;
 
         const recentTests: RecentTest[] = tests.map((t) => ({
           date: formatDate(t.created_at),
@@ -160,17 +165,18 @@ const Dashboard = () => {
         setData({
           displayName,
           streak: streakRes.data?.current_streak ?? 0,
-          totalQuestions: totalRes.count ?? 0,
-          accuracy: pct(correctRes.count, totalRes.count),
+          totalQuestions: grandTotal,
+          accuracy: grandTotal > 0 ? Math.round((grandCorrect / grandTotal) * 100) : 0,
           currentLevel: tests[0]?.level || "—",
-          grammarPct:   pct(gC.count, gT.count),
-          readingPct:   pct(rC.count, rT.count),
-          listeningPct: pct(lC.count, lT.count),
-          speakingPct:  pct(sC.count, sT.count),
-          writingPct:   pct(wC.count, wT.count),
+          grammarPct:   pctOf("grammar_vocab"),
+          readingPct:   pctOf("reading"),
+          listeningPct: pctOf("listening"),
+          speakingPct:  pctOf("speaking"),
+          writingPct:   pctOf("writing"),
           recentTests,
           weeklyActivity,
         });
+
       } finally {
         if (!cancelled) setLoading(false);
       }
