@@ -374,12 +374,11 @@ const SpeakingExamEngine = ({
 
     // Best-effort upload of all recordings — never block UI on failure
     try {
-      const currentRecordings = recordings;
+      const currentRecordings = recordingsRef.current;
       await Promise.all(
-        currentRecordings.map(async (url, idx) => {
-          if (!url) return;
+        currentRecordings.map(async (blob, idx) => {
+          if (!blob) return;
           try {
-            const blob = await fetch(url).then((r) => r.blob());
             await saveSpeakingRecording({
               examSetId: examSetId ?? null,
               part: `${partType}_q${idx + 1}`,
@@ -392,7 +391,7 @@ const SpeakingExamEngine = ({
       if (sourceQuestionIds && sourceQuestionIds.length > 0) {
         const perQuestion = sourceQuestionIds.map((qid, idx) => ({
           exam_question_id: qid,
-          user_answer: recordings[idx] ? "(recorded)" : null,
+          user_answer: recordingsRef.current[idx] ? "(recorded)" : null,
           is_correct: false,
         }));
         await saveExamResult({
