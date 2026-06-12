@@ -225,6 +225,7 @@ const ListeningExamEngine = ({
     setSeenQuestions(new Set());
     setBookmarked(new Set());
     setAnswers(new Array(totalQuestions).fill(null));
+    resetLimitedAudioPlays();
   };
 
   const handleAnswer = (qi: number, ai: any) => {
