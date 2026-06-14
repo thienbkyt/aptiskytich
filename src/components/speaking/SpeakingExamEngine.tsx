@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import ExamReportButton from "@/components/exam/ExamReportButton";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
