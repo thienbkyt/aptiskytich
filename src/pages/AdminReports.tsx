@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText } from "lucide-react";
+import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -19,20 +19,31 @@ type ReportRow = {
   exam_question_id: string | null;
   exam_set_id: string | null;
   user_id: string | null;
-  skill: string;
+  skill: string | null;
   part_type: string | null;
   question_number: number | null;
   reason: string;
   note: string | null;
   status: string;
   created_at: string;
+  report_category: string | null;
+  page_url: string | null;
+  device_info: string | null;
 };
 
-const REASON_LABELS: Record<string, string> = {
+const CONTENT_REASON_LABELS: Record<string, string> = {
   wrong_answer: "Sai đáp án",
   audio: "Lỗi audio",
   image: "Lỗi hình ảnh",
   content: "Lỗi nội dung",
+  other: "Khác",
+};
+
+const FUNCTIONAL_REASON_LABELS: Record<string, string> = {
+  cant_nav: "Không bấm được Next/Previous",
+  cant_exit: "Không thoát được",
+  button_broken: "Nút không hoạt động",
+  page_frozen: "Trang bị đứng/treo",
   other: "Khác",
 };
 
@@ -49,6 +60,12 @@ const STATUS_OPTIONS = [
   { value: "new", label: "Chưa xử lý" },
   { value: "resolved", label: "Đã xử lý" },
   { value: "all", label: "Tất cả" },
+];
+
+const CATEGORY_OPTIONS = [
+  { value: "all", label: "Tất cả loại" },
+  { value: "content", label: "Lỗi nội dung" },
+  { value: "functional", label: "Lỗi chức năng" },
 ];
 
 const fmtDate = (s: string) => {
@@ -71,7 +88,13 @@ const AdminReports = () => {
   const [loading, setLoading] = useState(true);
   const [skillFilter, setSkillFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("new");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Map exam_question_id -> { setId, setTitle }
+  const [questionSetMap, setQuestionSetMap] = useState<
+    Record<string, { setId: string | null; setTitle: string | null }>
+  >({});
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -86,22 +109,54 @@ const AdminReports = () => {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (skillFilter !== "all") {
-      query = query.eq("skill", skillFilter);
-    }
-    if (statusFilter !== "all") {
-      query = query.eq("status", statusFilter);
-    }
+    if (skillFilter !== "all") query = query.eq("skill", skillFilter);
+    if (statusFilter !== "all") query = query.eq("status", statusFilter);
+    if (categoryFilter !== "all") query = query.eq("report_category", categoryFilter);
 
     const { data, error } = await query;
     if (error) {
       toast({ title: "Lỗi tải dữ liệu", description: error.message, variant: "destructive" });
       setReports([]);
-    } else {
-      setReports((data || []) as ReportRow[]);
+      setQuestionSetMap({});
+      setLoading(false);
+      return;
     }
+
+    const rows = (data || []) as ReportRow[];
+    setReports(rows);
+
+    // Lookup exam set titles for content reports
+    const qIds = Array.from(
+      new Set(
+        rows
+          .filter((r) => (r.report_category ?? "content") === "content" && r.exam_question_id)
+          .map((r) => r.exam_question_id as string)
+      )
+    );
+
+    if (qIds.length > 0) {
+      const { data: qData, error: qErr } = await supabase
+        .from("exam_questions")
+        .select("id, exam_set_id, exam_sets:exam_set_id ( id, title )")
+        .in("id", qIds);
+      if (!qErr && qData) {
+        const map: Record<string, { setId: string | null; setTitle: string | null }> = {};
+        for (const row of qData as any[]) {
+          map[row.id] = {
+            setId: row.exam_set_id ?? row.exam_sets?.id ?? null,
+            setTitle: row.exam_sets?.title ?? null,
+          };
+        }
+        setQuestionSetMap(map);
+      } else {
+        setQuestionSetMap({});
+      }
+    } else {
+      setQuestionSetMap({});
+    }
+
     setLoading(false);
-  }, [skillFilter, statusFilter, toast]);
+  }, [skillFilter, statusFilter, categoryFilter, toast]);
 
   useEffect(() => {
     if (user && isAdmin) loadReports();
@@ -155,6 +210,18 @@ const AdminReports = () => {
           {/* Filters */}
           <div className="flex flex-wrap gap-3 mb-6">
             <div className="w-full sm:w-56">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Lọc theo loại báo cáo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full sm:w-56">
               <Select value={skillFilter} onValueChange={setSkillFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Lọc theo kỹ năng" />
@@ -195,6 +262,16 @@ const AdminReports = () => {
             ) : (
               filteredReports.map((r) => {
                 const isResolved = r.status === "resolved";
+                const category = (r.report_category ?? "content") as "content" | "functional";
+                const isFunctional = category === "functional";
+                const reasonLabel = isFunctional
+                  ? FUNCTIONAL_REASON_LABELS[r.reason] || r.reason
+                  : CONTENT_REASON_LABELS[r.reason] || r.reason;
+
+                const lookup = r.exam_question_id ? questionSetMap[r.exam_question_id] : undefined;
+                const setIdForLink = lookup?.setId || r.exam_set_id;
+                const setTitle = lookup?.setTitle;
+
                 return (
                   <Card
                     key={r.id}
@@ -203,29 +280,70 @@ const AdminReports = () => {
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <Badge variant={isResolved ? "secondary" : "default"}>
-                            {REASON_LABELS[r.reason] || r.reason}
+                          <Badge
+                            variant="outline"
+                            className={
+                              isFunctional
+                                ? "border-amber-500 text-amber-700 dark:text-amber-400"
+                                : "border-primary text-primary"
+                            }
+                          >
+                            {isFunctional ? "Lỗi chức năng" : "Lỗi nội dung"}
                           </Badge>
-                          <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                            {r.skill}
-                            {r.part_type ? ` • ${r.part_type}` : ""}
-                            {r.question_number ? ` • Câu ${r.question_number}` : ""}
-                          </span>
+                          <Badge variant={isResolved ? "secondary" : "default"}>
+                            {reasonLabel}
+                          </Badge>
+                          {(r.skill || r.part_type || r.question_number) && (
+                            <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                              {r.skill || ""}
+                              {r.part_type ? ` • ${r.part_type}` : ""}
+                              {r.question_number ? ` • Câu ${r.question_number}` : ""}
+                            </span>
+                          )}
                         </div>
+
+                        {!isFunctional && setTitle && (
+                          <p className="text-sm font-medium text-foreground mb-1">
+                            Bộ đề: {setTitle}
+                          </p>
+                        )}
 
                         <p className="text-sm text-muted-foreground mb-2">
                           Ghi chú: {r.note?.trim() ? r.note.trim() : "(không có ghi chú)"}
                         </p>
 
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          {r.exam_question_id && (
-                            <span>Question ID: <code className="text-foreground bg-muted rounded px-1">{r.exam_question_id}</code></span>
+                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                          {isFunctional && r.page_url && (
+                            <span>
+                              Trang: <code className="text-foreground bg-muted rounded px-1 break-all">{r.page_url}</code>
+                            </span>
                           )}
-                          {r.exam_set_id && (
-                            <span>Set ID: <code className="text-foreground bg-muted rounded px-1">{r.exam_set_id}</code></span>
+                          {isFunctional && r.device_info && (
+                            <span className="break-all">
+                              Thiết bị: <span className="text-foreground">{r.device_info}</span>
+                            </span>
                           )}
-                          <span>Thời gian: {fmtDate(r.created_at)}</span>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1">
+                            {!isFunctional && r.exam_question_id && (
+                              <span>Question ID: <code className="text-foreground bg-muted rounded px-1">{r.exam_question_id}</code></span>
+                            )}
+                            {!isFunctional && setIdForLink && (
+                              <span>Set ID: <code className="text-foreground bg-muted rounded px-1">{setIdForLink}</code></span>
+                            )}
+                            <span>Thời gian: {fmtDate(r.created_at)}</span>
+                          </div>
                         </div>
+
+                        {!isFunctional && setIdForLink && (
+                          <div className="mt-3">
+                            <Button asChild size="sm" variant="outline" className="gap-1.5">
+                              <Link to={`/admin?tab=legacy&examSet=${setIdForLink}`}>
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                Mở câu hỏi
+                              </Link>
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
