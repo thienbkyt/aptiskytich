@@ -16,6 +16,8 @@ import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import WritingFullResults from "@/components/writing/WritingFullResults";
+import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult } from "@/lib/saveExamResult";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
@@ -62,6 +64,14 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
   const adminNavigationRef = useRef(false);
+
+  // Writing full-practice grading state
+  const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
+  const [writingPhase, setWritingPhase] = useState<"none" | "grading" | "results">("none");
+  const [writingGradedCount, setWritingGradedCount] = useState(0);
+  const [writingResults, setWritingResults] = useState<WritingGradingResult[]>([]);
+  const [writingScore50, setWritingScore50] = useState(0);
+  const { gradeExam } = useExamGrading();
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
