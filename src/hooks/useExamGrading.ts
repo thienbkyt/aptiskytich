@@ -10,8 +10,29 @@ export interface GradingResult {
   suggestions: string[];
 }
 
+export interface WritingErrorItem {
+  original: string;
+  corrected: string;
+  explanation: string;
+}
+
+export interface WritingGradingResult {
+  partType: string;
+  maxPoints: number;
+  addressPercent: number;
+  bonusPercent: number;
+  wordPenaltyPercent: number;
+  grammarErrors: WritingErrorItem[];
+  spellingErrors: WritingErrorItem[];
+  openingClosingPenalty: number;
+  partScore: number;
+  feedback: string;
+}
+
+export type AnyGradingResult = GradingResult | WritingGradingResult;
+
 export function useExamGrading() {
-  const [grading, setGrading] = useState<GradingResult | null>(null);
+  const [grading, setGrading] = useState<AnyGradingResult | null>(null);
   const [isGrading, setIsGrading] = useState(false);
 
   const gradeExam = async (params: {
@@ -20,7 +41,7 @@ export function useExamGrading() {
     text?: string;
     questions: string[];
     partType: string;
-  }) => {
+  }): Promise<AnyGradingResult | null> => {
     setIsGrading(true);
     setGrading(null);
 
@@ -32,23 +53,50 @@ export function useExamGrading() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      const result = data as GradingResult;
+      const result = data as AnyGradingResult;
       setGrading(result);
 
       // Save to database
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("exam_gradings").insert({
-          user_id: user.id,
-          skill: params.type,
-          part_type: params.partType,
-          overall_level: result.overallLevel,
-          criteria: result.criteria as any,
-          mistakes: result.mistakes as any,
-          suggestions: result.suggestions as any,
-          transcript: result.transcript || "",
-          student_text: params.text || "",
-        });
+        if (params.type === "writing") {
+          const w = result as WritingGradingResult;
+          const mistakes = [
+            ...(w.grammarErrors || []).map((e) => ({ ...e, kind: "grammar" })),
+            ...(w.spellingErrors || []).map((e) => ({ ...e, kind: "spelling" })),
+          ];
+          await supabase.from("exam_gradings").insert({
+            user_id: user.id,
+            skill: params.type,
+            part_type: params.partType,
+            overall_level: `${w.partScore}/${w.maxPoints}`,
+            criteria: {
+              addressPercent: w.addressPercent,
+              bonusPercent: w.bonusPercent,
+              wordPenaltyPercent: w.wordPenaltyPercent,
+              openingClosingPenalty: w.openingClosingPenalty,
+              partScore: w.partScore,
+              maxPoints: w.maxPoints,
+            } as any,
+            mistakes: mistakes as any,
+            suggestions: [w.feedback] as any,
+            transcript: "",
+            student_text: params.text || "",
+          });
+        } else {
+          const s = result as GradingResult;
+          await supabase.from("exam_gradings").insert({
+            user_id: user.id,
+            skill: params.type,
+            part_type: params.partType,
+            overall_level: s.overallLevel,
+            criteria: s.criteria as any,
+            mistakes: s.mistakes as any,
+            suggestions: s.suggestions as any,
+            transcript: s.transcript || "",
+            student_text: params.text || "",
+          });
+        }
       }
 
       return result;

@@ -336,7 +336,7 @@ const WritingExamEngine = ({
         <div className="flex-1 px-4 pt-8 pb-10">
           <WritingResults
             isGrading={isGrading}
-            grading={grading}
+            grading={grading as import("@/hooks/useExamGrading").WritingGradingResult | null}
             onExit={onExit}
             submission={submission}
             onReview={!isGrading && grading ? () => setIsReviewing(true) : undefined}
