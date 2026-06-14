@@ -408,6 +408,7 @@ const ReadingExamEngine = ({
   }
 
   return (
+    <TimerProvider timeLeft={timeLeft} totalTime={timeLimit}>
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
       <ExamHeader
@@ -421,22 +422,15 @@ const ReadingExamEngine = ({
           <ReadingPart1Sentence
             question={part1Question}
             answers={p1Answers}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(gi, val) => {
-              if (submitted) return;
-              const n = [...p1Answers];
-              n[gi] = val;
-              setP1Answers(n);
-            }}
+            onAnswer={onAnswerP1}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
+            onNext={onPart1Next}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
 
@@ -444,21 +438,15 @@ const ReadingExamEngine = ({
           <ReadingPart2Cohesion
             question={part2Question}
             placements={p2Placements}
-            onPlacementsChange={(sIdx, p) => {
-              if (submitted) return;
-              setP2Placements((prev) => prev.map((x, i) => (i === sIdx ? p : x)));
-            }}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
+            onPlacementsChange={onPlacementsChangeP2}
             submitted={submitted}
-            onExitToSections={() => {}}
             onSubmit={!submitted ? handleSubmit : undefined}
             onPrevious={goToPrevPhase}
             sections={sections}
             currentSection={currentIndex}
-            onSectionChange={(i) => setCurrentIndex(i)}
+            onSectionChange={onSectionChangeP2}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
 
@@ -466,23 +454,16 @@ const ReadingExamEngine = ({
           <ReadingPart3Opinion
             question={part3Question}
             answers={p3Answers}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
             submitted={submitted}
             currentStatement={currentIndex}
-            onAnswer={(si, pi) => {
-              if (submitted) return;
-              const n = [...p3Answers];
-              n[si] = pi;
-              setP3Answers(n);
-            }}
+            onAnswer={onAnswerP3}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
+            onNext={onPart1Next}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
 
@@ -491,26 +472,20 @@ const ReadingExamEngine = ({
             question={part4Question}
             answers={p4Answers}
             currentIndex={currentIndex}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(pIdx, val) => {
-              if (submitted) return;
-              const n = [...p4Answers];
-              n[pIdx] = val;
-              setP4Answers(n);
-            }}
+            onAnswer={onAnswerP4}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
+            onNext={onPart1Next}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
       </div>
     </div>
+    </TimerProvider>
   );
 };
 
