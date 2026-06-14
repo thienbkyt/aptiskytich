@@ -12,6 +12,7 @@ import PageTransition from "@/components/layout/PageTransition";
 import RouteProgressBar from "@/components/layout/RouteProgressBar";
 
 import AICoachFab from "@/components/ai-coach/AICoachFab";
+import ReportFab from "@/components/ReportFab";
 
 const Index = lazy(() => import("./pages/Index"));
 
@@ -99,6 +100,7 @@ const App = () => (
           </PageTransition>
           </Suspense>
           <AICoachFab />
+          <ReportFab />
         </AuthProvider>
       </BrowserRouter>
 

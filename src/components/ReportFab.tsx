@@ -1,20 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Flag, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-type Category = "content" | "functional";
-type ContentReason = "wrong_answer" | "audio" | "image" | "content" | "other";
 type FunctionalReason = "cant_nav" | "cant_exit" | "button_broken" | "page_frozen" | "other";
-
-const CONTENT_REASONS: { value: ContentReason; label: string }[] = [
-  { value: "wrong_answer", label: "Sai đáp án" },
-  { value: "audio", label: "Lỗi audio" },
-  { value: "image", label: "Lỗi hình ảnh" },
-  { value: "content", label: "Lỗi nội dung/chính tả" },
-  { value: "other", label: "Khác" },
-];
 
 const FUNCTIONAL_REASONS: { value: FunctionalReason; label: string }[] = [
   { value: "cant_nav", label: "Không bấm được Next/Previous" },
@@ -23,14 +13,6 @@ const FUNCTIONAL_REASONS: { value: FunctionalReason; label: string }[] = [
   { value: "page_frozen", label: "Trang bị đứng/treo" },
   { value: "other", label: "Khác" },
 ];
-
-interface Props {
-  examQuestionId?: string | null;
-  examSetId?: string | null;
-  skill: string;
-  partType?: string | null;
-  questionNumber?: number | null;
-}
 
 const NAVY = "#002F5F";
 
@@ -50,65 +32,61 @@ function getPageUrl() {
   }
 }
 
-export default function ExamReportButton({
-  examQuestionId,
-  examSetId,
-  skill,
-  partType,
-  questionNumber,
-}: Props) {
+export default function ReportFab() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [category, setCategory] = useState<Category>("content");
-  const [contentReason, setContentReason] = useState<ContentReason>("wrong_answer");
-  const [functionalReason, setFunctionalReason] = useState<FunctionalReason>("cant_nav");
+  const [reason, setReason] = useState<FunctionalReason>("cant_nav");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
-  const reset = () => {
-    setNote("");
-    setCategory("content");
-    setContentReason("wrong_answer");
-    setFunctionalReason("cant_nav");
-  };
+  // Hide when in fullscreen exam mode
+  useEffect(() => {
+    const check = () => {
+      try {
+        setHidden(document.body.classList.contains("exam-fullscreen"));
+      } catch {
+        setHidden(false);
+      }
+    };
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   const handleSubmit = async () => {
     if (submitting) return;
     setSubmitting(true);
     try {
-      const reason = category === "content" ? contentReason : functionalReason;
       const { error } = await supabase.from("question_reports").insert({
-        exam_question_id: examQuestionId ?? null,
-        exam_set_id: examSetId ?? null,
+        exam_question_id: null,
+        exam_set_id: null,
         user_id: user?.id ?? null,
-        skill,
-        part_type: partType ?? null,
-        question_number: questionNumber ?? null,
+        skill: null,
+        part_type: null,
+        question_number: null,
         reason,
         note: note.trim() || null,
         status: "new",
-        report_category: category,
+        report_category: "functional",
         page_url: getPageUrl(),
         device_info: getDeviceInfo(),
       });
       if (error) throw error;
       toast.success("Đã gửi báo lỗi, cảm ơn bạn");
       setOpen(false);
-      reset();
+      setNote("");
+      setReason("cant_nav");
     } catch (e) {
-      console.error("[ExamReportButton] insert failed", e);
+      console.error("[ReportFab] insert failed", e);
       toast.error("Gửi báo lỗi thất bại, vui lòng thử lại");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const reasons = category === "content" ? CONTENT_REASONS : FUNCTIONAL_REASONS;
-  const activeReason: string = category === "content" ? contentReason : functionalReason;
-  const setActiveReason = (v: string) => {
-    if (category === "content") setContentReason(v as ContentReason);
-    else setFunctionalReason(v as FunctionalReason);
-  };
+  if (hidden) return null;
 
   return (
     <>
@@ -117,12 +95,12 @@ export default function ExamReportButton({
         onClick={() => setOpen(true)}
         className="fixed z-[90] flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-slate-50"
         style={{
-          bottom: 80,
+          bottom: 20,
           left: 16,
           color: NAVY,
           borderColor: NAVY,
         }}
-        aria-label="Báo lỗi câu hỏi"
+        aria-label="Báo lỗi chức năng"
       >
         <Flag className="w-3.5 h-3.5" />
         Báo lỗi
@@ -140,7 +118,7 @@ export default function ExamReportButton({
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-bold" style={{ color: NAVY }}>
-                Báo lỗi
+                Báo lỗi chức năng
               </h3>
               <button
                 type="button"
@@ -152,42 +130,15 @@ export default function ExamReportButton({
               </button>
             </div>
 
-            <div className="mb-3">
-              <div className="text-xs font-semibold mb-1.5 text-slate-600">Loại báo cáo</div>
-              <div className="flex gap-2">
-                {([
-                  { v: "content", l: "Lỗi nội dung câu hỏi" },
-                  { v: "functional", l: "Lỗi chức năng" },
-                ] as { v: Category; l: string }[]).map((c) => {
-                  const active = category === c.v;
-                  return (
-                    <button
-                      key={c.v}
-                      type="button"
-                      onClick={() => setCategory(c.v)}
-                      className="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
-                      style={{
-                        backgroundColor: active ? NAVY : "white",
-                        color: active ? "white" : NAVY,
-                        borderColor: NAVY,
-                      }}
-                    >
-                      {c.l}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             <div className="text-xs font-semibold mb-1.5 text-slate-600">Chi tiết</div>
             <div className="flex flex-wrap gap-2 mb-3">
-              {reasons.map((r) => {
-                const active = activeReason === r.value;
+              {FUNCTIONAL_REASONS.map((r) => {
+                const active = reason === r.value;
                 return (
                   <button
                     key={r.value}
                     type="button"
-                    onClick={() => setActiveReason(r.value)}
+                    onClick={() => setReason(r.value)}
                     className="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
                     style={{
                       backgroundColor: active ? NAVY : "white",
