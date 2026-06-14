@@ -9,6 +9,7 @@ import ListeningPart3Conversation from "@/components/listening/ListeningPart3Con
 import ListeningPart4Monologue from "@/components/listening/ListeningPart4Monologue";
 import ListeningResults from "@/components/listening/ListeningResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import ExamReportButton from "@/components/exam/ExamReportButton";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
 import type {
@@ -394,6 +395,15 @@ const ListeningExamEngine = ({
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
+      {!submitted && !reviewMode && (
+        <ExamReportButton
+          examQuestionId={sourceQuestionIds?.[currentIndex] ?? sourceQuestionIds?.[0] ?? null}
+          examSetId={null}
+          skill="listening"
+          partType={partType}
+          questionNumber={currentIndex + 1}
+        />
+      )}
       <ExamHeader
         skillLabel="Listening"
         partLabel={partLabel}

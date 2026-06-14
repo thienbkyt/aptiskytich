@@ -9,6 +9,7 @@ import WritingResults from "@/components/writing/WritingResults";
 import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import ExamReportButton from "@/components/exam/ExamReportButton";
 import { useExamGrading } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
@@ -348,6 +349,15 @@ const WritingExamEngine = ({
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
+      {phase === "practice" && !submitted && !reviewMode && (
+        <ExamReportButton
+          examQuestionId={sourceQuestionIds?.[0] ?? null}
+          examSetId={null}
+          skill="writing"
+          partType={partType}
+          questionNumber={1}
+        />
+      )}
       <ExamHeader
         skillLabel="Writing"
         partLabel={partLabel}

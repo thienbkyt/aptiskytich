@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import ExamReportButton from "@/components/exam/ExamReportButton";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -752,6 +753,13 @@ const SpeakingExamEngine = ({
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
+      <ExamReportButton
+        examQuestionId={sourceQuestionIds?.[currentIndex] ?? sourceQuestionIds?.[0] ?? null}
+        examSetId={examSetId ?? null}
+        skill="speaking"
+        partType={partType}
+        questionNumber={currentIndex + 1}
+      />
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}

@@ -15,6 +15,7 @@ import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import GrammarResults from "@/components/grammar/GrammarResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import ExamReportButton from "@/components/exam/ExamReportButton";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
@@ -377,6 +378,15 @@ const GrammarExamEngine = ({
           label={`Grammar · Câu ${groupStartLabel}/${questions.length}`}
           onSkip={!isLastGroup ? goNextGroup : handleSubmit}
           onBack={!isFirstGroup ? goPrevGroup : onPreviousPart}
+        />
+      )}
+      {phase === "practice" && !submitted && !reviewMode && (
+        <ExamReportButton
+          examQuestionId={(questions[currentIndex] as any)?.id ?? null}
+          examSetId={null}
+          skill="grammar_vocab"
+          partType={null}
+          questionNumber={currentIndex + 1}
         />
       )}
       <ExamHeader
