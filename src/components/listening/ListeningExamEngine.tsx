@@ -395,6 +395,15 @@ const ListeningExamEngine = ({
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
+      {!submitted && !reviewMode && (
+        <ExamReportButton
+          examQuestionId={sourceQuestionIds?.[currentIndex] ?? sourceQuestionIds?.[0] ?? null}
+          examSetId={null}
+          skill="listening"
+          partType={partType}
+          questionNumber={currentIndex + 1}
+        />
+      )}
       <ExamHeader
         skillLabel="Listening"
         partLabel={partLabel}
