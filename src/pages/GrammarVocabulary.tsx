@@ -15,6 +15,8 @@ import CompletionBadge from "@/components/practice/CompletionBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
+import { useAuth } from "@/hooks/useAuth";
+import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 
 interface FullPracticeState {
   active: boolean;
@@ -29,6 +31,7 @@ const GrammarVocabulary = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
+  const { user: authUser, loading: authLoading } = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const autoStartedRef = useRef<string | null>(null);
@@ -116,10 +119,12 @@ const GrammarVocabulary = () => {
             </p>
           </div>
 
-          {fullLoading ? (
+          {fullLoading || authLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
             </div>
+          ) : !authUser ? (
+            <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
           ) : filteredSets.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               Chưa có bộ đề nào. Vui lòng import đề từ trang Admin.
