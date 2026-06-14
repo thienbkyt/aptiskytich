@@ -380,6 +380,15 @@ const GrammarExamEngine = ({
           onBack={!isFirstGroup ? goPrevGroup : onPreviousPart}
         />
       )}
+      {phase === "practice" && !submitted && !reviewMode && (
+        <ExamReportButton
+          examQuestionId={(questions[currentIndex] as any)?.id ?? null}
+          examSetId={null}
+          skill="grammar_vocab"
+          partType={null}
+          questionNumber={currentIndex + 1}
+        />
+      )}
       <ExamHeader
         skillLabel="Grammar & Vocabulary"
         partLabel={testTitle}
