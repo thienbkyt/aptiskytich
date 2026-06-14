@@ -57,6 +57,15 @@ const BottomNavBar = ({
   const [reviewExpanded, setReviewExpanded] = useState<Set<number>>(new Set());
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
+  const navLockUntil = useRef(0);
+
+  const runNavLocked = (action?: () => void) => {
+    if (!action) return;
+    const now = Date.now();
+    if (now < navLockUntil.current) return;
+    navLockUntil.current = now + 350;
+    action();
+  };
 
   const autoBookmarkedCount = useMemo(
     () => sections.reduce((acc, sec) => acc + (sec.questions?.filter((q) => q.bookmarked).length || 0), 0),
