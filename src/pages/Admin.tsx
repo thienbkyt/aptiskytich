@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
 import QuestionManager from "@/components/admin/QuestionManager";
 import ImportCenter from "@/components/admin/import/ImportCenter";
