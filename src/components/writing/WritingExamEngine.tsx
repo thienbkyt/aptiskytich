@@ -349,6 +349,15 @@ const WritingExamEngine = ({
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
+      {phase === "practice" && !submitted && !reviewMode && (
+        <ExamReportButton
+          examQuestionId={sourceQuestionIds?.[0] ?? null}
+          examSetId={null}
+          skill="writing"
+          partType={partType}
+          questionNumber={1}
+        />
+      )}
       <ExamHeader
         skillLabel="Writing"
         partLabel={partLabel}
