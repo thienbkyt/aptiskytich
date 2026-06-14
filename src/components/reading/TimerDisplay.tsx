@@ -1,14 +1,23 @@
-import { useState } from "react";
+import { memo } from "react";
+import { useTimer } from "@/components/reading/TimerContext";
 
 interface TimerDisplayProps {
-  timeLeft: number;
-  totalTime: number;
+  timeLeft?: number;
+  totalTime?: number;
 }
 
 const formatTime = (s: number) =>
   `${String(Math.floor(s / 3600)).padStart(2, "0")}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-const TimerDisplay = ({ timeLeft, totalTime }: TimerDisplayProps) => {
+/**
+ * Self-subscribing timer display. When a TimerProvider is mounted up the tree,
+ * this component re-renders every second WITHOUT re-rendering its siblings
+ * (e.g. heavy question renderers). Falls back to props otherwise.
+ */
+const TimerDisplay = ({ timeLeft: timeLeftProp, totalTime: totalTimeProp }: TimerDisplayProps) => {
+  const ctx = useTimer();
+  const timeLeft = ctx ? ctx.timeLeft : (timeLeftProp ?? 0);
+  const totalTime = ctx ? ctx.totalTime : (totalTimeProp ?? 0);
   const progress = totalTime > 0 ? (timeLeft / totalTime) * 100 : 0;
 
   return (
@@ -28,4 +37,5 @@ const TimerDisplay = ({ timeLeft, totalTime }: TimerDisplayProps) => {
   );
 };
 
-export default TimerDisplay;
+export default memo(TimerDisplay);
+
