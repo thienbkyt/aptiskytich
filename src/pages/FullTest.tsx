@@ -10,6 +10,8 @@ import FullTestEngine from "@/components/fulltest/FullTestEngine";
 import { useFullTests, type FullTestItem } from "@/hooks/useFullTests";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
+import { useAuth } from "@/hooks/useAuth";
+import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -24,6 +26,7 @@ type TabKey = "aptis" | "key";
 const FullTest = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("aptis");
   const { tests, loading } = useFullTests(activeTab);
+  const { user: authUser, loading: authLoading } = useAuth();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
 
   const handleStartTest = (test: FullTestItem) => {
@@ -122,12 +125,14 @@ const FullTest = () => {
             </p>
           </div>
 
-          {loading ? (
+          {loading || authLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <TechSkeleton key={i} variant="card" className="h-52" />
               ))}
             </div>
+          ) : !authUser ? (
+            <LoginToPracticePrompt message="Đăng nhập để làm full bộ đề Aptis với giao diện giống đề thi thật 100%" />
           ) : tests.length === 0 ? (
             <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
               <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
