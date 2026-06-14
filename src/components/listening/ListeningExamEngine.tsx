@@ -73,6 +73,11 @@ const ListeningExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+
+  useEffect(() => {
+    if (phase === "practice") setHasStarted(true);
+  }, [phase]);
 
   const toggleBookmark = useCallback((qi: number) => {
     setBookmarked((prev) => {
