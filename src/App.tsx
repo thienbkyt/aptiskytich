@@ -24,6 +24,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminReport = lazy(() => import("./pages/AdminReport"));
+const AdminReports = lazy(() => import("./pages/AdminReports"));
 const AdminReportPricing = lazy(() => import("./pages/AdminReportPricing"));
 const AdminStudents = lazy(() => import("./pages/AdminStudents"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -90,6 +91,7 @@ const App = () => (
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/report" element={<AdminReport />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/report/pricing" element={<AdminReportPricing />} />
             <Route path="/admin/students" element={<AdminStudents />} />
             <Route path="*" element={<NotFound />} />

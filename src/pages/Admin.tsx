@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Shield, Database, FileSpreadsheet, BookOpen, Combine } from "lucide-react";
+import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
 import QuestionManager from "@/components/admin/QuestionManager";
@@ -41,9 +42,18 @@ const Admin = () => {
       <Navbar />
       <div className="pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-5xl">
-          <div className="flex items-center gap-3 mb-8">
-            <Shield className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-heading font-extrabold text-foreground">Admin Import Center</h1>
+          <div className="flex items-center justify-between gap-3 mb-8 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Shield className="w-6 h-6 text-primary" />
+              <h1 className="text-2xl font-heading font-extrabold text-foreground">Admin Import Center</h1>
+            </div>
+            <Link
+              to="/admin/reports"
+              className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              Xem báo lỗi câu hỏi
+            </Link>
           </div>
 
           <Tabs defaultValue="import-center" className="space-y-6">
