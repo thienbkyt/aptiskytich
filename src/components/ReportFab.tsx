@@ -40,17 +40,16 @@ export default function ReportFab() {
   const [submitting, setSubmitting] = useState(false);
   const [hidden, setHidden] = useState(false);
 
-  // Hide when in fullscreen exam mode
+  // Auto-hide during exams / review (full-screen takeover).
   useEffect(() => {
-    const check = () => {
-      try {
-        setHidden(document.body.classList.contains("exam-fullscreen"));
-      } catch {
-        setHidden(false);
-      }
+    const update = () => {
+      const isExam =
+        document.body.classList.contains("exam-mode") ||
+        document.body.classList.contains("history-review-mode");
+      setHidden(isExam);
     };
-    check();
-    const observer = new MutationObserver(check);
+    update();
+    const observer = new MutationObserver(update);
     observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
     return () => observer.disconnect();
   }, []);
