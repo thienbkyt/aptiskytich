@@ -575,40 +575,49 @@ export type Database = {
       question_reports: {
         Row: {
           created_at: string
+          device_info: string | null
           exam_question_id: string | null
           exam_set_id: string | null
           id: string
           note: string | null
+          page_url: string | null
           part_type: string | null
           question_number: number | null
           reason: string
-          skill: string
+          report_category: string
+          skill: string | null
           status: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          device_info?: string | null
           exam_question_id?: string | null
           exam_set_id?: string | null
           id?: string
           note?: string | null
+          page_url?: string | null
           part_type?: string | null
           question_number?: number | null
           reason: string
-          skill: string
+          report_category?: string
+          skill?: string | null
           status?: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          device_info?: string | null
           exam_question_id?: string | null
           exam_set_id?: string | null
           id?: string
           note?: string | null
+          page_url?: string | null
           part_type?: string | null
           question_number?: number | null
           reason?: string
-          skill?: string
+          report_category?: string
+          skill?: string | null
           status?: string
           user_id?: string | null
         }
