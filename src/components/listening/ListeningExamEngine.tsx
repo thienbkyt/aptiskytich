@@ -316,6 +316,11 @@ const ListeningExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3 flex justify-end">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <ExamInstructions
           skillName="Listening"
           totalParts={totalQuestions}
@@ -332,8 +337,11 @@ const ListeningExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
-        <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
-          <h1 className="text-xl mb-4">Aptis General Listening Instructions</h1>
+        <div className="flex-1 bg-white pl-[80px] pr-[80px] pt-[40px] font-sans text-black">
+          <div className="flex items-start justify-between mb-4">
+            <h1 className="text-xl">Aptis General Listening Instructions</h1>
+            {hasStarted && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />}
+          </div>
           <p className="font-bold mb-2">Listening</p>
           {fullFlow && (
             <p className="text-sm mb-1">You will listen to seventeen recordings.</p>
