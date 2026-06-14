@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -8,6 +8,7 @@ import ReadingPart3Opinion from "@/components/reading/ReadingPart3Opinion";
 import ReadingPart4Long from "@/components/reading/ReadingPart4Long";
 import ReadingResults from "@/components/reading/ReadingResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import { TimerProvider } from "@/components/reading/TimerContext";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
@@ -256,24 +257,46 @@ const ReadingExamEngine = ({
 
   // In full-part flow (skipIntro), Previous on first question jumps to previous part.
   // Otherwise (single-part practice), Previous on first question goes back to reading_intro.
-  const goToPrevPhase = () => {
+  const goToPrevPhase = useCallback(() => {
     if (skipIntro && onPreviousPart) onPreviousPart();
     else setPhase("reading_intro");
-  };
+  }, [skipIntro, onPreviousPart]);
 
-  const navProps = {
-    onPrevious: currentIndex > 0
-      ? () => setCurrentIndex((p) => p - 1)
-      : goToPrevPhase,
+  const goPrevQuestion = useCallback(() => setCurrentIndex((p) => Math.max(0, p - 1)), []);
+  const goNextQuestion = useCallback(() => setCurrentIndex((p) => p + 1), []);
+
+  const navProps = useMemo(() => ({
+    onPrevious: currentIndex > 0 ? goPrevQuestion : goToPrevPhase,
     onNext: currentIndex < totalQuestions - 1
-      ? () => setCurrentIndex((p) => p + 1)
+      ? goNextQuestion
       : (!submitted ? handleSubmit : undefined),
     onSubmit: undefined,
     isFirst: false,
     isLast: false,
     sections,
     onSubmitTest: !submitted ? handleSubmit : undefined,
-  };
+  }), [currentIndex, totalQuestions, submitted, handleSubmit, goPrevQuestion, goNextQuestion, goToPrevPhase, sections]);
+
+  // Stable answer handlers (functional setState → no answer-array deps → not recreated on timer tick).
+  const onAnswerP1 = useCallback((gi: number, val: number) => {
+    if (submitted) return;
+    setP1Answers((prev) => { const n = [...prev]; n[gi] = val; return n; });
+  }, [submitted]);
+  const onAnswerP3 = useCallback((si: number, pi: number) => {
+    if (submitted) return;
+    setP3Answers((prev) => { const n = [...prev]; n[si] = pi; return n; });
+  }, [submitted]);
+  const onAnswerP4 = useCallback((pIdx: number, val: number) => {
+    if (submitted) return;
+    setP4Answers((prev) => { const n = [...prev]; n[pIdx] = val; return n; });
+  }, [submitted]);
+  const onPlacementsChangeP2 = useCallback((sIdx: number, p: Record<number, string>) => {
+    if (submitted) return;
+    setP2Placements((prev) => prev.map((x, i) => (i === sIdx ? p : x)));
+  }, [submitted]);
+  const onSectionChangeP2 = useCallback((i: number) => setCurrentIndex(i), []);
+  const onToggleBookmarkCurrent = useCallback(() => toggleBookmark(currentIndex), [toggleBookmark, currentIndex]);
+  const onPart1Next = useCallback(() => { if (!submitted) handleSubmit(); }, [submitted, handleSubmit]);
 
   const isSinglePagePart = partType === "part1" || partType === "part3" || partType === "part4";
   const adminControls = !submitted && !reviewMode && (partType !== "part2" || phase !== "practice") ? (
