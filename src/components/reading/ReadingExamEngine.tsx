@@ -8,6 +8,7 @@ import ReadingPart3Opinion from "@/components/reading/ReadingPart3Opinion";
 import ReadingPart4Long from "@/components/reading/ReadingPart4Long";
 import ReadingResults from "@/components/reading/ReadingResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import ExamReportButton from "@/components/exam/ExamReportButton";
 import { TimerProvider } from "@/components/reading/TimerContext";
 import type {
   ReadingSentenceQuestion,
