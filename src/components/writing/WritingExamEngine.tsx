@@ -9,6 +9,7 @@ import WritingResults from "@/components/writing/WritingResults";
 import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import ExamReportButton from "@/components/exam/ExamReportButton";
 import { useExamGrading } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
