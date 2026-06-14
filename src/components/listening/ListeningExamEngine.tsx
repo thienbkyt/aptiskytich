@@ -125,7 +125,7 @@ const ListeningExamEngine = ({
   }, []);
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
         const next = p - 1;
@@ -139,7 +139,7 @@ const ListeningExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
