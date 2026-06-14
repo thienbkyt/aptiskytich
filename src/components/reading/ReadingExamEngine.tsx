@@ -329,6 +329,16 @@ const ReadingExamEngine = ({
     />
   ) : null;
 
+  const reportButton = phase === "practice" && !submitted && !reviewMode ? (
+    <ExamReportButton
+      examQuestionId={sourceQuestionIds?.[currentIndex] ?? sourceQuestionIds?.[0] ?? null}
+      examSetId={null}
+      skill="reading"
+      partType={partType}
+      questionNumber={currentIndex + 1}
+    />
+  ) : null;
+
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
