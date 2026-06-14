@@ -422,6 +422,7 @@ const ReadingExamEngine = ({
     <TimerProvider timeLeft={timeLeft} totalTime={timeLimit}>
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
+      {reportButton}
       <ExamHeader
         skillLabel="Reading Đề 01"
         partLabel={partLabel}
