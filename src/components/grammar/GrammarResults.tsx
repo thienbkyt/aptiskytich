@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Question } from "@/data/questions";
-import { getLevel, getLevelColor } from "@/data/questions";
 
 interface GrammarResultsProps {
   questions: Question[];
@@ -32,7 +31,6 @@ const GrammarResults = ({
 
   const total = questions.length;
   const pct = Math.round((correct / total) * 100);
-  const level = getLevel(correct, total);
 
   return (
     <div className="max-w-3xl mx-auto pb-10">
@@ -50,19 +48,13 @@ const GrammarResults = ({
             <p className="text-4xl font-heading font-extrabold text-primary">
               {correct}/{total}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Câu đúng</p>
+            <p className="text-sm text-muted-foreground mt-1">Số câu đúng</p>
           </div>
           <div>
             <p className="text-4xl font-heading font-extrabold text-foreground">
               {pct}%
             </p>
             <p className="text-sm text-muted-foreground mt-1">Tỉ lệ đúng</p>
-          </div>
-          <div>
-            <p className={`text-4xl font-heading font-extrabold ${getLevelColor(level)}`}>
-              {level}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">Trình độ ước tính</p>
           </div>
         </div>
 

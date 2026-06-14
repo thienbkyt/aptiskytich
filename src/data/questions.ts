@@ -123,3 +123,31 @@ export const getLevelColor = (level: string): string => {
     default: return "text-destructive";
   }
 };
+
+// ── Aptis 0–50 scaled score + CEFR band thresholds (for individual skill practice) ──
+
+export const APTIS_BAND_MIN: Record<
+  "listening" | "reading" | "writing" | "speaking",
+  Record<"A1" | "A2" | "B1" | "B2" | "C", number>
+> = {
+  listening: { A1: 8, A2: 16, B1: 24, B2: 34, C: 42 },
+  reading:   { A1: 8, A2: 16, B1: 26, B2: 38, C: 46 },
+  writing:   { A1: 6, A2: 18, B1: 26, B2: 40, C: 48 },
+  speaking:  { A1: 4, A2: 16, B1: 26, B2: 41, C: 48 },
+};
+
+export const toScaledScore = (correct: number, total: number): number =>
+  total > 0 ? Math.round((correct / total) * 50) : 0;
+
+export const getSkillBand = (
+  scaledScore: number,
+  skill: "listening" | "reading" | "writing" | "speaking"
+): string => {
+  const thresholds = APTIS_BAND_MIN[skill];
+  if (scaledScore >= thresholds.C) return "C";
+  if (scaledScore >= thresholds.B2) return "B2";
+  if (scaledScore >= thresholds.B1) return "B1";
+  if (scaledScore >= thresholds.A2) return "A2";
+  if (scaledScore >= thresholds.A1) return "A1";
+  return "A0";
+};

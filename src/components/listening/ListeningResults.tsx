@@ -2,6 +2,7 @@ import { ArrowLeft, RotateCcw, Trophy, Target, CheckCircle2, XCircle, Eye } from
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { toScaledScore, getSkillBand, getLevelColor } from "@/data/questions";
 import { resolveAudioUrl } from "@/lib/audioUrl";
 import type {
   ListeningPart1Question,
@@ -28,18 +29,10 @@ interface ListeningResultsProps {
   userAnswers?: any[];
 }
 
-const getLevel = (pct: number) => {
-  if (pct >= 90) return { label: "C", color: "text-emerald-500" };
-  if (pct >= 75) return { label: "B2", color: "text-blue-500" };
-  if (pct >= 60) return { label: "B1", color: "text-primary" };
-  if (pct >= 40) return { label: "A2", color: "text-amber-500" };
-  return { label: "A1", color: "text-destructive" };
-};
-
 const ListeningResults = (props: ListeningResultsProps) => {
   const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh" } = props;
-  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-  const level = getLevel(pct);
+  const scaled = toScaledScore(correct, total);
+  const band = getSkillBand(scaled, "listening");
 
   return (
     <motion.div
@@ -66,19 +59,17 @@ const ListeningResults = (props: ListeningResultsProps) => {
 
         <div className="flex justify-center gap-8 mb-6">
           <div>
-            <p className="text-4xl font-heading font-extrabold text-foreground">{correct}/{total}</p>
-            <p className="text-xs text-muted-foreground mt-1">Câu đúng</p>
+            <p className="text-4xl font-heading font-extrabold text-foreground">{scaled}/50</p>
+            <p className="text-xs text-muted-foreground mt-1">Điểm</p>
           </div>
           <div>
-            <p className="text-4xl font-heading font-extrabold text-foreground">{pct}%</p>
-            <p className="text-xs text-muted-foreground mt-1">Tỉ lệ</p>
+            <p className={`text-4xl font-heading font-extrabold ${getLevelColor(band)}`}>{band}</p>
+            <p className="text-xs text-muted-foreground mt-1">Trình độ</p>
           </div>
-        </div>
-
-        <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3 mb-8">
-          <Target className="w-5 h-5 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">Trình độ ước tính:</span>
-          <span className={`text-lg font-heading font-extrabold ${level.color}`}>{level.label}</span>
+          <div>
+            <p className="text-4xl font-heading font-extrabold text-foreground">{correct}/{total}</p>
+            <p className="text-xs text-muted-foreground mt-1">Số câu đúng</p>
+          </div>
         </div>
 
         <div className="flex gap-3 justify-center flex-wrap">
