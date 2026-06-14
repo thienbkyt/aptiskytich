@@ -128,100 +128,121 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
         );
       }
     } else {
-      systemPrompt = `You are an expert Aptis Writing exam grader. You will receive a student's written response along with the exam prompt.
+      systemPrompt = `You are an expert Aptis Writing exam grader. Grade the student's response using the EXACT numeric rubric below for the given partType. Be strict but fair. Respond in Vietnamese for the "feedback" field. List EVERY grammar and spelling mistake individually with original, corrected, and a short Vietnamese explanation.
 
-Your task:
-1. Grade the response on 4 criteria: Task Response, Grammar, Vocabulary, Coherence
-2. Each criterion is graded on the CEFR scale: A1, A2, B1, B2, C1
-3. Identify specific mistakes with corrections and explanations
-4. Provide improvement suggestions with better sentence structures and vocabulary
+GENERAL FLOW (every part): compute content% → apply word-shortage penalty → subtract error penalties → floor at 0 (never negative).
 
-Be strict but fair. Grade based on actual Aptis exam standards.`;
+RUBRIC BY partType:
+
+• task1 — Part 1, maxPoints=10, 5 questions × 2 points each. For each of the 5 short answers: grammatically correct = 2pt, grammatically wrong = 0pt. No word-count check. Sum across the 5 = partScore (no further penalty). Set addressPercent = (correctCount/5)*100, bonusPercent=0, wordPenaltyPercent=0, openingClosingPenalty=0. Still list grammar mistakes found.
+
+• task2 — Part 2, maxPoints=20, single form response, min 20 words.
+  - addressPercent (0–100): how well the student addressed the prompt requirements. If the prompt has 2 requirements and only 1 is addressed (the other off-topic) → 50%.
+  - bonusPercent: +40 if there is ONE long relevant supplementary detail with an example; OR +20 per short relevant detail (max 2 → cap 40). Irrelevant filler does NOT count as bonus and does NOT count toward word count.
+  - contentPercent = min(100, addressPercent*0.6 + bonusPercent). raw = contentPercent/100 * 20.
+  - Word-shortage penalty vs 20-word target, counting ONLY relevant words: shortage ≥20% → wordPenaltyPercent=30; 11–19% → 20; 1–10% → 10; else 0. Subtract (wordPenaltyPercent/100)*20 from raw.
+  - Error penalties: −1 per grammar error, −1 per spelling error.
+  - partScore = max(0, raw − wordPenalty − errors). openingClosingPenalty=0.
+
+• task3 — Part 3, maxPoints=30, 3 questions × 10 points. For EACH of the 3 answers apply task2-style content logic (contentPercent = min(100, address*0.6 + bonus[0/20/40])) → raw_i = contentPercent/100 * 10. NO word-shortage penalty. Subtract −1 per grammar error and −1 per spelling error from the SUM. partScore = max(0, sum(raw_i) − totalErrors). Report aggregated addressPercent = average across 3, bonusPercent = average across 3, wordPenaltyPercent=0, openingClosingPenalty=0.
+
+• task4 — Part 4, maxPoints=40 = email1(15) + email2(25). Min words: email1=50, email2=120.
+  - For EACH email: contentPercent = addressPercent (0–100) = how fully the prompt is addressed plus relevant info (no separate bonus split). raw_i = contentPercent/100 * emailMax.
+  - Word-shortage penalty per email vs its min, same brackets (≥20→30, 11–19→20, 1–10→10, else 0). Subtract (penalty%/100)*emailMax.
+  - Error penalties: −2 per error (grammar OR spelling) counted across both emails.
+  - Missing opening OR missing closing of an email: −3 each occurrence. Sum into openingClosingPenalty.
+  - partScore = max(0, (raw1+raw2) − wordPenalties − errorPenalties − openingClosingPenalty). Report addressPercent = average of the two emails, bonusPercent=0, wordPenaltyPercent = average of the two email penalty%.
+
+OUTPUT: Call submit_grading with EXACTLY this JSON schema. partScore must be the final number (0..maxPoints), already floored at 0. Round numeric fields to 1 decimal. feedback ≤ 3 sentences in Vietnamese.`;
 
       userContent = [
         {
           type: "text",
-          text: `Exam Part: ${partType}\nPrompt/Questions:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nStudent's written response:\n${text}\n\nGrade this writing response.`,
+          text: `partType: ${partType}\nPrompt/Questions:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nStudent's written response:\n${text}\n\nGrade strictly per the rubric for ${partType}.`,
         },
       ];
     }
 
-    const tools = [
-      {
-        type: "function",
-        function: {
-          name: "submit_grading",
-          description: "Submit the grading results for the exam response",
-          parameters: {
-            type: "object",
-            properties: {
-              transcript: {
-                type: "string",
-                description:
-                  "Transcription of audio (speaking only, empty string for writing)",
-              },
-              overallLevel: {
-                type: "string",
-                enum: ["A1", "A2", "B1", "B2", "C1"],
-                description: "Overall CEFR level",
-              },
-              criteria: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    level: {
-                      type: "string",
-                      enum: ["A1", "A2", "B1", "B2", "C1"],
-                    },
-                    feedback: { type: "string" },
-                  },
-                  required: ["name", "level", "feedback"],
-                  additionalProperties: false,
+    const errorItemSchema = {
+      type: "object",
+      properties: {
+        original: { type: "string" },
+        corrected: { type: "string" },
+        explanation: { type: "string" },
+      },
+      required: ["original", "corrected", "explanation"],
+      additionalProperties: false,
+    };
+
+    const speakingTool = {
+      type: "function",
+      function: {
+        name: "submit_grading",
+        description: "Submit the grading results for the speaking response",
+        parameters: {
+          type: "object",
+          properties: {
+            transcript: { type: "string" },
+            overallLevel: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1"] },
+            criteria: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  level: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1"] },
+                  feedback: { type: "string" },
                 },
-              },
-              mistakes: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    original: {
-                      type: "string",
-                      description: "The incorrect text",
-                    },
-                    corrected: {
-                      type: "string",
-                      description: "The corrected version",
-                    },
-                    explanation: {
-                      type: "string",
-                      description: "Why it's wrong and the grammar rule",
-                    },
-                  },
-                  required: ["original", "corrected", "explanation"],
-                  additionalProperties: false,
-                },
-              },
-              suggestions: {
-                type: "array",
-                items: { type: "string" },
-                description:
-                  "Improvement suggestions (better structures, vocabulary, tips)",
+                required: ["name", "level", "feedback"],
+                additionalProperties: false,
               },
             },
-            required: [
-              "transcript",
-              "overallLevel",
-              "criteria",
-              "mistakes",
-              "suggestions",
-            ],
-            additionalProperties: false,
+            mistakes: { type: "array", items: errorItemSchema },
+            suggestions: { type: "array", items: { type: "string" } },
           },
+          required: ["transcript", "overallLevel", "criteria", "mistakes", "suggestions"],
+          additionalProperties: false,
         },
       },
-    ];
+    };
+
+    const writingTool = {
+      type: "function",
+      function: {
+        name: "submit_grading",
+        description: "Submit the numeric Aptis Writing grading per part rubric",
+        parameters: {
+          type: "object",
+          properties: {
+            partType: { type: "string" },
+            maxPoints: { type: "number", description: "10/20/30/40 by part" },
+            addressPercent: { type: "number" },
+            bonusPercent: { type: "number" },
+            wordPenaltyPercent: { type: "number" },
+            grammarErrors: { type: "array", items: errorItemSchema },
+            spellingErrors: { type: "array", items: errorItemSchema },
+            openingClosingPenalty: { type: "number" },
+            partScore: { type: "number" },
+            feedback: { type: "string" },
+          },
+          required: [
+            "partType",
+            "maxPoints",
+            "addressPercent",
+            "bonusPercent",
+            "wordPenaltyPercent",
+            "grammarErrors",
+            "spellingErrors",
+            "openingClosingPenalty",
+            "partScore",
+            "feedback",
+          ],
+          additionalProperties: false,
+        },
+      },
+    };
+
+    const tools = [type === "writing" ? writingTool : speakingTool];
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
