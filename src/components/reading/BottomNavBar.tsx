@@ -497,7 +497,7 @@ const BottomNavBar = ({
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
-              <Button variant="outline" onClick={onPrevious} className="exam-nav-prev-next exam-nav-previous-button gap-2">
+              <Button variant="outline" onClick={() => runNavLocked(onPrevious)} className="exam-nav-prev-next exam-nav-previous-button gap-2">
                 <ArrowLeft className="w-4 h-4" /> Previous
               </Button>
             )}
@@ -506,7 +506,7 @@ const BottomNavBar = ({
                 {submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
-              <Button onClick={onNext} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6">
+              <Button onClick={() => runNavLocked(onNext)} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6">
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : null}
