@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus, Bookmark } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
@@ -57,6 +57,15 @@ const BottomNavBar = ({
   const [reviewExpanded, setReviewExpanded] = useState<Set<number>>(new Set());
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
+  const navLockUntil = useRef(0);
+
+  const runNavLocked = (action?: () => void) => {
+    if (!action) return;
+    const now = Date.now();
+    if (now < navLockUntil.current) return;
+    navLockUntil.current = now + 350;
+    action();
+  };
 
   const autoBookmarkedCount = useMemo(
     () => sections.reduce((acc, sec) => acc + (sec.questions?.filter((q) => q.bookmarked).length || 0), 0),
@@ -488,7 +497,7 @@ const BottomNavBar = ({
               <LogOut className="w-4 h-4" />
             </button>
             {!isFirst && onPrevious && (
-              <Button variant="outline" onClick={onPrevious} className="exam-nav-prev-next exam-nav-previous-button gap-2">
+              <Button variant="outline" onClick={() => runNavLocked(onPrevious)} className="exam-nav-prev-next exam-nav-previous-button gap-2">
                 <ArrowLeft className="w-4 h-4" /> Previous
               </Button>
             )}
@@ -497,7 +506,7 @@ const BottomNavBar = ({
                 {submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
-              <Button onClick={onNext} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6">
+              <Button onClick={() => runNavLocked(onNext)} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6">
                 Next <ArrowRight className="w-4 h-4" />
               </Button>
             ) : null}
