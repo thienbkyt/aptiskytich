@@ -47,6 +47,8 @@ interface WritingExamEngineProps {
   sourceQuestionIds?: string[];
   /** Open in read-only review mode (pre-submitted, intros skipped). */
   reviewMode?: boolean;
+  /** Full-practice mode: when set, engine forwards answers and skips grading/results. */
+  onPartAnswers?: (data: { partType: WritingPartType; text: string; questions: string[] }) => void;
   initialAnswers?: {
     shortAnswers?: string[];
     textAnswer?: string;
@@ -70,7 +72,7 @@ const WritingExamEngine = ({
   part1Data, part2Data, part3Data, part4Data,
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious, sourceQuestionIds,
-  showResultsOnSubmit,
+  showResultsOnSubmit, onPartAnswers,
   reviewMode, initialAnswers,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
@@ -184,6 +186,14 @@ const WritingExamEngine = ({
     setSubmitted(true);
     const perQuestion = buildPerQuestion();
 
+    // Full-practice mode (parent collects answers and grades all parts together)
+    if (onPartAnswers) {
+      const { text, questions } = getTextAndQuestions();
+      onPartAnswers({ partType, text, questions });
+      onComplete?.(perQuestion);
+      return;
+    }
+
     // Full-test mode (parent passes isLastPart): skip grading/results entirely
     if (isLastPart !== undefined && !showResultsOnSubmit) {
       onComplete?.(perQuestion);
@@ -203,7 +213,7 @@ const WritingExamEngine = ({
     });
 
     setPhase("results");
-  }, [onComplete, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
+  }, [onComplete, onPartAnswers, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
 
   const partLabel = PART_LABELS[partType];
   const adminControls = !submitted && !reviewMode ? (

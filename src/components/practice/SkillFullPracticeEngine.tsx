@@ -16,6 +16,8 @@ import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import WritingFullResults from "@/components/writing/WritingFullResults";
+import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult } from "@/lib/saveExamResult";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
@@ -62,6 +64,14 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
   const adminNavigationRef = useRef(false);
+
+  // Writing full-practice grading state
+  const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
+  const [writingPhase, setWritingPhase] = useState<"none" | "grading" | "results">("none");
+  const [writingGradedCount, setWritingGradedCount] = useState(0);
+  const [writingResults, setWritingResults] = useState<WritingGradingResult[]>([]);
+  const [writingScore50, setWritingScore50] = useState(0);
+  const { gradeExam } = useExamGrading();
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
@@ -306,6 +316,21 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   }
 
   if (skill === "writing") {
+    // Writing full-practice: show results when grading completes
+    if (writingPhase === "results") {
+      return <WritingFullResults results={writingResults} score50={writingScore50} onExit={onExit} />;
+    }
+    if (writingPhase === "grading") {
+      return (
+        <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Đang chấm điểm... ({writingGradedCount}/{parts.length})
+          </p>
+        </div>
+      );
+    }
+
     const writingPartType = partNorm.replace("part", "task") as "task1" | "task2" | "task3" | "task4";
     const writingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partNorm) {
@@ -314,6 +339,48 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part3": writingProps.part3Data = toWritingPart3(currentPart.questions); break;
       case "part4": writingProps.part4Data = toWritingPart4(currentPart.questions); break;
     }
+
+    const handleWritingPartAnswers = (data: { partType: string; text: string; questions: string[] }) => {
+      writingPartsRef.current.push(data);
+    };
+
+    const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
+      if (adminNavigationRef.current) return;
+      // Persist essay
+      saveExamResult({
+        examSetId: currentPart.id,
+        skill: "writing",
+        correct: 0,
+        total: perQuestion?.length || 0,
+        perQuestion,
+      });
+
+      if (!isLastPart) {
+        setCurrentPartIndex((p) => p + 1);
+        return;
+      }
+
+      // Last part → grade all sequentially
+      setWritingPhase("grading");
+      setWritingGradedCount(0);
+      const results: WritingGradingResult[] = [];
+      for (let i = 0; i < writingPartsRef.current.length; i++) {
+        const p = writingPartsRef.current[i];
+        const res = await gradeExam({
+          type: "writing",
+          text: p.text,
+          questions: p.questions,
+          partType: p.partType,
+        });
+        if (res) results.push(res as WritingGradingResult);
+        setWritingGradedCount(i + 1);
+      }
+      const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
+      setWritingResults(results);
+      setWritingScore50(Math.round(total100 / 2));
+      setWritingPhase("results");
+    };
+
     return (
       <>{adminOverlay}
       <WritingExamEngine
@@ -325,10 +392,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onTimeTick={(t) => setWritingTimeLeft(t)}
         skipIntro={currentPartIndex > 0}
         fullFlow
-        isLastPart={currentPartIndex >= parts.length - 1}
-        showResultsOnSubmit={isLastPart}
+        isLastPart={isLastPart}
         onExit={onExit}
-        onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
+        onPartAnswers={handleWritingPartAnswers}
+        onComplete={handleWritingPartComplete}
         onPrevious={handleAdminPreviousPart}
         {...writingProps}
       /></>
