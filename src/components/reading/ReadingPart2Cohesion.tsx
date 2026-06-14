@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, GripVertical } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -10,8 +10,8 @@ interface Props {
   question: ReadingCohesionQuestion;
   placements: Record<number, string>[]; // one map per section: position(1..5) -> sentence text
   onPlacementsChange: (sectionIdx: number, p: Record<number, string>) => void;
-  timeLeft: number;
-  totalTime: number;
+  timeLeft?: number;
+  totalTime?: number;
   submitted: boolean;
   onSubmit?: () => void;
   onPrevious?: () => void;
@@ -123,7 +123,7 @@ const ReadingPart2Cohesion = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+          <TimerDisplay />
         </div>
       </div>
 
@@ -246,4 +246,4 @@ const ReadingPart2Cohesion = ({
   );
 };
 
-export default ReadingPart2Cohesion;
+export default memo(ReadingPart2Cohesion);

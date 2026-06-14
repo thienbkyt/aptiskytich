@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -7,8 +8,8 @@ import type { ReadingOpinionQuestion } from "@/data/readingQuestions";
 interface Props {
   question: ReadingOpinionQuestion;
   answers: (number | null)[];
-  timeLeft: number;
-  totalTime: number;
+  timeLeft?: number;
+  totalTime?: number;
   submitted: boolean;
   currentStatement: number;
   onAnswer: (statementIndex: number, personIndex: number) => void;
@@ -46,7 +47,7 @@ const ReadingPart3Opinion = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+          <TimerDisplay />
         </div>
       </div>
 
@@ -145,4 +146,4 @@ const ReadingPart3Opinion = ({
   );
 };
 
-export default ReadingPart3Opinion;
+export default memo(ReadingPart3Opinion);
