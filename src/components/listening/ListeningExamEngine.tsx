@@ -9,6 +9,7 @@ import ListeningPart3Conversation from "@/components/listening/ListeningPart3Con
 import ListeningPart4Monologue from "@/components/listening/ListeningPart4Monologue";
 import ListeningResults from "@/components/listening/ListeningResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import TimerDisplay from "@/components/reading/TimerDisplay";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
 import type {
   ListeningPart1Question,
@@ -72,6 +73,11 @@ const ListeningExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+
+  useEffect(() => {
+    if (phase === "practice") setHasStarted(true);
+  }, [phase]);
 
   const toggleBookmark = useCallback((qi: number) => {
     setBookmarked((prev) => {
@@ -119,7 +125,7 @@ const ListeningExamEngine = ({
   }, []);
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
         const next = p - 1;
@@ -133,7 +139,7 @@ const ListeningExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
@@ -310,6 +316,11 @@ const ListeningExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3 flex justify-end">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <ExamInstructions
           skillName="Listening"
           totalParts={totalQuestions}
@@ -326,8 +337,11 @@ const ListeningExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
-        <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
-          <h1 className="text-xl mb-4">Aptis General Listening Instructions</h1>
+        <div className="flex-1 bg-white pl-[80px] pr-[80px] pt-[40px] font-sans text-black">
+          <div className="flex items-start justify-between mb-4">
+            <h1 className="text-xl">Aptis General Listening Instructions</h1>
+            {hasStarted && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />}
+          </div>
           <p className="font-bold mb-2">Listening</p>
           {fullFlow && (
             <p className="text-sm mb-1">You will listen to seventeen recordings.</p>
