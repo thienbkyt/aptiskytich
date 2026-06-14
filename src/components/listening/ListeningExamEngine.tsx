@@ -107,9 +107,16 @@ const ListeningExamEngine = ({
     setSubmitted(false);
     setSeenQuestions(new Set());
     setAnswers(new Array(totalQuestions).fill(null));
-    resetLimitedAudioPlays();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partType]);
+
+  // Reset audio play counts once on mount for a fresh attempt.
+  useEffect(() => {
+    if (!reviewMode) {
+      resetLimitedAudioPlays();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (phase !== "practice" || submitted || timeLeft <= 0) return;
