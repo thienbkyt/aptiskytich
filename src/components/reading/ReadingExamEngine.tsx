@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -8,6 +8,7 @@ import ReadingPart3Opinion from "@/components/reading/ReadingPart3Opinion";
 import ReadingPart4Long from "@/components/reading/ReadingPart4Long";
 import ReadingResults from "@/components/reading/ReadingResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
+import { TimerProvider } from "@/components/reading/TimerContext";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
@@ -256,24 +257,46 @@ const ReadingExamEngine = ({
 
   // In full-part flow (skipIntro), Previous on first question jumps to previous part.
   // Otherwise (single-part practice), Previous on first question goes back to reading_intro.
-  const goToPrevPhase = () => {
+  const goToPrevPhase = useCallback(() => {
     if (skipIntro && onPreviousPart) onPreviousPart();
     else setPhase("reading_intro");
-  };
+  }, [skipIntro, onPreviousPart]);
 
-  const navProps = {
-    onPrevious: currentIndex > 0
-      ? () => setCurrentIndex((p) => p - 1)
-      : goToPrevPhase,
+  const goPrevQuestion = useCallback(() => setCurrentIndex((p) => Math.max(0, p - 1)), []);
+  const goNextQuestion = useCallback(() => setCurrentIndex((p) => p + 1), []);
+
+  const navProps = useMemo(() => ({
+    onPrevious: currentIndex > 0 ? goPrevQuestion : goToPrevPhase,
     onNext: currentIndex < totalQuestions - 1
-      ? () => setCurrentIndex((p) => p + 1)
+      ? goNextQuestion
       : (!submitted ? handleSubmit : undefined),
     onSubmit: undefined,
     isFirst: false,
     isLast: false,
     sections,
     onSubmitTest: !submitted ? handleSubmit : undefined,
-  };
+  }), [currentIndex, totalQuestions, submitted, handleSubmit, goPrevQuestion, goNextQuestion, goToPrevPhase, sections]);
+
+  // Stable answer handlers (functional setState → no answer-array deps → not recreated on timer tick).
+  const onAnswerP1 = useCallback((gi: number, val: number) => {
+    if (submitted) return;
+    setP1Answers((prev) => { const n = [...prev]; n[gi] = val; return n; });
+  }, [submitted]);
+  const onAnswerP3 = useCallback((si: number, pi: number) => {
+    if (submitted) return;
+    setP3Answers((prev) => { const n = [...prev]; n[si] = pi; return n; });
+  }, [submitted]);
+  const onAnswerP4 = useCallback((pIdx: number, val: number) => {
+    if (submitted) return;
+    setP4Answers((prev) => { const n = [...prev]; n[pIdx] = val; return n; });
+  }, [submitted]);
+  const onPlacementsChangeP2 = useCallback((sIdx: number, p: Record<number, string>) => {
+    if (submitted) return;
+    setP2Placements((prev) => prev.map((x, i) => (i === sIdx ? p : x)));
+  }, [submitted]);
+  const onSectionChangeP2 = useCallback((i: number) => setCurrentIndex(i), []);
+  const onToggleBookmarkCurrent = useCallback(() => toggleBookmark(currentIndex), [toggleBookmark, currentIndex]);
+  const onPart1Next = useCallback(() => { if (!submitted) handleSubmit(); }, [submitted, handleSubmit]);
 
   const isSinglePagePart = partType === "part1" || partType === "part3" || partType === "part4";
   const adminControls = !submitted && !reviewMode && (partType !== "part2" || phase !== "practice") ? (
@@ -385,6 +408,7 @@ const ReadingExamEngine = ({
   }
 
   return (
+    <TimerProvider timeLeft={timeLeft} totalTime={timeLimit}>
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
       <ExamHeader
@@ -398,22 +422,15 @@ const ReadingExamEngine = ({
           <ReadingPart1Sentence
             question={part1Question}
             answers={p1Answers}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(gi, val) => {
-              if (submitted) return;
-              const n = [...p1Answers];
-              n[gi] = val;
-              setP1Answers(n);
-            }}
+            onAnswer={onAnswerP1}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
+            onNext={onPart1Next}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
 
@@ -421,21 +438,15 @@ const ReadingExamEngine = ({
           <ReadingPart2Cohesion
             question={part2Question}
             placements={p2Placements}
-            onPlacementsChange={(sIdx, p) => {
-              if (submitted) return;
-              setP2Placements((prev) => prev.map((x, i) => (i === sIdx ? p : x)));
-            }}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
+            onPlacementsChange={onPlacementsChangeP2}
             submitted={submitted}
-            onExitToSections={() => {}}
             onSubmit={!submitted ? handleSubmit : undefined}
             onPrevious={goToPrevPhase}
             sections={sections}
             currentSection={currentIndex}
-            onSectionChange={(i) => setCurrentIndex(i)}
+            onSectionChange={onSectionChangeP2}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
 
@@ -443,23 +454,16 @@ const ReadingExamEngine = ({
           <ReadingPart3Opinion
             question={part3Question}
             answers={p3Answers}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
             submitted={submitted}
             currentStatement={currentIndex}
-            onAnswer={(si, pi) => {
-              if (submitted) return;
-              const n = [...p3Answers];
-              n[si] = pi;
-              setP3Answers(n);
-            }}
+            onAnswer={onAnswerP3}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
+            onNext={onPart1Next}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
 
@@ -468,26 +472,20 @@ const ReadingExamEngine = ({
             question={part4Question}
             answers={p4Answers}
             currentIndex={currentIndex}
-            timeLeft={timeLeft}
-            totalTime={timeLimit}
             submitted={submitted}
-            onAnswer={(pIdx, val) => {
-              if (submitted) return;
-              const n = [...p4Answers];
-              n[pIdx] = val;
-              setP4Answers(n);
-            }}
+            onAnswer={onAnswerP4}
             {...navProps}
-            onNext={!submitted ? handleSubmit : undefined}
+            onNext={onPart1Next}
             onSubmit={undefined}
             isFirst={false}
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
-            onToggleBookmark={() => toggleBookmark(currentIndex)}
+            onToggleBookmark={onToggleBookmarkCurrent}
           />
         )}
       </div>
     </div>
+    </TimerProvider>
   );
 };
 
