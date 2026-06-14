@@ -26,6 +26,8 @@ import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
+import { useAuth } from "@/hooks/useAuth";
+import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 
 const partToTask: Record<string, WritingPartType> = {
   part1: "task1", part2: "task2", part3: "task3", part4: "task4",
@@ -75,6 +77,7 @@ const Writing = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
+  const { user: authUser, loading: authLoading } = useAuth();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const autoStartedRef = useRef<string | null>(null);
@@ -255,13 +258,21 @@ const Writing = () => {
           </Tabs>
 
           {activeTab === "full" ? (
-            <FullPartSection
-              progress={progress}
-              skillName="Writing"
-              sets={fullSets}
-              loading={fullLoading}
-              onStart={handleStartFullPractice}
-            />
+            fullLoading || authLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
+              </div>
+            ) : !authUser ? (
+              <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
+            ) : (
+              <FullPartSection
+                progress={progress}
+                skillName="Writing"
+                sets={fullSets}
+                loading={fullLoading}
+                onStart={handleStartFullPractice}
+              />
+            )
           ) : (
             <>
               {activeTaskInfo && (
@@ -273,10 +284,12 @@ const Writing = () => {
                 </div>
               )}
 
-              {loading ? (
+              {loading || authLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
                 </div>
+              ) : !authUser ? (
+                <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                   {filteredSets.map((set, index) => (
