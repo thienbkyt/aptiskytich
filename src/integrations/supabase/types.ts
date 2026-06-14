@@ -572,6 +572,48 @@ export type Database = {
         }
         Relationships: []
       }
+      question_reports: {
+        Row: {
+          created_at: string
+          exam_question_id: string | null
+          exam_set_id: string | null
+          id: string
+          note: string | null
+          part_type: string | null
+          question_number: number | null
+          reason: string
+          skill: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          exam_question_id?: string | null
+          exam_set_id?: string | null
+          id?: string
+          note?: string | null
+          part_type?: string | null
+          question_number?: number | null
+          reason: string
+          skill: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          exam_question_id?: string | null
+          exam_set_id?: string | null
+          id?: string
+          note?: string | null
+          part_type?: string | null
+          question_number?: number | null
+          reason?: string
+          skill?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           audio_url: string | null
