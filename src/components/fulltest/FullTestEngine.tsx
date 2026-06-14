@@ -14,6 +14,7 @@ import {
 import { saveTestResult } from "@/lib/testResults";
 import { saveExamResult } from "@/lib/saveExamResult";
 import { getLevel, getLevelColor } from "@/data/questions";
+import { useAuth } from "@/hooks/useAuth";
 
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
@@ -88,6 +89,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
   const completedKeysRef = useRef<Set<string>>(new Set());
   const adminNavigationRef = useRef(false);
+  const { isAdmin } = useAuth();
   // Unique id for this Full Test attempt — groups all 5 skills' rows in /history.
   const sessionIdRef = useRef<string>(
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -304,6 +306,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       goToPart(currentSkillIndex, currentPartIndex - 1);
       return;
     }
+    if (!isAdmin) return;
     const prevSkill = findSkillIndex(currentSkillIndex, -1);
     if (prevSkill === -1) return;
     const prevSkillKey = SKILL_ORDER[prevSkill];
@@ -315,7 +318,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   };
 
   const canGoBackPart =
-    currentPartIndex > 0 || findSkillIndex(currentSkillIndex, -1) !== -1;
+    currentPartIndex > 0 || (isAdmin && findSkillIndex(currentSkillIndex, -1) !== -1);
 
   const handleParentAdminSkip = () => {
     if (phase === "skill-intro") {
