@@ -139,18 +139,10 @@ const WritingExamEngine = ({
     return () => clearInterval(t);
   }, [hasStarted, submitted, timeLeft, externalTimeLeft, onTimeTick]);
 
-  // Full-test flow: when parent advances partType, reset to practice for the new part
-  useEffect(() => {
-    if (!skipIntro || reviewMode) return;
-    setPhase("practice");
-    setSubmitted(false);
-    setShortAnswers(new Array(part1Data?.questions.length || 5).fill(""));
-    setTextAnswer("");
-    setPart3Answers(new Array(part3Data?.questions.length || 3).fill(""));
-    setInformalAnswer("");
-    setFormalAnswer("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partType]);
+  // Note: engine is remounted per part (key changes), so we no longer reset
+  // answers on partType change — that would clobber restored initialAnswers.
+
+
 
 
   const getTextAndQuestions = (): { text: string; questions: string[] } => {
