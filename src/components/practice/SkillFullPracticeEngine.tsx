@@ -214,6 +214,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const handleAdminPreviousPart = currentPartIndex > 0 ? () => {
     adminNavigationRef.current = true;
     window.setTimeout(() => { adminNavigationRef.current = false; }, 800);
+    lastNavDirectionRef.current = "back";
     setCurrentPartIndex((p) => Math.max(0, p - 1));
     setEngineKey((k) => k + 1);
   } : undefined;
