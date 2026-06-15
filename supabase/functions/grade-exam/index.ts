@@ -223,6 +223,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
             addressPercent: { type: "number" },
             bonusPercent: { type: "number" },
             wordPenaltyPercent: { type: "number" },
+            coherencePenaltyPercent: { type: "number" },
             grammarErrors: { type: "array", items: errorItemSchema },
             spellingErrors: { type: "array", items: errorItemSchema },
             openingClosingPenalty: { type: "number" },
