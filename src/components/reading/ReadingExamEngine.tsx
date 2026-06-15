@@ -219,7 +219,11 @@ const ReadingExamEngine = ({
     let correct = 0;
     let scoredTotal = totalQuestions;
     if (partType === "part1" && part1Question) {
-      correct = part1Question.gaps.reduce((acc, g, i) => acc + (p1Answers[i] === g.correct ? 1 : 0), 0);
+      const usedGapIdx = [...part1Question.passage.matchAll(/\{(\d+)\}/g)]
+        .map(m => Number(m[1]))
+        .filter(idx => part1Question.gaps[idx]);
+      correct = usedGapIdx.reduce((acc, i) => acc + (p1Answers[i] === part1Question.gaps[i].correct ? 1 : 0), 0);
+      scoredTotal = usedGapIdx.length;
     } else if (partType === "part2" && part2Question) {
       let p2correct = 0, p2total = 0;
       part2Question.sections.forEach((sec, sIdx) => {
