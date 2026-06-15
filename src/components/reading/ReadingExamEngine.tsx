@@ -72,6 +72,8 @@ interface ReadingExamEngineProps {
   reviewDataLoading?: boolean;
   /** DB exam_set id; used as cache key for translate-review when fetching internally. */
   examSetId?: string | null;
+  /** Tổng số câu của cả ĐỀ Reading (4 part) để chia điểm /50 ở ReadingResults. */
+  totalForScore?: number | null;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
