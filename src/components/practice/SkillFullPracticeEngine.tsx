@@ -124,10 +124,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   ) => {
     if (adminNavigationRef.current) return;
     if (correct !== undefined && total !== undefined) {
-      setScores(prev => ({
-        correct: prev.correct + correct,
-        total: prev.total + total,
-      }));
+      if (skill === "reading") {
+        // Overwrite latest result for this part; recompute total from map (no double-count on revisit).
+        readingResultsByPartRef.current[currentPartIndex] = { correct, total };
+        const agg = Object.values(readingResultsByPartRef.current).reduce(
+          (acc, r) => ({ correct: acc.correct + r.correct, total: acc.total + r.total }),
+          { correct: 0, total: 0 }
+        );
+        setScores(agg);
+      } else {
+        setScores(prev => ({
+          correct: prev.correct + correct,
+          total: prev.total + total,
+        }));
+      }
       // Persist for the current part's exam_set
       const setIdForGrammar = parts[0]?.id ?? null;
       const examSetId = skill === "grammar_vocab" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
