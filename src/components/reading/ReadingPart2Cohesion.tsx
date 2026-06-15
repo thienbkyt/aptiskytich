@@ -207,33 +207,66 @@ const ReadingPart2Cohesion = ({
             </div>
           </div>
 
-          {/* Right: pool of unplaced sentences */}
-          <div
-            onDragOver={allowDrop}
-            onDrop={handleDropOnPool}
-            className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full"
-          >
-            {unplaced.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-4">
-                All sentences placed.
-              </p>
-            )}
-            {unplaced.map((s) => (
-              <div
-                key={s.text}
-                draggable={!submitted}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", s.text);
-                  handleDragStart(s.text);
-                }}
-                onDragEnd={handleDragEnd}
-                className="bg-background border border-border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2"
-              >
-                <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                <span>{s.text}</span>
+          {/* Right: pool of unplaced sentences (or correct order + translations when submitted) */}
+          {submitted ? (
+            <div className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-semibold text-foreground">Thứ tự đúng &amp; dịch nghĩa</p>
+                {reviewDataLoading && (
+                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Đang dịch…
+                  </span>
+                )}
               </div>
-            ))}
-          </div>
+              {[1, 2, 3, 4, 5].map((pos) => {
+                const correct = section.sentences.find((s) => s.correctPosition === pos);
+                if (!correct) return null;
+                const translation = reviewData?.translations?.[part2ItemId(currentSection, pos)];
+                return (
+                  <div key={pos} className="bg-background border border-border rounded-md px-3 py-2 text-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="text-xs font-bold text-primary mt-0.5">{pos}.</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-foreground">{correct.text}</p>
+                        {translation ? (
+                          <p className="mt-1 text-xs text-muted-foreground">{translation}</p>
+                        ) : reviewDataLoading ? (
+                          <p className="mt-1 text-xs italic text-muted-foreground">Đang dịch…</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div
+              onDragOver={allowDrop}
+              onDrop={handleDropOnPool}
+              className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full"
+            >
+              {unplaced.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  All sentences placed.
+                </p>
+              )}
+              {unplaced.map((s) => (
+                <div
+                  key={s.text}
+                  draggable={!submitted}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", s.text);
+                    handleDragStart(s.text);
+                  }}
+                  onDragEnd={handleDragEnd}
+                  className="bg-background border border-border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2"
+                >
+                  <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <span>{s.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
