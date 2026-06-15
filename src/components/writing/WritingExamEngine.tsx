@@ -176,6 +176,17 @@ const WritingExamEngine = ({
     return { text: "", questions: [] };
   };
 
+  // Forward live answers + submission map to parent (full-practice mode).
+  useEffect(() => {
+    if (reviewMode) return;
+    onAnswersChange?.({ shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer });
+    if (onPartAnswers) {
+      const { text, questions } = getTextAndQuestions();
+      onPartAnswers({ partType, text, questions });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType]);
+
   const buildPerQuestion = (): WritingPerQuestion[] | undefined => {
     if (!sourceQuestionIds || sourceQuestionIds.length === 0) return undefined;
     const { text } = getTextAndQuestions();
