@@ -340,6 +340,27 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   }
 
   if (skill === "reading") {
+    if (readingPhase === "results") {
+      return (
+        <ReadingFullResults
+          parts={readingFullParts}
+          score50={readingScore50}
+          onExit={onExit}
+          onRetry={() => {
+            readingAnswersByPartRef.current = {};
+            readingResultsByPartRef.current = {};
+            setReadingFullParts([]);
+            setReadingScore50(0);
+            setScores({ correct: 0, total: 0 });
+            setReadingTimeLeft(SKILL_TIMES.reading);
+            lastNavDirectionRef.current = "forward";
+            setCurrentPartIndex(0);
+            setEngineKey((k) => k + 1);
+            setReadingPhase("none");
+          }}
+        />
+      );
+    }
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const readingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
