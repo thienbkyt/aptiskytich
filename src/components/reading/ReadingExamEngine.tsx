@@ -71,7 +71,7 @@ const ReadingExamEngine = ({
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
-  sourceQuestionIds, reviewMode, initialAnswers,
+  sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -85,18 +85,33 @@ const ReadingExamEngine = ({
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
-    reviewMode && initialAnswers?.p1 ? initialAnswers.p1 : new Array(part1Question?.gaps.length || 0).fill(null)
+    initialAnswers?.p1 && initialAnswers.p1.length > 0
+      ? initialAnswers.p1
+      : new Array(part1Question?.gaps.length || 0).fill(null)
   );
   const [p2Placements, setP2Placements] = useState<Record<number, string>[]>(
-    () => reviewMode && initialAnswers?.p2 ? initialAnswers.p2 : (part2Question?.sections || []).map(() => ({}))
+    () => initialAnswers?.p2 && initialAnswers.p2.length > 0
+      ? initialAnswers.p2
+      : (part2Question?.sections || []).map(() => ({}))
   );
   const [p3Answers, setP3Answers] = useState<(number | null)[]>(
-    reviewMode && initialAnswers?.p3 ? initialAnswers.p3 : new Array(part3Question?.statements.length || 0).fill(null)
+    initialAnswers?.p3 && initialAnswers.p3.length > 0
+      ? initialAnswers.p3
+      : new Array(part3Question?.statements.length || 0).fill(null)
   );
   const p4Total = part4Question?.paragraphs?.length || part4Question?.questions.length || 0;
   const [p4Answers, setP4Answers] = useState<(number | null)[]>(
-    reviewMode && initialAnswers?.p4 ? initialAnswers.p4 : new Array(p4Total).fill(null)
+    initialAnswers?.p4 && initialAnswers.p4.length > 0
+      ? initialAnswers.p4
+      : new Array(p4Total).fill(null)
   );
+
+  // Notify parent of answer changes (skip in reviewMode).
+  useEffect(() => {
+    if (reviewMode) return;
+    onAnswersChange?.({ p1: p1Answers, p2: p2Placements, p3: p3Answers, p4: p4Answers });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p1Answers, p2Placements, p3Answers, p4Answers]);
 
   const part2SectionCount = part2Question?.sections.length || 0;
 
