@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, GripVertical } from "lucide-react";
+import { Bookmark, GripVertical, Loader2 } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import type { ReadingCohesionQuestion } from "@/data/readingQuestions";
+import { part2ItemId, type ReadingReviewData } from "@/lib/readingReview";
 
 interface Props {
   question: ReadingCohesionQuestion;
@@ -22,6 +23,8 @@ interface Props {
   onSectionChange?: (idx: number) => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  reviewData?: ReadingReviewData | null;
+  reviewDataLoading?: boolean;
 }
 
 const ReadingPart2Cohesion = ({
@@ -29,6 +32,7 @@ const ReadingPart2Cohesion = ({
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections, onSubmitTest,
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
+  reviewData, reviewDataLoading,
 }: Props) => {
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
