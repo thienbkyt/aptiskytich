@@ -271,6 +271,11 @@ const GrammarExamEngine = ({
           />
         )}
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 w-full pb-20">
           <ExamInstructions
             skillName="Grammar & Vocabulary"
