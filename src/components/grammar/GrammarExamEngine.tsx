@@ -303,6 +303,11 @@ const GrammarExamEngine = ({
           />
         )}
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Grammar & Vocabulary Instructions</h1>
           <p className="font-bold mb-2">Grammar & Vocabulary</p>
