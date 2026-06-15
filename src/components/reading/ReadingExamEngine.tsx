@@ -18,6 +18,7 @@ import type {
   ReadingLongQuestion,
 } from "@/data/readingQuestions";
 import type { ReadingReviewData } from "@/lib/readingReview";
+import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -69,6 +70,8 @@ interface ReadingExamEngineProps {
   reviewData?: ReadingReviewData | null;
   /** Whether reviewData is still loading (for inline loading hints). */
   reviewDataLoading?: boolean;
+  /** DB exam_set id; used as cache key for translate-review when fetching internally. */
+  examSetId?: string | null;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -79,7 +82,7 @@ const ReadingExamEngine = ({
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
-  reviewData, reviewDataLoading,
+  reviewData, reviewDataLoading, examSetId,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -120,6 +123,22 @@ const ReadingExamEngine = ({
     onAnswersChange?.({ p1: p1Answers, p2: p2Placements, p3: p3Answers, p4: p4Answers });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p1Answers, p2Placements, p3Answers, p4Answers]);
+
+  // Internal fetch of translate-review when parent did not supply reviewData.
+  // Enabled only in review/submitted mode to avoid pre-fetching during practice.
+  const internalFetchEnabled = reviewData === undefined && (submitted || isReviewing || !!reviewMode);
+  const cacheKey = examSetId ?? sourceQuestionIds?.[0] ?? null;
+  const partSnapshot = useMemo(
+    () => ({ partType, part1Question, part2Question, part3Question, part4Question }),
+    [partType, part1Question, part2Question, part3Question, part4Question],
+  );
+  const { data: internalReviewData, status: internalReviewStatus } = useReadingReviewData(
+    cacheKey, partSnapshot, internalFetchEnabled,
+  );
+  const effectiveReviewData = reviewData !== undefined ? reviewData : internalReviewData;
+  const effectiveReviewLoading = reviewData !== undefined
+    ? !!reviewDataLoading
+    : internalReviewStatus === "loading";
 
   const part2SectionCount = part2Question?.sections.length || 0;
 
@@ -507,8 +526,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
 
@@ -525,8 +544,8 @@ const ReadingExamEngine = ({
             onSectionChange={onSectionChangeP2}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
 
@@ -544,8 +563,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
 
@@ -563,8 +582,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
       </div>
