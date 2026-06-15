@@ -70,6 +70,8 @@ interface ReadingExamEngineProps {
   reviewData?: ReadingReviewData | null;
   /** Whether reviewData is still loading (for inline loading hints). */
   reviewDataLoading?: boolean;
+  /** DB exam_set id; used as cache key for translate-review when fetching internally. */
+  examSetId?: string | null;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
