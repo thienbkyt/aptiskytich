@@ -34,7 +34,8 @@ interface ReadingResultsProps {
 }
 
 const ReadingResults = (props: ReadingResultsProps) => {
-  const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh" } = props;
+  const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh", detailOnly } = props;
+  if (detailOnly) return <ReadingReview {...props} />;
   const scaled = toScaledScore(correct, total);
   const band = getSkillBand(scaled, "reading");
 
