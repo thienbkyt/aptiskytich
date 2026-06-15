@@ -311,10 +311,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part3": readingProps.part3Question = toReadingPart3(currentPart.questions); break;
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;
     }
+    const readingPreviousPart = currentPartIndex > 0
+      ? () => setCurrentPartIndex((p) => Math.max(0, p - 1))
+      : undefined;
     return (
       <>{adminOverlay}
       <ReadingExamEngine
-        key={`reading-${engineKey}`}
+        key={`reading-part-${currentPartIndex}`}
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
@@ -324,7 +327,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         fullFlow
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
-        onPreviousPart={handleAdminPreviousPart}
+        onPreviousPart={readingPreviousPart}
+        initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
+        onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
         showResultsOnSubmit={isLastPart}
         {...readingProps}
       /></>
