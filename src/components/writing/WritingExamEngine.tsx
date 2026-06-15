@@ -57,6 +57,15 @@ interface WritingExamEngineProps {
     informalAnswer?: string;
     formalAnswer?: string;
   };
+  onAnswersChange?: (a: {
+    shortAnswers: string[];
+    textAnswer: string;
+    part3Answers: string[];
+    informalAnswer: string;
+    formalAnswer: string;
+  }) => void;
+  /** When true, mount directly into practice phase (used when navigating back to a previous part). */
+  enterAtLastQuestion?: boolean;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
@@ -74,10 +83,10 @@ const WritingExamEngine = ({
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious, sourceQuestionIds,
   showResultsOnSubmit, onPartAnswers,
-  reviewMode, initialAnswers,
+  reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
 }: WritingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
-  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
@@ -95,14 +104,14 @@ const WritingExamEngine = ({
   }, [partType]);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
-    reviewMode && initialAnswers?.shortAnswers ? initialAnswers.shortAnswers : new Array(part1Data?.questions.length || 5).fill("")
+    initialAnswers?.shortAnswers ?? new Array(part1Data?.questions.length || 5).fill("")
   );
-  const [textAnswer, setTextAnswer] = useState(reviewMode ? (initialAnswers?.textAnswer || "") : "");
+  const [textAnswer, setTextAnswer] = useState(initialAnswers?.textAnswer ?? "");
   const [part3Answers, setPart3Answers] = useState<string[]>(
-    reviewMode && initialAnswers?.part3Answers ? initialAnswers.part3Answers : new Array(part3Data?.questions.length || 3).fill("")
+    initialAnswers?.part3Answers ?? new Array(part3Data?.questions.length || 3).fill("")
   );
-  const [informalAnswer, setInformalAnswer] = useState(reviewMode ? (initialAnswers?.informalAnswer || "") : "");
-  const [formalAnswer, setFormalAnswer] = useState(reviewMode ? (initialAnswers?.formalAnswer || "") : "");
+  const [informalAnswer, setInformalAnswer] = useState(initialAnswers?.informalAnswer ?? "");
+  const [formalAnswer, setFormalAnswer] = useState(initialAnswers?.formalAnswer ?? "");
 
   const { grading, isGrading, gradeExam } = useExamGrading();
 
@@ -130,18 +139,10 @@ const WritingExamEngine = ({
     return () => clearInterval(t);
   }, [hasStarted, submitted, timeLeft, externalTimeLeft, onTimeTick]);
 
-  // Full-test flow: when parent advances partType, reset to practice for the new part
-  useEffect(() => {
-    if (!skipIntro || reviewMode) return;
-    setPhase("practice");
-    setSubmitted(false);
-    setShortAnswers(new Array(part1Data?.questions.length || 5).fill(""));
-    setTextAnswer("");
-    setPart3Answers(new Array(part3Data?.questions.length || 3).fill(""));
-    setInformalAnswer("");
-    setFormalAnswer("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [partType]);
+  // Note: engine is remounted per part (key changes), so we no longer reset
+  // answers on partType change — that would clobber restored initialAnswers.
+
+
 
 
   const getTextAndQuestions = (): { text: string; questions: string[] } => {
@@ -174,6 +175,17 @@ const WritingExamEngine = ({
     }
     return { text: "", questions: [] };
   };
+
+  // Forward live answers + submission map to parent (full-practice mode).
+  useEffect(() => {
+    if (reviewMode) return;
+    onAnswersChange?.({ shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer });
+    if (onPartAnswers) {
+      const { text, questions } = getTextAndQuestions();
+      onPartAnswers({ partType, text, questions });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType]);
 
   const buildPerQuestion = (): WritingPerQuestion[] | undefined => {
     if (!sourceQuestionIds || sourceQuestionIds.length === 0) return undefined;

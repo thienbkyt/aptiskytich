@@ -74,6 +74,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
+  const writingAnswersByPartRef = useRef<Record<number, {
+    shortAnswers: string[]; textAnswer: string; part3Answers: string[]; informalAnswer: string; formalAnswer: string;
+  }>>({});
+  const writingSubmissionsByPartRef = useRef<Record<number, { partType: string; text: string; questions: string[] }>>({});
   const [writingPhase, setWritingPhase] = useState<"none" | "grading" | "results">("none");
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingResults, setWritingResults] = useState<WritingGradingResult[]>([]);
@@ -376,8 +380,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     }
 
     const handleWritingPartAnswers = (data: { partType: string; text: string; questions: string[] }) => {
-      writingPartsRef.current.push(data);
+      writingSubmissionsByPartRef.current[currentPartIndex] = data;
     };
+
+    const writingPreviousPart = currentPartIndex > 0
+      ? () => {
+          lastNavDirectionRef.current = "back";
+          setCurrentPartIndex((p) => Math.max(0, p - 1));
+        }
+      : undefined;
 
     const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
       if (adminNavigationRef.current) return;
@@ -391,16 +402,24 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       });
 
       if (!isLastPart) {
+        lastNavDirectionRef.current = "forward";
         setCurrentPartIndex((p) => p + 1);
         return;
       }
 
-      // Last part → grade all sequentially
+      // Last part → grade all sequentially using latest submission per part index
       setWritingPhase("grading");
       setWritingGradedCount(0);
+      const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
+        .map((k) => parseInt(k, 10))
+        .sort((a, b) => a - b);
+      const orderedSubmissions = orderedIndices
+        .map((i) => writingSubmissionsByPartRef.current[i])
+        .filter(Boolean);
+      writingPartsRef.current = orderedSubmissions;
       const results: WritingGradingResult[] = [];
-      for (let i = 0; i < writingPartsRef.current.length; i++) {
-        const p = writingPartsRef.current[i];
+      for (let i = 0; i < orderedSubmissions.length; i++) {
+        const p = orderedSubmissions[i];
         const res = await gradeExam({
           type: "writing",
           text: p.text,
@@ -419,7 +438,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     return (
       <>{adminOverlay}
       <WritingExamEngine
-        key="writing-full"
+        key={`writing-part-${currentPartIndex}`}
         partType={writingPartType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
@@ -431,7 +450,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onExit={onExit}
         onPartAnswers={handleWritingPartAnswers}
         onComplete={handleWritingPartComplete}
-        onPrevious={handleAdminPreviousPart}
+        onPrevious={writingPreviousPart}
+        initialAnswers={writingAnswersByPartRef.current[currentPartIndex]}
+        onAnswersChange={(a) => { writingAnswersByPartRef.current[currentPartIndex] = a; }}
+        enterAtLastQuestion={lastNavDirectionRef.current === "back"}
         {...writingProps}
       /></>
     );
