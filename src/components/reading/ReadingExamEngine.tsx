@@ -62,6 +62,8 @@ interface ReadingExamEngineProps {
   };
   /** Notifies parent whenever answers change (skipped in reviewMode). */
   onAnswersChange?: (answers: ReadingAnswersState) => void;
+  /** When true (and not reviewMode), mount at the LAST question of the part (used when navigating back from next part). */
+  enterAtLastQuestion?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
