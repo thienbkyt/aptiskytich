@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, memo } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
+import { Bookmark, CheckCircle2, XCircle, ChevronDown, Loader2 } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingLongQuestion } from "@/data/readingQuestions";
+import { part4ItemId, type ReadingReviewData } from "@/lib/readingReview";
 
 interface Props {
   question: ReadingLongQuestion;
@@ -22,6 +23,8 @@ interface Props {
   onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  reviewData?: ReadingReviewData | null;
+  reviewDataLoading?: boolean;
 }
 
 const ReadingPart4Long = ({
@@ -29,6 +32,7 @@ const ReadingPart4Long = ({
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
+  reviewData, reviewDataLoading,
 }: Props) => {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
