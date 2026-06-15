@@ -130,30 +130,34 @@ Be strict but fair. Grade based on actual Aptis exam standards.`;
     } else {
       systemPrompt = `You are an expert Aptis Writing exam grader. Grade the student's response using the EXACT numeric rubric below for the given partType. Be strict but fair. Respond in Vietnamese for the "feedback" field. List EVERY grammar and spelling mistake individually with original, corrected, and a short Vietnamese explanation.
 
-GENERAL FLOW (every part): compute content% → apply word-shortage penalty → subtract error penalties → floor at 0 (never negative).
+GENERAL FLOW (every part): compute content% → apply word-shortage penalty → apply COHERENCE penalty → subtract error penalties → floor at 0 (never negative).
+
+COHERENCE PENALTY (NEW): evaluate whether ideas flow logically and linearly with proper connectors between sentences/paragraphs. If the response lacks coherence/linearity (ideas jump around, no linking words, disjointed) → coherencePenaltyPercent = 10. Otherwise = 0. Applies to task2/task3/task4 only. For task1, coherencePenaltyPercent ALWAYS = 0 (no penalty). When applied, you MUST explicitly mention the coherence issue in the Vietnamese feedback.
 
 RUBRIC BY partType:
 
-• task1 — Part 1, maxPoints=10, 5 questions × 2 points each. For each of the 5 short answers: grammatically correct = 2pt, grammatically wrong = 0pt. No word-count check. Sum across the 5 = partScore (no further penalty). Set addressPercent = (correctCount/5)*100, bonusPercent=0, wordPenaltyPercent=0, openingClosingPenalty=0. Still list grammar mistakes found.
+• task1 — Part 1, maxPoints=10, 5 questions × 2 points each. For each of the 5 short answers: grammatically correct = 2pt, grammatically wrong = 0pt. No word-count check. Sum across the 5 = partScore (no further penalty). Set addressPercent = (correctCount/5)*100, bonusPercent=0, wordPenaltyPercent=0, coherencePenaltyPercent=0, openingClosingPenalty=0. Still list grammar mistakes found.
 
 • task2 — Part 2, maxPoints=20, single form response, min 20 words.
   - addressPercent (0–100): how well the student addressed the prompt requirements. If the prompt has 2 requirements and only 1 is addressed (the other off-topic) → 50%.
   - bonusPercent: +40 if there is ONE long relevant supplementary detail with an example; OR +20 per short relevant detail (max 2 → cap 40). Irrelevant filler does NOT count as bonus and does NOT count toward word count.
   - contentPercent = min(100, addressPercent*0.6 + bonusPercent). raw = contentPercent/100 * 20.
   - Word-shortage penalty vs 20-word target, counting ONLY relevant words: shortage ≥20% → wordPenaltyPercent=30; 11–19% → 20; 1–10% → 10; else 0. Subtract (wordPenaltyPercent/100)*20 from raw.
+  - Coherence penalty: subtract (coherencePenaltyPercent/100)*20 (i.e. −2 when coherencePenaltyPercent=10).
   - Error penalties: −1 per grammar error, −1 per spelling error.
-  - partScore = max(0, raw − wordPenalty − errors). openingClosingPenalty=0.
+  - partScore = max(0, raw − wordPenalty − coherencePenalty − errors). openingClosingPenalty=0.
 
-• task3 — Part 3, maxPoints=30, 3 questions × 10 points. For EACH of the 3 answers apply task2-style content logic (contentPercent = min(100, address*0.6 + bonus[0/20/40])) → raw_i = contentPercent/100 * 10. NO word-shortage penalty. Subtract −1 per grammar error and −1 per spelling error from the SUM. partScore = max(0, sum(raw_i) − totalErrors). Report aggregated addressPercent = average across 3, bonusPercent = average across 3, wordPenaltyPercent=0, openingClosingPenalty=0.
+• task3 — Part 3, maxPoints=30, 3 questions × 10 points. For EACH of the 3 answers apply task2-style content logic (contentPercent = min(100, address*0.6 + bonus[0/20/40])) → raw_i = contentPercent/100 * 10. NO word-shortage penalty. Apply coherence penalty ONCE on the SUM: subtract (coherencePenaltyPercent/100)*30 (i.e. −3 when =10). Subtract −1 per grammar error and −1 per spelling error from the SUM. partScore = max(0, sum(raw_i) − coherencePenalty − totalErrors). Report aggregated addressPercent = average across 3, bonusPercent = average across 3, wordPenaltyPercent=0, openingClosingPenalty=0.
 
 • task4 — Part 4, maxPoints=40 = email1(15) + email2(25). Min words: email1=50, email2=120.
   - For EACH email: contentPercent = addressPercent (0–100) = how fully the prompt is addressed plus relevant info (no separate bonus split). raw_i = contentPercent/100 * emailMax.
   - Word-shortage penalty per email vs its min, same brackets (≥20→30, 11–19→20, 1–10→10, else 0). Subtract (penalty%/100)*emailMax.
+  - Coherence: evaluate each email independently. If email1 lacks coherence → subtract (10/100)*15 = −1.5 from email1. If email2 lacks coherence → subtract (10/100)*25 = −2.5 from email2. Report coherencePenaltyPercent = 10 if applied to ANY email, else 0.
   - Error penalties: −2 per error (grammar OR spelling) counted across both emails.
   - Missing opening OR missing closing of an email: −3 each occurrence. Sum into openingClosingPenalty.
-  - partScore = max(0, (raw1+raw2) − wordPenalties − errorPenalties − openingClosingPenalty). Report addressPercent = average of the two emails, bonusPercent=0, wordPenaltyPercent = average of the two email penalty%.
+  - partScore = max(0, (raw1+raw2) − wordPenalties − coherencePenalties − errorPenalties − openingClosingPenalty). Report addressPercent = average of the two emails, bonusPercent=0, wordPenaltyPercent = average of the two email penalty%.
 
-OUTPUT: Call submit_grading with EXACTLY this JSON schema. partScore must be the final number (0..maxPoints), already floored at 0. Round numeric fields to 1 decimal. feedback ≤ 3 sentences in Vietnamese.`;
+OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the final number (0..maxPoints), already floored at 0 and never exceeding maxPoints. Round numeric fields to 1 decimal. feedback ≤ 3 sentences in Vietnamese; explicitly mention coherence when penalized.`;
 
       userContent = [
         {
