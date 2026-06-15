@@ -26,6 +26,13 @@ export interface ReadingPerQuestion {
   is_correct: boolean;
 }
 
+export interface ReadingAnswersState {
+  p1: (number | null)[];
+  p2: Record<number, string>[];
+  p3: (number | null)[];
+  p4: (number | null)[];
+}
+
 interface ReadingExamEngineProps {
   partType: ReadingPartType;
   testTitle: string;
@@ -53,6 +60,8 @@ interface ReadingExamEngineProps {
     p3?: (number | null)[];
     p4?: (number | null)[];
   };
+  /** Notifies parent whenever answers change (skipped in reviewMode). */
+  onAnswersChange?: (answers: ReadingAnswersState) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
