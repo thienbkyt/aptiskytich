@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
+import TimerDisplay from "@/components/reading/TimerDisplay";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import WritingPart1Short from "@/components/writing/WritingPart1Short";
 import WritingPart2Social from "@/components/writing/WritingPart2Social";
