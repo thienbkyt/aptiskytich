@@ -72,6 +72,8 @@ const ReadingExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     reviewMode && initialAnswers?.p1 ? initialAnswers.p1 : new Array(part1Question?.gaps.length || 0).fill(null)
