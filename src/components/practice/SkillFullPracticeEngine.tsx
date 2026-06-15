@@ -159,6 +159,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     if (isGrammar || isLast) {
       setPhase("completed");
     } else {
+      lastNavDirectionRef.current = "forward";
       setCurrentPartIndex(prev => prev + 1);
       if (skill !== "writing" && skill !== "listening") {
         setEngineKey(prev => prev + 1);
