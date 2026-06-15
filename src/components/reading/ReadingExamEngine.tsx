@@ -73,7 +73,7 @@ const ReadingExamEngine = ({
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
-  sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
+  sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
