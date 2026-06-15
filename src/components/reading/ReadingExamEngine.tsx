@@ -373,6 +373,11 @@ const ReadingExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Reading Instructions</h1>
           <p className="font-bold mb-2">Reading</p>
