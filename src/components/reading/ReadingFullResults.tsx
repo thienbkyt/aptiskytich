@@ -107,21 +107,8 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
     );
   }
 
-  const current = parts[reviewPartIndex];
-  const { data: reviewData, status: reviewStatus } = useReadingReviewData(
-    current?.examSetId ?? null,
-    current
-      ? {
-          partType: current.partType,
-          part1Question: current.part1Question,
-          part2Question: current.part2Question,
-          part3Question: current.part3Question,
-          part4Question: current.part4Question,
-        }
-      : null,
-    view === "review",
-  );
   if (!current) return null;
+
 
   return (
     <div className="min-h-screen">
