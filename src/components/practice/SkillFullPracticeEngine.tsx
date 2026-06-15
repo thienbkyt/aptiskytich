@@ -65,6 +65,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
   const adminNavigationRef = useRef(false);
+  const lastNavDirectionRef = useRef<"forward" | "back">("forward");
 
   // Reading full-practice: keep per-part answers + results so user can revisit/edit
   // previous parts without losing data; final score sums latest result per part.
