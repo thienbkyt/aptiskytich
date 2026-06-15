@@ -47,6 +47,22 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   const totalQuestions = parts.reduce((s, p) => s + p.total, 0);
   const band = getSkillBand(score50, "reading");
 
+  const current = parts[reviewPartIndex];
+  const { data: reviewData, status: reviewStatus } = useReadingReviewData(
+    current?.examSetId ?? null,
+    current
+      ? {
+          partType: current.partType,
+          part1Question: current.part1Question,
+          part2Question: current.part2Question,
+          part3Question: current.part3Question,
+          part4Question: current.part4Question,
+        }
+      : null,
+    view === "review",
+  );
+
+
   if (view === "summary") {
     return (
       <div className="max-w-3xl mx-auto pb-10">
