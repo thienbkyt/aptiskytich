@@ -115,7 +115,7 @@ const WritingExamEngine = ({
 
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       const next = timeLeft - 1;
       if (onTimeTick) onTimeTick(Math.max(0, next));
@@ -128,7 +128,7 @@ const WritingExamEngine = ({
       }
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft, externalTimeLeft, onTimeTick]);
+  }, [hasStarted, submitted, timeLeft, externalTimeLeft, onTimeTick]);
 
   // Full-test flow: when parent advances partType, reset to practice for the new part
   useEffect(() => {
