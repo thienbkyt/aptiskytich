@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle, ChevronDown, Loader2 } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
