@@ -1,8 +1,7 @@
-import { ArrowLeft, RotateCcw, Trophy, Target, CheckCircle2, XCircle, Eye } from "lucide-react";
+import { ArrowLeft, RotateCcw, Trophy, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { toScaledScore, getSkillBand, getLevelColor } from "@/data/questions";
 import { resolveAudioUrl } from "@/lib/audioUrl";
 import type {
   ListeningPart1Question,
@@ -31,8 +30,8 @@ interface ListeningResultsProps {
 
 const ListeningResults = (props: ListeningResultsProps) => {
   const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh" } = props;
-  const scaled = toScaledScore(correct, total);
-  const band = getSkillBand(scaled, "listening");
+  const score = correct * 2;
+  const maxScore = total * 2;
 
   return (
     <motion.div
@@ -59,12 +58,8 @@ const ListeningResults = (props: ListeningResultsProps) => {
 
         <div className="flex justify-center gap-8 mb-6">
           <div>
-            <p className="text-4xl font-heading font-extrabold text-foreground">{scaled}/50</p>
+            <p className="text-4xl font-heading font-extrabold text-foreground">{score}/{maxScore}</p>
             <p className="text-xs text-muted-foreground mt-1">Điểm</p>
-          </div>
-          <div>
-            <p className={`text-4xl font-heading font-extrabold ${getLevelColor(band)}`}>{band}</p>
-            <p className="text-xs text-muted-foreground mt-1">Trình độ</p>
           </div>
           <div>
             <p className="text-4xl font-heading font-extrabold text-foreground">{correct}/{total}</p>
