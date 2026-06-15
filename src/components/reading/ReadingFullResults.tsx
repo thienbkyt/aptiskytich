@@ -109,24 +109,29 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             Chi tiết bài làm
           </h3>
           <div className="space-y-3">
-            {parts.map((p, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between py-2 border-b border-border last:border-b-0"
-              >
-                <span className="text-sm font-medium text-foreground">
-                  {partLabel(p.partType)}
-                </span>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-muted-foreground">
-                    Số câu đúng: <span className="font-semibold text-foreground">{p.correct}/{p.total}</span>
+            {parts.map((p, i) => {
+              const T = totalQuestions > 0 ? totalQuestions : p.total;
+              const partScore = T > 0 ? Math.round((p.correct / T) * 50) : 0;
+              const partMax = T > 0 ? Math.round((p.total / T) * 50) : 0;
+              return (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-2 border-b border-border last:border-b-0"
+                >
+                  <span className="text-sm font-medium text-foreground">
+                    {partLabel(p.partType)}
                   </span>
-                  <span className="text-muted-foreground">
-                    Điểm: <span className="font-semibold text-primary">{p.correct * 2}/{p.total * 2}</span>
-                  </span>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className="text-muted-foreground">
+                      Số câu đúng: <span className="font-semibold text-foreground">{p.correct}/{p.total}</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      Điểm: <span className="font-semibold text-primary">{partScore}/{partMax}</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
