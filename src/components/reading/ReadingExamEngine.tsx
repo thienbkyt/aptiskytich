@@ -193,18 +193,16 @@ const ReadingExamEngine = ({
     if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
-        if (p <= 1) {
-          clearInterval(t);
-          handleSubmit();
-          onTimeTick?.(0);
-          return 0;
-        }
-        const next = p - 1;
+        const next = Math.max(0, p - 1);
         onTimeTick?.(next);
         return next;
       });
     }, 1000);
     return () => clearInterval(t);
+  }, [hasStarted, submitted, timeLeft]);
+
+  useEffect(() => {
+    if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
   }, [hasStarted, submitted, timeLeft]);
 
   const handleSubmit = useCallback(() => {
