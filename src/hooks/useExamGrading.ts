@@ -75,6 +75,7 @@ export function useExamGrading() {
               addressPercent: w.addressPercent,
               bonusPercent: w.bonusPercent,
               wordPenaltyPercent: w.wordPenaltyPercent,
+              coherencePenaltyPercent: w.coherencePenaltyPercent,
               openingClosingPenalty: w.openingClosingPenalty,
               partScore: w.partScore,
               maxPoints: w.maxPoints,
