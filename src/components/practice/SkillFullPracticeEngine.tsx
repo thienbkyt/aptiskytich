@@ -170,6 +170,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           partType,
           correct: res.correct,
           total: res.total,
+          examSetId: pt.id,
           answers: ans,
         };
         if (partType === "part1") entry.part1Question = toReadingPart1(pt.questions);
