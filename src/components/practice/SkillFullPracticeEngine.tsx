@@ -160,7 +160,33 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const isGrammar = skill === "grammar_vocab";
     const isLast = currentPartIndex >= parts.length - 1;
-    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening" || skill === "writing");
+    if (skill === "reading" && isLast) {
+      // Build per-part snapshot for the full-results screen
+      const built: ReadingFullPartResult[] = parts.map((pt, idx) => {
+        const partType = pt.partNorm as "part1" | "part2" | "part3" | "part4";
+        const res = readingResultsByPartRef.current[idx] || { correct: 0, total: 0 };
+        const ans = readingAnswersByPartRef.current[idx] || { p1: [], p2: [], p3: [], p4: [] };
+        const entry: ReadingFullPartResult = {
+          partType,
+          correct: res.correct,
+          total: res.total,
+          answers: ans,
+        };
+        if (partType === "part1") entry.part1Question = toReadingPart1(pt.questions);
+        else if (partType === "part2") entry.part2Question = toReadingPart2(pt.questions);
+        else if (partType === "part3") entry.part3Question = toReadingPart3(pt.questions);
+        else if (partType === "part4") entry.part4Question = toReadingPart4(pt.questions);
+        return entry;
+      });
+      const totalCorrect = built.reduce((s, p) => s + p.correct, 0);
+      const totalQs = built.reduce((s, p) => s + p.total, 0);
+      const score50 = totalQs > 0 ? Math.round((totalCorrect / totalQs) * 50) : 0;
+      setReadingFullParts(built);
+      setReadingScore50(score50);
+      setReadingPhase("results");
+      return;
+    }
+    const engineHandlesResults = isLast && (isGrammar || skill === "listening" || skill === "writing");
     if (engineHandlesResults) {
       return;
     }
