@@ -258,10 +258,10 @@ const ReadingExamEngine = ({
       perQuestion = [{
         exam_question_id: sourceQuestionIds[0],
         user_answer: JSON.stringify({ partType, answers: allAnswers }),
-        is_correct: correct === totalQuestions && totalQuestions > 0,
+        is_correct: correct === scoredTotal && scoredTotal > 0,
       }];
     }
-    onComplete?.(correct, totalQuestions, perQuestion);
+    onComplete?.(correct, scoredTotal, perQuestion);
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
