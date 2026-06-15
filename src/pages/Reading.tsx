@@ -58,6 +58,7 @@ interface ExamState {
   loadingExam: boolean;
   examSetId?: string | null;
   startedAt?: number;
+  totalForScore?: number | null;
 }
 
 interface FullPracticeState {
