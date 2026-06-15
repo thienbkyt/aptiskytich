@@ -20,6 +20,12 @@ interface ReadingResultsProps {
   mode?: "fresh" | "history";
   /** When true, render ONLY the per-question detail block (no header card). */
   detailOnly?: boolean;
+  /**
+   * Tổng số câu của cả ĐỀ Reading (4 part) — dùng để chia điểm /50 theo tỉ lệ.
+   * Khi có: điểm part = round(correct/T*50), tối đa = round(total/T*50).
+   * Khi không có (mock / không thuộc full test): fallback 2 điểm/câu.
+   */
+  totalForScore?: number | null;
   // Review data (optional)
   partType?: ReadingPartType;
   part1Question?: ReadingSentenceQuestion;
@@ -33,10 +39,11 @@ interface ReadingResultsProps {
 }
 
 const ReadingResults = (props: ReadingResultsProps) => {
-  const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh", detailOnly } = props;
+  const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh", detailOnly, totalForScore } = props;
   if (detailOnly) return <ReadingReview {...props} />;
-  const score = correct * 2;
-  const maxScore = total * 2;
+  const T = totalForScore && totalForScore > 0 ? totalForScore : null;
+  const score = T ? Math.round((correct / T) * 50) : correct * 2;
+  const maxScore = T ? Math.round((total / T) * 50) : total * 2;
 
   return (
     <div className="max-w-3xl mx-auto pb-10 space-y-6">
