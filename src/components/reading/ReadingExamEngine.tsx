@@ -72,6 +72,8 @@ interface ReadingExamEngineProps {
   reviewDataLoading?: boolean;
   /** DB exam_set id; used as cache key for translate-review when fetching internally. */
   examSetId?: string | null;
+  /** Tổng số câu của cả ĐỀ Reading (4 part) để chia điểm /50 ở ReadingResults. */
+  totalForScore?: number | null;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -82,7 +84,7 @@ const ReadingExamEngine = ({
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
-  reviewData, reviewDataLoading, examSetId,
+  reviewData, reviewDataLoading, examSetId, totalForScore,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -486,6 +488,7 @@ const ReadingExamEngine = ({
             onExit={onExit}
             onRetry={handleRetry}
             onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
+            totalForScore={totalForScore ?? null}
             partType={partType}
             part1Question={part1Question}
             part1Answers={p1Answers}
