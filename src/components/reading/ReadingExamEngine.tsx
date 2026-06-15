@@ -65,6 +65,10 @@ interface ReadingExamEngineProps {
   onAnswersChange?: (answers: ReadingAnswersState) => void;
   /** When true (and not reviewMode), mount at the LAST question of the part (used when navigating back from next part). */
   enterAtLastQuestion?: boolean;
+  /** Optional translations + Part 3 evidence used in submitted/review render. */
+  reviewData?: ReadingReviewData | null;
+  /** Whether reviewData is still loading (for inline loading hints). */
+  reviewDataLoading?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
