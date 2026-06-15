@@ -679,6 +679,24 @@ export type Database = {
           },
         ]
       }
+      reading_review_cache: {
+        Row: {
+          created_at: string
+          data: Json
+          exam_set_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          exam_set_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          exam_set_id?: string
+        }
+        Relationships: []
+      }
       speaking_recordings: {
         Row: {
           audio_url: string
