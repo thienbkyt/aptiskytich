@@ -72,6 +72,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   // previous parts without losing data; final score sums latest result per part.
   const readingAnswersByPartRef = useRef<Record<number, ReadingAnswersState>>({});
   const readingResultsByPartRef = useRef<Record<number, { correct: number; total: number }>>({});
+  const [readingPhase, setReadingPhase] = useState<"none" | "results">("none");
+  const [readingFullParts, setReadingFullParts] = useState<ReadingFullPartResult[]>([]);
+  const [readingScore50, setReadingScore50] = useState(0);
 
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
