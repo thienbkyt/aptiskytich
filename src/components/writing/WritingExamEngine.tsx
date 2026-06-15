@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
+import TimerDisplay from "@/components/reading/TimerDisplay";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import WritingPart1Short from "@/components/writing/WritingPart1Short";
 import WritingPart2Social from "@/components/writing/WritingPart2Social";
@@ -76,6 +77,8 @@ const WritingExamEngine = ({
   reviewMode, initialAnswers,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(!!reviewMode);
@@ -112,7 +115,7 @@ const WritingExamEngine = ({
 
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       const next = timeLeft - 1;
       if (onTimeTick) onTimeTick(Math.max(0, next));
@@ -125,7 +128,7 @@ const WritingExamEngine = ({
       }
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft, externalTimeLeft, onTimeTick]);
+  }, [hasStarted, submitted, timeLeft, externalTimeLeft, onTimeTick]);
 
   // Full-test flow: when parent advances partType, reset to practice for the new part
   useEffect(() => {
@@ -266,6 +269,11 @@ const WritingExamEngine = ({
     return (
       <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
         {adminControls}
+        {hasStarted && (
+          <div className="pr-10 pb-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <p className="text-sm text-gray-700 mb-2">Aptis General Practice Test</p>
         <h1 className="text-xl font-bold mb-6">Writing Practice Test {testTitle}</h1>
         <div className="flex gap-16 mb-8">
@@ -294,6 +302,11 @@ const WritingExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-4">Aptis General Writing Instructions</h1>
           <p className="font-bold mb-2">Writing</p>

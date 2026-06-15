@@ -70,6 +70,8 @@ const GrammarExamEngine = ({
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [isReviewing, setIsReviewing] = useState(false);
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
   const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching", "collocation"] as const;
@@ -123,7 +125,7 @@ const GrammarExamEngine = ({
   }, [phase, currentGroupIdx]);
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
         if (p <= 1) {
@@ -135,7 +137,7 @@ const GrammarExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft]);
 
   // Push current question to AI Coach context (for "explain this question" feature)
   useEffect(() => {
@@ -269,6 +271,11 @@ const GrammarExamEngine = ({
           />
         )}
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 w-full pb-20">
           <ExamInstructions
             skillName="Grammar & Vocabulary"
@@ -296,6 +303,11 @@ const GrammarExamEngine = ({
           />
         )}
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Grammar & Vocabulary Instructions</h1>
           <p className="font-bold mb-2">Grammar & Vocabulary</p>

@@ -10,6 +10,7 @@ import ReadingResults from "@/components/reading/ReadingResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import { TimerProvider } from "@/components/reading/TimerContext";
+import TimerDisplay from "@/components/reading/TimerDisplay";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
@@ -71,6 +72,8 @@ const ReadingExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     reviewMode && initialAnswers?.p1 ? initialAnswers.p1 : new Array(part1Question?.gaps.length || 0).fill(null)
@@ -153,7 +156,7 @@ const ReadingExamEngine = ({
   }, [phase, currentIndex, partType]);
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
         if (p <= 1) {
@@ -168,7 +171,7 @@ const ReadingExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
@@ -344,6 +347,11 @@ const ReadingExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 w-full pb-20">
           <ExamInstructions
             skillName="Reading"
@@ -365,6 +373,11 @@ const ReadingExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Reading Instructions</h1>
           <p className="font-bold mb-2">Reading</p>
