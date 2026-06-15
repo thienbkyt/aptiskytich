@@ -57,6 +57,15 @@ interface WritingExamEngineProps {
     informalAnswer?: string;
     formalAnswer?: string;
   };
+  onAnswersChange?: (a: {
+    shortAnswers: string[];
+    textAnswer: string;
+    part3Answers: string[];
+    informalAnswer: string;
+    formalAnswer: string;
+  }) => void;
+  /** When true, mount directly into practice phase (used when navigating back to a previous part). */
+  enterAtLastQuestion?: boolean;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
