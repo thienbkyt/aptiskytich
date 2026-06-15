@@ -315,7 +315,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;
     }
     const readingPreviousPart = currentPartIndex > 0
-      ? () => setCurrentPartIndex((p) => Math.max(0, p - 1))
+      ? () => {
+          lastNavDirectionRef.current = "back";
+          setCurrentPartIndex((p) => Math.max(0, p - 1));
+        }
       : undefined;
     return (
       <>{adminOverlay}
@@ -333,6 +336,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onPreviousPart={readingPreviousPart}
         initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
         onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
+        enterAtLastQuestion={lastNavDirectionRef.current === "back"}
         showResultsOnSubmit={isLastPart}
         {...readingProps}
       /></>
