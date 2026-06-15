@@ -526,8 +526,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
 
@@ -544,8 +544,8 @@ const ReadingExamEngine = ({
             onSectionChange={onSectionChangeP2}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
 
@@ -563,8 +563,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
 
@@ -582,8 +582,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
-            reviewData={reviewData}
-            reviewDataLoading={reviewDataLoading}
+            reviewData={effectiveReviewData}
+            reviewDataLoading={effectiveReviewLoading}
           />
         )}
       </div>
