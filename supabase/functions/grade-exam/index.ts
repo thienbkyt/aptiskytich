@@ -236,6 +236,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
             "addressPercent",
             "bonusPercent",
             "wordPenaltyPercent",
+            "coherencePenaltyPercent",
             "grammarErrors",
             "spellingErrors",
             "openingClosingPenalty",
