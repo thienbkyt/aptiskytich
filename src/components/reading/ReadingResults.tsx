@@ -35,8 +35,8 @@ interface ReadingResultsProps {
 const ReadingResults = (props: ReadingResultsProps) => {
   const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh", detailOnly } = props;
   if (detailOnly) return <ReadingReview {...props} />;
-  const scaled = toScaledScore(correct, total);
-  const band = getSkillBand(scaled, "reading");
+  const score = correct * 2;
+  const maxScore = total * 2;
 
   return (
     <div className="max-w-3xl mx-auto pb-10 space-y-6">
@@ -52,12 +52,8 @@ const ReadingResults = (props: ReadingResultsProps) => {
 
         <div className="flex items-center justify-center gap-8 mt-4">
           <div>
-            <p className="text-4xl font-heading font-extrabold text-primary">{scaled}/50</p>
+            <p className="text-4xl font-heading font-extrabold text-primary">{score}/{maxScore}</p>
             <p className="text-sm text-muted-foreground mt-1">Điểm</p>
-          </div>
-          <div>
-            <p className={`text-4xl font-heading font-extrabold ${getLevelColor(band)}`}>{band}</p>
-            <p className="text-sm text-muted-foreground mt-1">Trình độ</p>
           </div>
           <div>
             <p className="text-4xl font-heading font-extrabold text-foreground">{correct}/{total}</p>
