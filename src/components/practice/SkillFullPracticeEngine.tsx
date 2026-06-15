@@ -66,6 +66,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
   const adminNavigationRef = useRef(false);
 
+  // Reading full-practice: keep per-part answers + results so user can revisit/edit
+  // previous parts without losing data; final score sums latest result per part.
+  const readingAnswersByPartRef = useRef<Record<number, ReadingAnswersState>>({});
+  const readingResultsByPartRef = useRef<Record<number, { correct: number; total: number }>>({});
+
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
   const [writingPhase, setWritingPhase] = useState<"none" | "grading" | "results">("none");
