@@ -22,6 +22,7 @@ export interface WritingGradingResult {
   addressPercent: number;
   bonusPercent: number;
   wordPenaltyPercent: number;
+  coherencePenaltyPercent: number;
   grammarErrors: WritingErrorItem[];
   spellingErrors: WritingErrorItem[];
   openingClosingPenalty: number;
