@@ -3,6 +3,7 @@ import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
+import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
