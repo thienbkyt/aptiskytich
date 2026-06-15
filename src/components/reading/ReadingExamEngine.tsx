@@ -17,6 +17,7 @@ import type {
   ReadingOpinionQuestion,
   ReadingLongQuestion,
 } from "@/data/readingQuestions";
+import type { ReadingReviewData } from "@/lib/readingReview";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -64,6 +65,10 @@ interface ReadingExamEngineProps {
   onAnswersChange?: (answers: ReadingAnswersState) => void;
   /** When true (and not reviewMode), mount at the LAST question of the part (used when navigating back from next part). */
   enterAtLastQuestion?: boolean;
+  /** Optional translations + Part 3 evidence used in submitted/review render. */
+  reviewData?: ReadingReviewData | null;
+  /** Whether reviewData is still loading (for inline loading hints). */
+  reviewDataLoading?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -74,6 +79,7 @@ const ReadingExamEngine = ({
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
+  reviewData, reviewDataLoading,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -489,6 +495,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
+            reviewData={reviewData}
+            reviewDataLoading={reviewDataLoading}
           />
         )}
 
@@ -505,6 +513,8 @@ const ReadingExamEngine = ({
             onSectionChange={onSectionChangeP2}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
+            reviewData={reviewData}
+            reviewDataLoading={reviewDataLoading}
           />
         )}
 
@@ -522,6 +532,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
+            reviewData={reviewData}
+            reviewDataLoading={reviewDataLoading}
           />
         )}
 
@@ -539,6 +551,8 @@ const ReadingExamEngine = ({
             isLast={false}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={onToggleBookmarkCurrent}
+            reviewData={reviewData}
+            reviewDataLoading={reviewDataLoading}
           />
         )}
       </div>

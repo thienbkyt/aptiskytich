@@ -1,9 +1,10 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
+import { Bookmark, CheckCircle2, XCircle, ChevronDown, Loader2 } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingOpinionQuestion } from "@/data/readingQuestions";
+import { personLetterToIndex, type ReadingReviewData } from "@/lib/readingReview";
 
 interface Props {
   question: ReadingOpinionQuestion;
@@ -22,12 +23,15 @@ interface Props {
   onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  reviewData?: ReadingReviewData | null;
+  reviewDataLoading?: boolean;
 }
 
 const ReadingPart3Opinion = ({
   question, answers, timeLeft, totalTime, submitted, currentStatement,
   onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
+  reviewData, reviewDataLoading,
 }: Props) => {
 
   return (
@@ -54,14 +58,65 @@ const ReadingPart3Opinion = ({
       {/* Instruction */}
       <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{question.instruction}</p>
 
+      {submitted && reviewDataLoading && (
+        <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+          <Loader2 className="w-3 h-3 animate-spin" /> Đang tìm câu dẫn chứng…
+        </p>
+      )}
+
       {/* People's opinions - plain text paragraphs like real exam */}
       <div className="bg-white rounded-xl p-6 shadow-sm mb-6 space-y-5">
-        {question.people.map((person, pi) => (
-          <div key={pi}>
-            <p className="text-sm font-bold text-foreground mb-1">{person.name}</p>
-            <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{person.text}</p>
-          </div>
-        ))}
+        {question.people.map((person, pi) => {
+          // Collect evidence sentences in this person's block (from AI), then render
+          // the block text with each occurrence wrapped in a highlight.
+          const evidences: string[] = [];
+          if (submitted && reviewData?.part3Evidence) {
+            Object.values(reviewData.part3Evidence).forEach((ev) => {
+              if (!ev?.sentence || !ev?.person) return;
+              if (personLetterToIndex(ev.person) === pi && person.text.includes(ev.sentence)) {
+                if (!evidences.includes(ev.sentence)) evidences.push(ev.sentence);
+              }
+            });
+          }
+          const renderText = () => {
+            if (evidences.length === 0) {
+              return <span className="whitespace-pre-line">{person.text}</span>;
+            }
+            // Split iteratively on each evidence sentence
+            const parts: Array<{ t: string; hl: boolean }> = [{ t: person.text, hl: false }];
+            evidences.forEach((ev) => {
+              const next: Array<{ t: string; hl: boolean }> = [];
+              parts.forEach((p) => {
+                if (p.hl) { next.push(p); return; }
+                const segs = p.t.split(ev);
+                segs.forEach((s, i) => {
+                  if (s) next.push({ t: s, hl: false });
+                  if (i < segs.length - 1) next.push({ t: ev, hl: true });
+                });
+              });
+              parts.splice(0, parts.length, ...next);
+            });
+            return (
+              <span className="whitespace-pre-line">
+                {parts.map((p, i) =>
+                  p.hl ? (
+                    <mark key={i} className="bg-yellow-200 dark:bg-yellow-500/40 text-foreground rounded px-0.5">
+                      {p.t}
+                    </mark>
+                  ) : (
+                    <span key={i}>{p.t}</span>
+                  ),
+                )}
+              </span>
+            );
+          };
+          return (
+            <div key={pi}>
+              <p className="text-sm font-bold text-foreground mb-1">{person.name}</p>
+              <p className="text-sm text-foreground leading-relaxed">{renderText()}</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* All statements with dropdowns */}

@@ -1,8 +1,9 @@
 import { Fragment, memo } from "react";
-import { Bookmark } from "lucide-react";
+import { Bookmark, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingSentenceQuestion } from "@/data/readingQuestions";
+import { part1ItemId, buildPart1SentenceForGap, type ReadingReviewData } from "@/lib/readingReview";
 
 interface Props {
   question: ReadingSentenceQuestion;
@@ -20,6 +21,8 @@ interface Props {
   onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  reviewData?: ReadingReviewData | null;
+  reviewDataLoading?: boolean;
 }
 
 const ReadingPart1Sentence = ({
@@ -27,6 +30,7 @@ const ReadingPart1Sentence = ({
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
+  reviewData, reviewDataLoading,
 }: Props) => {
 
   const renderPassage = () => {
@@ -100,6 +104,63 @@ const ReadingPart1Sentence = ({
       <div className="flex-1 max-w-4xl mx-auto w-full">
         <p className="text-base font-bold text-foreground mb-8">{question.instruction}</p>
         {renderPassage()}
+
+        {submitted && (
+          <div className="mt-10 border-t border-border pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold text-foreground">Đáp án &amp; dịch nghĩa</p>
+              {reviewDataLoading && (
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang dịch…
+                </span>
+              )}
+            </div>
+            <div className="space-y-3">
+              {question.gaps.map((g, gi) => {
+                const userVal = answers[gi];
+                const userText = userVal !== null && userVal !== undefined ? g.options[userVal] : "—";
+                const isCorrect = userVal === g.correct;
+                const correctText = g.options[g.correct];
+                const translation = reviewData?.translations?.[part1ItemId(gi)];
+                const sentenceEn = buildPart1SentenceForGap(question, gi);
+                return (
+                  <div key={gi} className="rounded-lg border border-border bg-card p-3">
+                    <div className="flex items-start gap-3 flex-wrap">
+                      <span className="text-xs font-bold text-muted-foreground mt-0.5 min-w-[20px]">{gi + 1}.</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground italic mb-2">{sentenceEn}</p>
+                        <div className="flex items-center gap-2 flex-wrap text-sm">
+                          {isCorrect ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> {userText}
+                            </span>
+                          ) : (
+                            <>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 line-through">
+                                <XCircle className="w-3.5 h-3.5" /> {userText}
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> {correctText}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {translation ? (
+                          <p className="mt-2 text-sm text-foreground">
+                            <span className="text-muted-foreground">Dịch: </span>
+                            {translation}
+                          </p>
+                        ) : reviewDataLoading ? (
+                          <p className="mt-2 text-xs text-muted-foreground italic">Đang dịch…</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <BottomNavBar

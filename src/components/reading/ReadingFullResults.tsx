@@ -12,11 +12,13 @@ import type {
   ReadingOpinionQuestion,
   ReadingLongQuestion,
 } from "@/data/readingQuestions";
+import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 
 export interface ReadingFullPartResult {
   partType: ReadingPartType;
   correct: number;
   total: number;
+  examSetId?: string | null;
   part1Question?: ReadingSentenceQuestion;
   part2Question?: ReadingCohesionQuestion;
   part3Question?: ReadingOpinionQuestion;
@@ -90,6 +92,19 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   }
 
   const current = parts[reviewPartIndex];
+  const { data: reviewData, status: reviewStatus } = useReadingReviewData(
+    current?.examSetId ?? null,
+    current
+      ? {
+          partType: current.partType,
+          part1Question: current.part1Question,
+          part2Question: current.part2Question,
+          part3Question: current.part3Question,
+          part4Question: current.part4Question,
+        }
+      : null,
+    view === "review",
+  );
   if (!current) return null;
 
   return (
@@ -152,6 +167,8 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
         part3Question={current.part3Question}
         part4Question={current.part4Question}
         onExit={() => setView("summary")}
+        reviewData={reviewData}
+        reviewDataLoading={reviewStatus === "loading"}
       />
     </div>
   );
