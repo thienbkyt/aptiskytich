@@ -10,6 +10,7 @@ import ReadingResults from "@/components/reading/ReadingResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import { TimerProvider } from "@/components/reading/TimerContext";
+import TimerDisplay from "@/components/reading/TimerDisplay";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
