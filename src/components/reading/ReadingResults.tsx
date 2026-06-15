@@ -19,6 +19,8 @@ interface ReadingResultsProps {
   /** When provided, render a "Xem lại từng câu →" button. */
   onReview?: () => void;
   mode?: "fresh" | "history";
+  /** When true, render ONLY the per-question detail block (no header card). */
+  detailOnly?: boolean;
   // Review data (optional)
   partType?: ReadingPartType;
   part1Question?: ReadingSentenceQuestion;
