@@ -347,6 +347,11 @@ const ReadingExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+        {hasStarted && (
+          <div className="px-6 pt-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <div className="flex-1 w-full pb-20">
           <ExamInstructions
             skillName="Reading"
