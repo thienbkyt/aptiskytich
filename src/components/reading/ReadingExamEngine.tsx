@@ -488,6 +488,7 @@ const ReadingExamEngine = ({
             onExit={onExit}
             onRetry={handleRetry}
             onReview={() => { setIsReviewing(true); setCurrentIndex(0); }}
+            totalForScore={totalForScore ?? null}
             partType={partType}
             part1Question={part1Question}
             part1Answers={p1Answers}
