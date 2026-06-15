@@ -116,48 +116,54 @@ const ReadingPart1Sentence = ({
               )}
             </div>
             <div className="space-y-3">
-              {question.gaps.map((g, gi) => {
-                const userVal = answers[gi];
-                const userText = userVal !== null && userVal !== undefined ? g.options[userVal] : "—";
-                const isCorrect = userVal === g.correct;
-                const correctText = g.options[g.correct];
-                const translation = reviewData?.translations?.[part1ItemId(gi)];
-                const sentenceEn = buildPart1SentenceForGap(question, gi);
-                return (
-                  <div key={gi} className="rounded-lg border border-border bg-card p-3">
-                    <div className="flex items-start gap-3 flex-wrap">
-                      <span className="text-xs font-bold text-muted-foreground mt-0.5 min-w-[20px]">{gi + 1}.</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground italic mb-2">{sentenceEn}</p>
-                        <div className="flex items-center gap-2 flex-wrap text-sm">
-                          {isCorrect ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> {userText}
-                            </span>
-                          ) : (
-                            <>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 line-through">
-                                <XCircle className="w-3.5 h-3.5" /> {userText}
-                              </span>
+              {(() => {
+                const usedGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
+                  .map(m => Number(m[1]))
+                  .filter(idx => question.gaps[idx]);
+                return usedGapIdx.map((gi, displayIdx) => {
+                  const g = question.gaps[gi];
+                  const userVal = answers[gi];
+                  const userText = userVal !== null && userVal !== undefined ? g.options[userVal] : "—";
+                  const isCorrect = userVal === g.correct;
+                  const correctText = g.options[g.correct];
+                  const translation = reviewData?.translations?.[part1ItemId(gi)];
+                  const sentenceEn = buildPart1SentenceForGap(question, gi);
+                  return (
+                    <div key={gi} className="rounded-lg border border-border bg-card p-3">
+                      <div className="flex items-start gap-3 flex-wrap">
+                        <span className="text-xs font-bold text-muted-foreground mt-0.5 min-w-[20px]">{displayIdx + 1}.</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground italic mb-2">{sentenceEn}</p>
+                          <div className="flex items-center gap-2 flex-wrap text-sm">
+                            {isCorrect ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> {correctText}
+                                <CheckCircle2 className="w-3.5 h-3.5" /> {userText}
                               </span>
-                            </>
-                          )}
+                            ) : (
+                              <>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 line-through">
+                                  <XCircle className="w-3.5 h-3.5" /> {userText}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> {correctText}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          {translation ? (
+                            <p className="mt-2 text-sm text-foreground">
+                              <span className="text-muted-foreground">Dịch: </span>
+                              {translation}
+                            </p>
+                          ) : reviewDataLoading ? (
+                            <p className="mt-2 text-xs text-muted-foreground italic">Đang dịch…</p>
+                          ) : null}
                         </div>
-                        {translation ? (
-                          <p className="mt-2 text-sm text-foreground">
-                            <span className="text-muted-foreground">Dịch: </span>
-                            {translation}
-                          </p>
-                        ) : reviewDataLoading ? (
-                          <p className="mt-2 text-xs text-muted-foreground italic">Đang dịch…</p>
-                        ) : null}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
