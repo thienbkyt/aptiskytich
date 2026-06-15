@@ -127,16 +127,13 @@ const GrammarExamEngine = ({
   useEffect(() => {
     if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
-      setTimeLeft((p) => {
-        if (p <= 1) {
-          clearInterval(t);
-          handleSubmit();
-          return 0;
-        }
-        return p - 1;
-      });
+      setTimeLeft((p) => Math.max(0, p - 1));
     }, 1000);
     return () => clearInterval(t);
+  }, [hasStarted, submitted, timeLeft]);
+
+  useEffect(() => {
+    if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
   }, [hasStarted, submitted, timeLeft]);
 
   // Push current question to AI Coach context (for "explain this question" feature)

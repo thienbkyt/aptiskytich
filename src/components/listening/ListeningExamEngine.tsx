@@ -129,17 +129,16 @@ const ListeningExamEngine = ({
     if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
-        const next = p - 1;
-        onTimeTick?.(Math.max(0, next));
-        if (p <= 1) {
-          clearInterval(t);
-          handleSubmit();
-          return 0;
-        }
+        const next = Math.max(0, p - 1);
+        onTimeTick?.(next);
         return next;
       });
     }, 1000);
     return () => clearInterval(t);
+  }, [hasStarted, submitted, timeLeft]);
+
+  useEffect(() => {
+    if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
   }, [hasStarted, submitted, timeLeft]);
 
   const handleSubmit = useCallback(() => {
