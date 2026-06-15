@@ -19,6 +19,8 @@ import {
 import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } from "@/lib/examTransformers";
+import { computeReadingFullTotal } from "@/lib/readingFullTotal";
+import { supabase } from "@/integrations/supabase/client";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CompletionBadge from "@/components/practice/CompletionBadge";
