@@ -74,6 +74,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
+  const writingAnswersByPartRef = useRef<Record<number, {
+    shortAnswers: string[]; textAnswer: string; part3Answers: string[]; informalAnswer: string; formalAnswer: string;
+  }>>({});
+  const writingSubmissionsByPartRef = useRef<Record<number, { partType: string; text: string; questions: string[] }>>({});
   const [writingPhase, setWritingPhase] = useState<"none" | "grading" | "results">("none");
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingResults, setWritingResults] = useState<WritingGradingResult[]>([]);
