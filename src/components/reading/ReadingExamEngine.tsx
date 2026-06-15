@@ -124,6 +124,22 @@ const ReadingExamEngine = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p1Answers, p2Placements, p3Answers, p4Answers]);
 
+  // Internal fetch of translate-review when parent did not supply reviewData.
+  // Enabled only in review/submitted mode to avoid pre-fetching during practice.
+  const internalFetchEnabled = reviewData === undefined && (submitted || isReviewing || !!reviewMode);
+  const cacheKey = examSetId ?? sourceQuestionIds?.[0] ?? null;
+  const partSnapshot = useMemo(
+    () => ({ partType, part1Question, part2Question, part3Question, part4Question }),
+    [partType, part1Question, part2Question, part3Question, part4Question],
+  );
+  const { data: internalReviewData, status: internalReviewStatus } = useReadingReviewData(
+    cacheKey, partSnapshot, internalFetchEnabled,
+  );
+  const effectiveReviewData = reviewData !== undefined ? reviewData : internalReviewData;
+  const effectiveReviewLoading = reviewData !== undefined
+    ? !!reviewDataLoading
+    : internalReviewStatus === "loading";
+
   const part2SectionCount = part2Question?.sections.length || 0;
 
   // Panel "questions": for part2 each section = 1 question; others = per item.
