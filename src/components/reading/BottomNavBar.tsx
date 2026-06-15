@@ -63,7 +63,7 @@ const BottomNavBar = ({
     if (!action) return;
     const now = Date.now();
     if (now < navLockUntil.current) return;
-    navLockUntil.current = now + 350;
+    navLockUntil.current = now + 150;
     action();
   };
 
