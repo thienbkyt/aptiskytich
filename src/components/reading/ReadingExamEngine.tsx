@@ -75,7 +75,7 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
 }: ReadingExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
+  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
@@ -83,7 +83,7 @@ const ReadingExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
-  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
