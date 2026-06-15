@@ -217,13 +217,21 @@ const ReadingExamEngine = ({
     setCurrentIndex(0);
 
     let correct = 0;
+    let scoredTotal = totalQuestions;
     if (partType === "part1" && part1Question) {
       correct = part1Question.gaps.reduce((acc, g, i) => acc + (p1Answers[i] === g.correct ? 1 : 0), 0);
     } else if (partType === "part2" && part2Question) {
-      correct = part2Question.sections.reduce((acc, sec, sIdx) => {
-        const placements = p2Placements[sIdx] || {};
-        return acc + sec.sentences.reduce((a, s) => a + (placements[s.correctPosition] === s.text ? 1 : 0), 0);
-      }, 0);
+      let p2correct = 0, p2total = 0;
+      part2Question.sections.forEach((sec, sIdx) => {
+        const pl = p2Placements[sIdx] || {};
+        sec.sentences.forEach((s) => {
+          if (sIdx === 0 && s.correctPosition === 1) return; // câu cho sẵn, không chấm
+          p2total += 1;
+          if (pl[s.correctPosition] === s.text) p2correct += 1;
+        });
+      });
+      correct = p2correct;
+      scoredTotal = p2total;
     } else if (partType === "part3" && part3Question) {
       correct = part3Question.statements.reduce((acc, s, i) => acc + (p3Answers[i] === s.correctPerson ? 1 : 0), 0);
     } else if (partType === "part4" && part4Question) {
@@ -237,7 +245,7 @@ const ReadingExamEngine = ({
         correct = part4Question.questions.reduce((acc, q, i) => acc + (p4Answers[i] === q.correct ? 1 : 0), 0);
       }
     }
-    setResultStats({ correct, total: totalQuestions });
+    setResultStats({ correct, total: scoredTotal });
     // Build perQuestion: 1 row per DB source question. Reading parts compress all
     // sub-answers into a single DB row, so we store full answer state as JSON.
     let perQuestion: ReadingPerQuestion[] | undefined;
