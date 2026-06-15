@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, RotateCcw, CheckCircle2, XCircle, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toScaledScore, getSkillBand, getLevelColor } from "@/data/questions";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
