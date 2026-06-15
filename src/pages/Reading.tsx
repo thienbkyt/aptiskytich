@@ -107,8 +107,12 @@ const Reading = () => {
 
   const handleStartFromDB = async (set: ExamSetRow) => {
     const partType = normalizePart(set.part) as ReadingPartType;
-    setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now() }));
-    const questions = await fetchExamQuestions(set.id);
+    setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now(), totalForScore: null }));
+    const [questions, fullRow] = await Promise.all([
+      fetchExamQuestions(set.id),
+      supabase.from("exam_sets").select("full_test_id").eq("id", set.id).maybeSingle(),
+    ]);
+    const fullTestId = (fullRow.data as any)?.full_test_id ?? null;
     const sourceQuestionIds = questions.map((q: any) => q.id);
     let engineData: any = { sourceQuestionIds };
     switch (partType) {
@@ -118,6 +122,10 @@ const Reading = () => {
       case "part4": engineData.part4Question = toReadingPart4(questions); break;
     }
     setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
+    // Fire-and-forget: compute T from sibling parts in the same full test.
+    computeReadingFullTotal(fullTestId).then((T) => {
+      setExam((prev) => (prev.examSetId === set.id ? { ...prev, totalForScore: T } : prev));
+    });
   };
 
   const handleRandomPractice = () => {
