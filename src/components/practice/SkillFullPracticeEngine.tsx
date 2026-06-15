@@ -392,7 +392,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
         onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
         enterAtLastQuestion={lastNavDirectionRef.current === "back"}
-        showResultsOnSubmit={isLastPart}
+        showResultsOnSubmit={false}
         {...readingProps}
       /></>
     );
