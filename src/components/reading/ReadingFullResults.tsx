@@ -65,7 +65,7 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
 
   if (view === "summary") {
     return (
-      <div className="max-w-3xl mx-auto pb-10">
+      <div className="max-w-3xl mx-auto pb-10 space-y-6">
         <div className="bg-card border border-border rounded-xl p-8 text-center">
           <h2 className="text-2xl font-heading font-bold text-foreground mb-6">
             Kết quả Reading
@@ -101,6 +101,32 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             <Button onClick={onRetry} className="gap-2">
               <RotateCcw className="w-4 h-4" /> Làm lại
             </Button>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6">
+          <h3 className="text-lg font-heading font-bold text-foreground mb-4">
+            Chi tiết bài làm
+          </h3>
+          <div className="space-y-3">
+            {parts.map((p, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between py-2 border-b border-border last:border-b-0"
+              >
+                <span className="text-sm font-medium text-foreground">
+                  {partLabel(p.partType)}
+                </span>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-muted-foreground">
+                    Số câu đúng: <span className="font-semibold text-foreground">{p.correct}/{p.total}</span>
+                  </span>
+                  <span className="text-muted-foreground">
+                    Điểm: <span className="font-semibold text-primary">{p.correct * 2}/{p.total * 2}</span>
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
