@@ -156,7 +156,7 @@ const ReadingExamEngine = ({
   }, [phase, currentIndex, partType]);
 
   useEffect(() => {
-    if (phase !== "practice" || submitted || timeLeft <= 0) return;
+    if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
         if (p <= 1) {
@@ -171,7 +171,7 @@ const ReadingExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [phase, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
