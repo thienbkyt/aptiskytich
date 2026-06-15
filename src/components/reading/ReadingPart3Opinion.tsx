@@ -1,9 +1,10 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, CheckCircle2, XCircle, ChevronDown } from "lucide-react";
+import { Bookmark, CheckCircle2, XCircle, ChevronDown, Loader2 } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingOpinionQuestion } from "@/data/readingQuestions";
+import { personLetterToIndex, type ReadingReviewData } from "@/lib/readingReview";
 
 interface Props {
   question: ReadingOpinionQuestion;
@@ -22,12 +23,15 @@ interface Props {
   onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  reviewData?: ReadingReviewData | null;
+  reviewDataLoading?: boolean;
 }
 
 const ReadingPart3Opinion = ({
   question, answers, timeLeft, totalTime, submitted, currentStatement,
   onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
+  reviewData, reviewDataLoading,
 }: Props) => {
 
   return (
