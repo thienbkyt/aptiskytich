@@ -19,6 +19,8 @@ interface ReadingResultsProps {
   /** When provided, render a "Xem lại từng câu →" button. */
   onReview?: () => void;
   mode?: "fresh" | "history";
+  /** When true, render ONLY the per-question detail block (no header card). */
+  detailOnly?: boolean;
   // Review data (optional)
   partType?: ReadingPartType;
   part1Question?: ReadingSentenceQuestion;
@@ -32,7 +34,8 @@ interface ReadingResultsProps {
 }
 
 const ReadingResults = (props: ReadingResultsProps) => {
-  const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh" } = props;
+  const { correct, total, partLabel, onExit, onRetry, onReview, mode = "fresh", detailOnly } = props;
+  if (detailOnly) return <ReadingReview {...props} />;
   const scaled = toScaledScore(correct, total);
   const band = getSkillBand(scaled, "reading");
 

@@ -17,6 +17,7 @@ import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import ReadingFullResults, { type ReadingFullPartResult } from "@/components/reading/ReadingFullResults";
 import WritingFullResults from "@/components/writing/WritingFullResults";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult } from "@/lib/saveExamResult";
@@ -71,6 +72,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   // previous parts without losing data; final score sums latest result per part.
   const readingAnswersByPartRef = useRef<Record<number, ReadingAnswersState>>({});
   const readingResultsByPartRef = useRef<Record<number, { correct: number; total: number }>>({});
+  const [readingPhase, setReadingPhase] = useState<"none" | "results">("none");
+  const [readingFullParts, setReadingFullParts] = useState<ReadingFullPartResult[]>([]);
+  const [readingScore50, setReadingScore50] = useState(0);
 
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
@@ -156,7 +160,33 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const isGrammar = skill === "grammar_vocab";
     const isLast = currentPartIndex >= parts.length - 1;
-    const engineHandlesResults = isLast && (isGrammar || skill === "reading" || skill === "listening" || skill === "writing");
+    if (skill === "reading" && isLast) {
+      // Build per-part snapshot for the full-results screen
+      const built: ReadingFullPartResult[] = parts.map((pt, idx) => {
+        const partType = pt.partNorm as "part1" | "part2" | "part3" | "part4";
+        const res = readingResultsByPartRef.current[idx] || { correct: 0, total: 0 };
+        const ans = readingAnswersByPartRef.current[idx] || { p1: [], p2: [], p3: [], p4: [] };
+        const entry: ReadingFullPartResult = {
+          partType,
+          correct: res.correct,
+          total: res.total,
+          answers: ans,
+        };
+        if (partType === "part1") entry.part1Question = toReadingPart1(pt.questions);
+        else if (partType === "part2") entry.part2Question = toReadingPart2(pt.questions);
+        else if (partType === "part3") entry.part3Question = toReadingPart3(pt.questions);
+        else if (partType === "part4") entry.part4Question = toReadingPart4(pt.questions);
+        return entry;
+      });
+      const totalCorrect = built.reduce((s, p) => s + p.correct, 0);
+      const totalQs = built.reduce((s, p) => s + p.total, 0);
+      const score50 = totalQs > 0 ? Math.round((totalCorrect / totalQs) * 50) : 0;
+      setReadingFullParts(built);
+      setReadingScore50(score50);
+      setReadingPhase("results");
+      return;
+    }
+    const engineHandlesResults = isLast && (isGrammar || skill === "listening" || skill === "writing");
     if (engineHandlesResults) {
       return;
     }
@@ -310,6 +340,27 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   }
 
   if (skill === "reading") {
+    if (readingPhase === "results") {
+      return (
+        <ReadingFullResults
+          parts={readingFullParts}
+          score50={readingScore50}
+          onExit={onExit}
+          onRetry={() => {
+            readingAnswersByPartRef.current = {};
+            readingResultsByPartRef.current = {};
+            setReadingFullParts([]);
+            setReadingScore50(0);
+            setScores({ correct: 0, total: 0 });
+            setReadingTimeLeft(SKILL_TIMES.reading);
+            lastNavDirectionRef.current = "forward";
+            setCurrentPartIndex(0);
+            setEngineKey((k) => k + 1);
+            setReadingPhase("none");
+          }}
+        />
+      );
+    }
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const readingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
@@ -341,7 +392,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
         onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
         enterAtLastQuestion={lastNavDirectionRef.current === "back"}
-        showResultsOnSubmit={isLastPart}
+        showResultsOnSubmit={false}
         {...readingProps}
       /></>
     );
