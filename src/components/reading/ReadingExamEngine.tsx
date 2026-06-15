@@ -259,12 +259,13 @@ const ReadingExamEngine = ({
     },
   ];
 
-  // In full-part flow (skipIntro), Previous on first question jumps to previous part.
-  // Otherwise (single-part practice), Previous on first question goes back to reading_intro.
+  // Previous on first question ALWAYS goes back to reading_intro within the same engine
+  // instance so user-entered answers are preserved when navigating practice ↔ intro.
+  // Cross-part jumping is intentional only via the admin "Quay lại" button on the
+  // instructions phase (which still uses onPreviousPart below).
   const goToPrevPhase = useCallback(() => {
-    if (skipIntro && onPreviousPart) onPreviousPart();
-    else setPhase("reading_intro");
-  }, [skipIntro, onPreviousPart]);
+    setPhase("reading_intro");
+  }, []);
 
   const goPrevQuestion = useCallback(() => setCurrentIndex((p) => Math.max(0, p - 1)), []);
   const goNextQuestion = useCallback(() => setCurrentIndex((p) => p + 1), []);
