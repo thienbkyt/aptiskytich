@@ -26,6 +26,13 @@ export interface ReadingPerQuestion {
   is_correct: boolean;
 }
 
+export interface ReadingAnswersState {
+  p1: (number | null)[];
+  p2: Record<number, string>[];
+  p3: (number | null)[];
+  p4: (number | null)[];
+}
+
 interface ReadingExamEngineProps {
   partType: ReadingPartType;
   testTitle: string;
@@ -53,6 +60,8 @@ interface ReadingExamEngineProps {
     p3?: (number | null)[];
     p4?: (number | null)[];
   };
+  /** Notifies parent whenever answers change (skipped in reviewMode). */
+  onAnswersChange?: (answers: ReadingAnswersState) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -62,7 +71,7 @@ const ReadingExamEngine = ({
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
-  sourceQuestionIds, reviewMode, initialAnswers,
+  sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -76,18 +85,33 @@ const ReadingExamEngine = ({
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
-    reviewMode && initialAnswers?.p1 ? initialAnswers.p1 : new Array(part1Question?.gaps.length || 0).fill(null)
+    initialAnswers?.p1 && initialAnswers.p1.length > 0
+      ? initialAnswers.p1
+      : new Array(part1Question?.gaps.length || 0).fill(null)
   );
   const [p2Placements, setP2Placements] = useState<Record<number, string>[]>(
-    () => reviewMode && initialAnswers?.p2 ? initialAnswers.p2 : (part2Question?.sections || []).map(() => ({}))
+    () => initialAnswers?.p2 && initialAnswers.p2.length > 0
+      ? initialAnswers.p2
+      : (part2Question?.sections || []).map(() => ({}))
   );
   const [p3Answers, setP3Answers] = useState<(number | null)[]>(
-    reviewMode && initialAnswers?.p3 ? initialAnswers.p3 : new Array(part3Question?.statements.length || 0).fill(null)
+    initialAnswers?.p3 && initialAnswers.p3.length > 0
+      ? initialAnswers.p3
+      : new Array(part3Question?.statements.length || 0).fill(null)
   );
   const p4Total = part4Question?.paragraphs?.length || part4Question?.questions.length || 0;
   const [p4Answers, setP4Answers] = useState<(number | null)[]>(
-    reviewMode && initialAnswers?.p4 ? initialAnswers.p4 : new Array(p4Total).fill(null)
+    initialAnswers?.p4 && initialAnswers.p4.length > 0
+      ? initialAnswers.p4
+      : new Array(p4Total).fill(null)
   );
+
+  // Notify parent of answer changes (skip in reviewMode).
+  useEffect(() => {
+    if (reviewMode) return;
+    onAnswersChange?.({ p1: p1Answers, p2: p2Placements, p3: p3Answers, p4: p4Answers });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p1Answers, p2Placements, p3Answers, p4Answers]);
 
   const part2SectionCount = part2Question?.sections.length || 0;
 
@@ -259,13 +283,13 @@ const ReadingExamEngine = ({
     },
   ];
 
-  // Previous on first question ALWAYS goes back to reading_intro within the same engine
-  // instance so user-entered answers are preserved when navigating practice ↔ intro.
-  // Cross-part jumping is intentional only via the admin "Quay lại" button on the
-  // instructions phase (which still uses onPreviousPart below).
+  // Previous on first question: in full-flow (skipIntro) jump to previous part via parent;
+  // otherwise go back to the reading_intro screen within the same engine instance.
+  // Parent keeps answers per partIndex, so navigating back doesn't lose data.
   const goToPrevPhase = useCallback(() => {
-    setPhase("reading_intro");
-  }, []);
+    if (skipIntro && onPreviousPart) onPreviousPart();
+    else setPhase("reading_intro");
+  }, [skipIntro, onPreviousPart]);
 
   const goPrevQuestion = useCallback(() => setCurrentIndex((p) => Math.max(0, p - 1)), []);
   const goNextQuestion = useCallback(() => setCurrentIndex((p) => p + 1), []);

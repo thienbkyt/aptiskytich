@@ -3,6 +3,7 @@ import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
+import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
@@ -65,6 +66,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
   const adminNavigationRef = useRef(false);
 
+  // Reading full-practice: keep per-part answers + results so user can revisit/edit
+  // previous parts without losing data; final score sums latest result per part.
+  const readingAnswersByPartRef = useRef<Record<number, ReadingAnswersState>>({});
+  const readingResultsByPartRef = useRef<Record<number, { correct: number; total: number }>>({});
+
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
   const [writingPhase, setWritingPhase] = useState<"none" | "grading" | "results">("none");
@@ -118,10 +124,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   ) => {
     if (adminNavigationRef.current) return;
     if (correct !== undefined && total !== undefined) {
-      setScores(prev => ({
-        correct: prev.correct + correct,
-        total: prev.total + total,
-      }));
+      if (skill === "reading") {
+        // Overwrite latest result for this part; recompute total from map (no double-count on revisit).
+        readingResultsByPartRef.current[currentPartIndex] = { correct, total };
+        const agg = Object.values(readingResultsByPartRef.current).reduce(
+          (acc, r) => ({ correct: acc.correct + r.correct, total: acc.total + r.total }),
+          { correct: 0, total: 0 }
+        );
+        setScores(agg);
+      } else {
+        setScores(prev => ({
+          correct: prev.correct + correct,
+          total: prev.total + total,
+        }));
+      }
       // Persist for the current part's exam_set
       const setIdForGrammar = parts[0]?.id ?? null;
       const examSetId = skill === "grammar_vocab" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
@@ -295,10 +311,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part3": readingProps.part3Question = toReadingPart3(currentPart.questions); break;
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;
     }
+    const readingPreviousPart = currentPartIndex > 0
+      ? () => setCurrentPartIndex((p) => Math.max(0, p - 1))
+      : undefined;
     return (
       <>{adminOverlay}
       <ReadingExamEngine
-        key={`reading-${engineKey}`}
+        key={`reading-part-${currentPartIndex}`}
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
@@ -308,7 +327,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         fullFlow
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
-        onPreviousPart={handleAdminPreviousPart}
+        onPreviousPart={readingPreviousPart}
+        initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
+        onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
         showResultsOnSubmit={isLastPart}
         {...readingProps}
       /></>
