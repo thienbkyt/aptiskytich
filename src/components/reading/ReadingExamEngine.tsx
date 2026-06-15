@@ -17,6 +17,7 @@ import type {
   ReadingOpinionQuestion,
   ReadingLongQuestion,
 } from "@/data/readingQuestions";
+import type { ReadingReviewData } from "@/lib/readingReview";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
