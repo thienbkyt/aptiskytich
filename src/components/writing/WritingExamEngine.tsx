@@ -269,6 +269,11 @@ const WritingExamEngine = ({
     return (
       <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
         {adminControls}
+        {hasStarted && (
+          <div className="pr-10 pb-3">
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+          </div>
+        )}
         <p className="text-sm text-gray-700 mb-2">Aptis General Practice Test</p>
         <h1 className="text-xl font-bold mb-6">Writing Practice Test {testTitle}</h1>
         <div className="flex gap-16 mb-8">
