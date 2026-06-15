@@ -22,6 +22,7 @@ export interface WritingGradingResult {
   addressPercent: number;
   bonusPercent: number;
   wordPenaltyPercent: number;
+  coherencePenaltyPercent: number;
   grammarErrors: WritingErrorItem[];
   spellingErrors: WritingErrorItem[];
   openingClosingPenalty: number;
@@ -74,6 +75,7 @@ export function useExamGrading() {
               addressPercent: w.addressPercent,
               bonusPercent: w.bonusPercent,
               wordPenaltyPercent: w.wordPenaltyPercent,
+              coherencePenaltyPercent: w.coherencePenaltyPercent,
               openingClosingPenalty: w.openingClosingPenalty,
               partScore: w.partScore,
               maxPoints: w.maxPoints,
