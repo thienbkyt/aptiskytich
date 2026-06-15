@@ -143,6 +143,8 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
         key={`review-part-${reviewPartIndex}`}
         reviewMode
         skipIntro
+        testTitle="Reading"
+        timeLimit={0}
         partType={current.partType}
         initialAnswers={current.answers}
         part1Question={current.part1Question}
