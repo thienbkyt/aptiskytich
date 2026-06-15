@@ -77,6 +77,8 @@ const WritingExamEngine = ({
   reviewMode, initialAnswers,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(!!reviewMode);
