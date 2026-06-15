@@ -1,8 +1,9 @@
 import { Fragment, memo } from "react";
-import { Bookmark } from "lucide-react";
+import { Bookmark, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingSentenceQuestion } from "@/data/readingQuestions";
+import { part1ItemId, buildPart1SentenceForGap, type ReadingReviewData } from "@/lib/readingReview";
 
 interface Props {
   question: ReadingSentenceQuestion;
@@ -20,6 +21,8 @@ interface Props {
   onSubmitTest?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  reviewData?: ReadingReviewData | null;
+  reviewDataLoading?: boolean;
 }
 
 const ReadingPart1Sentence = ({
@@ -27,6 +30,7 @@ const ReadingPart1Sentence = ({
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
+  reviewData, reviewDataLoading,
 }: Props) => {
 
   const renderPassage = () => {
