@@ -45,6 +45,11 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview }: Wr
         <div className="inline-block px-6 py-3 rounded-full text-2xl font-bold mt-2 bg-primary/10 text-primary">
           Điểm: {grading.partScore}/{grading.maxPoints}
         </div>
+        {grading.coherencePenaltyPercent > 0 && (
+          <p className="text-sm font-medium text-red-600 dark:text-red-400 mt-3">
+            Trừ mạch lạc: −{grading.coherencePenaltyPercent}%
+          </p>
+        )}
         {grading.feedback && (
           <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{grading.feedback}</p>
         )}
