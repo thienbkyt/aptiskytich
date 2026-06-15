@@ -318,7 +318,14 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   if (skill === "writing") {
     // Writing full-practice: show results when grading completes
     if (writingPhase === "results") {
-      return <WritingFullResults results={writingResults} score50={writingScore50} onExit={onExit} />;
+      return (
+        <WritingFullResults
+          results={writingResults}
+          score50={writingScore50}
+          onExit={onExit}
+          submissions={writingPartsRef.current}
+        />
+      );
     }
     if (writingPhase === "grading") {
       return (
