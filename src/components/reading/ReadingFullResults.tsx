@@ -12,11 +12,13 @@ import type {
   ReadingOpinionQuestion,
   ReadingLongQuestion,
 } from "@/data/readingQuestions";
+import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 
 export interface ReadingFullPartResult {
   partType: ReadingPartType;
   correct: number;
   total: number;
+  examSetId?: string | null;
   part1Question?: ReadingSentenceQuestion;
   part2Question?: ReadingCohesionQuestion;
   part3Question?: ReadingOpinionQuestion;
