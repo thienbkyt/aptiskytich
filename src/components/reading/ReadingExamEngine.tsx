@@ -62,6 +62,8 @@ interface ReadingExamEngineProps {
   };
   /** Notifies parent whenever answers change (skipped in reviewMode). */
   onAnswersChange?: (answers: ReadingAnswersState) => void;
+  /** When true (and not reviewMode), mount at the LAST question of the part (used when navigating back from next part). */
+  enterAtLastQuestion?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -71,7 +73,7 @@ const ReadingExamEngine = ({
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
-  sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
+  sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -120,6 +122,14 @@ const ReadingExamEngine = ({
     : partType === "part2" ? part2SectionCount
     : partType === "part3" ? (part3Question?.statements.length || 0)
     : p4Total;
+
+  // On initial mount, if asked, jump to last question of the part (used when navigating back from next part).
+  useEffect(() => {
+    if (enterAtLastQuestion && !reviewMode && totalQuestions > 0) {
+      setCurrentIndex(totalQuestions - 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleBookmark = useCallback((qi: number) => {
     setBookmarked((prev) => {

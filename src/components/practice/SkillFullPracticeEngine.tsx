@@ -65,6 +65,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
   const adminNavigationRef = useRef(false);
+  const lastNavDirectionRef = useRef<"forward" | "back">("forward");
 
   // Reading full-practice: keep per-part answers + results so user can revisit/edit
   // previous parts without losing data; final score sums latest result per part.
@@ -158,6 +159,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     if (isGrammar || isLast) {
       setPhase("completed");
     } else {
+      lastNavDirectionRef.current = "forward";
       setCurrentPartIndex(prev => prev + 1);
       if (skill !== "writing" && skill !== "listening") {
         setEngineKey(prev => prev + 1);
@@ -212,6 +214,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const handleAdminPreviousPart = currentPartIndex > 0 ? () => {
     adminNavigationRef.current = true;
     window.setTimeout(() => { adminNavigationRef.current = false; }, 800);
+    lastNavDirectionRef.current = "back";
     setCurrentPartIndex((p) => Math.max(0, p - 1));
     setEngineKey((k) => k + 1);
   } : undefined;
@@ -312,7 +315,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": readingProps.part4Question = toReadingPart4(currentPart.questions); break;
     }
     const readingPreviousPart = currentPartIndex > 0
-      ? () => setCurrentPartIndex((p) => Math.max(0, p - 1))
+      ? () => {
+          lastNavDirectionRef.current = "back";
+          setCurrentPartIndex((p) => Math.max(0, p - 1));
+        }
       : undefined;
     return (
       <>{adminOverlay}
@@ -330,6 +336,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onPreviousPart={readingPreviousPart}
         initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
         onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
+        enterAtLastQuestion={lastNavDirectionRef.current === "back"}
         showResultsOnSubmit={isLastPart}
         {...readingProps}
       /></>
