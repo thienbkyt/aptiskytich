@@ -25,6 +25,8 @@ interface Props {
   onToggleBookmark?: () => void;
   reviewData?: ReadingReviewData | null;
   reviewDataLoading?: boolean;
+  pageNumber?: number;
+  pageTotal?: number;
 }
 
 const ReadingPart2Cohesion = ({
