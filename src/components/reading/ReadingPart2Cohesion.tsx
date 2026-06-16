@@ -36,7 +36,7 @@ const ReadingPart2Cohesion = ({
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
-  pageNumber, pageTotal,
+  pageNumber, pageTotal, hideTimer = false,
 }: Props) => {
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
