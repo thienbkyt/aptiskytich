@@ -505,7 +505,7 @@ const WritingExamEngine = ({
             ...(gradingResult.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
           ];
           return (
-            <div className="mt-8 space-y-5">
+            <div className="mt-4 space-y-4">
               <div className="bg-card border border-border rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base font-heading font-bold text-foreground">Nhận xét của AI</h3>
