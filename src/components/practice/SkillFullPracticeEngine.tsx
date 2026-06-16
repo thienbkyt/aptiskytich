@@ -228,11 +228,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setListeningPhase("results");
       return;
     }
-    const engineHandlesResults = isLast && (isGrammar || skill === "writing");
+    const engineHandlesResults = isGrammar || (isLast && (skill === "listening" || skill === "writing"));
     if (engineHandlesResults) {
       return;
     }
-    if (isGrammar || isLast) {
+    if (isLast) {
       setPhase("completed");
     } else {
       lastNavDirectionRef.current = "forward";

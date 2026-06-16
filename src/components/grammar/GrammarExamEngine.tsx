@@ -726,7 +726,7 @@ const GrammarExamEngine = ({
 
           {/* Bottom nav */}
           <BottomNavBar
-            onPrevious={!isFirstGroup ? goPrevGroup : () => setPhase("grammar_intro")}
+            onPrevious={!isFirstGroup ? goPrevGroup : (submitted ? undefined : () => setPhase("grammar_intro"))}
             onNext={
               !isLastGroup
                 ? goNextGroup
