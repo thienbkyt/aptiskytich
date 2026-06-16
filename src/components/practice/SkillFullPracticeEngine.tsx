@@ -444,7 +444,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
       if (adminNavigationRef.current) return;
-      // Persist essay
+      // Persist essay (fire-and-forget, do not block navigation)
       saveExamResult({
         examSetId: currentPart.id,
         skill: "writing",

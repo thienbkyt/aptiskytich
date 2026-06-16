@@ -198,7 +198,6 @@ const WritingExamEngine = ({
   };
 
   const handleSubmit = useCallback(async () => {
-    setSubmitted(true);
     const perQuestion = buildPerQuestion();
 
     // Full-practice mode (parent collects answers and grades all parts together)
@@ -208,6 +207,8 @@ const WritingExamEngine = ({
       onComplete?.(perQuestion);
       return;
     }
+
+    setSubmitted(true);
 
     // Full-test mode (parent passes isLastPart): skip grading/results entirely
     if (isLastPart !== undefined && !showResultsOnSubmit) {
