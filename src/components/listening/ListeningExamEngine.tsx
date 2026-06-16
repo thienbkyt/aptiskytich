@@ -114,6 +114,26 @@ const ListeningExamEngine = ({
     onAnswersChange?.(answers);
   }, [answers, reviewMode, onAnswersChange]);
 
+  // Internal fetch: only if parent did not supply highlightData and we're in submitted/review state.
+  const internalFetchEnabled =
+    highlightData === undefined && !!examSetId && (submitted || !!reviewMode);
+  const partSnapshot = {
+    partType,
+    part1Questions,
+    part2Questions,
+    part3Questions,
+    part4Questions,
+  };
+  const { data: internalHighlight, status: internalHighlightStatus } = useListeningHighlightData(
+    examSetId ?? null,
+    partSnapshot,
+    internalFetchEnabled,
+  );
+  const effectiveHighlight = highlightData !== undefined ? highlightData : internalHighlight;
+  const effectiveHighlightLoading =
+    highlightData !== undefined ? !!highlightLoading : internalHighlightStatus === "loading";
+  const highlights = effectiveHighlight?.highlights ?? {};
+
   useEffect(() => {
     if (phase === "practice") {
       setSeenQuestions((prev) => new Set(prev).add(currentIndex));
