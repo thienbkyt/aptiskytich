@@ -77,6 +77,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [readingFullParts, setReadingFullParts] = useState<ReadingFullPartResult[]>([]);
   const [readingScore50, setReadingScore50] = useState(0);
 
+  // Listening full-practice: same pattern as reading
+  const listeningAnswersByPartRef = useRef<Record<number, any[]>>({});
+  const listeningResultsByPartRef = useRef<Record<number, { correct: number; total: number }>>({});
+  const [listeningPhase, setListeningPhase] = useState<"none" | "results">("none");
+  const [listeningFullParts, setListeningFullParts] = useState<ListeningFullPartResult[]>([]);
+  const [listeningScore50, setListeningScore50] = useState(0);
+
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
   const writingAnswersByPartRef = useRef<Record<number, {
