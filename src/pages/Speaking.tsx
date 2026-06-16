@@ -47,6 +47,7 @@ interface ExamState {
   testTitle: string;
   engineData?: any;
   loadingExam: boolean;
+  examSetId?: string | null;
 }
 
 interface FullPracticeState {
@@ -61,13 +62,31 @@ const Speaking = () => {
   const { examSets, loading } = useExamSets("speaking");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
   const { progress } = useUserExamProgress();
-  const [exam, setExam] = useState<ExamState>({
+  const [exam, setExam] = useSessionState<ExamState>("speaking:exam", {
     active: false, partType: "part1", testTitle: "", loadingExam: false,
-  });
-  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
+  }, { omitKeys: ["engineData"] });
+  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("speaking:full", {
     active: false, fullTestId: "", title: "",
   });
   const { user: authUser, loading: authLoading } = useAuth();
+
+  // Rehydrate engineData after remount.
+  const rehydratedRef = useRef(false);
+  useEffect(() => {
+    if (rehydratedRef.current) return;
+    if (!exam.active || exam.engineData) return;
+    if (exam.examSetId) {
+      if (loading) return;
+      const target = examSets.find((s) => s.id === exam.examSetId);
+      if (target) {
+        rehydratedRef.current = true;
+        handleStartFromDB(target);
+      }
+    } else {
+      rehydratedRef.current = true;
+      handleStartMock(exam.partType);
+    }
+  }, [exam.active, exam.engineData, exam.examSetId, exam.partType, examSets, loading]);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const autoStartedRef = useRef<string | null>(null);
