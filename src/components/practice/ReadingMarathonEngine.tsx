@@ -250,7 +250,6 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     );
   }
 
-  const pagesPerSet = partType === "part2" ? 2 : 1;
   const saved = results[currentIndex]?.answers;
   const initialAnswers: any = {};
   if (saved !== undefined) {
