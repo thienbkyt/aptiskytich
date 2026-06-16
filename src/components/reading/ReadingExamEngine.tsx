@@ -79,6 +79,8 @@ interface ReadingExamEngineProps {
   /** Optional page numbering for marathon mode. */
   pageBase?: number;
   pageTotal?: number;
+  /** For Part 2: which section index to mount at initially. */
+  initialSection?: number;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
