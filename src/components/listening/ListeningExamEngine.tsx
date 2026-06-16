@@ -18,6 +18,8 @@ import type {
   ListeningPart3Question,
   ListeningPart4Clip,
 } from "@/data/listeningQuestions";
+import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
+import type { ListeningHighlightData } from "@/lib/listeningReview";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -50,6 +52,10 @@ interface ListeningExamEngineProps {
   reviewMode?: boolean;
   initialAnswers?: any[];
   onAnswersChange?: (answers: any[]) => void;
+  /** When provided, use parent-supplied highlight data; otherwise engine self-fetches in review. */
+  highlightData?: ListeningHighlightData | null;
+  highlightLoading?: boolean;
+  examSetId?: string | null;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -66,6 +72,7 @@ const ListeningExamEngine = ({
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
+  highlightData, highlightLoading, examSetId,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -106,6 +113,26 @@ const ListeningExamEngine = ({
     if (reviewMode) return;
     onAnswersChange?.(answers);
   }, [answers, reviewMode, onAnswersChange]);
+
+  // Internal fetch: only if parent did not supply highlightData and we're in submitted/review state.
+  const internalFetchEnabled =
+    highlightData === undefined && !!examSetId && (submitted || !!reviewMode);
+  const partSnapshot = {
+    partType,
+    part1Questions,
+    part2Questions,
+    part3Questions,
+    part4Questions,
+  };
+  const { data: internalHighlight, status: internalHighlightStatus } = useListeningHighlightData(
+    examSetId ?? null,
+    partSnapshot,
+    internalFetchEnabled,
+  );
+  const effectiveHighlight = highlightData !== undefined ? highlightData : internalHighlight;
+  const effectiveHighlightLoading =
+    highlightData !== undefined ? !!highlightLoading : internalHighlightStatus === "loading";
+  const highlights = effectiveHighlight?.highlights ?? {};
 
   useEffect(() => {
     if (phase === "practice") {
@@ -430,6 +457,8 @@ const ListeningExamEngine = ({
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={() => toggleBookmark(currentIndex)}
+            highlights={highlights}
+            highlightLoading={effectiveHighlightLoading}
           />
         )}
 
@@ -445,6 +474,8 @@ const ListeningExamEngine = ({
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={() => toggleBookmark(currentIndex)}
+            highlights={highlights}
+            highlightLoading={effectiveHighlightLoading}
           />
         )}
 
@@ -460,6 +491,8 @@ const ListeningExamEngine = ({
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={() => toggleBookmark(currentIndex)}
+            highlights={highlights}
+            highlightLoading={effectiveHighlightLoading}
           />
         )}
 
@@ -475,6 +508,8 @@ const ListeningExamEngine = ({
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={() => toggleBookmark(currentIndex)}
+            highlights={highlights}
+            highlightLoading={effectiveHighlightLoading}
           />
         )}
       </div>

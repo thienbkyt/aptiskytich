@@ -5,6 +5,8 @@ import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ListeningPart4Clip } from "@/data/listeningQuestions";
+import ScriptBlock from "@/components/listening/ScriptBlock";
+import { l4Id } from "@/lib/listeningReview";
 
 interface QuestionSection {
   title: string;
@@ -31,12 +33,15 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  highlights?: Record<string, string>;
+  highlightLoading?: boolean;
 }
 
 const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
+  highlights = {}, highlightLoading,
 }: Props) => {
   const clip = questions[currentIndex];
   if (!clip) return null;
@@ -128,10 +133,11 @@ const ListeningPart4Monologue = ({
           </div>
 
           {submitted && clip.script && (
-            <div className="mt-6 border border-border rounded-md p-4 bg-muted/30">
-              <p className="text-sm font-heading font-bold text-foreground mb-2">Script</p>
-              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{clip.script}</p>
-            </div>
+            <ScriptBlock
+              script={clip.script}
+              spans={clip.questions.map((_, qi) => highlights[l4Id(currentIndex, qi)]).filter(Boolean) as string[]}
+              loading={highlightLoading}
+            />
           )}
         </motion.div>
       </AnimatePresence>

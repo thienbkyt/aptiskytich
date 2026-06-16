@@ -3,6 +3,7 @@ import { ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSkillBand, getLevelColor } from "@/data/questions";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
+import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
 import type {
   ListeningPart1Question,
   ListeningPart2Question,
@@ -44,6 +45,21 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   const band = getSkillBand(score50, "listening");
 
   const current = parts[reviewPartIndex];
+
+  const { data: highlightData, status: highlightStatus } = useListeningHighlightData(
+    current?.examSetId ?? null,
+    current
+      ? {
+          partType: current.partType,
+          part1Questions: current.part1Questions,
+          part2Questions: current.part2Questions,
+          part3Questions: current.part3Questions,
+          part4Questions: current.part4Questions,
+        }
+      : null,
+    view === "review",
+  );
+
 
   if (view === "summary") {
     return (
@@ -180,6 +196,9 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
         part2Questions={current.part2Questions}
         part3Questions={current.part3Questions}
         part4Questions={current.part4Questions}
+        examSetId={current.examSetId ?? null}
+        highlightData={highlightData}
+        highlightLoading={highlightStatus === "loading"}
         onExit={() => setView("summary")}
       />
     </div>

@@ -4,6 +4,8 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { ListeningPart3Question } from "@/data/listeningQuestions";
+import ScriptBlock from "@/components/listening/ScriptBlock";
+import { l3Id } from "@/lib/listeningReview";
 
 interface QuestionSection {
   title: string;
@@ -30,6 +32,8 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  highlights?: Record<string, string>;
+  highlightLoading?: boolean;
 }
 
 const ANSWER_OPTIONS = [
@@ -42,6 +46,7 @@ const ListeningPart3Conversation = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
+  highlights = {}, highlightLoading,
 }: Props) => {
   const q = questions[currentIndex];
   if (!q) return null;
@@ -113,10 +118,11 @@ const ListeningPart3Conversation = ({
         </div>
 
         {submitted && q.script && (
-          <div className="mt-6 border border-border rounded-md p-4 bg-muted/30">
-            <p className="text-sm font-heading font-bold text-foreground mb-2">Script</p>
-            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{q.script}</p>
-          </div>
+          <ScriptBlock
+            script={q.script}
+            spans={q.statements.map((_, si) => highlights[l3Id(si)]).filter(Boolean) as string[]}
+            loading={highlightLoading}
+          />
         )}
       </div>
 
