@@ -196,6 +196,9 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
         part2Questions={current.part2Questions}
         part3Questions={current.part3Questions}
         part4Questions={current.part4Questions}
+        examSetId={current.examSetId ?? null}
+        highlightData={highlightData}
+        highlightLoading={highlightStatus === "loading"}
         onExit={() => setView("summary")}
       />
     </div>
