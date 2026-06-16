@@ -33,12 +33,15 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  highlights?: Record<string, string>;
+  highlightLoading?: boolean;
 }
 
 const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
+  highlights = {}, highlightLoading,
 }: Props) => {
   const clip = questions[currentIndex];
   if (!clip) return null;
