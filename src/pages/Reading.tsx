@@ -223,6 +223,9 @@ const Reading = () => {
         onExit={() => setMarathon({ active: false, partType: marathon.partType })}
       />
     );
+  }
+
+
 
   if (exam.active) {
     if (exam.loadingExam) {
