@@ -353,6 +353,27 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   }
 
   if (skill === "listening") {
+    if (listeningPhase === "results") {
+      return (
+        <ListeningFullResults
+          parts={listeningFullParts}
+          score50={listeningScore50}
+          onExit={onExit}
+          onRetry={() => {
+            listeningAnswersByPartRef.current = {};
+            listeningResultsByPartRef.current = {};
+            setListeningFullParts([]);
+            setListeningScore50(0);
+            setScores({ correct: 0, total: 0 });
+            setListeningTimeLeft(SKILL_TIMES.listening);
+            lastNavDirectionRef.current = "forward";
+            setCurrentPartIndex(0);
+            setEngineKey((k) => k + 1);
+            setListeningPhase("none");
+          }}
+        />
+      );
+    }
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const listeningProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
@@ -364,7 +385,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     return (
       <>{adminOverlay}
       <ListeningExamEngine
-        key="listening-full"
+        key={`listening-part-${currentPartIndex}`}
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
@@ -375,7 +396,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         onPreviousPart={handleAdminPreviousPart}
-        showResultsOnSubmit={isLastPart}
+        showResultsOnSubmit={false}
+        initialAnswers={listeningAnswersByPartRef.current[currentPartIndex]}
+        onAnswersChange={(a) => { listeningAnswersByPartRef.current[currentPartIndex] = a; }}
         {...listeningProps}
       /></>
     );
