@@ -29,6 +29,7 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
+import { useSessionState } from "@/hooks/useSessionState";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -70,14 +71,32 @@ const Listening = () => {
   const { examSets, loading } = useExamSets("listening");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("listening");
   const { progress } = useUserExamProgress();
-  const [exam, setExam] = useState<ExamState>({
+  const [exam, setExam] = useSessionState<ExamState>("listening:exam", {
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
-  });
-  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
+  }, { omitKeys: ["engineData"] });
+  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("listening:full", {
     active: false, fullTestId: "", title: "",
   });
   const { user: authUser, loading: authLoading } = useAuth();
+
+  // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
+  const rehydratedRef = useRef(false);
+  useEffect(() => {
+    if (rehydratedRef.current) return;
+    if (!exam.active || exam.engineData) return;
+    if (exam.examSetId) {
+      if (loading) return;
+      const target = examSets.find((s) => s.id === exam.examSetId);
+      if (target) {
+        rehydratedRef.current = true;
+        handleStartFromDB(target);
+      }
+    } else {
+      rehydratedRef.current = true;
+      handleStartMock(exam.partType);
+    }
+  }, [exam.active, exam.engineData, exam.examSetId, exam.partType, examSets, loading]);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const autoStartedRef = useRef<string | null>(null);
