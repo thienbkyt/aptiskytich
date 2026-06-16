@@ -32,6 +32,8 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  highlights?: Record<string, string>;
+  highlightLoading?: boolean;
 }
 
 const ANSWER_OPTIONS = [
@@ -44,6 +46,7 @@ const ListeningPart3Conversation = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
+  highlights = {}, highlightLoading,
 }: Props) => {
   const q = questions[currentIndex];
   if (!q) return null;
