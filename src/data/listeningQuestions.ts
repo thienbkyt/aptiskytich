@@ -55,6 +55,7 @@ export interface ListeningPart4Clip {
   id: number;
   audioUrl: string;
   questions: ListeningPart4ClipQuestion[];
+  script?: string;
 }
 
 // Mock data – Part 1
