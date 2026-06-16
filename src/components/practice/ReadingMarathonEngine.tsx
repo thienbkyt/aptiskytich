@@ -21,8 +21,8 @@ interface Props {
 type Phase = "loading" | "exam" | "completed";
 
 type ReviewEntry = {
-  part1Question: any;
-  answers: (number | null)[];
+  question: any;
+  answers: any;
   correct: number;
   total: number;
 };
