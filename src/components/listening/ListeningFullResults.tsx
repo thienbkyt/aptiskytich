@@ -46,6 +46,21 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
 
   const current = parts[reviewPartIndex];
 
+  const { data: highlightData, status: highlightStatus } = useListeningHighlightData(
+    current?.examSetId ?? null,
+    current
+      ? {
+          partType: current.partType,
+          part1Questions: current.part1Questions,
+          part2Questions: current.part2Questions,
+          part3Questions: current.part3Questions,
+          part4Questions: current.part4Questions,
+        }
+      : null,
+    view === "review",
+  );
+
+
   if (view === "summary") {
     return (
       <div className="max-w-3xl mx-auto pb-10 space-y-6">
