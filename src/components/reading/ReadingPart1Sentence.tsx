@@ -24,6 +24,8 @@ interface Props {
   reviewData?: ReadingReviewData | null;
   reviewDataLoading?: boolean;
   hideTimer?: boolean;
+  pageNumber?: number;
+  pageTotal?: number;
 }
 
 const ReadingPart1Sentence = ({
@@ -32,6 +34,7 @@ const ReadingPart1Sentence = ({
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
+  pageNumber, pageTotal,
 }: Props) => {
 
   const renderPassage = () => {

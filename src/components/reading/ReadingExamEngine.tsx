@@ -90,6 +90,7 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
+  pageNumber, pageTotal,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -425,7 +426,7 @@ const ReadingExamEngine = ({
     return (
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
-        <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+        <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
           <div className="px-6 pt-3">
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
@@ -451,7 +452,7 @@ const ReadingExamEngine = ({
     return (
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
-        <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
+        <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
           <div className="px-6 pt-3">
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
@@ -517,7 +518,7 @@ const ReadingExamEngine = ({
       {adminControls}
       {reportButton}
       <ExamHeader
-        skillLabel="Reading Đề 01"
+        skillLabel="Reading"
         partLabel={partLabel}
         onExit={onExit}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
@@ -539,6 +540,8 @@ const ReadingExamEngine = ({
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
             hideTimer={hideTimer}
+            pageNumber={pageNumber}
+            pageTotal={pageTotal}
           />
         )}
 

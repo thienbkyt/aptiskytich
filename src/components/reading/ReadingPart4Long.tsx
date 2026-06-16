@@ -70,7 +70,7 @@ const ReadingPart4Long = ({
     <div className="min-h-[70vh] flex flex-col pb-20" ref={containerRef}>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-sm font-heading font-bold text-foreground">Reading Đề 01</p>
+          <p className="text-sm font-heading font-bold text-foreground">Reading</p>
           <p className="text-sm text-muted-foreground">
             {paragraphs.length} paragraphs · {allHeadingTexts.length} headings
           </p>
