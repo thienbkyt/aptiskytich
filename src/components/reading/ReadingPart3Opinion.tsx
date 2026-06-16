@@ -34,6 +34,7 @@ const ReadingPart3Opinion = ({
   onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
+  pageNumber, pageTotal,
 }: Props) => {
 
   return (
