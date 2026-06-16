@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import ReadingExamEngine, { type ReadingPartType } from "@/components/reading/ReadingExamEngine";
 import ExamHeader from "@/components/exam/ExamHeader";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
@@ -22,26 +22,40 @@ type Phase = "loading" | "exam" | "completed";
 
 type QResult = { exam_question_id: string; user_answer: string | null; is_correct: boolean };
 
-type ReviewEntry = {
+type ResultEntry = {
+  correct: number;
+  total: number;
   examSetId: string;
   part: string;
   qResults: QResult[];
-  correct: number;
-  total: number;
+  answers: any;
 };
 
 const HUGE_TIME = 24 * 60 * 60;
 
 const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [accCorrect, setAccCorrect] = useState(0);
-  const [accTotal, setAccTotal] = useState(0);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [reviews, setReviews] = useState<ReviewEntry[]>([]);
+  const [results, setResults] = useState<(ResultEntry | undefined)[]>(
+    () => new Array(sets.length).fill(undefined)
+  );
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+
+  const accCorrect = useMemo(
+    () => results.reduce((sum, r) => sum + (r?.correct ?? 0), 0),
+    [results]
+  );
+  const accTotal = useMemo(
+    () => results.reduce((sum, r) => sum + (r?.total ?? 0), 0),
+    [results]
+  );
+  const reviewable = useMemo(
+    () => results.filter((r): r is ResultEntry => !!r),
+    [results]
+  );
 
   useEffect(() => {
     if (currentIndex >= sets.length) return;
@@ -68,15 +82,25 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
     const qResults: QResult[] = Array.isArray(perQuestion) ? (perQuestion as QResult[]) : [];
-    setReviews((prev) => [...prev, {
-      examSetId: set.id,
-      part: set.part,
-      qResults,
-      correct,
-      total,
-    }]);
-    setAccCorrect((c) => c + correct);
-    setAccTotal((t) => t + total);
+    let answers: any = [];
+    try {
+      const raw = qResults[0]?.user_answer;
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        answers = parsed?.answers ?? [];
+      }
+    } catch { /* noop */ }
+    setResults((prev) => {
+      const next = prev.slice();
+      next[currentIndex] = {
+        correct, total,
+        examSetId: set.id,
+        part: set.part,
+        qResults,
+        answers,
+      };
+      return next;
+    });
     if (currentIndex < sets.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {
@@ -95,7 +119,6 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     });
   }, [phase, savedOnce, accCorrect, accTotal]);
 
-  // Toggle body class while reviewing to hide engine-internal exam controls (matches HistoryReviewPager).
   useEffect(() => {
     if (reviewIndex === null) return;
     document.body.classList.add("history-review-mode");
@@ -110,11 +133,10 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     : partType === "part3" ? "Part 3"
     : "Part 4";
 
-  // Review mode — render real exam UI with answers via HistoryReviewRenderer
-  if (phase === "completed" && reviewIndex !== null && reviews[reviewIndex]) {
-    const r = reviews[reviewIndex];
+  if (phase === "completed" && reviewIndex !== null && reviewable[reviewIndex]) {
+    const r = reviewable[reviewIndex];
     const isFirst = reviewIndex === 0;
-    const isLast = reviewIndex === reviews.length - 1;
+    const isLast = reviewIndex === reviewable.length - 1;
     return (
       <div className="min-h-screen bg-background">
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
@@ -124,7 +146,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
                 Quay lại tổng kết
               </Button>
               <span className="text-xs text-muted-foreground truncate">
-                Đề <span className="font-bold text-foreground">{reviewIndex + 1}</span>/{reviews.length}
+                Đề <span className="font-bold text-foreground">{reviewIndex + 1}</span>/{reviewable.length}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -141,7 +163,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setReviewIndex((i) => (i !== null && i < reviews.length - 1 ? i + 1 : i))}
+                onClick={() => setReviewIndex((i) => (i !== null && i < reviewable.length - 1 ? i + 1 : i))}
                 disabled={isLast}
                 className="gap-1"
               >
@@ -181,19 +203,17 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 flex-wrap">
               <Button variant="outline" onClick={onExit}>Thoát</Button>
-              {reviews.length > 0 && (
+              {reviewable.length > 0 && (
                 <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
                   <Eye className="w-4 h-4" /> Xem lại từng câu →
                 </Button>
               )}
               <Button
                 onClick={() => {
-                  setAccCorrect(0);
-                  setAccTotal(0);
+                  setResults(new Array(sets.length).fill(undefined));
+                  setReviewIndex(null);
                   setCurrentIndex(0);
                   setSavedOnce(false);
-                  setReviews([]);
-                  setReviewIndex(null);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
                 }}
@@ -222,6 +242,15 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
   }
 
   const pagesPerSet = partType === "part2" ? 2 : 1;
+  const saved = results[currentIndex]?.answers;
+  const initialAnswers: any = {};
+  if (saved !== undefined) {
+    if (partType === "part1") initialAnswers.p1 = saved;
+    else if (partType === "part2") initialAnswers.p2 = saved;
+    else if (partType === "part3") initialAnswers.p3 = saved;
+    else if (partType === "part4") initialAnswers.p4 = saved;
+  }
+
   return (
     <ReadingExamEngine
       key={`${attempt}-${currentIndex}`}
@@ -233,6 +262,10 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       showResultsOnSubmit={false}
       onExit={onExit}
       onComplete={handleComplete}
+      onPreviousPart={() => {
+        if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+      }}
+      initialAnswers={initialAnswers}
       pageBase={currentIndex * pagesPerSet}
       pageTotal={sets.length * pagesPerSet}
       {...engineData}
