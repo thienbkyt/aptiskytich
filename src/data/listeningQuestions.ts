@@ -7,6 +7,7 @@ export interface ListeningPart1Question {
   questionText?: string;
   options: string[];
   correct: number;
+  script?: string;
 }
 
 // Part 2: Matching Information – 4 speakers, match each to one of 6 info items
@@ -26,6 +27,7 @@ export interface ListeningPart2Question {
   questionText: string;
   persons: ListeningPart2Person[];
   infoItems: ListeningPart2InfoItem[];
+  script?: string;
 }
 
 // Part 3: Short Conversations – Two speakers, classify each statement (man/woman/both)
@@ -39,6 +41,7 @@ export interface ListeningPart3Question {
   audioUrl: string;
   questionText: string;
   statements: ListeningPart3Statement[];
+  script?: string;
 }
 
 // Part 4: Monologues – 2 clips, each with 1 audio + 2 MCQ questions
@@ -52,6 +55,7 @@ export interface ListeningPart4Clip {
   id: number;
   audioUrl: string;
   questions: ListeningPart4ClipQuestion[];
+  script?: string;
 }
 
 // Mock data – Part 1

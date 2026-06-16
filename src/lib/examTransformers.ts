@@ -120,6 +120,7 @@ export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Questio
     questionText: r.question_text || "",
     options: r.options,
     correct: r.correct_answer ?? 0,
+    script: r.explanation || "",
   }));
 
 export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] => {
@@ -139,6 +140,7 @@ export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Questio
     questionText: first.question_text || "",
     persons,
     infoItems: ed.infoItems || [],
+    script: first.explanation || "",
   }];
 };
 
@@ -154,6 +156,7 @@ export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Questio
       text: r.question_text || "",
       correctAnswer: String(r.correct_answer ?? ""),
     })),
+    script: first.explanation || "",
   }];
 };
 
@@ -173,6 +176,7 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
       id: clips.length + 1,
       audioUrl: a.audio_url || "",
       questions,
+      script: a.explanation || "",
     });
   }
   return clips;
