@@ -27,6 +27,7 @@ interface Props {
   reviewDataLoading?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  hideTimer?: boolean;
 }
 
 const ReadingPart2Cohesion = ({
