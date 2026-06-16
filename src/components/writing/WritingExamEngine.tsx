@@ -536,17 +536,6 @@ const WritingExamEngine = ({
                 )}
               </div>
 
-              {submission.some((s) => s.sampleAnswer) && (
-                <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                  <h3 className="text-sm font-heading font-bold text-foreground">💡 Bài viết mẫu</h3>
-                  {submission.map((s, i) => s.sampleAnswer ? (
-                    <div key={i} className="bg-success/5 border border-success/20 rounded-lg p-3">
-                      <p className="text-xs font-semibold text-success mb-1">Đề {i + 1}</p>
-                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{s.sampleAnswer}</p>
-                    </div>
-                  ) : null)}
-                </div>
-              )}
             </div>
           );
         })()}
