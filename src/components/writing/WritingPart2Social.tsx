@@ -17,6 +17,7 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  reviewMode?: boolean;
 }
 
 const toolbarButtons = [
@@ -29,7 +30,7 @@ const toolbarButtons = [
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode,
 }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -57,7 +58,7 @@ const WritingPart2Social = ({
   }, [answer]);
 
   return (
-    <div className="min-h-[70vh] flex flex-col pb-20">
+    <div className={`${reviewMode ? "" : "min-h-[70vh]"} flex flex-col ${reviewMode ? "pb-4" : "pb-20"}`}>
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Writing – Part 2</p>
