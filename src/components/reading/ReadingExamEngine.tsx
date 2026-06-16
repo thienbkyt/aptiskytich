@@ -219,6 +219,7 @@ const ReadingExamEngine = ({
   }, [phase, currentIndex, partType]);
 
   useEffect(() => {
+    if (hideTimer) return;
     if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
@@ -228,11 +229,12 @@ const ReadingExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [hasStarted, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   useEffect(() => {
+    if (hideTimer) return;
     if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
-  }, [hasStarted, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
