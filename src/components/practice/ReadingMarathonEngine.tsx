@@ -21,8 +21,8 @@ interface Props {
 type Phase = "loading" | "exam" | "completed";
 
 type ReviewEntry = {
-  part1Question: any;
-  answers: (number | null)[];
+  question: any;
+  answers: any;
   correct: number;
   total: number;
 };
@@ -63,20 +63,20 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
   }, [currentIndex, sets, partType]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
-    let answers: (number | null)[] = [];
+    let answers: any = [];
     try {
       const raw = perQuestion?.[0]?.user_answer;
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed?.answers)) answers = parsed.answers;
+        if (parsed?.answers !== undefined) answers = parsed.answers;
       }
     } catch { /* noop */ }
-    setReviews((prev) => [...prev, {
-      part1Question: engineData?.part1Question,
-      answers,
-      correct,
-      total,
-    }]);
+    const question =
+      partType === "part1" ? engineData?.part1Question
+      : partType === "part2" ? engineData?.part2Question
+      : partType === "part3" ? engineData?.part3Question
+      : engineData?.part4Question;
+    setReviews((prev) => [...prev, { question, answers, correct, total }]);
     setAccCorrect((c) => c + correct);
     setAccTotal((t) => t + total);
     if (currentIndex < sets.length - 1) {
@@ -84,7 +84,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets.length, engineData]);
+  }, [currentIndex, sets.length, engineData, partType]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
@@ -117,12 +117,14 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
         <main className="flex-1 px-4 py-6">
           <ReadingResults
             mode="history"
-            partType="part1"
+            partType={partType}
             partLabel={`Đề ${reviewIndex + 1}`}
             correct={r.correct}
             total={r.total}
-            part1Question={r.part1Question}
-            part1Answers={r.answers}
+            {...(partType === "part1" ? { part1Question: r.question, part1Answers: r.answers } : {})}
+            {...(partType === "part2" ? { part2Question: r.question, part2Placements: r.answers } : {})}
+            {...(partType === "part3" ? { part3Question: r.question, part3Answers: r.answers } : {})}
+            {...(partType === "part4" ? { part4Question: r.question, part4Answers: r.answers } : {})}
             onExit={() => setReviewIndex(null)}
             onRetry={() => {}}
           />
