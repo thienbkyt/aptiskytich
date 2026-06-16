@@ -90,8 +90,11 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
-  pageNumber, pageTotal,
+  pageBase, pageTotal,
 }: ReadingExamEngineProps) => {
+  const computedPageNumber = pageBase != null
+    ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
+    : undefined;
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
