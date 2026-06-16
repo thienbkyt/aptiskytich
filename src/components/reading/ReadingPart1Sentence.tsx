@@ -23,6 +23,7 @@ interface Props {
   onToggleBookmark?: () => void;
   reviewData?: ReadingReviewData | null;
   reviewDataLoading?: boolean;
+  hideTimer?: boolean;
 }
 
 const ReadingPart1Sentence = ({
@@ -30,7 +31,7 @@ const ReadingPart1Sentence = ({
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
-  reviewData, reviewDataLoading,
+  reviewData, reviewDataLoading, hideTimer = false,
 }: Props) => {
 
   const renderPassage = () => {
@@ -97,7 +98,7 @@ const ReadingPart1Sentence = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay />
+          {!hideTimer && <TimerDisplay />}
         </div>
       </div>
 

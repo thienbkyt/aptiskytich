@@ -74,6 +74,8 @@ interface ReadingExamEngineProps {
   examSetId?: string | null;
   /** Tổng số câu của cả ĐỀ Reading (4 part) để chia điểm /50 ở ReadingResults. */
   totalForScore?: number | null;
+  /** When true, hide the countdown timer and disable auto-submit on time-up. */
+  hideTimer?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -84,7 +86,7 @@ const ReadingExamEngine = ({
   onExit, onComplete, onPreviousPart,
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
-  reviewData, reviewDataLoading, examSetId, totalForScore,
+  reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -217,6 +219,7 @@ const ReadingExamEngine = ({
   }, [phase, currentIndex, partType]);
 
   useEffect(() => {
+    if (hideTimer) return;
     if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       setTimeLeft((p) => {
@@ -226,11 +229,12 @@ const ReadingExamEngine = ({
       });
     }, 1000);
     return () => clearInterval(t);
-  }, [hasStarted, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   useEffect(() => {
+    if (hideTimer) return;
     if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
-  }, [hasStarted, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
@@ -419,7 +423,7 @@ const ReadingExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
-        {hasStarted && (
+        {hasStarted && !hideTimer && (
           <div className="px-6 pt-3">
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
           </div>
@@ -445,7 +449,7 @@ const ReadingExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Reading Đề 01" partLabel={partLabel} onExit={onExit} />
-        {hasStarted && (
+        {hasStarted && !hideTimer && (
           <div className="px-6 pt-3">
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
           </div>
@@ -531,6 +535,7 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
+            hideTimer={hideTimer}
           />
         )}
 
