@@ -402,7 +402,7 @@ const WritingExamEngine = ({
         onExit={onExit}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
-      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+      <div className={`flex-1 px-4 pt-8 ${reviewMode ? "pb-4" : "pb-20"} max-w-3xl mx-auto w-full`}>
         {partType === "task1" && part1Data && (
           <WritingPart1Short
             data={part1Data}
