@@ -49,6 +49,7 @@ interface ListeningExamEngineProps {
   /** Open in read-only review mode (pre-submitted, intros skipped). */
   reviewMode?: boolean;
   initialAnswers?: any[];
+  onAnswersChange?: (answers: any[]) => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
