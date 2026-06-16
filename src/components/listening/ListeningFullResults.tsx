@@ -3,6 +3,7 @@ import { ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSkillBand, getLevelColor } from "@/data/questions";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
+import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
 import type {
   ListeningPart1Question,
   ListeningPart2Question,
