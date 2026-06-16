@@ -92,9 +92,6 @@ const ReadingExamEngine = ({
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
   pageBase, pageTotal,
 }: ReadingExamEngineProps) => {
-  const computedPageNumber = pageBase != null
-    ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
-    : undefined;
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
