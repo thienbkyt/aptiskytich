@@ -118,10 +118,11 @@ const ListeningPart3Conversation = ({
         </div>
 
         {submitted && q.script && (
-          <div className="mt-6 border border-border rounded-md p-4 bg-muted/30">
-            <p className="text-sm font-heading font-bold text-foreground mb-2">Script</p>
-            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{q.script}</p>
-          </div>
+          <ScriptBlock
+            script={q.script}
+            spans={q.statements.map((_, si) => highlights[l3Id(si)]).filter(Boolean) as string[]}
+            loading={highlightLoading}
+          />
         )}
       </div>
 
