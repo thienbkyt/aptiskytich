@@ -457,6 +457,8 @@ const ListeningExamEngine = ({
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
             onToggleBookmark={() => toggleBookmark(currentIndex)}
+            highlights={highlights}
+            highlightLoading={effectiveHighlightLoading}
           />
         )}
 
