@@ -29,7 +29,7 @@ const WritingPart4TwoEmails = ({
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode,
 }: Props) => {
   return (
-    <div className={`${reviewMode ? "" : "min-h-[70vh]"} flex flex-col ${reviewMode ? "pb-4" : "pb-20"}`}>
+    <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Writing – Part 4</p>
@@ -94,7 +94,7 @@ const WritingPart4TwoEmails = ({
         )}
       </div>
 
-      <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />
+      {!reviewMode && <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
     </div>
   );
 };
