@@ -4,6 +4,8 @@ import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { ListeningPart3Question } from "@/data/listeningQuestions";
+import ScriptBlock from "@/components/listening/ScriptBlock";
+import { l3Id } from "@/lib/listeningReview";
 
 interface QuestionSection {
   title: string;
