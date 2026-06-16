@@ -1,4 +1,4 @@
-import { Bookmark } from "lucide-react";
+import { Bookmark, Check, X } from "lucide-react";
 import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -109,7 +109,7 @@ const ListeningPart2Match = ({
               else if (isWrong) selectCls = "border-destructive bg-destructive/10 text-destructive";
 
               return (
-                <div key={person.name} className="flex items-center gap-3">
+                <div key={person.name} className="flex items-center gap-3 flex-wrap">
                   <label className="text-sm text-foreground shrink-0 w-24">
                     Speaker {person.name} ...
                   </label>
@@ -128,6 +128,20 @@ const ListeningPart2Match = ({
                       </option>
                     ))}
                   </select>
+                  {submitted && (
+                    <>
+                      {isCorrect ? (
+                        <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                      ) : isWrong ? (
+                        <X className="w-5 h-5 text-destructive shrink-0" />
+                      ) : null}
+                      {isWrong && correctText && (
+                        <span className="text-sm text-emerald-600 dark:text-emerald-400 shrink-0">
+                          → {correctText}
+                        </span>
+                      )}
+                    </>
+                  )}
                 </div>
               );
             })}

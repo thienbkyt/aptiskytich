@@ -1,4 +1,4 @@
-import { Bookmark } from "lucide-react";
+import { Bookmark, Check, X } from "lucide-react";
 import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -91,6 +91,10 @@ const ListeningPart3Conversation = ({
         <div className="space-y-7">
           {q.statements.map((s, i) => {
             const value = selected[i] || "";
+            const isCorrect = submitted && value === s.correctAnswer;
+            const isWrong = submitted && value && value !== s.correctAnswer;
+            const correctLabel = ANSWER_OPTIONS.find((o) => o.value === s.correctAnswer)?.label || s.correctAnswer;
+
             let selectCls = "border-border bg-background";
             if (submitted) {
               if (value === s.correctAnswer) selectCls = "border-emerald-500 bg-emerald-500/10";
@@ -112,6 +116,20 @@ const ListeningPart3Conversation = ({
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
+                {submitted && (
+                  <>
+                    {isCorrect ? (
+                      <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                    ) : isWrong ? (
+                      <X className="w-5 h-5 text-destructive shrink-0" />
+                    ) : null}
+                    {isWrong && (
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400 shrink-0">
+                        → {correctLabel}
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
             );
           })}
