@@ -49,6 +49,7 @@ interface ListeningExamEngineProps {
   /** Open in read-only review mode (pre-submitted, intros skipped). */
   reviewMode?: boolean;
   initialAnswers?: any[];
+  onAnswersChange?: (answers: any[]) => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -64,7 +65,7 @@ const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
-  showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers,
+  showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -96,8 +97,15 @@ const ListeningExamEngine = ({
     (part4Questions?.length || 0);
 
   const [answers, setAnswers] = useState<any[]>(
-    reviewMode && initialAnswers ? initialAnswers : new Array(totalQuestions).fill(null)
+    initialAnswers && initialAnswers.length === totalQuestions
+      ? initialAnswers
+      : new Array(totalQuestions).fill(null)
   );
+
+  useEffect(() => {
+    if (reviewMode) return;
+    onAnswersChange?.(answers);
+  }, [answers, reviewMode, onAnswersChange]);
 
   useEffect(() => {
     if (phase === "practice") {

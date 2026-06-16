@@ -13,11 +13,12 @@ import {
 } from "@/lib/examTransformers";
 
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
-import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
+import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import ReadingFullResults, { type ReadingFullPartResult } from "@/components/reading/ReadingFullResults";
+import ListeningFullResults, { type ListeningFullPartResult } from "@/components/listening/ListeningFullResults";
 import WritingFullResults from "@/components/writing/WritingFullResults";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult } from "@/lib/saveExamResult";
@@ -75,6 +76,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [readingPhase, setReadingPhase] = useState<"none" | "results">("none");
   const [readingFullParts, setReadingFullParts] = useState<ReadingFullPartResult[]>([]);
   const [readingScore50, setReadingScore50] = useState(0);
+
+  // Listening full-practice: same pattern as reading
+  const listeningAnswersByPartRef = useRef<Record<number, any[]>>({});
+  const listeningResultsByPartRef = useRef<Record<number, { correct: number; total: number }>>({});
+  const [listeningPhase, setListeningPhase] = useState<"none" | "results">("none");
+  const [listeningFullParts, setListeningFullParts] = useState<ListeningFullPartResult[]>([]);
+  const [listeningScore50, setListeningScore50] = useState(0);
 
   // Writing full-practice grading state
   const writingPartsRef = useRef<Array<{ partType: string; text: string; questions: string[] }>>([]);
@@ -141,6 +149,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           { correct: 0, total: 0 }
         );
         setScores(agg);
+      } else if (skill === "listening") {
+        listeningResultsByPartRef.current[currentPartIndex] = { correct, total };
+        const agg = Object.values(listeningResultsByPartRef.current).reduce(
+          (acc, r) => ({ correct: acc.correct + r.correct, total: acc.total + r.total }),
+          { correct: 0, total: 0 }
+        );
+        setScores(agg);
       } else {
         setScores(prev => ({
           correct: prev.correct + correct,
@@ -187,7 +202,33 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setReadingPhase("results");
       return;
     }
-    const engineHandlesResults = isLast && (isGrammar || skill === "listening" || skill === "writing");
+    if (skill === "listening" && isLast) {
+      const built: ListeningFullPartResult[] = parts.map((pt, idx) => {
+        const partType = pt.partNorm as ListeningPartType;
+        const res = listeningResultsByPartRef.current[idx] || { correct: 0, total: 0 };
+        const ans = listeningAnswersByPartRef.current[idx] || [];
+        const entry: ListeningFullPartResult = {
+          partType,
+          correct: res.correct,
+          total: res.total,
+          examSetId: pt.id,
+          answers: ans,
+        };
+        if (partType === "part1") entry.part1Questions = toListeningPart1(pt.questions);
+        else if (partType === "part2") entry.part2Questions = toListeningPart2(pt.questions);
+        else if (partType === "part3") entry.part3Questions = toListeningPart3(pt.questions);
+        else if (partType === "part4") entry.part4Questions = toListeningPart4(pt.questions);
+        return entry;
+      });
+      const totalCorrect = built.reduce((s, p) => s + p.correct, 0);
+      const totalQs = built.reduce((s, p) => s + p.total, 0);
+      const score50 = totalQs > 0 ? Math.round((totalCorrect / totalQs) * 50) : 0;
+      setListeningFullParts(built);
+      setListeningScore50(score50);
+      setListeningPhase("results");
+      return;
+    }
+    const engineHandlesResults = isLast && (isGrammar || skill === "writing");
     if (engineHandlesResults) {
       return;
     }
@@ -312,6 +353,27 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   }
 
   if (skill === "listening") {
+    if (listeningPhase === "results") {
+      return (
+        <ListeningFullResults
+          parts={listeningFullParts}
+          score50={listeningScore50}
+          onExit={onExit}
+          onRetry={() => {
+            listeningAnswersByPartRef.current = {};
+            listeningResultsByPartRef.current = {};
+            setListeningFullParts([]);
+            setListeningScore50(0);
+            setScores({ correct: 0, total: 0 });
+            setListeningTimeLeft(SKILL_TIMES.listening);
+            lastNavDirectionRef.current = "forward";
+            setCurrentPartIndex(0);
+            setEngineKey((k) => k + 1);
+            setListeningPhase("none");
+          }}
+        />
+      );
+    }
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const listeningProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
@@ -323,7 +385,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     return (
       <>{adminOverlay}
       <ListeningExamEngine
-        key="listening-full"
+        key={`listening-part-${currentPartIndex}`}
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
@@ -334,7 +396,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         onPreviousPart={handleAdminPreviousPart}
-        showResultsOnSubmit={isLastPart}
+        showResultsOnSubmit={false}
+        initialAnswers={listeningAnswersByPartRef.current[currentPartIndex]}
+        onAnswersChange={(a) => { listeningAnswersByPartRef.current[currentPartIndex] = a; }}
         {...listeningProps}
       /></>
     );
