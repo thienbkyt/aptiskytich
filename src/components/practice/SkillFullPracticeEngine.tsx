@@ -466,12 +466,35 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   if (skill === "writing") {
     // Writing full-practice: show results when grading completes
     if (writingPhase === "results") {
+      // Build per-part review payloads aligned with writingResults order.
+      const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
+        .map((k) => parseInt(k, 10))
+        .sort((a, b) => a - b);
+      const reviewParts = orderedIndices.map((idx, i) => {
+        const pt = parts[idx];
+        if (!pt) return null;
+        const partNorm2 = pt.partNorm;
+        const writingPartType = partNorm2.replace("part", "task") as "task1" | "task2" | "task3" | "task4";
+        let partData: any = null;
+        if (partNorm2 === "part1") partData = toWritingPart1(pt.questions);
+        else if (partNorm2 === "part2") partData = toWritingPart2(pt.questions);
+        else if (partNorm2 === "part3") partData = toWritingPart3(pt.questions);
+        else if (partNorm2 === "part4") partData = toWritingPart4(pt.questions);
+        const answers = writingAnswersByPartRef.current[idx] || {
+          shortAnswers: [], textAnswer: "", part3Answers: [], informalAnswer: "", formalAnswer: "",
+        };
+        const grading = writingResults[i];
+        if (!partData || !grading) return null;
+        return { partType: writingPartType, partData, answers, grading };
+      }).filter(Boolean) as any[];
+
       return (
         <WritingFullResults
           results={writingResults}
           score50={writingScore50}
           onExit={onExit}
           submissions={writingPartsRef.current}
+          parts={reviewParts}
         />
       );
     }
