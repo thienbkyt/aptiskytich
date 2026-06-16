@@ -103,7 +103,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
                   setAccTotal(0);
                   setCurrentIndex(0);
                   setSavedOnce(false);
-                  setPhase("exam");
+                  setPhase("loading");
+                  setAttempt((a) => a + 1);
                 }}
               >
                 Làm lại từ đầu
