@@ -132,7 +132,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
 
   return (
     <ReadingExamEngine
-      key={currentIndex}
+      key={`${attempt}-${currentIndex}`}
       partType={partType}
       testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
       timeLimit={HUGE_TIME}
