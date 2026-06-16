@@ -18,6 +18,8 @@ import type {
   ListeningPart3Question,
   ListeningPart4Clip,
 } from "@/data/listeningQuestions";
+import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
+import type { ListeningHighlightData } from "@/lib/listeningReview";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
