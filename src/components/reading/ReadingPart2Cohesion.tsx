@@ -25,6 +25,8 @@ interface Props {
   onToggleBookmark?: () => void;
   reviewData?: ReadingReviewData | null;
   reviewDataLoading?: boolean;
+  pageNumber?: number;
+  pageTotal?: number;
 }
 
 const ReadingPart2Cohesion = ({
@@ -33,6 +35,7 @@ const ReadingPart2Cohesion = ({
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
+  pageNumber, pageTotal,
 }: Props) => {
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
@@ -114,7 +117,9 @@ const ReadingPart2Cohesion = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading</p>
           <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
-            Question {currentSection + 1} of {totalSections}
+            {pageNumber !== undefined && pageTotal !== undefined
+              ? `Question ${pageNumber} of ${pageTotal}`
+              : `Question ${currentSection + 1} of ${totalSections}`}
           </p>
         </div>
         <div className="flex items-center gap-4">
