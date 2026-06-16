@@ -79,6 +79,8 @@ interface ReadingExamEngineProps {
   /** Optional page numbering for marathon mode. */
   pageBase?: number;
   pageTotal?: number;
+  /** For Part 2: which section index to mount at initially. */
+  initialSection?: number;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -90,10 +92,10 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
-  pageBase, pageTotal,
+  pageBase, pageTotal, initialSection,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
   const computedPageNumber = pageBase != null
     ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
     : undefined;

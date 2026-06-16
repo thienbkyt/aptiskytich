@@ -25,9 +25,12 @@ interface Props {
   testTitle: string;
   qResults: QResult[];
   onExit: () => void;
+  pageBase?: number;
+  pageTotal?: number;
+  initialSection?: number;
 }
 
-const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit }: Props) => {
+const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, pageBase, pageTotal, initialSection }: Props) => {
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(null);
 
   useEffect(() => {
@@ -106,6 +109,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const props: any = {
       partType: pt, testTitle, timeLimit: 1800,
       onExit, reviewMode: true, initialAnswers: init,
+      pageBase, pageTotal, initialSection,
     };
     if (pt === "part1") props.part1Question = toReadingPart1(rows);
     if (pt === "part2") props.part2Question = toReadingPart2(rows);

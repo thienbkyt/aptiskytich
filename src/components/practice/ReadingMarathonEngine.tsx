@@ -133,10 +133,16 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     : partType === "part3" ? "Part 3"
     : "Part 4";
 
-  if (phase === "completed" && reviewIndex !== null && reviewable[reviewIndex]) {
-    const r = reviewable[reviewIndex];
+  const pagesPerSet = partType === "part2" ? 2 : 1;
+  const pages = reviewable.flatMap((entry, ri) =>
+    Array.from({ length: pagesPerSet }, (_, section) => ({ entry, ri, section }))
+  );
+
+  if (phase === "completed" && reviewIndex !== null && pages[reviewIndex]) {
+    const page = pages[reviewIndex];
+    const r = page.entry;
     const isFirst = reviewIndex === 0;
-    const isLast = reviewIndex === reviewable.length - 1;
+    const isLast = reviewIndex === pages.length - 1;
     return (
       <div className="min-h-screen bg-background">
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
@@ -146,7 +152,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
                 Quay lại tổng kết
               </Button>
               <span className="text-xs text-muted-foreground truncate">
-                Đề <span className="font-bold text-foreground">{reviewIndex + 1}</span>/{reviewable.length}
+                Trang <span className="font-bold text-foreground">{reviewIndex + 1}</span>/{pages.length}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -158,16 +164,16 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
                 className="gap-1"
               >
                 <ChevronLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Đề trước</span>
+                <span className="hidden sm:inline">Trang trước</span>
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setReviewIndex((i) => (i !== null && i < reviewable.length - 1 ? i + 1 : i))}
+                onClick={() => setReviewIndex((i) => (i !== null && i < pages.length - 1 ? i + 1 : i))}
                 disabled={isLast}
                 className="gap-1"
               >
-                <span className="hidden sm:inline">Đề sau</span>
+                <span className="hidden sm:inline">Trang sau</span>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -178,9 +184,12 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
           examSetId={r.examSetId}
           skill="reading"
           part={r.part}
-          testTitle={`Đề ${reviewIndex + 1}`}
+          testTitle={`Đề ${page.ri + 1}`}
           qResults={r.qResults}
           onExit={() => setReviewIndex(null)}
+          pageBase={page.ri * pagesPerSet}
+          pageTotal={pages.length}
+          initialSection={page.section}
         />
       </div>
     );
@@ -241,7 +250,6 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     );
   }
 
-  const pagesPerSet = partType === "part2" ? 2 : 1;
   const saved = results[currentIndex]?.answers;
   const initialAnswers: any = {};
   if (saved !== undefined) {
