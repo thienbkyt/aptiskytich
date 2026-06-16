@@ -33,6 +33,8 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  highlights?: Record<string, string>;
+  highlightLoading?: boolean;
 }
 
 const ListeningPart1Word = ({
