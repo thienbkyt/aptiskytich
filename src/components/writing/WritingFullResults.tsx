@@ -63,7 +63,7 @@ const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFul
           <div className="inline-block px-6 py-3 rounded-full text-3xl font-bold bg-primary/10 text-primary">
             {score50}/50
           </div>
-          <p className="text-sm text-muted-foreground">Tổng {total100}/100</p>
+          <p className="text-sm text-muted-foreground">{"\n"}</p>
 
           <div className="pt-2">
             <p className="text-sm text-muted-foreground mb-1">Trình độ</p>
