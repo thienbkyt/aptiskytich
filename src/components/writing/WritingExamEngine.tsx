@@ -385,7 +385,7 @@ const WritingExamEngine = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+    <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
       {adminControls}
       {phase === "practice" && !submitted && !reviewMode && (
         <ExamReportButton
@@ -402,7 +402,7 @@ const WritingExamEngine = ({
         onExit={onExit}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
-      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+      <div className={`flex-1 px-4 pt-8 ${reviewMode ? "pb-4" : "pb-20"} max-w-3xl mx-auto w-full`}>
         {partType === "task1" && part1Data && (
           <WritingPart1Short
             data={part1Data}
@@ -482,30 +482,12 @@ const WritingExamEngine = ({
         )}
 
         {reviewMode && gradingResult && (() => {
-          const submission = (() => {
-            if (partType === "task1" && part1Data) {
-              return part1Data.questions.map((q, i) => ({ prompt: q.text, answer: shortAnswers[i] || "", sampleAnswer: q.sampleAnswer }));
-            }
-            if (partType === "task2" && part2Data) {
-              return [{ prompt: `${part2Data.instruction}\n${part2Data.question || ""}`.trim(), answer: textAnswer, sampleAnswer: part2Data.sampleAnswer }];
-            }
-            if (partType === "task3" && part3Data) {
-              return part3Data.questions.map((q, i) => ({ prompt: q.text, answer: part3Answers[i] || "", sampleAnswer: q.sampleAnswer }));
-            }
-            if (partType === "task4" && part4Data) {
-              return [
-                { prompt: `Informal Email: ${part4Data.informalEmail.instruction}`, answer: informalAnswer, sampleAnswer: part4Data.informalEmail.sampleAnswer },
-                { prompt: `Formal Email: ${part4Data.formalEmail.instruction}`, answer: formalAnswer, sampleAnswer: part4Data.formalEmail.sampleAnswer },
-              ];
-            }
-            return [] as Array<{ prompt: string; answer: string; sampleAnswer?: string }>;
-          })();
           const allErrors = [
             ...(gradingResult.grammarErrors || []).map((e) => ({ ...e, kind: "Ngữ pháp" })),
             ...(gradingResult.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
           ];
           return (
-            <div className="mt-8 space-y-5">
+            <div className="mt-4 space-y-4">
               <div className="bg-card border border-border rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base font-heading font-bold text-foreground">Nhận xét của AI</h3>
@@ -536,17 +518,6 @@ const WritingExamEngine = ({
                 )}
               </div>
 
-              {submission.some((s) => s.sampleAnswer) && (
-                <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-                  <h3 className="text-sm font-heading font-bold text-foreground">💡 Bài viết mẫu</h3>
-                  {submission.map((s, i) => s.sampleAnswer ? (
-                    <div key={i} className="bg-success/5 border border-success/20 rounded-lg p-3">
-                      <p className="text-xs font-semibold text-success mb-1">Đề {i + 1}</p>
-                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{s.sampleAnswer}</p>
-                    </div>
-                  ) : null)}
-                </div>
-              )}
             </div>
           );
         })()}
