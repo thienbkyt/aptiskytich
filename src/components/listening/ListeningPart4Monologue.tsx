@@ -5,6 +5,8 @@ import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ListeningPart4Clip } from "@/data/listeningQuestions";
+import ScriptBlock from "@/components/listening/ScriptBlock";
+import { l4Id } from "@/lib/listeningReview";
 
 interface QuestionSection {
   title: string;
