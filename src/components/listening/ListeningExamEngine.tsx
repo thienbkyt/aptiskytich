@@ -52,6 +52,10 @@ interface ListeningExamEngineProps {
   reviewMode?: boolean;
   initialAnswers?: any[];
   onAnswersChange?: (answers: any[]) => void;
+  /** When provided, use parent-supplied highlight data; otherwise engine self-fetches in review. */
+  highlightData?: ListeningHighlightData | null;
+  highlightLoading?: boolean;
+  examSetId?: string | null;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
