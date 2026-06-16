@@ -581,6 +581,8 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
+            pageNumber={pageNumber}
+            pageTotal={pageTotal}
           />
         )}
 
