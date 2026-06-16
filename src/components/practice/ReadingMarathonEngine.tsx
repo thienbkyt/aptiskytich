@@ -117,12 +117,14 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
         <main className="flex-1 px-4 py-6">
           <ReadingResults
             mode="history"
-            partType="part1"
+            partType={partType}
             partLabel={`Đề ${reviewIndex + 1}`}
             correct={r.correct}
             total={r.total}
-            part1Question={r.part1Question}
-            part1Answers={r.answers}
+            {...(partType === "part1" ? { part1Question: r.question, part1Answers: r.answers } : {})}
+            {...(partType === "part2" ? { part2Question: r.question, part2Placements: r.answers } : {})}
+            {...(partType === "part3" ? { part3Question: r.question, part3Answers: r.answers } : {})}
+            {...(partType === "part4" ? { part4Question: r.question, part4Answers: r.answers } : {})}
             onExit={() => setReviewIndex(null)}
             onRetry={() => {}}
           />
