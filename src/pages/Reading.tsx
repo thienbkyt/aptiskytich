@@ -128,6 +128,11 @@ const Reading = () => {
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
 
+  const marathonSets = useMemo(
+    () => examSets.filter((s) => normalizePart(s.part) === marathon.partType),
+    [examSets, marathon.partType]
+  );
+
   const handleStartFromDB = async (set: ExamSetRow) => {
     const partType = normalizePart(set.part) as ReadingPartType;
     setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now(), totalForScore: null }));
@@ -217,7 +222,7 @@ const Reading = () => {
     const partLabel = PARTS.find((p) => p.id === marathon.partType)?.label ?? "Part";
     return (
       <ReadingMarathonEngine
-        sets={examSets.filter((s) => normalizePart(s.part) === marathon.partType)}
+        sets={marathonSets}
         partType={marathon.partType}
         skillLabel={`Reading · Marathon ${partLabel}`}
         onExit={() => setMarathon({ active: false, partType: marathon.partType })}
