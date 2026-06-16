@@ -97,7 +97,9 @@ const ListeningExamEngine = ({
     (part4Questions?.length || 0);
 
   const [answers, setAnswers] = useState<any[]>(
-    reviewMode && initialAnswers ? initialAnswers : new Array(totalQuestions).fill(null)
+    initialAnswers && initialAnswers.length === totalQuestions
+      ? initialAnswers
+      : new Array(totalQuestions).fill(null)
   );
 
   useEffect(() => {
