@@ -543,7 +543,7 @@ const ReadingExamEngine = ({
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
             hideTimer={hideTimer}
-            pageNumber={pageNumber}
+            pageNumber={computedPageNumber}
             pageTotal={pageTotal}
           />
         )}
@@ -563,7 +563,7 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
-            pageNumber={pageNumber}
+            pageNumber={computedPageNumber}
             pageTotal={pageTotal}
           />
         )}
@@ -584,7 +584,7 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
-            pageNumber={pageNumber}
+            pageNumber={computedPageNumber}
             pageTotal={pageTotal}
           />
         )}
