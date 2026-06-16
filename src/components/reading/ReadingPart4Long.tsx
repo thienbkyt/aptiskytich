@@ -166,7 +166,7 @@ const ReadingPart4Long = ({
                 </div>
               </div>
 
-              {submitted && isWrong && correctHeadingIdx !== undefined && (
+              {submitted && selected !== correctHeadingIdx && correctHeadingIdx !== undefined && (
                 <div className="flex flex-wrap items-center gap-2 mb-3 ml-9">
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
                   <span className="text-xs text-green-600 dark:text-green-400 font-medium">
