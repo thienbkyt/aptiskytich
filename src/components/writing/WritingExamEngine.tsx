@@ -385,7 +385,7 @@ const WritingExamEngine = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+    <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
       {adminControls}
       {phase === "practice" && !submitted && !reviewMode && (
         <ExamReportButton
