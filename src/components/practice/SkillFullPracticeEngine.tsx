@@ -149,6 +149,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           { correct: 0, total: 0 }
         );
         setScores(agg);
+      } else if (skill === "listening") {
+        listeningResultsByPartRef.current[currentPartIndex] = { correct, total };
+        const agg = Object.values(listeningResultsByPartRef.current).reduce(
+          (acc, r) => ({ correct: acc.correct + r.correct, total: acc.total + r.total }),
+          { correct: 0, total: 0 }
+        );
+        setScores(agg);
       } else {
         setScores(prev => ({
           correct: prev.correct + correct,
@@ -195,7 +202,33 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       setReadingPhase("results");
       return;
     }
-    const engineHandlesResults = isLast && (isGrammar || skill === "listening" || skill === "writing");
+    if (skill === "listening" && isLast) {
+      const built: ListeningFullPartResult[] = parts.map((pt, idx) => {
+        const partType = pt.partNorm as ListeningPartType;
+        const res = listeningResultsByPartRef.current[idx] || { correct: 0, total: 0 };
+        const ans = listeningAnswersByPartRef.current[idx] || [];
+        const entry: ListeningFullPartResult = {
+          partType,
+          correct: res.correct,
+          total: res.total,
+          examSetId: pt.id,
+          answers: ans,
+        };
+        if (partType === "part1") entry.part1Questions = toListeningPart1(pt.questions);
+        else if (partType === "part2") entry.part2Questions = toListeningPart2(pt.questions);
+        else if (partType === "part3") entry.part3Questions = toListeningPart3(pt.questions);
+        else if (partType === "part4") entry.part4Questions = toListeningPart4(pt.questions);
+        return entry;
+      });
+      const totalCorrect = built.reduce((s, p) => s + p.correct, 0);
+      const totalQs = built.reduce((s, p) => s + p.total, 0);
+      const score50 = totalQs > 0 ? Math.round((totalCorrect / totalQs) * 50) : 0;
+      setListeningFullParts(built);
+      setListeningScore50(score50);
+      setListeningPhase("results");
+      return;
+    }
+    const engineHandlesResults = isLast && (isGrammar || skill === "writing");
     if (engineHandlesResults) {
       return;
     }
