@@ -25,6 +25,7 @@ interface Props {
   onToggleBookmark?: () => void;
   reviewData?: ReadingReviewData | null;
   reviewDataLoading?: boolean;
+  hideTimer?: boolean;
 }
 
 const ReadingPart4Long = ({
@@ -32,7 +33,7 @@ const ReadingPart4Long = ({
   submitted, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
-  reviewData, reviewDataLoading,
+  reviewData, reviewDataLoading, hideTimer = false,
 }: Props) => {
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
