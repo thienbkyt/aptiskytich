@@ -1,6 +1,15 @@
 import { useState } from "react";
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { getSkillBand, getLevelColor } from "@/data/questions";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Eye } from "lucide-react";
+import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
+import type {
+  WritingPart1Data,
+  WritingPart2Data,
+  WritingPart3Data,
+  WritingPart4Data,
+} from "@/data/writingQuestions";
 
 interface Submission {
   partType: string;
@@ -8,11 +17,25 @@ interface Submission {
   questions: string[];
 }
 
+export interface WritingFullReviewPart {
+  partType: WritingPartType;
+  partData: WritingPart1Data | WritingPart2Data | WritingPart3Data | WritingPart4Data;
+  answers: {
+    shortAnswers?: string[];
+    textAnswer?: string;
+    part3Answers?: string[];
+    informalAnswer?: string;
+    formalAnswer?: string;
+  };
+  grading: WritingGradingResult;
+}
+
 interface WritingFullResultsProps {
   results: WritingGradingResult[];
   score50: number;
   onExit: () => void;
   submissions?: Submission[];
+  parts?: WritingFullReviewPart[];
 }
 
 const partLabel = (pt: string) => {
@@ -20,8 +43,9 @@ const partLabel = (pt: string) => {
   return m[pt] || pt;
 };
 
-const WritingFullResults = ({ results, score50, onExit, submissions = [] }: WritingFullResultsProps) => {
+const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFullResultsProps) => {
   const [view, setView] = useState<"summary" | "review">("summary");
+  const [reviewIdx, setReviewIdx] = useState(0);
   const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
   const band = getSkillBand(score50, "writing");
   const bandColor = getLevelColor(band);
@@ -61,12 +85,14 @@ const WritingFullResults = ({ results, score50, onExit, submissions = [] }: Writ
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <button
-            onClick={() => setView("review")}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-medium transition-colors"
-          >
-            Xem lại bài làm & nhận xét chi tiết →
-          </button>
+          {parts.length > 0 && (
+            <button
+              onClick={() => { setReviewIdx(0); setView("review"); }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-medium transition-colors inline-flex items-center gap-2"
+            >
+              <Eye className="w-4 h-4" /> Xem lại bài làm & nhận xét chi tiết →
+            </button>
+          )}
           <button
             onClick={onExit}
             className="bg-muted hover:bg-muted/80 text-foreground px-6 py-2.5 rounded-lg font-medium transition-colors"
@@ -78,125 +104,83 @@ const WritingFullResults = ({ results, score50, onExit, submissions = [] }: Writ
     );
   }
 
-  // ── Review view ──
+  // ── Review view (engine per part with tab bar) ──
+  const current = parts[reviewIdx];
+  if (!current) {
+    return (
+      <div className="max-w-xl mx-auto py-12 text-center">
+        <p className="text-sm text-muted-foreground mb-4">Không có dữ liệu xem lại.</p>
+        <Button onClick={() => setView("summary")}>← Quay lại tổng kết</Button>
+      </div>
+    );
+  }
+
+  const partData: any = current.partData;
+  const engineProps: any = {};
+  if (current.partType === "task1") engineProps.part1Data = partData;
+  else if (current.partType === "task2") engineProps.part2Data = partData;
+  else if (current.partType === "task3") engineProps.part3Data = partData;
+  else if (current.partType === "task4") engineProps.part4Data = partData;
+
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setView("summary")}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-        >
-          ← Quay lại tổng kết
-        </button>
-        <span className="text-sm text-muted-foreground">|</span>
-        <span className="text-sm font-medium text-foreground">Xem lại bài làm</span>
-      </div>
-
-      {results.map((r, idx) => {
-        const sub = submissions[idx];
-        const allErrors = [
-          ...(r.grammarErrors || []).map((e) => ({ ...e, kind: "Ngữ pháp" })),
-          ...(r.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
-        ];
-        const hasPenalties =
-          (r.wordPenaltyPercent || 0) > 0 ||
-          (r.coherencePenaltyPercent || 0) > 0 ||
-          (r.openingClosingPenalty || 0) > 0;
-
-        return (
-          <div key={idx} className="bg-card border border-border rounded-2xl p-6 space-y-5">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-heading font-bold text-foreground">{partLabel(r.partType)}</h3>
-              <span className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
-                {r.partScore}/{r.maxPoints}
-              </span>
-            </div>
-
-            {/* Prompt */}
-            {sub && sub.questions.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Đề bài</p>
-                <div className="text-sm text-foreground bg-muted/40 rounded-xl p-4 space-y-1">
-                  {sub.questions.map((q, i) => (
-                    <p key={i} className="leading-relaxed">{q}</p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* User text */}
-            {sub && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Bài làm của bạn</p>
-                <div className="text-sm text-foreground bg-muted/60 rounded-xl p-4 max-h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed">
-                  {sub.text || <span className="italic text-muted-foreground">(Không có nội dung)</span>}
-                </div>
-              </div>
-            )}
-
-            {/* Feedback */}
-            {r.feedback && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Nhận xét</p>
-                <p className="text-sm text-muted-foreground leading-relaxed">{r.feedback}</p>
-              </div>
-            )}
-
-            {/* Penalties */}
-            {hasPenalties && (
-              <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Các khoản trừ</p>
-                <div className="flex flex-wrap gap-2">
-                  {(r.wordPenaltyPercent || 0) > 0 && (
-                    <span className="inline-block px-3 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
-                      Phạt thiếu/tăng từ: −{r.wordPenaltyPercent}%
-                    </span>
-                  )}
-                  {(r.coherencePenaltyPercent || 0) > 0 && (
-                    <span className="inline-block px-3 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
-                      Trừ mạch lạc: −{r.coherencePenaltyPercent}%
-                    </span>
-                  )}
-                  {(r.openingClosingPenalty || 0) > 0 && (
-                    <span className="inline-block px-3 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
-                      Thiếu opening/closing: −{r.openingClosingPenalty}đ
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Errors */}
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Lỗi cần sửa</p>
-              {allErrors.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">Không phát hiện lỗi ngữ pháp/chính tả.</p>
-              ) : (
-                <div className="space-y-3">
-                  {allErrors.map((m, i) => (
-                    <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
-                      <p className="text-xs font-semibold text-muted-foreground mb-1">{m.kind}</p>
-                      <p className="text-sm text-red-600 dark:text-red-400 line-through mb-1">&ldquo;{m.original}&rdquo;</p>
-                      <p className="text-sm text-green-600 dark:text-green-400 font-medium mb-1">→ &ldquo;{m.corrected}&rdquo;</p>
-                      <p className="text-xs text-muted-foreground">{m.explanation}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+    <div className="min-h-screen">
+      {/* Top review bar */}
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+          <button
+            onClick={() => setView("summary")}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            ← Quay lại tổng kết
+          </button>
+          <div className="flex items-center gap-2">
+            {parts.map((p, i) => (
+              <button
+                key={i}
+                onClick={() => setReviewIdx(i)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+                  i === reviewIdx
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-foreground hover:border-primary/40"
+                }`}
+              >
+                {partLabel(p.partType)}
+              </button>
+            ))}
           </div>
-        );
-      })}
-
-      <div className="flex items-center justify-center pt-2 pb-8">
-        <button
-          onClick={() => setView("summary")}
-          className="bg-muted hover:bg-muted/80 text-foreground px-6 py-2.5 rounded-lg font-medium transition-colors"
-        >
-          ← Quay lại tổng kết
-        </button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReviewIdx((i) => Math.max(0, i - 1))}
+              disabled={reviewIdx === 0}
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" /> Part trước
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReviewIdx((i) => Math.min(parts.length - 1, i + 1))}
+              disabled={reviewIdx === parts.length - 1}
+            >
+              Part sau →
+            </Button>
+          </div>
+        </div>
       </div>
+
+      <WritingExamEngine
+        key={`wreview-${reviewIdx}`}
+        reviewMode
+        skipIntro
+        testTitle="Writing"
+        timeLimit={0}
+        partType={current.partType}
+        initialAnswers={current.answers}
+        gradingResult={current.grading}
+        onExit={() => setView("summary")}
+        {...engineProps}
+      />
     </div>
   );
 };
