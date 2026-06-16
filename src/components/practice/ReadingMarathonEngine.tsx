@@ -221,6 +221,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     );
   }
 
+  const pagesPerSet = partType === "part2" ? 2 : 1;
   return (
     <ReadingExamEngine
       key={`${attempt}-${currentIndex}`}
@@ -232,8 +233,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       showResultsOnSubmit={false}
       onExit={onExit}
       onComplete={handleComplete}
-      pageNumber={currentIndex + 1}
-      pageTotal={sets.length}
+      pageBase={currentIndex * pagesPerSet}
+      pageTotal={sets.length * pagesPerSet}
       {...engineData}
     />
   );
