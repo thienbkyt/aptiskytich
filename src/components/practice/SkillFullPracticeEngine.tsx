@@ -13,7 +13,7 @@ import {
 } from "@/lib/examTransformers";
 
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
-import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
+import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
