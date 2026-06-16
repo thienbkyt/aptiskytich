@@ -480,6 +480,76 @@ const WritingExamEngine = ({
             onSubmitTest={!submitted ? handleSubmit : undefined}
           />
         )}
+
+        {reviewMode && gradingResult && (() => {
+          const submission = (() => {
+            if (partType === "task1" && part1Data) {
+              return part1Data.questions.map((q, i) => ({ prompt: q.text, answer: shortAnswers[i] || "", sampleAnswer: q.sampleAnswer }));
+            }
+            if (partType === "task2" && part2Data) {
+              return [{ prompt: `${part2Data.instruction}\n${part2Data.question || ""}`.trim(), answer: textAnswer, sampleAnswer: part2Data.sampleAnswer }];
+            }
+            if (partType === "task3" && part3Data) {
+              return part3Data.questions.map((q, i) => ({ prompt: q.text, answer: part3Answers[i] || "", sampleAnswer: q.sampleAnswer }));
+            }
+            if (partType === "task4" && part4Data) {
+              return [
+                { prompt: `Informal Email: ${part4Data.informalEmail.instruction}`, answer: informalAnswer, sampleAnswer: part4Data.informalEmail.sampleAnswer },
+                { prompt: `Formal Email: ${part4Data.formalEmail.instruction}`, answer: formalAnswer, sampleAnswer: part4Data.formalEmail.sampleAnswer },
+              ];
+            }
+            return [] as Array<{ prompt: string; answer: string; sampleAnswer?: string }>;
+          })();
+          const allErrors = [
+            ...(gradingResult.grammarErrors || []).map((e) => ({ ...e, kind: "Ngữ pháp" })),
+            ...(gradingResult.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
+          ];
+          return (
+            <div className="mt-8 space-y-5">
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-heading font-bold text-foreground">Nhận xét của AI</h3>
+                  <span className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
+                    {gradingResult.partScore}/{gradingResult.maxPoints}
+                  </span>
+                </div>
+                {gradingResult.feedback && (
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{gradingResult.feedback}</p>
+                )}
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <h3 className="text-sm font-heading font-bold text-foreground mb-4">❌ Lỗi cần sửa</h3>
+                {allErrors.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">Không phát hiện lỗi ngữ pháp/chính tả.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {allErrors.map((m, i) => (
+                      <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
+                        <p className="text-xs font-semibold text-muted-foreground mb-1">{m.kind}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400 line-through mb-1">&ldquo;{m.original}&rdquo;</p>
+                        <p className="text-sm text-green-600 dark:text-green-400 font-medium mb-1">→ &ldquo;{m.corrected}&rdquo;</p>
+                        <p className="text-xs text-muted-foreground">{m.explanation}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {submission.some((s) => s.sampleAnswer) && (
+                <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
+                  <h3 className="text-sm font-heading font-bold text-foreground">💡 Bài viết mẫu</h3>
+                  {submission.map((s, i) => s.sampleAnswer ? (
+                    <div key={i} className="bg-success/5 border border-success/20 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-success mb-1">Đề {i + 1}</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{s.sampleAnswer}</p>
+                    </div>
+                  ) : null)}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
