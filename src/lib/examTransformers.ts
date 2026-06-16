@@ -154,7 +154,12 @@ export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Questio
     questionText: first.question_text || "",
     statements: rows.map((r) => ({
       text: r.question_text || "",
-      correctAnswer: String(r.correct_answer ?? ""),
+      correctAnswer: (() => {
+        const n = Number(r.correct_answer);
+        const map = ["man", "woman", "both"];
+        if (!Number.isNaN(n) && map[n]) return map[n];
+        return String(r.correct_answer ?? "").toLowerCase();
+      })(),
     })),
     script: first.explanation || "",
   }];
