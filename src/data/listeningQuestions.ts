@@ -27,6 +27,7 @@ export interface ListeningPart2Question {
   questionText: string;
   persons: ListeningPart2Person[];
   infoItems: ListeningPart2InfoItem[];
+  script?: string;
 }
 
 // Part 3: Short Conversations – Two speakers, classify each statement (man/woman/both)
