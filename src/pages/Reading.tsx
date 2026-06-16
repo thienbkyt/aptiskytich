@@ -345,6 +345,31 @@ const Reading = () => {
                 <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                  {filteredSets.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                      <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
+                        <Badge className="w-fit text-[11px] font-semibold mb-3 bg-primary text-primary-foreground border-0 gap-1">
+                          <InfinityIcon className="w-3 h-3" /> Marathon
+                        </Badge>
+                        <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
+                          Luyện tất cả đề {activePartInfo?.label}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Làm liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ
+                        </p>
+                        <div className="flex-1" />
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => setMarathon({ active: true, partType: activeTab as ReadingPartType })}
+                            className="gap-1.5 font-semibold"
+                          >
+                            Bắt đầu <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
                   {filteredSets.map((set, index) => (
                     <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
