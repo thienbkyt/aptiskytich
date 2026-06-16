@@ -41,6 +41,7 @@ export interface ListeningPart3Question {
   audioUrl: string;
   questionText: string;
   statements: ListeningPart3Statement[];
+  script?: string;
 }
 
 // Part 4: Monologues – 2 clips, each with 1 audio + 2 MCQ questions
