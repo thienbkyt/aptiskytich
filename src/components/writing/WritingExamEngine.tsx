@@ -120,9 +120,10 @@ const WritingExamEngine = ({
   // Ensure exam-mode dark overrides apply during intro phase too
   // (intro screen renders no ExamHeader, so the body class wouldn't be set).
   useEffect(() => {
+    if (reviewMode) return;
     document.body.classList.add("exam-mode");
     return () => document.body.classList.remove("exam-mode");
-  }, []);
+  }, [reviewMode]);
 
 
   useEffect(() => {
@@ -421,6 +422,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            reviewMode={reviewMode}
           />
         )}
 
@@ -438,6 +440,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            reviewMode={reviewMode}
           />
         )}
 
@@ -459,6 +462,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            reviewMode={reviewMode}
           />
         )}
 
@@ -478,6 +482,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            reviewMode={reviewMode}
           />
         )}
 

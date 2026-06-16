@@ -19,16 +19,17 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  reviewMode?: boolean;
 }
 
 const WritingPart4TwoEmails = ({
   data, informalAnswer, formalAnswer,
   onInformalChange, onFormalChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode,
 }: Props) => {
   return (
-    <div className="min-h-[70vh] flex flex-col pb-20">
+    <div className={`${reviewMode ? "" : "min-h-[70vh]"} flex flex-col ${reviewMode ? "pb-4" : "pb-20"}`}>
       <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Writing – Part 4</p>
