@@ -27,6 +27,7 @@ interface Props {
   reviewDataLoading?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  hideTimer?: boolean;
 }
 
 const ReadingPart3Opinion = ({
@@ -34,7 +35,7 @@ const ReadingPart3Opinion = ({
   onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
-  pageNumber, pageTotal,
+  pageNumber, pageTotal, hideTimer = false,
 }: Props) => {
 
   return (
