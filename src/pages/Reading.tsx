@@ -74,14 +74,32 @@ const Reading = () => {
   const { examSets, loading } = useExamSets("reading");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const { progress } = useUserExamProgress();
-  const [exam, setExam] = useState<ExamState>({
+  const [exam, setExam] = useSessionState<ExamState>("reading:exam", {
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
-  });
-  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
+  }, { omitKeys: ["engineData"] });
+  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("reading:full", {
     active: false, fullTestId: "", title: "",
   });
   const { user: authUser, loading: authLoading } = useAuth();
+
+  // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
+  const rehydratedRef = useRef(false);
+  useEffect(() => {
+    if (rehydratedRef.current) return;
+    if (!exam.active || exam.engineData) return;
+    if (exam.examSetId) {
+      if (loading) return;
+      const target = examSets.find((s) => s.id === exam.examSetId);
+      if (target) {
+        rehydratedRef.current = true;
+        handleStartFromDB(target);
+      }
+    } else {
+      rehydratedRef.current = true;
+      handleStartMock(exam.partType);
+    }
+  }, [exam.active, exam.engineData, exam.examSetId, exam.partType, examSets, loading]);
 
   // Auto-start when arriving via ?set=<examSetId> (e.g. from history "Làm lại")
   const [searchParams, setSearchParams] = useSearchParams();
