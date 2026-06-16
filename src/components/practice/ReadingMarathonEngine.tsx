@@ -27,33 +27,30 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
   const [accTotal, setAccTotal] = useState(0);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
-  const savedRef = (() => {
-    // close over a mutable boolean via state
-    return null;
-  })();
   const [savedOnce, setSavedOnce] = useState(false);
-
-  const loadCurrent = useCallback(async () => {
-    if (currentIndex >= sets.length) return;
-    setPhase("loading");
-    setEngineData(null);
-    const set = sets[currentIndex];
-    const questions = await fetchExamQuestions(set.id);
-    const data: any = {};
-    switch (partType) {
-      case "part1": data.part1Question = toReadingPart1(questions); break;
-      case "part2": data.part2Question = toReadingPart2(questions); break;
-      case "part3": data.part3Question = toReadingPart3(questions); break;
-      case "part4": data.part4Question = toReadingPart4(questions); break;
-    }
-    setEngineData(data);
-    setPhase("exam");
-  }, [currentIndex, sets, partType]);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (phase === "completed") return;
-    loadCurrent();
-  }, [loadCurrent, phase]);
+    if (currentIndex >= sets.length) return;
+    let cancelled = false;
+    setPhase("loading");
+    setEngineData(null);
+    (async () => {
+      const set = sets[currentIndex];
+      const questions = await fetchExamQuestions(set.id);
+      if (cancelled) return;
+      const data: any = {};
+      switch (partType) {
+        case "part1": data.part1Question = toReadingPart1(questions); break;
+        case "part2": data.part2Question = toReadingPart2(questions); break;
+        case "part3": data.part3Question = toReadingPart3(questions); break;
+        case "part4": data.part4Question = toReadingPart4(questions); break;
+      }
+      setEngineData(data);
+      setPhase("exam");
+    })();
+    return () => { cancelled = true; };
+  }, [currentIndex, sets, partType]);
 
   const handleComplete = useCallback((correct: number, total: number) => {
     setAccCorrect((c) => c + correct);
