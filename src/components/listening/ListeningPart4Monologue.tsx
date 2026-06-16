@@ -133,10 +133,11 @@ const ListeningPart4Monologue = ({
           </div>
 
           {submitted && clip.script && (
-            <div className="mt-6 border border-border rounded-md p-4 bg-muted/30">
-              <p className="text-sm font-heading font-bold text-foreground mb-2">Script</p>
-              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{clip.script}</p>
-            </div>
+            <ScriptBlock
+              script={clip.script}
+              spans={clip.questions.map((_, qi) => highlights[l4Id(currentIndex, qi)]).filter(Boolean) as string[]}
+              loading={highlightLoading}
+            />
           )}
         </motion.div>
       </AnimatePresence>
