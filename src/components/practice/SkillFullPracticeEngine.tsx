@@ -18,6 +18,7 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import ReadingFullResults, { type ReadingFullPartResult } from "@/components/reading/ReadingFullResults";
+import ListeningFullResults, { type ListeningFullPartResult } from "@/components/listening/ListeningFullResults";
 import WritingFullResults from "@/components/writing/WritingFullResults";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult } from "@/lib/saveExamResult";
