@@ -535,6 +535,7 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
+            hideTimer={hideTimer}
           />
         )}
 
