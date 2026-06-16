@@ -74,6 +74,8 @@ interface ReadingExamEngineProps {
   examSetId?: string | null;
   /** Tổng số câu của cả ĐỀ Reading (4 part) để chia điểm /50 ở ReadingResults. */
   totalForScore?: number | null;
+  /** When true, hide the countdown timer and disable auto-submit on time-up. */
+  hideTimer?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
