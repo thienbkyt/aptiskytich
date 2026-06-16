@@ -112,6 +112,13 @@ const ListeningPart1Word = ({
               );
             })}
           </div>
+
+          {submitted && q.script && (
+            <div className="mt-6 border border-border rounded-md p-4 bg-muted/30">
+              <p className="text-sm font-heading font-bold text-foreground mb-2">Script</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{q.script}</p>
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
 
