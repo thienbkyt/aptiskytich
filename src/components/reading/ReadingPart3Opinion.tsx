@@ -172,7 +172,7 @@ const ReadingPart3Opinion = ({
               </div>
 
               {submitted && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />}
-              {submitted && isWrong && (
+              {submitted && selected !== stmt.correctPerson && (
                 <div className="flex items-center gap-1 shrink-0">
                   <XCircle className="w-5 h-5 text-red-500" />
                   <span className="text-xs text-green-600 font-medium">
