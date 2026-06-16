@@ -112,7 +112,7 @@ const ReadingPart2Cohesion = ({
       )}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-sm font-heading font-bold text-foreground">Reading Đề 01</p>
+          <p className="text-sm font-heading font-bold text-foreground">Reading</p>
           <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
             Question {currentSection + 1} of {totalSections}
           </p>

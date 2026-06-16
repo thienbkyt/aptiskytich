@@ -39,7 +39,7 @@ const ReadingPart3Opinion = ({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-sm font-heading font-bold text-foreground">Reading Đề 01</p>
+          <p className="text-sm font-heading font-bold text-foreground">Reading</p>
         </div>
         <div className="flex items-center gap-4">
           <button
