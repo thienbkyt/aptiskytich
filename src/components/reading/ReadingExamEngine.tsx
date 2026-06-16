@@ -94,6 +94,9 @@ const ReadingExamEngine = ({
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const computedPageNumber = pageBase != null
+    ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
+    : undefined;
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
