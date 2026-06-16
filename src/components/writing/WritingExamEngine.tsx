@@ -11,7 +11,7 @@ import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
-import { useExamGrading } from "@/hooks/useExamGrading";
+import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
   WritingPart2Data,
@@ -48,6 +48,8 @@ interface WritingExamEngineProps {
   sourceQuestionIds?: string[];
   /** Open in read-only review mode (pre-submitted, intros skipped). */
   reviewMode?: boolean;
+  /** When in reviewMode, the AI grading for this part to render below the editor. */
+  gradingResult?: WritingGradingResult | null;
   /** Full-practice mode: when set, engine forwards answers and skips grading/results. */
   onPartAnswers?: (data: { partType: WritingPartType; text: string; questions: string[] }) => void;
   initialAnswers?: {
@@ -83,7 +85,7 @@ const WritingExamEngine = ({
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious, sourceQuestionIds,
   showResultsOnSubmit, onPartAnswers,
-  reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
+  reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
