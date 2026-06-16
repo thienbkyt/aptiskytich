@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import ReadingExamEngine, { type ReadingPartType } from "@/components/reading/ReadingExamEngine";
-import ReadingResults from "@/components/reading/ReadingResults";
 import ExamHeader from "@/components/exam/ExamHeader";
+import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import { Button } from "@/components/ui/button";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
@@ -20,9 +20,12 @@ interface Props {
 
 type Phase = "loading" | "exam" | "completed";
 
+type QResult = { exam_question_id: string; user_answer: string | null; is_correct: boolean };
+
 type ReviewEntry = {
-  question: any;
-  answers: any;
+  examSetId: string;
+  part: string;
+  qResults: QResult[];
   correct: number;
   total: number;
 };
@@ -63,20 +66,15 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
   }, [currentIndex, sets, partType]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
-    let answers: any = [];
-    try {
-      const raw = perQuestion?.[0]?.user_answer;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.answers !== undefined) answers = parsed.answers;
-      }
-    } catch { /* noop */ }
-    const question =
-      partType === "part1" ? engineData?.part1Question
-      : partType === "part2" ? engineData?.part2Question
-      : partType === "part3" ? engineData?.part3Question
-      : engineData?.part4Question;
-    setReviews((prev) => [...prev, { question, answers, correct, total }]);
+    const set = sets[currentIndex];
+    const qResults: QResult[] = Array.isArray(perQuestion) ? (perQuestion as QResult[]) : [];
+    setReviews((prev) => [...prev, {
+      examSetId: set.id,
+      part: set.part,
+      qResults,
+      correct,
+      total,
+    }]);
     setAccCorrect((c) => c + correct);
     setAccTotal((t) => t + total);
     if (currentIndex < sets.length - 1) {
@@ -84,7 +82,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets.length, engineData, partType]);
+  }, [currentIndex, sets]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
@@ -97,59 +95,71 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     });
   }, [phase, savedOnce, accCorrect, accTotal]);
 
+  // Toggle body class while reviewing to hide engine-internal exam controls (matches HistoryReviewPager).
+  useEffect(() => {
+    if (reviewIndex === null) return;
+    document.body.classList.add("history-review-mode");
+    return () => {
+      document.body.classList.remove("history-review-mode");
+    };
+  }, [reviewIndex !== null]);
+
   const partName =
     partType === "part1" ? "Part 1"
     : partType === "part2" ? "Part 2"
     : partType === "part3" ? "Part 3"
     : "Part 4";
 
-  // Review mode
+  // Review mode — render real exam UI with answers via HistoryReviewRenderer
   if (phase === "completed" && reviewIndex !== null && reviews[reviewIndex]) {
     const r = reviews[reviewIndex];
+    const isFirst = reviewIndex === 0;
+    const isLast = reviewIndex === reviews.length - 1;
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader
-          skillLabel="Reading"
-          partLabel={`Xem lại · Đề ${reviewIndex + 1}/${reviews.length}`}
-          onExit={() => setReviewIndex(null)}
-          immediateExit
-        />
-        <main className="flex-1 px-4 py-6">
-          <ReadingResults
-            mode="history"
-            partType={partType}
-            partLabel={`Đề ${reviewIndex + 1}`}
-            correct={r.correct}
-            total={r.total}
-            {...(partType === "part1" ? { part1Question: r.question, part1Answers: r.answers } : {})}
-            {...(partType === "part2" ? { part2Question: r.question, part2Placements: r.answers } : {})}
-            {...(partType === "part3" ? { part3Question: r.question, part3Answers: r.answers } : {})}
-            {...(partType === "part4" ? { part4Question: r.question, part4Answers: r.answers } : {})}
-            onExit={() => setReviewIndex(null)}
-            onRetry={() => {}}
-          />
-          <div className="max-w-3xl mx-auto mt-6 flex flex-wrap items-center justify-between gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setReviewIndex((i) => (i !== null && i > 0 ? i - 1 : i))}
-              disabled={reviewIndex === 0}
-              className="gap-2"
-            >
-              <ChevronLeft className="w-4 h-4" /> Đề trước
-            </Button>
-            <Button variant="secondary" onClick={() => setReviewIndex(null)}>
-              Quay lại tổng kết
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setReviewIndex((i) => (i !== null && i < reviews.length - 1 ? i + 1 : i))}
-              disabled={reviewIndex === reviews.length - 1}
-              className="gap-2"
-            >
-              Đề sau <ChevronRight className="w-4 h-4" />
-            </Button>
+      <div className="min-h-screen bg-background">
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+          <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Button size="sm" variant="outline" onClick={() => setReviewIndex(null)}>
+                Quay lại tổng kết
+              </Button>
+              <span className="text-xs text-muted-foreground truncate">
+                Đề <span className="font-bold text-foreground">{reviewIndex + 1}</span>/{reviews.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setReviewIndex((i) => (i !== null && i > 0 ? i - 1 : i))}
+                disabled={isFirst}
+                className="gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Đề trước</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setReviewIndex((i) => (i !== null && i < reviews.length - 1 ? i + 1 : i))}
+                disabled={isLast}
+                className="gap-1"
+              >
+                <span className="hidden sm:inline">Đề sau</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-        </main>
+        </div>
+        <HistoryReviewRenderer
+          key={reviewIndex}
+          examSetId={r.examSetId}
+          skill="reading"
+          part={r.part}
+          testTitle={`Đề ${reviewIndex + 1}`}
+          qResults={r.qResults}
+          onExit={() => setReviewIndex(null)}
+        />
       </div>
     );
   }
