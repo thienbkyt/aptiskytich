@@ -27,6 +27,7 @@ interface Props {
   reviewDataLoading?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  hideTimer?: boolean;
 }
 
 const ReadingPart2Cohesion = ({
@@ -35,7 +36,7 @@ const ReadingPart2Cohesion = ({
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
-  pageNumber, pageTotal,
+  pageNumber, pageTotal, hideTimer = false,
 }: Props) => {
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
@@ -132,7 +133,7 @@ const ReadingPart2Cohesion = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay />
+          {!hideTimer && <TimerDisplay />}
         </div>
       </div>
 

@@ -77,7 +77,7 @@ interface ReadingExamEngineProps {
   /** When true, hide the countdown timer and disable auto-submit on time-up. */
   hideTimer?: boolean;
   /** Optional page numbering for marathon mode. */
-  pageNumber?: number;
+  pageBase?: number;
   pageTotal?: number;
 }
 
@@ -90,10 +90,13 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
-  pageNumber, pageTotal,
+  pageBase, pageTotal,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const computedPageNumber = pageBase != null
+    ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
+    : undefined;
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
@@ -540,7 +543,7 @@ const ReadingExamEngine = ({
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
             hideTimer={hideTimer}
-            pageNumber={pageNumber}
+            pageNumber={computedPageNumber}
             pageTotal={pageTotal}
           />
         )}
@@ -560,8 +563,9 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
-            pageNumber={pageNumber}
+            pageNumber={computedPageNumber}
             pageTotal={pageTotal}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -581,8 +585,9 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
-            pageNumber={pageNumber}
+            pageNumber={computedPageNumber}
             pageTotal={pageTotal}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -602,6 +607,7 @@ const ReadingExamEngine = ({
             onToggleBookmark={onToggleBookmarkCurrent}
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
+            hideTimer={hideTimer}
           />
         )}
       </div>
