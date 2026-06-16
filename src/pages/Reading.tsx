@@ -213,6 +213,17 @@ const Reading = () => {
     );
   }
 
+  if (marathon.active) {
+    const partLabel = PARTS.find((p) => p.id === marathon.partType)?.label ?? "Part";
+    return (
+      <ReadingMarathonEngine
+        sets={examSets.filter((s) => normalizePart(s.part) === marathon.partType)}
+        partType={marathon.partType}
+        skillLabel={`Reading · Marathon ${partLabel}`}
+        onExit={() => setMarathon({ active: false, partType: marathon.partType })}
+      />
+    );
+
   if (exam.active) {
     if (exam.loadingExam) {
       return (
