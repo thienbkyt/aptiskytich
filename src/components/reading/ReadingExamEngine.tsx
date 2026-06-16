@@ -77,7 +77,7 @@ interface ReadingExamEngineProps {
   /** When true, hide the countdown timer and disable auto-submit on time-up. */
   hideTimer?: boolean;
   /** Optional page numbering for marathon mode. */
-  pageNumber?: number;
+  pageBase?: number;
   pageTotal?: number;
 }
 
