@@ -7,6 +7,7 @@ export interface ListeningPart1Question {
   questionText?: string;
   options: string[];
   correct: number;
+  script?: string;
 }
 
 // Part 2: Matching Information – 4 speakers, match each to one of 6 info items
