@@ -47,6 +47,19 @@ const WritingFullResults = ({ results, score50, onExit, submissions = [] }: Writ
           </div>
         </div>
 
+        {/* Chi tiết bài làm */}
+        <div className="bg-card border border-border rounded-2xl p-6 text-left space-y-3">
+          <h3 className="text-base font-heading font-bold text-foreground mb-3">Chi tiết bài làm</h3>
+          {results.map((r, i) => (
+            <div key={i} className="flex items-center justify-between text-sm">
+              <span className="text-foreground font-medium">{partLabel(r.partType)}</span>
+              <span className="text-muted-foreground">
+                Điểm: <span className="font-semibold text-foreground">{r.partScore}/{r.maxPoints}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
             onClick={() => setView("review")}
