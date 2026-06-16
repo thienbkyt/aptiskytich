@@ -43,6 +43,11 @@ const ReadingPart3Opinion = ({
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading</p>
+          {pageNumber !== undefined && pageTotal !== undefined && (
+            <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
+              Question {pageNumber} of {pageTotal}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <button
