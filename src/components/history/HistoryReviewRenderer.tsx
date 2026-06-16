@@ -25,9 +25,12 @@ interface Props {
   testTitle: string;
   qResults: QResult[];
   onExit: () => void;
+  pageBase?: number;
+  pageTotal?: number;
+  initialSection?: number;
 }
 
-const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit }: Props) => {
+const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, pageBase, pageTotal, initialSection }: Props) => {
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(null);
 
   useEffect(() => {
