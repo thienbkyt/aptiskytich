@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import aiCoachLogo from "@/assets/ai-coach-logo.png.asset.json";
+import { SHOW_AI_ASSISTANT } from "@/config/features";
 
 const AICoachPanel = lazy(() => import("./AICoachPanel"));
 
@@ -13,11 +14,14 @@ export default function AICoachFab() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
 
+  if (!SHOW_AI_ASSISTANT) return null;
+
   // Hide on auth pages and when body has exam-fullscreen class (set by exam UI).
   if (HIDDEN_PATTERNS.some((re) => re.test(loc.pathname))) return null;
   if (typeof document !== "undefined" && document.body.classList.contains("exam-fullscreen")) {
     return null;
   }
+
 
   return (
     <>
