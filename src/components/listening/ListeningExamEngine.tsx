@@ -101,6 +101,11 @@ const ListeningExamEngine = ({
   );
 
   useEffect(() => {
+    if (reviewMode) return;
+    onAnswersChange?.(answers);
+  }, [answers, reviewMode, onAnswersChange]);
+
+  useEffect(() => {
     if (phase === "practice") {
       setSeenQuestions((prev) => new Set(prev).add(currentIndex));
     }
