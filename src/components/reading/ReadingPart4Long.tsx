@@ -86,7 +86,7 @@ const ReadingPart4Long = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay />
+          {!hideTimer && <TimerDisplay />}
         </div>
       </div>
 
