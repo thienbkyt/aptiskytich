@@ -64,6 +64,7 @@ const WritingPart1Short = ({
               disabled={submitted}
               placeholder="Type your answer..."
               minHeight="60px"
+              wordLimit={5}
               initialValue={answers[i] || ""}
             />
             {submitted && (

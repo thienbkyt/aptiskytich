@@ -262,9 +262,9 @@ export const toWritingPart2 = (rows: ExamQuestionRow[]): WritingPart2Data => {
   const ed = first?.extra_data || {};
   return {
     type: "form-fill",
-    instruction: ed.instruction || first?.question_text || "Fill in the form. Write in sentences. Use 20–30 words.",
+    instruction: ((ed.instruction || first?.question_text || "Fill in the form. Write in sentences. Use 20–30 words.").replace(/\s*\(Viết[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim()),
     question: ed.question || ed.promptQuestions?.[0] || "",
-    wordLimit: ed.wordLimit ?? 45,
+    wordLimit: 30,
     sampleAnswer: ed.sampleAnswer || first?.explanation || "",
   };
 };
@@ -292,7 +292,7 @@ export const toWritingPart4 = (rows: ExamQuestionRow[]): WritingPart4Data => {
     scenarioIntro: ed.scenarioIntro || ed.instruction || first?.question_text || "",
     scenarioEmail: ed.scenarioEmail || "",
     informalEmail: {
-      instruction: ed.informalEmail?.instruction || ed.informalEmail?.scenario || "",
+      instruction: (ed.informalEmail?.instruction || ed.informalEmail?.scenario || "").split("\n\n")[0].trim(),
       wordLimit: ed.informalEmail?.wordLimit ?? 75,
       sampleAnswer: ed.informalEmail?.sampleAnswer || "",
     },
