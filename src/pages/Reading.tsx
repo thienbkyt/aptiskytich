@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Search, Clock, Shuffle, ArrowRight, Loader2 } from "lucide-react";
+import { BookOpen, Search, Clock, Shuffle, ArrowRight, Loader2, Infinity as InfinityIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
+import ReadingMarathonEngine from "@/components/practice/ReadingMarathonEngine";
 
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
