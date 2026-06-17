@@ -112,6 +112,8 @@ const SpeakingExamEngine = ({
   const recordingStartRef = useRef<number | null>(null);
   // When true, the next onstop should trigger handleFinish after writing the blob.
   const finishAfterStopRef = useRef(false);
+  // When non-null, onstop should advance to this question index after writing the blob.
+  const pendingAdvanceRef = useRef<number | null>(null);
 
 
 
@@ -266,11 +268,12 @@ const SpeakingExamEngine = ({
       };
 
       mediaRecorder.onstop = () => {
-        if (suppressRecordingSaveRef.current || token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
+        if (suppressRecordingSaveRef.current || token !== flowTokenRef.current) {
           suppressRecordingSaveRef.current = false;
           chunksRef.current = [];
           stream.getTracks().forEach(t => t.stop());
           streamRef.current = null;
+          pendingAdvanceRef.current = null;
           // Even when suppressed, honor a pending finish so we don't hang.
           if (finishAfterStopRef.current) {
             finishAfterStopRef.current = false;
@@ -303,6 +306,22 @@ const SpeakingExamEngine = ({
         if (finishAfterStopRef.current) {
           finishAfterStopRef.current = false;
           handleFinish();
+          return;
+        }
+        // Advance to next question only after blob is safely stored.
+        if (pendingAdvanceRef.current != null) {
+          const nextIdx = pendingAdvanceRef.current;
+          pendingAdvanceRef.current = null;
+          const advToken = flowTokenRef.current;
+          currentIndexRef.current = nextIdx;
+          transitionTimeoutRef.current = setTimeout(() => {
+            if (advToken !== flowTokenRef.current) return;
+            setCurrentIndex(nextIdx);
+            setCanFinish(false);
+            setIsTransitioning(false);
+            advancingRef.current = false;
+            startQuestionFlow();
+          }, 300);
         }
       };
 
@@ -361,21 +380,38 @@ const SpeakingExamEngine = ({
       return;
     }
 
-    if (recorderActive) {
-      try { recorder!.stop(); } catch { /* noop */ }
-    }
     setIsTransitioning(true);
     const nextIdx = idx + 1;
-    currentIndexRef.current = nextIdx;
     const token = flowTokenRef.current;
-    transitionTimeoutRef.current = setTimeout(() => {
-      if (token !== flowTokenRef.current) return;
-      setCurrentIndex(nextIdx);
-      setCanFinish(false);
-      setIsTransitioning(false);
-      advancingRef.current = false;
-      startQuestionFlow();
-    }, 300);
+    if (recorderActive) {
+      // Defer the index bump until onstop has saved the blob for this question.
+      pendingAdvanceRef.current = nextIdx;
+      try {
+        recorder!.stop();
+      } catch {
+        pendingAdvanceRef.current = null;
+        currentIndexRef.current = nextIdx;
+        transitionTimeoutRef.current = setTimeout(() => {
+          if (token !== flowTokenRef.current) return;
+          setCurrentIndex(nextIdx);
+          setCanFinish(false);
+          setIsTransitioning(false);
+          advancingRef.current = false;
+          startQuestionFlow();
+        }, 300);
+      }
+    } else {
+      // No active recorder (nothing to save) — advance immediately.
+      currentIndexRef.current = nextIdx;
+      transitionTimeoutRef.current = setTimeout(() => {
+        if (token !== flowTokenRef.current) return;
+        setCurrentIndex(nextIdx);
+        setCanFinish(false);
+        setIsTransitioning(false);
+        advancingRef.current = false;
+        startQuestionFlow();
+      }, 300);
+    }
   }, [partType]);
 
   const handleFinishRecording = useCallback(() => {
