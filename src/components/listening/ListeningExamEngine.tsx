@@ -57,6 +57,8 @@ interface ListeningExamEngineProps {
   highlightLoading?: boolean;
   examSetId?: string | null;
   hideTimer?: boolean;
+  pageBase?: number;
+  pageTotal?: number;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
