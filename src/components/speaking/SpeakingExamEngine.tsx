@@ -90,9 +90,21 @@ const SpeakingExamEngine = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  // TODO: remove debug
-  const [debugTranscripts, setDebugTranscripts] = useState<(string | null)[]>([]);
-  const debugRanRef = useRef(false);
+  // Phase 2: per-question speaking grading results (Part 1 only for now)
+  interface SpeakingItemGrading {
+    transcript: string;
+    addressPercent: number;
+    grammarErrors: { original: string; corrected: string; explanation: string }[];
+    pronunciationErrors: { word: string; note: string }[];
+    timePenalty: number;
+    errorPenalty: number;
+    partScore: number;
+    maxPoints: number;
+    feedback: string;
+  }
+  const [gradings, setGradings] = useState<(SpeakingItemGrading | null | { error: string })[]>([]);
+  const [isGradingPart1, setIsGradingPart1] = useState(false);
+  const gradingRanRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
