@@ -354,7 +354,7 @@ const ListeningExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
-        {hasStarted && (
+        {hasStarted && !hideTimer && (
           <div className="px-6 pt-3 flex justify-end">
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
           </div>
