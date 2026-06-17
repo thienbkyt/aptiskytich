@@ -815,6 +815,7 @@ const SpeakingExamEngine = ({
       if (partType === "part3") return part3Data?.sampleAnswers || [];
       if (partType === "part4") return part4Data?.sampleAnswers || [];
       return [];
+    })();
     const isPart1 = partType === "part1";
     const validGradings = gradings.filter((g): g is SpeakingItemGrading => !!g && !("error" in g));
     const totalScore = validGradings.reduce((sum, g) => sum + (g.partScore || 0), 0);
