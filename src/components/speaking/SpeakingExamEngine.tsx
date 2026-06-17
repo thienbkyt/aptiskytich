@@ -112,6 +112,8 @@ const SpeakingExamEngine = ({
   const recordingStartRef = useRef<number | null>(null);
   // When true, the next onstop should trigger handleFinish after writing the blob.
   const finishAfterStopRef = useRef(false);
+  // When non-null, onstop should advance to this question index after writing the blob.
+  const pendingAdvanceRef = useRef<number | null>(null);
 
 
 
