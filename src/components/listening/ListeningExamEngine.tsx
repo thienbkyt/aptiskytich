@@ -56,6 +56,7 @@ interface ListeningExamEngineProps {
   highlightData?: ListeningHighlightData | null;
   highlightLoading?: boolean;
   examSetId?: string | null;
+  hideTimer?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
