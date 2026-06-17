@@ -29,12 +29,17 @@ type ResultEntry = {
   qResults: QResult[];
 };
 
+type LoadedSet = {
+  engineData: any;
+  pageCount: number;
+};
+
 const HUGE_TIME = 24 * 60 * 60;
 
 const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("loading");
-  const [engineData, setEngineData] = useState<any>(null);
+  const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(
@@ -50,27 +55,63 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
     [results]
   );
 
+  // Preload all sets in parallel
   useEffect(() => {
-    if (currentIndex >= sets.length) return;
     let cancelled = false;
     setPhase("loading");
-    setEngineData(null);
+    setLoaded(null);
     (async () => {
-      const set = sets[currentIndex];
-      const questions = await fetchExamQuestions(set.id);
+      const allLoaded = await Promise.all(
+        sets.map(async (set) => {
+          const questions = await fetchExamQuestions(set.id);
+          const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
+          let pageCount = 0;
+          switch (partType) {
+            case "part1": {
+              const arr = toListeningPart1(questions);
+              data.part1Questions = arr;
+              pageCount = arr.length;
+              break;
+            }
+            case "part2": {
+              const arr = toListeningPart2(questions);
+              data.part2Questions = arr;
+              pageCount = arr.length;
+              break;
+            }
+            case "part3": {
+              const arr = toListeningPart3(questions);
+              data.part3Questions = arr;
+              pageCount = arr.length;
+              break;
+            }
+            case "part4": {
+              const arr = toListeningPart4(questions);
+              data.part4Questions = arr;
+              pageCount = arr.length;
+              break;
+            }
+          }
+          return { engineData: data, pageCount } as LoadedSet;
+        })
+      );
       if (cancelled) return;
-      const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
-      switch (partType) {
-        case "part1": data.part1Questions = toListeningPart1(questions); break;
-        case "part2": data.part2Questions = toListeningPart2(questions); break;
-        case "part3": data.part3Questions = toListeningPart3(questions); break;
-        case "part4": data.part4Questions = toListeningPart4(questions); break;
-      }
-      setEngineData(data);
+      setLoaded(allLoaded);
       setPhase("exam");
     })();
     return () => { cancelled = true; };
-  }, [currentIndex, sets, partType]);
+  }, [sets, partType, attempt]);
+
+  const pageTotal = useMemo(
+    () => (loaded ? loaded.reduce((s, l) => s + l.pageCount, 0) : 0),
+    [loaded]
+  );
+  const pageBase = useMemo(() => {
+    if (!loaded) return 0;
+    let base = 0;
+    for (let i = 0; i < currentIndex && i < loaded.length; i++) base += loaded[i].pageCount;
+    return base;
+  }, [loaded, currentIndex]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
@@ -144,7 +185,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
     );
   }
 
-  if (phase === "loading" || !engineData) {
+  if (phase === "loading" || !loaded) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
@@ -157,6 +198,9 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
       </div>
     );
   }
+
+  const engineData = loaded[currentIndex]?.engineData;
+  if (!engineData) return null;
 
   return (
     <ListeningExamEngine
@@ -172,6 +216,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
       onPreviousPart={() => {
         if (currentIndex > 0) setCurrentIndex((i) => i - 1);
       }}
+      pageBase={pageBase}
+      pageTotal={pageTotal}
       {...engineData}
     />
   );
