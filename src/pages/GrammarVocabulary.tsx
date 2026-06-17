@@ -17,7 +17,6 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
-import { useSessionState } from "@/hooks/useSessionState";
 
 interface FullPracticeState {
   active: boolean;
