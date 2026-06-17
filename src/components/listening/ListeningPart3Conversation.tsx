@@ -78,7 +78,7 @@ const ListeningPart3Conversation = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+          {!hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />}
         </div>
       </div>
 
