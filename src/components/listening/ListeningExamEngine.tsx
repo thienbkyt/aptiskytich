@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import { resetLimitedAudioPlays } from "@/components/exam/LimitedAudioPlayer";
@@ -145,10 +145,13 @@ const ListeningExamEngine = ({
     }
   }, [phase, currentIndex]);
 
+  const didMountRef = useRef(false);
+
   // Reset internal state when partType changes (full-test flow keeps engine mounted).
   // Skip in reviewMode so pre-filled answers aren't wiped.
   useEffect(() => {
     if (reviewMode) return;
+    if (!didMountRef.current) { didMountRef.current = true; return; }
     setPhase(skipIntro ? "practice" : "instructions");
     setCurrentIndex(0);
     setSubmitted(false);
