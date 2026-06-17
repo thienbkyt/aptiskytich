@@ -112,7 +112,27 @@ serve(async (req) => {
     let systemPrompt: string;
 
     if (type === "speaking") {
-      systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will compute it from your structured output.
+      if (isPart4Aggregated) {
+        systemPrompt = `You are an expert Aptis Speaking Part 4 grader. You receive ONE audio file (the student's full ~120-second monologue) and the list of sub-questions of the topic. Your job is QUALITATIVE — DO NOT compute a numeric score; the application will.
+
+Return via the tool call:
+1. transcript: accurate English transcription of what the student actually said. Empty string if silent/unintelligible.
+2. addressPercents: an array of numbers (0–100), ONE entry per sub-question in the same order, indicating how well the student addressed EACH sub-question. Off-topic / silent / unintelligible → 0. Bare on-topic answer without supporting detail → ~70. Fully addressed with at least one supporting detail → ~100.
+3. usedConnectors: boolean — true ONLY if the student clearly uses linking words/discourse markers between ideas (e.g. "however", "for example", "in addition", "on the other hand", "firstly/secondly", "because of that", "as a result"). False if the speech is just a flat list of disconnected sentences.
+4. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (explanation in Vietnamese). Empty array if none.
+5. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic), as { word, note } (Vietnamese). If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry.
+6. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve, mention connectors if missing.
+
+Be honest and strict but fair. Do not invent content the student didn't say.`;
+      } else {
+        const pictureExtra = itemType === "picture" ? `
+
+THIS ITEM IS A PICTURE DESCRIPTION. In addition, return TWO booleans:
+- pictureLogicIssue: true if the description is disorganized / not linear (e.g. jumps randomly between people/objects/background without a clear order).
+- pictureNoAction: true if the student only describes appearance (people, objects, colors) but fails to describe what is HAPPENING / the action in the picture.
+Set both to false when the description is well-structured and covers actions.` : "";
+
+        systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will compute it from your structured output.
 
 Return via the tool call:
 1. transcript: an accurate transcription of what the student actually said (English). If the audio is silent or unintelligible, return an empty string.
@@ -123,25 +143,22 @@ Return via the tool call:
    - Off-topic, silent, or unintelligible → 0.
 3. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } with explanation in Vietnamese. Empty array if none.
 4. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic, not phoneme-by-phoneme), as { word, note } with note in Vietnamese. If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry describing the issue.
-5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.
+5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.${pictureExtra}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
+      }
 
       if (audioBase64) {
-        console.log("[grade-exam] speaking: audioBase64 length =", audioBase64.length);
+        console.log("[grade-exam] speaking: audioBase64 length =", audioBase64.length, "partType=", partType, "itemType=", itemType, "agg=", isPart4Aggregated);
+        const qList = isPart4Aggregated ? subQuestions : questions;
+        const promptText = isPart4Aggregated
+          ? `Exam Part: part4 (aggregated)\nSub-questions:\n${qList.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nTranscribe the full monologue and return addressPercents (one per sub-question), usedConnectors, plus the other fields.`
+          : `Exam Part: ${partType}\nItem type: ${itemType}\nQuestions:\n${qList.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nPlease transcribe the audio and grade the student's speaking response.`;
         userContent = [
+          { type: "text", text: promptText },
           {
-            type: "text",
-            text: `Exam Part: ${partType}\nQuestions:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nPlease transcribe the audio and grade the student's speaking response.`,
-          },
-          {
-            // OpenAI-compatible audio input. Lovable AI Gateway forwards this
-            // to Gemini which accepts webm/opus from browser MediaRecorder.
             type: "input_audio",
-            input_audio: {
-              data: audioBase64,
-              format: "webm",
-            },
+            input_audio: { data: audioBase64, format: "webm" },
           },
         ];
       } else if (text) {
