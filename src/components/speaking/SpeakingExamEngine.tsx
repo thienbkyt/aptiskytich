@@ -202,21 +202,17 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
-  // TODO: remove debug — call grade-exam once per recorded question when done
+  // Phase 2 (Part 1 only): call grade-exam once per recorded question when done.
   useEffect(() => {
-    if (phase !== "done" || debugRanRef.current) return;
-    debugRanRef.current = true;
+    if (phase !== "done" || gradingRanRef.current) return;
+    if (partType !== "part1" || !part1Data) return;
+    gradingRanRef.current = true;
 
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions;
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return [part4Data.topic];
-      return [];
-    })();
-
+    const promptsList: string[] = part1Data.questions;
+    const speakTimeSec = part1Data.speakTime || 30;
     const blobs = recordingsRef.current.slice();
-    setDebugTranscripts(new Array(blobs.length).fill(null));
+    setGradings(new Array(blobs.length).fill(null));
+    setIsGradingPart1(true);
 
     const blobToBase64 = (blob: Blob) => new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -231,7 +227,14 @@ const SpeakingExamEngine = ({
 
     Promise.all(
       blobs.map(async (blob, idx) => {
-        if (!blob) return;
+        if (!blob) {
+          setGradings(prev => {
+            const next = [...prev];
+            next[idx] = { error: "Không có bài ghi âm" };
+            return next;
+          });
+          return;
+        }
         try {
           const audioBase64 = await blobToBase64(blob);
           const { data, error } = await supabase.functions.invoke("grade-exam", {
@@ -240,26 +243,30 @@ const SpeakingExamEngine = ({
               audioBase64,
               questions: [promptsList[idx] ?? ""],
               partType,
+              maxPoints: 2,
+              itemType: "question",
+              speakTime: speakTimeSec,
+              actualSpoken: durationsRef.current[idx] ?? 0,
             },
           });
           if (error) throw error;
-          const transcript = (data as any)?.transcript ?? "(không có transcript)";
-          setDebugTranscripts(prev => {
+          if ((data as any)?.error) throw new Error((data as any).error);
+          setGradings(prev => {
             const next = [...prev];
-            next[idx] = transcript;
+            next[idx] = data as SpeakingItemGrading;
             return next;
           });
         } catch (e: any) {
-          console.error("[debug] grade-exam failed for q", idx, e);
-          setDebugTranscripts(prev => {
+          console.error("[grade-exam] failed for q", idx, e);
+          setGradings(prev => {
             const next = [...prev];
-            next[idx] = `(lỗi: ${e?.message ?? "unknown"})`;
+            next[idx] = { error: e?.message ?? "Lỗi chấm điểm" };
             return next;
           });
         }
       })
-    );
-  }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
+    ).finally(() => setIsGradingPart1(false));
+  }, [phase, partType, part1Data]);
 
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
