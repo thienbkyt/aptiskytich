@@ -497,6 +497,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
         maxPoints: mp,
         itemType,
         feedback: grading?.feedback ?? "",
+        improvedVersion: grading?.improvedVersion ?? "",
       };
 
       return new Response(JSON.stringify(payload), {
