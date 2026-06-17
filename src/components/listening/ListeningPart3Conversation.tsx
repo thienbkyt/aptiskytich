@@ -67,7 +67,9 @@ const ListeningPart3Conversation = ({
         <div>
           <p className="text-base text-foreground mb-1">Listening</p>
           <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground">
-            Question {currentIndex + 1} of {questions.length}
+            {pageNumber != null && pageTotal != null
+              ? `Question ${pageNumber} of ${pageTotal}`
+              : `Question ${currentIndex + 1} of ${questions.length}`}
           </h2>
         </div>
         <div className="flex items-center gap-3">
