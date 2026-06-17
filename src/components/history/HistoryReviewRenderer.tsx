@@ -125,6 +125,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       partType: pt, testTitle, timeLimit: 2100,
       onExit, reviewMode: true,
       pageBase, pageTotal, initialQuestion: initialSection,
+      examSetId,
     };
     if (pt === "part1") {
       const qs = toListeningPart1(rows);
@@ -140,11 +141,10 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       const fnMap: any = { part2: toListeningPart2, part3: toListeningPart3, part4: toListeningPart4 };
       const propKey = pt === "part2" ? "part2Questions" : pt === "part3" ? "part3Questions" : "part4Questions";
       props[propKey] = fnMap[pt](rows);
-      props.initialAnswers = rows.map((r) => {
-        const raw = ansMap[r.id];
-        if (!raw) return null;
+      props.initialAnswers = qResults.map((r) => {
+        if (!r.user_answer) return null;
         try {
-          const p = JSON.parse(raw);
+          const p = JSON.parse(r.user_answer);
           return p?.answer ?? null;
         } catch { return null; }
       });
