@@ -75,9 +75,7 @@ const Writing = () => {
   const [exam, setExam] = useSessionState<ExamState>("writing:exam", {
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   }, { omitKeys: ["engineData"] });
-  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("writing:full", {
-    active: false, fullTestId: "", title: "",
-  });
+  const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount.
