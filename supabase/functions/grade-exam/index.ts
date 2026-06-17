@@ -332,6 +332,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
     }
 
     const grading = JSON.parse(toolCall.function.arguments);
+
     if (type === "speaking") {
       console.log(
         "[grade-exam] speaking transcript length =",
@@ -339,6 +340,47 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
         "preview:",
         (grading?.transcript ?? "").slice(0, 200)
       );
+
+      // ---- Code-side scoring (Phase 2) ----
+      const mp = Math.max(0, maxPoints || 0);
+      const st = Math.max(0, speakTime || 0);
+      const sp = Math.max(0, Math.min(st || actualSpoken, actualSpoken || 0));
+      const addr = Math.max(0, Math.min(100, Number(grading?.addressPercent ?? 0)));
+      const grammarCount = Array.isArray(grading?.grammarErrors) ? grading.grammarErrors.length : 0;
+      const pronCount = Array.isArray(grading?.pronunciationErrors) ? grading.pronunciationErrors.length : 0;
+
+      const contentScore = (addr / 100) * mp;
+      const shortagePercent = st > 0 ? Math.max(0, ((st - sp) / st) * 100) : 0;
+
+      // Time penalty thresholds (question). Picture doubles the thresholds.
+      const mul = itemType === "picture" ? 2 : 1;
+      let timePenalty = 0;
+      if (shortagePercent < 10 * mul) timePenalty = 0;
+      else if (shortagePercent <= 20 * mul) timePenalty = 0.5;
+      else if (shortagePercent <= 50 * mul) timePenalty = 1.0;
+      else timePenalty = 1.5;
+
+      const errorPenalty = Math.min(0.5 * mp, 0.2 * (grammarCount + pronCount));
+      const rawScore = contentScore - timePenalty - errorPenalty;
+      const partScore = Math.round(Math.max(0, Math.min(mp, rawScore)) * 10) / 10;
+
+      const payload = {
+        transcript: grading?.transcript ?? "",
+        addressPercent: Math.round(addr * 10) / 10,
+        grammarErrors: grading?.grammarErrors ?? [],
+        pronunciationErrors: grading?.pronunciationErrors ?? [],
+        timePenalty: Math.round(timePenalty * 10) / 10,
+        errorPenalty: Math.round(errorPenalty * 10) / 10,
+        contentScore: Math.round(contentScore * 10) / 10,
+        shortagePercent: Math.round(shortagePercent * 10) / 10,
+        partScore,
+        maxPoints: mp,
+        feedback: grading?.feedback ?? "",
+      };
+
+      return new Response(JSON.stringify(payload), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify(grading), {
