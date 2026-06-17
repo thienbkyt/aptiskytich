@@ -28,7 +28,6 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
-import { useSessionState } from "@/hooks/useSessionState";
 
 const partToTask: Record<string, WritingPartType> = {
   part1: "task1", part2: "task2", part3: "task3", part4: "task4",
@@ -72,9 +71,9 @@ const Writing = () => {
   const { examSets, loading } = useExamSets("writing");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("writing");
   const { progress } = useUserExamProgress();
-  const [exam, setExam] = useSessionState<ExamState>("writing:exam", {
+  const [exam, setExam] = useState<ExamState>({
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
-  }, { omitKeys: ["engineData"] });
+  });
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
   const { user: authUser, loading: authLoading } = useAuth();
 

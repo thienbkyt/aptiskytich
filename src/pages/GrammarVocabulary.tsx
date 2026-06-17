@@ -17,7 +17,6 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
-import { useSessionState } from "@/hooks/useSessionState";
 
 interface FullPracticeState {
   active: boolean;
@@ -29,7 +28,7 @@ const GrammarVocabulary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
   const { progress } = useUserExamProgress();
-  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("grammar_vocab:full", {
+  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
   const { user: authUser, loading: authLoading } = useAuth();
