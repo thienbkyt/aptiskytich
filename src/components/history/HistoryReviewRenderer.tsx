@@ -124,6 +124,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const props: any = {
       partType: pt, testTitle, timeLimit: 2100,
       onExit, reviewMode: true,
+      pageBase, pageTotal, initialQuestion: initialSection,
     };
     if (pt === "part1") {
       const qs = toListeningPart1(rows);
