@@ -378,7 +378,7 @@ const ListeningExamEngine = ({
         <div className="flex-1 bg-white pl-[80px] pr-[80px] pt-[40px] font-sans text-black">
           <div className="flex items-start justify-between mb-4">
             <h1 className="text-xl">Aptis General Listening Instructions</h1>
-            {hasStarted && !hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />}}
+            {hasStarted && !hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />}
           </div>
           <p className="font-bold mb-2">Listening</p>
           {fullFlow && (
