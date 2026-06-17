@@ -235,7 +235,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
       additionalProperties: false,
     };
 
-    const speakingTool = {
+    const speakingItemTool = {
       type: "function",
       function: {
         name: "submit_grading",
@@ -247,9 +247,36 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
             addressPercent: { type: "number", description: "0-100, how well the answer addresses the prompt" },
             grammarErrors: { type: "array", items: errorItemSchema },
             pronunciationErrors: { type: "array", items: pronunciationItemSchema },
+            pictureLogicIssue: { type: "boolean", description: "Picture items only: description not logically ordered" },
+            pictureNoAction: { type: "boolean", description: "Picture items only: only appearance described, no action" },
             feedback: { type: "string", description: "Vietnamese, max 3 short sentences" },
           },
           required: ["transcript", "addressPercent", "grammarErrors", "pronunciationErrors", "feedback"],
+          additionalProperties: false,
+        },
+      },
+    };
+
+    const speakingPart4Tool = {
+      type: "function",
+      function: {
+        name: "submit_grading",
+        description: "Submit qualitative grading for the WHOLE Part 4 monologue. Do NOT compute final numeric score.",
+        parameters: {
+          type: "object",
+          properties: {
+            transcript: { type: "string" },
+            addressPercents: {
+              type: "array",
+              items: { type: "number" },
+              description: "One 0-100 number per sub-question, same order as input",
+            },
+            usedConnectors: { type: "boolean" },
+            grammarErrors: { type: "array", items: errorItemSchema },
+            pronunciationErrors: { type: "array", items: pronunciationItemSchema },
+            feedback: { type: "string", description: "Vietnamese, max 3 short sentences" },
+          },
+          required: ["transcript", "addressPercents", "usedConnectors", "grammarErrors", "pronunciationErrors", "feedback"],
           additionalProperties: false,
         },
       },
