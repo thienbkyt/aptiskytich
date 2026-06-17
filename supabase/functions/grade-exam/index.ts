@@ -19,6 +19,11 @@ interface GradingRequest {
   speakTime?: number;      // seconds allowed for this item
   maxPoints?: number;      // max points for this item
   itemType?: "question" | "picture";
+  // Time-penalty tiers for shortage brackets 10-20% / >20-50% / >50% (<10% => 0)
+  timePenaltyTiers?: [number, number, number] | number[];
+  // Part 4 aggregated grading
+  subQuestions?: string[];
+  usedConnectorsRequired?: boolean;
 }
 
 serve(async (req) => {
