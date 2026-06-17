@@ -268,11 +268,12 @@ const SpeakingExamEngine = ({
       };
 
       mediaRecorder.onstop = () => {
-        if (suppressRecordingSaveRef.current || token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
+        if (suppressRecordingSaveRef.current || token !== flowTokenRef.current) {
           suppressRecordingSaveRef.current = false;
           chunksRef.current = [];
           stream.getTracks().forEach(t => t.stop());
           streamRef.current = null;
+          pendingAdvanceRef.current = null;
           // Even when suppressed, honor a pending finish so we don't hang.
           if (finishAfterStopRef.current) {
             finishAfterStopRef.current = false;
@@ -305,6 +306,22 @@ const SpeakingExamEngine = ({
         if (finishAfterStopRef.current) {
           finishAfterStopRef.current = false;
           handleFinish();
+          return;
+        }
+        // Advance to next question only after blob is safely stored.
+        if (pendingAdvanceRef.current != null) {
+          const nextIdx = pendingAdvanceRef.current;
+          pendingAdvanceRef.current = null;
+          const advToken = flowTokenRef.current;
+          currentIndexRef.current = nextIdx;
+          transitionTimeoutRef.current = setTimeout(() => {
+            if (advToken !== flowTokenRef.current) return;
+            setCurrentIndex(nextIdx);
+            setCanFinish(false);
+            setIsTransitioning(false);
+            advancingRef.current = false;
+            startQuestionFlow();
+          }, 300);
         }
       };
 
