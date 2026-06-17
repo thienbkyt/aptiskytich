@@ -845,6 +845,24 @@ const SpeakingExamEngine = ({
               </button>
             </div>
 
+            {isPart1 && (
+              <div className="bg-card border border-border rounded-2xl p-6 text-center">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Điểm Speaking Part 1
+                </p>
+                {isGradingPart1 && !allGraded ? (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang chấm điểm bằng AI...
+                  </div>
+                ) : (
+                  <p className="text-3xl font-heading font-bold text-primary">
+                    {totalScore.toFixed(1)} <span className="text-base text-muted-foreground">/ {totalMax}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="bg-card border border-border rounded-2xl p-6">
               <h3 className="text-base font-heading font-bold text-foreground mb-4">
                 🎙️ Xem lại từng câu
