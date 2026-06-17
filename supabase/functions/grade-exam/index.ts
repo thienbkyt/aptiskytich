@@ -195,8 +195,6 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
       additionalProperties: false,
     };
 
-    const speakingTool = {
-      type: "function",
     const pronunciationItemSchema = {
       type: "object",
       properties: {
