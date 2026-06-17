@@ -124,6 +124,12 @@ const Listening = () => {
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
 
+  const marathonSets = useMemo(
+    () => examSets.filter((s) => normalizePart(s.part) === marathon.partType),
+    [examSets, marathon.partType]
+  );
+
+
   const handleStartFromDB = async (set: ExamSetRow) => {
     const partType = normalizePart(set.part) as ListeningPartType;
     setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now() }));
