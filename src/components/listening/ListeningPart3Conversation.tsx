@@ -34,6 +34,7 @@ interface Props {
   onSubmitTest?: () => void;
   highlights?: Record<string, string>;
   highlightLoading?: boolean;
+  hideTimer?: boolean;
 }
 
 const ANSWER_OPTIONS = [
@@ -46,7 +47,7 @@ const ListeningPart3Conversation = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading,
+  highlights = {}, highlightLoading, hideTimer,
 }: Props) => {
   const q = questions[currentIndex];
   if (!q) return null;
@@ -77,7 +78,7 @@ const ListeningPart3Conversation = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+          {!hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />}
         </div>
       </div>
 

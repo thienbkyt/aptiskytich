@@ -56,6 +56,7 @@ interface ListeningExamEngineProps {
   highlightData?: ListeningHighlightData | null;
   highlightLoading?: boolean;
   examSetId?: string | null;
+  hideTimer?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -72,7 +73,7 @@ const ListeningExamEngine = ({
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
-  highlightData, highlightLoading, examSetId,
+  highlightData, highlightLoading, examSetId, hideTimer = false,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -174,8 +175,9 @@ const ListeningExamEngine = ({
   }, [hasStarted, submitted, timeLeft]);
 
   useEffect(() => {
+    if (hideTimer) return;
     if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
-  }, [hasStarted, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
@@ -352,7 +354,7 @@ const ListeningExamEngine = ({
       <div className="min-h-screen bg-white flex flex-col">
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
-        {hasStarted && (
+        {hasStarted && !hideTimer && (
           <div className="px-6 pt-3 flex justify-end">
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
           </div>
@@ -376,7 +378,7 @@ const ListeningExamEngine = ({
         <div className="flex-1 bg-white pl-[80px] pr-[80px] pt-[40px] font-sans text-black">
           <div className="flex items-start justify-between mb-4">
             <h1 className="text-xl">Aptis General Listening Instructions</h1>
-            {hasStarted && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />}
+            {hasStarted && !hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />}
           </div>
           <p className="font-bold mb-2">Listening</p>
           {fullFlow && (
@@ -460,6 +462,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -477,6 +480,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -494,6 +498,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -511,6 +516,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
       </div>
