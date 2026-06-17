@@ -19,6 +19,11 @@ interface GradingRequest {
   speakTime?: number;      // seconds allowed for this item
   maxPoints?: number;      // max points for this item
   itemType?: "question" | "picture";
+  // Time-penalty tiers for shortage brackets 10-20% / >20-50% / >50% (<10% => 0)
+  timePenaltyTiers?: [number, number, number] | number[];
+  // Part 4 aggregated grading
+  subQuestions?: string[];
+  usedConnectorsRequired?: boolean;
 }
 
 serve(async (req) => {
@@ -65,6 +70,14 @@ serve(async (req) => {
     const speakTime = Number(body.speakTime ?? 0);
     const maxPoints = Number(body.maxPoints ?? 0);
     const itemType: "question" | "picture" = body.itemType === "picture" ? "picture" : "question";
+    const subQuestions: string[] = Array.isArray(body.subQuestions) ? body.subQuestions : [];
+    const isPart4Aggregated = type === "speaking" && partType === "part4" && subQuestions.length > 0;
+    // Default tiers fall back to original Part-1 question scheme (×2 for picture).
+    const defaultTiers: [number, number, number] =
+      itemType === "picture" ? [1, 2, 3] : [0.5, 1, 1.5];
+    const tiersIn = Array.isArray(body.timePenaltyTiers) && body.timePenaltyTiers.length === 3
+      ? (body.timePenaltyTiers.map((n) => Number(n) || 0) as [number, number, number])
+      : defaultTiers;
 
     if (type !== "speaking" && type !== "writing") {
       return new Response(JSON.stringify({ error: "Invalid type" }), {
@@ -99,7 +112,27 @@ serve(async (req) => {
     let systemPrompt: string;
 
     if (type === "speaking") {
-      systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will compute it from your structured output.
+      if (isPart4Aggregated) {
+        systemPrompt = `You are an expert Aptis Speaking Part 4 grader. You receive ONE audio file (the student's full ~120-second monologue) and the list of sub-questions of the topic. Your job is QUALITATIVE — DO NOT compute a numeric score; the application will.
+
+Return via the tool call:
+1. transcript: accurate English transcription of what the student actually said. Empty string if silent/unintelligible.
+2. addressPercents: an array of numbers (0–100), ONE entry per sub-question in the same order, indicating how well the student addressed EACH sub-question. Off-topic / silent / unintelligible → 0. Bare on-topic answer without supporting detail → ~70. Fully addressed with at least one supporting detail → ~100.
+3. usedConnectors: boolean — true ONLY if the student clearly uses linking words/discourse markers between ideas (e.g. "however", "for example", "in addition", "on the other hand", "firstly/secondly", "because of that", "as a result"). False if the speech is just a flat list of disconnected sentences.
+4. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (explanation in Vietnamese). Empty array if none.
+5. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic), as { word, note } (Vietnamese). If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry.
+6. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve, mention connectors if missing.
+
+Be honest and strict but fair. Do not invent content the student didn't say.`;
+      } else {
+        const pictureExtra = itemType === "picture" ? `
+
+THIS ITEM IS A PICTURE DESCRIPTION. In addition, return TWO booleans:
+- pictureLogicIssue: true if the description is disorganized / not linear (e.g. jumps randomly between people/objects/background without a clear order).
+- pictureNoAction: true if the student only describes appearance (people, objects, colors) but fails to describe what is HAPPENING / the action in the picture.
+Set both to false when the description is well-structured and covers actions.` : "";
+
+        systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will compute it from your structured output.
 
 Return via the tool call:
 1. transcript: an accurate transcription of what the student actually said (English). If the audio is silent or unintelligible, return an empty string.
@@ -110,25 +143,22 @@ Return via the tool call:
    - Off-topic, silent, or unintelligible → 0.
 3. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } with explanation in Vietnamese. Empty array if none.
 4. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic, not phoneme-by-phoneme), as { word, note } with note in Vietnamese. If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry describing the issue.
-5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.
+5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.${pictureExtra}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
+      }
 
       if (audioBase64) {
-        console.log("[grade-exam] speaking: audioBase64 length =", audioBase64.length);
+        console.log("[grade-exam] speaking: audioBase64 length =", audioBase64.length, "partType=", partType, "itemType=", itemType, "agg=", isPart4Aggregated);
+        const qList = isPart4Aggregated ? subQuestions : questions;
+        const promptText = isPart4Aggregated
+          ? `Exam Part: part4 (aggregated)\nSub-questions:\n${qList.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nTranscribe the full monologue and return addressPercents (one per sub-question), usedConnectors, plus the other fields.`
+          : `Exam Part: ${partType}\nItem type: ${itemType}\nQuestions:\n${qList.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nPlease transcribe the audio and grade the student's speaking response.`;
         userContent = [
+          { type: "text", text: promptText },
           {
-            type: "text",
-            text: `Exam Part: ${partType}\nQuestions:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nPlease transcribe the audio and grade the student's speaking response.`,
-          },
-          {
-            // OpenAI-compatible audio input. Lovable AI Gateway forwards this
-            // to Gemini which accepts webm/opus from browser MediaRecorder.
             type: "input_audio",
-            input_audio: {
-              data: audioBase64,
-              format: "webm",
-            },
+            input_audio: { data: audioBase64, format: "webm" },
           },
         ];
       } else if (text) {
@@ -205,7 +235,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
       additionalProperties: false,
     };
 
-    const speakingTool = {
+    const speakingItemTool = {
       type: "function",
       function: {
         name: "submit_grading",
@@ -217,9 +247,36 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
             addressPercent: { type: "number", description: "0-100, how well the answer addresses the prompt" },
             grammarErrors: { type: "array", items: errorItemSchema },
             pronunciationErrors: { type: "array", items: pronunciationItemSchema },
+            pictureLogicIssue: { type: "boolean", description: "Picture items only: description not logically ordered" },
+            pictureNoAction: { type: "boolean", description: "Picture items only: only appearance described, no action" },
             feedback: { type: "string", description: "Vietnamese, max 3 short sentences" },
           },
           required: ["transcript", "addressPercent", "grammarErrors", "pronunciationErrors", "feedback"],
+          additionalProperties: false,
+        },
+      },
+    };
+
+    const speakingPart4Tool = {
+      type: "function",
+      function: {
+        name: "submit_grading",
+        description: "Submit qualitative grading for the WHOLE Part 4 monologue. Do NOT compute final numeric score.",
+        parameters: {
+          type: "object",
+          properties: {
+            transcript: { type: "string" },
+            addressPercents: {
+              type: "array",
+              items: { type: "number" },
+              description: "One 0-100 number per sub-question, same order as input",
+            },
+            usedConnectors: { type: "boolean" },
+            grammarErrors: { type: "array", items: errorItemSchema },
+            pronunciationErrors: { type: "array", items: pronunciationItemSchema },
+            feedback: { type: "string", description: "Vietnamese, max 3 short sentences" },
+          },
+          required: ["transcript", "addressPercents", "usedConnectors", "grammarErrors", "pronunciationErrors", "feedback"],
           additionalProperties: false,
         },
       },
@@ -263,6 +320,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
       },
     };
 
+    const speakingTool = isPart4Aggregated ? speakingPart4Tool : speakingItemTool;
     const tools = [type === "writing" ? writingTool : speakingTool];
     // Speaking needs audio understanding → use gemini-2.5-pro. Writing stays on flash.
     const model = type === "speaking" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
@@ -341,27 +399,68 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
         (grading?.transcript ?? "").slice(0, 200)
       );
 
-      // ---- Code-side scoring (Phase 2) ----
-      const mp = Math.max(0, maxPoints || 0);
       const st = Math.max(0, speakTime || 0);
       const sp = Math.max(0, Math.min(st || actualSpoken, actualSpoken || 0));
-      const addr = Math.max(0, Math.min(100, Number(grading?.addressPercent ?? 0)));
+      const shortagePercent = st > 0 ? Math.max(0, ((st - sp) / st) * 100) : 0;
       const grammarCount = Array.isArray(grading?.grammarErrors) ? grading.grammarErrors.length : 0;
       const pronCount = Array.isArray(grading?.pronunciationErrors) ? grading.pronunciationErrors.length : 0;
 
-      const contentScore = (addr / 100) * mp;
-      const shortagePercent = st > 0 ? Math.max(0, ((st - sp) / st) * 100) : 0;
-
-      // Time penalty thresholds (question). Picture doubles the thresholds.
-      const mul = itemType === "picture" ? 2 : 1;
+      // Tiered time penalty (<10% => 0; 10-20% => t1; >20-50% => t2; >50% => t3)
+      const [t1, t2, t3] = tiersIn as [number, number, number];
       let timePenalty = 0;
-      if (shortagePercent < 10 * mul) timePenalty = 0;
-      else if (shortagePercent <= 20 * mul) timePenalty = 0.5;
-      else if (shortagePercent <= 50 * mul) timePenalty = 1.0;
-      else timePenalty = 1.5;
+      if (shortagePercent < 10) timePenalty = 0;
+      else if (shortagePercent <= 20) timePenalty = t1;
+      else if (shortagePercent <= 50) timePenalty = t2;
+      else timePenalty = t3;
+
+      if (isPart4Aggregated) {
+        // Part 4: aggregated scoring (max 21 = 3 sub-questions × 7).
+        const mpTotal = subQuestions.length * 7;
+        const percents: number[] = Array.isArray(grading?.addressPercents) ? grading.addressPercents : [];
+        let contentTotal = 0;
+        for (let i = 0; i < subQuestions.length; i++) {
+          const p = Math.max(0, Math.min(100, Number(percents[i] ?? 0)));
+          contentTotal += (p / 100) * 7;
+        }
+        const usedConnectors = !!grading?.usedConnectors;
+        const connectorPenalty = usedConnectors ? 0 : 2;
+        const errorPenalty = Math.min(0.5 * mpTotal, 0.5 * (grammarCount + pronCount));
+        const rawScore = contentTotal - timePenalty - connectorPenalty - errorPenalty;
+        const partScore = Math.round(Math.max(0, Math.min(mpTotal, rawScore)) * 10) / 10;
+
+        const payload = {
+          transcript: grading?.transcript ?? "",
+          addressPercents: percents.map((p) => Math.round(Math.max(0, Math.min(100, Number(p))) * 10) / 10),
+          usedConnectors,
+          grammarErrors: grading?.grammarErrors ?? [],
+          pronunciationErrors: grading?.pronunciationErrors ?? [],
+          contentScore: Math.round(contentTotal * 10) / 10,
+          timePenalty: Math.round(timePenalty * 10) / 10,
+          connectorPenalty,
+          errorPenalty: Math.round(errorPenalty * 10) / 10,
+          shortagePercent: Math.round(shortagePercent * 10) / 10,
+          partScore,
+          maxPoints: mpTotal,
+          feedback: grading?.feedback ?? "",
+        };
+        return new Response(JSON.stringify(payload), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Per-item scoring (parts 1/2/3)
+      const mp = Math.max(0, maxPoints || 0);
+      const addr = Math.max(0, Math.min(100, Number(grading?.addressPercent ?? 0)));
+      const contentScore = (addr / 100) * mp;
+
+      // Picture penalty (only when itemType=picture)
+      const pictureLogicIssue = itemType === "picture" && !!grading?.pictureLogicIssue;
+      const pictureNoAction = itemType === "picture" && !!grading?.pictureNoAction;
+      const picturePenalty =
+        (pictureLogicIssue ? 1 : 0) + (pictureNoAction ? 1 : 0);
 
       const errorPenalty = Math.min(0.5 * mp, 0.2 * (grammarCount + pronCount));
-      const rawScore = contentScore - timePenalty - errorPenalty;
+      const rawScore = contentScore - timePenalty - picturePenalty - errorPenalty;
       const partScore = Math.round(Math.max(0, Math.min(mp, rawScore)) * 10) / 10;
 
       const payload = {
@@ -369,12 +468,16 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
         addressPercent: Math.round(addr * 10) / 10,
         grammarErrors: grading?.grammarErrors ?? [],
         pronunciationErrors: grading?.pronunciationErrors ?? [],
+        pictureLogicIssue,
+        pictureNoAction,
+        picturePenalty,
         timePenalty: Math.round(timePenalty * 10) / 10,
         errorPenalty: Math.round(errorPenalty * 10) / 10,
         contentScore: Math.round(contentScore * 10) / 10,
         shortagePercent: Math.round(shortagePercent * 10) / 10,
         partScore,
         maxPoints: mp,
+        itemType,
         feedback: grading?.feedback ?? "",
       };
 
