@@ -36,13 +36,15 @@ interface Props {
   highlights?: Record<string, string>;
   highlightLoading?: boolean;
   hideTimer?: boolean;
+  pageNumber?: number;
+  pageTotal?: number;
 }
 
 const ListeningPart1Word = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading, hideTimer,
+  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal,
 }: Props) => {
   const q = questions[currentIndex];
   if (!q) return null;
