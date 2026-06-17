@@ -124,10 +124,10 @@ const ListeningPart3Conversation = ({
                   <>
                     {isCorrect ? (
                       <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                    ) : (submitted && value !== s.correctAnswer) ? (
+                    ) : value !== s.correctAnswer ? (
                       <X className="w-5 h-5 text-destructive shrink-0" />
                     ) : null}
-                    {(submitted && value !== s.correctAnswer) && (
+                    {value !== s.correctAnswer && (
                       <span className="text-sm text-emerald-600 dark:text-emerald-400 shrink-0">
                         → {correctLabel}
                       </span>
