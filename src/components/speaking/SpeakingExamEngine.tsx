@@ -948,7 +948,7 @@ const SpeakingExamEngine = ({
                 {isGrading && !allGraded ? (
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Đang chấm điểm bằng AI...
+                    Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
                   </div>
                 ) : (
                   <p className="text-3xl font-heading font-bold text-primary">
