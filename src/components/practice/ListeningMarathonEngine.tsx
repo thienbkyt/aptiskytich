@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import ExamHeader from "@/components/exam/ExamHeader";
+import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import { Button } from "@/components/ui/button";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
@@ -8,7 +9,7 @@ import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
 } from "@/lib/examTransformers";
 import { saveExamResult } from "@/lib/saveExamResult";
-import { Trophy } from "lucide-react";
+import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
   sets: ExamSetRow[];
@@ -46,6 +47,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(
     () => new Array(sets.length).fill(undefined)
   );
+  const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
   const accCorrect = useMemo(
     () => results.reduce((sum, r) => sum + (r?.correct ?? 0), 0),
@@ -53,6 +55,10 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
   );
   const accTotal = useMemo(
     () => results.reduce((sum, r) => sum + (r?.total ?? 0), 0),
+    [results]
+  );
+  const reviewable = useMemo(
+    () => results.filter((r): r is ResultEntry => !!r),
     [results]
   );
 
@@ -146,11 +152,91 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
     });
   }, [phase, savedOnce, accCorrect, accTotal]);
 
+  // Add body class while reviewing for any review-mode global styles.
+  useEffect(() => {
+    if (reviewIndex === null) return;
+    document.body.classList.add("history-review-mode");
+    return () => {
+      document.body.classList.remove("history-review-mode");
+    };
+  }, [reviewIndex !== null]);
+
   const partName =
     partType === "part1" ? "Part 1"
     : partType === "part2" ? "Part 2"
     : partType === "part3" ? "Part 3"
     : "Part 4";
+
+  // Build flat pages array across all completed sets — 1 page per qResults entry.
+  const pages = useMemo(() => {
+    const out: { entry: ResultEntry; q: number; priorPages: number }[] = [];
+    let prior = 0;
+    for (const entry of reviewable) {
+      const count = entry.qResults.length;
+      for (let q = 0; q < count; q++) {
+        out.push({ entry, q, priorPages: prior });
+      }
+      prior += count;
+    }
+    return out;
+  }, [reviewable]);
+
+  if (phase === "completed" && reviewIndex !== null && pages[reviewIndex]) {
+    const page = pages[reviewIndex];
+    const r = page.entry;
+    const isFirst = reviewIndex === 0;
+    const isLast = reviewIndex === pages.length - 1;
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+          <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Button size="sm" variant="outline" onClick={() => setReviewIndex(null)}>
+                Quay lại tổng kết
+              </Button>
+              <span className="text-xs text-muted-foreground truncate">
+                Trang <span className="font-bold text-foreground">{reviewIndex + 1}</span>/{pages.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setReviewIndex((i) => (i !== null && i > 0 ? i - 1 : i))}
+                disabled={isFirst}
+                className="gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Trang trước</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setReviewIndex((i) => (i !== null && i < pages.length - 1 ? i + 1 : i))}
+                disabled={isLast}
+                className="gap-1"
+              >
+                <span className="hidden sm:inline">Trang sau</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+        <HistoryReviewRenderer
+          key={reviewIndex}
+          examSetId={r.examSetId}
+          skill="listening"
+          part={r.part}
+          testTitle={`Đề ${reviewable.indexOf(r) + 1}`}
+          qResults={r.qResults}
+          onExit={() => setReviewIndex(null)}
+          pageBase={page.priorPages}
+          pageTotal={pages.length}
+          initialSection={page.q}
+        />
+      </div>
+    );
+  }
 
   if (phase === "completed") {
     return (
@@ -169,9 +255,15 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 flex-wrap">
               <Button variant="outline" onClick={onExit}>Thoát</Button>
+              {reviewable.length > 0 && (
+                <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
+                  <Eye className="w-4 h-4" /> Xem lại từng câu →
+                </Button>
+              )}
               <Button
                 onClick={() => {
                   setResults(new Array(sets.length).fill(undefined));
+                  setReviewIndex(null);
                   setCurrentIndex(0);
                   setEnterAtLast(false);
                   setSavedOnce(false);
@@ -205,6 +297,27 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
   const engineData = loaded[currentIndex]?.engineData;
   if (!engineData) return null;
 
+  // Rebuild initialAnswers for current set from previously saved qResults so
+  // Previous navigation keeps the user's selections intact.
+  const prevEntry = results[currentIndex];
+  let initialAnswers: any[] | undefined;
+  if (prevEntry?.qResults?.length) {
+    if (partType === "part1") {
+      initialAnswers = prevEntry.qResults.map((r) => {
+        const n = r.user_answer != null ? parseInt(r.user_answer, 10) : NaN;
+        return Number.isFinite(n) ? n : null;
+      });
+    } else {
+      initialAnswers = prevEntry.qResults.map((r) => {
+        if (!r.user_answer) return null;
+        try {
+          const p = JSON.parse(r.user_answer);
+          return p?.answer ?? null;
+        } catch { return null; }
+      });
+    }
+  }
+
   return (
     <ListeningExamEngine
       key={`${attempt}-${currentIndex}`}
@@ -227,6 +340,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
           ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
           : 0
       }
+      initialAnswers={initialAnswers}
       pageBase={pageBase}
       pageTotal={pageTotal}
       {...engineData}
