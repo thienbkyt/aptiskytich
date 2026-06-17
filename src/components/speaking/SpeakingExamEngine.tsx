@@ -987,7 +987,7 @@ const SpeakingExamEngine = ({
                       if (g === null) {
                         return (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang chấm điểm bằng AI...
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
                           </div>
                         );
                       }
@@ -1001,37 +1001,11 @@ const SpeakingExamEngine = ({
                       return (
                         <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
                           <div className="flex items-center justify-between">
-                            <p className="text-xs font-semibold text-foreground">Điểm AI chấm</p>
+                            <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
                             <p className="text-sm font-bold text-primary">
                               {g.partScore.toFixed(1)} / {g.maxPoints}
                             </p>
                           </div>
-                          <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
-                            {isPart4 && Array.isArray(g.addressPercents) ? (
-                              <span>Bám đề từng câu: {g.addressPercents.map((p) => `${p}%`).join(" · ")}</span>
-                            ) : (
-                              <span>Bám đề: {g.addressPercent}%</span>
-                            )}
-                            <span>Trừ thời gian: −{g.timePenalty.toFixed(1)}</span>
-                            {!!g.picturePenalty && g.picturePenalty > 0 && (
-                              <span>Trừ tranh: −{g.picturePenalty.toFixed(1)}</span>
-                            )}
-                            {isPart4 && typeof g.connectorPenalty === "number" && (
-                              <span>Trừ từ nối: −{g.connectorPenalty.toFixed(1)}</span>
-                            )}
-                            <span>Trừ lỗi: −{g.errorPenalty.toFixed(1)}</span>
-                          </div>
-                          {(g.pictureLogicIssue || g.pictureNoAction) && (
-                            <div className="text-[11px] text-amber-700 dark:text-amber-400">
-                              {g.pictureLogicIssue && <div>⚠ Mô tả chưa logic / chưa theo trình tự.</div>}
-                              {g.pictureNoAction && <div>⚠ Chưa mô tả được hành động trong tranh.</div>}
-                            </div>
-                          )}
-                          {isPart4 && g.usedConnectors === false && (
-                            <div className="text-[11px] text-amber-700 dark:text-amber-400">
-                              ⚠ Bài nói chưa dùng từ nối / liên kết giữa các ý.
-                            </div>
-                          )}
                           {g.transcript && (
                             <div>
                               <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
