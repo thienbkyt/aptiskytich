@@ -462,6 +462,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -479,6 +480,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -496,6 +498,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -513,6 +516,7 @@ const ListeningExamEngine = ({
             onToggleBookmark={() => toggleBookmark(currentIndex)}
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
+            hideTimer={hideTimer}
           />
         )}
       </div>
