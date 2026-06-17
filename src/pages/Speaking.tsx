@@ -62,10 +62,10 @@ const Speaking = () => {
   const { examSets, loading } = useExamSets("speaking");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
   const { progress } = useUserExamProgress();
-  const [exam, setExam] = useSessionState<ExamState>("speaking:exam", {
+  const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", loadingExam: false,
-  }, { omitKeys: ["engineData"] });
-  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("speaking:full", {
+  });
+  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
   const { user: authUser, loading: authLoading } = useAuth();

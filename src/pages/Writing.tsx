@@ -72,9 +72,9 @@ const Writing = () => {
   const { examSets, loading } = useExamSets("writing");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("writing");
   const { progress } = useUserExamProgress();
-  const [exam, setExam] = useSessionState<ExamState>("writing:exam", {
+  const [exam, setExam] = useState<ExamState>({
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
-  }, { omitKeys: ["engineData"] });
+  });
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
   const { user: authUser, loading: authLoading } = useAuth();
 

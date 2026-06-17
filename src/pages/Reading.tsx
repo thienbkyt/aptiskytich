@@ -75,11 +75,11 @@ const Reading = () => {
   const { examSets, loading } = useExamSets("reading");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const { progress } = useUserExamProgress();
-  const [exam, setExam] = useSessionState<ExamState>("reading:exam", {
+  const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
-  }, { omitKeys: ["engineData"] });
-  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("reading:full", {
+  });
+  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
   const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType }>({

@@ -29,7 +29,7 @@ const GrammarVocabulary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
   const { progress } = useUserExamProgress();
-  const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("grammar_vocab:full", {
+  const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
   const { user: authUser, loading: authLoading } = useAuth();
