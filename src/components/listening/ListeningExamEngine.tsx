@@ -75,8 +75,10 @@ const ListeningExamEngine = ({
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
-  highlightData, highlightLoading, examSetId, hideTimer = false,
+  highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal,
 }: ListeningExamEngineProps) => {
+  const usePages = pageBase != null && pageTotal != null;
+  const pageNumber = usePages ? pageBase + currentIndexPlaceholder : undefined;
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
