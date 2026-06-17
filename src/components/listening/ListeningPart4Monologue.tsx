@@ -36,13 +36,15 @@ interface Props {
   highlights?: Record<string, string>;
   highlightLoading?: boolean;
   hideTimer?: boolean;
+  pageNumber?: number;
+  pageTotal?: number;
 }
 
 const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading, hideTimer,
+  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal,
 }: Props) => {
   const clip = questions[currentIndex];
   if (!clip) return null;
@@ -60,7 +62,9 @@ const ListeningPart4Monologue = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Listening – Part 4</p>
           <p className="text-sm text-foreground">
-            Recording {currentIndex + 1} of {questions.length}
+            {pageNumber != null && pageTotal != null
+              ? `Question ${pageNumber} of ${pageTotal}`
+              : `Recording ${currentIndex + 1} of ${questions.length}`}
           </p>
         </div>
         <div className="flex items-center gap-3">

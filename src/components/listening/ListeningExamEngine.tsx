@@ -57,6 +57,8 @@ interface ListeningExamEngineProps {
   highlightLoading?: boolean;
   examSetId?: string | null;
   hideTimer?: boolean;
+  pageBase?: number;
+  pageTotal?: number;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -73,7 +75,7 @@ const ListeningExamEngine = ({
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
-  highlightData, highlightLoading, examSetId, hideTimer = false,
+  highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -463,6 +465,8 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
+            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageTotal={pageTotal}
           />
         )}
 
@@ -481,6 +485,8 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
+            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageTotal={pageTotal}
           />
         )}
 
@@ -499,6 +505,8 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
+            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageTotal={pageTotal}
           />
         )}
 
@@ -517,6 +525,8 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
+            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageTotal={pageTotal}
           />
         )}
       </div>
