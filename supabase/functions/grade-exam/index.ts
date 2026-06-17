@@ -70,6 +70,14 @@ serve(async (req) => {
     const speakTime = Number(body.speakTime ?? 0);
     const maxPoints = Number(body.maxPoints ?? 0);
     const itemType: "question" | "picture" = body.itemType === "picture" ? "picture" : "question";
+    const subQuestions: string[] = Array.isArray(body.subQuestions) ? body.subQuestions : [];
+    const isPart4Aggregated = type === "speaking" && partType === "part4" && subQuestions.length > 0;
+    // Default tiers fall back to original Part-1 question scheme (×2 for picture).
+    const defaultTiers: [number, number, number] =
+      itemType === "picture" ? [1, 2, 3] : [0.5, 1, 1.5];
+    const tiersIn = Array.isArray(body.timePenaltyTiers) && body.timePenaltyTiers.length === 3
+      ? (body.timePenaltyTiers.map((n) => Number(n) || 0) as [number, number, number])
+      : defaultTiers;
 
     if (type !== "speaking" && type !== "writing") {
       return new Response(JSON.stringify({ error: "Invalid type" }), {
