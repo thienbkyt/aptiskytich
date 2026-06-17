@@ -38,6 +38,7 @@ const HUGE_TIME = 24 * 60 * 60;
 
 const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
@@ -126,6 +127,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
       };
       return next;
     });
+    setEnterAtLast(false);
     if (currentIndex < sets.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {
@@ -171,6 +173,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
                 onClick={() => {
                   setResults(new Array(sets.length).fill(undefined));
                   setCurrentIndex(0);
+                  setEnterAtLast(false);
                   setSavedOnce(false);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
@@ -214,8 +217,16 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
       onExit={onExit}
       onComplete={handleComplete}
       onPreviousPart={() => {
-        if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+        if (currentIndex > 0) {
+          setEnterAtLast(true);
+          setCurrentIndex((i) => i - 1);
+        }
       }}
+      initialQuestion={
+        enterAtLast
+          ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
+          : 0
+      }
       pageBase={pageBase}
       pageTotal={pageTotal}
       {...engineData}
