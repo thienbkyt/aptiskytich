@@ -97,7 +97,6 @@ const ListeningPart3Conversation = ({
           {q.statements.map((s, i) => {
             const value = selected[i] || "";
             const isCorrect = submitted && value === s.correctAnswer;
-            const isWrong = submitted && value && value !== s.correctAnswer;
             const correctLabel = ANSWER_OPTIONS.find((o) => o.value === s.correctAnswer)?.label || s.correctAnswer;
 
             let selectCls = "border-border bg-background";
@@ -125,10 +124,10 @@ const ListeningPart3Conversation = ({
                   <>
                     {isCorrect ? (
                       <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                    ) : isWrong ? (
+                    ) : (submitted && value !== s.correctAnswer) ? (
                       <X className="w-5 h-5 text-destructive shrink-0" />
                     ) : null}
-                    {isWrong && (
+                    {(submitted && value !== s.correctAnswer) && (
                       <span className="text-sm text-emerald-600 dark:text-emerald-400 shrink-0">
                         → {correctLabel}
                       </span>
