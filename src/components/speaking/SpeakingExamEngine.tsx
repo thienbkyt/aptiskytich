@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import { supabase } from "@/integrations/supabase/client";
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -89,6 +90,9 @@ const SpeakingExamEngine = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  // TODO: remove debug
+  const [debugTranscripts, setDebugTranscripts] = useState<(string | null)[]>([]);
+  const debugRanRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -185,6 +189,65 @@ const SpeakingExamEngine = ({
       window.speechSynthesis?.cancel();
     };
   }, []);
+
+  // TODO: remove debug — call grade-exam once per recorded question when done
+  useEffect(() => {
+    if (phase !== "done" || debugRanRef.current) return;
+    debugRanRef.current = true;
+
+    const promptsList: string[] = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions;
+      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
+      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
+      if (partType === "part4" && part4Data) return [part4Data.topic];
+      return [];
+    })();
+
+    const blobs = recordingsRef.current.slice();
+    setDebugTranscripts(new Array(blobs.length).fill(null));
+
+    const blobToBase64 = (blob: Blob) => new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        const comma = dataUrl.indexOf(",");
+        resolve(comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    Promise.all(
+      blobs.map(async (blob, idx) => {
+        if (!blob) return;
+        try {
+          const audioBase64 = await blobToBase64(blob);
+          const { data, error } = await supabase.functions.invoke("grade-exam", {
+            body: {
+              type: "speaking",
+              audioBase64,
+              questions: [promptsList[idx] ?? ""],
+              partType,
+            },
+          });
+          if (error) throw error;
+          const transcript = (data as any)?.transcript ?? "(không có transcript)";
+          setDebugTranscripts(prev => {
+            const next = [...prev];
+            next[idx] = transcript;
+            return next;
+          });
+        } catch (e: any) {
+          console.error("[debug] grade-exam failed for q", idx, e);
+          setDebugTranscripts(prev => {
+            const next = [...prev];
+            next[idx] = `(lỗi: ${e?.message ?? "unknown"})`;
+            return next;
+          });
+        }
+      })
+    );
+  }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
 
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
@@ -776,6 +839,16 @@ const SpeakingExamEngine = ({
                       ) : (
                         <p className="text-xs text-muted-foreground italic">Không có bài ghi âm</p>
                       )}
+                    </div>
+
+                    {/* TODO: remove debug */}
+                    <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-yellow-800 mb-1">DEBUG: Transcript Gemini nghe được</p>
+                      <p className="text-sm text-yellow-900 whitespace-pre-wrap">
+                        {debugTranscripts[i] === null || debugTranscripts[i] === undefined
+                          ? "Đang nhận diện..."
+                          : debugTranscripts[i]}
+                      </p>
                     </div>
 
                     {samples[i] && (
