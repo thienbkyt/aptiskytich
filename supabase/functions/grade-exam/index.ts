@@ -102,15 +102,19 @@ Your task:
 Be strict but fair. Grade based on actual Aptis exam standards.`;
 
       if (audioBase64) {
+        console.log("[grade-exam] speaking: audioBase64 length =", audioBase64.length);
         userContent = [
           {
             type: "text",
             text: `Exam Part: ${partType}\nQuestions:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nPlease transcribe the audio and grade the student's speaking response.`,
           },
           {
-            type: "image_url",
-            image_url: {
-              url: `data:audio/webm;base64,${audioBase64}`,
+            // OpenAI-compatible audio input. Lovable AI Gateway forwards this
+            // to Gemini which accepts webm/opus from browser MediaRecorder.
+            type: "input_audio",
+            input_audio: {
+              data: audioBase64,
+              format: "webm",
             },
           },
         ];
@@ -249,6 +253,8 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
     };
 
     const tools = [type === "writing" ? writingTool : speakingTool];
+    // Speaking needs audio understanding → use gemini-2.5-pro. Writing stays on flash.
+    const model = type === "speaking" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -259,7 +265,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
@@ -301,7 +307,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
 
     // Log AI usage (fire-and-forget)
     logAIUsage({
-      model: "google/gemini-2.5-flash",
+      model,
       usage: data.usage,
       source_function: "grade-exam",
       metadata: { type, partType },
@@ -315,6 +321,14 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
     }
 
     const grading = JSON.parse(toolCall.function.arguments);
+    if (type === "speaking") {
+      console.log(
+        "[grade-exam] speaking transcript length =",
+        (grading?.transcript ?? "").length,
+        "preview:",
+        (grading?.transcript ?? "").slice(0, 200)
+      );
+    }
 
     return new Response(JSON.stringify(grading), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
