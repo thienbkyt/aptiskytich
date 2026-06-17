@@ -57,7 +57,9 @@ const ListeningPart1Word = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Listening – Part 1</p>
           <p className="text-sm text-foreground">
-            Question {currentIndex + 1} of {questions.length}
+            {pageNumber != null && pageTotal != null
+              ? `Question ${pageNumber} of ${pageTotal}`
+              : `Question ${currentIndex + 1} of ${questions.length}`}
           </p>
         </div>
         <div className="flex items-center gap-3">
