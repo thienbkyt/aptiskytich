@@ -399,27 +399,68 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
         (grading?.transcript ?? "").slice(0, 200)
       );
 
-      // ---- Code-side scoring (Phase 2) ----
-      const mp = Math.max(0, maxPoints || 0);
       const st = Math.max(0, speakTime || 0);
       const sp = Math.max(0, Math.min(st || actualSpoken, actualSpoken || 0));
-      const addr = Math.max(0, Math.min(100, Number(grading?.addressPercent ?? 0)));
+      const shortagePercent = st > 0 ? Math.max(0, ((st - sp) / st) * 100) : 0;
       const grammarCount = Array.isArray(grading?.grammarErrors) ? grading.grammarErrors.length : 0;
       const pronCount = Array.isArray(grading?.pronunciationErrors) ? grading.pronunciationErrors.length : 0;
 
-      const contentScore = (addr / 100) * mp;
-      const shortagePercent = st > 0 ? Math.max(0, ((st - sp) / st) * 100) : 0;
-
-      // Time penalty thresholds (question). Picture doubles the thresholds.
-      const mul = itemType === "picture" ? 2 : 1;
+      // Tiered time penalty (<10% => 0; 10-20% => t1; >20-50% => t2; >50% => t3)
+      const [t1, t2, t3] = tiersIn as [number, number, number];
       let timePenalty = 0;
-      if (shortagePercent < 10 * mul) timePenalty = 0;
-      else if (shortagePercent <= 20 * mul) timePenalty = 0.5;
-      else if (shortagePercent <= 50 * mul) timePenalty = 1.0;
-      else timePenalty = 1.5;
+      if (shortagePercent < 10) timePenalty = 0;
+      else if (shortagePercent <= 20) timePenalty = t1;
+      else if (shortagePercent <= 50) timePenalty = t2;
+      else timePenalty = t3;
+
+      if (isPart4Aggregated) {
+        // Part 4: aggregated scoring (max 21 = 3 sub-questions × 7).
+        const mpTotal = subQuestions.length * 7;
+        const percents: number[] = Array.isArray(grading?.addressPercents) ? grading.addressPercents : [];
+        let contentTotal = 0;
+        for (let i = 0; i < subQuestions.length; i++) {
+          const p = Math.max(0, Math.min(100, Number(percents[i] ?? 0)));
+          contentTotal += (p / 100) * 7;
+        }
+        const usedConnectors = !!grading?.usedConnectors;
+        const connectorPenalty = usedConnectors ? 0 : 2;
+        const errorPenalty = Math.min(0.5 * mpTotal, 0.5 * (grammarCount + pronCount));
+        const rawScore = contentTotal - timePenalty - connectorPenalty - errorPenalty;
+        const partScore = Math.round(Math.max(0, Math.min(mpTotal, rawScore)) * 10) / 10;
+
+        const payload = {
+          transcript: grading?.transcript ?? "",
+          addressPercents: percents.map((p) => Math.round(Math.max(0, Math.min(100, Number(p))) * 10) / 10),
+          usedConnectors,
+          grammarErrors: grading?.grammarErrors ?? [],
+          pronunciationErrors: grading?.pronunciationErrors ?? [],
+          contentScore: Math.round(contentTotal * 10) / 10,
+          timePenalty: Math.round(timePenalty * 10) / 10,
+          connectorPenalty,
+          errorPenalty: Math.round(errorPenalty * 10) / 10,
+          shortagePercent: Math.round(shortagePercent * 10) / 10,
+          partScore,
+          maxPoints: mpTotal,
+          feedback: grading?.feedback ?? "",
+        };
+        return new Response(JSON.stringify(payload), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Per-item scoring (parts 1/2/3)
+      const mp = Math.max(0, maxPoints || 0);
+      const addr = Math.max(0, Math.min(100, Number(grading?.addressPercent ?? 0)));
+      const contentScore = (addr / 100) * mp;
+
+      // Picture penalty (only when itemType=picture)
+      const pictureLogicIssue = itemType === "picture" && !!grading?.pictureLogicIssue;
+      const pictureNoAction = itemType === "picture" && !!grading?.pictureNoAction;
+      const picturePenalty =
+        (pictureLogicIssue ? 1 : 0) + (pictureNoAction ? 1 : 0);
 
       const errorPenalty = Math.min(0.5 * mp, 0.2 * (grammarCount + pronCount));
-      const rawScore = contentScore - timePenalty - errorPenalty;
+      const rawScore = contentScore - timePenalty - picturePenalty - errorPenalty;
       const partScore = Math.round(Math.max(0, Math.min(mp, rawScore)) * 10) / 10;
 
       const payload = {
@@ -427,12 +468,16 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
         addressPercent: Math.round(addr * 10) / 10,
         grammarErrors: grading?.grammarErrors ?? [],
         pronunciationErrors: grading?.pronunciationErrors ?? [],
+        pictureLogicIssue,
+        pictureNoAction,
+        picturePenalty,
         timePenalty: Math.round(timePenalty * 10) / 10,
         errorPenalty: Math.round(errorPenalty * 10) / 10,
         contentScore: Math.round(contentScore * 10) / 10,
         shortagePercent: Math.round(shortagePercent * 10) / 10,
         partScore,
         maxPoints: mp,
+        itemType,
         feedback: grading?.feedback ?? "",
       };
 
