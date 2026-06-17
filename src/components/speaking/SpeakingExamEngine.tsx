@@ -380,21 +380,38 @@ const SpeakingExamEngine = ({
       return;
     }
 
-    if (recorderActive) {
-      try { recorder!.stop(); } catch { /* noop */ }
-    }
     setIsTransitioning(true);
     const nextIdx = idx + 1;
-    currentIndexRef.current = nextIdx;
     const token = flowTokenRef.current;
-    transitionTimeoutRef.current = setTimeout(() => {
-      if (token !== flowTokenRef.current) return;
-      setCurrentIndex(nextIdx);
-      setCanFinish(false);
-      setIsTransitioning(false);
-      advancingRef.current = false;
-      startQuestionFlow();
-    }, 300);
+    if (recorderActive) {
+      // Defer the index bump until onstop has saved the blob for this question.
+      pendingAdvanceRef.current = nextIdx;
+      try {
+        recorder!.stop();
+      } catch {
+        pendingAdvanceRef.current = null;
+        currentIndexRef.current = nextIdx;
+        transitionTimeoutRef.current = setTimeout(() => {
+          if (token !== flowTokenRef.current) return;
+          setCurrentIndex(nextIdx);
+          setCanFinish(false);
+          setIsTransitioning(false);
+          advancingRef.current = false;
+          startQuestionFlow();
+        }, 300);
+      }
+    } else {
+      // No active recorder (nothing to save) — advance immediately.
+      currentIndexRef.current = nextIdx;
+      transitionTimeoutRef.current = setTimeout(() => {
+        if (token !== flowTokenRef.current) return;
+        setCurrentIndex(nextIdx);
+        setCanFinish(false);
+        setIsTransitioning(false);
+        advancingRef.current = false;
+        startQuestionFlow();
+      }, 300);
+    }
   }, [partType]);
 
   const handleFinishRecording = useCallback(() => {
