@@ -884,15 +884,77 @@ const SpeakingExamEngine = ({
                       )}
                     </div>
 
-                    {/* TODO: remove debug */}
-                    <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
-                      <p className="text-xs font-semibold text-yellow-800 mb-1">DEBUG: Transcript Gemini nghe được</p>
-                      <p className="text-sm text-yellow-900 whitespace-pre-wrap">
-                        {debugTranscripts[i] === null || debugTranscripts[i] === undefined
-                          ? "Đang nhận diện..."
-                          : debugTranscripts[i]}
-                      </p>
-                    </div>
+                    {isPart1 && (() => {
+                      const g = gradings[i];
+                      if (g === null || g === undefined) {
+                        return (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang chấm điểm bằng AI...
+                          </div>
+                        );
+                      }
+                      if ("error" in g) {
+                        return (
+                          <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 text-xs text-destructive">
+                            Không chấm được câu này: {g.error}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold text-foreground">Điểm AI chấm</p>
+                            <p className="text-sm font-bold text-primary">
+                              {g.partScore.toFixed(1)} / {g.maxPoints}
+                            </p>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
+                            <span>Bám đề: {g.addressPercent}%</span>
+                            <span>Trừ thời gian: −{g.timePenalty.toFixed(1)}</span>
+                            <span>Trừ lỗi: −{g.errorPenalty.toFixed(1)}</span>
+                          </div>
+                          {g.transcript && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
+                              <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
+                            </div>
+                          )}
+                          {g.grammarErrors?.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
+                              <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                {g.grammarErrors.map((e, k) => (
+                                  <li key={k}>
+                                    <span className="line-through text-destructive">{e.original}</span>{" → "}
+                                    <span className="text-success font-medium">{e.corrected}</span>
+                                    <span className="text-muted-foreground"> — {e.explanation}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {g.pronunciationErrors?.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi phát âm</p>
+                              <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                {g.pronunciationErrors.map((e, k) => (
+                                  <li key={k}>
+                                    <span className="font-medium">{e.word}</span>
+                                    <span className="text-muted-foreground"> — {e.note}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {g.feedback && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
+                              <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {samples[i] && (
                       <div className="bg-success/5 border border-success/20 rounded-lg p-3">
