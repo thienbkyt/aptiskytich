@@ -35,13 +35,14 @@ interface Props {
   onSubmitTest?: () => void;
   highlights?: Record<string, string>;
   highlightLoading?: boolean;
+  hideTimer?: boolean;
 }
 
 const ListeningPart1Word = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading,
+  highlights = {}, highlightLoading, hideTimer,
 }: Props) => {
   const q = questions[currentIndex];
   if (!q) return null;
