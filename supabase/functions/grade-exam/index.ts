@@ -197,31 +197,31 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
 
     const speakingTool = {
       type: "function",
+    const pronunciationItemSchema = {
+      type: "object",
+      properties: {
+        word: { type: "string" },
+        note: { type: "string" },
+      },
+      required: ["word", "note"],
+      additionalProperties: false,
+    };
+
+    const speakingTool = {
+      type: "function",
       function: {
         name: "submit_grading",
-        description: "Submit the grading results for the speaking response",
+        description: "Submit qualitative grading for ONE speaking item. Do NOT compute final numeric score.",
         parameters: {
           type: "object",
           properties: {
             transcript: { type: "string" },
-            overallLevel: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1"] },
-            criteria: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  level: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1"] },
-                  feedback: { type: "string" },
-                },
-                required: ["name", "level", "feedback"],
-                additionalProperties: false,
-              },
-            },
-            mistakes: { type: "array", items: errorItemSchema },
-            suggestions: { type: "array", items: { type: "string" } },
+            addressPercent: { type: "number", description: "0-100, how well the answer addresses the prompt" },
+            grammarErrors: { type: "array", items: errorItemSchema },
+            pronunciationErrors: { type: "array", items: pronunciationItemSchema },
+            feedback: { type: "string", description: "Vietnamese, max 3 short sentences" },
           },
-          required: ["transcript", "overallLevel", "criteria", "mistakes", "suggestions"],
+          required: ["transcript", "addressPercent", "grammarErrors", "pronunciationErrors", "feedback"],
           additionalProperties: false,
         },
       },
