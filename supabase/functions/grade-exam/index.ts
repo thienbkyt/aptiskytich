@@ -320,6 +320,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
       },
     };
 
+    const speakingTool = isPart4Aggregated ? speakingPart4Tool : speakingItemTool;
     const tools = [type === "writing" ? writingTool : speakingTool];
     // Speaking needs audio understanding → use gemini-2.5-pro. Writing stays on flash.
     const model = type === "speaking" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
