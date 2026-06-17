@@ -38,6 +38,7 @@ const HUGE_TIME = 24 * 60 * 60;
 
 const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
@@ -126,6 +127,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
       };
       return next;
     });
+    setEnterAtLast(false);
     if (currentIndex < sets.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {

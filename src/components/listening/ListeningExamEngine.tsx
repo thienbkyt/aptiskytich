@@ -59,6 +59,7 @@ interface ListeningExamEngineProps {
   hideTimer?: boolean;
   pageBase?: number;
   pageTotal?: number;
+  initialQuestion?: number;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -75,10 +76,10 @@ const ListeningExamEngine = ({
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
-  highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal,
+  highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
