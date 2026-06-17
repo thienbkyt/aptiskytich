@@ -207,6 +207,18 @@ const Listening = () => {
     );
   }
 
+  if (marathon.active) {
+    const partLabel = PARTS.find((p) => p.id === marathon.partType)?.label ?? "Part";
+    return (
+      <ListeningMarathonEngine
+        sets={marathonSets}
+        partType={marathon.partType}
+        skillLabel={`Listening · Marathon ${partLabel}`}
+        onExit={() => setMarathon({ active: false, partType: marathon.partType })}
+      />
+    );
+  }
+
   if (exam.active) {
     if (exam.loadingExam) {
       return (
