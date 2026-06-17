@@ -190,6 +190,65 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
+  // TODO: remove debug — call grade-exam once per recorded question when done
+  useEffect(() => {
+    if (phase !== "done" || debugRanRef.current) return;
+    debugRanRef.current = true;
+
+    const promptsList: string[] = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions;
+      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
+      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
+      if (partType === "part4" && part4Data) return [part4Data.topic];
+      return [];
+    })();
+
+    const blobs = recordingsRef.current.slice();
+    setDebugTranscripts(new Array(blobs.length).fill(null));
+
+    const blobToBase64 = (blob: Blob) => new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        const comma = dataUrl.indexOf(",");
+        resolve(comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    Promise.all(
+      blobs.map(async (blob, idx) => {
+        if (!blob) return;
+        try {
+          const audioBase64 = await blobToBase64(blob);
+          const { data, error } = await supabase.functions.invoke("grade-exam", {
+            body: {
+              type: "speaking",
+              audioBase64,
+              questions: [promptsList[idx] ?? ""],
+              partType,
+            },
+          });
+          if (error) throw error;
+          const transcript = (data as any)?.transcript ?? "(không có transcript)";
+          setDebugTranscripts(prev => {
+            const next = [...prev];
+            next[idx] = transcript;
+            return next;
+          });
+        } catch (e: any) {
+          console.error("[debug] grade-exam failed for q", idx, e);
+          setDebugTranscripts(prev => {
+            const next = [...prev];
+            next[idx] = `(lỗi: ${e?.message ?? "unknown"})`;
+            return next;
+          });
+        }
+      })
+    );
+  }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
+
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
     const token = ++flowTokenRef.current;
