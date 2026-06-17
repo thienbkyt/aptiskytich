@@ -104,6 +104,7 @@ const SpeakingExamEngine = ({
     partScore: number;
     maxPoints: number;
     feedback: string;
+    improvedVersion?: string;
     itemType?: "question" | "picture";
     // Part 4 aggregated
     addressPercents?: number[];
