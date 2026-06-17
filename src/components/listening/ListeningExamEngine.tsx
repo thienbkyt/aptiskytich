@@ -175,8 +175,9 @@ const ListeningExamEngine = ({
   }, [hasStarted, submitted, timeLeft]);
 
   useEffect(() => {
+    if (hideTimer) return;
     if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
-  }, [hasStarted, submitted, timeLeft]);
+  }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);
