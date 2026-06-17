@@ -99,16 +99,20 @@ serve(async (req) => {
     let systemPrompt: string;
 
     if (type === "speaking") {
-      systemPrompt = `You are an expert Aptis Speaking exam grader. You will receive audio of a student's spoken English response along with the exam questions. 
+      systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will compute it from your structured output.
 
-Your task:
-1. Transcribe the audio accurately
-2. Grade the response on 4 criteria: Fluency, Pronunciation, Grammar, Vocabulary
-3. Each criterion is graded on the CEFR scale: A1, A2, B1, B2, C1
-4. Identify specific mistakes with corrections
-5. Provide improvement suggestions
+Return via the tool call:
+1. transcript: an accurate transcription of what the student actually said (English). If the audio is silent or unintelligible, return an empty string.
+2. addressPercent (0–100): how well the answer addresses the question.
+   - 100 = fully on-topic AND includes at least one clear supporting detail/example.
+   - 70  = on-topic but no supporting detail (just the bare answer).
+   - Partially off-topic → scale proportionally (e.g. only half the prompt addressed → ~35–50).
+   - Off-topic, silent, or unintelligible → 0.
+3. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } with explanation in Vietnamese. Empty array if none.
+4. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic, not phoneme-by-phoneme), as { word, note } with note in Vietnamese. If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry describing the issue.
+5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.
 
-Be strict but fair. Grade based on actual Aptis exam standards.`;
+Be honest and strict but fair. Do not invent content the student didn't say.`;
 
       if (audioBase64) {
         console.log("[grade-exam] speaking: audioBase64 length =", audioBase64.length);
