@@ -1049,12 +1049,17 @@ const SpeakingExamEngine = ({
                       );
                     })()}
 
-                    {samples[i] && (
-                      <div className="bg-success/5 border border-success/20 rounded-lg p-3">
-                        <p className="text-xs font-semibold text-success mb-1">💡 Bài nói mẫu</p>
-                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{samples[i]}</p>
-                      </div>
-                    )}
+                    {(() => {
+                      const gIdx = isPart4 ? 0 : i;
+                      const g = gradings[gIdx];
+                      if (!g || "error" in g || !g.improvedVersion) return null;
+                      return (
+                        <div className="bg-success/5 border border-success/20 rounded-lg p-3">
+                          <p className="text-xs font-semibold text-success mb-1">💡 Phiên bản AI Kỳ Tích gợi ý cho bạn</p>
+                          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{g.improvedVersion}</p>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
