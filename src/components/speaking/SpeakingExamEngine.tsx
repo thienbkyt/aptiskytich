@@ -891,13 +891,6 @@ const SpeakingExamEngine = ({
       if (partType === "part4" && part4Data) return [part4Data.topic];
       return [];
     })();
-    const samples: string[] = (() => {
-      if (partType === "part1") return part1Data?.sampleAnswers || [];
-      if (partType === "part2") return part2Data?.sampleAnswers || [];
-      if (partType === "part3") return part3Data?.sampleAnswers || [];
-      if (partType === "part4") return part4Data?.sampleAnswers || [];
-      return [];
-    })();
     const validGradings = gradings.filter((g): g is SpeakingItemGrading => !!g && !("error" in g));
     const totalScore = validGradings.reduce((sum, g) => sum + (g.partScore || 0), 0);
     const totalMax = (() => {
