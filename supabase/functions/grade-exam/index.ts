@@ -14,6 +14,11 @@ interface GradingRequest {
   text?: string;
   questions: string[];
   partType: string;
+  // Speaking-only (Phase 2): used by code-side scoring
+  actualSpoken?: number;   // seconds the student actually spoke
+  speakTime?: number;      // seconds allowed for this item
+  maxPoints?: number;      // max points for this item
+  itemType?: "question" | "picture";
 }
 
 serve(async (req) => {
