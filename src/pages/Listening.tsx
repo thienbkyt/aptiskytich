@@ -79,6 +79,9 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useSessionState<FullPracticeState>("listening:full", {
     active: false, fullTestId: "", title: "",
   });
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType }>({
+    active: false, partType: "part1",
+  });
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
