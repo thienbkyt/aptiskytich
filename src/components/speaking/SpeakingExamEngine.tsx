@@ -90,9 +90,21 @@ const SpeakingExamEngine = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  // TODO: remove debug
-  const [debugTranscripts, setDebugTranscripts] = useState<(string | null)[]>([]);
-  const debugRanRef = useRef(false);
+  // Phase 2: per-question speaking grading results (Part 1 only for now)
+  interface SpeakingItemGrading {
+    transcript: string;
+    addressPercent: number;
+    grammarErrors: { original: string; corrected: string; explanation: string }[];
+    pronunciationErrors: { word: string; note: string }[];
+    timePenalty: number;
+    errorPenalty: number;
+    partScore: number;
+    maxPoints: number;
+    feedback: string;
+  }
+  const [gradings, setGradings] = useState<(SpeakingItemGrading | null | { error: string })[]>([]);
+  const [isGradingPart1, setIsGradingPart1] = useState(false);
+  const gradingRanRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -190,21 +202,17 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
-  // TODO: remove debug — call grade-exam once per recorded question when done
+  // Phase 2 (Part 1 only): call grade-exam once per recorded question when done.
   useEffect(() => {
-    if (phase !== "done" || debugRanRef.current) return;
-    debugRanRef.current = true;
+    if (phase !== "done" || gradingRanRef.current) return;
+    if (partType !== "part1" || !part1Data) return;
+    gradingRanRef.current = true;
 
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions;
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return [part4Data.topic];
-      return [];
-    })();
-
+    const promptsList: string[] = part1Data.questions;
+    const speakTimeSec = part1Data.speakTime || 30;
     const blobs = recordingsRef.current.slice();
-    setDebugTranscripts(new Array(blobs.length).fill(null));
+    setGradings(new Array(blobs.length).fill(null));
+    setIsGradingPart1(true);
 
     const blobToBase64 = (blob: Blob) => new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -219,7 +227,14 @@ const SpeakingExamEngine = ({
 
     Promise.all(
       blobs.map(async (blob, idx) => {
-        if (!blob) return;
+        if (!blob) {
+          setGradings(prev => {
+            const next = [...prev];
+            next[idx] = { error: "Không có bài ghi âm" };
+            return next;
+          });
+          return;
+        }
         try {
           const audioBase64 = await blobToBase64(blob);
           const { data, error } = await supabase.functions.invoke("grade-exam", {
@@ -228,26 +243,30 @@ const SpeakingExamEngine = ({
               audioBase64,
               questions: [promptsList[idx] ?? ""],
               partType,
+              maxPoints: 2,
+              itemType: "question",
+              speakTime: speakTimeSec,
+              actualSpoken: durationsRef.current[idx] ?? 0,
             },
           });
           if (error) throw error;
-          const transcript = (data as any)?.transcript ?? "(không có transcript)";
-          setDebugTranscripts(prev => {
+          if ((data as any)?.error) throw new Error((data as any).error);
+          setGradings(prev => {
             const next = [...prev];
-            next[idx] = transcript;
+            next[idx] = data as SpeakingItemGrading;
             return next;
           });
         } catch (e: any) {
-          console.error("[debug] grade-exam failed for q", idx, e);
-          setDebugTranscripts(prev => {
+          console.error("[grade-exam] failed for q", idx, e);
+          setGradings(prev => {
             const next = [...prev];
-            next[idx] = `(lỗi: ${e?.message ?? "unknown"})`;
+            next[idx] = { error: e?.message ?? "Lỗi chấm điểm" };
             return next;
           });
         }
       })
-    );
-  }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
+    ).finally(() => setIsGradingPart1(false));
+  }, [phase, partType, part1Data]);
 
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
@@ -797,6 +816,12 @@ const SpeakingExamEngine = ({
       if (partType === "part4") return part4Data?.sampleAnswers || [];
       return [];
     })();
+    const isPart1 = partType === "part1";
+    const validGradings = gradings.filter((g): g is SpeakingItemGrading => !!g && !("error" in g));
+    const totalScore = validGradings.reduce((sum, g) => sum + (g.partScore || 0), 0);
+    const totalMax = isPart1 ? (part1Data?.questions.length || 0) * 2 : 0;
+    const allGraded = isPart1 && gradings.length > 0 && gradings.every(g => g !== null);
+
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
@@ -820,6 +845,24 @@ const SpeakingExamEngine = ({
               </button>
             </div>
 
+            {isPart1 && (
+              <div className="bg-card border border-border rounded-2xl p-6 text-center">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                  Điểm Speaking Part 1
+                </p>
+                {isGradingPart1 && !allGraded ? (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Đang chấm điểm bằng AI...
+                  </div>
+                ) : (
+                  <p className="text-3xl font-heading font-bold text-primary">
+                    {totalScore.toFixed(1)} <span className="text-base text-muted-foreground">/ {totalMax}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="bg-card border border-border rounded-2xl p-6">
               <h3 className="text-base font-heading font-bold text-foreground mb-4">
                 🎙️ Xem lại từng câu
@@ -841,15 +884,77 @@ const SpeakingExamEngine = ({
                       )}
                     </div>
 
-                    {/* TODO: remove debug */}
-                    <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
-                      <p className="text-xs font-semibold text-yellow-800 mb-1">DEBUG: Transcript Gemini nghe được</p>
-                      <p className="text-sm text-yellow-900 whitespace-pre-wrap">
-                        {debugTranscripts[i] === null || debugTranscripts[i] === undefined
-                          ? "Đang nhận diện..."
-                          : debugTranscripts[i]}
-                      </p>
-                    </div>
+                    {isPart1 && (() => {
+                      const g = gradings[i];
+                      if (g === null || g === undefined) {
+                        return (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang chấm điểm bằng AI...
+                          </div>
+                        );
+                      }
+                      if ("error" in g) {
+                        return (
+                          <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 text-xs text-destructive">
+                            Không chấm được câu này: {g.error}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold text-foreground">Điểm AI chấm</p>
+                            <p className="text-sm font-bold text-primary">
+                              {g.partScore.toFixed(1)} / {g.maxPoints}
+                            </p>
+                          </div>
+                          <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5">
+                            <span>Bám đề: {g.addressPercent}%</span>
+                            <span>Trừ thời gian: −{g.timePenalty.toFixed(1)}</span>
+                            <span>Trừ lỗi: −{g.errorPenalty.toFixed(1)}</span>
+                          </div>
+                          {g.transcript && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
+                              <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
+                            </div>
+                          )}
+                          {g.grammarErrors?.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
+                              <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                {g.grammarErrors.map((e, k) => (
+                                  <li key={k}>
+                                    <span className="line-through text-destructive">{e.original}</span>{" → "}
+                                    <span className="text-success font-medium">{e.corrected}</span>
+                                    <span className="text-muted-foreground"> — {e.explanation}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {g.pronunciationErrors?.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi phát âm</p>
+                              <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                {g.pronunciationErrors.map((e, k) => (
+                                  <li key={k}>
+                                    <span className="font-medium">{e.word}</span>
+                                    <span className="text-muted-foreground"> — {e.note}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {g.feedback && (
+                            <div>
+                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
+                              <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {samples[i] && (
                       <div className="bg-success/5 border border-success/20 rounded-lg p-3">

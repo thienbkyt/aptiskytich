@@ -14,6 +14,11 @@ interface GradingRequest {
   text?: string;
   questions: string[];
   partType: string;
+  // Speaking-only (Phase 2): used by code-side scoring
+  actualSpoken?: number;   // seconds the student actually spoke
+  speakTime?: number;      // seconds allowed for this item
+  maxPoints?: number;      // max points for this item
+  itemType?: "question" | "picture";
 }
 
 serve(async (req) => {
@@ -56,6 +61,10 @@ serve(async (req) => {
 
     const body: GradingRequest = await req.json();
     const { type, audioBase64, text, questions, partType } = body;
+    const actualSpoken = Number(body.actualSpoken ?? 0);
+    const speakTime = Number(body.speakTime ?? 0);
+    const maxPoints = Number(body.maxPoints ?? 0);
+    const itemType: "question" | "picture" = body.itemType === "picture" ? "picture" : "question";
 
     if (type !== "speaking" && type !== "writing") {
       return new Response(JSON.stringify({ error: "Invalid type" }), {
@@ -90,16 +99,20 @@ serve(async (req) => {
     let systemPrompt: string;
 
     if (type === "speaking") {
-      systemPrompt = `You are an expert Aptis Speaking exam grader. You will receive audio of a student's spoken English response along with the exam questions. 
+      systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will compute it from your structured output.
 
-Your task:
-1. Transcribe the audio accurately
-2. Grade the response on 4 criteria: Fluency, Pronunciation, Grammar, Vocabulary
-3. Each criterion is graded on the CEFR scale: A1, A2, B1, B2, C1
-4. Identify specific mistakes with corrections
-5. Provide improvement suggestions
+Return via the tool call:
+1. transcript: an accurate transcription of what the student actually said (English). If the audio is silent or unintelligible, return an empty string.
+2. addressPercent (0–100): how well the answer addresses the question.
+   - 100 = fully on-topic AND includes at least one clear supporting detail/example.
+   - 70  = on-topic but no supporting detail (just the bare answer).
+   - Partially off-topic → scale proportionally (e.g. only half the prompt addressed → ~35–50).
+   - Off-topic, silent, or unintelligible → 0.
+3. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } with explanation in Vietnamese. Empty array if none.
+4. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic, not phoneme-by-phoneme), as { word, note } with note in Vietnamese. If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry describing the issue.
+5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.
 
-Be strict but fair. Grade based on actual Aptis exam standards.`;
+Be honest and strict but fair. Do not invent content the student didn't say.`;
 
       if (audioBase64) {
         console.log("[grade-exam] speaking: audioBase64 length =", audioBase64.length);
@@ -182,33 +195,31 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
       additionalProperties: false,
     };
 
+    const pronunciationItemSchema = {
+      type: "object",
+      properties: {
+        word: { type: "string" },
+        note: { type: "string" },
+      },
+      required: ["word", "note"],
+      additionalProperties: false,
+    };
+
     const speakingTool = {
       type: "function",
       function: {
         name: "submit_grading",
-        description: "Submit the grading results for the speaking response",
+        description: "Submit qualitative grading for ONE speaking item. Do NOT compute final numeric score.",
         parameters: {
           type: "object",
           properties: {
             transcript: { type: "string" },
-            overallLevel: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1"] },
-            criteria: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  level: { type: "string", enum: ["A1", "A2", "B1", "B2", "C1"] },
-                  feedback: { type: "string" },
-                },
-                required: ["name", "level", "feedback"],
-                additionalProperties: false,
-              },
-            },
-            mistakes: { type: "array", items: errorItemSchema },
-            suggestions: { type: "array", items: { type: "string" } },
+            addressPercent: { type: "number", description: "0-100, how well the answer addresses the prompt" },
+            grammarErrors: { type: "array", items: errorItemSchema },
+            pronunciationErrors: { type: "array", items: pronunciationItemSchema },
+            feedback: { type: "string", description: "Vietnamese, max 3 short sentences" },
           },
-          required: ["transcript", "overallLevel", "criteria", "mistakes", "suggestions"],
+          required: ["transcript", "addressPercent", "grammarErrors", "pronunciationErrors", "feedback"],
           additionalProperties: false,
         },
       },
@@ -321,6 +332,7 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
     }
 
     const grading = JSON.parse(toolCall.function.arguments);
+
     if (type === "speaking") {
       console.log(
         "[grade-exam] speaking transcript length =",
@@ -328,6 +340,47 @@ OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the 
         "preview:",
         (grading?.transcript ?? "").slice(0, 200)
       );
+
+      // ---- Code-side scoring (Phase 2) ----
+      const mp = Math.max(0, maxPoints || 0);
+      const st = Math.max(0, speakTime || 0);
+      const sp = Math.max(0, Math.min(st || actualSpoken, actualSpoken || 0));
+      const addr = Math.max(0, Math.min(100, Number(grading?.addressPercent ?? 0)));
+      const grammarCount = Array.isArray(grading?.grammarErrors) ? grading.grammarErrors.length : 0;
+      const pronCount = Array.isArray(grading?.pronunciationErrors) ? grading.pronunciationErrors.length : 0;
+
+      const contentScore = (addr / 100) * mp;
+      const shortagePercent = st > 0 ? Math.max(0, ((st - sp) / st) * 100) : 0;
+
+      // Time penalty thresholds (question). Picture doubles the thresholds.
+      const mul = itemType === "picture" ? 2 : 1;
+      let timePenalty = 0;
+      if (shortagePercent < 10 * mul) timePenalty = 0;
+      else if (shortagePercent <= 20 * mul) timePenalty = 0.5;
+      else if (shortagePercent <= 50 * mul) timePenalty = 1.0;
+      else timePenalty = 1.5;
+
+      const errorPenalty = Math.min(0.5 * mp, 0.2 * (grammarCount + pronCount));
+      const rawScore = contentScore - timePenalty - errorPenalty;
+      const partScore = Math.round(Math.max(0, Math.min(mp, rawScore)) * 10) / 10;
+
+      const payload = {
+        transcript: grading?.transcript ?? "",
+        addressPercent: Math.round(addr * 10) / 10,
+        grammarErrors: grading?.grammarErrors ?? [],
+        pronunciationErrors: grading?.pronunciationErrors ?? [],
+        timePenalty: Math.round(timePenalty * 10) / 10,
+        errorPenalty: Math.round(errorPenalty * 10) / 10,
+        contentScore: Math.round(contentScore * 10) / 10,
+        shortagePercent: Math.round(shortagePercent * 10) / 10,
+        partScore,
+        maxPoints: mp,
+        feedback: grading?.feedback ?? "",
+      };
+
+      return new Response(JSON.stringify(payload), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(JSON.stringify(grading), {
