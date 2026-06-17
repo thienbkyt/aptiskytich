@@ -273,7 +273,9 @@ const SpeakingExamEngine = ({
           streamRef.current = null;
           // Even when suppressed, honor a pending finish so we don't hang.
           if (finishAfterStopRef.current) {
-            finishAfterStopRef.current = false;
+  finishAfterStopRef.current = false;
+  // When non-null, onstop should advance to this question index after writing the blob.
+  const pendingAdvanceRef = useRef<number | null>(null);
             handleFinish();
           }
           return;
