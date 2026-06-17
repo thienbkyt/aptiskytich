@@ -112,6 +112,19 @@ serve(async (req) => {
     let systemPrompt: string;
 
     if (type === "speaking") {
+      const leniencyRules = `
+
+ERROR-DETECTION LENIENCY (Aptis prioritizes intelligibility over nitpicking — apply STRICTLY):
+A. Connected speech — NEVER penalize:
+   - Dropped final consonants caused by linking: -ed (/t/,/d/), -t, -d, -s endings. E.g. "asked" heard as "ask", "seats" heard as "seat" → NOT an error.
+   - CRITICAL: when an inflectional ending (-ed past, -s plural / 3rd-person) is dropped due to connected speech, do NOT count it as a GRAMMAR error (wrong tense / wrong number) NOR a PRONUNCIATION error.
+   - Consonant cluster reduction such as /sts/ → /s/ (e.g. "tourists" → "touris") → NOT an error.
+B. Likely transcription mishears (not student errors) — use CONTEXT to ignore:
+   - If a word in the transcript doesn't fit the context and is likely a mishearing, do NOT flag a grammar/vocabulary error for it.
+   - Be especially lenient with easily-confused pairs: was/were, is/are, a/the, this/these, and nouns that sound similar (e.g. "restaurant" easily misheard as "question"). When in doubt → ignore, no deduction.
+C. Self-correction: if the student says something wrong then SELF-CORRECTS it immediately (same sentence or the next), do NOT count the original mistake — this is a positive sign.
+D. Filler words: completely ignore "uh, um, er, ah, like" when analyzing grammar. Evaluate the sentence AS IF fillers were removed. E.g. "my mother had me uh deliver the groceries" = "my mother had me deliver the groceries" → grammatically CORRECT, no deduction.`;
+
       if (isPart4Aggregated) {
         systemPrompt = `You are an expert Aptis Speaking Part 4 grader. You receive ONE audio file (the student's full ~120-second monologue) and the list of sub-questions of the topic. Your job is QUALITATIVE — DO NOT compute a numeric score; the application will.
 
@@ -122,6 +135,7 @@ Return via the tool call:
 4. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (explanation in Vietnamese). Empty array if none.
 5. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic), as { word, note } (Vietnamese). If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry.
 6. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve, mention connectors if missing.
+7. improvedVersion: a rewritten upgraded English version of the STUDENT'S OWN monologue (one combined version for the whole Part 4). KEEP the student's ideas/content — only fix errors, upgrade vocabulary & sentence structures, and add linking words. It must read like a high-scoring version of THEIR answer, not a generic model answer.${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       } else {
@@ -143,7 +157,8 @@ Return via the tool call:
    - Off-topic, silent, or unintelligible → 0.
 3. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } with explanation in Vietnamese. Empty array if none.
 4. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic, not phoneme-by-phoneme), as { word, note } with note in Vietnamese. If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry describing the issue.
-5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.${pictureExtra}
+5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.
+6. improvedVersion: a rewritten upgraded English version of THE STUDENT'S OWN answer for this item. KEEP the student's ideas/content — only fix errors, upgrade vocabulary & sentence structures, and add linking words. It must read like a high-scoring version of THEIR answer, not a generic model answer. If the student was silent/unintelligible, return an empty string.${pictureExtra}${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       }
