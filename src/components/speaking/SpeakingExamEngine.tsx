@@ -210,18 +210,51 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
-  // Phase 2 (Part 1 only): call grade-exam once per recorded question when done.
+  // Phase 2B (Parts 1/2/3/4): call grade-exam when done.
   useEffect(() => {
     if (phase !== "done" || gradingRanRef.current) return;
-    if (partType !== "part1" || !part1Data) return;
     gradingRanRef.current = true;
 
-    const promptsList: string[] = part1Data.questions;
-    const speakTimeSec = part1Data.speakTime || 30;
-    const blobs = recordingsRef.current.slice();
-    setGradings(new Array(blobs.length).fill(null));
-    setIsGradingPart1(true);
+    // Build per-item grading configs by partType.
+    interface ItemCfg {
+      maxPoints: number;
+      itemType: "question" | "picture";
+      speakTime: number;
+      timePenaltyTiers: [number, number, number];
+      questionText: string;
+    }
+    let itemCfgs: ItemCfg[] = [];
+    let aggregatedPart4: { speakTime: number; tiers: [number, number, number]; subQuestions: string[] } | null = null;
 
+    if (partType === "part1" && part1Data) {
+      const st = part1Data.speakTime || 30;
+      itemCfgs = part1Data.questions.map((q) => ({
+        maxPoints: 2, itemType: "question", speakTime: st,
+        timePenaltyTiers: [0.5, 1, 1.5], questionText: q,
+      }));
+    } else if (partType === "part2" && part2Data) {
+      const st = part2Data.speakTime || 45;
+      const qs = part2Data.questions || [];
+      itemCfgs = qs.map((q, idx) => idx === 0
+        ? { maxPoints: 4, itemType: "picture", speakTime: st, timePenaltyTiers: [1, 2, 3], questionText: q }
+        : { maxPoints: 2, itemType: "question", speakTime: st, timePenaltyTiers: [0.5, 1, 1.5], questionText: q });
+    } else if (partType === "part3" && part3Data) {
+      const st = part3Data.speakTime || 60;
+      const qs = part3Data.questions || [];
+      itemCfgs = qs.map((q, idx) => idx === 0
+        ? { maxPoints: 7, itemType: "picture", speakTime: st, timePenaltyTiers: [2, 3, 4], questionText: q }
+        : { maxPoints: 4, itemType: "question", speakTime: st, timePenaltyTiers: [1, 1.5, 2], questionText: q });
+    } else if (partType === "part4" && part4Data) {
+      aggregatedPart4 = {
+        speakTime: part4Data.speakTime || 120,
+        tiers: [5, 10, 15],
+        subQuestions: part4Data.questions || [],
+      };
+    } else {
+      return;
+    }
+
+    const blobs = recordingsRef.current.slice();
     const blobToBase64 = (blob: Blob) => new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -233,8 +266,47 @@ const SpeakingExamEngine = ({
       reader.readAsDataURL(blob);
     });
 
+    setIsGrading(true);
+
+    if (aggregatedPart4) {
+      // One call for the whole part: use the first (and only) recording.
+      setGradings([null]);
+      const blob = blobs[0];
+      (async () => {
+        if (!blob) {
+          setGradings([{ error: "Không có bài ghi âm" }]);
+          return;
+        }
+        try {
+          const audioBase64 = await blobToBase64(blob);
+          const { data, error } = await supabase.functions.invoke("grade-exam", {
+            body: {
+              type: "speaking",
+              audioBase64,
+              questions: aggregatedPart4!.subQuestions,
+              subQuestions: aggregatedPart4!.subQuestions,
+              partType: "part4",
+              speakTime: aggregatedPart4!.speakTime,
+              actualSpoken: durationsRef.current[0] ?? 0,
+              timePenaltyTiers: aggregatedPart4!.tiers,
+              usedConnectorsRequired: true,
+            },
+          });
+          if (error) throw error;
+          if ((data as any)?.error) throw new Error((data as any).error);
+          setGradings([data as SpeakingItemGrading]);
+        } catch (e: any) {
+          console.error("[grade-exam] part4 failed", e);
+          setGradings([{ error: e?.message ?? "Lỗi chấm điểm" }]);
+        }
+      })().finally(() => setIsGrading(false));
+      return;
+    }
+
+    setGradings(new Array(itemCfgs.length).fill(null));
     Promise.all(
-      blobs.map(async (blob, idx) => {
+      itemCfgs.map(async (cfg, idx) => {
+        const blob = blobs[idx];
         if (!blob) {
           setGradings(prev => {
             const next = [...prev];
@@ -249,12 +321,13 @@ const SpeakingExamEngine = ({
             body: {
               type: "speaking",
               audioBase64,
-              questions: [promptsList[idx] ?? ""],
+              questions: [cfg.questionText],
               partType,
-              maxPoints: 2,
-              itemType: "question",
-              speakTime: speakTimeSec,
+              maxPoints: cfg.maxPoints,
+              itemType: cfg.itemType,
+              speakTime: cfg.speakTime,
               actualSpoken: durationsRef.current[idx] ?? 0,
+              timePenaltyTiers: cfg.timePenaltyTiers,
             },
           });
           if (error) throw error;
@@ -273,8 +346,8 @@ const SpeakingExamEngine = ({
           });
         }
       })
-    ).finally(() => setIsGradingPart1(false));
-  }, [phase, partType, part1Data]);
+    ).finally(() => setIsGrading(false));
+  }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
 
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
