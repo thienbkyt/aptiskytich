@@ -106,6 +106,10 @@ const SpeakingExamEngine = ({
   const finishedRef = useRef(false);
   // Synchronously-updated recordings store (avoids stale state when finishing on last question).
   const recordingsRef = useRef<(Blob | null)[]>([]);
+  // Actual spoken duration (seconds) per question. Computed at stop time.
+  const durationsRef = useRef<(number | null)[]>([]);
+  // Timestamp (ms) when current recording started, for duration calc.
+  const recordingStartRef = useRef<number | null>(null);
   // When true, the next onstop should trigger handleFinish after writing the blob.
   const finishAfterStopRef = useRef(false);
 
@@ -155,6 +159,7 @@ const SpeakingExamEngine = ({
     const total = getTotalQuestions();
     setRecordings(new Array(total).fill(null));
     recordingsRef.current = new Array(total).fill(null);
+    durationsRef.current = new Array(total).fill(null);
   }, [partType]);
 
   // Ensure exam-mode dark overrides apply across ALL speaking phases
@@ -275,6 +280,15 @@ const SpeakingExamEngine = ({
         }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
+        // Record actual spoken duration (capped at speakTime).
+        const startedAt = recordingStartRef.current;
+        const elapsedSec = startedAt
+          ? Math.min(speakTime, Math.max(0, Math.round((Date.now() - startedAt) / 1000)))
+          : speakTime;
+        recordingStartRef.current = null;
+        const durArr = durationsRef.current.slice();
+        durArr[recordingIndex] = elapsedSec;
+        durationsRef.current = durArr;
         // Update the ref synchronously BEFORE any async finish flow reads it.
         const arr = recordingsRef.current.slice();
         arr[recordingIndex] = blob;
@@ -293,6 +307,7 @@ const SpeakingExamEngine = ({
       };
 
       mediaRecorder.start();
+      recordingStartRef.current = Date.now();
 
       // Enable "Finish Recording" after 10 seconds
       finishTimerRef.current = setTimeout(() => {
@@ -384,6 +399,7 @@ const SpeakingExamEngine = ({
               examSetId: examSetId ?? null,
               part: `${partType}_q${idx + 1}`,
               blob,
+              durationSeconds: durationsRef.current[idx] ?? undefined,
             });
           } catch { /* ignore individual upload failures */ }
         })
