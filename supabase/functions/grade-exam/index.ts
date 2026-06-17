@@ -61,6 +61,10 @@ serve(async (req) => {
 
     const body: GradingRequest = await req.json();
     const { type, audioBase64, text, questions, partType } = body;
+    const actualSpoken = Number(body.actualSpoken ?? 0);
+    const speakTime = Number(body.speakTime ?? 0);
+    const maxPoints = Number(body.maxPoints ?? 0);
+    const itemType: "question" | "picture" = body.itemType === "picture" ? "picture" : "question";
 
     if (type !== "speaking" && type !== "writing") {
       return new Response(JSON.stringify({ error: "Invalid type" }), {
