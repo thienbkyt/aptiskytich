@@ -90,6 +90,9 @@ const SpeakingExamEngine = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  // TODO: remove debug
+  const [debugTranscripts, setDebugTranscripts] = useState<(string | null)[]>([]);
+  const debugRanRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
