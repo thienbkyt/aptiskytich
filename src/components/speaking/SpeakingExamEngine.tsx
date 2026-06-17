@@ -841,6 +841,16 @@ const SpeakingExamEngine = ({
                       )}
                     </div>
 
+                    {/* TODO: remove debug */}
+                    <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-yellow-800 mb-1">DEBUG: Transcript Gemini nghe được</p>
+                      <p className="text-sm text-yellow-900 whitespace-pre-wrap">
+                        {debugTranscripts[i] === null || debugTranscripts[i] === undefined
+                          ? "Đang nhận diện..."
+                          : debugTranscripts[i]}
+                      </p>
+                    </div>
+
                     {samples[i] && (
                       <div className="bg-success/5 border border-success/20 rounded-lg p-3">
                         <p className="text-xs font-semibold text-success mb-1">💡 Bài nói mẫu</p>
