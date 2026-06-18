@@ -418,7 +418,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       let runningMax = 0;
       let doneCount = 0;
 
-      for (const sub of orderedSubs) {
+      for (let oi = 0; oi < orderedSubs.length; oi++) {
+        const sub = orderedSubs[oi];
+        const originalPartIdx = orderedIndices[oi];
+        const originalPart = parts[originalPartIdx];
         const gradings: Awaited<ReturnType<typeof gradeSpeakingSpec>>[] = [];
         for (const item of sub.items) {
           if (!item.audioBase64) {
@@ -433,14 +436,21 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         }
         const maxTotal = sub.items.reduce((s, i) => s + i.spec.maxPoints, 0);
         runningMax += maxTotal;
-        partResults.push({
+        const entry: SpeakingFullPartResult = {
           partType: sub.partType,
           partNumber: sub.partNumber,
           prompts: sub.items.map((i) => i.spec.questionText),
           recordingUrls: sub.items.map((i) => i.audioUrl),
           gradings,
           maxTotal,
-        });
+        };
+        if (originalPart) {
+          if (sub.partType === "part1") entry.part1Data = toSpeakingPart1(originalPart.questions);
+          else if (sub.partType === "part2") entry.part2Data = toSpeakingPart2(originalPart.questions);
+          else if (sub.partType === "part3") entry.part3Data = toSpeakingPart3(originalPart.questions);
+          else if (sub.partType === "part4") entry.part4Data = toSpeakingPart4(originalPart.questions);
+        }
+        partResults.push(entry);
       }
 
       setSpeakingFullParts(partResults);
