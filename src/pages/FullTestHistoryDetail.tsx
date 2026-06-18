@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getLevel, getLevelColor } from "@/data/questions";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
+import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 
 interface SessionRow {
