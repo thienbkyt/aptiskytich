@@ -564,7 +564,7 @@ const SpeakingExamEngine = ({
             return {
               spec,
               audioBase64,
-              audioUrl: recordings[idx] ?? null,
+              audioUrl: recordings[idx] ?? (blob ? URL.createObjectURL(blob) : null),
               blob,
               actualSpoken: durationsRef.current[idx] ?? 0,
             };
