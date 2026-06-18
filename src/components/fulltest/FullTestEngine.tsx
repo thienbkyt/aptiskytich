@@ -606,6 +606,90 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       case "part3": speakingProps.part3Data = toSpeakingPart3(currentPart.questions); break;
       case "part4": speakingProps.part4Data = toSpeakingPart4(currentPart.questions); break;
     }
+    const isLastSpeakingPart = currentPartIndex >= partsForSkill.length - 1;
+
+    const handleSpeakingPartSubs = (sub: SpeakingPartSubmission) => {
+      speakingDataByPartRef.current[currentPartIndex] = {
+        sub,
+        partId: currentPart.id ?? null,
+        partLabel: currentPart.part,
+      };
+    };
+
+    const runSpeakingGradingBackground = async () => {
+      if (speakingGradingStartedRef.current) return;
+      speakingGradingStartedRef.current = true;
+      setSpeakingGradingPending(true);
+      try {
+        const orderedIndices = Object.keys(speakingDataByPartRef.current)
+          .map((k) => parseInt(k, 10))
+          .sort((a, b) => a - b);
+        const orderedEntries = orderedIndices
+          .map((i) => speakingDataByPartRef.current[i])
+          .filter(Boolean);
+
+        let totalScore = 0;
+        let totalMax = 0;
+        for (const e of orderedEntries) {
+          totalMax += e.sub.items.reduce((s, it) => s + (it.spec.maxPoints || 0), 0);
+        }
+
+        // Grade each part's items in parallel
+        const perPartResults: Awaited<ReturnType<typeof gradeSpeakingItems>>[] = [];
+        for (const entry of orderedEntries) {
+          const specs = entry.sub.items.map((i) => i.spec);
+          const blobs = entry.sub.items.map((i) => i.blob);
+          const actuals = entry.sub.items.map((i) => i.actualSpoken);
+          const results = await gradeSpeakingItems(specs, blobs, actuals);
+          for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
+          perPartResults.push(results);
+        }
+
+        // Persist one aggregate speaking test_results row (gets linked to History)
+        const totalRounded = Math.round(totalScore);
+        const maxRounded = Math.max(Math.round(totalMax), 1);
+        const testResultId = await saveExamResult({
+          examSetId: orderedEntries[0]?.partId ?? null,
+          skill: "speaking",
+          correct: totalRounded,
+          total: maxRounded,
+          fullTestSessionId: sessionIdRef.current,
+          fullTestId: testId,
+        });
+
+        // Save per-question gradings linked to that row
+        for (let i = 0; i < orderedEntries.length; i++) {
+          const entry = orderedEntries[i];
+          const results = perPartResults[i];
+          await saveSpeakingGradings({
+            testResultId,
+            examSetId: entry.partId,
+            partLabel: entry.partLabel,
+            gradings: results,
+            questionTexts: entry.sub.items.map((it) => it.spec.questionText),
+          });
+        }
+
+        setScores((prev) => ({
+          ...prev,
+          speaking: { correct: totalRounded, total: maxRounded },
+        }));
+      } catch (e) {
+        console.warn("[FullTestEngine] speaking grading failed", e);
+      } finally {
+        setSpeakingGradingPending(false);
+      }
+    };
+
+    const handleSpeakingComplete = () => {
+      const wasLast = isLastSpeakingPart;
+      handlePartComplete();
+      if (wasLast) {
+        // Fire-and-forget: student continues to listening immediately.
+        void runSpeakingGradingBackground();
+      }
+    };
+
     return (
       <>
         {progressBar}
@@ -619,7 +703,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           fullTestSessionId={sessionIdRef.current}
           fullTestId={testId}
           onExit={handleExit}
-          onComplete={() => handlePartComplete()}
+          fullFlow
+          isLastPart={isLastSpeakingPart}
+          onPartSubmissions={handleSpeakingPartSubs}
+          onComplete={handleSpeakingComplete}
           skipIntro={currentPartIndex > 0}
           onAdminPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...speakingProps}
