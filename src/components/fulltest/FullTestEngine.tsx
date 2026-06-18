@@ -16,13 +16,14 @@ import { saveExamResult } from "@/lib/saveExamResult";
 import { getLevel, getLevelColor } from "@/data/questions";
 import { useAuth } from "@/hooks/useAuth";
 
-import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
+import SpeakingExamEngine, { type SpeakingPartSubmission } from "@/components/speaking/SpeakingExamEngine";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
+import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
