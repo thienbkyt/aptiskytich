@@ -392,16 +392,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   // ── Completed ──
   if (phase === "completed") {
-    const totalCorrect = Object.values(scores).reduce((s, v) => s + v.correct, 0);
-    const totalQ = Object.values(scores).reduce((s, v) => s + v.total, 0);
-    const skillPercents = SKILL_ORDER
+    const toScore50 = (correct: number, total: number) =>
+      total > 0 ? Math.round((correct / total) * 50) : 0;
+    const skillScore50s = SKILL_ORDER
       .map((sk) => scores[sk])
       .filter((s) => s.total > 0)
-      .map((s) => s.correct / s.total);
-    const avgPct = skillPercents.length
-      ? skillPercents.reduce((a, b) => a + b, 0) / skillPercents.length
+      .map((s) => toScore50(s.correct, s.total));
+    const avgScore50 = skillScore50s.length
+      ? skillScore50s.reduce((a, b) => a + b, 0) / skillScore50s.length
       : 0;
-    const overallLevel = totalQ > 0 ? getLevel(Math.round(avgPct * 100), 100) : "—";
+    const overallLevel = skillScore50s.length > 0 ? getLevel(Math.round(avgScore50), 50) : "—";
 
     const handleScrollTo = (id: string) => {
       const el = document.getElementById(id);
@@ -423,13 +423,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           </div>
           <h2 className="text-2xl font-heading font-bold text-foreground mb-2">Hoàn thành bài thi thử!</h2>
           <p className="text-muted-foreground mb-4">{testTitle}</p>
-          {totalQ > 0 && (
+          {skillScore50s.length > 0 && (
             <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3">
               <span className="text-sm font-medium text-muted-foreground">Trình độ tổng thể:</span>
               <span className={`text-lg font-heading font-extrabold ${getLevelColor(overallLevel)}`}>{overallLevel}</span>
-              {totalQ > 0 && (
-                <span className="text-sm text-muted-foreground ml-2">• {totalCorrect}/{totalQ}</span>
-              )}
+              <span className="text-sm text-muted-foreground ml-2">• {Math.round(avgScore50)}/50</span>
             </div>
           )}
         </div>
@@ -439,8 +437,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           {SKILL_ORDER.map((skill) => {
             const s = scores[skill];
             const Icon = SKILL_ICONS[skill];
-            const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-            const lvl = s.total > 0 ? getLevel(s.correct, s.total) : null;
+            const score50 = toScore50(s.correct, s.total);
+            const pct = s.total > 0 ? Math.round((score50 / 50) * 100) : 0;
+            const lvl = s.total > 0 ? getLevel(score50, 50) : null;
             return (
               <button
                 key={skill}
@@ -457,7 +456,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                 ) : s.total > 0 ? (
                   <>
                     <p className="text-lg font-heading font-bold text-foreground">
-                      {s.correct}/{s.total}
+                      {score50}/50
                     </p>
                     <p className="text-[11px] text-muted-foreground">{pct}% • <span className={`font-bold ${lvl ? getLevelColor(lvl) : ""}`}>{lvl}</span></p>
                   </>
