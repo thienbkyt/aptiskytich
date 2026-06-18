@@ -70,7 +70,7 @@ const SpeakingReviewView = ({
         >
           ← Quay lại tổng kết
         </button>
-        {showNav && (
+        {showNav && !hidePager && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => onChangeIndex(Math.max(0, rIdx - 1))}
