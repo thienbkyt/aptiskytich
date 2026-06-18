@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
-import { supabase } from "@/integrations/supabase/client";
+
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
@@ -22,12 +22,14 @@ import type {
 } from "@/data/speakingQuestions";
 import {
   buildSpeakingGradingSpecs,
-  gradeSpeakingSpec,
+  gradeSpeakingItems,
+  saveSpeakingGradings,
   blobToBase64,
   type SpeakingItemGrading,
   type SpeakingGradingResult,
   type SpeakingGradingSpec,
 } from "./speakingGrading";
+import SpeakingReviewView from "./SpeakingReviewView";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
@@ -233,35 +235,15 @@ const SpeakingExamEngine = ({
     setIsGrading(true);
     setGradings(new Array(specs.length).fill(null));
 
-    Promise.all(
-      specs.map(async (spec, idx) => {
-        const blob = blobs[idx];
-        if (!blob) {
-          setGradings(prev => {
-            const next = [...prev];
-            next[idx] = { error: "Không có bài ghi âm" };
-            return next;
-          });
-          return;
-        }
-        try {
-          const audioBase64 = await blobToBase64(blob);
-          const result = await gradeSpeakingSpec(spec, audioBase64, durationsRef.current[idx] ?? 0);
-          setGradings(prev => {
-            const next = [...prev];
-            next[idx] = result;
-            return next;
-          });
-        } catch (e: any) {
-          setGradings(prev => {
-            const next = [...prev];
-            next[idx] = { error: e?.message ?? "Lỗi chấm điểm" };
-            return next;
-          });
-        }
-      }),
-    ).finally(() => setIsGrading(false));
+    gradeSpeakingItems(specs, blobs, durationsRef.current, (idx, result) => {
+      setGradings(prev => {
+        const next = [...prev];
+        next[idx] = result;
+        return next;
+      });
+    }).finally(() => setIsGrading(false));
   }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
+
 
 
   // Persist per-question AI grading results to DB (once, after all gradings complete).
@@ -279,40 +261,15 @@ const SpeakingExamEngine = ({
       if (partType === "part4" && part4Data) return [part4Data.topic];
       return [];
     })();
-    const partLabel = `Part ${PART_NUMBERS[partType]}`;
-
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const rows = gradings
-          .map((g, i) => {
-            if (!g || "error" in g) return null;
-            return {
-              user_id: user.id,
-              test_result_id: testResultIdRef.current,
-              exam_set_id: examSetId ?? null,
-              part: partLabel,
-              item_index: i,
-              question_text: promptsList[i] ?? null,
-              max_points: g.maxPoints ?? 0,
-              part_score: g.partScore ?? 0,
-              transcript: g.transcript ?? null,
-              grammar_errors: (g.grammarErrors ?? []) as any,
-              pronunciation_errors: (g.pronunciationErrors ?? []) as any,
-              improved_version: g.improvedVersion ?? null,
-              feedback: g.feedback ?? null,
-            };
-          })
-          .filter((r): r is NonNullable<typeof r> => r !== null);
-        if (rows.length > 0) {
-          await supabase.from("speaking_question_gradings").insert(rows as any);
-        }
-      } catch (e) {
-        console.warn("[speaking_question_gradings] save failed", e);
-      }
-    })();
+    saveSpeakingGradings({
+      testResultId: testResultIdRef.current,
+      examSetId: examSetId ?? null,
+      partLabel: `Part ${PART_NUMBERS[partType]}`,
+      gradings,
+      questionTexts: promptsList,
+    });
   }, [phase, gradings, partType, part1Data, part2Data, part3Data, part4Data, examSetId]);
+
 
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
@@ -891,13 +848,6 @@ const SpeakingExamEngine = ({
 
   // Grading / Done — submitted screen with per-question playback
   if (phase === "grading" || phase === "done") {
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions;
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return [part4Data.topic];
-      return [];
-    })();
     const validGradings = gradings.filter((g): g is SpeakingItemGrading => !!g && !("error" in g));
     const totalScore = validGradings.reduce((sum, g) => sum + (g.partScore || 0), 0);
     const totalMax = (() => {
@@ -914,8 +864,6 @@ const SpeakingExamEngine = ({
       return 0;
     })();
     const allGraded = gradings.length > 0 && gradings.every(g => g !== null);
-    // For Part 4, the single grading entry corresponds to the single "topic" prompt card.
-    const isPart4 = partType === "part4";
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -982,183 +930,22 @@ const SpeakingExamEngine = ({
                   </button>
                 </div>
               </>
-            ) : (() => {
-              // Per-question review using the exam-taking layout.
-              const reviewTotal = isPart4 ? 1 : promptsList.length;
-              const rIdx = Math.min(reviewIndex, Math.max(0, reviewTotal - 1));
-              const prompt = promptsList[rIdx] ?? promptsList[0] ?? "";
-              const gIdx = isPart4 ? 0 : rIdx;
-              const g = gradings[gIdx];
-              const audioUrl = recordings[rIdx];
-              const canPrev = rIdx > 0;
-              const canNext = rIdx < reviewTotal - 1;
-              const showNav = reviewTotal > 1;
-              return (
-                <div className="-mx-4">
-                  <div className="px-4 flex items-center justify-between mb-4 max-w-6xl mx-auto">
-                    <button
-                      onClick={() => setReviewDetail(false)}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      ← Quay lại tổng kết
-                    </button>
-                    {showNav && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setReviewIndex((i) => Math.max(0, i - 1))}
-                          disabled={!canPrev}
-                          className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
-                        >
-                          ← Câu trước
-                        </button>
-                        <span className="text-xs text-muted-foreground">
-                          {rIdx + 1} / {reviewTotal}
-                        </span>
-                        <button
-                          onClick={() => setReviewIndex((i) => Math.min(reviewTotal - 1, i + 1))}
-                          disabled={!canNext}
-                          className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
-                        >
-                          Câu sau →
-                        </button>
-                      </div>
-                    )}
-                    <button
-                      onClick={onExit}
-                      className="text-sm bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-4 py-2 font-medium transition-colors"
-                    >
-                      Thoát
-                    </button>
-                  </div>
-
-                  <div className="flex px-4 gap-6 max-w-6xl mx-auto w-full">
-                    {/* Left: same layout as exam-taking screen */}
-                    <div className="flex-1">
-                      <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
-                        <p className="text-xs text-gray-500 mb-1">Speaking</p>
-                        <p className="text-sm font-bold text-gray-900 mb-6">
-                          {isPart4 ? `Part ${partNumber} of ${totalParts}` : `Question ${rIdx + 1} of ${reviewTotal}`}
-                        </p>
-
-                        {partType === "part2" && part2Data?.imageUrl && (
-                          <div className="mb-4">
-                            <SignedImage
-                              src={part2Data.imageUrl}
-                              alt="Describe this picture"
-                              className="w-full max-w-md rounded-lg object-cover"
-                            />
-                          </div>
-                        )}
-
-                        {partType === "part3" && part3Data && (
-                          <div className="grid grid-cols-2 gap-4 mb-4">
-                            <SignedImage src={part3Data.imageUrl1} alt="Picture 1" className="w-full rounded-lg object-cover h-56" />
-                            <SignedImage src={part3Data.imageUrl2} alt="Picture 2" className="w-full rounded-lg object-cover h-56" />
-                          </div>
-                        )}
-
-                        {partType === "part4" && part4Data && (
-                          <div className="bg-gray-50 rounded-lg p-5 mb-4">
-                            <p className="font-bold text-gray-900 mb-3">Topic: {part4Data.topic}</p>
-                            {part4Data.imageUrl && (
-                              <div className="mb-4 rounded-lg overflow-hidden border border-gray-200 max-w-md">
-                                <SignedImage src={part4Data.imageUrl} alt="Part 4 topic" className="w-full h-56 object-cover" />
-                              </div>
-                            )}
-                            <ul className="space-y-1.5 mb-3">
-                              {part4Data.questions.map((q, i) => (
-                                <li key={i} className="text-sm text-gray-700">• {q}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {partType !== "part4" && (
-                          <p className="text-sm text-gray-800 mt-4">{prompt}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: review panel — audio + AI grading */}
-                    <div className="w-[340px] shrink-0 space-y-3">
-                      <div className="bg-white rounded-xl shadow-sm p-4">
-                        <p className="text-xs font-semibold text-muted-foreground mb-2">Bài ghi âm của bạn</p>
-                        {audioUrl ? (
-                          <audio controls src={audioUrl} className="w-full h-9" />
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic">Không có bài ghi âm cho câu này.</p>
-                        )}
-                      </div>
-
-                      {(!g || "error" in g) ? (
-                        <div className="bg-white rounded-xl shadow-sm p-4">
-                          <p className="text-xs text-muted-foreground italic">
-                            {g && "error" in g ? `Không chấm được câu này: ${g.error}` : "Chưa có kết quả chấm cho câu này."}
-                          </p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
-                              <p className="text-sm font-bold text-primary">
-                                {g.partScore.toFixed(1)} / {g.maxPoints}
-                              </p>
-                            </div>
-                            {g.transcript && (
-                              <div>
-                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
-                                <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
-                              </div>
-                            )}
-                            {g.grammarErrors?.length > 0 && (
-                              <div>
-                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
-                                <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
-                                  {g.grammarErrors.map((e, k) => (
-                                    <li key={k}>
-                                      <span className="line-through text-destructive">{e.original}</span>{" → "}
-                                      <span className="text-success font-medium">{e.corrected}</span>
-                                      <span className="text-muted-foreground"> — {e.explanation}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {g.pronunciationErrors?.length > 0 && (
-                              <div>
-                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi phát âm</p>
-                                <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
-                                  {g.pronunciationErrors.map((e, k) => (
-                                    <li key={k}>
-                                      <span className="font-medium">{e.word}</span>
-                                      <span className="text-muted-foreground"> — {e.note}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {g.feedback && (
-                              <div>
-                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
-                                <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
-                              </div>
-                            )}
-                          </div>
-
-                          {g.improvedVersion && (
-                            <div className="bg-success/5 border border-success/20 rounded-xl p-4">
-                              <p className="text-xs font-semibold text-success mb-1">💡 Phiên bản AI Kỳ Tích gợi ý cho bạn</p>
-                              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{g.improvedVersion}</p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
+            ) : (
+              <SpeakingReviewView
+                partType={partType}
+                part1Data={part1Data}
+                part2Data={part2Data}
+                part3Data={part3Data}
+                part4Data={part4Data}
+                recordings={recordings}
+                gradings={gradings}
+                reviewIndex={reviewIndex}
+                onChangeIndex={setReviewIndex}
+                onBack={() => setReviewDetail(false)}
+                onExit={onExit}
+                totalParts={totalParts}
+              />
+            )}
           </div>
         </div>
         {exitDialog}
