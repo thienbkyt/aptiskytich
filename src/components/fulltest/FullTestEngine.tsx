@@ -65,7 +65,7 @@ interface PartSet {
 
 type SkillData = Record<SkillStep, PartSet[]>;
 
-type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "completed";
+type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "finalizing-writing" | "completed";
 
 const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [phase, setPhase] = useState<FlowPhase>("loading");
