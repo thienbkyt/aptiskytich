@@ -715,6 +715,68 @@ export type Database = {
         }
         Relationships: []
       }
+      speaking_question_gradings: {
+        Row: {
+          created_at: string
+          exam_set_id: string | null
+          feedback: string | null
+          grammar_errors: Json
+          id: string
+          improved_version: string | null
+          item_index: number
+          max_points: number
+          part: string
+          part_score: number
+          pronunciation_errors: Json
+          question_text: string | null
+          test_result_id: string | null
+          transcript: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          grammar_errors?: Json
+          id?: string
+          improved_version?: string | null
+          item_index: number
+          max_points?: number
+          part: string
+          part_score?: number
+          pronunciation_errors?: Json
+          question_text?: string | null
+          test_result_id?: string | null
+          transcript?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          grammar_errors?: Json
+          id?: string
+          improved_version?: string | null
+          item_index?: number
+          max_points?: number
+          part?: string
+          part_score?: number
+          pronunciation_errors?: Json
+          question_text?: string | null
+          test_result_id?: string | null
+          transcript?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "speaking_question_gradings_test_result_id_fkey"
+            columns: ["test_result_id"]
+            isOneToOne: false
+            referencedRelation: "test_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       speaking_recordings: {
         Row: {
           audio_url: string
