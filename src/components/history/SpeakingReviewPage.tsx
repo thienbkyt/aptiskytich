@@ -22,6 +22,8 @@ interface Props {
   onExit: () => void;
   /** When present, scope grading queries to this aggregate row. */
   testResultId?: string;
+  questionIndex?: number;
+  onQuestionCount?: (n: number) => void;
 }
 
 const SIGNED_TTL = 50 * 60 * 1000;
