@@ -113,7 +113,10 @@ const SpeakingExamEngine = ({
   }
   const [gradings, setGradings] = useState<(SpeakingItemGrading | null | { error: string })[]>([]);
   const [isGrading, setIsGrading] = useState(false);
+  const [reviewDetail, setReviewDetail] = useState(false);
   const gradingRanRef = useRef(false);
+  const testResultIdRef = useRef<string | null>(null);
+  const gradingsSavedRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
