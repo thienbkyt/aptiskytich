@@ -103,6 +103,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
   const [speakingGradingPending, setSpeakingGradingPending] = useState(false);
   const speakingGradingStartedRef = useRef(false);
+  const speakingGradingPromiseRef = useRef<Promise<void> | null>(null);
+
+  // Writing grading state for Full Test (graded at the very end after writing's last part)
+  const writingSubmissionsByPartRef = useRef<Record<number, { partType: string; text: string; questions: string[]; partId: string | null; partLabel: string }>>({});
+  const [writingGradedCount, setWritingGradedCount] = useState(0);
+  const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
+  const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
+  const { gradeExam } = useExamGrading();
 
 
   // Persist final result once when the user finishes the full test.
