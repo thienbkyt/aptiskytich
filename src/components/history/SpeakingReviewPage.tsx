@@ -146,6 +146,7 @@ const SpeakingReviewPage = ({
       setRecordings(signed);
       setGradings(gradeArr);
       setReviewIndex(0);
+      setPromptCount(Math.max(promptCount, 1));
       setLoading(false);
     })();
     return () => { cancelled = true; };
