@@ -364,6 +364,30 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     );
   }
 
+  // ── Finalizing Writing (grade all parts + wait for speaking) ──
+  if (phase === "finalizing-writing") {
+    const total = writingTotalToGrade || 0;
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <h2 className="text-xl font-heading font-bold text-foreground">
+          AI Kỳ Tích đang chấm Writing và tổng hợp kết quả...
+        </h2>
+        {waitingForSpeaking && (
+          <p className="text-sm text-muted-foreground">Đang chờ phần Speaking chấm xong...</p>
+        )}
+        {total > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Đã chấm {writingGradedCount}/{total} phần Writing
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground max-w-md">
+          Vui lòng không tắt trình duyệt. Quá trình này có thể mất vài chục giây.
+        </p>
+      </div>
+    );
+  }
+
   // ── Completed ──
   if (phase === "completed") {
     const totalCorrect = Object.values(scores).reduce((s, v) => s + v.correct, 0);
