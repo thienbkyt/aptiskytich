@@ -248,7 +248,7 @@ const FullTestHistoryDetail = () => {
             <TechSkeleton variant="card" className="h-96 w-full" />
           ) : (
             <>
-              {/* Summary */}
+              {/* Summary header */}
               <div className="glass-card p-6 md:p-8 mb-6 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
                   <Trophy className="w-8 h-8 text-primary" />
@@ -257,80 +257,32 @@ const FullTestHistoryDetail = () => {
                   <Trophy className="w-3 h-3" /> Full Test
                 </Badge>
                 <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-2">{title}</h1>
-                <p className="text-xs text-muted-foreground mb-4 flex items-center justify-center gap-1.5">
+                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" /> {formatDateTime(rows[0].created_at)}
                 </p>
-                {skillScore50s.length > 0 && (
-                  <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3">
-                    <span className="text-sm font-medium text-muted-foreground">Trình độ tổng thể:</span>
-                    <span className={`text-lg font-heading font-extrabold ${getLevelColor(overallLevel)}`}>{overallLevel}</span>
-                    <span className="text-sm text-muted-foreground ml-2">• {Math.round(avgScore50)}/50</span>
-                  </div>
-                )}
               </div>
 
-              {/* Per-skill cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {SKILL_ORDER.map((sk) => {
-                  const agg = skillAgg[sk];
-                  const Icon = SKILL_ICONS[sk];
-                  const score50 = toScore50(agg.correct, agg.total);
-                  const pct = agg.total > 0 ? Math.round((score50 / 50) * 100) : 0;
-                  const lvl = agg.total > 0 ? getLevel(score50, 50) : null;
-                  // For grammar there's exactly one row (merged). For others, list per-part.
-                  return (
-                    <div key={sk} className="bg-card border border-border rounded-xl p-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Icon className="w-4 h-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-heading font-bold text-foreground text-sm">{SKILL_LABELS[sk]}</p>
-                            {lvl ? (
-                              <p className={`text-[11px] font-bold ${getLevelColor(lvl)}`}>Band {lvl} • {pct}%</p>
-                            ) : (
-                              <p className="text-[11px] text-muted-foreground">Chưa có dữ liệu</p>
-                            )}
-                          </div>
-                        </div>
-                        {agg.total > 0 && (
-                          <span className="text-sm font-bold text-foreground">{score50}/50</span>
-                        )}
-                      </div>
+              {/* Aptis score table */}
+              <FullTestScoreTable scores={skillAgg as any} />
 
-                      {agg.rows.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">—</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {agg.rows.map((r) => (
-                            <button
-                              key={r.id}
-                              onClick={() => handleReview(r)}
-                              className="w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors group"
-                            >
-                              <span className="text-xs text-foreground truncate">
-                                {sk === "grammar" 
-                                  ? `${r.setTitle ? `${r.setTitle}` : "Phần"}`
-                                  : `${r.setPart || "Phần"} ${r.setTitle ? `– ${r.setTitle}` : ""}`}
-                              </span>
-                              <span className="text-xs text-primary inline-flex items-center gap-1 shrink-0 group-hover:underline">
-                                <Eye className="w-3 h-3" /> Xem lại
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="flex flex-wrap justify-end gap-3">
+              <div className="flex flex-wrap justify-center gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => {
+                    if (allPages.length === 0) return;
+                    setReviewSkillStart(allPages[0].skill as SkillKey);
+                    setReviewRow(rows[0]);
+                  }}
+                  disabled={allPages.length === 0}
+                >
+                  <Eye className="w-4 h-4" /> Xem lại từng câu
+                </Button>
                 <Link to="/thi-thu">
                   <Button className="gap-2"><RotateCcw className="w-4 h-4" />Làm lại Full Test</Button>
                 </Link>
               </div>
+
             </>
           )}
         </div>
