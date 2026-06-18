@@ -43,6 +43,7 @@ const setCached = (id: string, url: string) => {
 
 const SpeakingReviewPage = ({
   userId, examSetId, attemptCreatedAt, testTitle, partLabel, onExit, testResultId,
+  questionIndex, onQuestionCount,
 }: Props) => {
   const [partType, setPartType] = useState<SpeakingPartType | null>(null);
   const [part1Data, setPart1Data] = useState<SpeakingPart1Data | undefined>();
