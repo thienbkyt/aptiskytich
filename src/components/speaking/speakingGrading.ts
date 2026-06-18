@@ -146,3 +146,81 @@ export async function gradeSpeakingSpec(
 export function computeSpeakingMaxTotal(specs: SpeakingGradingSpec[]): number {
   return specs.reduce((s, x) => s + x.maxPoints, 0);
 }
+
+/**
+ * Grade many specs in parallel. `blobs[i]` and `actualSpokens[i]` correspond
+ * to specs[i]. Missing blobs yield `{ error }` entries. `onItem` (optional)
+ * fires as each item completes, useful for incremental UI updates.
+ */
+export async function gradeSpeakingItems(
+  specs: SpeakingGradingSpec[],
+  blobs: (Blob | null)[],
+  actualSpokens: (number | null | undefined)[],
+  onItem?: (idx: number, result: SpeakingGradingResult) => void,
+): Promise<SpeakingGradingResult[]> {
+  const results: SpeakingGradingResult[] = new Array(specs.length).fill(null) as any;
+  await Promise.all(
+    specs.map(async (spec, idx) => {
+      const blob = blobs[idx];
+      if (!blob) {
+        const r: SpeakingGradingResult = { error: "Không có bài ghi âm" };
+        results[idx] = r;
+        onItem?.(idx, r);
+        return;
+      }
+      try {
+        const audioBase64 = await blobToBase64(blob);
+        const r = await gradeSpeakingSpec(spec, audioBase64, actualSpokens[idx] ?? 0);
+        results[idx] = r;
+        onItem?.(idx, r);
+      } catch (e: any) {
+        const r: SpeakingGradingResult = { error: e?.message ?? "Lỗi chấm điểm" };
+        results[idx] = r;
+        onItem?.(idx, r);
+      }
+    }),
+  );
+  return results;
+}
+
+/**
+ * Persist per-question AI gradings to `speaking_question_gradings`. Best-effort;
+ * failures are logged and swallowed. Skips rows with errors.
+ */
+export async function saveSpeakingGradings(opts: {
+  testResultId: string | null;
+  examSetId?: string | null;
+  partLabel: string;
+  gradings: (SpeakingGradingResult | null)[];
+  questionTexts: string[];
+}): Promise<void> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const rows = opts.gradings
+      .map((g, i) => {
+        if (!g || "error" in g) return null;
+        return {
+          user_id: user.id,
+          test_result_id: opts.testResultId,
+          exam_set_id: opts.examSetId ?? null,
+          part: opts.partLabel,
+          item_index: i,
+          question_text: opts.questionTexts[i] ?? null,
+          max_points: g.maxPoints ?? 0,
+          part_score: g.partScore ?? 0,
+          transcript: g.transcript ?? null,
+          grammar_errors: (g.grammarErrors ?? []) as any,
+          pronunciation_errors: (g.pronunciationErrors ?? []) as any,
+          improved_version: g.improvedVersion ?? null,
+          feedback: g.feedback ?? null,
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+    if (rows.length > 0) {
+      await supabase.from("speaking_question_gradings").insert(rows as any);
+    }
+  } catch (e) {
+    console.warn("[saveSpeakingGradings] failed", e);
+  }
+}
