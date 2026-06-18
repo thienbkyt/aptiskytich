@@ -70,15 +70,22 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       if (cancelled) return;
       if (!match) { setWritingGrading(null); return; }
       setWritingGrading({
+        partType: part,
         partScore: match.part_score || 0,
         maxPoints: match.max_points || 0,
+        addressPercent: 0,
+        bonusPercent: 0,
+        wordPenaltyPercent: 0,
+        coherencePenaltyPercent: 0,
+        openingClosingPenalty: 0,
         grammarErrors: (match.grammar_errors as any) || [],
         spellingErrors: (match.spelling_errors as any) || [],
         feedback: match.feedback || "",
-      } as WritingGradingResult);
+      });
     })();
     return () => { cancelled = true; };
   }, [skill, userId, attemptCreatedAt, testResultId, part]);
+
 
 
   if (!rows) {
