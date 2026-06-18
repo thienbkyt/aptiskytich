@@ -39,6 +39,8 @@ interface GrammarExamEngineProps {
   reviewMode?: boolean;
   initialAnswers?: (number | null)[];
   initialFillAnswers?: string[];
+  initialGroup?: number;
+  onGroupCount?: (n: number) => void;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -56,6 +58,8 @@ const GrammarExamEngine = ({
   reviewMode,
   initialAnswers,
   initialFillAnswers,
+  initialGroup,
+  onGroupCount,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -106,6 +110,21 @@ const GrammarExamEngine = ({
     }
     return g;
   }, [questions]);
+
+  // Report group count to outer pager (review mode).
+  useEffect(() => {
+    onGroupCount?.(groups.length);
+  }, [groups.length, onGroupCount]);
+
+  // Jump to initialGroup once on mount (review mode).
+  useEffect(() => {
+    if (initialGroup != null && groups[initialGroup]) {
+      setCurrentIndex(groups[initialGroup].startIdx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
 
   const currentGroupIdx = Math.max(
