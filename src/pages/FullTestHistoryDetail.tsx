@@ -309,7 +309,7 @@ const FullTestHistoryDetail = () => {
                               className="w-full text-left flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors group"
                             >
                               <span className="text-xs text-foreground truncate">
-                                {r.skillLabel === "grammar" 
+                                {sk === "grammar" 
                                   ? `${r.setTitle ? `${r.setTitle}` : "Phần"}`
                                   : `${r.setPart || "Phần"} ${r.setTitle ? `– ${r.setTitle}` : ""}`}
                               </span>
