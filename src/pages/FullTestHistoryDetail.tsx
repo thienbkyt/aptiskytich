@@ -259,11 +259,11 @@ const FullTestHistoryDetail = () => {
                 <p className="text-xs text-muted-foreground mb-4 flex items-center justify-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" /> {formatDateTime(rows[0].created_at)}
                 </p>
-                {totals.total > 0 && (
+                {skillScore50s.length > 0 && (
                   <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3">
                     <span className="text-sm font-medium text-muted-foreground">Trình độ tổng thể:</span>
                     <span className={`text-lg font-heading font-extrabold ${getLevelColor(overallLevel)}`}>{overallLevel}</span>
-                    <span className="text-sm text-muted-foreground ml-2">• {totals.correct}/{totals.total}</span>
+                    <span className="text-sm text-muted-foreground ml-2">• {Math.round(avgScore50)}/50</span>
                   </div>
                 )}
               </div>
