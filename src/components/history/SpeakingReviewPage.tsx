@@ -53,7 +53,14 @@ const SpeakingReviewPage = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [promptCount, setPromptCount] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!loading) onQuestionCount?.(promptCount);
+  }, [promptCount, loading, onQuestionCount]);
+
+  const effectiveIndex = questionIndex ?? reviewIndex;
 
   useEffect(() => {
     let cancelled = false;
