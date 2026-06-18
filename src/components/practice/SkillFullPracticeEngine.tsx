@@ -98,6 +98,16 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [writingScore50, setWritingScore50] = useState(0);
   const { gradeExam } = useExamGrading();
 
+  // Speaking full-practice grading state
+  const speakingSubmissionsByPartRef = useRef<Record<number, SpeakingPartSubmission>>({});
+  const [speakingPhase, setSpeakingPhase] = useState<"none" | "grading" | "results">("none");
+  const [speakingGradedCount, setSpeakingGradedCount] = useState(0);
+  const [speakingGradeTotal, setSpeakingGradeTotal] = useState(0);
+  const [speakingFullParts, setSpeakingFullParts] = useState<SpeakingFullPartResult[]>([]);
+  const [speakingTotalScore, setSpeakingTotalScore] = useState(0);
+  const [speakingTotalMax, setSpeakingTotalMax] = useState(0);
+
+
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
 
