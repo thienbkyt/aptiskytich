@@ -414,7 +414,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               >
                 <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary mb-2" />
                 <p className="text-xs font-semibold text-foreground mb-1">{SKILL_LABELS[skill]}</p>
-                {s.total > 0 ? (
+                {skill === "speaking" && speakingGradingPending ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+                    AI Kỳ Tích đang chấm...
+                  </p>
+                ) : s.total > 0 ? (
                   <>
                     <p className="text-lg font-heading font-bold text-foreground">
                       {s.correct}/{s.total}
