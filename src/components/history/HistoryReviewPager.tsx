@@ -207,9 +207,6 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       />
     ) : (
       <>
-        {current.skill === "writing" && (
-          <WritingFeedbackCard userId={userId} attemptCreatedAt={current.attemptCreatedAt} />
-        )}
         <HistoryReviewRenderer
           key={current.testResultId}
           examSetId={current.examSetId}
@@ -217,6 +214,9 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           part={current.part}
           testTitle={current.testTitle}
           qResults={qResults}
+          userId={userId}
+          attemptCreatedAt={current.attemptCreatedAt}
+          testResultId={current.testResultId}
           onExit={onExit}
         />
         {/* Answer key + explanation panel — the heart of the review UX. */}
