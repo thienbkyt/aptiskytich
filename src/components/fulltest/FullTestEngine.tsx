@@ -26,6 +26,7 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
 import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
+import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
