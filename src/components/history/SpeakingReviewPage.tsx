@@ -179,9 +179,10 @@ const SpeakingReviewPage = ({
           part4Data={part4Data}
           recordings={recordings}
           gradings={gradings}
-          reviewIndex={reviewIndex}
+          reviewIndex={effectiveIndex}
           onChangeIndex={setReviewIndex}
           onBack={onExit}
+          hidePager={questionIndex !== undefined}
         />
       </div>
     </div>
