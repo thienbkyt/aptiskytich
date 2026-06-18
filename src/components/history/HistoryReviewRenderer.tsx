@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import {
   toGrammarQuestions,
@@ -11,6 +12,7 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine, { type ReadingPartType } from "@/components/reading/ReadingExamEngine";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
+import type { WritingGradingResult } from "@/hooks/useExamGrading";
 
 interface QResult {
   exam_question_id: string;
@@ -25,13 +27,17 @@ interface Props {
   testTitle: string;
   qResults: QResult[];
   onExit: () => void;
+  userId?: string;
+  attemptCreatedAt?: string;
+  testResultId?: string;
   pageBase?: number;
   pageTotal?: number;
   initialSection?: number;
 }
 
-const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, pageBase, pageTotal, initialSection }: Props) => {
+const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection }: Props) => {
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(null);
+  const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +47,46 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     })();
     return () => { cancelled = true; };
   }, [examSetId]);
+
+  // Fetch writing AI grading (writing_question_gradings) when applicable.
+  useEffect(() => {
+    if (skill !== "writing" || !userId) { setWritingGrading(null); return; }
+    let cancelled = false;
+    (async () => {
+      const windowMs = 2 * 60 * 60 * 1000;
+      const target = attemptCreatedAt ? new Date(attemptCreatedAt).getTime() : 0;
+      let q = supabase.from("writing_question_gradings")
+        .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback,created_at,test_result_id")
+        .eq("user_id", userId);
+      const { data } = await q;
+      const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
+      const match = ((data || []) as any[]).find((g) => {
+        const gp = (g.part || "").toLowerCase().replace(/\s+/g, "");
+        if (gp !== partKey) return false;
+        if (testResultId && g.test_result_id === testResultId) return true;
+        if (!target) return true;
+        return Math.abs(new Date(g.created_at).getTime() - target) < windowMs;
+      });
+      if (cancelled) return;
+      if (!match) { setWritingGrading(null); return; }
+      setWritingGrading({
+        partType: part,
+        partScore: match.part_score || 0,
+        maxPoints: match.max_points || 0,
+        addressPercent: 0,
+        bonusPercent: 0,
+        wordPenaltyPercent: 0,
+        coherencePenaltyPercent: 0,
+        openingClosingPenalty: 0,
+        grammarErrors: (match.grammar_errors as any) || [],
+        spellingErrors: (match.spelling_errors as any) || [],
+        feedback: match.feedback || "",
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [skill, userId, attemptCreatedAt, testResultId, part]);
+
+
 
   if (!rows) {
     return (
@@ -177,6 +223,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const props: any = {
       partType: taskKey, testTitle, timeLimit: 3000,
       onExit, reviewMode: true, initialAnswers: init,
+      gradingResult: writingGrading ?? null,
     };
     if (taskKey === "task1") props.part1Data = toWritingPart1(rows);
     if (taskKey === "task2") props.part2Data = toWritingPart2(rows);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,6 +69,7 @@ type SkillData = Record<SkillStep, PartSet[]>;
 type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "finalizing-writing" | "completed";
 
 const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [skillData, setSkillData] = useState<SkillData>({
     speaking: [], listening: [], grammar: [], reading: [], writing: [],
@@ -504,7 +506,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           })}
         </div>
 
-        <div className="text-center mt-8">
+        <div className="text-center mt-8 flex flex-wrap justify-center gap-3">
+          <Button
+            onClick={() => navigate(`/history/full-test/${sessionIdRef.current}`)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Eye className="w-4 h-4" /> Xem lại từng câu
+          </Button>
           <Button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             Quay lại danh sách đề
           </Button>
