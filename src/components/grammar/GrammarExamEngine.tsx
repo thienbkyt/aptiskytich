@@ -111,6 +111,21 @@ const GrammarExamEngine = ({
     return g;
   }, [questions]);
 
+  // Report group count to outer pager (review mode).
+  useEffect(() => {
+    onGroupCount?.(groups.length);
+  }, [groups.length, onGroupCount]);
+
+  // Jump to initialGroup once on mount (review mode).
+  useEffect(() => {
+    if (initialGroup != null && groups[initialGroup]) {
+      setCurrentIndex(groups[initialGroup].startIdx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+
 
   const currentGroupIdx = Math.max(
     0,
