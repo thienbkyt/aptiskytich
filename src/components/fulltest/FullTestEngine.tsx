@@ -69,6 +69,7 @@ type SkillData = Record<SkillStep, PartSet[]>;
 type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "finalizing-writing" | "completed";
 
 const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [skillData, setSkillData] = useState<SkillData>({
     speaking: [], listening: [], grammar: [], reading: [], writing: [],
