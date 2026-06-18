@@ -551,6 +551,37 @@ const SpeakingExamEngine = ({
     if (finishedRef.current) return;
     finishedRef.current = true;
 
+    // Full-skill flow: parent grades & shows results at the end. Hand off the
+    // raw recordings + grading specs and immediately advance — no per-part
+    // DB save, no in-engine grading, no "done" screen here.
+    if (fullFlow) {
+      try {
+        const specs = buildSpeakingGradingSpecs(partType, { part1Data, part2Data, part3Data, part4Data });
+        const items: SpeakingPartSubmissionItem[] = await Promise.all(
+          specs.map(async (spec, idx) => {
+            const blob = recordingsRef.current[idx] ?? null;
+            const audioBase64 = blob ? await blobToBase64(blob).catch(() => null) : null;
+            return {
+              spec,
+              audioBase64,
+              audioUrl: recordings[idx] ?? null,
+              blob,
+              actualSpoken: durationsRef.current[idx] ?? 0,
+            };
+          }),
+        );
+        onPartSubmissions?.({
+          partType,
+          partNumber: PART_NUMBERS[partType],
+          items,
+        });
+      } catch (e) {
+        console.warn("[SpeakingExamEngine] fullFlow submission build failed", e);
+      }
+      onComplete?.();
+      return;
+    }
+
     // Best-effort upload of all recordings — never block UI on failure
     try {
       const currentRecordings = recordingsRef.current;
@@ -599,6 +630,7 @@ const SpeakingExamEngine = ({
     onComplete?.();
     setPhase("done");
   };
+
 
   const handleExit = () => {
     // Just open the confirm dialog — keep timer & TTS running in background
