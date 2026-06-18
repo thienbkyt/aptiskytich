@@ -48,6 +48,39 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     return () => { cancelled = true; };
   }, [examSetId]);
 
+  // Fetch writing AI grading (writing_question_gradings) when applicable.
+  useEffect(() => {
+    if (skill !== "writing" || !userId) { setWritingGrading(null); return; }
+    let cancelled = false;
+    (async () => {
+      const windowMs = 2 * 60 * 60 * 1000;
+      const target = attemptCreatedAt ? new Date(attemptCreatedAt).getTime() : 0;
+      let q = supabase.from("writing_question_gradings")
+        .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback,created_at,test_result_id")
+        .eq("user_id", userId);
+      const { data } = await q;
+      const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
+      const match = ((data || []) as any[]).find((g) => {
+        const gp = (g.part || "").toLowerCase().replace(/\s+/g, "");
+        if (gp !== partKey) return false;
+        if (testResultId && g.test_result_id === testResultId) return true;
+        if (!target) return true;
+        return Math.abs(new Date(g.created_at).getTime() - target) < windowMs;
+      });
+      if (cancelled) return;
+      if (!match) { setWritingGrading(null); return; }
+      setWritingGrading({
+        partScore: match.part_score || 0,
+        maxPoints: match.max_points || 0,
+        grammarErrors: (match.grammar_errors as any) || [],
+        spellingErrors: (match.spelling_errors as any) || [],
+        feedback: match.feedback || "",
+      } as WritingGradingResult);
+    })();
+    return () => { cancelled = true; };
+  }, [skill, userId, attemptCreatedAt, testResultId, part]);
+
+
   if (!rows) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
