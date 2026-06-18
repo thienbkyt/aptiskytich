@@ -26,6 +26,7 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
 import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
+import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -392,22 +393,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   // ── Completed ──
   if (phase === "completed") {
-    const toScore50 = (correct: number, total: number) =>
-      total > 0 ? Math.round((correct / total) * 50) : 0;
-    const skillScore50s = SKILL_ORDER
-      .map((sk) => scores[sk])
-      .filter((s) => s.total > 0)
-      .map((s) => toScore50(s.correct, s.total));
-    const avgScore50 = skillScore50s.length
-      ? skillScore50s.reduce((a, b) => a + b, 0) / skillScore50s.length
-      : 0;
-    const overallLevel = skillScore50s.length > 0 ? getLevel(Math.round(avgScore50), 50) : "—";
-
-    const handleScrollTo = (id: string) => {
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    };
-
     return (
       <div className="min-h-[70vh] pb-16">
         <div className="flex items-center mb-6">
@@ -417,94 +402,24 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         </div>
 
         {/* Header */}
-        <div className="max-w-4xl mx-auto text-center mb-8">
+        <div className="max-w-3xl mx-auto text-center mb-6">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Trophy className="w-8 h-8 text-primary" />
           </div>
           <h2 className="text-2xl font-heading font-bold text-foreground mb-2">Hoàn thành bài thi thử!</h2>
-          <p className="text-muted-foreground mb-4">{testTitle}</p>
-          {skillScore50s.length > 0 && (
-            <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3">
-              <span className="text-sm font-medium text-muted-foreground">Trình độ tổng thể:</span>
-              <span className={`text-lg font-heading font-extrabold ${getLevelColor(overallLevel)}`}>{overallLevel}</span>
-              <span className="text-sm text-muted-foreground ml-2">• {Math.round(avgScore50)}/50</span>
-            </div>
+          <p className="text-muted-foreground">{testTitle}</p>
+          {speakingGradingPending && (
+            <p className="text-xs text-muted-foreground mt-2 inline-flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" /> AI Kỳ Tích đang chấm Speaking...
+            </p>
           )}
         </div>
 
-        {/* Skill summary cards */}
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
-          {SKILL_ORDER.map((skill) => {
-            const s = scores[skill];
-            const Icon = SKILL_ICONS[skill];
-            const score50 = toScore50(s.correct, s.total);
-            const pct = s.total > 0 ? Math.round((score50 / 50) * 100) : 0;
-            const lvl = s.total > 0 ? getLevel(score50, 50) : null;
-            return (
-              <button
-                key={skill}
-                onClick={() => handleScrollTo(`skill-${skill}`)}
-                className="bg-card border border-border rounded-xl p-4 text-left hover:border-primary/40 hover:shadow-md transition-all group"
-              >
-                <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary mb-2" />
-                <p className="text-xs font-semibold text-foreground mb-1">{SKILL_LABELS[skill]}</p>
-                {skill === "speaking" && speakingGradingPending ? (
-                  <p className="text-xs text-muted-foreground italic">
-                    <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
-                    AI Kỳ Tích đang chấm...
-                  </p>
-                ) : s.total > 0 ? (
-                  <>
-                    <p className="text-lg font-heading font-bold text-foreground">
-                      {score50}/50
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">{pct}% • <span className={`font-bold ${lvl ? getLevelColor(lvl) : ""}`}>{lvl}</span></p>
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground">—</p>
-                )}
-              </button>
-            );
-          })}
+        {/* Aptis score table */}
+        <div className="max-w-3xl mx-auto">
+          <FullTestScoreTable scores={scores} />
         </div>
 
-        {/* Per-skill review sections */}
-        <div className="max-w-4xl mx-auto space-y-8">
-          {SKILL_ORDER.map((skill) => {
-            const s = scores[skill];
-            const Icon = SKILL_ICONS[skill];
-            const score50 = toScore50(s.correct, s.total);
-            const pct = s.total > 0 ? Math.round((score50 / 50) * 100) : 0;
-            const lvl = s.total > 0 ? getLevel(score50, 50) : null;
-            return (
-              <section
-                key={skill}
-                id={`skill-${skill}`}
-                className="bg-card border border-border rounded-xl p-6 scroll-mt-20"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-heading font-bold text-foreground">{SKILL_LABELS[skill]}</h3>
-                  </div>
-                  {s.total > 0 && !(skill === "speaking" && speakingGradingPending) && (
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">{score50}/50 • {pct}%</p>
-                      {lvl && <p className={`text-xs font-bold ${getLevelColor(lvl)}`}>Band {lvl}</p>}
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {skill === "speaking" && speakingGradingPending
-                    ? "AI Kỳ Tích đang chấm phần Speaking... Kết quả sẽ hiện ngay khi xong."
-                    : s.total > 0
-                    ? `Bạn đã hoàn thành phần ${SKILL_LABELS[skill]}. Xem chi tiết từng câu trong phần Lịch sử làm bài.`
-                    : `Không có dữ liệu cho phần này.`}
-                </p>
-              </section>
-            );
-          })}
-        </div>
 
         <div className="text-center mt-8 flex flex-wrap justify-center gap-3">
           <Button
