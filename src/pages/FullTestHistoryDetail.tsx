@@ -122,15 +122,17 @@ const FullTestHistoryDetail = () => {
     return acc;
   }, [rows]);
 
-  const totals = useMemo(() => {
-    let correct = 0, total = 0;
-    for (const r of rows) { correct += r.score; total += r.total; }
-    return { correct, total };
-  }, [rows]);
+  const toScore50 = (correct: number, total: number) =>
+    total > 0 ? Math.round((correct / total) * 50) : 0;
 
-  const overallLevel = totals.total > 0
-    ? getLevel(Math.round((totals.correct / totals.total) * 100), 100)
-    : "—";
+  const skillScore50s = useMemo(
+    () => SKILL_ORDER.map((sk) => skillAgg[sk]).filter((a) => a.total > 0).map((a) => toScore50(a.correct, a.total)),
+    [skillAgg]
+  );
+  const avgScore50 = skillScore50s.length
+    ? skillScore50s.reduce((a, b) => a + b, 0) / skillScore50s.length
+    : 0;
+  const overallLevel = skillScore50s.length > 0 ? getLevel(Math.round(avgScore50), 50) : "—";
 
   // Speaking in full-test stores ONE aggregate test_results row covering all parts,
   // but for review we want one page per speaking exam_set. Resolve member sets.
