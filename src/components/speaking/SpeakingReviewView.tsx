@@ -38,7 +38,7 @@ export interface SpeakingReviewViewProps {
 const SpeakingReviewView = ({
   partType, part1Data, part2Data, part3Data, part4Data,
   recordings, gradings, reviewIndex, onChangeIndex, onBack, onExit,
-  totalParts = 4,
+  totalParts = 4, hidePager = false,
 }: SpeakingReviewViewProps) => {
   const partNumber = PART_NUMBERS[partType];
 
