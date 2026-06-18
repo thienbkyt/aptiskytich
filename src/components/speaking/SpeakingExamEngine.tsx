@@ -107,6 +107,7 @@ const SpeakingExamEngine = ({
   part1Data, part2Data, part3Data, part4Data,
   examSetId, sourceQuestionIds, fullTestSessionId, fullTestId,
   onExit, onComplete, skipIntro = false, onAdminPrevious,
+  fullFlow = false, isLastPart, onPartSubmissions,
 }: SpeakingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -116,28 +117,7 @@ const SpeakingExamEngine = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  // Phase 2B: per-item speaking grading results (Parts 1/2/3) + aggregated for Part 4
-  interface SpeakingItemGrading {
-    transcript: string;
-    addressPercent: number;
-    grammarErrors: { original: string; corrected: string; explanation: string }[];
-    pronunciationErrors: { word: string; note: string }[];
-    pictureLogicIssue?: boolean;
-    pictureNoAction?: boolean;
-    picturePenalty?: number;
-    timePenalty: number;
-    errorPenalty: number;
-    partScore: number;
-    maxPoints: number;
-    feedback: string;
-    improvedVersion?: string;
-    itemType?: "question" | "picture";
-    // Part 4 aggregated
-    addressPercents?: number[];
-    usedConnectors?: boolean;
-    connectorPenalty?: number;
-  }
-  const [gradings, setGradings] = useState<(SpeakingItemGrading | null | { error: string })[]>([]);
+  const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
   const [isGrading, setIsGrading] = useState(false);
   const [reviewDetail, setReviewDetail] = useState(false);
   const gradingRanRef = useRef(false);
