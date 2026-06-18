@@ -122,15 +122,17 @@ const FullTestHistoryDetail = () => {
     return acc;
   }, [rows]);
 
-  const totals = useMemo(() => {
-    let correct = 0, total = 0;
-    for (const r of rows) { correct += r.score; total += r.total; }
-    return { correct, total };
-  }, [rows]);
+  const toScore50 = (correct: number, total: number) =>
+    total > 0 ? Math.round((correct / total) * 50) : 0;
 
-  const overallLevel = totals.total > 0
-    ? getLevel(Math.round((totals.correct / totals.total) * 100), 100)
-    : "—";
+  const skillScore50s = useMemo(
+    () => SKILL_ORDER.map((sk) => skillAgg[sk]).filter((a) => a.total > 0).map((a) => toScore50(a.correct, a.total)),
+    [skillAgg]
+  );
+  const avgScore50 = skillScore50s.length
+    ? skillScore50s.reduce((a, b) => a + b, 0) / skillScore50s.length
+    : 0;
+  const overallLevel = skillScore50s.length > 0 ? getLevel(Math.round(avgScore50), 50) : "—";
 
   // Speaking in full-test stores ONE aggregate test_results row covering all parts,
   // but for review we want one page per speaking exam_set. Resolve member sets.
@@ -257,11 +259,11 @@ const FullTestHistoryDetail = () => {
                 <p className="text-xs text-muted-foreground mb-4 flex items-center justify-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" /> {formatDateTime(rows[0].created_at)}
                 </p>
-                {totals.total > 0 && (
+                {skillScore50s.length > 0 && (
                   <div className="inline-flex items-center gap-2 bg-muted rounded-xl px-5 py-3">
                     <span className="text-sm font-medium text-muted-foreground">Trình độ tổng thể:</span>
                     <span className={`text-lg font-heading font-extrabold ${getLevelColor(overallLevel)}`}>{overallLevel}</span>
-                    <span className="text-sm text-muted-foreground ml-2">• {totals.correct}/{totals.total}</span>
+                    <span className="text-sm text-muted-foreground ml-2">• {Math.round(avgScore50)}/50</span>
                   </div>
                 )}
               </div>
@@ -271,8 +273,9 @@ const FullTestHistoryDetail = () => {
                 {SKILL_ORDER.map((sk) => {
                   const agg = skillAgg[sk];
                   const Icon = SKILL_ICONS[sk];
-                  const pct = agg.total > 0 ? Math.round((agg.correct / agg.total) * 100) : 0;
-                  const lvl = agg.total > 0 ? getLevel(agg.correct, agg.total) : null;
+                  const score50 = toScore50(agg.correct, agg.total);
+                  const pct = agg.total > 0 ? Math.round((score50 / 50) * 100) : 0;
+                  const lvl = agg.total > 0 ? getLevel(score50, 50) : null;
                   // For grammar there's exactly one row (merged). For others, list per-part.
                   return (
                     <div key={sk} className="bg-card border border-border rounded-xl p-5">
@@ -291,7 +294,7 @@ const FullTestHistoryDetail = () => {
                           </div>
                         </div>
                         {agg.total > 0 && (
-                          <span className="text-sm font-bold text-foreground">{agg.correct}/{agg.total}</span>
+                          <span className="text-sm font-bold text-foreground">{score50}/50</span>
                         )}
                       </div>
 
