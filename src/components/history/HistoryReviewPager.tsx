@@ -220,6 +220,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       </div>
     ) : current.skill === "speaking" ? (
       <SpeakingReviewPage
+        key={`${current.testResultId}-speaking`}
         userId={userId}
         examSetId={current.examSetId}
         attemptCreatedAt={current.attemptCreatedAt}
@@ -227,35 +228,11 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         partLabel={current.part || "Speaking"}
         testResultId={current.testResultId}
         onExit={onExit}
+        questionIndex={qIdx}
+        onQuestionCount={setPartPageCount}
       />
     ) : (
       <>
-        {partPageCount > 1 && (
-          <div className="max-w-5xl mx-auto px-4 pt-3 flex items-center justify-between gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setQIdx((i) => Math.max(0, i - 1))}
-              disabled={qIdx === 0}
-              className="gap-1"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Câu trước</span>
-            </Button>
-            <div className="text-sm font-semibold text-[#24085a]">
-              {qIdx + 1}/{partPageCount}
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setQIdx((i) => Math.min(partPageCount - 1, i + 1))}
-              disabled={qIdx === partPageCount - 1}
-              className="gap-1 bg-[#24085a] text-white hover:bg-[#24085a]/90"
-            >
-              <span>Câu sau</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
         <HistoryReviewRenderer
           key={`${current.testResultId}-${qIdx}`}
           examSetId={current.examSetId}
