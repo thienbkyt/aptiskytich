@@ -39,6 +39,8 @@ interface GrammarExamEngineProps {
   reviewMode?: boolean;
   initialAnswers?: (number | null)[];
   initialFillAnswers?: string[];
+  initialGroup?: number;
+  onGroupCount?: (n: number) => void;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
