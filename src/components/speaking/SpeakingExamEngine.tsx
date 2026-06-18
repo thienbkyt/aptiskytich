@@ -120,6 +120,7 @@ const SpeakingExamEngine = ({
   const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
   const [isGrading, setIsGrading] = useState(false);
   const [reviewDetail, setReviewDetail] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(0);
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
   const gradingsSavedRef = useRef(false);
