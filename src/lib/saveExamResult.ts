@@ -45,7 +45,7 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
   inFlight.add(lockKey);
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return null;
 
 
     const total = Math.max(opts.total, 0);
@@ -95,8 +95,10 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
 
     // Learning streak
     await updateLearningStreak(user.id);
+    return testResultId;
   } catch (err) {
     console.warn("[saveExamResult] skipped:", err);
+    return null;
   } finally {
     inFlight.delete(lockKey);
   }
