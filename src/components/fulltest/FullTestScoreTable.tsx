@@ -46,6 +46,7 @@ const FullTestScoreTable = ({ scores }: Props) => {
   ];
 
   const rowsRight: Array<{ label: string; band: string | null }> = [
+    { label: "", band: null },
     { label: "Listening", band: bandFor("listening") },
     { label: "Reading", band: bandFor("reading") },
     { label: "Speaking", band: bandFor("speaking") },
