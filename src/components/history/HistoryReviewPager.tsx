@@ -99,6 +99,8 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setFadeKey((k) => k + 1);
+    setQIdx(0);
+    setPartPageCount(1);
   }, [pageIdx]);
 
   const isFirst = pageIdx === 0;
