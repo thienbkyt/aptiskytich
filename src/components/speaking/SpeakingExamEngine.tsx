@@ -921,7 +921,7 @@ const SpeakingExamEngine = ({
       <div className="min-h-screen bg-background flex flex-col">
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 py-8">
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className={`${reviewDetail ? "max-w-6xl" : "max-w-2xl"} mx-auto space-y-6`}>
             {!reviewDetail ? (
               <>
                 <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
