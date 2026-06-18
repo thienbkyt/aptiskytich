@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
-import WritingFeedbackCard from "@/components/history/WritingFeedbackCard";
+
 import ReviewAnswerPanel, { type ReviewQuestion } from "@/components/history/ReviewAnswerPanel";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
 
