@@ -27,6 +27,7 @@ export interface SpeakingReviewViewProps {
   onBack: () => void;
   onExit?: () => void;
   totalParts?: number;
+  hidePager?: boolean;
 }
 
 /**
@@ -37,7 +38,7 @@ export interface SpeakingReviewViewProps {
 const SpeakingReviewView = ({
   partType, part1Data, part2Data, part3Data, part4Data,
   recordings, gradings, reviewIndex, onChangeIndex, onBack, onExit,
-  totalParts = 4,
+  totalParts = 4, hidePager = false,
 }: SpeakingReviewViewProps) => {
   const partNumber = PART_NUMBERS[partType];
 
@@ -69,7 +70,7 @@ const SpeakingReviewView = ({
         >
           ← Quay lại tổng kết
         </button>
-        {showNav && (
+        {showNav && !hidePager && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => onChangeIndex(Math.max(0, rIdx - 1))}

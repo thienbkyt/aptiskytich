@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const [pageIdx, setPageIdx] = useState(Math.min(initialPageIdx, Math.max(0, pages.length - 1)));
   const [qIdx, setQIdx] = useState(0);
   const [partPageCount, setPartPageCount] = useState(1);
+  const enterAtLastRef = useRef(false);
   const [dataByPage, setDataByPage] = useState<Record<string, PageData>>({});
   const [loadingPage, setLoadingPage] = useState(false);
   const [fadeKey, setFadeKey] = useState(0);
@@ -99,27 +100,48 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setFadeKey((k) => k + 1);
-    setQIdx(0);
     setPartPageCount(1);
   }, [pageIdx]);
 
+  // When new part announces its page count, snap to last if we navigated back.
+  useEffect(() => {
+    if (enterAtLastRef.current) {
+      setQIdx(Math.max(0, partPageCount - 1));
+      enterAtLastRef.current = false;
+    }
+  }, [partPageCount]);
+
   const isFirst = pageIdx === 0;
   const isLast = pageIdx === pages.length - 1;
-  const showPager = pages.length > 1;
+  const showPager = pages.length > 1 || partPageCount > 1;
+  const atFirst = isFirst && qIdx === 0;
+  const atLast = isLast && qIdx >= partPageCount - 1;
 
   const handleNext = () => {
-    if (isLast) onExit();
-    else setPageIdx((p) => p + 1);
+    if (qIdx < partPageCount - 1) {
+      setQIdx((i) => i + 1);
+    } else if (pageIdx < pages.length - 1) {
+      setQIdx(0);
+      setPageIdx((p) => p + 1);
+    } else {
+      onExit();
+    }
   };
   const handlePrev = () => {
-    if (!isFirst) setPageIdx((p) => p - 1);
+    if (qIdx > 0) {
+      setQIdx((i) => i - 1);
+    } else if (pageIdx > 0) {
+      enterAtLastRef.current = true;
+      setPageIdx((p) => p - 1);
+    }
   };
 
   useReviewKeyboard({
-    onPrev: !isFirst ? handlePrev : undefined,
+    onPrev: !atFirst ? handlePrev : undefined,
     onNext: handleNext,
     onExit,
   });
+
 
   if (!current) {
     return (
@@ -149,20 +171,17 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           >
             <X className="w-4 h-4" /> Đóng
           </button>
-          <div className="hidden sm:block text-xs text-muted-foreground truncate">
-            {showPager ? (
-              <>
-                <span className="font-bold text-foreground">
-                  {pageIdx + 1}/{pages.length}
-                </span>{" "}
-                · <span className="text-[#24085a] font-semibold">{skillLabel}</span>
-                {current.part ? <span className="ml-1 text-muted-foreground">{current.part}</span> : null}
-              </>
-            ) : (
-              <>
-                <span className="text-[#24085a] font-semibold">{skillLabel}</span>
-                {current.part ? <span className="ml-1 text-muted-foreground">· {current.part}</span> : null}
-              </>
+          <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground truncate">
+            <span className="font-bold text-foreground">
+              {pageIdx + 1}/{pages.length}
+            </span>
+            <span>·</span>
+            <span className="text-[#24085a] font-semibold">{skillLabel}</span>
+            {current.part ? <span className="ml-1 text-muted-foreground">{current.part}</span> : null}
+            {partPageCount > 1 && (
+              <span className="ml-2 text-muted-foreground">
+                · Câu <span className="font-semibold text-foreground">{qIdx + 1}/{partPageCount}</span>
+              </span>
             )}
           </div>
         </div>
@@ -172,7 +191,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
               size="sm"
               variant="outline"
               onClick={handlePrev}
-              disabled={isFirst}
+              disabled={atFirst}
               className="gap-1"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -183,7 +202,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
               onClick={handleNext}
               className="gap-1 bg-[#24085a] text-white hover:bg-[#24085a]/90"
             >
-              <span className="hidden sm:inline">{isLast ? "Hoàn tất" : "Sau"}</span>
+              <span className="hidden sm:inline">{atLast ? "Hoàn tất" : "Sau"}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -201,6 +220,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       </div>
     ) : current.skill === "speaking" ? (
       <SpeakingReviewPage
+        key={`${current.testResultId}-speaking`}
         userId={userId}
         examSetId={current.examSetId}
         attemptCreatedAt={current.attemptCreatedAt}
@@ -208,35 +228,11 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         partLabel={current.part || "Speaking"}
         testResultId={current.testResultId}
         onExit={onExit}
+        questionIndex={qIdx}
+        onQuestionCount={setPartPageCount}
       />
     ) : (
       <>
-        {partPageCount > 1 && (
-          <div className="max-w-5xl mx-auto px-4 pt-3 flex items-center justify-between gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setQIdx((i) => Math.max(0, i - 1))}
-              disabled={qIdx === 0}
-              className="gap-1"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Câu trước</span>
-            </Button>
-            <div className="text-sm font-semibold text-[#24085a]">
-              {qIdx + 1}/{partPageCount}
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setQIdx((i) => Math.min(partPageCount - 1, i + 1))}
-              disabled={qIdx === partPageCount - 1}
-              className="gap-1 bg-[#24085a] text-white hover:bg-[#24085a]/90"
-            >
-              <span>Câu sau</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </div>
-        )}
         <HistoryReviewRenderer
           key={`${current.testResultId}-${qIdx}`}
           examSetId={current.examSetId}

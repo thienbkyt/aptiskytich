@@ -22,6 +22,8 @@ interface Props {
   onExit: () => void;
   /** When present, scope grading queries to this aggregate row. */
   testResultId?: string;
+  questionIndex?: number;
+  onQuestionCount?: (n: number) => void;
 }
 
 const SIGNED_TTL = 50 * 60 * 1000;
@@ -41,6 +43,7 @@ const setCached = (id: string, url: string) => {
 
 const SpeakingReviewPage = ({
   userId, examSetId, attemptCreatedAt, testTitle, partLabel, onExit, testResultId,
+  questionIndex, onQuestionCount,
 }: Props) => {
   const [partType, setPartType] = useState<SpeakingPartType | null>(null);
   const [part1Data, setPart1Data] = useState<SpeakingPart1Data | undefined>();
@@ -50,7 +53,14 @@ const SpeakingReviewPage = ({
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [promptCount, setPromptCount] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!loading) onQuestionCount?.(promptCount);
+  }, [promptCount, loading, onQuestionCount]);
+
+  const effectiveIndex = questionIndex ?? reviewIndex;
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +146,7 @@ const SpeakingReviewPage = ({
       setRecordings(signed);
       setGradings(gradeArr);
       setReviewIndex(0);
+      setPromptCount(Math.max(promptCount, 1));
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -168,9 +179,10 @@ const SpeakingReviewPage = ({
           part4Data={part4Data}
           recordings={recordings}
           gradings={gradings}
-          reviewIndex={reviewIndex}
+          reviewIndex={effectiveIndex}
           onChangeIndex={setReviewIndex}
           onBack={onExit}
+          hidePager={questionIndex !== undefined}
         />
       </div>
     </div>
