@@ -48,6 +48,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const [pageIdx, setPageIdx] = useState(Math.min(initialPageIdx, Math.max(0, pages.length - 1)));
   const [qIdx, setQIdx] = useState(0);
   const [partPageCount, setPartPageCount] = useState(1);
+  const enterAtLastRef = useRef(false);
   const [dataByPage, setDataByPage] = useState<Record<string, PageData>>({});
   const [loadingPage, setLoadingPage] = useState(false);
   const [fadeKey, setFadeKey] = useState(0);
