@@ -16,13 +16,14 @@ import { saveExamResult } from "@/lib/saveExamResult";
 import { getLevel, getLevelColor } from "@/data/questions";
 import { useAuth } from "@/hooks/useAuth";
 
-import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
+import SpeakingExamEngine, { type SpeakingPartSubmission } from "@/components/speaking/SpeakingExamEngine";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
+import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -96,6 +97,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
+
+  // Background grading state for Speaking in Full Test
+  const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
+  const [speakingGradingPending, setSpeakingGradingPending] = useState(false);
+  const speakingGradingStartedRef = useRef(false);
 
 
   // Persist final result once when the user finishes the full test.
@@ -408,7 +414,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               >
                 <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary mb-2" />
                 <p className="text-xs font-semibold text-foreground mb-1">{SKILL_LABELS[skill]}</p>
-                {s.total > 0 ? (
+                {skill === "speaking" && speakingGradingPending ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    <Loader2 className="w-3 h-3 inline animate-spin mr-1" />
+                    AI Kỳ Tích đang chấm...
+                  </p>
+                ) : s.total > 0 ? (
                   <>
                     <p className="text-lg font-heading font-bold text-foreground">
                       {s.correct}/{s.total}
@@ -441,7 +452,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                     <Icon className="w-5 h-5 text-primary" />
                     <h3 className="text-lg font-heading font-bold text-foreground">{SKILL_LABELS[skill]}</h3>
                   </div>
-                  {s.total > 0 && (
+                  {s.total > 0 && !(skill === "speaking" && speakingGradingPending) && (
                     <div className="text-right">
                       <p className="text-sm font-bold text-foreground">{s.correct}/{s.total} • {pct}%</p>
                       {lvl && <p className={`text-xs font-bold ${getLevelColor(lvl)}`}>Band {lvl}</p>}
@@ -449,7 +460,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {s.total > 0
+                  {skill === "speaking" && speakingGradingPending
+                    ? "AI Kỳ Tích đang chấm phần Speaking... Kết quả sẽ hiện ngay khi xong."
+                    : s.total > 0
                     ? `Bạn đã hoàn thành phần ${SKILL_LABELS[skill]}. Xem chi tiết từng câu trong phần Lịch sử làm bài.`
                     : `Không có dữ liệu cho phần này.`}
                 </p>
@@ -600,6 +613,90 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       case "part3": speakingProps.part3Data = toSpeakingPart3(currentPart.questions); break;
       case "part4": speakingProps.part4Data = toSpeakingPart4(currentPart.questions); break;
     }
+    const isLastSpeakingPart = currentPartIndex >= partsForSkill.length - 1;
+
+    const handleSpeakingPartSubs = (sub: SpeakingPartSubmission) => {
+      speakingDataByPartRef.current[currentPartIndex] = {
+        sub,
+        partId: currentPart.id ?? null,
+        partLabel: currentPart.part,
+      };
+    };
+
+    const runSpeakingGradingBackground = async () => {
+      if (speakingGradingStartedRef.current) return;
+      speakingGradingStartedRef.current = true;
+      setSpeakingGradingPending(true);
+      try {
+        const orderedIndices = Object.keys(speakingDataByPartRef.current)
+          .map((k) => parseInt(k, 10))
+          .sort((a, b) => a - b);
+        const orderedEntries = orderedIndices
+          .map((i) => speakingDataByPartRef.current[i])
+          .filter(Boolean);
+
+        let totalScore = 0;
+        let totalMax = 0;
+        for (const e of orderedEntries) {
+          totalMax += e.sub.items.reduce((s, it) => s + (it.spec.maxPoints || 0), 0);
+        }
+
+        // Grade each part's items in parallel
+        const perPartResults: Awaited<ReturnType<typeof gradeSpeakingItems>>[] = [];
+        for (const entry of orderedEntries) {
+          const specs = entry.sub.items.map((i) => i.spec);
+          const blobs = entry.sub.items.map((i) => i.blob);
+          const actuals = entry.sub.items.map((i) => i.actualSpoken);
+          const results = await gradeSpeakingItems(specs, blobs, actuals);
+          for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
+          perPartResults.push(results);
+        }
+
+        // Persist one aggregate speaking test_results row (gets linked to History)
+        const totalRounded = Math.round(totalScore);
+        const maxRounded = Math.max(Math.round(totalMax), 1);
+        const testResultId = await saveExamResult({
+          examSetId: orderedEntries[0]?.partId ?? null,
+          skill: "speaking",
+          correct: totalRounded,
+          total: maxRounded,
+          fullTestSessionId: sessionIdRef.current,
+          fullTestId: testId,
+        });
+
+        // Save per-question gradings linked to that row
+        for (let i = 0; i < orderedEntries.length; i++) {
+          const entry = orderedEntries[i];
+          const results = perPartResults[i];
+          await saveSpeakingGradings({
+            testResultId,
+            examSetId: entry.partId,
+            partLabel: entry.partLabel,
+            gradings: results,
+            questionTexts: entry.sub.items.map((it) => it.spec.questionText),
+          });
+        }
+
+        setScores((prev) => ({
+          ...prev,
+          speaking: { correct: totalRounded, total: maxRounded },
+        }));
+      } catch (e) {
+        console.warn("[FullTestEngine] speaking grading failed", e);
+      } finally {
+        setSpeakingGradingPending(false);
+      }
+    };
+
+    const handleSpeakingComplete = () => {
+      const wasLast = isLastSpeakingPart;
+      handlePartComplete();
+      if (wasLast) {
+        // Fire-and-forget: student continues to listening immediately.
+        void runSpeakingGradingBackground();
+      }
+    };
+
     return (
       <>
         {progressBar}
@@ -613,7 +710,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           fullTestSessionId={sessionIdRef.current}
           fullTestId={testId}
           onExit={handleExit}
-          onComplete={() => handlePartComplete()}
+          fullFlow
+          isLastPart={isLastSpeakingPart}
+          onPartSubmissions={handleSpeakingPartSubs}
+          onComplete={handleSpeakingComplete}
           skipIntro={currentPartIndex > 0}
           onAdminPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...speakingProps}
