@@ -849,13 +849,6 @@ const SpeakingExamEngine = ({
 
   // Grading / Done — submitted screen with per-question playback
   if (phase === "grading" || phase === "done") {
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions;
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return [part4Data.topic];
-      return [];
-    })();
     const validGradings = gradings.filter((g): g is SpeakingItemGrading => !!g && !("error" in g));
     const totalScore = validGradings.reduce((sum, g) => sum + (g.partScore || 0), 0);
     const totalMax = (() => {
@@ -872,8 +865,6 @@ const SpeakingExamEngine = ({
       return 0;
     })();
     const allGraded = gradings.length > 0 && gradings.every(g => g !== null);
-    // For Part 4, the single grading entry corresponds to the single "topic" prompt card.
-    const isPart4 = partType === "part4";
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
