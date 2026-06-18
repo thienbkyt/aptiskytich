@@ -473,8 +473,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           {SKILL_ORDER.map((skill) => {
             const s = scores[skill];
             const Icon = SKILL_ICONS[skill];
-            const pct = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-            const lvl = s.total > 0 ? getLevel(s.correct, s.total) : null;
+            const score50 = toScore50(s.correct, s.total);
+            const pct = s.total > 0 ? Math.round((score50 / 50) * 100) : 0;
+            const lvl = s.total > 0 ? getLevel(score50, 50) : null;
             return (
               <section
                 key={skill}
@@ -488,7 +489,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                   </div>
                   {s.total > 0 && !(skill === "speaking" && speakingGradingPending) && (
                     <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">{s.correct}/{s.total} • {pct}%</p>
+                      <p className="text-sm font-bold text-foreground">{score50}/50 • {pct}%</p>
                       {lvl && <p className={`text-xs font-bold ${getLevelColor(lvl)}`}>Band {lvl}</p>}
                     </div>
                   )}
