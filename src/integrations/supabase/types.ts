@@ -1183,6 +1183,59 @@ export type Database = {
         }
         Relationships: []
       }
+      writing_question_gradings: {
+        Row: {
+          created_at: string
+          exam_set_id: string | null
+          feedback: string | null
+          grammar_errors: Json
+          id: string
+          item_index: number
+          max_points: number
+          part: string
+          part_score: number
+          spelling_errors: Json
+          test_result_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          grammar_errors?: Json
+          id?: string
+          item_index?: number
+          max_points?: number
+          part: string
+          part_score?: number
+          spelling_errors?: Json
+          test_result_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          grammar_errors?: Json
+          id?: string
+          item_index?: number
+          max_points?: number
+          part?: string
+          part_score?: number
+          spelling_errors?: Json
+          test_result_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "writing_question_gradings_test_result_id_fkey"
+            columns: ["test_result_id"]
+            isOneToOne: false
+            referencedRelation: "test_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
