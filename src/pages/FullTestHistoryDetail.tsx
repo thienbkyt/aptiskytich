@@ -132,6 +132,27 @@ const FullTestHistoryDetail = () => {
     ? getLevel(Math.round((totals.correct / totals.total) * 100), 100)
     : "—";
 
+  // Speaking in full-test stores ONE aggregate test_results row covering all parts,
+  // but for review we want one page per speaking exam_set. Resolve member sets.
+  const [speakingSets, setSpeakingSets] = useState<Array<{ id: string; part: string; title?: string }>>([]);
+  useEffect(() => {
+    if (!fullTestId) return;
+    let cancelled = false;
+    (async () => {
+      const { data: members } = await supabase
+        .from("full_test_members").select("exam_set_id").eq("full_test_id", fullTestId);
+      const ids = (members || []).map((m: any) => m.exam_set_id).filter(Boolean);
+      if (ids.length === 0) return;
+      const { data: sets } = await supabase
+        .from("exam_sets").select("id,part,skill,title").in("id", ids).eq("skill", "speaking");
+      if (cancelled) return;
+      const sk = (sets || []) as any[];
+      sk.sort((a, b) => (a.part || "").localeCompare(b.part || ""));
+      setSpeakingSets(sk.map((s) => ({ id: s.id, part: s.part, title: s.title })));
+    })();
+    return () => { cancelled = true; };
+  }, [fullTestId]);
+
   // Build cross-skill pages ordered: Speaking -> Listening -> Grammar -> Reading -> Writing,
   // and within each skill by part number.
   const allPages: ReviewPage[] = useMemo(() => {
@@ -141,6 +162,23 @@ const FullTestHistoryDetail = () => {
     };
     const ordered: ReviewPage[] = [];
     for (const sk of SKILL_ORDER) {
+      if (sk === "speaking" && speakingSets.length > 0) {
+        // Use the aggregate speaking test_result row's id for every per-part page,
+        // so the new SpeakingReviewPage can scope its queries to this attempt.
+        const aggRow = rows.find((r) => r.skill === "speaking");
+        if (!aggRow) continue;
+        for (const s of speakingSets) {
+          ordered.push({
+            testResultId: aggRow.id,
+            examSetId: s.id,
+            skill: "speaking",
+            part: s.part,
+            testTitle: `${title} – ${SKILL_LABELS.speaking}`,
+            attemptCreatedAt: aggRow.created_at,
+          });
+        }
+        continue;
+      }
       const skRows = rows.filter((r) => r.skill === sk);
       skRows.sort((a, b) => partNum(a.setPart || "") - partNum(b.setPart || ""));
       for (const r of skRows) {
@@ -156,7 +194,7 @@ const FullTestHistoryDetail = () => {
       }
     }
     return ordered;
-  }, [rows, title]);
+  }, [rows, title, speakingSets]);
 
   const [reviewSkillStart, setReviewSkillStart] = useState<SkillKey | null>(null);
   const handleReview = (r: SessionRow) => {
