@@ -171,20 +171,17 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           >
             <X className="w-4 h-4" /> Đóng
           </button>
-          <div className="hidden sm:block text-xs text-muted-foreground truncate">
-            {showPager ? (
-              <>
-                <span className="font-bold text-foreground">
-                  {pageIdx + 1}/{pages.length}
-                </span>{" "}
-                · <span className="text-[#24085a] font-semibold">{skillLabel}</span>
-                {current.part ? <span className="ml-1 text-muted-foreground">{current.part}</span> : null}
-              </>
-            ) : (
-              <>
-                <span className="text-[#24085a] font-semibold">{skillLabel}</span>
-                {current.part ? <span className="ml-1 text-muted-foreground">· {current.part}</span> : null}
-              </>
+          <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground truncate">
+            <span className="font-bold text-foreground">
+              {pageIdx + 1}/{pages.length}
+            </span>
+            <span>·</span>
+            <span className="text-[#24085a] font-semibold">{skillLabel}</span>
+            {current.part ? <span className="ml-1 text-muted-foreground">{current.part}</span> : null}
+            {partPageCount > 1 && (
+              <span className="ml-2 text-muted-foreground">
+                · Câu <span className="font-semibold text-foreground">{qIdx + 1}/{partPageCount}</span>
+              </span>
             )}
           </div>
         </div>
@@ -194,7 +191,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
               size="sm"
               variant="outline"
               onClick={handlePrev}
-              disabled={isFirst}
+              disabled={atFirst}
               className="gap-1"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -205,7 +202,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
               onClick={handleNext}
               className="gap-1 bg-[#24085a] text-white hover:bg-[#24085a]/90"
             >
-              <span className="hidden sm:inline">{isLast ? "Hoàn tất" : "Sau"}</span>
+              <span className="hidden sm:inline">{atLast ? "Hoàn tất" : "Sau"}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
