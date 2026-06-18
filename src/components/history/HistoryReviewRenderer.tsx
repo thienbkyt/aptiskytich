@@ -52,6 +52,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
   // Report page count for the current part (drives outer pager).
   useEffect(() => {
     if (!rows || !onPageCount) return;
+    if (skill === "grammar") return; // Grammar reports its own count via onGroupCount
     const pt = normalizePart(part);
     let n = 1;
     if (skill === "listening") {
