@@ -24,6 +24,7 @@ import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
 import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -64,7 +65,7 @@ interface PartSet {
 
 type SkillData = Record<SkillStep, PartSet[]>;
 
-type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "completed";
+type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "finalizing-writing" | "completed";
 
 const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [phase, setPhase] = useState<FlowPhase>("loading");
@@ -102,6 +103,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
   const [speakingGradingPending, setSpeakingGradingPending] = useState(false);
   const speakingGradingStartedRef = useRef(false);
+  const speakingGradingPromiseRef = useRef<Promise<void> | null>(null);
+
+  // Writing grading state for Full Test (graded at the very end after writing's last part)
+  const writingSubmissionsByPartRef = useRef<Record<number, { partType: string; text: string; questions: string[]; partId: string | null; partLabel: string }>>({});
+  const [writingGradedCount, setWritingGradedCount] = useState(0);
+  const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
+  const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
+  const { gradeExam } = useExamGrading();
 
 
   // Persist final result once when the user finishes the full test.
@@ -351,6 +360,30 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         <p className="text-sm text-muted-foreground">Đang tải dữ liệu bài thi...</p>
+      </div>
+    );
+  }
+
+  // ── Finalizing Writing (grade all parts + wait for speaking) ──
+  if (phase === "finalizing-writing") {
+    const total = writingTotalToGrade || 0;
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <h2 className="text-xl font-heading font-bold text-foreground">
+          AI Kỳ Tích đang chấm Writing và tổng hợp kết quả...
+        </h2>
+        {waitingForSpeaking && (
+          <p className="text-sm text-muted-foreground">Đang chờ phần Speaking chấm xong...</p>
+        )}
+        {total > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Đã chấm {writingGradedCount}/{total} phần Writing
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground max-w-md">
+          Vui lòng không tắt trình duyệt. Quá trình này có thể mất vài chục giây.
+        </p>
       </div>
     );
   }
@@ -693,7 +726,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       handlePartComplete();
       if (wasLast) {
         // Fire-and-forget: student continues to listening immediately.
-        void runSpeakingGradingBackground();
+        // Track the promise so writing's final grading can await it.
+        speakingGradingPromiseRef.current = runSpeakingGradingBackground();
       }
     };
 
@@ -796,6 +830,130 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       case "task3": writingProps.part3Data = toWritingPart3(currentPart.questions); break;
       case "task4": writingProps.part4Data = toWritingPart4(currentPart.questions); break;
     }
+    const isLastWritingPart = currentPartIndex >= partsForSkill.length - 1;
+
+    const handleWritingPartAnswers = (data: { partType: string; text: string; questions: string[] }) => {
+      writingSubmissionsByPartRef.current[currentPartIndex] = {
+        ...data,
+        partId: currentPart.id ?? null,
+        partLabel: currentPart.part,
+      };
+    };
+
+    const runWritingFinalize = async () => {
+      // Wait for speaking grading to finish so its score is included in the summary.
+      if (speakingGradingPromiseRef.current) {
+        setWaitingForSpeaking(true);
+        try { await speakingGradingPromiseRef.current; } catch {}
+        setWaitingForSpeaking(false);
+      }
+
+      const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
+        .map((k) => parseInt(k, 10))
+        .sort((a, b) => a - b);
+      const orderedEntries = orderedIndices
+        .map((i) => writingSubmissionsByPartRef.current[i])
+        .filter(Boolean);
+
+      setWritingTotalToGrade(orderedEntries.length);
+      setWritingGradedCount(0);
+
+      // Grade each part sequentially
+      const results: { entry: typeof orderedEntries[number]; res: WritingGradingResult | null }[] = [];
+      let totalScore = 0;
+      let totalMax = 0;
+      for (let i = 0; i < orderedEntries.length; i++) {
+        const e = orderedEntries[i];
+        const res = (await gradeExam({
+          type: "writing",
+          text: e.text,
+          questions: e.questions,
+          partType: e.partType,
+        })) as WritingGradingResult | null;
+        if (res) {
+          totalScore += res.partScore || 0;
+          totalMax += res.maxPoints || 0;
+        }
+        results.push({ entry: e, res });
+        setWritingGradedCount(i + 1);
+      }
+
+      const totalRounded = Math.round(totalScore);
+      const maxRounded = Math.max(Math.round(totalMax), 1);
+
+      // Aggregate writing test_results row
+      const testResultId = await saveExamResult({
+        examSetId: orderedEntries[0]?.partId ?? null,
+        skill: "writing",
+        correct: totalRounded,
+        total: maxRounded,
+        fullTestSessionId: sessionIdRef.current,
+        fullTestId: testId,
+      });
+
+      // Per-part grading rows (no intermediate % fields persisted)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const rows = results
+          .filter((r) => !!r.res)
+          .map((r, idx) => ({
+            user_id: user.id,
+            test_result_id: testResultId,
+            exam_set_id: r.entry.partId,
+            part: r.entry.partLabel,
+            item_index: idx,
+            max_points: r.res!.maxPoints || 0,
+            part_score: r.res!.partScore || 0,
+            grammar_errors: (r.res!.grammarErrors || []) as any,
+            spelling_errors: (r.res!.spellingErrors || []) as any,
+            feedback: r.res!.feedback || "",
+          }));
+        if (rows.length > 0) {
+          await (supabase as any).from("writing_question_gradings").insert(rows);
+        }
+      }
+
+      setScores((prev) => ({
+        ...prev,
+        writing: { correct: totalRounded, total: maxRounded },
+      }));
+      setPhase("completed");
+    };
+
+    const handleWritingPartComplete = (
+      perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>,
+    ) => {
+      if (adminNavigationRef.current) return;
+
+      // Persist a per-set writing row so /history shows the attempt (text only).
+      saveExamResult({
+        examSetId: currentPart.id ?? null,
+        skill: "writing",
+        correct: 0,
+        total: perQuestion?.length || 0,
+        perQuestion,
+        fullTestSessionId: sessionIdRef.current,
+        fullTestId: testId,
+      });
+
+      if (!isLastWritingPart) {
+        // Just advance to the next writing part — do NOT call handlePartComplete
+        // (which would add 0 to scores.writing and clobber the AI total later).
+        const key = `writing-${currentPartIndex}`;
+        if (completedKeysRef.current.has(key)) return;
+        completedKeysRef.current.add(key);
+        setCurrentPartIndex((p) => p + 1);
+        return;
+      }
+
+      // Last writing part → finalize: grade everything, persist, move to completed
+      const key = `writing-${currentPartIndex}`;
+      if (completedKeysRef.current.has(key)) return;
+      completedKeysRef.current.add(key);
+      setPhase("finalizing-writing");
+      void runWritingFinalize();
+    };
+
     return (
       <>
         {progressBar}
@@ -809,9 +967,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onTimeTick={(t) => setWritingTimeLeft(t)}
           skipIntro={currentPartIndex > 0}
           fullFlow
-          isLastPart={currentPartIndex >= partsForSkill.length - 1}
+          isLastPart={isLastWritingPart}
           onExit={handleExit}
-          onComplete={(perQuestion) => handlePartComplete(0, perQuestion?.length || 0, perQuestion)}
+          onPartAnswers={handleWritingPartAnswers}
+          onComplete={handleWritingPartComplete}
           onPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...writingProps}
         />
