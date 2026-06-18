@@ -120,6 +120,7 @@ const SpeakingExamEngine = ({
   const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
   const [isGrading, setIsGrading] = useState(false);
   const [reviewDetail, setReviewDetail] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(0);
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
   const gradingsSavedRef = useRef(false);
@@ -920,7 +921,7 @@ const SpeakingExamEngine = ({
       <div className="min-h-screen bg-background flex flex-col">
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 py-8">
-          <div className="max-w-2xl mx-auto space-y-6">
+          <div className={`${reviewDetail ? "max-w-6xl" : "max-w-2xl"} mx-auto space-y-6`}>
             {!reviewDetail ? (
               <>
                 <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
@@ -967,7 +968,7 @@ const SpeakingExamEngine = ({
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <button
-                    onClick={() => setReviewDetail(true)}
+                    onClick={() => { setReviewIndex(0); setReviewDetail(true); }}
                     disabled={!allGraded}
                     className="bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
                   >
@@ -981,136 +982,190 @@ const SpeakingExamEngine = ({
                   </button>
                 </div>
               </>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => setReviewDetail(false)}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    ← Quay lại tổng kết
-                  </button>
-                  <button
-                    onClick={onExit}
-                    className="text-sm bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-4 py-2 font-medium transition-colors"
-                  >
-                    Thoát
-                  </button>
-                </div>
+            ) : (() => {
+              // Per-question review using the exam-taking layout.
+              const reviewTotal = isPart4 ? 1 : promptsList.length;
+              const rIdx = Math.min(reviewIndex, Math.max(0, reviewTotal - 1));
+              const prompt = promptsList[rIdx] ?? promptsList[0] ?? "";
+              const gIdx = isPart4 ? 0 : rIdx;
+              const g = gradings[gIdx];
+              const audioUrl = recordings[rIdx];
+              const canPrev = rIdx > 0;
+              const canNext = rIdx < reviewTotal - 1;
+              const showNav = reviewTotal > 1;
+              return (
+                <div className="-mx-4">
+                  <div className="px-4 flex items-center justify-between mb-4 max-w-6xl mx-auto">
+                    <button
+                      onClick={() => setReviewDetail(false)}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      ← Quay lại tổng kết
+                    </button>
+                    {showNav && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setReviewIndex((i) => Math.max(0, i - 1))}
+                          disabled={!canPrev}
+                          className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
+                        >
+                          ← Câu trước
+                        </button>
+                        <span className="text-xs text-muted-foreground">
+                          {rIdx + 1} / {reviewTotal}
+                        </span>
+                        <button
+                          onClick={() => setReviewIndex((i) => Math.min(reviewTotal - 1, i + 1))}
+                          disabled={!canNext}
+                          className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
+                        >
+                          Câu sau →
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      onClick={onExit}
+                      className="text-sm bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-4 py-2 font-medium transition-colors"
+                    >
+                      Thoát
+                    </button>
+                  </div>
 
-                <div className="bg-card border border-border rounded-2xl p-6">
-                  <h3 className="text-base font-heading font-bold text-foreground mb-4">
-                    🎙️ Xem lại từng câu
-                  </h3>
-                  <div className="space-y-4">
-                    {promptsList.map((prompt, i) => (
-                      <div key={i} className="border border-border rounded-xl p-4 space-y-3">
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground mb-1">Câu {i + 1}</p>
-                          <p className="text-sm text-foreground">{prompt}</p>
+                  <div className="flex px-4 gap-6 max-w-6xl mx-auto w-full">
+                    {/* Left: same layout as exam-taking screen */}
+                    <div className="flex-1">
+                      <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
+                        <p className="text-xs text-gray-500 mb-1">Speaking</p>
+                        <p className="text-sm font-bold text-gray-900 mb-6">
+                          {isPart4 ? `Part ${partNumber} of ${totalParts}` : `Question ${rIdx + 1} of ${reviewTotal}`}
+                        </p>
+
+                        {partType === "part2" && part2Data?.imageUrl && (
+                          <div className="mb-4">
+                            <SignedImage
+                              src={part2Data.imageUrl}
+                              alt="Describe this picture"
+                              className="w-full max-w-md rounded-lg object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {partType === "part3" && part3Data && (
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <SignedImage src={part3Data.imageUrl1} alt="Picture 1" className="w-full rounded-lg object-cover h-56" />
+                            <SignedImage src={part3Data.imageUrl2} alt="Picture 2" className="w-full rounded-lg object-cover h-56" />
+                          </div>
+                        )}
+
+                        {partType === "part4" && part4Data && (
+                          <div className="bg-gray-50 rounded-lg p-5 mb-4">
+                            <p className="font-bold text-gray-900 mb-3">Topic: {part4Data.topic}</p>
+                            {part4Data.imageUrl && (
+                              <div className="mb-4 rounded-lg overflow-hidden border border-gray-200 max-w-md">
+                                <SignedImage src={part4Data.imageUrl} alt="Part 4 topic" className="w-full h-56 object-cover" />
+                              </div>
+                            )}
+                            <ul className="space-y-1.5 mb-3">
+                              {part4Data.questions.map((q, i) => (
+                                <li key={i} className="text-sm text-gray-700">• {q}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {partType !== "part4" && (
+                          <p className="text-sm text-gray-800 mt-4">{prompt}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: review panel — audio + AI grading */}
+                    <div className="w-[340px] shrink-0 space-y-3">
+                      <div className="bg-white rounded-xl shadow-sm p-4">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2">Bài ghi âm của bạn</p>
+                        {audioUrl ? (
+                          <audio controls src={audioUrl} className="w-full h-9" />
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">Không có bài ghi âm cho câu này.</p>
+                        )}
+                      </div>
+
+                      {(!g || "error" in g) ? (
+                        <div className="bg-white rounded-xl shadow-sm p-4">
+                          <p className="text-xs text-muted-foreground italic">
+                            {g && "error" in g ? `Không chấm được câu này: ${g.error}` : "Chưa có kết quả chấm cho câu này."}
+                          </p>
                         </div>
-
-                        <div>
-                          <p className="text-xs font-semibold text-muted-foreground mb-1">Bài ghi âm của bạn</p>
-                          {recordings[i] ? (
-                            <audio controls src={recordings[i]!} className="w-full h-9" />
-                          ) : (
-                            <p className="text-xs text-muted-foreground italic">Không có bài ghi âm</p>
-                          )}
-                        </div>
-
-                        {(() => {
-                          const gIdx = isPart4 ? 0 : i;
-                          const g = gradings[gIdx];
-                          if (g === undefined) return null;
-                          if (g === null) {
-                            return (
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
-                              </div>
-                            );
-                          }
-                          if ("error" in g) {
-                            return (
-                              <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 text-xs text-destructive">
-                                Không chấm được câu này: {g.error}
-                              </div>
-                            );
-                          }
-                          return (
-                            <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
-                                <p className="text-sm font-bold text-primary">
-                                  {g.partScore.toFixed(1)} / {g.maxPoints}
-                                </p>
-                              </div>
-                              {g.transcript && (
-                                <div>
-                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
-                                  <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
-                                </div>
-                              )}
-                              {g.grammarErrors?.length > 0 && (
-                                <div>
-                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
-                                  <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
-                                    {g.grammarErrors.map((e, k) => (
-                                      <li key={k}>
-                                        <span className="line-through text-destructive">{e.original}</span>{" → "}
-                                        <span className="text-success font-medium">{e.corrected}</span>
-                                        <span className="text-muted-foreground"> — {e.explanation}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {g.pronunciationErrors?.length > 0 && (
-                                <div>
-                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi phát âm</p>
-                                  <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
-                                    {g.pronunciationErrors.map((e, k) => (
-                                      <li key={k}>
-                                        <span className="font-medium">{e.word}</span>
-                                        <span className="text-muted-foreground"> — {e.note}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {g.feedback && (
-                                <div>
-                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
-                                  <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
-                                </div>
-                              )}
+                      ) : (
+                        <>
+                          <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
+                              <p className="text-sm font-bold text-primary">
+                                {g.partScore.toFixed(1)} / {g.maxPoints}
+                              </p>
                             </div>
-                          );
-                        })()}
+                            {g.transcript && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
+                                <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
+                              </div>
+                            )}
+                            {g.grammarErrors?.length > 0 && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
+                                <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                  {g.grammarErrors.map((e, k) => (
+                                    <li key={k}>
+                                      <span className="line-through text-destructive">{e.original}</span>{" → "}
+                                      <span className="text-success font-medium">{e.corrected}</span>
+                                      <span className="text-muted-foreground"> — {e.explanation}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {g.pronunciationErrors?.length > 0 && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi phát âm</p>
+                                <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                  {g.pronunciationErrors.map((e, k) => (
+                                    <li key={k}>
+                                      <span className="font-medium">{e.word}</span>
+                                      <span className="text-muted-foreground"> — {e.note}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {g.feedback && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
+                                <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
+                              </div>
+                            )}
+                          </div>
 
-                        {(() => {
-                          const gIdx = isPart4 ? 0 : i;
-                          const g = gradings[gIdx];
-                          if (!g || "error" in g || !g.improvedVersion) return null;
-                          return (
-                            <div className="bg-success/5 border border-success/20 rounded-lg p-3">
+                          {g.improvedVersion && (
+                            <div className="bg-success/5 border border-success/20 rounded-xl p-4">
                               <p className="text-xs font-semibold text-success mb-1">💡 Phiên bản AI Kỳ Tích gợi ý cho bạn</p>
                               <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{g.improvedVersion}</p>
                             </div>
-                          );
-                        })()}
-                      </div>
-                    ))}
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </>
-            )}
+              );
+            })()}
           </div>
         </div>
         {exitDialog}
       </div>
     );
   }
+
 
   // Reading-question, Prep or Recording phase
   const question = getCurrentQuestion();
