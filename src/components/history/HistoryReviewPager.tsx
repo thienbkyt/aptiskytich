@@ -100,27 +100,48 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
     setFadeKey((k) => k + 1);
-    setQIdx(0);
     setPartPageCount(1);
   }, [pageIdx]);
 
+  // When new part announces its page count, snap to last if we navigated back.
+  useEffect(() => {
+    if (enterAtLastRef.current) {
+      setQIdx(Math.max(0, partPageCount - 1));
+      enterAtLastRef.current = false;
+    }
+  }, [partPageCount]);
+
   const isFirst = pageIdx === 0;
   const isLast = pageIdx === pages.length - 1;
-  const showPager = pages.length > 1;
+  const showPager = pages.length > 1 || partPageCount > 1;
+  const atFirst = isFirst && qIdx === 0;
+  const atLast = isLast && qIdx >= partPageCount - 1;
 
   const handleNext = () => {
-    if (isLast) onExit();
-    else setPageIdx((p) => p + 1);
+    if (qIdx < partPageCount - 1) {
+      setQIdx((i) => i + 1);
+    } else if (pageIdx < pages.length - 1) {
+      setQIdx(0);
+      setPageIdx((p) => p + 1);
+    } else {
+      onExit();
+    }
   };
   const handlePrev = () => {
-    if (!isFirst) setPageIdx((p) => p - 1);
+    if (qIdx > 0) {
+      setQIdx((i) => i - 1);
+    } else if (pageIdx > 0) {
+      enterAtLastRef.current = true;
+      setPageIdx((p) => p - 1);
+    }
   };
 
   useReviewKeyboard({
-    onPrev: !isFirst ? handlePrev : undefined,
+    onPrev: !atFirst ? handlePrev : undefined,
     onNext: handleNext,
     onExit,
   });
+
 
   if (!current) {
     return (
