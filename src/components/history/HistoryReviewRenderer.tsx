@@ -216,6 +216,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const props: any = {
       partType: taskKey, testTitle, timeLimit: 3000,
       onExit, reviewMode: true, initialAnswers: init,
+      gradingResult: writingGrading ?? null,
     };
     if (taskKey === "task1") props.part1Data = toWritingPart1(rows);
     if (taskKey === "task2") props.part2Data = toWritingPart2(rows);
