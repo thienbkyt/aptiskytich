@@ -33,9 +33,10 @@ interface Props {
   pageBase?: number;
   pageTotal?: number;
   initialSection?: number;
+  onPageCount?: (n: number) => void;
 }
 
-const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection }: Props) => {
+const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection, onPageCount }: Props) => {
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(null);
   const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
 
@@ -47,6 +48,23 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     })();
     return () => { cancelled = true; };
   }, [examSetId]);
+
+  // Report page count for the current part (drives outer pager).
+  useEffect(() => {
+    if (!rows || !onPageCount) return;
+    const pt = normalizePart(part);
+    let n = 1;
+    if (skill === "listening") {
+      if (pt === "part1") n = toListeningPart1(rows).length;
+      else if (pt === "part4") n = toListeningPart4(rows).length;
+    } else if (skill === "reading") {
+      if (pt === "part2") {
+        const p2 = toReadingPart2(rows) as any;
+        n = Array.isArray(p2?.sections) ? p2.sections.length : 1;
+      }
+    }
+    onPageCount(Math.max(1, n));
+  }, [rows, skill, part, onPageCount]);
 
   // Fetch writing AI grading (writing_question_gradings) when applicable.
   useEffect(() => {
