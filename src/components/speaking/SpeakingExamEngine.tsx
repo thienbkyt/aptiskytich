@@ -353,6 +353,56 @@ const SpeakingExamEngine = ({
     ).finally(() => setIsGrading(false));
   }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
 
+  // Persist per-question AI grading results to DB (once, after all gradings complete).
+  useEffect(() => {
+    if (phase !== "done") return;
+    if (gradingsSavedRef.current) return;
+    if (gradings.length === 0) return;
+    if (!gradings.every(g => g !== null)) return;
+    gradingsSavedRef.current = true;
+
+    const promptsList: string[] = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions;
+      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
+      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
+      if (partType === "part4" && part4Data) return [part4Data.topic];
+      return [];
+    })();
+    const partLabel = `Part ${PART_NUMBERS[partType]}`;
+
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const rows = gradings
+          .map((g, i) => {
+            if (!g || "error" in g) return null;
+            return {
+              user_id: user.id,
+              test_result_id: testResultIdRef.current,
+              exam_set_id: examSetId ?? null,
+              part: partLabel,
+              item_index: i,
+              question_text: promptsList[i] ?? null,
+              max_points: g.maxPoints ?? 0,
+              part_score: g.partScore ?? 0,
+              transcript: g.transcript ?? null,
+              grammar_errors: (g.grammarErrors ?? []) as any,
+              pronunciation_errors: (g.pronunciationErrors ?? []) as any,
+              improved_version: g.improvedVersion ?? null,
+              feedback: g.feedback ?? null,
+            };
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+        if (rows.length > 0) {
+          await supabase.from("speaking_question_gradings").insert(rows as any);
+        }
+      } catch (e) {
+        console.warn("[speaking_question_gradings] save failed", e);
+      }
+    })();
+  }, [phase, gradings, partType, part1Data, part2Data, part3Data, part4Data, examSetId]);
+
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
     const token = ++flowTokenRef.current;
