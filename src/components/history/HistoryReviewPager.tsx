@@ -202,6 +202,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         attemptCreatedAt={current.attemptCreatedAt}
         testTitle={current.testTitle}
         partLabel={current.part || "Speaking"}
+        testResultId={current.testResultId}
         onExit={onExit}
       />
     ) : (
