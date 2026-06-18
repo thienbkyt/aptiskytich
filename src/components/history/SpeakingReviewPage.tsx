@@ -1,8 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ExamHeader from "@/components/exam/ExamHeader";
-import { Skeleton } from "@/components/ui/skeleton";
-import AIGradingCard from "@/components/history/AIGradingCard";
+import SpeakingReviewView from "@/components/speaking/SpeakingReviewView";
+import { fetchExamQuestions, normalizePart } from "@/hooks/useExamSets";
+import {
+  toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
+} from "@/lib/examTransformers";
+import type {
+  SpeakingPartType,
+  SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data,
+} from "@/data/speakingQuestions";
+import type { SpeakingGradingResult, SpeakingItemGrading } from "@/components/speaking/speakingGrading";
 
 interface Props {
   userId: string;
@@ -11,131 +20,158 @@ interface Props {
   testTitle: string;
   partLabel: string;
   onExit: () => void;
+  /** When present, scope grading queries to this aggregate row. */
+  testResultId?: string;
 }
 
-interface Rec {
-  id: string;
-  part: string;
-  audio_url: string;
-  duration_seconds: number | null;
-  signed_url?: string;
-}
-
-interface Grading {
-  overall_level: string | null;
-  suggestions: any;
-  mistakes: any;
-  criteria?: any;
-}
-
-const SIGNED_URL_TTL_MS = 50 * 60 * 1000;
-
-const getCachedSignedUrl = (key: string): string | null => {
+const SIGNED_TTL = 50 * 60 * 1000;
+const cacheKey = (id: string) => `rec_signed:${id}`;
+const getCached = (id: string): string | null => {
   try {
-    const raw = sessionStorage.getItem(`rec_signed:${key}`);
+    const raw = sessionStorage.getItem(cacheKey(id));
     if (!raw) return null;
     const { url, exp } = JSON.parse(raw);
-    if (Date.now() > exp) {
-      sessionStorage.removeItem(`rec_signed:${key}`);
-      return null;
-    }
+    if (Date.now() > exp) { sessionStorage.removeItem(cacheKey(id)); return null; }
     return url as string;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
+};
+const setCached = (id: string, url: string) => {
+  try { sessionStorage.setItem(cacheKey(id), JSON.stringify({ url, exp: Date.now() + SIGNED_TTL })); } catch {}
 };
 
-const setCachedSignedUrl = (key: string, url: string) => {
-  try {
-    sessionStorage.setItem(
-      `rec_signed:${key}`,
-      JSON.stringify({ url, exp: Date.now() + SIGNED_URL_TTL_MS }),
-    );
-  } catch {
-    /* quota exceeded — silently skip */
-  }
-};
-
-const SpeakingReviewPage = ({ userId, examSetId, attemptCreatedAt, testTitle, partLabel, onExit }: Props) => {
-  const [recs, setRecs] = useState<Rec[] | null>(null);
-  const [grading, setGrading] = useState<Grading | null>(null);
+const SpeakingReviewPage = ({
+  userId, examSetId, attemptCreatedAt, testTitle, partLabel, onExit, testResultId,
+}: Props) => {
+  const [partType, setPartType] = useState<SpeakingPartType | null>(null);
+  const [part1Data, setPart1Data] = useState<SpeakingPart1Data | undefined>();
+  const [part2Data, setPart2Data] = useState<SpeakingPart2Data | undefined>();
+  const [part3Data, setPart3Data] = useState<SpeakingPart3Data | undefined>();
+  const [part4Data, setPart4Data] = useState<SpeakingPart4Data | undefined>();
+  const [recordings, setRecordings] = useState<(string | null)[]>([]);
+  const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
-      const { data } = await supabase
+      // 1. Resolve part type + data from the exam_set's questions.
+      const { data: setRow } = await supabase
+        .from("exam_sets").select("part").eq("id", examSetId).maybeSingle();
+      const pt = normalizePart((setRow?.part as string) || partLabel) as SpeakingPartType;
+      const rows = await fetchExamQuestions(examSetId);
+      let promptCount = 0;
+      if (pt === "part1") { const d = toSpeakingPart1(rows); setPart1Data(d); promptCount = d.questions.length; }
+      else if (pt === "part2") { const d = toSpeakingPart2(rows); setPart2Data(d); promptCount = (d.questions || [d.prompt]).length; }
+      else if (pt === "part3") { const d = toSpeakingPart3(rows); setPart3Data(d); promptCount = (d.questions || [d.prompt]).length; }
+      else if (pt === "part4") { const d = toSpeakingPart4(rows); setPart4Data(d); promptCount = 1; }
+      setPartType(pt);
+
+      const windowMs = 2 * 60 * 60 * 1000;
+      const target = new Date(attemptCreatedAt).getTime();
+
+      // 2. Recordings — match by user+examSetId, within time window.
+      const { data: recsRaw } = await supabase
         .from("speaking_recordings")
         .select("id,part,audio_url,duration_seconds,created_at")
         .eq("user_id", userId)
         .eq("exam_set_id", examSetId)
         .order("created_at", { ascending: true });
-      const target = new Date(attemptCreatedAt).getTime();
-      const sameAttempt = (data || []).filter(
-        (r: any) => Math.abs(new Date(r.created_at).getTime() - target) < 2 * 60 * 60 * 1000,
+      const recs = ((recsRaw || []) as any[]).filter(
+        (r) => Math.abs(new Date(r.created_at).getTime() - target) < windowMs,
       );
+      // recordings.part is like "part1_q1"; index by question position
+      const recByIdx: (any | null)[] = new Array(Math.max(promptCount, 1)).fill(null);
+      for (const r of recs) {
+        const m = (r.part as string).match(/_q(\d+)/);
+        const idx = m ? parseInt(m[1], 10) - 1 : -1;
+        if (idx >= 0 && idx < recByIdx.length) recByIdx[idx] = r;
+      }
       const signed = await Promise.all(
-        sameAttempt.map(async (r: any) => {
-          const cached = getCachedSignedUrl(r.id);
-          if (cached) return { ...r, signed_url: cached } as Rec;
+        recByIdx.map(async (r) => {
+          if (!r) return null;
+          const cached = getCached(r.id);
+          if (cached) return cached;
           const { data: s } = await supabase.storage
-            .from("speaking-recordings")
-            .createSignedUrl(r.audio_url, 3600);
-          if (s?.signedUrl) setCachedSignedUrl(r.id, s.signedUrl);
-          return { ...r, signed_url: s?.signedUrl } as Rec;
+            .from("speaking-recordings").createSignedUrl(r.audio_url, 3600);
+          if (s?.signedUrl) setCached(r.id, s.signedUrl);
+          return s?.signedUrl ?? null;
         }),
       );
-      signed.sort((a, b) => (a.part > b.part ? 1 : -1));
-      if (!cancelled) setRecs(signed);
 
-      const { data: gradings } = await supabase
-        .from("exam_gradings")
-        .select("overall_level,suggestions,mistakes,criteria,created_at")
-        .eq("user_id", userId)
-        .eq("skill", "speaking")
-        .order("created_at", { ascending: false })
-        .limit(20);
-      const g = (gradings || []).find(
-        (x: any) => Math.abs(new Date(x.created_at).getTime() - target) < 2 * 60 * 60 * 1000,
-      ) as Grading | undefined;
-      if (!cancelled && g) setGrading(g);
+      // 3. Gradings — match by test_result_id (preferred) + part label; fallback time window.
+      let q = supabase
+        .from("speaking_question_gradings")
+        .select("item_index,max_points,part_score,transcript,grammar_errors,pronunciation_errors,improved_version,feedback,part,created_at")
+        .eq("user_id", userId);
+      if (testResultId) q = q.eq("test_result_id", testResultId);
+      const { data: gradingRows } = await q;
+      const matching = ((gradingRows || []) as any[])
+        .filter((g) =>
+          // Allow partLabel match in either direction ("Part 1" vs "Part 1")
+          (g.part || "").toLowerCase().replace(/\s+/g, "") ===
+            (partLabel || "").toLowerCase().replace(/\s+/g, "")
+          && (testResultId || Math.abs(new Date(g.created_at).getTime() - target) < windowMs),
+        )
+        .sort((a, b) => a.item_index - b.item_index);
+      const gradeArr: (SpeakingGradingResult | null)[] = new Array(Math.max(promptCount, 1)).fill(null);
+      for (const g of matching) {
+        const item: SpeakingItemGrading = {
+          transcript: g.transcript || "",
+          addressPercent: 0,
+          grammarErrors: (g.grammar_errors as any) || [],
+          pronunciationErrors: (g.pronunciation_errors as any) || [],
+          timePenalty: 0,
+          errorPenalty: 0,
+          partScore: g.part_score || 0,
+          maxPoints: g.max_points || 0,
+          feedback: g.feedback || "",
+          improvedVersion: g.improved_version || undefined,
+        };
+        if (g.item_index >= 0 && g.item_index < gradeArr.length) gradeArr[g.item_index] = item;
+      }
+
+      if (cancelled) return;
+      setRecordings(signed);
+      setGradings(gradeArr);
+      setReviewIndex(0);
+      setLoading(false);
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, examSetId, attemptCreatedAt]);
+    return () => { cancelled = true; };
+  }, [userId, examSetId, attemptCreatedAt, partLabel, testResultId]);
+
+  const skillHeader = useMemo(() => (
+    <ExamHeader skillLabel="Speaking" partLabel={partLabel} onExit={onExit} />
+  ), [partLabel, onExit]);
+
+  if (loading || !partType) {
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        {skillHeader}
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
-      <ExamHeader skillLabel="Speaking" partLabel={partLabel} onExit={onExit} />
-      <div className="flex-1 px-4 pt-8 pb-28 max-w-3xl mx-auto w-full space-y-4">
-        {grading && <AIGradingCard grading={grading} title="AI đánh giá Speaking" />}
-
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h2 className="font-heading font-bold text-foreground mb-4">{testTitle} – {partLabel}</h2>
-          {!recs ? (
-            <Skeleton className="h-32 w-full" />
-          ) : recs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Không có file ghi âm cho lần thi này.</p>
-          ) : (
-            <div className="space-y-4">
-              {recs.map((rec) => (
-                <div key={rec.id} className="p-3 rounded-lg bg-muted/40">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-foreground">{rec.part.toUpperCase()}</span>
-                    {rec.duration_seconds != null && (
-                      <span className="text-xs text-muted-foreground">{rec.duration_seconds}s</span>
-                    )}
-                  </div>
-                  {rec.signed_url ? (
-                    <audio controls src={rec.signed_url} className="w-full" preload="metadata" />
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Không tải được file ghi âm.</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      {skillHeader}
+      <div className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
+        <SpeakingReviewView
+          partType={partType}
+          part1Data={part1Data}
+          part2Data={part2Data}
+          part3Data={part3Data}
+          part4Data={part4Data}
+          recordings={recordings}
+          gradings={gradings}
+          reviewIndex={reviewIndex}
+          onChangeIndex={setReviewIndex}
+          onBack={onExit}
+        />
       </div>
     </div>
   );
