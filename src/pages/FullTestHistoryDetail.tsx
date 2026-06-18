@@ -273,8 +273,9 @@ const FullTestHistoryDetail = () => {
                 {SKILL_ORDER.map((sk) => {
                   const agg = skillAgg[sk];
                   const Icon = SKILL_ICONS[sk];
-                  const pct = agg.total > 0 ? Math.round((agg.correct / agg.total) * 100) : 0;
-                  const lvl = agg.total > 0 ? getLevel(agg.correct, agg.total) : null;
+                  const score50 = toScore50(agg.correct, agg.total);
+                  const pct = agg.total > 0 ? Math.round((score50 / 50) * 100) : 0;
+                  const lvl = agg.total > 0 ? getLevel(score50, 50) : null;
                   // For grammar there's exactly one row (merged). For others, list per-part.
                   return (
                     <div key={sk} className="bg-card border border-border rounded-xl p-5">
@@ -293,7 +294,7 @@ const FullTestHistoryDetail = () => {
                           </div>
                         </div>
                         {agg.total > 0 && (
-                          <span className="text-sm font-bold text-foreground">{agg.correct}/{agg.total}</span>
+                          <span className="text-sm font-bold text-foreground">{score50}/50</span>
                         )}
                       </div>
 
