@@ -236,35 +236,15 @@ const SpeakingExamEngine = ({
     setIsGrading(true);
     setGradings(new Array(specs.length).fill(null));
 
-    Promise.all(
-      specs.map(async (spec, idx) => {
-        const blob = blobs[idx];
-        if (!blob) {
-          setGradings(prev => {
-            const next = [...prev];
-            next[idx] = { error: "Không có bài ghi âm" };
-            return next;
-          });
-          return;
-        }
-        try {
-          const audioBase64 = await blobToBase64(blob);
-          const result = await gradeSpeakingSpec(spec, audioBase64, durationsRef.current[idx] ?? 0);
-          setGradings(prev => {
-            const next = [...prev];
-            next[idx] = result;
-            return next;
-          });
-        } catch (e: any) {
-          setGradings(prev => {
-            const next = [...prev];
-            next[idx] = { error: e?.message ?? "Lỗi chấm điểm" };
-            return next;
-          });
-        }
-      }),
-    ).finally(() => setIsGrading(false));
+    gradeSpeakingItems(specs, blobs, durationsRef.current, (idx, result) => {
+      setGradings(prev => {
+        const next = [...prev];
+        next[idx] = result;
+        return next;
+      });
+    }).finally(() => setIsGrading(false));
   }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
+
 
 
   // Persist per-question AI grading results to DB (once, after all gradings complete).
