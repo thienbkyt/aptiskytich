@@ -12,7 +12,9 @@ import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
 
-import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
+import SpeakingExamEngine, { type SpeakingPartSubmission } from "@/components/speaking/SpeakingExamEngine";
+import SpeakingFullResults, { type SpeakingFullPartResult } from "@/components/speaking/SpeakingFullResults";
+import { gradeSpeakingSpec } from "@/components/speaking/speakingGrading";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
@@ -95,6 +97,16 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [writingResults, setWritingResults] = useState<WritingGradingResult[]>([]);
   const [writingScore50, setWritingScore50] = useState(0);
   const { gradeExam } = useExamGrading();
+
+  // Speaking full-practice grading state
+  const speakingSubmissionsByPartRef = useRef<Record<number, SpeakingPartSubmission>>({});
+  const [speakingPhase, setSpeakingPhase] = useState<"none" | "grading" | "results">("none");
+  const [speakingGradedCount, setSpeakingGradedCount] = useState(0);
+  const [speakingGradeTotal, setSpeakingGradeTotal] = useState(0);
+  const [speakingFullParts, setSpeakingFullParts] = useState<SpeakingFullPartResult[]>([]);
+  const [speakingTotalScore, setSpeakingTotalScore] = useState(0);
+  const [speakingTotalMax, setSpeakingTotalMax] = useState(0);
+
 
   const skillLabel = SKILL_LABELS[skill] || skill;
   const timeLimit = SKILL_TIMES[skill] || 1800;
@@ -327,6 +339,32 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   // Progress indicator removed — engines render full-screen like individual parts
 
   if (skill === "speaking") {
+    if (speakingPhase === "results") {
+      return (
+        <SpeakingFullResults
+          parts={speakingFullParts}
+          totalScore={speakingTotalScore}
+          totalMax={speakingTotalMax}
+          onExit={onExit}
+        />
+      );
+    }
+    if (speakingPhase === "grading") {
+      return (
+        <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
+          </p>
+          {speakingGradeTotal > 0 && (
+            <p className="text-xs text-muted-foreground">
+              ({speakingGradedCount}/{speakingGradeTotal})
+            </p>
+          )}
+        </div>
+      );
+    }
+
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const speakingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
     switch (partType) {
@@ -335,22 +373,103 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part3": speakingProps.part3Data = toSpeakingPart3(currentPart.questions); break;
       case "part4": speakingProps.part4Data = toSpeakingPart4(currentPart.questions); break;
     }
+
+    const handleSpeakingPartSubmissions = (sub: SpeakingPartSubmission) => {
+      speakingSubmissionsByPartRef.current[currentPartIndex] = sub;
+    };
+
+    const handleSpeakingPartComplete = async () => {
+      if (adminNavigationRef.current) return;
+      // Persist a per-part attempt (no score yet) so HistoryDetail can list it.
+      const perQuestion = currentPart.questions.map((q) => ({
+        exam_question_id: q.id,
+        user_answer: "(recorded)",
+        is_correct: false,
+      }));
+      saveExamResult({
+        examSetId: currentPart.id,
+        skill: "speaking",
+        correct: 0,
+        total: perQuestion.length,
+        perQuestion,
+      });
+
+      if (!isLastPart) {
+        lastNavDirectionRef.current = "forward";
+        setCurrentPartIndex((p) => p + 1);
+        return;
+      }
+
+      // Last part → grade every item across every collected part submission.
+      const orderedIndices = Object.keys(speakingSubmissionsByPartRef.current)
+        .map((k) => parseInt(k, 10))
+        .sort((a, b) => a - b);
+      const orderedSubs = orderedIndices
+        .map((i) => speakingSubmissionsByPartRef.current[i])
+        .filter(Boolean) as SpeakingPartSubmission[];
+
+      const itemTotal = orderedSubs.reduce((s, p) => s + p.items.length, 0);
+      setSpeakingGradeTotal(itemTotal);
+      setSpeakingGradedCount(0);
+      setSpeakingPhase("grading");
+
+      const partResults: SpeakingFullPartResult[] = [];
+      let runningScore = 0;
+      let runningMax = 0;
+      let doneCount = 0;
+
+      for (const sub of orderedSubs) {
+        const gradings: Awaited<ReturnType<typeof gradeSpeakingSpec>>[] = [];
+        for (const item of sub.items) {
+          if (!item.audioBase64) {
+            gradings.push({ error: "Không có bài ghi âm" });
+          } else {
+            const r = await gradeSpeakingSpec(item.spec, item.audioBase64, item.actualSpoken);
+            gradings.push(r);
+            if (!("error" in r)) runningScore += r.partScore || 0;
+          }
+          doneCount += 1;
+          setSpeakingGradedCount(doneCount);
+        }
+        const maxTotal = sub.items.reduce((s, i) => s + i.spec.maxPoints, 0);
+        runningMax += maxTotal;
+        partResults.push({
+          partType: sub.partType,
+          partNumber: sub.partNumber,
+          prompts: sub.items.map((i) => i.spec.questionText),
+          recordingUrls: sub.items.map((i) => i.audioUrl),
+          gradings,
+          maxTotal,
+        });
+      }
+
+      setSpeakingFullParts(partResults);
+      setSpeakingTotalScore(runningScore);
+      setSpeakingTotalMax(runningMax);
+      setSpeakingPhase("results");
+      setScores({ correct: Math.round(runningScore), total: Math.round(runningMax) });
+    };
+
     return (
       <>{adminOverlay}
       <SpeakingExamEngine
-        key={`speaking-${engineKey}`}
+        key={`speaking-${currentPartIndex}`}
         partType={partType}
         testTitle={headerTitle}
         timeLimit={timeLimit}
         examSetId={currentPart.id}
         onExit={onExit}
-        onComplete={() => handlePartComplete()}
+        fullFlow
+        isLastPart={isLastPart}
+        onPartSubmissions={handleSpeakingPartSubmissions}
+        onComplete={handleSpeakingPartComplete}
         skipIntro={currentPartIndex > 0}
         onAdminPrevious={handleAdminPreviousPart}
         {...speakingProps}
       /></>
     );
   }
+
 
   if (skill === "listening") {
     if (listeningPhase === "results") {
