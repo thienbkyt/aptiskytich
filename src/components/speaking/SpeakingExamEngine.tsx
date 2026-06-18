@@ -20,6 +20,28 @@ import type {
   SpeakingPart3Data,
   SpeakingPart4Data,
 } from "@/data/speakingQuestions";
+import {
+  buildSpeakingGradingSpecs,
+  gradeSpeakingSpec,
+  blobToBase64,
+  type SpeakingItemGrading,
+  type SpeakingGradingResult,
+  type SpeakingGradingSpec,
+} from "./speakingGrading";
+
+/** Payload passed to parent in fullFlow mode (full-skill practice). */
+export interface SpeakingPartSubmissionItem {
+  spec: SpeakingGradingSpec;
+  audioBase64: string | null;
+  audioUrl: string | null;
+  blob: Blob | null;
+  actualSpoken: number;
+}
+export interface SpeakingPartSubmission {
+  partType: SpeakingPartType;
+  partNumber: number;
+  items: SpeakingPartSubmissionItem[];
+}
 
 interface SpeakingExamEngineProps {
   partType: SpeakingPartType;
@@ -37,6 +59,10 @@ interface SpeakingExamEngineProps {
   onComplete?: () => void;
   skipIntro?: boolean;
   onAdminPrevious?: () => void;
+  /** Full-skill practice mode: skip in-engine grading + DB save, hand submission to parent. */
+  fullFlow?: boolean;
+  isLastPart?: boolean;
+  onPartSubmissions?: (submission: SpeakingPartSubmission) => void;
 }
 
 type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
