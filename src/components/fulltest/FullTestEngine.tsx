@@ -702,7 +702,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       handlePartComplete();
       if (wasLast) {
         // Fire-and-forget: student continues to listening immediately.
-        void runSpeakingGradingBackground();
+        // Track the promise so writing's final grading can await it.
+        speakingGradingPromiseRef.current = runSpeakingGradingBackground();
       }
     };
 
