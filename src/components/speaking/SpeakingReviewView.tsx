@@ -27,6 +27,7 @@ export interface SpeakingReviewViewProps {
   onBack: () => void;
   onExit?: () => void;
   totalParts?: number;
+  hidePager?: boolean;
 }
 
 /**
