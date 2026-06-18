@@ -22,7 +22,6 @@ import type {
 } from "@/data/speakingQuestions";
 import {
   buildSpeakingGradingSpecs,
-  gradeSpeakingSpec,
   gradeSpeakingItems,
   saveSpeakingGradings,
   blobToBase64,
