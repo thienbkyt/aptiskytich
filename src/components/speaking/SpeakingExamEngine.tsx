@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
-import { supabase } from "@/integrations/supabase/client";
+
 import type {
   SpeakingPartType,
   SpeakingPart1Data,
