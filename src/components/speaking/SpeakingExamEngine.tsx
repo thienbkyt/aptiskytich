@@ -614,7 +614,7 @@ const SpeakingExamEngine = ({
           user_answer: recordingsRef.current[idx] ? "(recorded)" : null,
           is_correct: false,
         }));
-        await saveExamResult({
+        const trid = await saveExamResult({
           examSetId: examSetId ?? null,
           skill: "speaking",
           correct: 0,
@@ -623,6 +623,17 @@ const SpeakingExamEngine = ({
           fullTestSessionId: fullTestSessionId ?? null,
           fullTestId: fullTestId ?? null,
         });
+        testResultIdRef.current = trid;
+      } else {
+        const trid = await saveExamResult({
+          examSetId: examSetId ?? null,
+          skill: "speaking",
+          correct: 0,
+          total: 1,
+          fullTestSessionId: fullTestSessionId ?? null,
+          fullTestId: fullTestId ?? null,
+        });
+        testResultIdRef.current = trid;
       }
     } catch { /* swallow */ }
     onComplete?.();
