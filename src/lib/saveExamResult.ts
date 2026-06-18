@@ -36,16 +36,16 @@ const inFlight = new Set<string>();
  *   test_results row) when an array is provided.
  * - Updates `learning_streaks` (creates row / increments / resets).
  */
-export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
+export async function saveExamResult(opts: SaveExamResultOpts): Promise<string | null> {
   const lockKey = `${opts.examSetId || "noset"}::${opts.fullTestSessionId || "single"}::${opts.skill}`;
   if (inFlight.has(lockKey)) {
     console.warn("[saveExamResult] duplicate submit ignored:", lockKey);
-    return;
+    return null;
   }
   inFlight.add(lockKey);
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return null;
 
 
     const total = Math.max(opts.total, 0);
@@ -95,8 +95,10 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<void> {
 
     // Learning streak
     await updateLearningStreak(user.id);
+    return testResultId;
   } catch (err) {
     console.warn("[saveExamResult] skipped:", err);
+    return null;
   } finally {
     inFlight.delete(lockKey);
   }

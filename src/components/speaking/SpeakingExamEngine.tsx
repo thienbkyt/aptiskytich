@@ -113,7 +113,10 @@ const SpeakingExamEngine = ({
   }
   const [gradings, setGradings] = useState<(SpeakingItemGrading | null | { error: string })[]>([]);
   const [isGrading, setIsGrading] = useState(false);
+  const [reviewDetail, setReviewDetail] = useState(false);
   const gradingRanRef = useRef(false);
+  const testResultIdRef = useRef<string | null>(null);
+  const gradingsSavedRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -349,6 +352,56 @@ const SpeakingExamEngine = ({
       })
     ).finally(() => setIsGrading(false));
   }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
+
+  // Persist per-question AI grading results to DB (once, after all gradings complete).
+  useEffect(() => {
+    if (phase !== "done") return;
+    if (gradingsSavedRef.current) return;
+    if (gradings.length === 0) return;
+    if (!gradings.every(g => g !== null)) return;
+    gradingsSavedRef.current = true;
+
+    const promptsList: string[] = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions;
+      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
+      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
+      if (partType === "part4" && part4Data) return [part4Data.topic];
+      return [];
+    })();
+    const partLabel = `Part ${PART_NUMBERS[partType]}`;
+
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const rows = gradings
+          .map((g, i) => {
+            if (!g || "error" in g) return null;
+            return {
+              user_id: user.id,
+              test_result_id: testResultIdRef.current,
+              exam_set_id: examSetId ?? null,
+              part: partLabel,
+              item_index: i,
+              question_text: promptsList[i] ?? null,
+              max_points: g.maxPoints ?? 0,
+              part_score: g.partScore ?? 0,
+              transcript: g.transcript ?? null,
+              grammar_errors: (g.grammarErrors ?? []) as any,
+              pronunciation_errors: (g.pronunciationErrors ?? []) as any,
+              improved_version: g.improvedVersion ?? null,
+              feedback: g.feedback ?? null,
+            };
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+        if (rows.length > 0) {
+          await supabase.from("speaking_question_gradings").insert(rows as any);
+        }
+      } catch (e) {
+        console.warn("[speaking_question_gradings] save failed", e);
+      }
+    })();
+  }, [phase, gradings, partType, part1Data, part2Data, part3Data, part4Data, examSetId]);
 
   // Read question aloud, beep, then start prep/recording
   const startQuestionFlow = useCallback(async () => {
@@ -611,7 +664,7 @@ const SpeakingExamEngine = ({
           user_answer: recordingsRef.current[idx] ? "(recorded)" : null,
           is_correct: false,
         }));
-        await saveExamResult({
+        const trid = await saveExamResult({
           examSetId: examSetId ?? null,
           skill: "speaking",
           correct: 0,
@@ -620,6 +673,17 @@ const SpeakingExamEngine = ({
           fullTestSessionId: fullTestSessionId ?? null,
           fullTestId: fullTestId ?? null,
         });
+        testResultIdRef.current = trid;
+      } else {
+        const trid = await saveExamResult({
+          examSetId: examSetId ?? null,
+          skill: "speaking",
+          correct: 0,
+          total: 1,
+          fullTestSessionId: fullTestSessionId ?? null,
+          fullTestId: fullTestId ?? null,
+        });
+        testResultIdRef.current = trid;
       }
     } catch { /* swallow */ }
     onComplete?.();
@@ -915,148 +979,190 @@ const SpeakingExamEngine = ({
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 py-8">
           <div className="max-w-2xl mx-auto space-y-6">
-            <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
-              <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                <Loader2 className="w-7 h-7 text-green-500" />
-              </div>
-              <h2 className="text-xl font-heading font-bold text-foreground mb-2">
-                Bài Speaking đã được nộp
-              </h2>
-              <p className="text-sm text-muted-foreground mb-6">
-                Cảm ơn bạn đã hoàn thành phần Speaking. Bạn có thể nghe lại bài làm và tham khảo bài mẫu bên dưới.
-              </p>
-              <button
-                onClick={onExit}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
-              >
-                Quay lại danh sách đề
-              </button>
-            </div>
-
-            {totalMax > 0 && (
-              <div className="bg-card border border-border rounded-2xl p-6 text-center">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                  Điểm Speaking Part {partNumber}
-                </p>
-                {isGrading && !allGraded ? (
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
+            {!reviewDetail ? (
+              <>
+                <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                    <Loader2 className="w-7 h-7 text-green-500" />
                   </div>
-                ) : (
-                  <p className="text-3xl font-heading font-bold text-primary">
-                    {totalScore.toFixed(1)} <span className="text-base text-muted-foreground">/ {totalMax}</span>
+                  <h2 className="text-xl font-heading font-bold text-foreground mb-2">
+                    Bài Speaking đã được nộp
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Cảm ơn bạn đã hoàn thành phần Speaking.
                   </p>
-                )}
-              </div>
-            )}
+                </div>
 
-            <div className="bg-card border border-border rounded-2xl p-6">
-              <h3 className="text-base font-heading font-bold text-foreground mb-4">
-                🎙️ Xem lại từng câu
-              </h3>
-              <div className="space-y-4">
-                {promptsList.map((prompt, i) => (
-                  <div key={i} className="border border-border rounded-xl p-4 space-y-3">
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground mb-1">Câu {i + 1}</p>
-                      <p className="text-sm text-foreground">{prompt}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground mb-1">Bài ghi âm của bạn</p>
-                      {recordings[i] ? (
-                        <audio controls src={recordings[i]!} className="w-full h-9" />
+                {totalMax > 0 && (
+                  <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Tổng điểm Speaking
+                    </p>
+                    {isGrading && !allGraded ? (
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
+                      </div>
+                    ) : (
+                      <p className="text-4xl font-heading font-bold text-primary">
+                        {totalScore.toFixed(1)} <span className="text-base text-muted-foreground">/ {totalMax}</span>
+                      </p>
+                    )}
+                    <div className="border-t border-border pt-3 mt-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                        Speaking Part {partNumber}
+                      </p>
+                      {allGraded ? (
+                        <p className="text-lg font-bold text-foreground">
+                          {totalScore.toFixed(1)} / {totalMax}
+                        </p>
                       ) : (
-                        <p className="text-xs text-muted-foreground italic">Không có bài ghi âm</p>
+                        <p className="text-sm text-muted-foreground italic">Đang chấm...</p>
                       )}
                     </div>
-
-                    {(() => {
-                      // For Part 4, gradings[0] applies to the single topic card.
-                      const gIdx = isPart4 ? 0 : i;
-                      const g = gradings[gIdx];
-                      if (g === undefined) return null;
-                      if (g === null) {
-                        return (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
-                          </div>
-                        );
-                      }
-                      if ("error" in g) {
-                        return (
-                          <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 text-xs text-destructive">
-                            Không chấm được câu này: {g.error}
-                          </div>
-                        );
-                      }
-                      return (
-                        <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
-                            <p className="text-sm font-bold text-primary">
-                              {g.partScore.toFixed(1)} / {g.maxPoints}
-                            </p>
-                          </div>
-                          {g.transcript && (
-                            <div>
-                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
-                              <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
-                            </div>
-                          )}
-                          {g.grammarErrors?.length > 0 && (
-                            <div>
-                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
-                              <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
-                                {g.grammarErrors.map((e, k) => (
-                                  <li key={k}>
-                                    <span className="line-through text-destructive">{e.original}</span>{" → "}
-                                    <span className="text-success font-medium">{e.corrected}</span>
-                                    <span className="text-muted-foreground"> — {e.explanation}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {g.pronunciationErrors?.length > 0 && (
-                            <div>
-                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi phát âm</p>
-                              <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
-                                {g.pronunciationErrors.map((e, k) => (
-                                  <li key={k}>
-                                    <span className="font-medium">{e.word}</span>
-                                    <span className="text-muted-foreground"> — {e.note}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          {g.feedback && (
-                            <div>
-                              <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
-                              <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    {(() => {
-                      const gIdx = isPart4 ? 0 : i;
-                      const g = gradings[gIdx];
-                      if (!g || "error" in g || !g.improvedVersion) return null;
-                      return (
-                        <div className="bg-success/5 border border-success/20 rounded-lg p-3">
-                          <p className="text-xs font-semibold text-success mb-1">💡 Phiên bản AI Kỳ Tích gợi ý cho bạn</p>
-                          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{g.improvedVersion}</p>
-                        </div>
-                      );
-                    })()}
                   </div>
-                ))}
-              </div>
-            </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={() => setReviewDetail(true)}
+                    disabled={!allGraded}
+                    className="bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+                  >
+                    🎙️ Xem lại từng câu
+                  </button>
+                  <button
+                    onClick={onExit}
+                    className="bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+                  >
+                    Quay lại danh sách đề
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setReviewDetail(false)}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    ← Quay lại tổng kết
+                  </button>
+                  <button
+                    onClick={onExit}
+                    className="text-sm bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-4 py-2 font-medium transition-colors"
+                  >
+                    Thoát
+                  </button>
+                </div>
+
+                <div className="bg-card border border-border rounded-2xl p-6">
+                  <h3 className="text-base font-heading font-bold text-foreground mb-4">
+                    🎙️ Xem lại từng câu
+                  </h3>
+                  <div className="space-y-4">
+                    {promptsList.map((prompt, i) => (
+                      <div key={i} className="border border-border rounded-xl p-4 space-y-3">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">Câu {i + 1}</p>
+                          <p className="text-sm text-foreground">{prompt}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">Bài ghi âm của bạn</p>
+                          {recordings[i] ? (
+                            <audio controls src={recordings[i]!} className="w-full h-9" />
+                          ) : (
+                            <p className="text-xs text-muted-foreground italic">Không có bài ghi âm</p>
+                          )}
+                        </div>
+
+                        {(() => {
+                          const gIdx = isPart4 ? 0 : i;
+                          const g = gradings[gIdx];
+                          if (g === undefined) return null;
+                          if (g === null) {
+                            return (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
+                              </div>
+                            );
+                          }
+                          if ("error" in g) {
+                            return (
+                              <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 text-xs text-destructive">
+                                Không chấm được câu này: {g.error}
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="bg-muted/30 border border-border rounded-lg p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
+                                <p className="text-sm font-bold text-primary">
+                                  {g.partScore.toFixed(1)} / {g.maxPoints}
+                                </p>
+                              </div>
+                              {g.transcript && (
+                                <div>
+                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
+                                  <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
+                                </div>
+                              )}
+                              {g.grammarErrors?.length > 0 && (
+                                <div>
+                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
+                                  <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                    {g.grammarErrors.map((e, k) => (
+                                      <li key={k}>
+                                        <span className="line-through text-destructive">{e.original}</span>{" → "}
+                                        <span className="text-success font-medium">{e.corrected}</span>
+                                        <span className="text-muted-foreground"> — {e.explanation}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {g.pronunciationErrors?.length > 0 && (
+                                <div>
+                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi phát âm</p>
+                                  <ul className="text-xs text-foreground space-y-1 list-disc pl-4">
+                                    {g.pronunciationErrors.map((e, k) => (
+                                      <li key={k}>
+                                        <span className="font-medium">{e.word}</span>
+                                        <span className="text-muted-foreground"> — {e.note}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {g.feedback && (
+                                <div>
+                                  <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
+                                  <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {(() => {
+                          const gIdx = isPart4 ? 0 : i;
+                          const g = gradings[gIdx];
+                          if (!g || "error" in g || !g.improvedVersion) return null;
+                          return (
+                            <div className="bg-success/5 border border-success/20 rounded-lg p-3">
+                              <p className="text-xs font-semibold text-success mb-1">💡 Phiên bản AI Kỳ Tích gợi ý cho bạn</p>
+                              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{g.improvedVersion}</p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
         {exitDialog}
