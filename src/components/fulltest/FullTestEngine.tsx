@@ -98,6 +98,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
 
+  // Background grading state for Speaking in Full Test
+  const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
+  const [speakingGradingPending, setSpeakingGradingPending] = useState(false);
+  const speakingGradingStartedRef = useRef(false);
+
 
   // Persist final result once when the user finishes the full test.
   useEffect(() => {
