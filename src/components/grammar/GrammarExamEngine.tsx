@@ -58,6 +58,8 @@ const GrammarExamEngine = ({
   reviewMode,
   initialAnswers,
   initialFillAnswers,
+  initialGroup,
+  onGroupCount,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
