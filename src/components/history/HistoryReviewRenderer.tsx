@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import {
   toGrammarQuestions,
@@ -11,6 +12,7 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine, { type ReadingPartType } from "@/components/reading/ReadingExamEngine";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
+import type { WritingGradingResult } from "@/hooks/useExamGrading";
 
 interface QResult {
   exam_question_id: string;
