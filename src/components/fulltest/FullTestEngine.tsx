@@ -452,7 +452,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                     <Icon className="w-5 h-5 text-primary" />
                     <h3 className="text-lg font-heading font-bold text-foreground">{SKILL_LABELS[skill]}</h3>
                   </div>
-                  {s.total > 0 && (
+                  {s.total > 0 && !(skill === "speaking" && speakingGradingPending) && (
                     <div className="text-right">
                       <p className="text-sm font-bold text-foreground">{s.correct}/{s.total} • {pct}%</p>
                       {lvl && <p className={`text-xs font-bold ${getLevelColor(lvl)}`}>Band {lvl}</p>}
@@ -460,7 +460,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {s.total > 0
+                  {skill === "speaking" && speakingGradingPending
+                    ? "AI Kỳ Tích đang chấm phần Speaking... Kết quả sẽ hiện ngay khi xong."
+                    : s.total > 0
                     ? `Bạn đã hoàn thành phần ${SKILL_LABELS[skill]}. Xem chi tiết từng câu trong phần Lịch sử làm bài.`
                     : `Không có dữ liệu cho phần này.`}
                 </p>
