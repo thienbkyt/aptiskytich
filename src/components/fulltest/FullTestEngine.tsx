@@ -108,7 +108,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const speakingGradingPromiseRef = useRef<Promise<void> | null>(null);
 
   // Writing grading state for Full Test (graded at the very end after writing's last part)
-  const writingSubmissionsByPartRef = useRef<Record<number, { partType: string; text: string; questions: string[]; partId: string | null; partLabel: string }>>({});
+  const writingSubmissionsByPartRef = useRef<Record<number, { partType: string; text: string; questions: string[]; partId: string | null; partLabel: string; perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }> }>>({});
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
@@ -867,8 +867,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       setWritingTotalToGrade(orderedEntries.length);
       setWritingGradedCount(0);
 
-      // Grade each part sequentially
-      const results: { entry: typeof orderedEntries[number]; res: WritingGradingResult | null }[] = [];
+      // Grade each part sequentially, and persist ONE test_results row per part
+      // carrying that part's AI score (mirrors how objective skills store per-part rows).
+      const { data: { user } } = await supabase.auth.getUser();
       let totalScore = 0;
       let totalMax = 0;
       for (let i = 0; i < orderedEntries.length; i++) {
@@ -879,48 +880,46 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           questions: e.questions,
           partType: e.partType,
         })) as WritingGradingResult | null;
-        if (res) {
-          totalScore += res.partScore || 0;
-          totalMax += res.maxPoints || 0;
+
+        const partScore = res?.partScore || 0;
+        const partMax = res?.maxPoints || 0;
+        totalScore += partScore;
+        totalMax += partMax;
+
+        const partScoreRounded = Math.round(partScore);
+        const partMaxRounded = Math.max(Math.round(partMax), 1);
+
+        // 1 row per part with that part's AI score
+        const testResultId = await saveExamResult({
+          examSetId: e.partId ?? null,
+          skill: "writing",
+          correct: partScoreRounded,
+          total: partMaxRounded,
+          perQuestion: e.perQuestion,
+          fullTestSessionId: sessionIdRef.current,
+          fullTestId: testId,
+        });
+
+        if (res && user) {
+          await (supabase as any).from("writing_question_gradings").insert([{
+            user_id: user.id,
+            test_result_id: testResultId,
+            exam_set_id: e.partId,
+            part: e.partLabel,
+            item_index: 0,
+            max_points: res.maxPoints || 0,
+            part_score: res.partScore || 0,
+            grammar_errors: (res.grammarErrors || []) as any,
+            spelling_errors: (res.spellingErrors || []) as any,
+            feedback: res.feedback || "",
+          }]);
         }
-        results.push({ entry: e, res });
+
         setWritingGradedCount(i + 1);
       }
 
       const totalRounded = Math.round(totalScore);
       const maxRounded = Math.max(Math.round(totalMax), 1);
-
-      // Aggregate writing test_results row
-      const testResultId = await saveExamResult({
-        examSetId: orderedEntries[0]?.partId ?? null,
-        skill: "writing",
-        correct: totalRounded,
-        total: maxRounded,
-        fullTestSessionId: sessionIdRef.current,
-        fullTestId: testId,
-      });
-
-      // Per-part grading rows (no intermediate % fields persisted)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const rows = results
-          .filter((r) => !!r.res)
-          .map((r, idx) => ({
-            user_id: user.id,
-            test_result_id: testResultId,
-            exam_set_id: r.entry.partId,
-            part: r.entry.partLabel,
-            item_index: idx,
-            max_points: r.res!.maxPoints || 0,
-            part_score: r.res!.partScore || 0,
-            grammar_errors: (r.res!.grammarErrors || []) as any,
-            spelling_errors: (r.res!.spellingErrors || []) as any,
-            feedback: r.res!.feedback || "",
-          }));
-        if (rows.length > 0) {
-          await (supabase as any).from("writing_question_gradings").insert(rows);
-        }
-      }
 
       setScores((prev) => ({
         ...prev,
@@ -934,16 +933,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     ) => {
       if (adminNavigationRef.current) return;
 
-      // Persist a per-set writing row so /history shows the attempt (text only).
-      saveExamResult({
-        examSetId: currentPart.id ?? null,
-        skill: "writing",
-        correct: 0,
-        total: perQuestion?.length || 0,
-        perQuestion,
-        fullTestSessionId: sessionIdRef.current,
-        fullTestId: testId,
-      });
+      // Attach perQuestion (text answers) to the stored submission for this part.
+      // No test_results row is created here — grading + persistence happen in runWritingFinalize.
+      const existing = writingSubmissionsByPartRef.current[currentPartIndex];
+      if (existing) {
+        writingSubmissionsByPartRef.current[currentPartIndex] = { ...existing, perQuestion };
+      }
 
       if (!isLastWritingPart) {
         // Just advance to the next writing part — do NOT call handlePartComplete
@@ -955,7 +950,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         return;
       }
 
-      // Last writing part → finalize: grade everything, persist, move to completed
+      // Last writing part → finalize: grade everything, persist per-part rows, move to completed
       const key = `writing-${currentPartIndex}`;
       if (completedKeysRef.current.has(key)) return;
       completedKeysRef.current.add(key);
