@@ -43,11 +43,41 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Grammar & Vocabulary in skill-full-practice merges multiple exam_sets
+      // (1 Grammar set + Vocab Part 1..5) sharing the same full_test_id.
+      // The single saved test_results row points at only one set, so to
+      // restore all 50 questions on review we must fetch every sibling set.
+      if (skill === "grammar") {
+        const { data: parent } = await supabase
+          .from("exam_sets")
+          .select("full_test_id")
+          .eq("id", examSetId)
+          .maybeSingle();
+        const fullTestId = (parent as any)?.full_test_id as string | undefined;
+        if (fullTestId) {
+          const { data: sets } = await supabase
+            .from("exam_sets")
+            .select("id, part, skill")
+            .eq("full_test_id", fullTestId)
+            .in("skill", ["grammar_vocab", "grammar", "grammar_vocabulary"])
+            .eq("is_published", true);
+          const list = (sets || []) as { id: string; part: string }[];
+          // Match SkillFullPracticeEngine's ordering exactly.
+          list.sort((a, b) => a.part.localeCompare(b.part));
+          const all: ExamQuestionRow[] = [];
+          for (const s of list) {
+            const qs = await fetchExamQuestions(s.id);
+            all.push(...qs);
+          }
+          if (!cancelled) setRows(all.length ? all : await fetchExamQuestions(examSetId));
+          return;
+        }
+      }
       const r = await fetchExamQuestions(examSetId);
       if (!cancelled) setRows(r);
     })();
     return () => { cancelled = true; };
-  }, [examSetId]);
+  }, [examSetId, skill]);
 
   // Report page count for the current part (drives outer pager).
   useEffect(() => {
