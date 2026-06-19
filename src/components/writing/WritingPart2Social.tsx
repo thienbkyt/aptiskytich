@@ -1,5 +1,4 @@
-import { useRef, useCallback, useEffect } from "react";
-import {Bookmark, Bold, Italic, Underline, Strikethrough} from "lucide-react";
+import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { WritingPart2Data } from "@/data/writingQuestions";
@@ -20,42 +19,12 @@ interface Props {
   reviewMode?: boolean;
 }
 
-const toolbarButtons = [
-  { cmd: "bold", icon: Bold },
-  { cmd: "italic", icon: Italic },
-  { cmd: "underline", icon: Underline },
-  { cmd: "strikeThrough", icon: Strikethrough },
-];
-
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode,
 }: Props) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-
   const wordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0;
-
-  const execFormat = useCallback((cmd: string) => {
-    document.execCommand(cmd, false);
-    editorRef.current?.focus();
-  }, []);
-
-  const handleInput = useCallback(() => {
-    onAnswerChange(editorRef.current?.innerText || "");
-  }, [onAnswerChange]);
-
-  // Seed the editor with the initial saved answer (review mode).
-  const seededRef = useRef(false);
-  useEffect(() => {
-    if (seededRef.current || !editorRef.current) return;
-    if (answer && answer.length > 0) {
-      editorRef.current.innerText = answer;
-      seededRef.current = true;
-    } else if (answer === "") {
-      seededRef.current = true;
-    }
-  }, [answer]);
 
   return (
     <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
@@ -80,25 +49,18 @@ const WritingPart2Social = ({
       <p className="text-sm font-bold text-foreground mb-3 leading-relaxed">{data.instruction}</p>
       <p className="text-sm text-foreground mb-4">{data.question}</p>
 
-      <div className="flex items-center gap-1 mb-0">
-        {toolbarButtons.map(({ cmd, icon: Icon }) => (
-          <button key={cmd} type="button" onClick={() => execFormat(cmd)} disabled={submitted}
-            className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card hover:bg-muted transition-colors disabled:opacity-50">
-            <Icon className="w-4 h-4 text-foreground" />
-          </button>
-        ))}
-      </div>
+      <textarea
+        value={answer}
+        disabled={submitted}
+        placeholder="Type your answer here"
+        onChange={(e) => onAnswerChange(e.target.value)}
+        className="min-h-[120px] w-full rounded-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground whitespace-pre-wrap resize-y disabled:opacity-70 disabled:cursor-not-allowed"
+      />
 
-      <div className="flex-1 relative">
-        <div ref={editorRef} contentEditable={!submitted} onInput={handleInput}
-          data-placeholder="Type your answer here"
-          className="min-h-[120px] w-full rounded-b-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
-          suppressContentEditableWarning />
-        <div className="flex justify-end mt-1.5">
-          <span className="text-xs text-muted-foreground">
-            Words <span className="font-semibold text-foreground">{wordCount}</span> / {data.wordLimit}
-          </span>
-        </div>
+      <div className="flex justify-end mt-1.5">
+        <span className="text-xs text-muted-foreground">
+          Words <span className="font-semibold text-foreground">{wordCount}</span> / {data.wordLimit}
+        </span>
       </div>
 
       {submitted && data.sampleAnswer && (
