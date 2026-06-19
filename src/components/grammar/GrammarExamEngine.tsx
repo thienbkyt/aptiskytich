@@ -532,12 +532,16 @@ const GrammarExamEngine = ({
                       const itemCorrect = submitted && userAns === item.correct_answer;
                       const itemWrong =
                         submitted && userAns !== null && userAns !== item.correct_answer;
+                      const itemBlank = submitted && (userAns === null || userAns === undefined);
 
                       let triggerCls = "";
                       if (itemCorrect)
                         triggerCls = "border-emerald-500 bg-emerald-500/10 text-emerald-700";
                       else if (itemWrong)
                         triggerCls = "border-destructive bg-destructive/10 text-destructive";
+                      else if (itemBlank)
+                        triggerCls = "border-amber-400 bg-amber-50 text-amber-700";
+
 
                       // Split sentence at the first ____ run for gap_fill
                       const gapMatch = isGapFill
@@ -574,11 +578,12 @@ const GrammarExamEngine = ({
                               {afterGap && (
                                 <span className="text-sm text-gray-900">{afterGap}</span>
                               )}
-                              {submitted && itemWrong && (
+                              {submitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
                               )}
+
                             </div>
                           ) : (
                             <div className="flex-1 flex items-center gap-3">
@@ -608,11 +613,12 @@ const GrammarExamEngine = ({
                                   </SelectContent>
                                 </Select>
                               </div>
-                              {submitted && itemWrong && (
+                              {submitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
                               )}
+
                             </div>
                           )}
                         </div>
