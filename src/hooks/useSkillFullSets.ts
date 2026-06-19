@@ -7,6 +7,7 @@ export interface SkillFullSetItem {
   partCount: number;
   parts: string[];
   examSetIds: string[];
+  questionCount: number;
 }
 
 
@@ -59,12 +60,17 @@ export const useSkillFullSets = (skill: string) => {
         const partsArr = Array.from(info.parts).sort();
         // Only include sets with 2+ parts
         if (partsArr.length >= 2) {
+          const { count } = await supabase
+            .from("exam_questions")
+            .select("id", { count: "exact", head: true })
+            .in("exam_set_id", info.ids);
           result.push({
             fullTestId: ftId,
             title: info.title,
             partCount: partsArr.length,
             parts: partsArr,
             examSetIds: info.ids,
+            questionCount: count ?? 0,
           });
         }
       }

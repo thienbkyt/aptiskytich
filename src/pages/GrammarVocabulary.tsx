@@ -96,7 +96,7 @@ const GrammarVocabulary = () => {
               </div>
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">Grammar & Vocabulary</h1>
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                Luyện ngữ pháp và từ vựng thường gặp trong bài thi Aptis. Mỗi đề gồm 30 câu liên tiếp.
+                Luyện ngữ pháp và từ vựng thường gặp trong bài thi Aptis. Mỗi đề gồm 25 câu ngữ pháp + 25 câu từ vựng, đúng cấu trúc Aptis.
               </p>
             </div>
           </div>
@@ -138,7 +138,7 @@ const GrammarVocabulary = () => {
                       Grammar & Vocab
                     </Badge>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">{set.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">30 câu liên tiếp · {set.partCount} phần</p>
+                    <p className="text-sm text-muted-foreground mb-3">{set.questionCount} câu · {set.partCount} phần</p>
                     <div className="mb-4">{(() => { const done = set.examSetIds.filter(id => progress.has(id)).length; if (done === set.examSetIds.length && done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">Đã hoàn thành tất cả {set.partCount} Part</span>; if (done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-info bg-info/10 px-2.5 py-1 rounded-full">Đã làm {done}/{set.partCount} Part</span>; return <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>; })()}</div>
                     <div className="flex-1" />
                     <div className="flex justify-end">

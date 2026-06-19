@@ -433,7 +433,7 @@ const GrammarExamEngine = ({
                 Grammar & Vocabulary
               </p>
               <p className="text-sm text-gray-700">
-                {`Question ${isSynonymGroup ? groupStartLabel : currentIndex + 1} of 30`}
+                {`Question ${isSynonymGroup ? groupStartLabel : currentIndex + 1} of ${questions.length}`}
               </p>
             </div>
             <div className="flex items-center gap-4">
