@@ -136,12 +136,26 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const initialAnswers: (number | null)[] = [];
     const initialFill: string[] = [];
     questions.forEach((q) => {
-      const raw = ansMap[(q as any).id];
+      const eqId = (q.extra_data as any)?._eqId as string | undefined;
+      const raw = eqId ? ansMap[eqId] : null;
       if (q.question_type === "fill-in-blank") {
         initialAnswers.push(null);
-        initialFill.push(raw || "");
+        initialFill.push(typeof raw === "string" ? raw : "");
       } else {
-        const n = raw != null ? parseInt(raw, 10) : NaN;
+        let n: number = NaN;
+        if (raw != null) {
+          const trimmed = String(raw).trim();
+          if (/^-?\d+$/.test(trimmed)) {
+            n = parseInt(trimmed, 10);
+          } else {
+            try {
+              const p = JSON.parse(trimmed);
+              if (typeof p === "number") n = p;
+              else if (p && typeof p.answer === "number") n = p.answer;
+              else if (p && typeof p.answer === "string" && /^-?\d+$/.test(p.answer)) n = parseInt(p.answer, 10);
+            } catch { /* not json */ }
+          }
+        }
         initialAnswers.push(Number.isFinite(n) ? n : null);
         initialFill.push("");
       }

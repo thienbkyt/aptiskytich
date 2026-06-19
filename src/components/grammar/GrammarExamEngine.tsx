@@ -199,7 +199,8 @@ const GrammarExamEngine = ({
         ok = answers[i] === q.correct_answer;
       }
       if (ok) correct++;
-      return { exam_question_id: (q as any).id, user_answer: userAnswer, is_correct: ok };
+      const eqId = (q.extra_data as any)?._eqId ?? String((q as any).id);
+      return { exam_question_id: eqId, user_answer: userAnswer, is_correct: ok };
     });
     onComplete?.(correct, questions.length, perQuestion);
   }, [questions, answers, fillAnswers, onComplete]);

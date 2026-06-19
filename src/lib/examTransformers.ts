@@ -23,7 +23,7 @@ export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] =>
       explanation: r.explanation || "",
       question_type: qt,
       audio_url: r.audio_url,
-      extra_data: r.extra_data,
+      extra_data: { ...(r.extra_data || {}), _eqId: r.id },
     };
   });
 
