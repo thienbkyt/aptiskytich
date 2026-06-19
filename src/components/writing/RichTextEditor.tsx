@@ -1,5 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from "react";
-import { Bold, Italic, Underline, Strikethrough } from "lucide-react";
+import { useState } from "react";
 
 interface Props {
   onTextChange: (text: string) => void;
@@ -11,67 +10,24 @@ interface Props {
   initialValue?: string;
 }
 
-const toolbarButtons = [
-  { cmd: "bold", icon: Bold },
-  { cmd: "italic", icon: Italic },
-  { cmd: "underline", icon: Underline },
-  { cmd: "strikeThrough", icon: Strikethrough },
-];
+const countWords = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
 
-const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answer here", minHeight = "120px", wordLimit, initialValue }: Props) => {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const [wordCount, setWordCount] = useState(0);
-  const seededRef = useRef(false);
-
-  // Seed initial content once (avoid clobbering user typing on re-renders).
-  useEffect(() => {
-    if (seededRef.current) return;
-    if (!editorRef.current) return;
-    if (initialValue && initialValue.length > 0) {
-      editorRef.current.innerText = initialValue;
-      const wc = initialValue.trim() ? initialValue.trim().split(/\s+/).length : 0;
-      setWordCount(wc);
-      seededRef.current = true;
-    } else if (initialValue === "" || initialValue === undefined) {
-      // Mark as seeded once we get a definitive empty value to avoid re-seeding.
-      seededRef.current = true;
-    }
-  }, [initialValue]);
-
-  const execFormat = useCallback((cmd: string) => {
-    document.execCommand(cmd, false);
-    editorRef.current?.focus();
-  }, []);
-
-  const handleInput = useCallback(() => {
-    const text = editorRef.current?.innerText || "";
-    onTextChange(text);
-    setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0);
-  }, [onTextChange]);
+const RichTextEditor = ({ onTextChange, disabled, placeholder = "Type your answer here", minHeight = "120px", wordLimit, initialValue = "" }: Props) => {
+  const [wordCount, setWordCount] = useState(countWords(initialValue));
 
   return (
     <div>
-      <div className="flex items-center gap-1 mb-0">
-        {toolbarButtons.map(({ cmd, icon: Icon }) => (
-          <button
-            key={cmd}
-            type="button"
-            onClick={() => execFormat(cmd)}
-            disabled={disabled}
-            className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card hover:bg-muted transition-colors disabled:opacity-50"
-          >
-            <Icon className="w-4 h-4 text-foreground" />
-          </button>
-        ))}
-      </div>
-      <div
-        ref={editorRef}
-        contentEditable={!disabled}
-        onInput={handleInput}
-        data-placeholder={placeholder}
+      <textarea
+        defaultValue={initialValue}
+        disabled={disabled}
+        placeholder={placeholder}
+        onChange={(e) => {
+          const text = e.target.value;
+          onTextChange(text);
+          setWordCount(countWords(text));
+        }}
         style={{ minHeight }}
-        className="w-full rounded-b-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground whitespace-pre-wrap"
-        suppressContentEditableWarning
+        className="w-full rounded-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground whitespace-pre-wrap resize-y disabled:opacity-70 disabled:cursor-not-allowed"
       />
       {wordLimit != null && (
         <div className="flex justify-end mt-1.5">
