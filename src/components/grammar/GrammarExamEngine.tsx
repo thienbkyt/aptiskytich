@@ -578,11 +578,12 @@ const GrammarExamEngine = ({
                               {afterGap && (
                                 <span className="text-sm text-gray-900">{afterGap}</span>
                               )}
-                              {submitted && itemWrong && (
+                              {submitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
                               )}
+
                             </div>
                           ) : (
                             <div className="flex-1 flex items-center gap-3">
@@ -612,11 +613,12 @@ const GrammarExamEngine = ({
                                   </SelectContent>
                                 </Select>
                               </div>
-                              {submitted && itemWrong && (
+                              {submitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
                               )}
+
                             </div>
                           )}
                         </div>
