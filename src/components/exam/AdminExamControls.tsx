@@ -26,7 +26,7 @@ const AdminExamControls = ({
   onSkip,
   onBack,
   label,
-  position = "top-left",
+  position = "top-center",
 }: AdminExamControlsProps) => {
   const { isAdmin: authIsAdmin } = useAuth();
   const clickLockRef = useRef(false);
@@ -69,7 +69,9 @@ const AdminExamControls = ({
   if (!isAdmin) return null;
 
   const posClass =
-    position === "top-right" ? "top-2 right-2" : "top-2 left-2";
+    position === "top-right" ? "top-2 right-2"
+    : position === "top-left" ? "top-2 left-2"
+    : "top-2 left-1/2 -translate-x-1/2";
 
   const runOnce = (action?: () => void) => {
     const now = Date.now();
@@ -85,7 +87,7 @@ const AdminExamControls = ({
   };
 
   return (
-    <div className={`fixed ${posClass} z-[100] flex flex-col items-start gap-0.5 pointer-events-auto`}>
+    <div className={`fixed ${posClass} z-[100] flex flex-col gap-0.5 ${position === "top-center" ? "items-center" : "items-start"} pointer-events-auto`}>
       <span className="text-[9px] font-bold uppercase tracking-wider text-yellow-300 bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded border border-yellow-300/40">
         Admin{label ? ` · ${label}` : ""}
       </span>

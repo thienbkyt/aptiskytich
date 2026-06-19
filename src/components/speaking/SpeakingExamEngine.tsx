@@ -716,7 +716,6 @@ const SpeakingExamEngine = ({
 
   const adminControls = phase !== "grading" && phase !== "done" ? (
     <AdminExamControls
-      position="top-right"
       onSkip={handleAdminSkip}
       onBack={adminBackHandler}
       label={`Speaking Part ${partNumber} · Câu ${currentIndex + 1}/${getTotalQuestions() || 1}`}
