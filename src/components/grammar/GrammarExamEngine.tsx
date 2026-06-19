@@ -532,12 +532,16 @@ const GrammarExamEngine = ({
                       const itemCorrect = submitted && userAns === item.correct_answer;
                       const itemWrong =
                         submitted && userAns !== null && userAns !== item.correct_answer;
+                      const itemBlank = submitted && (userAns === null || userAns === undefined);
 
                       let triggerCls = "";
                       if (itemCorrect)
                         triggerCls = "border-emerald-500 bg-emerald-500/10 text-emerald-700";
                       else if (itemWrong)
                         triggerCls = "border-destructive bg-destructive/10 text-destructive";
+                      else if (itemBlank)
+                        triggerCls = "border-amber-400 bg-amber-50 text-amber-700";
+
 
                       // Split sentence at the first ____ run for gap_fill
                       const gapMatch = isGapFill
