@@ -10,8 +10,8 @@ interface AdminExamControlsProps {
   onBack?: () => void;
   /** Optional small label after "Admin", e.g. "Speaking · Part 2/4" */
   label?: string;
-  /** Position: top-left (default) avoids collision with engine top-right buttons */
-  position?: "top-left" | "top-right";
+  /** Position: top-center (default) places overlay in the center top */
+  position?: "top-left" | "top-right" | "top-center";
 }
 
 /**
