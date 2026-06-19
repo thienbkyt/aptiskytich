@@ -1,114 +1,96 @@
+## Vấn đề (gốc rễ)
 
-## Mục tiêu
+Trong `src/lib/examTransformers.ts`, hàm `toGrammarQuestions` ghi đè `id` của câu hỏi thành `i + 1` (số thứ tự). Khi `GrammarExamEngine.handleSubmit` lưu `perQuestion`, nó dùng `(q as any).id` — tức `"1"`, `"2"`, ... — đưa vào cột `exam_question_id` (UUID) của bảng `exam_question_results`.
 
-Nâng cấp cảm giác "công nghệ" cho toàn bộ web Aptis Kỳ Tích bằng:
-- **Particle / network background** ở các trang chính
-- **Interactive effects**: mouse spotlight trên card, border beam quanh CTA, cursor glow nhẹ
-- **Micro-interactions**: hover lift, scale, shimmer cho button, fade-in stagger khi cuộn
+Kết quả: insert per-question fail. Kiểm tra DB xác nhận 21 `test_results` skill grammar_vocab nhưng **0 row** trong `exam_question_results` skill grammar/grammar_vocab. Vì vậy ở History:
+- không có `qResults` → không hiển thị đáp án user
+- `ansMap[(q as any).id]` luôn miss → không có đáp án đúng/sai highlight
+- "mất thông tin bài làm"
 
-Mức độ: 6/10 — đủ "wow" nhưng không gây phân tâm hay nặng máy.
+Reading/Listening hoạt động vì transformer giữ nguyên UUID (`r.id`) khi map answers.
 
-**Loại trừ:** Toàn bộ giao diện làm bài thi (ExamEngine, ExamHeader, các route khi đang trong trạng thái exam) — giữ nguyên sạch sẽ, không thêm hiệu ứng nào.
+## Phạm vi sửa
 
----
+3 file, chỉ frontend. Không đụng schema/edge function/AI grading. Dữ liệu grammar lịch sử cũ vẫn rỗng (chấp nhận — không có gì để khôi phục), từ giờ trở đi mọi lần làm bài sẽ lưu đúng và review chính xác.
 
-## Phạm vi áp dụng
+### 1. `src/lib/examTransformers.ts` — `toGrammarQuestions`
 
-Áp dụng (thêm animation):
-- Landing (`/`)
-- Dashboard (`/dashboard`)
-- Course (`/course`)
-- Auth, ResetPassword (`/auth`, `/reset-password`)
-- SkillPractice + các trang chọn part (`/grammar`, `/reading`, `/listening`, `/speaking`, `/writing`, `/vocabulary`, `/thi-thu`) — **chỉ phần chọn đề / part**, không vào ExamEngine
-- History, HistoryDetail, Progress
-- Admin (`/admin/*`)
-- NotFound
+Vẫn set `id: i + 1` cho UI, nhưng nhồi UUID thật vào `extra_data._eqId`:
 
-Loại trừ (giữ nguyên):
-- Toàn bộ component `*ExamEngine`, `ExamHeader`, `ExamFooter`, `QuestionReviewModal`
-- Trang kết quả ngay sau khi nộp bài (giữ tối giản)
+```ts
+extra_data: { ...(r.extra_data || {}), _eqId: r.id }
+```
 
----
+### 2. `src/components/grammar/GrammarExamEngine.tsx` — `handleSubmit`
 
-## Các component animation mới sẽ tạo
+Thay `exam_question_id: (q as any).id` bằng `_eqId` nếu có, fallback về `id` string:
 
-Tạo trong `src/components/ui/`:
+```ts
+const eqId = (q.extra_data as any)?._eqId ?? String((q as any).id);
+return { exam_question_id: eqId, user_answer: userAnswer, is_correct: ok };
+```
 
-1. **`particles-background.tsx`** — Canvas particles (~40 hạt) trôi nhẹ + nối line khi gần nhau (network effect). Theo theme (light/dark), dùng màu primary với opacity thấp. `pointer-events-none`, `absolute inset-0`.
-2. **`spotlight-card.tsx`** — Card với radial gradient theo vị trí chuột (mouse-tracked spotlight). Wrap quanh `GlowCard` hiện có.
-3. **`border-beam.tsx`** — Border ánh sáng chạy quanh viền (CSS conic-gradient + animation). Dùng cho CTA chính, badge "Hot".
-4. **`magnetic-button.tsx`** — Button hơi "hút" theo chuột khi hover (translate nhẹ theo cursor). Optional wrapper.
-5. **`scroll-reveal.tsx`** — Wrapper dùng `useInView` của framer-motion để fade-up khi xuất hiện trong viewport, hỗ trợ stagger.
-6. **`gradient-orb.tsx`** — Orb gradient có animation "breathing" (scale + opacity). Đặt làm background section.
+`user_answer` giữ logic hiện tại:
+- `fill-in-blank` → text user nhập (`fillAnswers[i]`)
+- mọi loại MCQ/`vocab_matching` (synonym, gap_fill, definition_matching, collocation) → `String(answers[i])` (chỉ số option)
 
-Cập nhật `src/index.css` + `tailwind.config.ts`:
-- Keyframes mới: `border-beam`, `gradient-shift`, `breathing`, `aurora-drift`, `scan-line`
-- Utility: `.animate-border-beam`, `.animate-breathing`, `.animate-aurora`, `.bg-aurora` (gradient động)
-- Class `.tech-card` áp dụng spotlight + hover glow nhất quán
+Logic này đã đủ vì engine nhóm các câu vocab_matching nhưng vẫn lưu **từng câu** (mỗi index trong `currentGroup.indices` là một `Question` riêng với `answers[idx]` riêng).
 
----
+### 3. `src/components/history/HistoryReviewRenderer.tsx` — nhánh `skill === "grammar"`
 
-## Áp dụng vào từng trang
+Build `ansMap` theo `_eqId` thay vì `id` cục bộ:
 
-### Landing (`src/pages/Index.tsx`)
-- Hero: thêm `<ParticlesBackground />` chồng lên `<AnimatedGrid />`, headline gradient có `gradient-shift` animation, badge dùng `<BorderBeam />`, CTA chính dùng `<MagneticButton />`
-- Stats: number đếm lên (count-up) khi vào viewport
-- Exam Structure & Features: card dùng `<SpotlightCard />` thay `GlowCard`, icon có hover rotate/scale
-- Testimonials: card hover tilt nhẹ 3D
-- CTA cuối: thêm gradient orb "breathing"
+```ts
+const grammarAnsMap: Record<string, string | null> = {};
+qResults.forEach((r) => { grammarAnsMap[r.exam_question_id] = r.user_answer; });
 
-### Dashboard (`src/pages/Dashboard.tsx`)
-- Hero block: thêm particles + aurora gradient nhẹ
-- StatPill: hover scale + glow đậm hơn, value có count-up khi load
-- QuickActionCard: spotlight follow chuột, icon glow khi hover
-- Skill progress bars: shimmer chạy qua bar (đã có animate-shimmer, áp dụng vào)
-- StreakRing: animation rotate nhẹ liên tục cho ring outline
+const questions = toGrammarQuestions(rows);
+const initialAnswers: (number | null)[] = [];
+const initialFill: string[] = [];
+questions.forEach((q) => {
+  const eqId = (q.extra_data as any)?._eqId as string | undefined;
+  const raw = eqId ? grammarAnsMap[eqId] : null;
+  if (q.question_type === "fill-in-blank") {
+    initialAnswers.push(null);
+    initialFill.push(typeof raw === "string" ? raw : "");
+  } else {
+    // raw có thể là "2" hoặc JSON {answer: 2} (defensive)
+    let n: number = NaN;
+    if (raw != null) {
+      const trimmed = raw.trim();
+      if (/^\d+$/.test(trimmed)) n = parseInt(trimmed, 10);
+      else {
+        try {
+          const p = JSON.parse(trimmed);
+          if (typeof p === "number") n = p;
+          else if (p && typeof p.answer === "number") n = p.answer;
+        } catch { /* not json */ }
+      }
+    }
+    initialAnswers.push(Number.isFinite(n) ? n : null);
+    initialFill.push("");
+  }
+});
+```
 
-### Course / SkillPractice / FullTest selection
-- Card chọn part/đề: spotlight + border beam khi hover
-- Page header: scroll-reveal stagger
+Pass vào `GrammarExamEngine` như cũ với `reviewMode initialAnswers initialFill showResultsOnSubmit={false} initialGroup onGroupCount`. Engine đã có sẵn:
+- `submitted = true` khi `reviewMode` → render highlight đúng/sai
+- dropdown `value={userAns}` cho vocab_matching, MCQ buttons highlight emerald cho correct, destructive cho user-wrong
+- Hiển thị `✓ {correct option}` bên cạnh khi sai
+- Block explanation cuối câu (cần `qIsCorrect`/`qIsWrong`, đã dựa trên `isAnswered` + `isCorrect`)
 
-### Auth
-- Background particles + aurora orb
-- Card form: subtle border glow
+## Kiểm thử
 
-### Admin
-- Stat cards & tables: hover row glow nhẹ, card spotlight
-- Không thêm particles (giữ nhanh, gọn cho admin)
+1. Làm 1 attempt skill Grammar Full (đủ Sentence Gap Fill + Collocation Matching + Synonym + Definition + MCQ + fill-in-blank).
+2. Vào History → "Xem lại chi tiết":
+   - Mỗi dropdown vocab_matching hiện lựa chọn của user, viền xanh/đỏ đúng/sai.
+   - Câu sai có "✓ <đáp án đúng>" hiện kế bên dropdown.
+   - MCQ: option user chọn (nếu sai) đỏ + X, option đúng xanh + ✓.
+   - Fill-in-blank: input đóng băng giá trị user, dưới hiện "Đáp án đúng: ...".
+   - Explanation hiện cho mọi câu đã trả lời.
+3. SQL check: `select count(*) from exam_question_results where skill = 'grammar_vocab'` > 0 sau lần làm mới.
 
-### Navbar / Footer
-- Navbar logo: subtle glow pulse
-- Nav link active: underline animation đã có, thêm hover scale
-- Footer: gradient line trên cùng với animation drift
+## Out of scope
 
----
-
-## Đảm bảo không ảnh hưởng exam UI
-
-Cơ chế chặn:
-- Các animation mới **chỉ thêm trong các page component liệt kê ở trên**, không đụng đến bất kỳ file `*ExamEngine.tsx`, `ExamHeader.tsx`, `ExamFooter.tsx`, `ExamLayout.tsx`.
-- Trang results sau exam: chỉ giữ fade-in đơn giản, không particles.
-- Body class `exam-mode` (nếu có) sẽ disable particles globally qua CSS guard `body.exam-mode .particles-bg { display: none }`.
-
----
-
-## Performance & Accessibility
-
-- Particles: throttle theo `requestAnimationFrame`, pause khi tab inactive, giảm số hạt trên mobile (<768px chỉ 20 hạt)
-- Respect `prefers-reduced-motion`: tắt particles, border beam, breathing — chỉ giữ fade nhẹ
-- Tất cả component decorative đều `pointer-events-none` và `aria-hidden`
-- Không import framer-motion thêm (đã có sẵn)
-
----
-
-## Technical Details
-
-- **Files mới** (6): `src/components/ui/particles-background.tsx`, `spotlight-card.tsx`, `border-beam.tsx`, `magnetic-button.tsx`, `scroll-reveal.tsx`, `gradient-orb.tsx`
-- **Files sửa**:
-  - `src/index.css` — thêm keyframes & utilities
-  - `tailwind.config.ts` — đăng ký animation
-  - `src/pages/Index.tsx`, `Dashboard.tsx`, `Course.tsx`, `Auth.tsx`, `SkillPractice.tsx`, `FullTest.tsx`, `History.tsx`, `Progress.tsx`, `NotFound.tsx`
-  - `src/components/layout/Navbar.tsx`, `Footer.tsx`
-  - Admin pages (light touch)
-
-Không thêm dependency mới — dùng framer-motion (đã có), Canvas API, CSS thuần.
+- Lịch sử grammar cũ (trước fix) vẫn không có per-question — không tái tạo được.
+- Không đụng AI grading speaking/writing, không đổi schema.
