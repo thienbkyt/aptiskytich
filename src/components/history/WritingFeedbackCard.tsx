@@ -59,7 +59,7 @@ const WritingFeedbackCard = ({ userId, attemptCreatedAt }: Props) => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 pt-4">
-      <AIGradingCard grading={grading} title="AI đánh giá Writing" />
+      <AIGradingCard grading={grading} title="AI Kỳ Tích đánh giá Writing" />
     </div>
   );
 };
