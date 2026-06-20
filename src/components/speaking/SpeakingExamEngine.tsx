@@ -126,6 +126,7 @@ const SpeakingExamEngine = ({
   const [reviewIndex, setReviewIndex] = useState(0);
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
+  const sessionStartIsoRef = useRef<string>(new Date().toISOString());
   const gradingsSavedRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
