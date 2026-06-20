@@ -418,7 +418,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         },
         body: JSON.stringify({
           model,
-          reasoning_effort: "low",
+          reasoning_effort: type === "speaking" ? "medium" : "low",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
