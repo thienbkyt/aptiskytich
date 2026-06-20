@@ -1,52 +1,51 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import AIGradingCard from "@/components/history/AIGradingCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Props {
   userId: string;
-  attemptCreatedAt: string;
+  testResultId: string | null | undefined;
 }
 
-interface Grading {
-  overall_level: string | null;
-  suggestions: any;
-  mistakes: any;
-  criteria?: any;
+interface GradingRow {
+  part: string | null;
+  part_score: number | null;
+  max_points: number | null;
+  grammar_errors: any;
+  spelling_errors: any;
+  feedback: string | null;
 }
 
 /**
- * Fetches and renders the AI Writing grading for the matching attempt window.
- * Renders nothing if no grading is found (graceful for old attempts).
+ * Renders AI Writing grading for a specific attempt, linked by test_result_id.
+ * Falls back to nothing when no grading is found.
  */
-const WritingFeedbackCard = ({ userId, attemptCreatedAt }: Props) => {
-  const [grading, setGrading] = useState<Grading | null>(null);
+const WritingFeedbackCard = ({ userId, testResultId }: Props) => {
+  const [rows, setRows] = useState<GradingRow[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const target = new Date(attemptCreatedAt).getTime();
+      if (!testResultId) {
+        if (!cancelled) { setRows([]); setLoading(false); }
+        return;
+      }
       const { data } = await supabase
-        .from("exam_gradings")
-        .select("overall_level,suggestions,mistakes,criteria,created_at")
+        .from("writing_question_gradings")
+        .select("part,part_score,max_points,grammar_errors,spelling_errors,feedback")
         .eq("user_id", userId)
-        .eq("skill", "writing")
-        .order("created_at", { ascending: false })
-        .limit(20);
-      const g = (data || []).find(
-        (x: any) => Math.abs(new Date(x.created_at).getTime() - target) < 2 * 60 * 60 * 1000,
-      ) as Grading | undefined;
+        .eq("test_result_id", testResultId);
       if (!cancelled) {
-        setGrading(g || null);
+        setRows((data || []) as GradingRow[]);
         setLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId, attemptCreatedAt]);
+  }, [userId, testResultId]);
 
   if (loading) {
     return (
@@ -55,11 +54,58 @@ const WritingFeedbackCard = ({ userId, attemptCreatedAt }: Props) => {
       </div>
     );
   }
-  if (!grading) return null;
+  if (!rows || rows.length === 0) return null;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 pt-4">
-      <AIGradingCard grading={grading} title="AI Kỳ Tích đánh giá Writing" />
+    <div className="max-w-3xl mx-auto px-4 pt-4 space-y-4">
+      {rows.map((g, i) => {
+        const grammar = (g.grammar_errors as any[]) || [];
+        const spelling = (g.spelling_errors as any[]) || [];
+        return (
+          <div key={i} className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-foreground">
+                AI Kỳ Tích đánh giá Writing{g.part ? ` — ${g.part}` : ""}
+              </h3>
+              <span className="text-sm font-medium text-primary">
+                {(g.part_score ?? 0)}/{g.max_points ?? 0}
+              </span>
+            </div>
+            {g.feedback && (
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-3">{g.feedback}</p>
+            )}
+            {grammar.length > 0 && (
+              <div className="mb-2">
+                <p className="text-xs font-semibold text-foreground mb-1">Lỗi ngữ pháp ({grammar.length})</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  {grammar.map((e: any, j: number) => (
+                    <li key={j}>
+                      <span className="line-through text-destructive">{e.original}</span>
+                      {" → "}
+                      <span className="text-foreground">{e.corrected}</span>
+                      {e.explanation ? ` — ${e.explanation}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {spelling.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-foreground mb-1">Lỗi chính tả ({spelling.length})</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  {spelling.map((e: any, j: number) => (
+                    <li key={j}>
+                      <span className="line-through text-destructive">{e.original}</span>
+                      {" → "}
+                      <span className="text-foreground">{e.corrected}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
