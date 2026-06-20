@@ -48,7 +48,7 @@ const CRITERIA_LABEL_VI: Record<string, string> = {
 const labelize = (k: string) =>
   CRITERIA_LABEL_VI[k.toLowerCase()] || k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-const AIGradingCard = ({ grading, title = "AI đánh giá tổng quan" }: Props) => {
+const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan" }: Props) => {
   const suggestions: string[] = (() => {
     const arr = Array.isArray(grading.suggestions) ? grading.suggestions : [];
     return arr
