@@ -269,9 +269,48 @@ const History = () => {
         });
         groups.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+        // Full Part grouping
+        const fpMap = new Map<string, FullPartGroup>();
+        for (const r of merged) {
+          if (!r.fullPartSession) continue;
+          let g = fpMap.get(r.fullPartSession);
+          if (!g) {
+            g = {
+              sessionId: r.fullPartSession,
+              skill: r.skill,
+              created_at: r.created_at,
+              partCount: 0,
+              num: 0,
+              den: 0,
+              displayScore: "—",
+              displayBand: "—",
+            };
+            fpMap.set(r.fullPartSession, g);
+          }
+          g.partCount++;
+          if (r.skill === "speaking") {
+            const a = speakingAggMap[r.id]; g.num += a?.sum || 0; g.den += a?.max || 0;
+          } else if (r.skill === "writing") {
+            const a = writingAggMap[r.id]; g.num += a?.sum || 0; g.den += a?.max || 0;
+          } else {
+            g.num += r.score; g.den += r.total;
+          }
+          if (new Date(r.created_at).getTime() > new Date(g.created_at).getTime()) {
+            g.created_at = r.created_at;
+          }
+        }
+        const fpGroups = Array.from(fpMap.values()).map((g) => {
+          const scaled = g.den > 0 ? Math.round((g.num / g.den) * 50) : null;
+          const isGrammar = g.skill === "grammar";
+          g.displayScore = scaled != null ? `${scaled}/50` : "—";
+          g.displayBand = scaled != null && !isGrammar ? getSkillBand(scaled, g.skill as any) : "—";
+          return g;
+        });
+
         if (!cancelled) {
           setRows(merged);
           setFullTestGroups(groups);
+          setFullPartGroups(fpGroups);
         }
       } finally {
         if (!cancelled) setLoading(false);
