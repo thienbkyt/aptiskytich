@@ -21,6 +21,7 @@ import StreakRing from "@/components/dashboard/StreakRing";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
+import { computeHistoryDisplay, SKILL_LABELS } from "@/lib/historyDisplay";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
