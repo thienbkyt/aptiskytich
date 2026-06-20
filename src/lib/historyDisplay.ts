@@ -75,7 +75,7 @@ export const computeHistoryDisplay = (
 
       displayScore: `${snapScaled}/50`,
 
-      displayBand: snapBand || (r.level || "—"),
+      displayBand: noBand ? "—" : (snapBand || (r.level || "—")),
 
       scorePct: snapScaled / 50,
 
