@@ -19,6 +19,8 @@ export interface SaveExamResultOpts {
   fullTestId?: string | null;
   /** Extra fields merged into the `skill_scores` JSON column (e.g. mode/label for Marathon rows). */
   extraSkillScores?: Record<string, any>;
+  /** Frozen review payload — stored in `test_results.review_snapshot` for offline-style review. */
+  reviewSnapshot?: any;
 }
 
 /**
@@ -72,6 +74,7 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
           skill_scores: { skill: opts.skill, correct, total, ...(opts.extraSkillScores || {}) } as any,
           full_test_session_id: opts.fullTestSessionId ?? null,
           full_test_id: opts.fullTestId ?? null,
+          review_snapshot: opts.reviewSnapshot ?? null,
         } as any)
         .select("id")
         .single();
