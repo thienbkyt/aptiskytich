@@ -495,24 +495,28 @@ const Dashboard = () => {
                   ) : (
                     <div className="space-y-2">
                       {d.recentTests.map((t, i) => {
-                        const grad = LEVEL_GRAD[t.level] || "from-muted to-muted";
-                        const pct = t.total > 0 ? Math.round((t.score / t.total) * 100) : 0;
+                        const grad = LEVEL_GRAD[t.displayBand] || "from-muted to-muted";
                         return (
-                          <div
-                            key={i}
+                          <Link
+                            to={`/history/${t.id}?review=1`}
+                            key={t.id || i}
                             className="group flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/40 hover:bg-muted/50 transition-all"
                           >
                             <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br ${grad} flex items-center justify-center text-white text-xs font-extrabold shadow-md`}>
-                              {t.level}
+                              {t.displayBand}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <Calendar className="w-3 h-3" /> {t.date}
+                              <div className="text-sm font-bold text-foreground truncate">
+                                {t.skillLabel}{t.partLabel ? ` · ${t.partLabel}` : ""}
                               </div>
-                              <div className="text-sm font-bold text-foreground">{t.score}/{t.total} <span className="text-xs text-muted-foreground font-normal">· {pct}%</span></div>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Calendar className="w-3 h-3" /> {t.dateTime}
+                                <span className="text-muted-foreground/60">·</span>
+                                <span className="font-semibold text-foreground/80">{t.displayScore}</span>
+                              </div>
                             </div>
                             <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                          </div>
+                          </Link>
                         );
                       })}
                     </div>
