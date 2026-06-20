@@ -11,7 +11,10 @@ import type {
   SpeakingPartType,
   SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data,
 } from "@/data/speakingQuestions";
-import type { SpeakingGradingResult, SpeakingItemGrading } from "@/components/speaking/speakingGrading";
+import {
+  buildSpeakingGradingSpecs, gradeSpeakingSpec, blobToBase64,
+  type SpeakingGradingResult, type SpeakingItemGrading,
+} from "@/components/speaking/speakingGrading";
 
 interface Props {
   userId: string;
