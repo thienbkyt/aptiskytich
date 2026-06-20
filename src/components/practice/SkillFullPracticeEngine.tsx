@@ -550,16 +550,18 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         partResults.push(entry);
 
         if (originalPart) {
+          const pathByIdx: Record<number, string> = {};
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
             try {
-              await saveSpeakingRecording({
+              const path = await saveSpeakingRecording({
                 examSetId: originalPart.id,
                 part: `${originalPart.partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
                 testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
               });
+              if (path) pathByIdx[idx] = path;
             } catch (e) {
               console.warn("[SkillFullPractice] saveSpeakingRecording failed", e);
             }
@@ -576,6 +578,41 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           } catch (e) {
             console.warn("[SkillFullPractice] saveSpeakingGradings failed", e);
           }
+
+          // Bake AI + recordingPaths into this part's snapshot.
+          try {
+            const trid = speakingTestResultIdByPartRef.current[originalPartIdx] ?? null;
+            if (trid) {
+              const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+              const aiByIndex: Record<number, any> = {};
+              let partScore = 0, partMax = 0;
+              gradings.forEach((g, i) => {
+                if (!g || (g as any).error) return;
+                const gg = g as any;
+                aiByIndex[i] = {
+                  partScore: gg.partScore,
+                  maxPoints: gg.maxPoints,
+                  grammarErrors: gg.grammarErrors || [],
+                  pronunciationErrors: gg.pronunciationErrors || [],
+                  feedback: gg.feedback || null,
+                  transcript: gg.transcript || null,
+                  improvedVersion: gg.improvedVersion || null,
+                  recordingPath: pathByIdx[i] ?? null,
+                };
+                partScore += gg.partScore || 0;
+                partMax += gg.maxPoints || 0;
+              });
+              // also include pure-recording rows with no AI
+              Object.entries(pathByIdx).forEach(([k, p]) => {
+                const i = Number(k);
+                if (!aiByIndex[i]) aiByIndex[i] = { recordingPath: p };
+              });
+              const scaled = partMax > 0 ? Math.round((partScore / partMax) * 50) : null;
+              await mergeSnapshotAI(trid, aiByIndex, partMax > 0 ? {
+                score: partScore, total: partMax, scaled50: scaled,
+              } : undefined);
+            }
+          } catch (e) { console.warn("[SkillFullPractice] mergeSnapshotAI failed", e); }
         }
       }
 
