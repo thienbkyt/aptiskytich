@@ -157,6 +157,18 @@ const ReadingExamEngine = ({
 
   const part2SectionCount = part2Question?.sections.length || 0;
 
+  // Notify parent of page count for this part (review pager support).
+  useEffect(() => {
+    const n = partType === "part2" ? Math.max(1, part2SectionCount) : 1;
+    onPageCount?.(n);
+  }, [partType, part2SectionCount, onPageCount]);
+
+  // When initialSection changes (review pager navigates pages), sync currentIndex.
+  useEffect(() => {
+    if (initialSection != null) setCurrentIndex(initialSection);
+  }, [initialSection]);
+
+
   // Panel "questions": for part2 each section = 1 question; others = per item.
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
     : partType === "part2" ? part2SectionCount
