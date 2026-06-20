@@ -511,15 +511,15 @@ const History = () => {
 };
 
 const StatCard = ({
-  icon: Icon, label, value, accent,
-}: { icon: any; label: string; value: string; accent?: boolean }) => (
+  icon: Icon, label, value,
+}: { icon: any; label: string; value: string }) => (
   <div className="glass-card p-4 flex items-center gap-3">
-    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${accent ? "bg-primary/15 text-primary" : "bg-muted text-foreground"}`}>
+    <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-muted text-foreground">
       <Icon className="w-5 h-5" />
     </div>
     <div className="min-w-0">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`text-xl font-extrabold ${accent ? "text-primary" : "text-foreground"}`}>{value}</div>
+      <div className="text-xl font-extrabold text-foreground">{value}</div>
     </div>
   </div>
 );
