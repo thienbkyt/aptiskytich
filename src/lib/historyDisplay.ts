@@ -25,6 +25,8 @@ export const computeHistoryDisplay = (
 
   const isAI = skill === "speaking" || skill === "writing";
 
+  const noBand = skill === "grammar" || skill === "grammar_vocab";
+
   const snapScaled = snapshot && typeof snapshot.scaled50 === "number" ? snapshot.scaled50 : null;
 
   const snapBand = snapshot && typeof snapshot.band === "string" ? snapshot.band : null;
