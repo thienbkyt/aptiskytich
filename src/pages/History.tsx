@@ -33,6 +33,7 @@ interface HistoryRow {
   full_test_session_id: string | null;
   full_test_id: string | null;
   isMarathon: boolean;
+  fullPartSession: string | null;
   // computed display
   displayScore: string;     // e.g. "12/25" or "8/10" or "—"
   displayBand: string;      // e.g. "B1" or "—"
@@ -50,6 +51,17 @@ interface FullTestGroup {
   skillCount: number;
   gvScaled: number | null;
   skillAgg: Record<string, { num: number; den: number }>;
+}
+
+interface FullPartGroup {
+  sessionId: string;
+  skill: string;
+  created_at: string;
+  partCount: number;
+  num: number;
+  den: number;
+  displayScore: string;
+  displayBand: string;
 }
 
 const SKILL_LABELS: Record<string, string> = {
@@ -100,6 +112,7 @@ const History = () => {
   const skillFilter = params.get("skill") || "all";
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [fullTestGroups, setFullTestGroups] = useState<FullTestGroup[]>([]);
+  const [fullPartGroups, setFullPartGroups] = useState<FullPartGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -197,6 +210,7 @@ const History = () => {
             full_test_session_id: r.full_test_session_id ?? null,
             full_test_id: r.full_test_id ?? null,
             isMarathon,
+            fullPartSession: ss.fullPartSession ?? null,
             ...disp,
           };
         });
@@ -255,9 +269,48 @@ const History = () => {
         });
         groups.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+        // Full Part grouping
+        const fpMap = new Map<string, FullPartGroup>();
+        for (const r of merged) {
+          if (!r.fullPartSession) continue;
+          let g = fpMap.get(r.fullPartSession);
+          if (!g) {
+            g = {
+              sessionId: r.fullPartSession,
+              skill: r.skill,
+              created_at: r.created_at,
+              partCount: 0,
+              num: 0,
+              den: 0,
+              displayScore: "—",
+              displayBand: "—",
+            };
+            fpMap.set(r.fullPartSession, g);
+          }
+          g.partCount++;
+          if (r.skill === "speaking") {
+            const a = speakingAggMap[r.id]; g.num += a?.sum || 0; g.den += a?.max || 0;
+          } else if (r.skill === "writing") {
+            const a = writingAggMap[r.id]; g.num += a?.sum || 0; g.den += a?.max || 0;
+          } else {
+            g.num += r.score; g.den += r.total;
+          }
+          if (new Date(r.created_at).getTime() > new Date(g.created_at).getTime()) {
+            g.created_at = r.created_at;
+          }
+        }
+        const fpGroups = Array.from(fpMap.values()).map((g) => {
+          const scaled = g.den > 0 ? Math.round((g.num / g.den) * 50) : null;
+          const isGrammar = g.skill === "grammar";
+          g.displayScore = scaled != null ? `${scaled}/50` : "—";
+          g.displayBand = scaled != null && !isGrammar ? getSkillBand(scaled, g.skill as any) : "—";
+          return g;
+        });
+
         if (!cancelled) {
           setRows(merged);
           setFullTestGroups(groups);
+          setFullPartGroups(fpGroups);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -266,13 +319,26 @@ const History = () => {
     return () => { cancelled = true; };
   }, [user]);
 
-  const perSkillRows = useMemo(() => rows.filter((r) => !r.full_test_session_id), [rows]);
+  const perSkillRows = useMemo(
+    () => rows.filter((r) => !r.full_test_session_id && !r.fullPartSession),
+    [rows],
+  );
 
-  const filtered = useMemo(() => {
-    if (skillFilter === "all") return perSkillRows;
-    if (skillFilter === "fulltest") return perSkillRows; // unused
-    return perSkillRows.filter((r) => r.skill === skillFilter);
-  }, [perSkillRows, skillFilter]);
+  type MixedItem =
+    | { kind: "row"; created_at: string; row: HistoryRow }
+    | { kind: "group"; created_at: string; group: FullPartGroup };
+
+  const filteredItems = useMemo<MixedItem[]>(() => {
+    const rowItems: MixedItem[] = perSkillRows
+      .filter((r) => skillFilter === "all" || skillFilter === "fulltest" || r.skill === skillFilter)
+      .map((r) => ({ kind: "row", created_at: r.created_at, row: r }));
+    const groupItems: MixedItem[] = fullPartGroups
+      .filter((g) => skillFilter === "all" || g.skill === skillFilter)
+      .map((g) => ({ kind: "group", created_at: g.created_at, group: g }));
+    return [...rowItems, ...groupItems].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  }, [perSkillRows, fullPartGroups, skillFilter]);
 
   // Top stats
   const stats = useMemo(() => {
@@ -404,7 +470,7 @@ const History = () => {
                 </Table>
               </div>
             )
-          ) : filtered.length === 0 ? (
+          ) : filteredItems.length === 0 ? (
             <EmptyState
               title="Chưa có lịch sử làm bài"
               desc="Hãy bắt đầu luyện tập để theo dõi tiến trình của bạn nhé!"
@@ -425,7 +491,52 @@ const History = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((r) => {
+                  {filteredItems.map((item) => {
+                    if (item.kind === "group") {
+                      const g = item.group;
+                      const Icon = SKILL_ICON[g.skill] || ListChecks;
+                      return (
+                        <TableRow key={`fp-${g.sessionId}`}>
+                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" />{formatDateTime(g.created_at)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <Icon className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-foreground truncate">{SKILL_LABELS[g.skill] || g.skill}</span>
+                                  <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Full Part</Badge>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground truncate">{g.partCount} phần</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell><span className="text-muted-foreground">—</span></TableCell>
+                          <TableCell className="text-right font-semibold text-foreground">{g.displayScore}</TableCell>
+                          <TableCell className="text-right">
+                            {g.displayBand && g.displayBand !== "—" ? (
+                              <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-0 font-bold">{g.displayBand}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex gap-2">
+                              <Link to={`/history/full-part/${g.sessionId}`}>
+                                <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                              </Link>
+                              <Link to={SKILL_ROUTES[g.skill] || "/practice"}>
+                                <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                              </Link>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                    const r = item.row;
                     const Icon = SKILL_ICON[r.skill] || ListChecks;
                     return (
                       <TableRow key={r.id}>
