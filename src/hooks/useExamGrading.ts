@@ -97,19 +97,22 @@ export function useExamGrading() {
           });
           // Link this grading to the specific attempt so history review can find it without time-window heuristics.
           if (params.testResultId) {
-            await (supabase as any).from("writing_question_gradings").insert([{
-              user_id: user.id,
-              test_result_id: params.testResultId,
-              exam_set_id: params.examSetId ?? null,
-              part: params.partLabel ?? params.partType,
-              item_index: 0,
-              question_text: null,
-              max_points: w.maxPoints || 0,
-              part_score: w.partScore || 0,
-              grammar_errors: (w.grammarErrors || []) as any,
-              spelling_errors: (w.spellingErrors || []) as any,
-              feedback: w.feedback || "",
-            }]);
+            try {
+              await (supabase as any).from("writing_question_gradings").insert([{
+                user_id: user.id,
+                test_result_id: params.testResultId,
+                exam_set_id: params.examSetId ?? null,
+                part: params.partLabel ?? params.partType,
+                item_index: 0,
+                max_points: w.maxPoints || 0,
+                part_score: w.partScore || 0,
+                grammar_errors: (w.grammarErrors || []) as any,
+                spelling_errors: (w.spellingErrors || []) as any,
+                feedback: w.feedback || "",
+              }]);
+            } catch (writeErr: any) {
+              console.warn("[useExamGrading] writing_question_gradings insert failed:", writeErr?.message || writeErr);
+            }
           }
         } else {
           const s = result as GradingResult;
