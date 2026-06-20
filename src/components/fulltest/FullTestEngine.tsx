@@ -231,7 +231,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         const snap = buildReviewSnapshot({
           skill: skill === "grammar" ? "grammar_vocab" : skill,
           part: parts[currentPartIndex]?.partNorm ?? null,
-          testTitle: parts[currentPartIndex]?.title ?? null,
+          testTitle: null,
           score: correct, total,
           scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
           items: (perQuestion || []).map((p) => ({
@@ -634,6 +634,23 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         // can be linked by test_result_id (review no longer relies on time-window matching).
         const totalRounded = Math.round(totalScore);
         const maxRounded = Math.max(Math.round(totalMax), 1);
+        const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const speakingSnap = buildReviewSnapshot({
+          skill: "speaking",
+          part: null,
+          testTitle: "Full Test · Speaking",
+          score: totalRounded, total: maxRounded,
+          scaled50: maxRounded > 0 ? Math.round((totalRounded / maxRounded) * 50) : null,
+          items: [],
+          raw: {
+            perPart: orderedEntries.map((e, i) => ({
+              partType: e.sub.partType,
+              partId: e.partId,
+              itemCount: e.sub.items.length,
+              gradings: (perPartResults[i] || []).map((r) => (r && !("error" in r) ? r : null)),
+            })),
+          },
+        });
         const testResultId = await saveExamResult({
           examSetId: orderedEntries[0]?.partId ?? null,
           skill: "speaking",
@@ -641,6 +658,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           total: maxRounded,
           fullTestSessionId: sessionIdRef.current,
           fullTestId: testId,
+          reviewSnapshot: speakingSnap,
         });
 
         // Upload recordings (linked to the attempt via test_result_id)
@@ -845,6 +863,26 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         const partScoreRounded = Math.round(partScore);
         const partMaxRounded = Math.max(Math.round(partMax), 1);
 
+        const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const writingSnap = buildReviewSnapshot({
+          skill: "writing",
+          part: e.partType,
+          testTitle: e.partLabel ?? null,
+          score: partScoreRounded, total: partMaxRounded,
+          scaled50: partMaxRounded > 0 ? Math.round((partScoreRounded / partMaxRounded) * 50) : null,
+          items: (e.perQuestion || []).map((p) => ({
+            userAnswer: p.user_answer ?? null,
+            isCorrect: false,
+            ai: res ? {
+              partScore: res.partScore,
+              maxPoints: res.maxPoints,
+              grammarErrors: res.grammarErrors,
+              spellingErrors: res.spellingErrors,
+              feedback: res.feedback,
+            } : null,
+          })),
+          raw: { partType: e.partType, text: e.text, questions: e.questions, ai: res || null },
+        });
         // 1 row per part with that part's AI score
         const testResultId = await saveExamResult({
           examSetId: e.partId ?? null,
@@ -854,6 +892,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           perQuestion: e.perQuestion,
           fullTestSessionId: sessionIdRef.current,
           fullTestId: testId,
+          reviewSnapshot: writingSnap,
         });
 
         if (res && user) {
