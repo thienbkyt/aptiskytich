@@ -183,22 +183,43 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       const examSetId = skill === "grammar_vocab" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
       (async () => {
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const {
+          buildGrammarItems, buildReadingItems, buildListeningItems, computeScaleAndBand,
+        } = await import("@/lib/reviewItemsBuilder");
+        const partNorm = parts[currentPartIndex]?.partNorm ?? null;
+        const partQuestions = parts[currentPartIndex]?.questions ?? [];
+        let items: any[] = [];
+        if (skill === "grammar_vocab") {
+          items = buildGrammarItems(partQuestions, perQuestion || []);
+        } else if (skill === "reading" && partNorm) {
+          // Need engineData for reading items. Use what's stored on the part.
+          const engineData: any = {};
+          // Best-effort: derive from partQuestions via transformers
+          try {
+            const { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } = await import("@/lib/examTransformers");
+            if (partNorm === "part1") engineData.part1Question = toReadingPart1(partQuestions);
+            else if (partNorm === "part2") engineData.part2Question = toReadingPart2(partQuestions);
+            else if (partNorm === "part3") engineData.part3Question = toReadingPart3(partQuestions);
+            else if (partNorm === "part4") engineData.part4Question = toReadingPart4(partQuestions);
+            items = buildReadingItems(partNorm as any, engineData, {}, {}, perQuestion || []);
+          } catch { /* noop */ }
+        } else if (skill === "listening" && partNorm) {
+          const engineData: any = {};
+          try {
+            const { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } = await import("@/lib/examTransformers");
+            if (partNorm === "part1") engineData.part1Questions = toListeningPart1(partQuestions);
+            else if (partNorm === "part2") engineData.part2Questions = toListeningPart2(partQuestions);
+            else if (partNorm === "part3") engineData.part3Questions = toListeningPart3(partQuestions);
+            else if (partNorm === "part4") engineData.part4Questions = toListeningPart4(partQuestions);
+            items = buildListeningItems(partNorm as any, engineData, {}, perQuestion || []);
+          } catch { /* noop */ }
+        }
+        const { scaled50, band } = computeScaleAndBand(skill === "grammar_vocab" ? "grammar" : skill, correct, total);
         const snap = buildReviewSnapshot({
-          skill,
-          part: parts[currentPartIndex]?.partNorm ?? null,
-          testTitle,
-          score: correct, total,
-          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
-          items: (perQuestion || []).map((p) => ({
-            userAnswer: p.user_answer ?? null,
-            isCorrect: !!p.is_correct,
-          })),
-          raw: {
-            skill,
-            partType: parts[currentPartIndex]?.partNorm ?? null,
-            questions: parts[currentPartIndex]?.questions ?? [],
-            perQuestion: perQuestion || [],
-          },
+          skill, part: partNorm, testTitle,
+          score: correct, total, scaled50, band,
+          items,
+          raw: { skill, partType: partNorm, questions: partQuestions, perQuestion: perQuestion || [] },
         });
         saveExamResult({
           examSetId, skill,
