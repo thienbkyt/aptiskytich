@@ -452,12 +452,27 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         is_correct: false,
       }));
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+      const promptsList: string[] = (() => {
+        try {
+          const q = (currentPart.questions?.[0] as any) || {};
+          if (Array.isArray(q.questions)) return q.questions;
+        } catch { /* noop */ }
+        return currentPart.questions.map((_, i) => `Question ${i + 1}`);
+      })();
+      const specs = perQuestion.map((_, idx) => ({
+        questionText: promptsList[idx] || `Question ${idx + 1}`,
+        recordingPath: null,
+        ai: null,
+      }));
+      const { scaled50, band } = computeScaleAndBand("speaking", 0, perQuestion.length);
       const snap = buildReviewSnapshot({
         skill: "speaking",
         part: currentPart.partNorm,
         testTitle,
         score: 0, total: perQuestion.length,
-        items: perQuestion.map(() => ({})),
+        scaled50, band,
+        items: buildSpeakingItems(specs),
         raw: {
           partType: currentPart.partNorm,
           questions: currentPart.questions,
