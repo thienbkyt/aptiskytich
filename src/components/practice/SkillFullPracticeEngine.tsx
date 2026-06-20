@@ -100,6 +100,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   // Speaking full-practice grading state
   const speakingSubmissionsByPartRef = useRef<Record<number, SpeakingPartSubmission>>({});
+  const speakingTestResultIdByPartRef = useRef<Record<number, string | null>>({});
   const [speakingPhase, setSpeakingPhase] = useState<"none" | "grading" | "results">("none");
   const [speakingGradedCount, setSpeakingGradedCount] = useState(0);
   const [speakingGradeTotal, setSpeakingGradeTotal] = useState(0);
