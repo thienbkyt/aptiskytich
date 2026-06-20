@@ -48,7 +48,7 @@ const CRITERIA_LABEL_VI: Record<string, string> = {
 const labelize = (k: string) =>
   CRITERIA_LABEL_VI[k.toLowerCase()] || k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
-const AIGradingCard = ({ grading, title = "AI đánh giá tổng quan" }: Props) => {
+const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan" }: Props) => {
   const suggestions: string[] = (() => {
     const arr = Array.isArray(grading.suggestions) ? grading.suggestions : [];
     return arr
@@ -68,7 +68,14 @@ const AIGradingCard = ({ grading, title = "AI đánh giá tổng quan" }: Props)
   })();
 
   const overall = grading.overall_level || "—";
-  const overallColor = CEFR_COLORS[overall] || "bg-[#24085a]/10 text-[#24085a]";
+  const writingCriteria: any = grading.criteria && typeof grading.criteria === "object" && !Array.isArray(grading.criteria) ? grading.criteria : null;
+  const isWriting = !!(writingCriteria && typeof writingCriteria.maxPoints === "number" && typeof writingCriteria.partScore === "number");
+  const writingDisplay = isWriting
+    ? `${Number((Number(writingCriteria.partScore) / 2).toFixed(1))}/${Number(writingCriteria.maxPoints) / 2}`
+    : null;
+  const overallColor = isWriting
+    ? "bg-primary/10 text-primary"
+    : (CEFR_COLORS[overall] || "bg-[#24085a]/10 text-[#24085a]");
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
@@ -82,16 +89,16 @@ const AIGradingCard = ({ grading, title = "AI đánh giá tổng quan" }: Props)
             <p className="text-xs font-semibold text-muted-foreground mb-1">{title}</p>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-2xl font-heading font-extrabold px-3 py-0.5 rounded-md ${overallColor}`}>
-                {overall}
+                {isWriting ? writingDisplay : overall}
               </span>
-              <span className="text-xs text-muted-foreground">Band CEFR</span>
+              <span className="text-xs text-muted-foreground">{isWriting ? "Điểm Writing" : "Band CEFR"}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* CEFR criteria breakdown */}
-      {criteriaEntries.length > 0 && (
+      {!isWriting && criteriaEntries.length > 0 && (
         <div className="p-5 border-b border-border">
           <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
             Điểm theo tiêu chí

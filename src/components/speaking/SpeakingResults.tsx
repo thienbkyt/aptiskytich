@@ -21,7 +21,7 @@ const SpeakingResults = ({ isGrading, grading, onExit }: SpeakingResultsProps) =
       <div className="max-w-lg mx-auto bg-card border border-border rounded-2xl p-8 text-center">
         <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
         <h2 className="text-xl font-heading font-bold text-foreground mb-2">Đang chấm điểm...</h2>
-        <p className="text-sm text-muted-foreground">AI đang phân tích bài nói của bạn. Vui lòng đợi trong giây lát.</p>
+        <p className="text-sm text-muted-foreground">AI Kỳ Tích đang phân tích bài nói của bạn. Vui lòng đợi trong giây lát.</p>
       </div>
     );
   }

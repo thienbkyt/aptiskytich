@@ -432,7 +432,7 @@ const Dashboard = () => {
                     </div>
                     <h2 className="font-heading font-extrabold text-foreground mb-1">Tăng tốc Speaking</h2>
                     <p className="text-sm text-muted-foreground mb-4">
-                      AI chấm + feedback chi tiết. Chỉ 12 phút mỗi ngày.
+                      AI Kỳ Tích chấm + feedback chi tiết. Chỉ 12 phút mỗi ngày.
                     </p>
                     <Button asChild variant="glow" size="sm" className="w-full">
                       <Link to="/speaking">Luyện Speaking <ArrowRight className="w-3 h-3 ml-1" /></Link>

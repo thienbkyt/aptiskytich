@@ -22,7 +22,7 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview }: Wr
       <div className="max-w-lg mx-auto bg-card border border-border rounded-2xl p-8 text-center">
         <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
         <h2 className="text-xl font-heading font-bold text-foreground mb-2">Đang chấm điểm...</h2>
-        <p className="text-sm text-muted-foreground">AI đang phân tích bài viết của bạn. Vui lòng đợi trong giây lát.</p>
+        <p className="text-sm text-muted-foreground">AI Kỳ Tích đang phân tích bài viết của bạn. Vui lòng đợi trong giây lát.</p>
       </div>
     );
   }
@@ -43,7 +43,7 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview }: Wr
         </div>
         <h2 className="text-2xl font-heading font-bold text-foreground mb-1">Kết quả Writing</h2>
         <div className="inline-block px-6 py-3 rounded-full text-2xl font-bold mt-2 bg-primary/10 text-primary">
-          Điểm: {grading.partScore}/{grading.maxPoints}
+          Điểm: {Number((grading.partScore / 2).toFixed(1))}/{grading.maxPoints / 2}
         </div>
         {grading.coherencePenaltyPercent > 0 && (
           <p className="text-sm font-medium text-red-600 dark:text-red-400 mt-3">

@@ -51,7 +51,7 @@ const AiParser = ({ onParsed }: Props) => {
       }));
 
       if (questions.length === 0) {
-        toast({ title: "AI không tìm thấy câu hỏi nào", variant: "destructive" });
+        toast({ title: "AI Kỳ Tích không tìm thấy câu hỏi nào", variant: "destructive" });
       } else {
         setParsedCount(questions.length);
         toast({ title: `AI đã bóc tách ${questions.length} câu hỏi!` });
@@ -70,7 +70,7 @@ const AiParser = ({ onParsed }: Props) => {
         <h2 className="font-heading font-bold text-foreground">AI Parser — Bóc tách đề thi tự động</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        Dán nội dung đề thi thô vào ô bên dưới. AI sẽ tự động nhận diện câu hỏi, đáp án và điền vào Form thông minh.
+        Dán nội dung đề thi thô vào ô bên dưới. AI Kỳ Tích sẽ tự động nhận diện câu hỏi, đáp án và điền vào Form thông minh.
       </p>
 
       <div>

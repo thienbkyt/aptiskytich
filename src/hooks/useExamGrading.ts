@@ -70,7 +70,7 @@ export function useExamGrading() {
             user_id: user.id,
             skill: params.type,
             part_type: params.partType,
-            overall_level: `${w.partScore}/${w.maxPoints}`,
+            overall_level: `${Number((w.partScore / 2).toFixed(1))}/${w.maxPoints / 2}`,
             criteria: {
               addressPercent: w.addressPercent,
               bonusPercent: w.bonusPercent,
