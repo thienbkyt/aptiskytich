@@ -191,12 +191,73 @@ const Dashboard = () => {
         });
         const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
 
-        const recentTests: RecentTest[] = tests.map((t) => ({
-          date: formatDate(t.created_at),
-          score: t.score,
-          total: t.total,
-          level: t.level,
-        }));
+        // Build recent tests with proper skill/part labels + display score/band
+        const recentRaw = tests as any[];
+        const recentSetIds = Array.from(new Set(recentRaw.map((t) => t.exam_set_id).filter(Boolean)));
+        const recentIds = recentRaw.map((t) => t.id);
+        const setsMap: Record<string, { skill: string; part: string; title: string }> = {};
+        const writingAggMap: Record<string, { sum: number; max: number }> = {};
+        const speakingAggMap: Record<string, { sum: number; max: number }> = {};
+        if (recentSetIds.length > 0 || recentIds.length > 0) {
+          const [setsRes, wgRes, sgRes] = await Promise.all([
+            recentSetIds.length > 0
+              ? supabase.from("exam_sets").select("id,skill,part,title").in("id", recentSetIds)
+              : Promise.resolve({ data: [] as any[] }),
+            recentIds.length > 0
+              ? supabase.from("writing_question_gradings").select("test_result_id,part_score,max_points").in("test_result_id", recentIds)
+              : Promise.resolve({ data: [] as any[] }),
+            recentIds.length > 0
+              ? (supabase as any).from("speaking_question_gradings").select("test_result_id,part_score,max_points").in("test_result_id", recentIds)
+              : Promise.resolve({ data: [] as any[] }),
+          ]);
+          (setsRes.data || []).forEach((s: any) => {
+            setsMap[s.id] = { skill: s.skill, part: s.part, title: s.title };
+          });
+          (wgRes.data || []).forEach((g: any) => {
+            if (!g.test_result_id) return;
+            const a = writingAggMap[g.test_result_id] || { sum: 0, max: 0 };
+            a.sum += Number(g.part_score || 0);
+            a.max += Number(g.max_points || 0);
+            writingAggMap[g.test_result_id] = a;
+          });
+          (sgRes.data || []).forEach((g: any) => {
+            if (!g.test_result_id) return;
+            const a = speakingAggMap[g.test_result_id] || { sum: 0, max: 0 };
+            a.sum += Number(g.part_score || 0);
+            a.max += Number(g.max_points || 0);
+            speakingAggMap[g.test_result_id] = a;
+          });
+        }
+
+        const formatDateTime = (iso: string) => {
+          const dt = new Date(iso);
+          const pad = (n: number) => String(n).padStart(2, "0");
+          return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        };
+
+        const recentTests: RecentTest[] = recentRaw.map((t) => {
+          const setInfo = t.exam_set_id ? setsMap[t.exam_set_id] : undefined;
+          const ss = (t.skill_scores || {}) as any;
+          let skill = setInfo?.skill || ss.skill || "unknown";
+          if (skill === "grammar_vocab") skill = "grammar";
+          const disp = computeHistoryDisplay(
+            { skill, score: t.score, total: t.total, level: t.level },
+            t.review_snapshot,
+            writingAggMap[t.id],
+            speakingAggMap[t.id],
+          );
+          const skillLabel = SKILL_LABELS[skill] || (skill !== "unknown" ? skill : "Bài luyện");
+          const partLabel = setInfo?.part ? `Part ${setInfo.part}` : (t.full_test_session_id ? "Full test" : "");
+          return {
+            id: t.id,
+            dateTime: formatDateTime(t.created_at),
+            skill,
+            skillLabel,
+            partLabel,
+            displayScore: disp.displayScore,
+            displayBand: disp.displayBand,
+          };
+        });
 
         setData({
           displayName,
