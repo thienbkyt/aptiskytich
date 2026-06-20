@@ -200,17 +200,16 @@ const Writing = () => {
     return (
       <WritingExamEngine
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={WRITING_TIME[exam.partType] ?? 3000}
-        onExit={handleExit} onComplete={(perQuestion) => {
-          setExam((p) => {
-            const timeSpent = p.startedAt ? Math.floor((Date.now() - p.startedAt) / 1000) : undefined;
-            saveExamResult({
-              examSetId: p.examSetId ?? null,
-              skill: "writing",
-              correct: 0, total: perQuestion?.length || 0, timeSpent,
-              perQuestion,
-            });
-            return p;
+        examSetId={exam.examSetId ?? null}
+        onExit={handleExit} onComplete={async (perQuestion) => {
+          const timeSpent = exam.startedAt ? Math.floor((Date.now() - exam.startedAt) / 1000) : undefined;
+          const id = await saveExamResult({
+            examSetId: exam.examSetId ?? null,
+            skill: "writing",
+            correct: 0, total: perQuestion?.length || 0, timeSpent,
+            perQuestion,
           });
+          return id ?? null;
         }}
         {...exam.engineData}
       />
