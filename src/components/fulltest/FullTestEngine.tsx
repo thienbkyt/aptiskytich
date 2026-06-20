@@ -228,20 +228,43 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       const examSetId = skill === "grammar" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
       (async () => {
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const {
+          buildGrammarItems, buildReadingItems, buildListeningItems, computeScaleAndBand,
+        } = await import("@/lib/reviewItemsBuilder");
+        const partNorm = parts[currentPartIndex]?.partNorm ?? null;
+        const partQuestions = parts[currentPartIndex]?.questions ?? [];
+        let items: any[] = [];
+        try {
+          if (skill === "grammar") {
+            items = buildGrammarItems(partQuestions, perQuestion || []);
+          } else if (skill === "reading" && partNorm) {
+            const { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } = await import("@/lib/examTransformers");
+            const ed: any = {};
+            if (partNorm === "part1") ed.part1Question = toReadingPart1(partQuestions);
+            else if (partNorm === "part2") ed.part2Question = toReadingPart2(partQuestions);
+            else if (partNorm === "part3") ed.part3Question = toReadingPart3(partQuestions);
+            else if (partNorm === "part4") ed.part4Question = toReadingPart4(partQuestions);
+            items = buildReadingItems(partNorm as any, ed, {}, {}, perQuestion || []);
+          } else if (skill === "listening" && partNorm) {
+            const { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } = await import("@/lib/examTransformers");
+            const ed: any = {};
+            if (partNorm === "part1") ed.part1Questions = toListeningPart1(partQuestions);
+            else if (partNorm === "part2") ed.part2Questions = toListeningPart2(partQuestions);
+            else if (partNorm === "part3") ed.part3Questions = toListeningPart3(partQuestions);
+            else if (partNorm === "part4") ed.part4Questions = toListeningPart4(partQuestions);
+            items = buildListeningItems(partNorm as any, ed, {}, perQuestion || []);
+          }
+        } catch { /* noop */ }
+        const { scaled50, band } = computeScaleAndBand(skill, correct, total);
         const snap = buildReviewSnapshot({
           skill: skill === "grammar" ? "grammar_vocab" : skill,
-          part: parts[currentPartIndex]?.partNorm ?? null,
+          part: partNorm,
           testTitle: null,
-          score: correct, total,
-          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
-          items: (perQuestion || []).map((p) => ({
-            userAnswer: p.user_answer ?? null,
-            isCorrect: !!p.is_correct,
-          })),
+          score: correct, total, scaled50, band,
+          items,
           raw: {
-            skill,
-            partType: parts[currentPartIndex]?.partNorm ?? null,
-            questions: parts[currentPartIndex]?.questions ?? [],
+            skill, partType: partNorm,
+            questions: partQuestions,
             perQuestion: perQuestion || [],
           },
         });
