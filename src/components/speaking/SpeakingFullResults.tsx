@@ -6,7 +6,10 @@ import type {
   SpeakingPartType,
   SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data,
 } from "@/data/speakingQuestions";
-import type { SpeakingGradingResult, SpeakingItemGrading } from "./speakingGrading";
+import {
+  buildSpeakingGradingSpecs, gradeSpeakingSpec, blobToBase64,
+  type SpeakingGradingResult, type SpeakingItemGrading,
+} from "./speakingGrading";
 
 export interface SpeakingFullPartResult {
   partType: SpeakingPartType;
@@ -32,7 +35,9 @@ interface Props {
 const isGrading = (g: SpeakingGradingResult | null | undefined): g is SpeakingItemGrading =>
   !!g && typeof g === "object" && !("error" in g);
 
-const SpeakingFullResults = ({ parts, totalScore, totalMax, onExit }: Props) => {
+const SpeakingFullResults = ({ parts: initialParts, totalScore: initialTotalScore, totalMax, onExit }: Props) => {
+  const [parts, setParts] = useState<SpeakingFullPartResult[]>(initialParts);
+  const [totalScore, setTotalScore] = useState<number>(initialTotalScore);
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewPartIdx, setReviewPartIdx] = useState(0);
   const [reviewItemIdx, setReviewItemIdx] = useState(0);
@@ -40,6 +45,41 @@ const SpeakingFullResults = ({ parts, totalScore, totalMax, onExit }: Props) => 
   const currentPart = parts[reviewPartIdx];
   const canPrevPart = reviewPartIdx > 0;
   const canNextPart = reviewPartIdx < parts.length - 1;
+
+  const handleRegrade = async (gIdx: number) => {
+    const part = parts[reviewPartIdx];
+    if (!part) return;
+    const url = part.recordingUrls[part.partType === "part4" ? 0 : gIdx];
+    if (!url) return;
+    const specs = buildSpeakingGradingSpecs(part.partType, {
+      part1Data: part.part1Data, part2Data: part.part2Data,
+      part3Data: part.part3Data, part4Data: part.part4Data,
+    });
+    const spec = specs[gIdx];
+    if (!spec) return;
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const base64 = await blobToBase64(blob);
+      const r = await gradeSpeakingSpec(spec, base64, spec.speakTime);
+      setParts((prev) => {
+        const next = prev.slice();
+        const np = { ...next[reviewPartIdx] };
+        np.gradings = np.gradings.slice();
+        np.gradings[gIdx] = r;
+        next[reviewPartIdx] = np;
+        // Recompute total score across all parts
+        const newTotal = next.reduce(
+          (s, p) => s + p.gradings.reduce((ss, gg) => ss + (isGrading(gg) ? gg.partScore || 0 : 0), 0),
+          0,
+        );
+        setTotalScore(newTotal);
+        return next;
+      });
+    } catch (e) {
+      console.warn("[SpeakingFullResults] regrade failed", e);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -139,6 +179,7 @@ const SpeakingFullResults = ({ parts, totalScore, totalMax, onExit }: Props) => 
                 onBack={() => setReviewDetail(false)}
                 onExit={onExit}
                 totalParts={parts.length}
+                onRegrade={handleRegrade}
               />
             )}
           </div>

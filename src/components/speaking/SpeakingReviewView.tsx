@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import SignedImage from "@/components/exam/SignedImage";
 import type {
   SpeakingPartType,
@@ -28,6 +30,9 @@ export interface SpeakingReviewViewProps {
   onExit?: () => void;
   totalParts?: number;
   hidePager?: boolean;
+  /** Re-grade a single question (the one currently shown). The parent is
+   *  responsible for actually calling the grader and persisting the result. */
+  onRegrade?: (gradingIndex: number) => Promise<void>;
 }
 
 /**
@@ -38,8 +43,9 @@ export interface SpeakingReviewViewProps {
 const SpeakingReviewView = ({
   partType, part1Data, part2Data, part3Data, part4Data,
   recordings, gradings, reviewIndex, onChangeIndex, onBack, onExit,
-  totalParts = 4, hidePager = false,
+  totalParts = 4, hidePager = false, onRegrade,
 }: SpeakingReviewViewProps) => {
+  const [regradingIdx, setRegradingIdx] = useState<number | null>(null);
   const partNumber = PART_NUMBERS[partType];
 
   const promptsList: string[] = (() => {
@@ -161,10 +167,25 @@ const SpeakingReviewView = ({
           </div>
 
           {(!g || "error" in g) ? (
-            <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
               <p className="text-xs text-muted-foreground italic">
                 {g && "error" in g ? `Không chấm được câu này: ${g.error}` : "Chưa có kết quả chấm cho câu này."}
               </p>
+              {onRegrade && audioUrl && (
+                <button
+                  onClick={async () => {
+                    if (regradingIdx !== null) return;
+                    setRegradingIdx(gIdx);
+                    try { await onRegrade(gIdx); }
+                    finally { setRegradingIdx(null); }
+                  }}
+                  disabled={regradingIdx !== null}
+                  className="inline-flex items-center gap-2 text-xs bg-primary hover:bg-primary/90 disabled:opacity-60 text-primary-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
+                >
+                  {regradingIdx === gIdx && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {regradingIdx === gIdx ? "Đang chấm lại..." : "Chấm lại"}
+                </button>
+              )}
             </div>
           ) : (
             <>

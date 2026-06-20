@@ -418,23 +418,52 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       const partResults: SpeakingFullPartResult[] = [];
       let runningScore = 0;
       let runningMax = 0;
-      let doneCount = 0;
 
+      // Flatten all items across parts and grade with a concurrency pool of 4
+      // to dramatically cut wall-clock time vs the previous sequential loop.
+      type FlatItem = { oi: number; itemIndex: number; item: SpeakingPartSubmission["items"][number] };
+      const flatItems: FlatItem[] = [];
+      const gradingsByPart: Awaited<ReturnType<typeof gradeSpeakingSpec>>[][] =
+        orderedSubs.map((sub) => new Array(sub.items.length).fill(null) as any);
+      orderedSubs.forEach((sub, oi) => {
+        sub.items.forEach((item, itemIndex) => {
+          if (!item.audioBase64) {
+            gradingsByPart[oi][itemIndex] = { error: "Không có bài ghi âm" };
+          } else {
+            flatItems.push({ oi, itemIndex, item });
+          }
+        });
+      });
+
+      let doneCount = orderedSubs.reduce(
+        (s, sub) => s + sub.items.filter((i) => !i.audioBase64).length,
+        0,
+      );
+      setSpeakingGradedCount(doneCount);
+
+      const CONCURRENCY = 4;
+      let cursor = 0;
+      const worker = async () => {
+        while (true) {
+          const idx = cursor++;
+          if (idx >= flatItems.length) return;
+          const { oi, itemIndex, item } = flatItems[idx];
+          const r = await gradeSpeakingSpec(item.spec, item.audioBase64!, item.actualSpoken);
+          gradingsByPart[oi][itemIndex] = r;
+          doneCount += 1;
+          setSpeakingGradedCount(doneCount);
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, flatItems.length) }, () => worker()));
+
+      // Reassemble per-part results, run scoring, persist recordings + gradings.
       for (let oi = 0; oi < orderedSubs.length; oi++) {
         const sub = orderedSubs[oi];
         const originalPartIdx = orderedIndices[oi];
         const originalPart = parts[originalPartIdx];
-        const gradings: Awaited<ReturnType<typeof gradeSpeakingSpec>>[] = [];
-        for (const item of sub.items) {
-          if (!item.audioBase64) {
-            gradings.push({ error: "Không có bài ghi âm" });
-          } else {
-            const r = await gradeSpeakingSpec(item.spec, item.audioBase64, item.actualSpoken);
-            gradings.push(r);
-            if (!("error" in r)) runningScore += r.partScore || 0;
-          }
-          doneCount += 1;
-          setSpeakingGradedCount(doneCount);
+        const gradings = gradingsByPart[oi];
+        for (const r of gradings) {
+          if (r && !("error" in r)) runningScore += r.partScore || 0;
         }
         const maxTotal = sub.items.reduce((s, i) => s + i.spec.maxPoints, 0);
         runningMax += maxTotal;
@@ -454,7 +483,6 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         }
         partResults.push(entry);
 
-        // Upload recordings (one per item) so review page can find them via signed URLs.
         if (originalPart) {
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
@@ -470,7 +498,6 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
             }
           }));
 
-          // Persist per-question AI gradings for History review.
           try {
             await saveSpeakingGradings({
               testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,

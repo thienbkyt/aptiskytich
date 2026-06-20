@@ -11,7 +11,10 @@ import type {
   SpeakingPartType,
   SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data,
 } from "@/data/speakingQuestions";
-import type { SpeakingGradingResult, SpeakingItemGrading } from "@/components/speaking/speakingGrading";
+import {
+  buildSpeakingGradingSpecs, gradeSpeakingSpec, blobToBase64,
+  type SpeakingGradingResult, type SpeakingItemGrading,
+} from "@/components/speaking/speakingGrading";
 
 interface Props {
   userId: string;
@@ -167,6 +170,59 @@ const SpeakingReviewPage = ({
     );
   }
 
+  const handleRegrade = async (gIdx: number) => {
+    const url = recordings[partType === "part4" ? 0 : gIdx];
+    if (!url) return;
+    const specs = buildSpeakingGradingSpecs(partType, {
+      part1Data, part2Data, part3Data, part4Data,
+    });
+    const spec = specs[gIdx];
+    if (!spec) return;
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const base64 = await blobToBase64(blob);
+      const r = await gradeSpeakingSpec(spec, base64, spec.speakTime);
+      setGradings((prev) => {
+        const next = prev.slice();
+        next[gIdx] = r;
+        return next;
+      });
+      if (!("error" in r)) {
+        // Best-effort upsert into speaking_question_gradings (delete old + insert).
+        try {
+          let del = supabase
+            .from("speaking_question_gradings")
+            .delete()
+            .eq("user_id", userId)
+            .eq("part", partLabel)
+            .eq("item_index", gIdx);
+          if (testResultId) del = del.eq("test_result_id", testResultId);
+          await del;
+          await supabase.from("speaking_question_gradings").insert({
+            user_id: userId,
+            test_result_id: testResultId ?? null,
+            exam_set_id: examSetId,
+            part: partLabel,
+            item_index: gIdx,
+            question_text: spec.questionText,
+            max_points: r.maxPoints ?? 0,
+            part_score: r.partScore ?? 0,
+            transcript: r.transcript ?? null,
+            grammar_errors: (r.grammarErrors ?? []) as any,
+            pronunciation_errors: (r.pronunciationErrors ?? []) as any,
+            improved_version: r.improvedVersion ?? null,
+            feedback: r.feedback ?? null,
+          } as any);
+        } catch (e) {
+          console.warn("[SpeakingReviewPage] persist regrade failed", e);
+        }
+      }
+    } catch (e) {
+      console.warn("[SpeakingReviewPage] regrade failed", e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {skillHeader}
@@ -183,6 +239,7 @@ const SpeakingReviewPage = ({
           onChangeIndex={setReviewIndex}
           onBack={onExit}
           hidePager={questionIndex !== undefined}
+          onRegrade={handleRegrade}
         />
       </div>
     </div>

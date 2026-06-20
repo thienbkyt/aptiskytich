@@ -116,31 +116,38 @@ export async function gradeSpeakingSpec(
   audioBase64: string,
   actualSpoken: number,
 ): Promise<SpeakingGradingResult> {
-  try {
-    const body: Record<string, unknown> = {
-      type: "speaking",
-      audioBase64,
-      questions: spec.questions,
-      partType: spec.partType,
-      speakTime: spec.speakTime,
-      actualSpoken,
-      timePenaltyTiers: spec.timePenaltyTiers,
-    };
-    if (spec.isAggregated) {
-      body.subQuestions = spec.subQuestions;
-      body.usedConnectorsRequired = true;
-    } else {
-      body.maxPoints = spec.maxPoints;
-      body.itemType = spec.itemType;
-    }
-    const { data, error } = await supabase.functions.invoke("grade-exam", { body });
-    if (error) throw error;
-    if ((data as any)?.error) throw new Error((data as any).error);
-    return data as SpeakingItemGrading;
-  } catch (e: any) {
-    console.error("[gradeSpeakingSpec] failed", e);
-    return { error: e?.message ?? "Lỗi chấm điểm" };
+  const body: Record<string, unknown> = {
+    type: "speaking",
+    audioBase64,
+    questions: spec.questions,
+    partType: spec.partType,
+    speakTime: spec.speakTime,
+    actualSpoken,
+    timePenaltyTiers: spec.timePenaltyTiers,
+  };
+  if (spec.isAggregated) {
+    body.subQuestions = spec.subQuestions;
+    body.usedConnectorsRequired = true;
+  } else {
+    body.maxPoints = spec.maxPoints;
+    body.itemType = spec.itemType;
   }
+  const delays = [1500, 3000];
+  let lastErr: any = null;
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    try {
+      const { data, error } = await supabase.functions.invoke("grade-exam", { body });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as SpeakingItemGrading;
+    } catch (e: any) {
+      lastErr = e;
+      console.warn(`[gradeSpeakingSpec] attempt ${attempt + 1} failed`, e?.message ?? e);
+      if (attempt < 2) await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
+  }
+  console.error("[gradeSpeakingSpec] failed after retries", lastErr);
+  return { error: lastErr?.message ?? "Lỗi chấm điểm" };
 }
 
 export function computeSpeakingMaxTotal(specs: SpeakingGradingSpec[]): number {
