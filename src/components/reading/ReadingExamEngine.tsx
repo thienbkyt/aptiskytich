@@ -81,6 +81,8 @@ interface ReadingExamEngineProps {
   pageTotal?: number;
   /** For Part 2: which section index to mount at initially. */
   initialSection?: number;
+  /** Notifies parent of total page count for this part (used by review pager). */
+  onPageCount?: (n: number) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -92,7 +94,7 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
-  pageBase, pageTotal, initialSection,
+  pageBase, pageTotal, initialSection, onPageCount,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
@@ -154,6 +156,18 @@ const ReadingExamEngine = ({
     : internalReviewStatus === "loading";
 
   const part2SectionCount = part2Question?.sections.length || 0;
+
+  // Notify parent of page count for this part (review pager support).
+  useEffect(() => {
+    const n = partType === "part2" ? Math.max(1, part2SectionCount) : 1;
+    onPageCount?.(n);
+  }, [partType, part2SectionCount, onPageCount]);
+
+  // When initialSection changes (review pager navigates pages), sync currentIndex.
+  useEffect(() => {
+    if (initialSection != null) setCurrentIndex(initialSection);
+  }, [initialSection]);
+
 
   // Panel "questions": for part2 each section = 1 question; others = per item.
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
