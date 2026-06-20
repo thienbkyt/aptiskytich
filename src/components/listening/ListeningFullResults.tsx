@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSkillBand, getLevelColor } from "@/data/questions";
