@@ -387,13 +387,14 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         user_answer: "(recorded)",
         is_correct: false,
       }));
-      saveExamResult({
+      const _trId = await saveExamResult({
         examSetId: currentPart.id,
         skill: "speaking",
         correct: 0,
         total: perQuestion.length,
         perQuestion,
       });
+      speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
