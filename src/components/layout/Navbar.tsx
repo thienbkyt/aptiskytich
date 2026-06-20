@@ -71,7 +71,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/70 backdrop-blur-xl border-b border-primary/40 shadow-[0_1px_0_0_hsl(var(--primary)/0.6),0_8px_24px_-8px_hsl(var(--primary)/0.25)]">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur-md border-b border-primary/40 shadow-[0_1px_0_0_hsl(var(--primary)/0.6),0_8px_24px_-8px_hsl(var(--primary)/0.25)]">
       <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 mr-4 group">
