@@ -118,6 +118,7 @@ const WritingExamEngine = ({
   const [formalAnswer, setFormalAnswer] = useState(initialAnswers?.formalAnswer ?? "");
 
   const { grading, isGrading, gradeExam } = useExamGrading();
+  const effectiveGrading = (gradingResult ?? grading) as WritingGradingResult | null;
 
   // Ensure exam-mode dark overrides apply during intro phase too
   // (intro screen renders no ExamHeader, so the body class wouldn't be set).
@@ -515,10 +516,10 @@ const WritingExamEngine = ({
           />
         )}
 
-        {reviewMode && gradingResult && (() => {
+        {(reviewMode || isReviewing) && effectiveGrading && (() => {
           const allErrors = [
-            ...(gradingResult.grammarErrors || []).map((e) => ({ ...e, kind: "Ngữ pháp" })),
-            ...(gradingResult.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
+            ...(effectiveGrading.grammarErrors || []).map((e) => ({ ...e, kind: "Ngữ pháp" })),
+            ...(effectiveGrading.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
           ];
           return (
             <div className="mt-4 space-y-4">
@@ -526,11 +527,11 @@ const WritingExamEngine = ({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base font-heading font-bold text-foreground">Nhận xét của AI Kỳ Tích</h3>
                   <span className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
-                    {Number((gradingResult.partScore / 2).toFixed(1))}/{gradingResult.maxPoints / 2}
+                    {Number((effectiveGrading.partScore / 2).toFixed(1))}/{effectiveGrading.maxPoints / 2}
                   </span>
                 </div>
-                {gradingResult.feedback && (
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{gradingResult.feedback}</p>
+                {effectiveGrading.feedback && (
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{effectiveGrading.feedback}</p>
                 )}
               </div>
 
