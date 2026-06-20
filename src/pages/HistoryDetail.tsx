@@ -259,7 +259,13 @@ const HistoryDetail = () => {
         pages={reviewPages}
         initialPageIdx={reviewInitialIdx}
         userId={user.id}
-        onExit={() => setReviewing(false)}
+        onExit={() => {
+          if (startReview) {
+            navigate("/history", { replace: true });
+          } else {
+            setReviewing(false);
+          }
+        }}
       />
     );
   }
