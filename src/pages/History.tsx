@@ -491,7 +491,7 @@ const History = () => {
                         <TableCell className="text-right">
                           <div className="inline-flex gap-2">
                             {!r.isMarathon && (
-                              <Link to={`/history/${r.id}`}>
+                              <Link to={`/history/${r.id}?review=1`}>
                                 <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
                               </Link>
                             )}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,9 @@ const formatDuration = (s: number | null) => {
 
 const HistoryDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const startReview = searchParams.has("review");
   const { user, loading: authLoading } = useAuth();
   const [result, setResult] = useState<ResultRow | null>(null);
   const [setInfo, setSetInfo] = useState<{ title: string; skill: string; part: string } | null>(null);
@@ -74,6 +77,13 @@ const HistoryDetail = () => {
   const [reviewing, setReviewing] = useState(false);
   const [reviewPages, setReviewPages] = useState<ReviewPage[]>([]);
   const [reviewInitialIdx, setReviewInitialIdx] = useState(0);
+
+  // Auto-enter review mode when requested via URL and pages are ready.
+  useEffect(() => {
+    if (startReview && reviewPages.length > 0 && !reviewing) {
+      setReviewing(true);
+    }
+  }, [startReview, reviewPages.length, reviewing]);
 
   // When toggling between summary/review, scroll to top.
   useEffect(() => {
@@ -249,7 +259,13 @@ const HistoryDetail = () => {
         pages={reviewPages}
         initialPageIdx={reviewInitialIdx}
         userId={user.id}
-        onExit={() => setReviewing(false)}
+        onExit={() => {
+          if (startReview) {
+            navigate("/history", { replace: true });
+          } else {
+            setReviewing(false);
+          }
+        }}
       />
     );
   }
