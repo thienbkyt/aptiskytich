@@ -23,6 +23,7 @@ interface HistoryRow {
   part: string;
   full_test_session_id: string | null;
   full_test_id: string | null;
+  isMarathon: boolean;
 }
 
 interface FullTestGroup {
