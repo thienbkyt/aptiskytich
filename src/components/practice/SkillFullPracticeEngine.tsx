@@ -490,6 +490,21 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
+      // Back-fill test_result_id on speaking_recordings saved during this part
+      try {
+        if (_trId && currentPart.id) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            await supabase.from("speaking_recordings")
+              .update({ test_result_id: _trId })
+              .eq("user_id", user.id)
+              .eq("exam_set_id", currentPart.id)
+              .is("test_result_id", null)
+              .gte("created_at", speakingSessionStartIsoRef.current);
+          }
+        }
+      } catch { /* swallow */ }
+
       // Kick background grading for THIS part now, so it overlaps the next part.
       const subNow = speakingSubmissionsByPartRef.current[currentPartIndex];
       if (subNow) {
