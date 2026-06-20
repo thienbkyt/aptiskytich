@@ -144,13 +144,35 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
     setSavedOnce(true);
-    saveExamResult({
-      examSetId: null,
-      skill: "listening",
-      correct: accCorrect,
-      total: accTotal,
-      extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
-    });
+    (async () => {
+      const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const snap = buildReviewSnapshot({
+        skill: "listening",
+        part: partType,
+        testTitle: `Marathon · ${partName}`,
+        score: accCorrect, total: accTotal,
+        scaled50: accTotal > 0 ? Math.round((accCorrect / accTotal) * 50) : null,
+        items: [],
+        raw: {
+          mode: "marathon",
+          partType,
+          perSet: reviewable.map((r, i) => ({
+            examSetId: r.examSetId, part: r.part,
+            correct: r.correct, total: r.total,
+            qResults: r.qResults,
+            engineData: loaded?.[sets.findIndex((s) => s.id === r.examSetId)]?.engineData ?? null,
+          })),
+        },
+      });
+      saveExamResult({
+        examSetId: null,
+        skill: "listening",
+        correct: accCorrect,
+        total: accTotal,
+        extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
+        reviewSnapshot: snap,
+      });
+    })();
   }, [phase, savedOnce, accCorrect, accTotal]);
 
   // Add body class while reviewing for any review-mode global styles.

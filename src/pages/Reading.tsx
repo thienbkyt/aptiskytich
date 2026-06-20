@@ -179,7 +179,42 @@ const Reading = () => {
     });
   };
 
-  const handleComplete = (correct: number, total: number, perQuestion?: any[]) => {
+  const handleComplete = async (correct: number, total: number, perQuestion?: any[]) => {
+    const snap = await (async () => {
+      try {
+        const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { buildReviewRequest } = await import("@/lib/readingReview");
+        let translations: Record<string, string> = {};
+        let part3Evidence: Record<string, { person: string; sentence: string }> = {};
+        try {
+          const partLike = { partType: exam.partType, ...(exam.engineData || {}) } as any;
+          const { items, part3 } = buildReviewRequest(partLike);
+          if ((items?.length || 0) > 0 || (part3?.length || 0) > 0) {
+            const res = await supabase.functions.invoke("translate-review", {
+              body: { exam_set_id: exam.examSetId, items, part3 },
+            });
+            const p = (res?.data || {}) as any;
+            translations = p.translations || {};
+            part3Evidence = p.part3Evidence || {};
+          }
+        } catch (e) { /* best-effort */ }
+        return buildReviewSnapshot({
+          skill: "reading",
+          part: exam.partType,
+          testTitle: exam.testTitle,
+          score: correct, total,
+          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
+          items: [],
+          raw: {
+            engineData: exam.engineData,
+            perQuestion: perQuestion || [],
+            translations,
+            part3Evidence,
+          },
+        });
+      } catch { return null; }
+    })();
     setExam((prev) => {
       const timeSpent = prev.startedAt ? Math.floor((Date.now() - prev.startedAt) / 1000) : undefined;
       saveExamResult({
@@ -187,6 +222,7 @@ const Reading = () => {
         skill: "reading",
         correct, total, timeSpent,
         perQuestion,
+        reviewSnapshot: snap,
       });
       return { ...prev, correct, total };
     });

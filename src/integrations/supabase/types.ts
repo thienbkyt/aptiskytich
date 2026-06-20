@@ -934,6 +934,7 @@ export type Database = {
           full_test_session_id: string | null
           id: string
           level: string
+          review_snapshot: Json | null
           score: number
           skill_scores: Json | null
           test_id: string | null
@@ -949,6 +950,7 @@ export type Database = {
           full_test_session_id?: string | null
           id?: string
           level: string
+          review_snapshot?: Json | null
           score: number
           skill_scores?: Json | null
           test_id?: string | null
@@ -964,6 +966,7 @@ export type Database = {
           full_test_session_id?: string | null
           id?: string
           level?: string
+          review_snapshot?: Json | null
           score?: number
           skill_scores?: Json | null
           test_id?: string | null

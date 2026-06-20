@@ -543,6 +543,23 @@ const SpeakingExamEngine = ({
     // Create the aggregate test_results row FIRST so each recording can be linked
     // by test_result_id (review page no longer relies on time-window matching).
     try {
+      const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const partData =
+        partType === "part1" ? { part1Data }
+        : partType === "part2" ? { part2Data }
+        : partType === "part3" ? { part3Data }
+        : { part4Data };
+      const snap = buildReviewSnapshot({
+        skill: "speaking",
+        part: partType,
+        testTitle,
+        score: 0,
+        total: sourceQuestionIds?.length || 1,
+        items: (sourceQuestionIds || []).map((_, idx) => ({
+          extra: { recordingIndex: idx },
+        })),
+        raw: { partType, ...partData, sourceQuestionIds, recordingCount: recordingsRef.current.length },
+      });
       if (sourceQuestionIds && sourceQuestionIds.length > 0) {
         const perQuestion = sourceQuestionIds.map((qid, idx) => ({
           exam_question_id: qid,
@@ -557,6 +574,7 @@ const SpeakingExamEngine = ({
           perQuestion,
           fullTestSessionId: fullTestSessionId ?? null,
           fullTestId: fullTestId ?? null,
+          reviewSnapshot: snap,
         });
         testResultIdRef.current = trid;
       } else {
@@ -567,6 +585,7 @@ const SpeakingExamEngine = ({
           total: 1,
           fullTestSessionId: fullTestSessionId ?? null,
           fullTestId: fullTestId ?? null,
+          reviewSnapshot: snap,
         });
         testResultIdRef.current = trid;
       }

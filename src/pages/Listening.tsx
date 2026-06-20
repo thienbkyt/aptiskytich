@@ -168,7 +168,39 @@ const Listening = () => {
     });
   };
 
-  const handleComplete = (correct: number, total: number, perQuestion?: any[]) => {
+  const handleComplete = async (correct: number, total: number, perQuestion?: any[]) => {
+    const snap = await (async () => {
+      try {
+        const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { buildHighlightRequest } = await import("@/lib/listeningReview");
+        let highlights: Record<string, string> = {};
+        try {
+          const partLike = { partType: exam.partType, ...(exam.engineData || {}) } as any;
+          const items = buildHighlightRequest(partLike);
+          if ((items?.length || 0) > 0) {
+            const res = await supabase.functions.invoke("listening-highlight", {
+              body: { exam_set_id: exam.examSetId, items },
+            });
+            const p = (res?.data || {}) as any;
+            highlights = p.highlights || {};
+          }
+        } catch { /* best-effort */ }
+        return buildReviewSnapshot({
+          skill: "listening",
+          part: exam.partType,
+          testTitle: exam.testTitle,
+          score: correct, total,
+          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
+          items: [],
+          raw: {
+            engineData: exam.engineData,
+            perQuestion: perQuestion || [],
+            highlights,
+          },
+        });
+      } catch { return null; }
+    })();
     setExam((prev) => {
       const timeSpent = prev.startedAt ? Math.floor((Date.now() - prev.startedAt) / 1000) : undefined;
       saveExamResult({
@@ -176,6 +208,7 @@ const Listening = () => {
         skill: "listening",
         correct, total, timeSpent,
         perQuestion,
+        reviewSnapshot: snap,
       });
       return { ...prev, correct, total };
     });
