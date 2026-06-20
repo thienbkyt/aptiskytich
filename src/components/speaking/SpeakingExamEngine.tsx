@@ -268,6 +268,37 @@ const SpeakingExamEngine = ({
       gradings,
       questionTexts: promptsList,
     });
+    // Bake AI grading into snapshot items so review is self-sufficient.
+    (async () => {
+      try {
+        if (!testResultIdRef.current) return;
+        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+        const aiByIndex: Record<number, any> = {};
+        let totalScore = 0, totalMax = 0;
+        gradings.forEach((g, i) => {
+          if (!g || (g as any).error) return;
+          const gg = g as any;
+          aiByIndex[i] = {
+            partScore: gg.partScore,
+            maxPoints: gg.maxPoints,
+            grammarErrors: gg.grammarErrors || [],
+            pronunciationErrors: gg.pronunciationErrors || [],
+            feedback: gg.feedback || null,
+            transcript: gg.transcript || null,
+            improvedVersion: gg.improvedVersion || null,
+          };
+          totalScore += gg.partScore || 0;
+          totalMax += gg.maxPoints || 0;
+        });
+        const scaled50 = totalMax > 0 ? Math.round((totalScore / totalMax) * 50) : null;
+        const extra = totalMax > 0
+          ? { score: totalScore, total: totalMax, scaled50 }
+          : undefined;
+        if (Object.keys(aiByIndex).length > 0) {
+          await mergeSnapshotAI(testResultIdRef.current, aiByIndex, extra);
+        }
+      } catch (e) { console.warn("[Speaking] bake AI failed", e); }
+    })();
   }, [phase, gradings, partType, part1Data, part2Data, part3Data, part4Data, examSetId]);
 
 
