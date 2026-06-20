@@ -383,7 +383,10 @@ const History = () => {
                         </TableCell>
                         <TableCell><Badge variant="outline" className="text-[11px]">{g.skillCount}/5 kỹ năng</Badge></TableCell>
                         <TableCell className="text-right">
-                          <div className="font-bold text-foreground">{g.hasScaled ? `${g.totalScaled}/250` : "—"}</div>
+                          <div className="font-bold text-foreground">{g.hasScaled ? `${g.totalScaled}/200` : "—"}</div>
+                          {g.gvScaled != null && (
+                            <div className="text-[11px] text-muted-foreground">G&V {g.gvScaled}/50</div>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="inline-flex gap-2">
