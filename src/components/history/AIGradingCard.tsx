@@ -98,7 +98,7 @@ const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan
       </div>
 
       {/* CEFR criteria breakdown */}
-      {criteriaEntries.length > 0 && (
+      {!isWriting && criteriaEntries.length > 0 && (
         <div className="p-5 border-b border-border">
           <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
             Điểm theo tiêu chí
