@@ -63,6 +63,7 @@ const formatDuration = (s: number | null) => {
 
 const HistoryDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const startReview = searchParams.has("review");
   const { user, loading: authLoading } = useAuth();
