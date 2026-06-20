@@ -114,23 +114,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const { gradeExam } = useExamGrading();
 
 
-  // Persist final result once when the user finishes the full test.
-  useEffect(() => {
-    if (phase !== "completed" || savedRef.current) return;
-    savedRef.current = true;
-    const totalCorrect = Object.values(scores).reduce((s, v) => s + v.correct, 0);
-    const totalQ = Object.values(scores).reduce((s, v) => s + v.total, 0);
-    if (totalQ === 0) return;
-    const skillScores: Record<string, { correct: number; total: number }> = {};
-    SKILL_ORDER.forEach((sk) => { skillScores[sk] = scores[sk]; });
-    saveTestResult({
-      correct: totalCorrect,
-      total: totalQ,
-      skill: "full_test",
-      testId: testId,
-      skillScores,
-    });
-  }, [phase, scores, testId]);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
