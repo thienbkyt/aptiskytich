@@ -568,7 +568,157 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       });
     }
 
-    return new Response(JSON.stringify(grading), {
+    // ─── WRITING: compute final score from qualitative grading ───
+    const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+    const round1 = (n: number) => Math.round(n * 10) / 10;
+    const wordShortBracket = (count: number, target: number) => {
+      const short = Math.max(0, ((target - count) / target) * 100);
+      if (short >= 20) return 30;
+      if (short >= 11) return 20;
+      if (short >= 1) return 10;
+      return 0;
+    };
+    const stripIdx = (arr: any[]) =>
+      (Array.isArray(arr) ? arr : []).map(({ questionIndex, emailIndex, ...rest }: any) => rest);
+
+    const allGrammar: any[] = Array.isArray(grading?.grammarErrors) ? grading.grammarErrors : [];
+    const allSpelling: any[] = Array.isArray(grading?.spellingErrors) ? grading.spellingErrors : [];
+    const feedback: string = grading?.feedback ?? "";
+    let payload: any;
+
+    if (partType === "task1") {
+      const items: any[] = Array.isArray(grading?.items) ? grading.items.slice(0, 5) : [];
+      while (items.length < 5) items.push({ tooManyWords: false, grammarCorrect: false });
+      const correctCount = items.filter((it) => !it.tooManyWords && it.grammarCorrect).length;
+      const partScore = round1(clamp(correctCount * 2, 0, 10));
+      payload = {
+        partType,
+        maxPoints: 10,
+        addressPercent: round1((correctCount / 5) * 100),
+        bonusPercent: 0,
+        wordPenaltyPercent: 0,
+        coherencePenaltyPercent: 0,
+        openingClosingPenalty: 0,
+        grammarErrors: stripIdx(allGrammar),
+        spellingErrors: stripIdx(allSpelling),
+        partScore,
+        feedback,
+      };
+    } else if (partType === "task2") {
+      const max = 20;
+      const addr = clamp(Number(grading?.addressPercent ?? 0), 0, 100);
+      const bonus = clamp(Number(grading?.bonusPercent ?? 0), 0, 40);
+      const wc = Math.max(0, Number(grading?.relevantWordCount ?? 0));
+      const coh = !!grading?.coherenceLacking;
+      const content = Math.min(100, addr * 0.6 + bonus);
+      const raw = (content / 100) * max;
+      const wordPct = wordShortBracket(wc, 20);
+      const wordPenalty = (wordPct / 100) * max;
+      const cohPct = coh ? 10 : 0;
+      const cohPenalty = (cohPct / 100) * max;
+      const errPenalty = (allGrammar.length + allSpelling.length) * 1;
+      const partScore = round1(clamp(raw - wordPenalty - cohPenalty - errPenalty, 0, max));
+      payload = {
+        partType,
+        maxPoints: max,
+        addressPercent: round1(addr),
+        bonusPercent: round1(bonus),
+        wordPenaltyPercent: wordPct,
+        coherencePenaltyPercent: cohPct,
+        openingClosingPenalty: 0,
+        grammarErrors: stripIdx(allGrammar),
+        spellingErrors: stripIdx(allSpelling),
+        partScore,
+        feedback,
+      };
+    } else if (partType === "task3") {
+      const max = 30;
+      const items: any[] = Array.isArray(grading?.items) ? grading.items.slice(0, 3) : [];
+      while (items.length < 3) items.push({ addressPercent: 0, bonusPercent: 0 });
+      const coh = !!grading?.coherenceLacking;
+      let sumScore = 0;
+      const addrs: number[] = [];
+      const bons: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const a = clamp(Number(items[i]?.addressPercent ?? 0), 0, 100);
+        const b = clamp(Number(items[i]?.bonusPercent ?? 0), 0, 40);
+        addrs.push(a);
+        bons.push(b);
+        const content = Math.min(100, a * 0.6 + b);
+        const raw = (content / 100) * 10;
+        const errsI =
+          allGrammar.filter((e) => Number(e?.questionIndex) === i).length +
+          allSpelling.filter((e) => Number(e?.questionIndex) === i).length;
+        sumScore += Math.max(0, raw - errsI * 1);
+      }
+      const cohPct = coh ? 10 : 0;
+      const cohPenalty = (cohPct / 100) * max;
+      const partScore = round1(clamp(sumScore - cohPenalty, 0, max));
+      payload = {
+        partType,
+        maxPoints: max,
+        addressPercent: round1(addrs.reduce((s, n) => s + n, 0) / 3),
+        bonusPercent: round1(bons.reduce((s, n) => s + n, 0) / 3),
+        wordPenaltyPercent: 0,
+        coherencePenaltyPercent: cohPct,
+        openingClosingPenalty: 0,
+        grammarErrors: stripIdx(allGrammar),
+        spellingErrors: stripIdx(allSpelling),
+        partScore,
+        feedback,
+      };
+    } else {
+      // task4
+      const max = 40;
+      const emailMaxes = [15, 25];
+      const wordTargets = [50, 120];
+      const emails = [grading?.email1, grading?.email2];
+      let totalScore = 0;
+      const addrs: number[] = [];
+      const wordPcts: number[] = [];
+      let anyCoh = false;
+      let totalOC = 0;
+      for (let e = 0; e < 2; e++) {
+        const em = emails[e] || {};
+        const maxE = emailMaxes[e];
+        const addr = clamp(Number(em?.addressPercent ?? 0), 0, 100);
+        const wc = Math.max(0, Number(em?.relevantWordCount ?? 0));
+        const coh = !!em?.coherenceLacking;
+        const missO = !!em?.missingOpening;
+        const missC = !!em?.missingClosing;
+        addrs.push(addr);
+        if (coh) anyCoh = true;
+        const raw = (addr / 100) * maxE;
+        const wordPct = wordShortBracket(wc, wordTargets[e]);
+        wordPcts.push(wordPct);
+        const wordPenalty = (wordPct / 100) * maxE;
+        const cohPenalty = (coh ? 10 : 0) / 100 * maxE;
+        const errCount =
+          allGrammar.filter((er) => Number(er?.emailIndex) === e).length +
+          allSpelling.filter((er) => Number(er?.emailIndex) === e).length;
+        const errPenalty = errCount * 2;
+        const ocPenalty = (missO ? 3 : 0) + (missC ? 3 : 0);
+        totalOC += ocPenalty;
+        const emailScore = Math.max(0, raw - wordPenalty - cohPenalty - errPenalty - ocPenalty);
+        totalScore += emailScore;
+      }
+      const partScore = round1(clamp(totalScore, 0, max));
+      payload = {
+        partType,
+        maxPoints: max,
+        addressPercent: round1((addrs[0] + addrs[1]) / 2),
+        bonusPercent: 0,
+        wordPenaltyPercent: round1((wordPcts[0] + wordPcts[1]) / 2),
+        coherencePenaltyPercent: anyCoh ? 10 : 0,
+        openingClosingPenalty: totalOC,
+        grammarErrors: stripIdx(allGrammar),
+        spellingErrors: stripIdx(allSpelling),
+        partScore,
+        feedback,
+      };
+    }
+
+    return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
