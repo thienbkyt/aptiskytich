@@ -13,7 +13,7 @@ import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
 import { saveTestResult } from "@/lib/testResults";
-import { saveExamResult } from "@/lib/saveExamResult";
+import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
 import { getLevel, getLevelColor } from "@/data/questions";
 import { useAuth } from "@/hooks/useAuth";
 
