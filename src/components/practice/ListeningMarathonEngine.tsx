@@ -146,17 +146,28 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
     setSavedOnce(true);
     (async () => {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+      const items: any[] = [];
+      reviewable.forEach((r) => {
+        const ed = loaded?.[sets.findIndex((s) => s.id === r.examSetId)]?.engineData ?? null;
+        if (ed) {
+          try {
+            items.push(...buildListeningItems(partType as any, ed, {}, r.qResults || []));
+          } catch { /* noop */ }
+        }
+      });
+      const { scaled50, band } = computeScaleAndBand("listening", accCorrect, accTotal);
       const snap = buildReviewSnapshot({
         skill: "listening",
         part: partType,
         testTitle: `Marathon · ${partName}`,
         score: accCorrect, total: accTotal,
-        scaled50: accTotal > 0 ? Math.round((accCorrect / accTotal) * 50) : null,
-        items: [],
+        scaled50, band,
+        items,
         raw: {
           mode: "marathon",
           partType,
-          perSet: reviewable.map((r, i) => ({
+          perSet: reviewable.map((r) => ({
             examSetId: r.examSetId, part: r.part,
             correct: r.correct, total: r.total,
             qResults: r.qResults,
