@@ -30,6 +30,9 @@ export interface SpeakingReviewViewProps {
   onExit?: () => void;
   totalParts?: number;
   hidePager?: boolean;
+  /** Re-grade a single question (the one currently shown). The parent is
+   *  responsible for actually calling the grader and persisting the result. */
+  onRegrade?: (gradingIndex: number) => Promise<void>;
 }
 
 /**
