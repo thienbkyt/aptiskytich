@@ -68,7 +68,14 @@ const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan
   })();
 
   const overall = grading.overall_level || "—";
-  const overallColor = CEFR_COLORS[overall] || "bg-[#24085a]/10 text-[#24085a]";
+  const writingCriteria: any = grading.criteria && typeof grading.criteria === "object" && !Array.isArray(grading.criteria) ? grading.criteria : null;
+  const isWriting = !!(writingCriteria && typeof writingCriteria.maxPoints === "number" && typeof writingCriteria.partScore === "number");
+  const writingDisplay = isWriting
+    ? `${Number((Number(writingCriteria.partScore) / 2).toFixed(1))}/${Number(writingCriteria.maxPoints) / 2}`
+    : null;
+  const overallColor = isWriting
+    ? "bg-primary/10 text-primary"
+    : (CEFR_COLORS[overall] || "bg-[#24085a]/10 text-[#24085a]");
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
