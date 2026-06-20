@@ -101,6 +101,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   // Speaking full-practice grading state
   const speakingSubmissionsByPartRef = useRef<Record<number, SpeakingPartSubmission>>({});
   const speakingTestResultIdByPartRef = useRef<Record<number, string | null>>({});
+  const speakingSessionStartIsoRef = useRef<string>(new Date().toISOString());
   const speakingGradingPromisesByPartRef = useRef<
     Record<number, Promise<Awaited<ReturnType<typeof gradeSpeakingSpec>>[]>>
   >({});
