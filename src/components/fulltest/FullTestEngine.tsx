@@ -658,13 +658,40 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         const totalRounded = Math.round(totalScore);
         const maxRounded = Math.max(Math.round(totalMax), 1);
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+        // Build flat items across all parts (in order)
+        const speakingItemSpecs: any[] = [];
+        const itemAIByIndex: Record<number, any> = {};
+        let runningIdx = 0;
+        orderedEntries.forEach((e, partIdx) => {
+          e.sub.items.forEach((it, itIdx) => {
+            const g = (perPartResults[partIdx] || [])[itIdx];
+            const ai = g && !("error" in g) ? {
+              partScore: (g as any).partScore,
+              maxPoints: (g as any).maxPoints,
+              grammarErrors: (g as any).grammarErrors || [],
+              pronunciationErrors: (g as any).pronunciationErrors || [],
+              feedback: (g as any).feedback || null,
+              transcript: (g as any).transcript || null,
+              improvedVersion: (g as any).improvedVersion || null,
+            } : null;
+            speakingItemSpecs.push({
+              questionText: it.spec.questionText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
+              recordingPath: null,
+              ai,
+            });
+            if (ai) itemAIByIndex[runningIdx] = ai;
+            runningIdx += 1;
+          });
+        });
+        const { scaled50, band } = computeScaleAndBand("speaking", totalRounded, maxRounded);
         const speakingSnap = buildReviewSnapshot({
           skill: "speaking",
           part: null,
           testTitle: "Full Test · Speaking",
           score: totalRounded, total: maxRounded,
-          scaled50: maxRounded > 0 ? Math.round((totalRounded / maxRounded) * 50) : null,
-          items: [],
+          scaled50, band,
+          items: buildSpeakingItems(speakingItemSpecs),
           raw: {
             perPart: orderedEntries.map((e, i) => ({
               partType: e.sub.partType,
