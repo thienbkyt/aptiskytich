@@ -65,6 +65,40 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
     view === "review",
   );
 
+  const handlePageCount = useCallback((n: number) => {
+    setPageCount(n);
+    setPageInPart((prev) => {
+      if (enterAtLast) {
+        setEnterAtLast(false);
+        return Math.max(0, n - 1);
+      }
+      return prev > n - 1 ? 0 : prev;
+    });
+  }, [enterAtLast]);
+
+  const goNextPage = () => {
+    if (pageInPart < pageCount - 1) {
+      setPageInPart((p) => p + 1);
+    } else if (reviewPartIndex < parts.length - 1) {
+      setReviewPartIndex((i) => i + 1);
+      setPageInPart(0);
+      setPageCount(1);
+      setEnterAtLast(false);
+    }
+  };
+
+  const goPrevPage = () => {
+    if (pageInPart > 0) {
+      setPageInPart((p) => p - 1);
+    } else if (reviewPartIndex > 0) {
+      setEnterAtLast(true);
+      setReviewPartIndex((i) => i - 1);
+      setPageCount(1);
+    }
+  };
+
+
+
 
   if (view === "summary") {
     return (
