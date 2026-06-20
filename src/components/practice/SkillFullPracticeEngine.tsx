@@ -101,6 +101,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   // Speaking full-practice grading state
   const speakingSubmissionsByPartRef = useRef<Record<number, SpeakingPartSubmission>>({});
   const speakingTestResultIdByPartRef = useRef<Record<number, string | null>>({});
+  const speakingGradingPromisesByPartRef = useRef<
+    Record<number, Promise<Awaited<ReturnType<typeof gradeSpeakingSpec>>[]>>
+  >({});
   const [speakingPhase, setSpeakingPhase] = useState<"none" | "grading" | "results">("none");
   const [speakingGradedCount, setSpeakingGradedCount] = useState(0);
   const [speakingGradeTotal, setSpeakingGradeTotal] = useState(0);
@@ -379,6 +382,26 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       speakingSubmissionsByPartRef.current[currentPartIndex] = sub;
     };
 
+    // Grade all items of a single part in parallel; increments speakingGradedCount
+    // as each item completes (functional setState so multiple parts can stream safely).
+    const gradePartItems = async (
+      sub: SpeakingPartSubmission,
+    ): Promise<Awaited<ReturnType<typeof gradeSpeakingSpec>>[]> => {
+      const results: Awaited<ReturnType<typeof gradeSpeakingSpec>>[] =
+        new Array(sub.items.length).fill(null) as any;
+      await Promise.all(
+        sub.items.map(async (item, idx) => {
+          if (!item.audioBase64) {
+            results[idx] = { error: "Không có bài ghi âm" };
+          } else {
+            results[idx] = await gradeSpeakingSpec(item.spec, item.audioBase64, item.actualSpoken);
+          }
+          setSpeakingGradedCount((c) => c + 1);
+        }),
+      );
+      return results;
+    };
+
     const handleSpeakingPartComplete = async () => {
       if (adminNavigationRef.current) return;
       // Persist a per-part attempt (no score yet) so HistoryDetail can list it.
@@ -396,13 +419,23 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
+      // Kick background grading for THIS part now, so it overlaps the next part.
+      const subNow = speakingSubmissionsByPartRef.current[currentPartIndex];
+      if (subNow) {
+        setSpeakingGradeTotal((t) => t + subNow.items.length);
+        // Allow overwrite (e.g. if user re-completed this part after going back)
+        speakingGradingPromisesByPartRef.current[currentPartIndex] = gradePartItems(subNow);
+      }
+
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
         setCurrentPartIndex((p) => p + 1);
         return;
       }
 
-      // Last part → grade every item across every collected part submission.
+      // Last part → await every per-part grading promise (most already done).
+      setSpeakingPhase("grading");
+
       const orderedIndices = Object.keys(speakingSubmissionsByPartRef.current)
         .map((k) => parseInt(k, 10))
         .sort((a, b) => a - b);
@@ -410,53 +443,16 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         .map((i) => speakingSubmissionsByPartRef.current[i])
         .filter(Boolean) as SpeakingPartSubmission[];
 
-      const itemTotal = orderedSubs.reduce((s, p) => s + p.items.length, 0);
-      setSpeakingGradeTotal(itemTotal);
-      setSpeakingGradedCount(0);
-      setSpeakingPhase("grading");
+      const gradingsByPart: Awaited<ReturnType<typeof gradeSpeakingSpec>>[][] = [];
+      for (const partIdx of orderedIndices) {
+        const p = speakingGradingPromisesByPartRef.current[partIdx];
+        gradingsByPart.push(p ? await p : []);
+      }
 
       const partResults: SpeakingFullPartResult[] = [];
       let runningScore = 0;
       let runningMax = 0;
 
-      // Flatten all items across parts and grade with a concurrency pool of 4
-      // to dramatically cut wall-clock time vs the previous sequential loop.
-      type FlatItem = { oi: number; itemIndex: number; item: SpeakingPartSubmission["items"][number] };
-      const flatItems: FlatItem[] = [];
-      const gradingsByPart: Awaited<ReturnType<typeof gradeSpeakingSpec>>[][] =
-        orderedSubs.map((sub) => new Array(sub.items.length).fill(null) as any);
-      orderedSubs.forEach((sub, oi) => {
-        sub.items.forEach((item, itemIndex) => {
-          if (!item.audioBase64) {
-            gradingsByPart[oi][itemIndex] = { error: "Không có bài ghi âm" };
-          } else {
-            flatItems.push({ oi, itemIndex, item });
-          }
-        });
-      });
-
-      let doneCount = orderedSubs.reduce(
-        (s, sub) => s + sub.items.filter((i) => !i.audioBase64).length,
-        0,
-      );
-      setSpeakingGradedCount(doneCount);
-
-      const CONCURRENCY = 4;
-      let cursor = 0;
-      const worker = async () => {
-        while (true) {
-          const idx = cursor++;
-          if (idx >= flatItems.length) return;
-          const { oi, itemIndex, item } = flatItems[idx];
-          const r = await gradeSpeakingSpec(item.spec, item.audioBase64!, item.actualSpoken);
-          gradingsByPart[oi][itemIndex] = r;
-          doneCount += 1;
-          setSpeakingGradedCount(doneCount);
-        }
-      };
-      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, flatItems.length) }, () => worker()));
-
-      // Reassemble per-part results, run scoring, persist recordings + gradings.
       for (let oi = 0; oi < orderedSubs.length; oi++) {
         const sub = orderedSubs[oi];
         const originalPartIdx = orderedIndices[oi];
