@@ -43,6 +43,7 @@ export async function createAndDownloadExcel(
   filename: string,
   sheetDefs: { name: string; cols: Record<string, any>[] }[]
 ) {
+  const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
 
   for (const { name, cols } of sheetDefs) {
