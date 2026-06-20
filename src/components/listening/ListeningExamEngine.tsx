@@ -60,6 +60,8 @@ interface ListeningExamEngineProps {
   pageBase?: number;
   pageTotal?: number;
   initialQuestion?: number;
+  /** Notifies parent of total question count for this part (used by review pager). */
+  onQuestionCount?: (n: number) => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
