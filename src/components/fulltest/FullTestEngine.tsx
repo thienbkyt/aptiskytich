@@ -932,14 +932,19 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         const partMaxRounded = Math.max(Math.round(partMax), 1);
 
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const { computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+        const userText = e.text || (e.perQuestion?.[0]?.user_answer ?? "");
+        const promptText = (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType);
+        const { scaled50, band } = computeScaleAndBand("writing", partScoreRounded, partMaxRounded);
         const writingSnap = buildReviewSnapshot({
           skill: "writing",
           part: e.partType,
           testTitle: e.partLabel ?? null,
           score: partScoreRounded, total: partMaxRounded,
-          scaled50: partMaxRounded > 0 ? Math.round((partScoreRounded / partMaxRounded) * 50) : null,
-          items: (e.perQuestion || []).map((p) => ({
-            userAnswer: p.user_answer ?? null,
+          scaled50, band,
+          items: [{
+            questionText: promptText,
+            userAnswer: userText,
             isCorrect: false,
             ai: res ? {
               partScore: res.partScore,
@@ -948,7 +953,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               spellingErrors: res.spellingErrors,
               feedback: res.feedback,
             } : null,
-          })),
+          }],
           raw: { partType: e.partType, text: e.text, questions: e.questions, ai: res || null },
         });
         // 1 row per part with that part's AI score
