@@ -197,7 +197,7 @@
     @apply py-16 md:py-20;
   }
   .section-container {
-    @apply container mx-auto px-4 max-w-[1200px];
+    @apply container mx-auto px-4 max-w-[1400px];
   }
   .tech-grid-bg {
     background-image:
