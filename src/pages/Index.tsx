@@ -33,7 +33,7 @@ const stats = [
 ];
 
 const features = [
-  { icon: Cpu, title: "AI chấm Speaking & Writing", desc: "Phân tích phát âm, ngữ pháp, từ vựng theo CEFR." },
+  { icon: Cpu, title: "AI Kỳ Tích chấm Speaking & Writing", desc: "Phân tích phát âm, ngữ pháp, từ vựng theo CEFR." },
   { icon: Clock, title: "Thi thử 10 phút", desc: "Kiểm tra trình độ nhanh với bài thi mini Aptis." },
   { icon: BarChart3, title: "Theo dõi tiến bộ", desc: "Biểu đồ chi tiết theo từng kỹ năng." },
   { icon: Flame, title: "Chuỗi học tập", desc: "Duy trì streak hàng ngày để tạo thói quen." },
@@ -56,7 +56,7 @@ const examSections = [
 ];
 
 const trustBadges = [
-  { icon: Cpu, label: "AI chấm tự động" },
+  { icon: Cpu, label: "AI Kỳ Tích chấm tự động" },
   { icon: ShieldCheck, label: "Sát đề thi thật 100%" },
   { icon: Sparkles, label: "5,000+ học viên" },
 ];
@@ -82,7 +82,7 @@ const Index = () => {
               variants={fadeUp} custom={0}
               className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-on-dark text-xs font-semibold mb-6 backdrop-blur-sm overflow-hidden"
             >
-              <Sparkles className="w-3.5 h-3.5 text-primary-glow" /> Nền tảng luyện Aptis có AI · Miễn phí
+              <Sparkles className="w-3.5 h-3.5 text-primary-glow" /> Nền tảng luyện Aptis có AI Kỳ Tích · Miễn phí
               <BorderBeam size={120} duration={6} />
             </motion.div>
             <motion.h1
@@ -99,7 +99,7 @@ const Index = () => {
               variants={fadeUp} custom={2}
               className="text-lg md:text-xl text-on-dark/70 mb-10 max-w-2xl mx-auto leading-relaxed"
             >
-              Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. AI chấm Speaking & Writing. Đạt B1–B2 nhanh nhất.
+              Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. AI Kỳ Tích chấm Speaking & Writing. Đạt B1–B2 nhanh nhất.
             </motion.p>
             <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
               <MagneticButton>

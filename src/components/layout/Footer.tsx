@@ -18,7 +18,7 @@ const Footer = () => (
             </span>
           </div>
           <p className="text-sm text-sidebar-foreground/50 leading-relaxed mb-5">
-            Nền tảng luyện thi Aptis có AI hỗ trợ. Giúp bạn đạt B1–B2 nhanh nhất.
+            Nền tảng luyện thi Aptis có AI Kỳ Tích hỗ trợ. Giúp bạn đạt B1–B2 nhanh nhất.
           </p>
           <div className="flex items-center gap-2">
             {[
