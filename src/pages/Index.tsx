@@ -259,7 +259,6 @@ const Index = () => {
       {/* Course CTA */}
       <section className="section-padding relative overflow-hidden bg-gradient-hero">
         <AnimatedGrid />
-        <ParticlesBackground count={30} />
         <GradientOrb tone="orange" size={420} className="top-1/2 -translate-y-1/2 -left-32" />
         <GradientOrb tone="red" size={420} className="top-1/2 -translate-y-1/2 -right-32" />
         <div className="section-container relative z-10">
