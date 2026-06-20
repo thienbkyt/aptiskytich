@@ -171,8 +171,9 @@ const WritingExamEngine = ({
       return {
         text: `Informal Email:\n${informalAnswer}\n\nFormal Email:\n${formalAnswer}`,
         questions: [
-          `Informal: ${part4Data.informalEmail.instruction}`,
-          `Formal: ${part4Data.formalEmail.instruction}`,
+          `SCENARIO (bối cảnh chung cho cả 2 email): ${part4Data.scenarioIntro}\n${part4Data.scenarioEmail}`,
+          `Email 1 (Informal) instruction: ${part4Data.informalEmail.instruction}`,
+          `Email 2 (Formal) instruction: ${part4Data.formalEmail.instruction}`,
         ],
       };
     }
