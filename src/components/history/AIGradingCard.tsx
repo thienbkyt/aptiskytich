@@ -89,9 +89,9 @@ const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan
             <p className="text-xs font-semibold text-muted-foreground mb-1">{title}</p>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-2xl font-heading font-extrabold px-3 py-0.5 rounded-md ${overallColor}`}>
-                {overall}
+                {isWriting ? writingDisplay : overall}
               </span>
-              <span className="text-xs text-muted-foreground">Band CEFR</span>
+              <span className="text-xs text-muted-foreground">{isWriting ? "Điểm Writing" : "Band CEFR"}</span>
             </div>
           </div>
         </div>
