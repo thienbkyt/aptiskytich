@@ -294,43 +294,111 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       },
     };
 
-    const writingTool = {
-      type: "function",
-      function: {
-        name: "submit_grading",
-        description: "Submit the numeric Aptis Writing grading per part rubric",
-        parameters: {
+    const writingErrorItemSchema = (extraField?: { name: string; desc: string }) => {
+      const props: any = {
+        original: { type: "string" },
+        corrected: { type: "string" },
+        explanation: { type: "string" },
+      };
+      const required = ["original", "corrected", "explanation"];
+      if (extraField) {
+        props[extraField.name] = { type: "number", description: extraField.desc };
+        required.push(extraField.name);
+      }
+      return { type: "object", properties: props, required, additionalProperties: false };
+    };
+
+    const buildWritingTool = (pt: string) => {
+      let props: any;
+      let required: string[];
+      if (pt === "task1") {
+        props = {
+          items: {
+            type: "array",
+            description: "Exactly 5 items, one per short answer",
+            items: {
+              type: "object",
+              properties: {
+                tooManyWords: { type: "boolean" },
+                grammarCorrect: { type: "boolean" },
+              },
+              required: ["tooManyWords", "grammarCorrect"],
+              additionalProperties: false,
+            },
+          },
+          grammarErrors: { type: "array", items: errorItemSchema },
+          spellingErrors: { type: "array", items: errorItemSchema },
+          feedback: { type: "string" },
+        };
+        required = ["items", "grammarErrors", "spellingErrors", "feedback"];
+      } else if (pt === "task2") {
+        props = {
+          addressPercent: { type: "number" },
+          bonusPercent: { type: "number" },
+          relevantWordCount: { type: "number" },
+          coherenceLacking: { type: "boolean" },
+          grammarErrors: { type: "array", items: errorItemSchema },
+          spellingErrors: { type: "array", items: errorItemSchema },
+          feedback: { type: "string" },
+        };
+        required = ["addressPercent", "bonusPercent", "relevantWordCount", "coherenceLacking", "grammarErrors", "spellingErrors", "feedback"];
+      } else if (pt === "task3") {
+        const errWithIdx = writingErrorItemSchema({ name: "questionIndex", desc: "0,1,2 — which of the 3 answers" });
+        props = {
+          items: {
+            type: "array",
+            description: "Exactly 3 items in question order",
+            items: {
+              type: "object",
+              properties: {
+                addressPercent: { type: "number" },
+                bonusPercent: { type: "number" },
+              },
+              required: ["addressPercent", "bonusPercent"],
+              additionalProperties: false,
+            },
+          },
+          coherenceLacking: { type: "boolean" },
+          grammarErrors: { type: "array", items: errWithIdx },
+          spellingErrors: { type: "array", items: errWithIdx },
+          feedback: { type: "string" },
+        };
+        required = ["items", "coherenceLacking", "grammarErrors", "spellingErrors", "feedback"];
+      } else {
+        // task4
+        const emailSchema = {
           type: "object",
           properties: {
-            partType: { type: "string" },
-            maxPoints: { type: "number", description: "10/20/30/40 by part" },
             addressPercent: { type: "number" },
-            bonusPercent: { type: "number" },
-            wordPenaltyPercent: { type: "number" },
-            coherencePenaltyPercent: { type: "number" },
-            grammarErrors: { type: "array", items: errorItemSchema },
-            spellingErrors: { type: "array", items: errorItemSchema },
-            openingClosingPenalty: { type: "number" },
-            partScore: { type: "number" },
-            feedback: { type: "string" },
+            relevantWordCount: { type: "number" },
+            coherenceLacking: { type: "boolean" },
+            missingOpening: { type: "boolean" },
+            missingClosing: { type: "boolean" },
           },
-          required: [
-            "partType",
-            "maxPoints",
-            "addressPercent",
-            "bonusPercent",
-            "wordPenaltyPercent",
-            "coherencePenaltyPercent",
-            "grammarErrors",
-            "spellingErrors",
-            "openingClosingPenalty",
-            "partScore",
-            "feedback",
-          ],
+          required: ["addressPercent", "relevantWordCount", "coherenceLacking", "missingOpening", "missingClosing"],
           additionalProperties: false,
+        };
+        const errWithIdx = writingErrorItemSchema({ name: "emailIndex", desc: "0 = email1 informal, 1 = email2 formal" });
+        props = {
+          email1: emailSchema,
+          email2: emailSchema,
+          grammarErrors: { type: "array", items: errWithIdx },
+          spellingErrors: { type: "array", items: errWithIdx },
+          feedback: { type: "string" },
+        };
+        required = ["email1", "email2", "grammarErrors", "spellingErrors", "feedback"];
+      }
+      return {
+        type: "function",
+        function: {
+          name: "submit_grading",
+          description: "Submit qualitative Aptis Writing grading. Do NOT compute final score.",
+          parameters: { type: "object", properties: props, required, additionalProperties: false },
         },
-      },
+      };
     };
+
+    const writingTool = buildWritingTool(partType);
 
     const speakingTool = isPart4Aggregated ? speakingPart4Tool : speakingItemTool;
     const tools = [type === "writing" ? writingTool : speakingTool];
