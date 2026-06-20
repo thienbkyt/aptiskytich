@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 import { getSkillBand } from "@/data/questions";
+import { computeHistoryDisplay } from "@/lib/historyDisplay";
 
 interface HistoryRow {
   id: string;
