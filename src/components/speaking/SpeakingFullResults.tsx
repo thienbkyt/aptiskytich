@@ -6,7 +6,10 @@ import type {
   SpeakingPartType,
   SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingPart4Data,
 } from "@/data/speakingQuestions";
-import type { SpeakingGradingResult, SpeakingItemGrading } from "./speakingGrading";
+import {
+  buildSpeakingGradingSpecs, gradeSpeakingSpec, blobToBase64,
+  type SpeakingGradingResult, type SpeakingItemGrading,
+} from "./speakingGrading";
 
 export interface SpeakingFullPartResult {
   partType: SpeakingPartType;
