@@ -97,25 +97,21 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     onPageCount(Math.max(1, n));
   }, [rows, skill, part, onPageCount]);
 
-  // Fetch writing AI grading (writing_question_gradings) when applicable.
+  // Fetch writing AI grading (writing_question_gradings) for this exact attempt via test_result_id.
   useEffect(() => {
     if (skill !== "writing" || !userId) { setWritingGrading(null); return; }
+    if (!testResultId) { setWritingGrading(null); return; }
     let cancelled = false;
     (async () => {
-      const windowMs = 2 * 60 * 60 * 1000;
-      const target = attemptCreatedAt ? new Date(attemptCreatedAt).getTime() : 0;
-      let q = supabase.from("writing_question_gradings")
-        .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback,created_at,test_result_id")
-        .eq("user_id", userId);
-      const { data } = await q;
+      const { data } = await supabase.from("writing_question_gradings")
+        .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback")
+        .eq("user_id", userId)
+        .eq("test_result_id", testResultId);
+      const rows = (data || []) as any[];
       const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
-      const match = ((data || []) as any[]).find((g) => {
-        const gp = (g.part || "").toLowerCase().replace(/\s+/g, "");
-        if (gp !== partKey) return false;
-        if (testResultId && g.test_result_id === testResultId) return true;
-        if (!target) return true;
-        return Math.abs(new Date(g.created_at).getTime() - target) < windowMs;
-      });
+      const match =
+        rows.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) ||
+        rows[0]; // single-part attempts may not echo part label
       if (cancelled) return;
       if (!match) { setWritingGrading(null); return; }
       setWritingGrading({
@@ -133,7 +129,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       });
     })();
     return () => { cancelled = true; };
-  }, [skill, userId, attemptCreatedAt, testResultId, part]);
+  }, [skill, userId, testResultId, part]);
 
 
 

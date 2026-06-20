@@ -42,13 +42,23 @@ export function useExamGrading() {
     text?: string;
     questions: string[];
     partType: string;
+    /** When set (writing), grading is additionally persisted to writing_question_gradings linked to this attempt. */
+    testResultId?: string | null;
+    examSetId?: string | null;
+    partLabel?: string;
   }): Promise<AnyGradingResult | null> => {
     setIsGrading(true);
     setGrading(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("grade-exam", {
-        body: params,
+        body: {
+          type: params.type,
+          audioBase64: params.audioBase64,
+          text: params.text,
+          questions: params.questions,
+          partType: params.partType,
+        },
       });
 
       if (error) throw error;
@@ -85,6 +95,22 @@ export function useExamGrading() {
             transcript: "",
             student_text: params.text || "",
           });
+          // Link this grading to the specific attempt so history review can find it without time-window heuristics.
+          if (params.testResultId) {
+            await (supabase as any).from("writing_question_gradings").insert([{
+              user_id: user.id,
+              test_result_id: params.testResultId,
+              exam_set_id: params.examSetId ?? null,
+              part: params.partLabel ?? params.partType,
+              item_index: 0,
+              question_text: null,
+              max_points: w.maxPoints || 0,
+              part_score: w.partScore || 0,
+              grammar_errors: (w.grammarErrors || []) as any,
+              spelling_errors: (w.spellingErrors || []) as any,
+              feedback: w.feedback || "",
+            }]);
+          }
         } else {
           const s = result as GradingResult;
           await supabase.from("exam_gradings").insert({

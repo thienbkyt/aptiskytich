@@ -41,7 +41,9 @@ interface WritingExamEngineProps {
   fullFlow?: boolean;
   isLastPart?: boolean;
   onExit: () => void;
-  onComplete?: (perQuestion?: WritingPerQuestion[]) => void;
+  onComplete?: (perQuestion?: WritingPerQuestion[]) => void | Promise<string | null | void>;
+  /** DB exam_sets.id this engine is rendering — forwarded to grading persistence. */
+  examSetId?: string | null;
   onPrevious?: () => void;
   showResultsOnSubmit?: boolean;
   /** DB exam_questions.id list — used to persist the user's essay per part. */
@@ -83,7 +85,7 @@ const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
-  onExit, onComplete, onPrevious, sourceQuestionIds,
+  onExit, onComplete, onPrevious, sourceQuestionIds, examSetId,
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
 }: WritingExamEngineProps) => {
@@ -221,7 +223,9 @@ const WritingExamEngine = ({
     }
 
     setPhase("grading");
-    onComplete?.(perQuestion);
+
+    // Resolve test_result_id from parent's save so grading can be linked to this attempt.
+    const trid = (await Promise.resolve(onComplete?.(perQuestion))) as string | null | void;
 
     const { text, questions } = getTextAndQuestions();
 
@@ -230,6 +234,9 @@ const WritingExamEngine = ({
       text,
       questions,
       partType,
+      testResultId: (trid as string | null) ?? null,
+      examSetId: examSetId ?? null,
+      partLabel: PART_LABELS[partType],
     });
 
     setPhase("results");
