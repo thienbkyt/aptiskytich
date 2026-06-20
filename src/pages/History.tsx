@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 import { getSkillBand } from "@/data/questions";
+import { computeHistoryDisplay } from "@/lib/historyDisplay";
 
 interface HistoryRow {
   id: string;
@@ -89,51 +90,7 @@ const startOfWeek = () => {
   return d;
 };
 
-const computeDisplay = (
-  r: { skill: string; score: number; total: number; level: string },
-  snapshot: any,
-  writingAgg?: { sum: number; max: number } | null,
-  speakingAgg?: { sum: number; max: number } | null,
-): { displayScore: string; displayBand: string; scorePct: number | null } => {
-  const skill = r.skill;
-  const isAI = skill === "speaking" || skill === "writing";
-
-  // 1) snapshot scaled50 + band
-  const snapScaled = snapshot && typeof snapshot.scaled50 === "number" ? snapshot.scaled50 : null;
-  const snapBand = snapshot && typeof snapshot.band === "string" ? snapshot.band : null;
-  if (snapScaled != null) {
-    return {
-      displayScore: `${snapScaled}/50`,
-      displayBand: snapBand || (isAI ? getSkillBand(snapScaled, skill as any) : (r.level || "—")),
-      scorePct: snapScaled / 50,
-    };
-  }
-
-  // 2) AI gradings fallback
-  if (isAI) {
-    const agg = skill === "writing" ? writingAgg : speakingAgg;
-    if (agg && agg.max > 0) {
-      const scaled = Math.round((agg.sum / agg.max) * 50);
-      return {
-        displayScore: `${Number(agg.sum.toFixed(1))}/${agg.max}`,
-        displayBand: getSkillBand(scaled, skill as any),
-        scorePct: agg.sum / agg.max,
-      };
-    }
-    // no AI data → show dashes (don't fall back to misleading 0/3 · A1)
-    return { displayScore: "—", displayBand: "—", scorePct: null };
-  }
-
-  // 3) plain MCQ
-  if (r.total > 0) {
-    return {
-      displayScore: `${r.score}/${r.total}`,
-      displayBand: r.level || "—",
-      scorePct: r.score / r.total,
-    };
-  }
-  return { displayScore: "—", displayBand: r.level || "—", scorePct: null };
-};
+const computeDisplay = computeHistoryDisplay;
 
 const History = () => {
   const { user, loading: authLoading } = useAuth();

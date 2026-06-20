@@ -21,6 +21,7 @@ import StreakRing from "@/components/dashboard/StreakRing";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
+import { computeHistoryDisplay, SKILL_LABELS } from "@/lib/historyDisplay";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -28,10 +29,13 @@ const fadeUp = {
 };
 
 interface RecentTest {
-  date: string;
-  score: number;
-  total: number;
-  level: string;
+  id: string;
+  dateTime: string;
+  skill: string;
+  skillLabel: string;
+  partLabel: string;
+  displayScore: string;
+  displayBand: string;
 }
 
 interface DashboardData {
@@ -102,7 +106,7 @@ const Dashboard = () => {
         const [profileRes, streakRes, testsRes, allResultsRes, speakingGradRes, writingGradRes, examGradRes] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
-          supabase.from("test_results").select("score,total,level,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(4),
+          supabase.from("test_results").select("id,score,total,level,created_at,skill_scores,review_snapshot,exam_set_id,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
           supabase.from("test_results").select("skill_scores,created_at").eq("user_id", user.id),
           supabase.from("speaking_question_gradings").select("part_score,max_points").eq("user_id", user.id),
           supabase.from("writing_question_gradings").select("part_score,max_points").eq("user_id", user.id),
@@ -188,12 +192,73 @@ const Dashboard = () => {
         });
         const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
 
-        const recentTests: RecentTest[] = tests.map((t) => ({
-          date: formatDate(t.created_at),
-          score: t.score,
-          total: t.total,
-          level: t.level,
-        }));
+        // Build recent tests with proper skill/part labels + display score/band
+        const recentRaw = tests as any[];
+        const recentSetIds = Array.from(new Set(recentRaw.map((t) => t.exam_set_id).filter(Boolean)));
+        const recentIds = recentRaw.map((t) => t.id);
+        const setsMap: Record<string, { skill: string; part: string; title: string }> = {};
+        const writingAggMap: Record<string, { sum: number; max: number }> = {};
+        const speakingAggMap: Record<string, { sum: number; max: number }> = {};
+        if (recentSetIds.length > 0 || recentIds.length > 0) {
+          const [setsRes, wgRes, sgRes] = await Promise.all([
+            recentSetIds.length > 0
+              ? supabase.from("exam_sets").select("id,skill,part,title").in("id", recentSetIds)
+              : Promise.resolve({ data: [] as any[] }),
+            recentIds.length > 0
+              ? supabase.from("writing_question_gradings").select("test_result_id,part_score,max_points").in("test_result_id", recentIds)
+              : Promise.resolve({ data: [] as any[] }),
+            recentIds.length > 0
+              ? (supabase as any).from("speaking_question_gradings").select("test_result_id,part_score,max_points").in("test_result_id", recentIds)
+              : Promise.resolve({ data: [] as any[] }),
+          ]);
+          (setsRes.data || []).forEach((s: any) => {
+            setsMap[s.id] = { skill: s.skill, part: s.part, title: s.title };
+          });
+          (wgRes.data || []).forEach((g: any) => {
+            if (!g.test_result_id) return;
+            const a = writingAggMap[g.test_result_id] || { sum: 0, max: 0 };
+            a.sum += Number(g.part_score || 0);
+            a.max += Number(g.max_points || 0);
+            writingAggMap[g.test_result_id] = a;
+          });
+          (sgRes.data || []).forEach((g: any) => {
+            if (!g.test_result_id) return;
+            const a = speakingAggMap[g.test_result_id] || { sum: 0, max: 0 };
+            a.sum += Number(g.part_score || 0);
+            a.max += Number(g.max_points || 0);
+            speakingAggMap[g.test_result_id] = a;
+          });
+        }
+
+        const formatDateTime = (iso: string) => {
+          const dt = new Date(iso);
+          const pad = (n: number) => String(n).padStart(2, "0");
+          return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        };
+
+        const recentTests: RecentTest[] = recentRaw.map((t) => {
+          const setInfo = t.exam_set_id ? setsMap[t.exam_set_id] : undefined;
+          const ss = (t.skill_scores || {}) as any;
+          let skill = setInfo?.skill || ss.skill || "unknown";
+          if (skill === "grammar_vocab") skill = "grammar";
+          const disp = computeHistoryDisplay(
+            { skill, score: t.score, total: t.total, level: t.level },
+            t.review_snapshot,
+            writingAggMap[t.id],
+            speakingAggMap[t.id],
+          );
+          const skillLabel = SKILL_LABELS[skill] || (skill !== "unknown" ? skill : "Bài luyện");
+          const partLabel = setInfo?.part ? `Part ${setInfo.part}` : (t.full_test_session_id ? "Full test" : "");
+          return {
+            id: t.id,
+            dateTime: formatDateTime(t.created_at),
+            skill,
+            skillLabel,
+            partLabel,
+            displayScore: disp.displayScore,
+            displayBand: disp.displayBand,
+          };
+        });
 
         setData({
           displayName,
@@ -430,24 +495,28 @@ const Dashboard = () => {
                   ) : (
                     <div className="space-y-2">
                       {d.recentTests.map((t, i) => {
-                        const grad = LEVEL_GRAD[t.level] || "from-muted to-muted";
-                        const pct = t.total > 0 ? Math.round((t.score / t.total) * 100) : 0;
+                        const grad = LEVEL_GRAD[t.displayBand] || "from-muted to-muted";
                         return (
-                          <div
-                            key={i}
+                          <Link
+                            to={`/history/${t.id}?review=1`}
+                            key={t.id || i}
                             className="group flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/40 hover:bg-muted/50 transition-all"
                           >
                             <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br ${grad} flex items-center justify-center text-white text-xs font-extrabold shadow-md`}>
-                              {t.level}
+                              {t.displayBand}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <Calendar className="w-3 h-3" /> {t.date}
+                              <div className="text-sm font-bold text-foreground truncate">
+                                {t.skillLabel}{t.partLabel ? ` · ${t.partLabel}` : ""}
                               </div>
-                              <div className="text-sm font-bold text-foreground">{t.score}/{t.total} <span className="text-xs text-muted-foreground font-normal">· {pct}%</span></div>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Calendar className="w-3 h-3" /> {t.dateTime}
+                                <span className="text-muted-foreground/60">·</span>
+                                <span className="font-semibold text-foreground/80">{t.displayScore}</span>
+                              </div>
                             </div>
                             <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                          </div>
+                          </Link>
                         );
                       })}
                     </div>
