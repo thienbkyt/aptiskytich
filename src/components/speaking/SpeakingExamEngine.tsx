@@ -637,6 +637,20 @@ const SpeakingExamEngine = ({
         });
         testResultIdRef.current = trid;
       }
+      // Back-fill test_result_id on speaking_recordings saved during this part
+      try {
+        if (testResultIdRef.current && examSetId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id) {
+            await supabase.from("speaking_recordings")
+              .update({ test_result_id: testResultIdRef.current })
+              .eq("user_id", user.id)
+              .eq("exam_set_id", examSetId)
+              .is("test_result_id", null)
+              .gte("created_at", sessionStartIsoRef.current);
+          }
+        }
+      } catch { /* swallow */ }
     } catch { /* swallow */ }
 
     // Best-effort upload of all recordings — never block UI on failure. Collect paths
