@@ -223,7 +223,9 @@ const WritingExamEngine = ({
     }
 
     setPhase("grading");
-    onComplete?.(perQuestion);
+
+    // Resolve test_result_id from parent's save so grading can be linked to this attempt.
+    const trid = (await Promise.resolve(onComplete?.(perQuestion))) as string | null | void;
 
     const { text, questions } = getTextAndQuestions();
 
@@ -232,6 +234,9 @@ const WritingExamEngine = ({
       text,
       questions,
       partType,
+      testResultId: (trid as string | null) ?? null,
+      examSetId: examSetId ?? null,
+      partLabel: PART_LABELS[partType],
     });
 
     setPhase("results");
