@@ -607,25 +607,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           const results = await gradeSpeakingItems(specs, blobs, actuals);
           for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
           perPartResults.push(results);
-
-          // Upload recordings so review page (matches by examSetId + "partN_qK") can play them.
-          const partNorm = entry.sub.partType; // already "part1" | "part2" | ...
-          await Promise.all(entry.sub.items.map(async (item, idx) => {
-            if (!item.blob) return;
-            try {
-              await saveSpeakingRecording({
-                examSetId: entry.partId,
-                part: `${partNorm}_q${idx + 1}`,
-                blob: item.blob,
-                durationSeconds: item.actualSpoken,
-              });
-            } catch (e) {
-              console.warn("[FullTestEngine] saveSpeakingRecording failed", e);
-            }
-          }));
         }
 
-        // Persist one aggregate speaking test_results row (gets linked to History)
+        // Persist one aggregate speaking test_results row FIRST so recordings + gradings
+        // can be linked by test_result_id (review no longer relies on time-window matching).
         const totalRounded = Math.round(totalScore);
         const maxRounded = Math.max(Math.round(totalMax), 1);
         const testResultId = await saveExamResult({
@@ -636,6 +621,25 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           fullTestSessionId: sessionIdRef.current,
           fullTestId: testId,
         });
+
+        // Upload recordings (linked to the attempt via test_result_id)
+        for (const entry of orderedEntries) {
+          const partNorm = entry.sub.partType;
+          await Promise.all(entry.sub.items.map(async (item, idx) => {
+            if (!item.blob) return;
+            try {
+              await saveSpeakingRecording({
+                examSetId: entry.partId,
+                part: `${partNorm}_q${idx + 1}`,
+                blob: item.blob,
+                durationSeconds: item.actualSpoken,
+                testResultId,
+              });
+            } catch (e) {
+              console.warn("[FullTestEngine] saveSpeakingRecording failed", e);
+            }
+          }));
+        }
 
         // Save per-question gradings linked to that row
         for (let i = 0; i < orderedEntries.length; i++) {
