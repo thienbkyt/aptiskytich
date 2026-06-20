@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSkillBand, getLevelColor } from "@/data/questions";
@@ -40,6 +40,9 @@ const partLabel = (pt: ListeningPartType) => ({
 const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   const [view, setView] = useState<"summary" | "review">("summary");
   const [reviewPartIndex, setReviewPartIndex] = useState(0);
+  const [pageInPart, setPageInPart] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
+  const [enterAtLast, setEnterAtLast] = useState(false);
   const totalCorrect = parts.reduce((s, p) => s + p.correct, 0);
   const totalQuestions = parts.reduce((s, p) => s + p.total, 0);
   const band = getSkillBand(score50, "listening");
@@ -59,6 +62,40 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
       : null,
     view === "review",
   );
+
+  const handleQuestionCount = useCallback((n: number) => {
+    setPageCount(n);
+    setPageInPart((prev) => {
+      if (enterAtLast) {
+        setEnterAtLast(false);
+        return Math.max(0, n - 1);
+      }
+      return prev > n - 1 ? 0 : prev;
+    });
+  }, [enterAtLast]);
+
+  const goNextPage = () => {
+    if (pageInPart < pageCount - 1) {
+      setPageInPart((p) => p + 1);
+    } else if (reviewPartIndex < parts.length - 1) {
+      setReviewPartIndex((i) => i + 1);
+      setPageInPart(0);
+      setPageCount(1);
+      setEnterAtLast(false);
+    }
+  };
+
+  const goPrevPage = () => {
+    if (pageInPart > 0) {
+      setPageInPart((p) => p - 1);
+    } else if (reviewPartIndex > 0) {
+      setEnterAtLast(true);
+      setReviewPartIndex((i) => i - 1);
+      setPageCount(1);
+    }
+  };
+
+
 
 
   if (view === "summary") {
@@ -152,7 +189,7 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             {parts.map((p, i) => (
               <button
                 key={i}
-                onClick={() => setReviewPartIndex(i)}
+                onClick={() => { setReviewPartIndex(i); setPageInPart(0); setPageCount(1); setEnterAtLast(false); }}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
                   i === reviewPartIndex
                     ? "bg-primary text-primary-foreground border-primary"
@@ -167,31 +204,33 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setReviewPartIndex((i) => Math.max(0, i - 1))}
-              disabled={reviewPartIndex === 0}
+              onClick={goPrevPage}
+              disabled={reviewPartIndex === 0 && pageInPart === 0}
             >
-              ← Part trước
+              ← Trang trước
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setReviewPartIndex((i) => Math.min(parts.length - 1, i + 1))}
-              disabled={reviewPartIndex === parts.length - 1}
+              onClick={goNextPage}
+              disabled={reviewPartIndex === parts.length - 1 && pageInPart >= pageCount - 1}
             >
-              Part sau →
+              Trang sau →
             </Button>
           </div>
         </div>
       </div>
 
       <ListeningExamEngine
-        key={`lreview-${reviewPartIndex}`}
+        key={`lreview-${reviewPartIndex}-${pageInPart}`}
         reviewMode
         skipIntro
         testTitle="Listening"
         timeLimit={0}
         partType={current.partType}
         initialAnswers={current.answers}
+        initialQuestion={pageInPart}
+        onQuestionCount={handleQuestionCount}
         part1Questions={current.part1Questions}
         part2Questions={current.part2Questions}
         part3Questions={current.part3Questions}
@@ -201,6 +240,7 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
         highlightLoading={highlightStatus === "loading"}
         onExit={() => setView("summary")}
       />
+
     </div>
   );
 };

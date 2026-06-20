@@ -60,6 +60,8 @@ interface ListeningExamEngineProps {
   pageBase?: number;
   pageTotal?: number;
   initialQuestion?: number;
+  /** Notifies parent of total question count for this part (used by review pager). */
+  onQuestionCount?: (n: number) => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -76,7 +78,7 @@ const ListeningExamEngine = ({
   part1Questions, part2Questions, part3Questions, part4Questions,
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
-  highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion,
+  highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -106,6 +108,17 @@ const ListeningExamEngine = ({
     partType === "part2" ? (part2Questions?.length || 0) :
     partType === "part3" ? (part3Questions?.length || 0) :
     (part4Questions?.length || 0);
+
+  // Notify parent of question count for this part (review pager support).
+  useEffect(() => {
+    onQuestionCount?.(Math.max(1, totalQuestions));
+  }, [partType, totalQuestions, onQuestionCount]);
+
+  // When initialQuestion changes (review pager navigates), sync currentIndex.
+  useEffect(() => {
+    if (initialQuestion != null) setCurrentIndex(initialQuestion);
+  }, [initialQuestion]);
+
 
   const [answers, setAnswers] = useState<any[]>(
     initialAnswers && initialAnswers.length === totalQuestions
