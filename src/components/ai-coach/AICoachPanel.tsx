@@ -363,7 +363,7 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
               <h3 className="font-bold text-sm leading-tight">AI Kỳ Tích</h3>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
-                {ctx.exam?.questionText ? `Đang xem câu ${(ctx.exam.questionIndex ?? 0) + 1}` : "AI luyện thi Aptis"}
+                {ctx.exam?.questionText ? `Đang xem câu ${(ctx.exam.questionIndex ?? 0) + 1}` : "AI Kỳ Tích luyện thi Aptis"}
               </p>
             </div>
           </div>

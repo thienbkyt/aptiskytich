@@ -39,7 +39,7 @@ export default function AICoachFab() {
         )}
         style={{ animation: open ? undefined : "coach-pulse 2.5s ease-in-out infinite" }}
       >
-        {open ? <X className="w-6 h-6" /> : <img src={aiCoachLogo.url} alt="AI Coach" className="w-full h-full object-cover rounded-full" />}
+        {open ? <X className="w-6 h-6" /> : <img src={aiCoachLogo.url} alt="AI Kỳ Tích" className="w-full h-full object-cover rounded-full" />}
         {!open && (
           <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-background text-primary border border-primary/40">
             AI

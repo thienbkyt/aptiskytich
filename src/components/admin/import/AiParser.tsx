@@ -51,7 +51,7 @@ const AiParser = ({ onParsed }: Props) => {
       }));
 
       if (questions.length === 0) {
-        toast({ title: "AI không tìm thấy câu hỏi nào", variant: "destructive" });
+        toast({ title: "AI Kỳ Tích không tìm thấy câu hỏi nào", variant: "destructive" });
       } else {
         setParsedCount(questions.length);
         toast({ title: `AI đã bóc tách ${questions.length} câu hỏi!` });
