@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowRight, Eye, RotateCcw, History as HistoryIcon, Calendar, Trophy,
-  BookOpen, Headphones, Mic, Pencil, GraduationCap, ListChecks, BarChart3, CalendarDays,
+  BookOpen, Headphones, Mic, Pencil, GraduationCap, ListChecks, CalendarDays,
+
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -301,19 +302,13 @@ const History = () => {
   // Top stats
   const stats = useMemo(() => {
     const totalAttempts = perSkillRows.length + fullTestGroups.length;
-    // latest band: most recent row with a band != "—"
-    let latestBand = "—";
-    for (const r of [...perSkillRows].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    )) {
-      if (r.displayBand && r.displayBand !== "—") { latestBand = r.displayBand; break; }
-    }
     const weekStart = startOfWeek().getTime();
     const thisWeek =
       perSkillRows.filter((r) => new Date(r.created_at).getTime() >= weekStart).length +
       fullTestGroups.filter((g) => new Date(g.created_at).getTime() >= weekStart).length;
-    return { totalAttempts, latestBand, thisWeek };
+    return { totalAttempts, thisWeek };
   }, [perSkillRows, fullTestGroups]);
+
 
   if (authLoading) {
     return (
@@ -347,17 +342,11 @@ const History = () => {
           <p className="text-muted-foreground mb-6">Toàn bộ kết quả các bài bạn đã hoàn thành.</p>
 
           {/* Stats strip */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             <StatCard
               icon={ListChecks}
               label="Tổng lượt làm"
               value={loading ? "…" : String(stats.totalAttempts)}
-            />
-            <StatCard
-              icon={BarChart3}
-              label="Band gần nhất"
-              value={loading ? "…" : stats.latestBand}
-              accent
             />
             <StatCard
               icon={CalendarDays}
@@ -365,6 +354,7 @@ const History = () => {
               value={loading ? "…" : String(stats.thisWeek)}
             />
           </div>
+
 
           <Tabs value={skillFilter} onValueChange={setSkill} className="mb-6">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
@@ -521,15 +511,15 @@ const History = () => {
 };
 
 const StatCard = ({
-  icon: Icon, label, value, accent,
-}: { icon: any; label: string; value: string; accent?: boolean }) => (
+  icon: Icon, label, value,
+}: { icon: any; label: string; value: string }) => (
   <div className="glass-card p-4 flex items-center gap-3">
-    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${accent ? "bg-primary/15 text-primary" : "bg-muted text-foreground"}`}>
+    <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-muted text-foreground">
       <Icon className="w-5 h-5" />
     </div>
     <div className="min-w-0">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`text-xl font-extrabold ${accent ? "text-primary" : "text-foreground"}`}>{value}</div>
+      <div className="text-xl font-extrabold text-foreground">{value}</div>
     </div>
   </div>
 );
