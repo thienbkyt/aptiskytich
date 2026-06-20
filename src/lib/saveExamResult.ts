@@ -69,7 +69,7 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
           level,
           exam_set_id: opts.examSetId ?? null,
           time_spent: opts.timeSpent ?? null,
-          skill_scores: { skill: opts.skill, correct, total } as any,
+          skill_scores: { skill: opts.skill, correct, total, ...(opts.extraSkillScores || {}) } as any,
           full_test_session_id: opts.fullTestSessionId ?? null,
           full_test_id: opts.fullTestId ?? null,
         } as any)
