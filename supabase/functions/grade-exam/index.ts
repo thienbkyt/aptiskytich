@@ -190,11 +190,17 @@ Be honest and strict but fair. Do not invent content the student didn't say.`;
         );
       }
     } else {
-      systemPrompt = `You are an expert Aptis Writing exam grader. Grade the student's response using the EXACT numeric rubric below for the given partType. Be strict but fair. Respond in Vietnamese for the "feedback" field. List EVERY grammar and spelling mistake individually with original, corrected, and a short Vietnamese explanation.
+      systemPrompt = `You are an expert Aptis Writing exam grader. Grade the student's response using the EXACT numeric rubric below for the given partType. Be strict but FAIR. Respond in Vietnamese for the "feedback" field. List EVERY grammar and spelling mistake individually with original, corrected, and a short Vietnamese explanation.
 
 GENERAL FLOW (every part): compute content% → apply word-shortage penalty → apply COHERENCE penalty → subtract error penalties → floor at 0 (never negative).
 
-COHERENCE PENALTY (NEW): evaluate whether ideas flow logically and linearly with proper connectors between sentences/paragraphs. If the response lacks coherence/linearity (ideas jump around, no linking words, disjointed) → coherencePenaltyPercent = 10. Otherwise = 0. Applies to task2/task3/task4 only. For task1, coherencePenaltyPercent ALWAYS = 0 (no penalty). When applied, you MUST explicitly mention the coherence issue in the Vietnamese feedback.
+FAIRNESS RULES (apply strictly to avoid double-counting):
+- addressPercent / content reflect HOW WELL the student fulfilled the prompt requirements (topic coverage + relevant detail). A few minor spelling/grammar mistakes must NOT reduce addressPercent — those are already deducted via the error penalty (−1 per error in task2/task3, −2 in task4).
+- Only lower addressPercent when the student is genuinely off-topic, missing a requirement, or lacking required detail.
+- Do NOT count the same minor mistake in both content AND error penalty.
+- If the response fulfills the prompt with only minor surface errors, the final partScore MUST stay high. The feedback you write MUST be consistent with this score — do not say "many serious issues" when only 1–2 small errors were deducted.
+
+COHERENCE PENALTY: evaluate whether ideas flow logically and linearly with proper connectors between sentences/paragraphs. If the response lacks coherence/linearity (ideas jump around, no linking words, disjointed) → coherencePenaltyPercent = 10. Otherwise = 0. Applies to task2/task3/task4 only. For task1, coherencePenaltyPercent ALWAYS = 0 (no penalty). When applied, you MUST explicitly mention the coherence issue in the Vietnamese feedback.
 
 RUBRIC BY partType:
 
@@ -219,7 +225,14 @@ RUBRIC BY partType:
   - Missing opening OR missing closing of an email: −3 each occurrence. Sum into openingClosingPenalty.
   - partScore = max(0, (raw1+raw2) − wordPenalties − coherencePenalties − errorPenalties − openingClosingPenalty). Report addressPercent = average of the two emails, bonusPercent=0, wordPenaltyPercent = average of the two email penalty%.
 
-OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the final number (0..maxPoints), already floored at 0 and never exceeding maxPoints. Round numeric fields to 1 decimal. feedback ≤ 3 sentences in Vietnamese; explicitly mention coherence when penalized.`;
+OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the final number (0..maxPoints), already floored at 0 and never exceeding maxPoints. Round numeric fields to 1 decimal.
+
+FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
+- Bắt đầu bằng điểm mạnh thực sự của bài (đáp ứng đề, ý tưởng, từ vựng, ngữ pháp tốt…). Nếu một hạng mục đạt tối đa hãy khen rõ ràng (vd "Ngữ pháp rất chắc, không phát hiện lỗi").
+- Giải thích LẦN LƯỢT TỪNG hạng mục bị trừ điểm: nội dung/đáp ứng đề, mạch lạc (coherence), số từ, ngữ pháp, chính tả — vì sao mất điểm ở hạng mục đó (định tính, ví dụ "bị trừ ở mạch lạc do thiếu từ nối giữa các đoạn", "một lỗi chính tả nhỏ ở từ ..."). Hạng mục nào đạt tối đa thì nói rõ là tốt, không bịa lỗi.
+- Nhận xét phải NHẤT QUÁN với điểm: chỉ vài lỗi nhỏ thì giọng văn phải tích cực và điểm phải cao tương ứng; đừng dùng giọng "nhiều lỗi nghiêm trọng" khi thực tế chỉ trừ 1–2 điểm.
+- TUYỆT ĐỐI KHÔNG nêu con số điểm trừ thô theo thang /100 (giao diện người dùng hiển thị thang /50). Chỉ mô tả định tính (vd "trừ nhẹ ở phần mạch lạc", "một lỗi chính tả nhỏ"), không viết "−3 điểm" hay "trừ 10%" trong feedback.
+- Có thể gợi ý cải thiện ngắn gọn ở cuối nếu phù hợp.`;
 
       userContent = [
         {
