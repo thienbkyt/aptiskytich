@@ -91,6 +91,7 @@ const App = () => (
             <Route path="/history" element={<History />} />
             <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
             <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
+            <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
             <Route path="/history/:id" element={<HistoryDetail />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/admin" element={<Admin />} />
