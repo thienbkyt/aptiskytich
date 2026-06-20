@@ -112,6 +112,7 @@ const History = () => {
   const skillFilter = params.get("skill") || "all";
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [fullTestGroups, setFullTestGroups] = useState<FullTestGroup[]>([]);
+  const [fullPartGroups, setFullPartGroups] = useState<FullPartGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
