@@ -43,6 +43,9 @@ const partLabel = (pt: ReadingPartType) => ({
 const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   const [view, setView] = useState<"summary" | "review">("summary");
   const [reviewPartIndex, setReviewPartIndex] = useState(0);
+  const [pageInPart, setPageInPart] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
+  const [enterAtLast, setEnterAtLast] = useState(false);
   const totalCorrect = parts.reduce((s, p) => s + p.correct, 0);
   const totalQuestions = parts.reduce((s, p) => s + p.total, 0);
   const band = getSkillBand(score50, "reading");
