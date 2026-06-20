@@ -218,13 +218,9 @@ const History = () => {
             sessionMap.set(r.full_test_session_id, g);
           }
           g.rows.push(r);
-          // accumulate scaled50 per skill row (cap each at 50)
-          const m = /^(\d+)\/50$/.exec(r.displayScore);
-          if (m) {
-            g.totalScaled += Number(m[1]);
-            g.hasScaled = true;
-          } else if (r.total > 0) {
-            g.totalScaled += Math.round((r.score / r.total) * 50);
+          // Dùng scorePct thống nhất cho mọi kỹ năng (AI tính từ gradings) → cộng đủ Speaking/Writing.
+          if (r.scorePct != null) {
+            g.totalScaled += Math.min(50, Math.round(r.scorePct * 50));
             g.hasScaled = true;
           }
           if (new Date(r.created_at).getTime() < new Date(g.created_at).getTime()) {
