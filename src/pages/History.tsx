@@ -198,6 +198,7 @@ const History = () => {
             full_test_session_id: r.full_test_session_id ?? null,
             full_test_id: r.full_test_id ?? null,
             isMarathon,
+            fullPartSession: ss.fullPartSession ?? null,
             ...disp,
           };
         });
