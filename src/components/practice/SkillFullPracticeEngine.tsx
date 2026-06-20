@@ -488,6 +488,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
                 part: `${originalPart.partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
+                testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
               });
             } catch (e) {
               console.warn("[SkillFullPractice] saveSpeakingRecording failed", e);
