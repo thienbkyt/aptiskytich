@@ -81,6 +81,8 @@ interface ReadingExamEngineProps {
   pageTotal?: number;
   /** For Part 2: which section index to mount at initially. */
   initialSection?: number;
+  /** Notifies parent of total page count for this part (used by review pager). */
+  onPageCount?: (n: number) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
