@@ -28,10 +28,13 @@ const fadeUp = {
 };
 
 interface RecentTest {
-  date: string;
-  score: number;
-  total: number;
-  level: string;
+  id: string;
+  dateTime: string;
+  skill: string;
+  skillLabel: string;
+  partLabel: string;
+  displayScore: string;
+  displayBand: string;
 }
 
 interface DashboardData {
