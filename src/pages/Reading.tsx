@@ -185,6 +185,7 @@ const Reading = () => {
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
         const { supabase } = await import("@/integrations/supabase/client");
         const { buildReviewRequest } = await import("@/lib/readingReview");
+        const { buildReadingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
         let translations: Record<string, string> = {};
         let part3Evidence: Record<string, { person: string; sentence: string }> = {};
         try {
@@ -199,13 +200,15 @@ const Reading = () => {
             part3Evidence = p.part3Evidence || {};
           }
         } catch (e) { /* best-effort */ }
+        const builtItems = buildReadingItems(exam.partType, exam.engineData, translations, part3Evidence, perQuestion || []);
+        const { scaled50, band } = computeScaleAndBand("reading", correct, total);
         return buildReviewSnapshot({
           skill: "reading",
           part: exam.partType,
           testTitle: exam.testTitle,
           score: correct, total,
-          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
-          items: [],
+          scaled50, band,
+          items: builtItems,
           raw: {
             engineData: exam.engineData,
             perQuestion: perQuestion || [],
@@ -226,7 +229,6 @@ const Reading = () => {
       });
       return { ...prev, correct, total };
     });
-    // legacy aggregate write (kept for backwards compatibility)
     saveTestResult({ correct, total, skill: "reading" });
   };
 
