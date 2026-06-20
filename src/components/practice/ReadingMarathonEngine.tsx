@@ -116,6 +116,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       skill: "reading",
       correct: accCorrect,
       total: accTotal,
+      extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
     });
   }, [phase, savedOnce, accCorrect, accTotal]);
 
