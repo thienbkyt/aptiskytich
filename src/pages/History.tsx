@@ -5,10 +5,17 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Eye, RotateCcw, History as HistoryIcon, Calendar, Trophy } from "lucide-react";
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from "@/components/ui/table";
+import {
+  ArrowRight, Eye, RotateCcw, History as HistoryIcon, Calendar, Trophy,
+  BookOpen, Headphones, Mic, Pencil, GraduationCap, ListChecks, BarChart3, CalendarDays,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
+import { getSkillBand } from "@/data/questions";
 
 interface HistoryRow {
   id: string;
@@ -24,6 +31,10 @@ interface HistoryRow {
   full_test_session_id: string | null;
   full_test_id: string | null;
   isMarathon: boolean;
+  // computed display
+  displayScore: string;     // e.g. "12/25" or "8/10" or "—"
+  displayBand: string;      // e.g. "B1" or "—"
+  scorePct: number | null;  // for sorting/optional pct
 }
 
 interface FullTestGroup {
@@ -32,8 +43,8 @@ interface FullTestGroup {
   title: string;
   created_at: string;
   rows: HistoryRow[];
-  totalScore: number;
-  totalQuestions: number;
+  totalScaled: number;     // sum of scaled50 per skill (max 250 = 5x50)
+  hasScaled: boolean;
   skillCount: number;
 }
 
@@ -55,10 +66,72 @@ const SKILL_ROUTES: Record<string, string> = {
   writing: "/writing",
 };
 
+const SKILL_ICON: Record<string, any> = {
+  grammar: GraduationCap,
+  reading: BookOpen,
+  listening: Headphones,
+  speaking: Mic,
+  writing: Pencil,
+};
+
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const startOfWeek = () => {
+  const d = new Date();
+  const day = d.getDay() || 7; // Mon=1..Sun=7
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - (day - 1));
+  return d;
+};
+
+const computeDisplay = (
+  r: { skill: string; score: number; total: number; level: string },
+  snapshot: any,
+  writingAgg?: { sum: number; max: number } | null,
+  speakingAgg?: { sum: number; max: number } | null,
+): { displayScore: string; displayBand: string; scorePct: number | null } => {
+  const skill = r.skill;
+  const isAI = skill === "speaking" || skill === "writing";
+
+  // 1) snapshot scaled50 + band
+  const snapScaled = snapshot && typeof snapshot.scaled50 === "number" ? snapshot.scaled50 : null;
+  const snapBand = snapshot && typeof snapshot.band === "string" ? snapshot.band : null;
+  if (snapScaled != null) {
+    return {
+      displayScore: `${snapScaled}/50`,
+      displayBand: snapBand || (isAI ? getSkillBand(snapScaled, skill as any) : (r.level || "—")),
+      scorePct: snapScaled / 50,
+    };
+  }
+
+  // 2) AI gradings fallback
+  if (isAI) {
+    const agg = skill === "writing" ? writingAgg : speakingAgg;
+    if (agg && agg.max > 0) {
+      const scaled = Math.round((agg.sum / agg.max) * 50);
+      return {
+        displayScore: `${Number(agg.sum.toFixed(1))}/${agg.max}`,
+        displayBand: getSkillBand(scaled, skill as any),
+        scorePct: agg.sum / agg.max,
+      };
+    }
+    // no AI data → show dashes (don't fall back to misleading 0/3 · A1)
+    return { displayScore: "—", displayBand: "—", scorePct: null };
+  }
+
+  // 3) plain MCQ
+  if (r.total > 0) {
+    return {
+      displayScore: `${r.score}/${r.total}`,
+      displayBand: r.level || "—",
+      scorePct: r.score / r.total,
+    };
+  }
+  return { displayScore: "—", displayBand: r.level || "—", scorePct: null };
 };
 
 const History = () => {
@@ -77,7 +150,7 @@ const History = () => {
       try {
         const { data: results } = await supabase
           .from("test_results")
-          .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores,full_test_session_id,full_test_id")
+          .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores,full_test_session_id,full_test_id,review_snapshot")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
@@ -95,7 +168,6 @@ const History = () => {
           });
         }
 
-        // Resolve full_test titles
         const ftIds = Array.from(
           new Set((results || []).map((r: any) => r.full_test_id).filter(Boolean))
         );
@@ -108,6 +180,34 @@ const History = () => {
           (fts || []).forEach((f: any) => { ftMap[f.id] = f.title; });
         }
 
+        // AI gradings aggregated per test_result_id
+        const [{ data: wg }, { data: sg }] = await Promise.all([
+          supabase
+            .from("writing_question_gradings")
+            .select("test_result_id,part_score,max_points")
+            .eq("user_id", user.id),
+          (supabase as any)
+            .from("speaking_question_gradings")
+            .select("test_result_id,part_score,max_points")
+            .eq("user_id", user.id),
+        ]);
+        const writingAggMap: Record<string, { sum: number; max: number }> = {};
+        (wg || []).forEach((g: any) => {
+          if (!g.test_result_id) return;
+          const a = writingAggMap[g.test_result_id] || { sum: 0, max: 0 };
+          a.sum += Number(g.part_score || 0);
+          a.max += Number(g.max_points || 0);
+          writingAggMap[g.test_result_id] = a;
+        });
+        const speakingAggMap: Record<string, { sum: number; max: number }> = {};
+        (sg || []).forEach((g: any) => {
+          if (!g.test_result_id) return;
+          const a = speakingAggMap[g.test_result_id] || { sum: 0, max: 0 };
+          a.sum += Number(g.part_score || 0);
+          a.max += Number(g.max_points || 0);
+          speakingAggMap[g.test_result_id] = a;
+        });
+
         const merged: HistoryRow[] = (results || []).map((r: any) => {
           const setInfo = r.exam_set_id ? setsMap[r.exam_set_id] : undefined;
           const ss = (r.skill_scores || {}) as any;
@@ -117,6 +217,12 @@ const History = () => {
           const title = isMarathon
             ? (ss.label || "Luyện nhanh (Marathon)")
             : (setInfo?.title || "Đề mẫu");
+          const disp = computeDisplay(
+            { skill, score: r.score, total: r.total, level: r.level },
+            r.review_snapshot,
+            writingAggMap[r.id],
+            speakingAggMap[r.id],
+          );
           return {
             id: r.id,
             created_at: r.created_at,
@@ -131,10 +237,11 @@ const History = () => {
             full_test_session_id: r.full_test_session_id ?? null,
             full_test_id: r.full_test_id ?? null,
             isMarathon,
+            ...disp,
           };
         });
 
-        // Group Full Test rows by session id
+        // Full Test grouping
         const sessionMap = new Map<string, FullTestGroup>();
         for (const r of merged) {
           if (!r.full_test_session_id) continue;
@@ -146,16 +253,22 @@ const History = () => {
               title: (r.full_test_id && ftMap[r.full_test_id]) || "Bài thi thử Aptis",
               created_at: r.created_at,
               rows: [],
-              totalScore: 0,
-              totalQuestions: 0,
+              totalScaled: 0,
+              hasScaled: false,
               skillCount: 0,
             };
             sessionMap.set(r.full_test_session_id, g);
           }
           g.rows.push(r);
-          g.totalScore += r.score || 0;
-          g.totalQuestions += r.total || 0;
-          // earliest created_at (rows ordered desc → keep later overwrite)
+          // accumulate scaled50 per skill row (cap each at 50)
+          const m = /^(\d+)\/50$/.exec(r.displayScore);
+          if (m) {
+            g.totalScaled += Number(m[1]);
+            g.hasScaled = true;
+          } else if (r.total > 0) {
+            g.totalScaled += Math.round((r.score / r.total) * 50);
+            g.hasScaled = true;
+          }
           if (new Date(r.created_at).getTime() < new Date(g.created_at).getTime()) {
             g.created_at = r.created_at;
           }
@@ -177,13 +290,30 @@ const History = () => {
     return () => { cancelled = true; };
   }, [user]);
 
-  // Filter: per-skill view excludes Full Test rows (those live under "fulltest" tab)
+  const perSkillRows = useMemo(() => rows.filter((r) => !r.full_test_session_id), [rows]);
+
   const filtered = useMemo(() => {
-    if (skillFilter === "fulltest") return rows; // not used directly
-    const base = rows.filter((r) => !r.full_test_session_id);
-    if (skillFilter === "all") return base;
-    return base.filter((r) => r.skill === skillFilter);
-  }, [rows, skillFilter]);
+    if (skillFilter === "all") return perSkillRows;
+    if (skillFilter === "fulltest") return perSkillRows; // unused
+    return perSkillRows.filter((r) => r.skill === skillFilter);
+  }, [perSkillRows, skillFilter]);
+
+  // Top stats
+  const stats = useMemo(() => {
+    const totalAttempts = perSkillRows.length + fullTestGroups.length;
+    // latest band: most recent row with a band != "—"
+    let latestBand = "—";
+    for (const r of [...perSkillRows].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )) {
+      if (r.displayBand && r.displayBand !== "—") { latestBand = r.displayBand; break; }
+    }
+    const weekStart = startOfWeek().getTime();
+    const thisWeek =
+      perSkillRows.filter((r) => new Date(r.created_at).getTime() >= weekStart).length +
+      fullTestGroups.filter((g) => new Date(g.created_at).getTime() >= weekStart).length;
+    return { totalAttempts, latestBand, thisWeek };
+  }, [perSkillRows, fullTestGroups]);
 
   if (authLoading) {
     return (
@@ -216,6 +346,26 @@ const History = () => {
           </div>
           <p className="text-muted-foreground mb-6">Toàn bộ kết quả các bài bạn đã hoàn thành.</p>
 
+          {/* Stats strip */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+            <StatCard
+              icon={ListChecks}
+              label="Tổng lượt làm"
+              value={loading ? "…" : String(stats.totalAttempts)}
+            />
+            <StatCard
+              icon={BarChart3}
+              label="Band gần nhất"
+              value={loading ? "…" : stats.latestBand}
+              accent
+            />
+            <StatCard
+              icon={CalendarDays}
+              label="Số bài tuần này"
+              value={loading ? "…" : String(stats.thisWeek)}
+            />
+          </div>
+
           <Tabs value={skillFilter} onValueChange={setSkill} className="mb-6">
             <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5">
               <TabsTrigger value="all" className="flex-1 min-w-[80px]">Tất cả</TabsTrigger>
@@ -243,40 +393,47 @@ const History = () => {
                 ctaLabel="Đi đến trang thi thử"
               />
             ) : (
-              <div className="space-y-3">
-                {fullTestGroups.map((g) => {
-                  const pct = g.totalQuestions > 0 ? Math.round((g.totalScore / g.totalQuestions) * 100) : 0;
-                  return (
-                    <div key={g.sessionId} className="glass-card p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                          <Badge className="bg-primary/10 text-primary border-0 gap-1">
-                            <Trophy className="w-3 h-3" /> Full Test
-                          </Badge>
-                          <Badge variant="outline" className="text-[11px]">{g.skillCount}/5 kỹ năng</Badge>
-                        </div>
-                        <h3 className="font-heading font-semibold text-foreground truncate">{g.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                          <Calendar className="w-3 h-3" /> {formatDateTime(g.created_at)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4 md:gap-6">
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-foreground">{g.totalScore}/{g.totalQuestions}</div>
-                          <div className="text-xs text-muted-foreground">{pct}%</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 md:flex-col lg:flex-row">
-                        <Link to={`/history/full-test/${g.sessionId}`} className="flex-1 md:flex-none">
-                          <Button variant="outline" size="sm" className="gap-1.5 w-full"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
-                        </Link>
-                        <Link to="/thi-thu" className="flex-1 md:flex-none">
-                          <Button size="sm" className="gap-1.5 w-full"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="glass-card overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ngày giờ</TableHead>
+                      <TableHead>Bài thi</TableHead>
+                      <TableHead>Kỹ năng</TableHead>
+                      <TableHead className="text-right">Điểm</TableHead>
+                      <TableHead className="text-right">Hành động</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fullTestGroups.map((g) => (
+                      <TableRow key={g.sessionId}>
+                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" />{formatDateTime(g.created_at)}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-primary/10 text-primary border-0 gap-1"><Trophy className="w-3 h-3" />Full Test</Badge>
+                            <span className="font-medium text-foreground truncate">{g.title}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell><Badge variant="outline" className="text-[11px]">{g.skillCount}/5 kỹ năng</Badge></TableCell>
+                        <TableCell className="text-right">
+                          <div className="font-bold text-foreground">{g.hasScaled ? `${g.totalScaled}/250` : "—"}</div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="inline-flex gap-2">
+                            <Link to={`/history/full-test/${g.sessionId}`}>
+                              <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                            </Link>
+                            <Link to="/thi-thu">
+                              <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                            </Link>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )
           ) : filtered.length === 0 ? (
@@ -287,51 +444,73 @@ const History = () => {
               ctaLabel="Đi đến trang luyện tập"
             />
           ) : (
-            <div className="space-y-3">
-              {filtered.map((r) => {
-                const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
-                return (
-                  <div key={r.id} className="glass-card p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <Badge variant="secondary" className="text-[11px]">{SKILL_LABELS[r.skill] || r.skill}</Badge>
-                        {r.part && <Badge variant="outline" className="text-[11px]">{r.part}</Badge>}
-                        {r.isMarathon && (
-                          <Badge className="bg-primary/10 text-primary border-0 text-[11px]">Marathon</Badge>
-                        )}
-                      </div>
-                      <h3 className="font-heading font-semibold text-foreground truncate">{r.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                        <Calendar className="w-3 h-3" /> {formatDateTime(r.created_at)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4 md:gap-6">
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-foreground">{r.score}/{r.total}</div>
-                        <div className="text-xs text-muted-foreground">{pct}%</div>
-                      </div>
-                      <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-0 font-bold">{r.level}</Badge>
-                    </div>
-                    <div className="flex gap-2 md:flex-col lg:flex-row">
-                      {!r.isMarathon && (
-                        <Link to={`/history/${r.id}`} className="flex-1 md:flex-none">
-                          <Button variant="outline" size="sm" className="gap-1.5 w-full"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
-                        </Link>
-                      )}
-                      <Link
-                        to={
-                          r.exam_set_id
-                            ? `${SKILL_ROUTES[r.skill] || "/practice"}?set=${r.exam_set_id}`
-                            : SKILL_ROUTES[r.skill] || "/practice"
-                        }
-                        className="flex-1 md:flex-none"
-                      >
-                        <Button size="sm" className="gap-1.5 w-full"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="glass-card overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ngày giờ</TableHead>
+                    <TableHead>Kỹ năng</TableHead>
+                    <TableHead>Phần</TableHead>
+                    <TableHead className="text-right">Điểm</TableHead>
+                    <TableHead className="text-right">Band</TableHead>
+                    <TableHead className="text-right">Hành động</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((r) => {
+                    const Icon = SKILL_ICON[r.skill] || ListChecks;
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" />{formatDateTime(r.created_at)}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                              <Icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-medium text-foreground truncate">{SKILL_LABELS[r.skill] || r.skill}</div>
+                              <div className="text-[11px] text-muted-foreground truncate">
+                                {r.title}{r.isMarathon ? " · Marathon" : ""}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {r.part ? <Badge variant="outline" className="text-[11px]">{r.part}</Badge> : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-foreground">{r.displayScore}</TableCell>
+                        <TableCell className="text-right">
+                          {r.displayBand && r.displayBand !== "—" ? (
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-0 font-bold">{r.displayBand}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="inline-flex gap-2">
+                            {!r.isMarathon && (
+                              <Link to={`/history/${r.id}`}>
+                                <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                              </Link>
+                            )}
+                            <Link
+                              to={
+                                r.exam_set_id
+                                  ? `${SKILL_ROUTES[r.skill] || "/practice"}?set=${r.exam_set_id}`
+                                  : SKILL_ROUTES[r.skill] || "/practice"
+                              }
+                            >
+                              <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                            </Link>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>
@@ -340,6 +519,20 @@ const History = () => {
     </div>
   );
 };
+
+const StatCard = ({
+  icon: Icon, label, value, accent,
+}: { icon: any; label: string; value: string; accent?: boolean }) => (
+  <div className="glass-card p-4 flex items-center gap-3">
+    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${accent ? "bg-primary/15 text-primary" : "bg-muted text-foreground"}`}>
+      <Icon className="w-5 h-5" />
+    </div>
+    <div className="min-w-0">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`text-xl font-extrabold ${accent ? "text-primary" : "text-foreground"}`}>{value}</div>
+    </div>
+  </div>
+);
 
 const EmptyState = ({ title, desc, ctaTo, ctaLabel }: { title: string; desc: string; ctaTo: string; ctaLabel: string }) => (
   <div className="glass-card p-10 text-center">
