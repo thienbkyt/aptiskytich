@@ -798,17 +798,21 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
       if (adminNavigationRef.current) return;
-      // Persist essay first and capture test_result_id so AI grading can link to this attempt.
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const sub = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
+      const userText = (perQuestion?.[0]?.user_answer) || sub.text || "";
+      const promptText = (sub.questions || []).join("\n\n") || currentPart.partNorm;
       const snap = buildReviewSnapshot({
         skill: "writing",
         part: currentPart.partNorm,
         testTitle,
-        score: 0, total: perQuestion?.length || 0,
-        items: (perQuestion || []).map((p) => ({
-          userAnswer: p.user_answer ?? null,
+        score: 0, total: 1,
+        items: [{
+          questionText: promptText,
+          userAnswer: userText,
           isCorrect: false,
-        })),
+          ai: null,
+        }],
         raw: {
           partType: currentPart.partNorm,
           questions: currentPart.questions,
