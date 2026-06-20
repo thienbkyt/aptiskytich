@@ -48,6 +48,8 @@ interface FullTestGroup {
   totalScaled: number;     // sum of scaled50 per skill (max 250 = 5x50)
   hasScaled: boolean;
   skillCount: number;
+  gvScaled: number | null;
+  skillAgg: Record<string, { num: number; den: number }>;
 }
 
 const SKILL_LABELS: Record<string, string> = {
@@ -214,21 +216,41 @@ const History = () => {
               totalScaled: 0,
               hasScaled: false,
               skillCount: 0,
+              gvScaled: null,
+              skillAgg: {},
             };
             sessionMap.set(r.full_test_session_id, g);
           }
           g.rows.push(r);
-          // Dùng scorePct thống nhất cho mọi kỹ năng (AI tính từ gradings) → cộng đủ Speaking/Writing.
-          if (r.scorePct != null) {
-            g.totalScaled += Math.min(50, Math.round(r.scorePct * 50));
-            g.hasScaled = true;
+          // Gộp theo kỹ năng (mỗi kỹ năng nhiều part = nhiều row).
+          // MCQ dùng score/total; AI dùng tổng gradings (sum/max).
+          {
+            let num = 0, den = 0;
+            if (r.skill === "speaking") { const a = speakingAggMap[r.id]; num = a?.sum || 0; den = a?.max || 0; }
+            else if (r.skill === "writing") { const a = writingAggMap[r.id]; num = a?.sum || 0; den = a?.max || 0; }
+            else { num = r.score; den = r.total; }
+            if (den > 0) {
+              const cur = g.skillAgg[r.skill] || { num: 0, den: 0 };
+              cur.num += num; cur.den += den;
+              g.skillAgg[r.skill] = cur;
+            }
           }
           if (new Date(r.created_at).getTime() < new Date(g.created_at).getTime()) {
             g.created_at = r.created_at;
           }
         }
+        const FOUR_SKILLS = ["reading", "listening", "speaking", "writing"];
         const groups = Array.from(sessionMap.values()).map((g) => {
           g.skillCount = new Set(g.rows.map((r) => r.skill)).size;
+          let total = 0, has = false, gv: number | null = null;
+          for (const sk of Object.keys(g.skillAgg)) {
+            const { num, den } = g.skillAgg[sk];
+            if (den <= 0) continue;
+            const scaled = Math.min(50, Math.round((num / den) * 50));
+            if (sk === "grammar") gv = scaled;
+            else if (FOUR_SKILLS.includes(sk)) { total += scaled; has = true; }
+          }
+          g.totalScaled = total; g.gvScaled = gv; g.hasScaled = has;
           return g;
         });
         groups.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
