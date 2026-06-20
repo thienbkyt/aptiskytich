@@ -159,7 +159,7 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             {parts.map((p, i) => (
               <button
                 key={i}
-                onClick={() => setReviewPartIndex(i)}
+                onClick={() => { setReviewPartIndex(i); setPageInPart(0); setPageCount(1); setEnterAtLast(false); }}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
                   i === reviewPartIndex
                     ? "bg-primary text-primary-foreground border-primary"
@@ -174,31 +174,33 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setReviewPartIndex((i) => Math.max(0, i - 1))}
-              disabled={reviewPartIndex === 0}
+              onClick={goPrevPage}
+              disabled={reviewPartIndex === 0 && pageInPart === 0}
             >
-              ← Part trước
+              ← Trang trước
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setReviewPartIndex((i) => Math.min(parts.length - 1, i + 1))}
-              disabled={reviewPartIndex === parts.length - 1}
+              onClick={goNextPage}
+              disabled={reviewPartIndex === parts.length - 1 && pageInPart >= pageCount - 1}
             >
-              Part sau →
+              Trang sau →
             </Button>
           </div>
         </div>
       </div>
 
       <ReadingExamEngine
-        key={`review-part-${reviewPartIndex}`}
+        key={`review-${reviewPartIndex}-${pageInPart}`}
         reviewMode
         skipIntro
         testTitle="Reading"
         timeLimit={0}
         partType={current.partType}
         initialAnswers={current.answers}
+        initialSection={pageInPart}
+        onPageCount={handlePageCount}
         part1Question={current.part1Question}
         part2Question={current.part2Question}
         part3Question={current.part3Question}
@@ -207,6 +209,7 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
         reviewData={reviewData}
         reviewDataLoading={reviewStatus === "loading"}
       />
+
     </div>
   );
 };
