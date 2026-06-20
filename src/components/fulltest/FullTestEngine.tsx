@@ -226,14 +226,35 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       // Persist per-set result so it appears in /history
       const setIdForGrammar = parts[0]?.id ?? null;
       const examSetId = skill === "grammar" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
-      saveExamResult({
-        examSetId,
-        skill: skill === "grammar" ? "grammar_vocab" : skill,
-        correct, total,
-        perQuestion,
-        fullTestSessionId: sessionIdRef.current,
-        fullTestId: testId,
-      });
+      (async () => {
+        const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const snap = buildReviewSnapshot({
+          skill: skill === "grammar" ? "grammar_vocab" : skill,
+          part: parts[currentPartIndex]?.partNorm ?? null,
+          testTitle: parts[currentPartIndex]?.title ?? null,
+          score: correct, total,
+          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
+          items: (perQuestion || []).map((p) => ({
+            userAnswer: p.user_answer ?? null,
+            isCorrect: !!p.is_correct,
+          })),
+          raw: {
+            skill,
+            partType: parts[currentPartIndex]?.partNorm ?? null,
+            questions: parts[currentPartIndex]?.questions ?? [],
+            perQuestion: perQuestion || [],
+          },
+        });
+        saveExamResult({
+          examSetId,
+          skill: skill === "grammar" ? "grammar_vocab" : skill,
+          correct, total,
+          perQuestion,
+          fullTestSessionId: sessionIdRef.current,
+          fullTestId: testId,
+          reviewSnapshot: snap,
+        });
+      })();
     }
 
     // Check if there are more parts in this skill
