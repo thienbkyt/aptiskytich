@@ -901,6 +901,26 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           partLabel: WRITING_PART_LABELS[p.partType] ?? p.partType,
         });
         if (res) results.push(res as WritingGradingResult);
+        // Bake this part's AI into its snapshot.
+        try {
+          if (p.testResultId && res && (res as any).partScore !== undefined) {
+            const w = res as WritingGradingResult;
+            const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+            await mergeSnapshotAI(p.testResultId, {
+              0: {
+                partScore: w.partScore,
+                maxPoints: w.maxPoints,
+                grammarErrors: w.grammarErrors || [],
+                spellingErrors: w.spellingErrors || [],
+                feedback: w.feedback || null,
+              },
+            }, {
+              score: w.partScore,
+              total: w.maxPoints,
+              scaled50: w.maxPoints > 0 ? Math.round((w.partScore / w.maxPoints) * 50) : null,
+            });
+          }
+        } catch (e) { console.warn("[SkillFullPractice] writing bake AI failed", e); }
         setWritingGradedCount(i + 1);
       }
       const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
