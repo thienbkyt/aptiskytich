@@ -25,6 +25,8 @@ export const computeHistoryDisplay = (
 
   const isAI = skill === "speaking" || skill === "writing";
 
+  const noBand = skill === "grammar" || skill === "grammar_vocab";
+
   const snapScaled = snapshot && typeof snapshot.scaled50 === "number" ? snapshot.scaled50 : null;
 
   const snapBand = snapshot && typeof snapshot.band === "string" ? snapshot.band : null;
@@ -73,7 +75,7 @@ export const computeHistoryDisplay = (
 
       displayScore: `${snapScaled}/50`,
 
-      displayBand: snapBand || (r.level || "—"),
+      displayBand: noBand ? "—" : (snapBand || (r.level || "—")),
 
       scorePct: snapScaled / 50,
 
@@ -83,9 +85,9 @@ export const computeHistoryDisplay = (
 
   if (r.total > 0) {
 
-    return { displayScore: `${r.score}/${r.total}`, displayBand: r.level || "—", scorePct: r.score / r.total };
+    return { displayScore: `${r.score}/${r.total}`, displayBand: noBand ? "—" : (r.level || "—"), scorePct: r.score / r.total };
 
   }
 
-  return { displayScore: "—", displayBand: r.level || "—", scorePct: null };
+  return { displayScore: "—", displayBand: noBand ? "—" : (r.level || "—"), scorePct: null };
 };
