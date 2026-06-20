@@ -268,6 +268,37 @@ const SpeakingExamEngine = ({
       gradings,
       questionTexts: promptsList,
     });
+    // Bake AI grading into snapshot items so review is self-sufficient.
+    (async () => {
+      try {
+        if (!testResultIdRef.current) return;
+        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+        const aiByIndex: Record<number, any> = {};
+        let totalScore = 0, totalMax = 0;
+        gradings.forEach((g, i) => {
+          if (!g || (g as any).error) return;
+          const gg = g as any;
+          aiByIndex[i] = {
+            partScore: gg.partScore,
+            maxPoints: gg.maxPoints,
+            grammarErrors: gg.grammarErrors || [],
+            pronunciationErrors: gg.pronunciationErrors || [],
+            feedback: gg.feedback || null,
+            transcript: gg.transcript || null,
+            improvedVersion: gg.improvedVersion || null,
+          };
+          totalScore += gg.partScore || 0;
+          totalMax += gg.maxPoints || 0;
+        });
+        const scaled50 = totalMax > 0 ? Math.round((totalScore / totalMax) * 50) : null;
+        const extra = totalMax > 0
+          ? { score: totalScore, total: totalMax, scaled50 }
+          : undefined;
+        if (Object.keys(aiByIndex).length > 0) {
+          await mergeSnapshotAI(testResultIdRef.current, aiByIndex, extra);
+        }
+      } catch (e) { console.warn("[Speaking] bake AI failed", e); }
+    })();
   }, [phase, gradings, partType, part1Data, part2Data, part3Data, part4Data, examSetId]);
 
 
@@ -542,22 +573,37 @@ const SpeakingExamEngine = ({
 
     // Create the aggregate test_results row FIRST so each recording can be linked
     // by test_result_id (review page no longer relies on time-window matching).
+    const promptsList: string[] = (() => {
+      if (partType === "part1" && part1Data) return part1Data.questions || [];
+      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
+      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
+      if (partType === "part4" && part4Data) return part4Data.questions || [part4Data.topic];
+      return [];
+    })();
     try {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
       const partData =
         partType === "part1" ? { part1Data }
         : partType === "part2" ? { part2Data }
         : partType === "part3" ? { part3Data }
         : { part4Data };
+      const itemCount = Math.max(sourceQuestionIds?.length || 0, promptsList.length, recordingsRef.current.length);
+      const specs = Array.from({ length: itemCount }, (_, idx) => ({
+        questionText: promptsList[idx] || `Question ${idx + 1}`,
+        recordingPath: null,
+        ai: null,
+      }));
+      const items = buildSpeakingItems(specs);
+      const { scaled50, band } = computeScaleAndBand("speaking", 0, itemCount);
       const snap = buildReviewSnapshot({
         skill: "speaking",
         part: partType,
         testTitle,
         score: 0,
-        total: sourceQuestionIds?.length || 1,
-        items: (sourceQuestionIds || []).map((_, idx) => ({
-          extra: { recordingIndex: idx },
-        })),
+        total: itemCount || 1,
+        scaled50, band,
+        items,
         raw: { partType, ...partData, sourceQuestionIds, recordingCount: recordingsRef.current.length },
       });
       if (sourceQuestionIds && sourceQuestionIds.length > 0) {
@@ -591,24 +637,42 @@ const SpeakingExamEngine = ({
       }
     } catch { /* swallow */ }
 
-    // Best-effort upload of all recordings — never block UI on failure
+    // Best-effort upload of all recordings — never block UI on failure. Collect paths
+    // so we can bake them into the snapshot items.
+    const uploadedPaths: (string | null)[] = [];
     try {
       const currentRecordings = recordingsRef.current;
       await Promise.all(
         currentRecordings.map(async (blob, idx) => {
-          if (!blob) return;
+          if (!blob) { uploadedPaths[idx] = null; return; }
           try {
-            await saveSpeakingRecording({
+            const path = await saveSpeakingRecording({
               examSetId: examSetId ?? null,
               part: `${partType}_q${idx + 1}`,
               blob,
               durationSeconds: durationsRef.current[idx] ?? undefined,
               testResultId: testResultIdRef.current,
             });
-          } catch { /* ignore individual upload failures */ }
+            uploadedPaths[idx] = path;
+          } catch { uploadedPaths[idx] = null; }
         })
       );
     } catch { /* swallow */ }
+
+    // Bake recordingPath into snapshot items now that uploads are done.
+    try {
+      if (testResultIdRef.current) {
+        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+        const aiByIndex: Record<number, any> = {};
+        uploadedPaths.forEach((p, idx) => {
+          if (p) aiByIndex[idx] = { recordingPath: p };
+        });
+        if (Object.keys(aiByIndex).length > 0) {
+          await mergeSnapshotAI(testResultIdRef.current, aiByIndex);
+        }
+      }
+    } catch { /* swallow */ }
+
     onComplete?.();
     setPhase("done");
   };

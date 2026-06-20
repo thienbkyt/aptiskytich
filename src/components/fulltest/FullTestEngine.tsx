@@ -228,20 +228,43 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       const examSetId = skill === "grammar" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
       (async () => {
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const {
+          buildGrammarItems, buildReadingItems, buildListeningItems, computeScaleAndBand,
+        } = await import("@/lib/reviewItemsBuilder");
+        const partNorm = parts[currentPartIndex]?.partNorm ?? null;
+        const partQuestions = parts[currentPartIndex]?.questions ?? [];
+        let items: any[] = [];
+        try {
+          if (skill === "grammar") {
+            items = buildGrammarItems(partQuestions, perQuestion || []);
+          } else if (skill === "reading" && partNorm) {
+            const { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } = await import("@/lib/examTransformers");
+            const ed: any = {};
+            if (partNorm === "part1") ed.part1Question = toReadingPart1(partQuestions);
+            else if (partNorm === "part2") ed.part2Question = toReadingPart2(partQuestions);
+            else if (partNorm === "part3") ed.part3Question = toReadingPart3(partQuestions);
+            else if (partNorm === "part4") ed.part4Question = toReadingPart4(partQuestions);
+            items = buildReadingItems(partNorm as any, ed, {}, {}, perQuestion || []);
+          } else if (skill === "listening" && partNorm) {
+            const { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } = await import("@/lib/examTransformers");
+            const ed: any = {};
+            if (partNorm === "part1") ed.part1Questions = toListeningPart1(partQuestions);
+            else if (partNorm === "part2") ed.part2Questions = toListeningPart2(partQuestions);
+            else if (partNorm === "part3") ed.part3Questions = toListeningPart3(partQuestions);
+            else if (partNorm === "part4") ed.part4Questions = toListeningPart4(partQuestions);
+            items = buildListeningItems(partNorm as any, ed, {}, perQuestion || []);
+          }
+        } catch { /* noop */ }
+        const { scaled50, band } = computeScaleAndBand(skill, correct, total);
         const snap = buildReviewSnapshot({
           skill: skill === "grammar" ? "grammar_vocab" : skill,
-          part: parts[currentPartIndex]?.partNorm ?? null,
+          part: partNorm,
           testTitle: null,
-          score: correct, total,
-          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
-          items: (perQuestion || []).map((p) => ({
-            userAnswer: p.user_answer ?? null,
-            isCorrect: !!p.is_correct,
-          })),
+          score: correct, total, scaled50, band,
+          items,
           raw: {
-            skill,
-            partType: parts[currentPartIndex]?.partNorm ?? null,
-            questions: parts[currentPartIndex]?.questions ?? [],
+            skill, partType: partNorm,
+            questions: partQuestions,
             perQuestion: perQuestion || [],
           },
         });
@@ -635,13 +658,40 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         const totalRounded = Math.round(totalScore);
         const maxRounded = Math.max(Math.round(totalMax), 1);
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+        // Build flat items across all parts (in order)
+        const speakingItemSpecs: any[] = [];
+        const itemAIByIndex: Record<number, any> = {};
+        let runningIdx = 0;
+        orderedEntries.forEach((e, partIdx) => {
+          e.sub.items.forEach((it, itIdx) => {
+            const g = (perPartResults[partIdx] || [])[itIdx];
+            const ai = g && !("error" in g) ? {
+              partScore: (g as any).partScore,
+              maxPoints: (g as any).maxPoints,
+              grammarErrors: (g as any).grammarErrors || [],
+              pronunciationErrors: (g as any).pronunciationErrors || [],
+              feedback: (g as any).feedback || null,
+              transcript: (g as any).transcript || null,
+              improvedVersion: (g as any).improvedVersion || null,
+            } : null;
+            speakingItemSpecs.push({
+              questionText: it.spec.questionText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
+              recordingPath: null,
+              ai,
+            });
+            if (ai) itemAIByIndex[runningIdx] = ai;
+            runningIdx += 1;
+          });
+        });
+        const { scaled50, band } = computeScaleAndBand("speaking", totalRounded, maxRounded);
         const speakingSnap = buildReviewSnapshot({
           skill: "speaking",
           part: null,
           testTitle: "Full Test · Speaking",
           score: totalRounded, total: maxRounded,
-          scaled50: maxRounded > 0 ? Math.round((totalRounded / maxRounded) * 50) : null,
-          items: [],
+          scaled50, band,
+          items: buildSpeakingItems(speakingItemSpecs),
           raw: {
             perPart: orderedEntries.map((e, i) => ({
               partType: e.sub.partType,
@@ -661,23 +711,29 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           reviewSnapshot: speakingSnap,
         });
 
-        // Upload recordings (linked to the attempt via test_result_id)
+        // Upload recordings (linked to the attempt via test_result_id). Collect paths
+        // to bake into the snapshot so review can render them without re-fetching.
+        const pathByIndex: Record<number, string> = {};
+        let cursor = 0;
         for (const entry of orderedEntries) {
           const partNorm = entry.sub.partType;
+          const baseIdx = cursor;
           await Promise.all(entry.sub.items.map(async (item, idx) => {
             if (!item.blob) return;
             try {
-              await saveSpeakingRecording({
+              const path = await saveSpeakingRecording({
                 examSetId: entry.partId,
                 part: `${partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
                 testResultId,
               });
+              if (path) pathByIndex[baseIdx + idx] = path;
             } catch (e) {
               console.warn("[FullTestEngine] saveSpeakingRecording failed", e);
             }
           }));
+          cursor += entry.sub.items.length;
         }
 
         // Save per-question gradings linked to that row
@@ -692,6 +748,18 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             questionTexts: entry.sub.items.map((it) => it.spec.questionText),
           });
         }
+
+        // Bake recordingPath into snapshot items.
+        try {
+          const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+          const aiByIndex: Record<number, any> = {};
+          for (const [k, p] of Object.entries(pathByIndex)) {
+            aiByIndex[Number(k)] = { recordingPath: p };
+          }
+          if (testResultId && Object.keys(aiByIndex).length > 0) {
+            await mergeSnapshotAI(testResultId, aiByIndex);
+          }
+        } catch { /* swallow */ }
 
         setScores((prev) => ({
           ...prev,
@@ -864,14 +932,19 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         const partMaxRounded = Math.max(Math.round(partMax), 1);
 
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const { computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+        const userText = e.text || (e.perQuestion?.[0]?.user_answer ?? "");
+        const promptText = (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType);
+        const { scaled50, band } = computeScaleAndBand("writing", partScoreRounded, partMaxRounded);
         const writingSnap = buildReviewSnapshot({
           skill: "writing",
           part: e.partType,
           testTitle: e.partLabel ?? null,
           score: partScoreRounded, total: partMaxRounded,
-          scaled50: partMaxRounded > 0 ? Math.round((partScoreRounded / partMaxRounded) * 50) : null,
-          items: (e.perQuestion || []).map((p) => ({
-            userAnswer: p.user_answer ?? null,
+          scaled50, band,
+          items: [{
+            questionText: promptText,
+            userAnswer: userText,
             isCorrect: false,
             ai: res ? {
               partScore: res.partScore,
@@ -880,7 +953,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               spellingErrors: res.spellingErrors,
               feedback: res.feedback,
             } : null,
-          })),
+          }],
           raw: { partType: e.partType, text: e.text, questions: e.questions, ai: res || null },
         });
         // 1 row per part with that part's AI score

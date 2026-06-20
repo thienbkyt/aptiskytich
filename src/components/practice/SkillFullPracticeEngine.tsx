@@ -183,22 +183,43 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       const examSetId = skill === "grammar_vocab" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
       (async () => {
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const {
+          buildGrammarItems, buildReadingItems, buildListeningItems, computeScaleAndBand,
+        } = await import("@/lib/reviewItemsBuilder");
+        const partNorm = parts[currentPartIndex]?.partNorm ?? null;
+        const partQuestions = parts[currentPartIndex]?.questions ?? [];
+        let items: any[] = [];
+        if (skill === "grammar_vocab") {
+          items = buildGrammarItems(partQuestions, perQuestion || []);
+        } else if (skill === "reading" && partNorm) {
+          // Need engineData for reading items. Use what's stored on the part.
+          const engineData: any = {};
+          // Best-effort: derive from partQuestions via transformers
+          try {
+            const { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } = await import("@/lib/examTransformers");
+            if (partNorm === "part1") engineData.part1Question = toReadingPart1(partQuestions);
+            else if (partNorm === "part2") engineData.part2Question = toReadingPart2(partQuestions);
+            else if (partNorm === "part3") engineData.part3Question = toReadingPart3(partQuestions);
+            else if (partNorm === "part4") engineData.part4Question = toReadingPart4(partQuestions);
+            items = buildReadingItems(partNorm as any, engineData, {}, {}, perQuestion || []);
+          } catch { /* noop */ }
+        } else if (skill === "listening" && partNorm) {
+          const engineData: any = {};
+          try {
+            const { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } = await import("@/lib/examTransformers");
+            if (partNorm === "part1") engineData.part1Questions = toListeningPart1(partQuestions);
+            else if (partNorm === "part2") engineData.part2Questions = toListeningPart2(partQuestions);
+            else if (partNorm === "part3") engineData.part3Questions = toListeningPart3(partQuestions);
+            else if (partNorm === "part4") engineData.part4Questions = toListeningPart4(partQuestions);
+            items = buildListeningItems(partNorm as any, engineData, {}, perQuestion || []);
+          } catch { /* noop */ }
+        }
+        const { scaled50, band } = computeScaleAndBand(skill === "grammar_vocab" ? "grammar" : skill, correct, total);
         const snap = buildReviewSnapshot({
-          skill,
-          part: parts[currentPartIndex]?.partNorm ?? null,
-          testTitle,
-          score: correct, total,
-          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
-          items: (perQuestion || []).map((p) => ({
-            userAnswer: p.user_answer ?? null,
-            isCorrect: !!p.is_correct,
-          })),
-          raw: {
-            skill,
-            partType: parts[currentPartIndex]?.partNorm ?? null,
-            questions: parts[currentPartIndex]?.questions ?? [],
-            perQuestion: perQuestion || [],
-          },
+          skill, part: partNorm, testTitle,
+          score: correct, total, scaled50, band,
+          items,
+          raw: { skill, partType: partNorm, questions: partQuestions, perQuestion: perQuestion || [] },
         });
         saveExamResult({
           examSetId, skill,
@@ -431,12 +452,27 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         is_correct: false,
       }));
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+      const promptsList: string[] = (() => {
+        try {
+          const q = (currentPart.questions?.[0] as any) || {};
+          if (Array.isArray(q.questions)) return q.questions;
+        } catch { /* noop */ }
+        return currentPart.questions.map((_, i) => `Question ${i + 1}`);
+      })();
+      const specs = perQuestion.map((_, idx) => ({
+        questionText: promptsList[idx] || `Question ${idx + 1}`,
+        recordingPath: null,
+        ai: null,
+      }));
+      const { scaled50, band } = computeScaleAndBand("speaking", 0, perQuestion.length);
       const snap = buildReviewSnapshot({
         skill: "speaking",
         part: currentPart.partNorm,
         testTitle,
         score: 0, total: perQuestion.length,
-        items: perQuestion.map(() => ({})),
+        scaled50, band,
+        items: buildSpeakingItems(specs),
         raw: {
           partType: currentPart.partNorm,
           questions: currentPart.questions,
@@ -514,16 +550,18 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         partResults.push(entry);
 
         if (originalPart) {
+          const pathByIdx: Record<number, string> = {};
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
             try {
-              await saveSpeakingRecording({
+              const path = await saveSpeakingRecording({
                 examSetId: originalPart.id,
                 part: `${originalPart.partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
                 testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
               });
+              if (path) pathByIdx[idx] = path;
             } catch (e) {
               console.warn("[SkillFullPractice] saveSpeakingRecording failed", e);
             }
@@ -540,6 +578,41 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           } catch (e) {
             console.warn("[SkillFullPractice] saveSpeakingGradings failed", e);
           }
+
+          // Bake AI + recordingPaths into this part's snapshot.
+          try {
+            const trid = speakingTestResultIdByPartRef.current[originalPartIdx] ?? null;
+            if (trid) {
+              const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+              const aiByIndex: Record<number, any> = {};
+              let partScore = 0, partMax = 0;
+              gradings.forEach((g, i) => {
+                if (!g || (g as any).error) return;
+                const gg = g as any;
+                aiByIndex[i] = {
+                  partScore: gg.partScore,
+                  maxPoints: gg.maxPoints,
+                  grammarErrors: gg.grammarErrors || [],
+                  pronunciationErrors: gg.pronunciationErrors || [],
+                  feedback: gg.feedback || null,
+                  transcript: gg.transcript || null,
+                  improvedVersion: gg.improvedVersion || null,
+                  recordingPath: pathByIdx[i] ?? null,
+                };
+                partScore += gg.partScore || 0;
+                partMax += gg.maxPoints || 0;
+              });
+              // also include pure-recording rows with no AI
+              Object.entries(pathByIdx).forEach(([k, p]) => {
+                const i = Number(k);
+                if (!aiByIndex[i]) aiByIndex[i] = { recordingPath: p };
+              });
+              const scaled = partMax > 0 ? Math.round((partScore / partMax) * 50) : null;
+              await mergeSnapshotAI(trid, aiByIndex, partMax > 0 ? {
+                score: partScore, total: partMax, scaled50: scaled,
+              } : undefined);
+            }
+          } catch (e) { console.warn("[SkillFullPractice] mergeSnapshotAI failed", e); }
         }
       }
 
@@ -762,17 +835,21 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
       if (adminNavigationRef.current) return;
-      // Persist essay first and capture test_result_id so AI grading can link to this attempt.
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const sub = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
+      const userText = (perQuestion?.[0]?.user_answer) || sub.text || "";
+      const promptText = (sub.questions || []).join("\n\n") || currentPart.partNorm;
       const snap = buildReviewSnapshot({
         skill: "writing",
         part: currentPart.partNorm,
         testTitle,
-        score: 0, total: perQuestion?.length || 0,
-        items: (perQuestion || []).map((p) => ({
-          userAnswer: p.user_answer ?? null,
+        score: 0, total: 1,
+        items: [{
+          questionText: promptText,
+          userAnswer: userText,
           isCorrect: false,
-        })),
+          ai: null,
+        }],
         raw: {
           partType: currentPart.partNorm,
           questions: currentPart.questions,
@@ -824,6 +901,26 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           partLabel: WRITING_PART_LABELS[p.partType] ?? p.partType,
         });
         if (res) results.push(res as WritingGradingResult);
+        // Bake this part's AI into its snapshot.
+        try {
+          if (p.testResultId && res && (res as any).partScore !== undefined) {
+            const w = res as WritingGradingResult;
+            const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+            await mergeSnapshotAI(p.testResultId, {
+              0: {
+                partScore: w.partScore,
+                maxPoints: w.maxPoints,
+                grammarErrors: w.grammarErrors || [],
+                spellingErrors: w.spellingErrors || [],
+                feedback: w.feedback || null,
+              },
+            }, {
+              score: w.partScore,
+              total: w.maxPoints,
+              scaled50: w.maxPoints > 0 ? Math.round((w.partScore / w.maxPoints) * 50) : null,
+            });
+          }
+        } catch (e) { console.warn("[SkillFullPractice] writing bake AI failed", e); }
         setWritingGradedCount(i + 1);
       }
       const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);

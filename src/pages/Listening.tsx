@@ -174,6 +174,7 @@ const Listening = () => {
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
         const { supabase } = await import("@/integrations/supabase/client");
         const { buildHighlightRequest } = await import("@/lib/listeningReview");
+        const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
         let highlights: Record<string, string> = {};
         try {
           const partLike = { partType: exam.partType, ...(exam.engineData || {}) } as any;
@@ -186,13 +187,15 @@ const Listening = () => {
             highlights = p.highlights || {};
           }
         } catch { /* best-effort */ }
+        const builtItems = buildListeningItems(exam.partType, exam.engineData, highlights, perQuestion || []);
+        const { scaled50, band } = computeScaleAndBand("listening", correct, total);
         return buildReviewSnapshot({
           skill: "listening",
           part: exam.partType,
           testTitle: exam.testTitle,
           score: correct, total,
-          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
-          items: [],
+          scaled50, band,
+          items: builtItems,
           raw: {
             engineData: exam.engineData,
             perQuestion: perQuestion || [],

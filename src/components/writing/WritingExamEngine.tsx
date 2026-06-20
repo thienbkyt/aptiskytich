@@ -229,7 +229,7 @@ const WritingExamEngine = ({
 
     const { text, questions } = getTextAndQuestions();
 
-    await gradeExam({
+    const result = await gradeExam({
       type: "writing",
       text,
       questions,
@@ -238,6 +238,27 @@ const WritingExamEngine = ({
       examSetId: examSetId ?? null,
       partLabel: PART_LABELS[partType],
     });
+
+    // Bake AI grading into the saved review_snapshot so History review is self-sufficient.
+    try {
+      if (trid && result && (result as any).partScore !== undefined) {
+        const w = result as WritingGradingResult;
+        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+        const ai = {
+          partScore: w.partScore,
+          maxPoints: w.maxPoints,
+          grammarErrors: w.grammarErrors || [],
+          spellingErrors: w.spellingErrors || [],
+          feedback: w.feedback || null,
+        };
+        // Writing snapshots are single-item per part (one merged "text" item).
+        await mergeSnapshotAI(trid as string, { 0: ai }, {
+          score: w.partScore,
+          total: w.maxPoints,
+          scaled50: w.maxPoints > 0 ? Math.round((w.partScore / w.maxPoints) * 50) : null,
+        });
+      }
+    } catch (e) { console.warn("[Writing] bake AI failed", e); }
 
     setPhase("results");
   }, [onComplete, onPartAnswers, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
