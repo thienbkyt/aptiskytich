@@ -70,6 +70,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
   const adminNavigationRef = useRef(false);
   const lastNavDirectionRef = useRef<"forward" | "back">("forward");
+  const fullPartSessionRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
 
   // Reading full-practice: keep per-part answers + results so user can revisit/edit
   // previous parts without losing data; final score sums latest result per part.
@@ -227,6 +232,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           correct, total,
           perQuestion,
           reviewSnapshot: snap,
+          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
         });
       })();
     }
