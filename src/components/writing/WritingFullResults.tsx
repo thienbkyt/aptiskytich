@@ -166,7 +166,7 @@ const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFul
               onClick={() => setReviewIdx((i) => Math.max(0, i - 1))}
               disabled={reviewIdx === 0}
             >
-              <ArrowLeft className="w-4 h-4 mr-1" /> Part trước
+              <ArrowLeft className="w-4 h-4 mr-1" /> Trang trước
             </Button>
             <Button
               variant="outline"
@@ -174,7 +174,7 @@ const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFul
               onClick={() => setReviewIdx((i) => Math.min(parts.length - 1, i + 1))}
               disabled={reviewIdx === parts.length - 1}
             >
-              Part sau →
+              Trang sau →
             </Button>
           </div>
         </div>
