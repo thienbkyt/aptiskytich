@@ -540,23 +540,9 @@ const SpeakingExamEngine = ({
       return;
     }
 
-    // Best-effort upload of all recordings — never block UI on failure
+    // Create the aggregate test_results row FIRST so each recording can be linked
+    // by test_result_id (review page no longer relies on time-window matching).
     try {
-      const currentRecordings = recordingsRef.current;
-      await Promise.all(
-        currentRecordings.map(async (blob, idx) => {
-          if (!blob) return;
-          try {
-            await saveSpeakingRecording({
-              examSetId: examSetId ?? null,
-              part: `${partType}_q${idx + 1}`,
-              blob,
-              durationSeconds: durationsRef.current[idx] ?? undefined,
-            });
-          } catch { /* ignore individual upload failures */ }
-        })
-      );
-      // Persist per-question rows (for HistoryDetail review)
       if (sourceQuestionIds && sourceQuestionIds.length > 0) {
         const perQuestion = sourceQuestionIds.map((qid, idx) => ({
           exam_question_id: qid,
@@ -584,6 +570,25 @@ const SpeakingExamEngine = ({
         });
         testResultIdRef.current = trid;
       }
+    } catch { /* swallow */ }
+
+    // Best-effort upload of all recordings — never block UI on failure
+    try {
+      const currentRecordings = recordingsRef.current;
+      await Promise.all(
+        currentRecordings.map(async (blob, idx) => {
+          if (!blob) return;
+          try {
+            await saveSpeakingRecording({
+              examSetId: examSetId ?? null,
+              part: `${partType}_q${idx + 1}`,
+              blob,
+              durationSeconds: durationsRef.current[idx] ?? undefined,
+              testResultId: testResultIdRef.current,
+            });
+          } catch { /* ignore individual upload failures */ }
+        })
+      );
     } catch { /* swallow */ }
     onComplete?.();
     setPhase("done");

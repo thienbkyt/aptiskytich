@@ -167,6 +167,8 @@ export async function saveSpeakingRecording(opts: {
   part: string;
   blob: Blob;
   durationSeconds?: number;
+  /** When set, link the recording row to this exact attempt so history review can scope by it. */
+  testResultId?: string | null;
 }): Promise<void> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -193,6 +195,7 @@ export async function saveSpeakingRecording(opts: {
       part: opts.part,
       audio_url: path,
       duration_seconds: opts.durationSeconds ?? null,
+      test_result_id: opts.testResultId ?? null,
     } as any);
 
     // Speaking sessions count as activity too

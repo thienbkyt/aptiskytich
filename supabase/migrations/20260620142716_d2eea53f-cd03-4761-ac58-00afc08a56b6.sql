@@ -1,0 +1,2 @@
+ALTER TABLE public.speaking_recordings ADD COLUMN IF NOT EXISTS test_result_id uuid REFERENCES public.test_results(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_speaking_recordings_test_result ON public.speaking_recordings(test_result_id);
