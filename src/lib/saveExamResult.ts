@@ -174,10 +174,10 @@ export async function saveSpeakingRecording(opts: {
   durationSeconds?: number;
   /** When set, link the recording row to this exact attempt so history review can scope by it. */
   testResultId?: string | null;
-}): Promise<void> {
+}): Promise<string | null> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return null;
 
     const timestamp = Date.now();
     const setSegment = opts.examSetId || "no-set";
@@ -191,7 +191,7 @@ export async function saveSpeakingRecording(opts: {
       });
     if (upErr) {
       console.warn("[saveSpeakingRecording] upload failed:", upErr);
-      return;
+      return null;
     }
 
     await supabase.from("speaking_recordings").insert({
@@ -205,8 +205,11 @@ export async function saveSpeakingRecording(opts: {
 
     // Speaking sessions count as activity too
     await updateLearningStreak(user.id);
+    return path;
   } catch (err) {
     console.warn("[saveSpeakingRecording] skipped:", err);
+    return null;
   }
 }
+
 
