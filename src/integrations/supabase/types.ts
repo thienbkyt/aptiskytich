@@ -785,6 +785,7 @@ export type Database = {
           exam_set_id: string | null
           id: string
           part: string
+          test_result_id: string | null
           user_id: string
         }
         Insert: {
@@ -794,6 +795,7 @@ export type Database = {
           exam_set_id?: string | null
           id?: string
           part: string
+          test_result_id?: string | null
           user_id: string
         }
         Update: {
@@ -803,9 +805,18 @@ export type Database = {
           exam_set_id?: string | null
           id?: string
           part?: string
+          test_result_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "speaking_recordings_test_result_id_fkey"
+            columns: ["test_result_id"]
+            isOneToOne: false
+            referencedRelation: "test_results"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {
