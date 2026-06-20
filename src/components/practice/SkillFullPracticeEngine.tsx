@@ -702,8 +702,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       case "part4": writingProps.part4Data = toWritingPart4(currentPart.questions); break;
     }
 
+    const WRITING_PART_LABELS: Record<string, string> = {
+      task1: "Part 1 – Short Answers",
+      task2: "Part 2 – Social Media Response",
+      task3: "Part 3 – Three Questions",
+      task4: "Part 4 – Informal & Formal Email",
+    };
+
     const handleWritingPartAnswers = (data: { partType: string; text: string; questions: string[] }) => {
-      writingSubmissionsByPartRef.current[currentPartIndex] = data;
+      const prev = writingSubmissionsByPartRef.current[currentPartIndex] as any;
+      writingSubmissionsByPartRef.current[currentPartIndex] = {
+        ...data,
+        // preserve partId/perQuestion/testResultId set in handleWritingPartComplete
+        ...(prev ? { partId: prev.partId, perQuestion: prev.perQuestion, testResultId: prev.testResultId } : {}),
+      } as any;
     };
 
     const writingPreviousPart = currentPartIndex > 0
@@ -715,14 +727,21 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
     const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
       if (adminNavigationRef.current) return;
-      // Persist essay (fire-and-forget, do not block navigation)
-      saveExamResult({
+      // Persist essay first and capture test_result_id so AI grading can link to this attempt.
+      const trid = await saveExamResult({
         examSetId: currentPart.id,
         skill: "writing",
         correct: 0,
         total: perQuestion?.length || 0,
         perQuestion,
       });
+      const existing = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
+      writingSubmissionsByPartRef.current[currentPartIndex] = {
+        ...existing,
+        partId: currentPart.id,
+        perQuestion,
+        testResultId: trid ?? null,
+      } as any;
 
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
@@ -738,7 +757,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         .sort((a, b) => a - b);
       const orderedSubmissions = orderedIndices
         .map((i) => writingSubmissionsByPartRef.current[i])
-        .filter(Boolean);
+        .filter(Boolean) as Array<{ partType: string; text: string; questions: string[]; partId?: string; testResultId?: string | null }>;
       writingPartsRef.current = orderedSubmissions;
       const results: WritingGradingResult[] = [];
       for (let i = 0; i < orderedSubmissions.length; i++) {
@@ -748,6 +767,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           text: p.text,
           questions: p.questions,
           partType: p.partType,
+          testResultId: p.testResultId ?? null,
+          examSetId: p.partId ?? null,
+          partLabel: WRITING_PART_LABELS[p.partType] ?? p.partType,
         });
         if (res) results.push(res as WritingGradingResult);
         setWritingGradedCount(i + 1);
