@@ -110,11 +110,13 @@ const History = () => {
 
         const merged: HistoryRow[] = (results || []).map((r: any) => {
           const setInfo = r.exam_set_id ? setsMap[r.exam_set_id] : undefined;
-          let skill =
-            setInfo?.skill ||
-            (r.skill_scores && (r.skill_scores as any).skill) ||
-            "unknown";
+          const ss = (r.skill_scores || {}) as any;
+          let skill = setInfo?.skill || ss.skill || "unknown";
           if (skill === "grammar_vocab") skill = "grammar";
+          const isMarathon = ss.mode === "marathon" || (!r.exam_set_id && !r.full_test_session_id && !!ss.label);
+          const title = isMarathon
+            ? (ss.label || "Luyện nhanh (Marathon)")
+            : (setInfo?.title || "Đề mẫu");
           return {
             id: r.id,
             created_at: r.created_at,
@@ -124,10 +126,11 @@ const History = () => {
             time_spent: r.time_spent,
             exam_set_id: r.exam_set_id,
             skill,
-            title: setInfo?.title || "Đề mẫu",
+            title,
             part: setInfo?.part || "",
             full_test_session_id: r.full_test_session_id ?? null,
             full_test_id: r.full_test_id ?? null,
+            isMarathon,
           };
         });
 
