@@ -85,9 +85,9 @@ export const computeHistoryDisplay = (
 
   if (r.total > 0) {
 
-    return { displayScore: `${r.score}/${r.total}`, displayBand: r.level || "—", scorePct: r.score / r.total };
+    return { displayScore: `${r.score}/${r.total}`, displayBand: noBand ? "—" : (r.level || "—"), scorePct: r.score / r.total };
 
   }
 
-  return { displayScore: "—", displayBand: r.level || "—", scorePct: null };
+  return { displayScore: "—", displayBand: noBand ? "—" : (r.level || "—"), scorePct: null };
 };
