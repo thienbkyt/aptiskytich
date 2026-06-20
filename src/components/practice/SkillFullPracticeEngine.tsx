@@ -23,7 +23,7 @@ import ReadingFullResults, { type ReadingFullPartResult } from "@/components/rea
 import ListeningFullResults, { type ListeningFullPartResult } from "@/components/listening/ListeningFullResults";
 import WritingFullResults from "@/components/writing/WritingFullResults";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
-import { saveExamResult } from "@/lib/saveExamResult";
+import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
