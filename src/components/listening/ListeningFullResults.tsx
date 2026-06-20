@@ -189,7 +189,7 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             {parts.map((p, i) => (
               <button
                 key={i}
-                onClick={() => setReviewPartIndex(i)}
+                onClick={() => { setReviewPartIndex(i); setPageInPart(0); setPageCount(1); setEnterAtLast(false); }}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
                   i === reviewPartIndex
                     ? "bg-primary text-primary-foreground border-primary"
@@ -204,31 +204,33 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setReviewPartIndex((i) => Math.max(0, i - 1))}
-              disabled={reviewPartIndex === 0}
+              onClick={goPrevPage}
+              disabled={reviewPartIndex === 0 && pageInPart === 0}
             >
-              ← Part trước
+              ← Trang trước
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setReviewPartIndex((i) => Math.min(parts.length - 1, i + 1))}
-              disabled={reviewPartIndex === parts.length - 1}
+              onClick={goNextPage}
+              disabled={reviewPartIndex === parts.length - 1 && pageInPart >= pageCount - 1}
             >
-              Part sau →
+              Trang sau →
             </Button>
           </div>
         </div>
       </div>
 
       <ListeningExamEngine
-        key={`lreview-${reviewPartIndex}`}
+        key={`lreview-${reviewPartIndex}-${pageInPart}`}
         reviewMode
         skipIntro
         testTitle="Listening"
         timeLimit={0}
         partType={current.partType}
         initialAnswers={current.answers}
+        initialQuestion={pageInPart}
+        onQuestionCount={handleQuestionCount}
         part1Questions={current.part1Questions}
         part2Questions={current.part2Questions}
         part3Questions={current.part3Questions}
@@ -238,6 +240,7 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
         highlightLoading={highlightStatus === "loading"}
         onExit={() => setView("summary")}
       />
+
     </div>
   );
 };
