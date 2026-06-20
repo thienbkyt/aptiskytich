@@ -109,6 +109,17 @@ const ListeningExamEngine = ({
     partType === "part3" ? (part3Questions?.length || 0) :
     (part4Questions?.length || 0);
 
+  // Notify parent of question count for this part (review pager support).
+  useEffect(() => {
+    onQuestionCount?.(Math.max(1, totalQuestions));
+  }, [partType, totalQuestions, onQuestionCount]);
+
+  // When initialQuestion changes (review pager navigates), sync currentIndex.
+  useEffect(() => {
+    if (initialQuestion != null) setCurrentIndex(initialQuestion);
+  }, [initialQuestion]);
+
+
   const [answers, setAnswers] = useState<any[]>(
     initialAnswers && initialAnswers.length === totalQuestions
       ? initialAnswers
