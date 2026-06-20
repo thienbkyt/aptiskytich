@@ -13,7 +13,7 @@ import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
 import { saveTestResult } from "@/lib/testResults";
-import { saveExamResult } from "@/lib/saveExamResult";
+import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
 import { getLevel, getLevelColor } from "@/data/questions";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -607,6 +607,22 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           const results = await gradeSpeakingItems(specs, blobs, actuals);
           for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
           perPartResults.push(results);
+
+          // Upload recordings so review page (matches by examSetId + "partN_qK") can play them.
+          const partNorm = entry.sub.partType; // already "part1" | "part2" | ...
+          await Promise.all(entry.sub.items.map(async (item, idx) => {
+            if (!item.blob) return;
+            try {
+              await saveSpeakingRecording({
+                examSetId: entry.partId,
+                part: `${partNorm}_q${idx + 1}`,
+                blob: item.blob,
+                durationSeconds: item.actualSpoken,
+              });
+            } catch (e) {
+              console.warn("[FullTestEngine] saveSpeakingRecording failed", e);
+            }
+          }));
         }
 
         // Persist one aggregate speaking test_results row (gets linked to History)

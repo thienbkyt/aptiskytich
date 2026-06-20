@@ -14,7 +14,7 @@ import {
 
 import SpeakingExamEngine, { type SpeakingPartSubmission } from "@/components/speaking/SpeakingExamEngine";
 import SpeakingFullResults, { type SpeakingFullPartResult } from "@/components/speaking/SpeakingFullResults";
-import { gradeSpeakingSpec } from "@/components/speaking/speakingGrading";
+import { gradeSpeakingSpec, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
@@ -23,7 +23,7 @@ import ReadingFullResults, { type ReadingFullPartResult } from "@/components/rea
 import ListeningFullResults, { type ListeningFullPartResult } from "@/components/listening/ListeningFullResults";
 import WritingFullResults from "@/components/writing/WritingFullResults";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
-import { saveExamResult } from "@/lib/saveExamResult";
+import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -100,6 +100,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
 
   // Speaking full-practice grading state
   const speakingSubmissionsByPartRef = useRef<Record<number, SpeakingPartSubmission>>({});
+  const speakingTestResultIdByPartRef = useRef<Record<number, string | null>>({});
   const [speakingPhase, setSpeakingPhase] = useState<"none" | "grading" | "results">("none");
   const [speakingGradedCount, setSpeakingGradedCount] = useState(0);
   const [speakingGradeTotal, setSpeakingGradeTotal] = useState(0);
@@ -386,13 +387,14 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         user_answer: "(recorded)",
         is_correct: false,
       }));
-      saveExamResult({
+      const _trId = await saveExamResult({
         examSetId: currentPart.id,
         skill: "speaking",
         correct: 0,
         total: perQuestion.length,
         perQuestion,
       });
+      speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
@@ -451,6 +453,36 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
           else if (sub.partType === "part4") entry.part4Data = toSpeakingPart4(originalPart.questions);
         }
         partResults.push(entry);
+
+        // Upload recordings (one per item) so review page can find them via signed URLs.
+        if (originalPart) {
+          await Promise.all(sub.items.map(async (item, idx) => {
+            if (!item.blob) return;
+            try {
+              await saveSpeakingRecording({
+                examSetId: originalPart.id,
+                part: `${originalPart.partNorm}_q${idx + 1}`,
+                blob: item.blob,
+                durationSeconds: item.actualSpoken,
+              });
+            } catch (e) {
+              console.warn("[SkillFullPractice] saveSpeakingRecording failed", e);
+            }
+          }));
+
+          // Persist per-question AI gradings for History review.
+          try {
+            await saveSpeakingGradings({
+              testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
+              examSetId: originalPart.id,
+              partLabel: `Part ${sub.partNumber}`,
+              gradings,
+              questionTexts: sub.items.map((i) => i.spec.questionText),
+            });
+          } catch (e) {
+            console.warn("[SkillFullPractice] saveSpeakingGradings failed", e);
+          }
+        }
       }
 
       setSpeakingFullParts(partResults);
