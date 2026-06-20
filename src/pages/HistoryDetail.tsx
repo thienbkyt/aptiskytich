@@ -63,6 +63,8 @@ const formatDuration = (s: number | null) => {
 
 const HistoryDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const startReview = searchParams.has("review");
   const { user, loading: authLoading } = useAuth();
   const [result, setResult] = useState<ResultRow | null>(null);
   const [setInfo, setSetInfo] = useState<{ title: string; skill: string; part: string } | null>(null);
@@ -74,6 +76,13 @@ const HistoryDetail = () => {
   const [reviewing, setReviewing] = useState(false);
   const [reviewPages, setReviewPages] = useState<ReviewPage[]>([]);
   const [reviewInitialIdx, setReviewInitialIdx] = useState(0);
+
+  // Auto-enter review mode when requested via URL and pages are ready.
+  useEffect(() => {
+    if (startReview && reviewPages.length > 0 && !reviewing) {
+      setReviewing(true);
+    }
+  }, [startReview, reviewPages.length, reviewing]);
 
   // When toggling between summary/review, scroll to top.
   useEffect(() => {
