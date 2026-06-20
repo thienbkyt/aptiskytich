@@ -203,11 +203,24 @@ const Writing = () => {
         examSetId={exam.examSetId ?? null}
         onExit={handleExit} onComplete={async (perQuestion) => {
           const timeSpent = exam.startedAt ? Math.floor((Date.now() - exam.startedAt) / 1000) : undefined;
+          const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+          const snap = buildReviewSnapshot({
+            skill: "writing",
+            part: exam.partType,
+            testTitle: exam.testTitle,
+            score: 0, total: perQuestion?.length || 0,
+            items: (perQuestion || []).map((p) => ({
+              userAnswer: p.user_answer ?? null,
+              isCorrect: false,
+            })),
+            raw: { engineData: exam.engineData, perQuestion: perQuestion || [] },
+          });
           const id = await saveExamResult({
             examSetId: exam.examSetId ?? null,
             skill: "writing",
             correct: 0, total: perQuestion?.length || 0, timeSpent,
             perQuestion,
+            reviewSnapshot: snap,
           });
           return id ?? null;
         }}
