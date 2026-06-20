@@ -12,7 +12,6 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
-import { saveTestResult } from "@/lib/testResults";
 import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
 import { getLevel, getLevelColor } from "@/data/questions";
 import { useAuth } from "@/hooks/useAuth";
@@ -89,7 +88,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
-  const savedRef = useRef(false);
   // Prevent double-advancing if a child engine fires onComplete twice
   // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
   const completedKeysRef = useRef<Set<string>>(new Set());
@@ -116,23 +114,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const { gradeExam } = useExamGrading();
 
 
-  // Persist final result once when the user finishes the full test.
-  useEffect(() => {
-    if (phase !== "completed" || savedRef.current) return;
-    savedRef.current = true;
-    const totalCorrect = Object.values(scores).reduce((s, v) => s + v.correct, 0);
-    const totalQ = Object.values(scores).reduce((s, v) => s + v.total, 0);
-    if (totalQ === 0) return;
-    const skillScores: Record<string, { correct: number; total: number }> = {};
-    SKILL_ORDER.forEach((sk) => { skillScores[sk] = scores[sk]; });
-    saveTestResult({
-      correct: totalCorrect,
-      total: totalQ,
-      skill: "full_test",
-      testId: testId,
-      skillScores,
-    });
-  }, [phase, scores, testId]);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
