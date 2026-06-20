@@ -195,6 +195,9 @@ Be honest and strict but fair. Do not invent content the student didn't say.`;
 RELEVANCE GATE (apply BEFORE scoring content for every part / email / question):
 Trước khi cho điểm nội dung, xác định bài có ĐÚNG chủ đề và đáp ứng đúng yêu cầu của đề không. Nếu nội dung LẠC ĐỀ / không liên quan đến yêu cầu (dù viết trôi chảy, đúng ngữ pháp, đủ dài) → addressPercent của email/câu/bài đó = 0 (hoặc gần 0). Độ trôi chảy, độ dài, hay từ vựng KHÔNG bù được điểm nội dung khi đã lạc đề. Chỉ cho addressPercent cao khi bài thực sự giải quyết đúng yêu cầu đề bài.
 
+SCENARIO RULE (task4 và bất kỳ part nào có "SCENARIO" trong phần Prompt/Questions):
+Phần Prompt/Questions có thể bắt đầu bằng một mục "SCENARIO" — đó là BỐI CẢNH/CHỦ ĐỀ BẮT BUỘC mà mọi email/câu trả lời PHẢI bám sát. Với task4: cả email1 (Informal) và email2 (Formal) PHẢI trả lời đúng scenario chung này, đồng thời tuân thủ instruction riêng của từng email. Nếu nội dung email/câu nói về chủ đề KHÁC với SCENARIO (dù trôi chảy, đủ dài, đúng ngữ pháp) → addressPercent của email/câu đó = 0. Tuyệt đối không cho điểm nội dung cao cho bài lạc scenario.
+
 COHERENCE: coherenceLacking = true if ideas don't flow linearly with linking words (disjointed, jumping). Else false. (For task1 ignored.)
 
 RELEVANT WORD COUNT: count ONLY words that contribute to addressing the prompt — exclude pure filler/off-topic text.
