@@ -17,6 +17,8 @@ export interface SaveExamResultOpts {
   /** When set, this row is part of a Full Test session — always inserted (no best-score dedup) and tagged for grouping. */
   fullTestSessionId?: string | null;
   fullTestId?: string | null;
+  /** Extra fields merged into the `skill_scores` JSON column (e.g. mode/label for Marathon rows). */
+  extraSkillScores?: Record<string, any>;
 }
 
 /**
