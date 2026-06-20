@@ -49,19 +49,11 @@ const Navbar = () => {
     setMobileAdminOpen(false);
   }, [location.pathname]);
 
-  // Warm up the most likely "next" routes once the browser is idle.
+  // Warm up the most likely "next" routes once the browser is idle — only for signed-in users.
   useEffect(() => {
-    prefetchOnIdle([
-      "/dashboard",
-      "/vocabulary",
-      "/thi-thu",
-      "/grammar",
-      "/reading",
-      "/listening",
-      "/speaking",
-      "/writing",
-    ]);
-  }, []);
+    if (!user) return;
+    prefetchOnIdle(["/dashboard", "/vocabulary"]);
+  }, [user]);
 
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
