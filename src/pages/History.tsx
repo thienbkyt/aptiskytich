@@ -53,6 +53,17 @@ interface FullTestGroup {
   skillAgg: Record<string, { num: number; den: number }>;
 }
 
+interface FullPartGroup {
+  sessionId: string;
+  skill: string;
+  created_at: string;
+  partCount: number;
+  num: number;
+  den: number;
+  displayScore: string;
+  displayBand: string;
+}
+
 const SKILL_LABELS: Record<string, string> = {
   grammar: "Grammar",
   grammar_vocab: "Grammar",
