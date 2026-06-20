@@ -319,13 +319,26 @@ const History = () => {
     return () => { cancelled = true; };
   }, [user]);
 
-  const perSkillRows = useMemo(() => rows.filter((r) => !r.full_test_session_id), [rows]);
+  const perSkillRows = useMemo(
+    () => rows.filter((r) => !r.full_test_session_id && !r.fullPartSession),
+    [rows],
+  );
 
-  const filtered = useMemo(() => {
-    if (skillFilter === "all") return perSkillRows;
-    if (skillFilter === "fulltest") return perSkillRows; // unused
-    return perSkillRows.filter((r) => r.skill === skillFilter);
-  }, [perSkillRows, skillFilter]);
+  type MixedItem =
+    | { kind: "row"; created_at: string; row: HistoryRow }
+    | { kind: "group"; created_at: string; group: FullPartGroup };
+
+  const filteredItems = useMemo<MixedItem[]>(() => {
+    const rowItems: MixedItem[] = perSkillRows
+      .filter((r) => skillFilter === "all" || skillFilter === "fulltest" || r.skill === skillFilter)
+      .map((r) => ({ kind: "row", created_at: r.created_at, row: r }));
+    const groupItems: MixedItem[] = fullPartGroups
+      .filter((g) => skillFilter === "all" || g.skill === skillFilter)
+      .map((g) => ({ kind: "group", created_at: g.created_at, group: g }));
+    return [...rowItems, ...groupItems].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+  }, [perSkillRows, fullPartGroups, skillFilter]);
 
   // Top stats
   const stats = useMemo(() => {
