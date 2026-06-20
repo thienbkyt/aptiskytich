@@ -493,6 +493,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         total: perQuestion.length,
         perQuestion,
         reviewSnapshot: snap,
+        extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
@@ -885,6 +886,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         total: perQuestion?.length || 0,
         perQuestion,
         reviewSnapshot: snap,
+        extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
       });
       const existing = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
       writingSubmissionsByPartRef.current[currentPartIndex] = {
