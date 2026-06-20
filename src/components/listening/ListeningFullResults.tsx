@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSkillBand, getLevelColor } from "@/data/questions";
@@ -46,6 +46,13 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   const totalCorrect = parts.reduce((s, p) => s + p.correct, 0);
   const totalQuestions = parts.reduce((s, p) => s + p.total, 0);
   const band = getSkillBand(score50, "listening");
+
+  useEffect(() => {
+    if (view === "review") {
+      document.body.classList.add("history-review-mode");
+      return () => document.body.classList.remove("history-review-mode");
+    }
+  }, [view]);
 
   const current = parts[reviewPartIndex];
 

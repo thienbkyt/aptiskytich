@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { getSkillBand, getLevelColor } from "@/data/questions";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,13 @@ const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFul
   const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
   const band = getSkillBand(score50, "writing");
   const bandColor = getLevelColor(band);
+
+  useEffect(() => {
+    if (view === "review") {
+      document.body.classList.add("history-review-mode");
+      return () => document.body.classList.remove("history-review-mode");
+    }
+  }, [view]);
 
   // ── Summary view ──
   if (view === "summary") {

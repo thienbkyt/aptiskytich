@@ -46,7 +46,7 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBa
             <button
               type="button"
               onClick={onBackToResults}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+              className="exam-header-back-btn flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4" />
               Quay lại kết quả

@@ -50,6 +50,13 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   const totalQuestions = parts.reduce((s, p) => s + p.total, 0);
   const band = getSkillBand(score50, "reading");
 
+  useEffect(() => {
+    if (view === "review") {
+      document.body.classList.add("history-review-mode");
+      return () => document.body.classList.remove("history-review-mode");
+    }
+  }, [view]);
+
   const current = parts[reviewPartIndex];
   const { data: reviewData, status: reviewStatus } = useReadingReviewData(
     current?.examSetId ?? null,
