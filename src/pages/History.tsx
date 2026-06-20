@@ -470,7 +470,7 @@ const History = () => {
                 </Table>
               </div>
             )
-          ) : filtered.length === 0 ? (
+          ) : filteredItems.length === 0 ? (
             <EmptyState
               title="Chưa có lịch sử làm bài"
               desc="Hãy bắt đầu luyện tập để theo dõi tiến trình của bạn nhé!"
@@ -491,7 +491,52 @@ const History = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((r) => {
+                  {filteredItems.map((item) => {
+                    if (item.kind === "group") {
+                      const g = item.group;
+                      const Icon = SKILL_ICON[g.skill] || ListChecks;
+                      return (
+                        <TableRow key={`fp-${g.sessionId}`}>
+                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" />{formatDateTime(g.created_at)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <Icon className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-foreground truncate">{SKILL_LABELS[g.skill] || g.skill}</span>
+                                  <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Full Part</Badge>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground truncate">{g.partCount} phần</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell><span className="text-muted-foreground">—</span></TableCell>
+                          <TableCell className="text-right font-semibold text-foreground">{g.displayScore}</TableCell>
+                          <TableCell className="text-right">
+                            {g.displayBand && g.displayBand !== "—" ? (
+                              <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-0 font-bold">{g.displayBand}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex gap-2">
+                              <Link to={`/history/full-part/${g.sessionId}`}>
+                                <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                              </Link>
+                              <Link to={SKILL_ROUTES[g.skill] || "/practice"}>
+                                <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                              </Link>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                    const r = item.row;
                     const Icon = SKILL_ICON[r.skill] || ListChecks;
                     return (
                       <TableRow key={r.id}>
