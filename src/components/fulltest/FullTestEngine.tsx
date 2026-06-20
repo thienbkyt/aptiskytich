@@ -711,23 +711,29 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           reviewSnapshot: speakingSnap,
         });
 
-        // Upload recordings (linked to the attempt via test_result_id)
+        // Upload recordings (linked to the attempt via test_result_id). Collect paths
+        // to bake into the snapshot so review can render them without re-fetching.
+        const pathByIndex: Record<number, string> = {};
+        let cursor = 0;
         for (const entry of orderedEntries) {
           const partNorm = entry.sub.partType;
+          const baseIdx = cursor;
           await Promise.all(entry.sub.items.map(async (item, idx) => {
             if (!item.blob) return;
             try {
-              await saveSpeakingRecording({
+              const path = await saveSpeakingRecording({
                 examSetId: entry.partId,
                 part: `${partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
                 testResultId,
               });
+              if (path) pathByIndex[baseIdx + idx] = path;
             } catch (e) {
               console.warn("[FullTestEngine] saveSpeakingRecording failed", e);
             }
           }));
+          cursor += entry.sub.items.length;
         }
 
         // Save per-question gradings linked to that row
@@ -742,6 +748,18 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             questionTexts: entry.sub.items.map((it) => it.spec.questionText),
           });
         }
+
+        // Bake recordingPath into snapshot items.
+        try {
+          const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+          const aiByIndex: Record<number, any> = {};
+          for (const [k, p] of Object.entries(pathByIndex)) {
+            aiByIndex[Number(k)] = { recordingPath: p };
+          }
+          if (testResultId && Object.keys(aiByIndex).length > 0) {
+            await mergeSnapshotAI(testResultId, aiByIndex);
+          }
+        } catch { /* swallow */ }
 
         setScores((prev) => ({
           ...prev,
