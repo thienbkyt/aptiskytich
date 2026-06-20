@@ -1,9 +1,8 @@
-import ExcelJS from "exceljs";
-
 /**
  * Read an Excel file from a FileReader result (ArrayBuffer) and return sheets as JSON arrays.
  */
 export async function readExcelFile(buffer: ArrayBuffer): Promise<{ sheetNames: string[]; sheets: Record<string, Record<string, any>[]> }> {
+  const ExcelJS = (await import("exceljs")).default;
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
 
