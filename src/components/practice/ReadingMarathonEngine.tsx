@@ -113,13 +113,25 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     setSavedOnce(true);
     (async () => {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const { buildReadingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+      const items: any[] = [];
+      reviewable.forEach((r) => {
+        // engineData isn't preserved on the entry — rebuild from set questions on the fly
+        // would be costly; skip per-set items here, marathons still ship raw.perSet.
+        items.push({
+          questionText: `Đề ${r.examSetId} · ${r.part}`,
+          userAnswer: `${r.correct}/${r.total}`,
+          isCorrect: r.correct === r.total,
+        });
+      });
+      const { scaled50, band } = computeScaleAndBand("reading", accCorrect, accTotal);
       const snap = buildReviewSnapshot({
         skill: "reading",
         part: partType,
         testTitle: `Marathon · ${partName}`,
         score: accCorrect, total: accTotal,
-        scaled50: accTotal > 0 ? Math.round((accCorrect / accTotal) * 50) : null,
-        items: [],
+        scaled50, band,
+        items,
         raw: {
           mode: "marathon",
           partType,
