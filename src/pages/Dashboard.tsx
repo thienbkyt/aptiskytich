@@ -99,11 +99,14 @@ const Dashboard = () => {
       try {
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-        const [profileRes, streakRes, testsRes, allResultsRes] = await Promise.all([
+        const [profileRes, streakRes, testsRes, allResultsRes, speakingGradRes, writingGradRes, examGradRes] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
           supabase.from("test_results").select("score,total,level,created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(4),
           supabase.from("test_results").select("skill_scores,created_at").eq("user_id", user.id),
+          supabase.from("speaking_question_gradings").select("part_score,max_points").eq("user_id", user.id),
+          supabase.from("writing_question_gradings").select("part_score,max_points").eq("user_id", user.id),
+          supabase.from("exam_gradings").select("criteria").eq("user_id", user.id).eq("skill", "writing"),
         ]);
 
         if (cancelled) return;
@@ -117,9 +120,12 @@ const Dashboard = () => {
         const allResults = allResultsRes.data || [];
 
         // Aggregate skill totals from test_results.skill_scores
+        // accuracy only counts MCQ skills (grammar/reading/listening); speaking & writing are AI-graded
         const skillAgg: Record<string, { correct: number; total: number }> = {};
-        let grandCorrect = 0;
+        let mcqCorrect = 0;
+        let mcqTotal = 0;
         let grandTotal = 0;
+        const MCQ_SKILLS = new Set(["grammar_vocab", "reading", "listening"]);
         allResults.forEach((row: any) => {
           const ss = row.skill_scores;
           if (!ss || typeof ss !== "object") return;
@@ -130,14 +136,41 @@ const Dashboard = () => {
           if (!skillAgg[skill]) skillAgg[skill] = { correct: 0, total: 0 };
           skillAgg[skill].correct += correct;
           skillAgg[skill].total += total;
-          grandCorrect += correct;
           grandTotal += total;
+          if (MCQ_SKILLS.has(skill)) {
+            mcqCorrect += correct;
+            mcqTotal += total;
+          }
         });
 
         const pctOf = (key: string) => {
           const a = skillAgg[key];
           return a && a.total > 0 ? Math.round((a.correct / a.total) * 100) : 0;
         };
+        const clampPct = (n: number) => Math.max(0, Math.min(100, n));
+
+        // Speaking % from AI gradings
+        let sCorrect = 0, sMax = 0;
+        (speakingGradRes.data || []).forEach((r: any) => {
+          sCorrect += Number(r.part_score) || 0;
+          sMax += Number(r.max_points) || 0;
+        });
+        const speakingPct = sMax > 0 ? clampPct(Math.round((sCorrect / sMax) * 100)) : 0;
+
+        // Writing % from AI: writing_question_gradings + exam_gradings(writing).criteria
+        let wCorrect = 0, wMax = 0;
+        (writingGradRes.data || []).forEach((r: any) => {
+          wCorrect += Number(r.part_score) || 0;
+          wMax += Number(r.max_points) || 0;
+        });
+        (examGradRes.data || []).forEach((r: any) => {
+          const c = r.criteria;
+          if (c && typeof c === "object") {
+            wCorrect += Number((c as any).partScore) || 0;
+            wMax += Number((c as any).maxPoints) || 0;
+          }
+        });
+        const writingPct = wMax > 0 ? clampPct(Math.round((wCorrect / wMax) * 100)) : 0;
 
         const nowVN = toVNDate(new Date());
         const todayIdx = vnWeekdayIndex(new Date());
@@ -166,13 +199,13 @@ const Dashboard = () => {
           displayName,
           streak: streakRes.data?.current_streak ?? 0,
           totalQuestions: grandTotal,
-          accuracy: grandTotal > 0 ? Math.round((grandCorrect / grandTotal) * 100) : 0,
+          accuracy: mcqTotal > 0 ? Math.round((mcqCorrect / mcqTotal) * 100) : 0,
           currentLevel: tests[0]?.level || "—",
           grammarPct:   pctOf("grammar_vocab"),
           readingPct:   pctOf("reading"),
           listeningPct: pctOf("listening"),
-          speakingPct:  pctOf("speaking"),
-          writingPct:   pctOf("writing"),
+          speakingPct,
+          writingPct,
           recentTests,
           weeklyActivity,
         });
