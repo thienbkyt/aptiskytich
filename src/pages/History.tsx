@@ -296,6 +296,9 @@ const History = () => {
                       <div className="flex flex-wrap items-center gap-2 mb-1.5">
                         <Badge variant="secondary" className="text-[11px]">{SKILL_LABELS[r.skill] || r.skill}</Badge>
                         {r.part && <Badge variant="outline" className="text-[11px]">{r.part}</Badge>}
+                        {r.isMarathon && (
+                          <Badge className="bg-primary/10 text-primary border-0 text-[11px]">Marathon</Badge>
+                        )}
                       </div>
                       <h3 className="font-heading font-semibold text-foreground truncate">{r.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
@@ -310,9 +313,11 @@ const History = () => {
                       <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-0 font-bold">{r.level}</Badge>
                     </div>
                     <div className="flex gap-2 md:flex-col lg:flex-row">
-                      <Link to={`/history/${r.id}`} className="flex-1 md:flex-none">
-                        <Button variant="outline" size="sm" className="gap-1.5 w-full"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
-                      </Link>
+                      {!r.isMarathon && (
+                        <Link to={`/history/${r.id}`} className="flex-1 md:flex-none">
+                          <Button variant="outline" size="sm" className="gap-1.5 w-full"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                        </Link>
+                      )}
                       <Link
                         to={
                           r.exam_set_id
