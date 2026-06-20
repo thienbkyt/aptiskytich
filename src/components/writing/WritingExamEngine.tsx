@@ -41,7 +41,9 @@ interface WritingExamEngineProps {
   fullFlow?: boolean;
   isLastPart?: boolean;
   onExit: () => void;
-  onComplete?: (perQuestion?: WritingPerQuestion[]) => void;
+  onComplete?: (perQuestion?: WritingPerQuestion[]) => void | Promise<string | null | void>;
+  /** DB exam_sets.id this engine is rendering — forwarded to grading persistence. */
+  examSetId?: string | null;
   onPrevious?: () => void;
   showResultsOnSubmit?: boolean;
   /** DB exam_questions.id list — used to persist the user's essay per part. */
