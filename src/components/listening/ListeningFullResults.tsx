@@ -40,6 +40,9 @@ const partLabel = (pt: ListeningPartType) => ({
 const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
   const [view, setView] = useState<"summary" | "review">("summary");
   const [reviewPartIndex, setReviewPartIndex] = useState(0);
+  const [pageInPart, setPageInPart] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
+  const [enterAtLast, setEnterAtLast] = useState(false);
   const totalCorrect = parts.reduce((s, p) => s + p.correct, 0);
   const totalQuestions = parts.reduce((s, p) => s + p.total, 0);
   const band = getSkillBand(score50, "listening");
@@ -59,6 +62,40 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
       : null,
     view === "review",
   );
+
+  const handleQuestionCount = useCallback((n: number) => {
+    setPageCount(n);
+    setPageInPart((prev) => {
+      if (enterAtLast) {
+        setEnterAtLast(false);
+        return Math.max(0, n - 1);
+      }
+      return prev > n - 1 ? 0 : prev;
+    });
+  }, [enterAtLast]);
+
+  const goNextPage = () => {
+    if (pageInPart < pageCount - 1) {
+      setPageInPart((p) => p + 1);
+    } else if (reviewPartIndex < parts.length - 1) {
+      setReviewPartIndex((i) => i + 1);
+      setPageInPart(0);
+      setPageCount(1);
+      setEnterAtLast(false);
+    }
+  };
+
+  const goPrevPage = () => {
+    if (pageInPart > 0) {
+      setPageInPart((p) => p - 1);
+    } else if (reviewPartIndex > 0) {
+      setEnterAtLast(true);
+      setReviewPartIndex((i) => i - 1);
+      setPageCount(1);
+    }
+  };
+
+
 
 
   if (view === "summary") {
