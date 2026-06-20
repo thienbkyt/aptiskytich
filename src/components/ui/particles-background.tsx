@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface ParticlesBackgroundProps {
   className?: string;
-  /** Number of particles on desktop. Mobile auto-halves. */
+  /** Number of particles on desktop. */
   count?: number;
   /** Max distance to draw connecting lines. */
   linkDistance?: number;
@@ -16,14 +16,25 @@ interface ParticlesBackgroundProps {
  * - pointer-events-none, aria-hidden
  * - pauses when tab is hidden
  * - respects prefers-reduced-motion (renders nothing)
+ * - skipped entirely on mobile (<768px) to keep scroll smooth
  */
 const ParticlesBackground = ({
   className,
-  count = 42,
+  count = 24,
   linkDistance = 130,
   color = "204, 28, 1", // brand red rgb
 }: ParticlesBackgroundProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  if (isMobile) return null;
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -34,8 +45,7 @@ const ParticlesBackground = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const isMobile = window.innerWidth < 768;
-    const N = isMobile ? Math.floor(count / 2) : count;
+    const N = count;
 
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
     let width = 0;
@@ -85,22 +95,24 @@ const ParticlesBackground = ({
         ctx.fill();
       }
 
-      // links
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const a = particles[i];
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < linkDistance) {
-            const alpha = (1 - dist / linkDistance) * 0.25;
-            ctx.strokeStyle = `rgba(${color}, ${alpha})`;
-            ctx.lineWidth = 0.6;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
+      // O(N^2) links only for small particle counts; skip on larger sets.
+      if (particles.length <= 28) {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const a = particles[i];
+            const b = particles[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < linkDistance) {
+              const alpha = (1 - dist / linkDistance) * 0.25;
+              ctx.strokeStyle = `rgba(${color}, ${alpha})`;
+              ctx.lineWidth = 0.6;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
           }
         }
       }
