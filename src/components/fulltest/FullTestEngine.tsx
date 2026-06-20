@@ -636,130 +636,149 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           .map((i) => speakingDataByPartRef.current[i])
           .filter(Boolean);
 
-        let totalScore = 0;
         let totalMax = 0;
         for (const e of orderedEntries) {
           totalMax += e.sub.items.reduce((s, it) => s + (it.spec.maxPoints || 0), 0);
         }
-
-        // Grade each part's items in parallel
-        const perPartResults: Awaited<ReturnType<typeof gradeSpeakingItems>>[] = [];
-        for (const entry of orderedEntries) {
-          const specs = entry.sub.items.map((i) => i.spec);
-          const blobs = entry.sub.items.map((i) => i.blob);
-          const actuals = entry.sub.items.map((i) => i.actualSpoken);
-          const results = await gradeSpeakingItems(specs, blobs, actuals);
-          for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
-          perPartResults.push(results);
-        }
-
-        // Persist one aggregate speaking test_results row FIRST so recordings + gradings
-        // can be linked by test_result_id (review no longer relies on time-window matching).
-        const totalRounded = Math.round(totalScore);
         const maxRounded = Math.max(Math.round(totalMax), 1);
+
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
-        const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
-        // Build flat items across all parts (in order)
-        const speakingItemSpecs: any[] = [];
-        const itemAIByIndex: Record<number, any> = {};
-        let runningIdx = 0;
-        orderedEntries.forEach((e, partIdx) => {
+        const { buildSpeakingItems, computeScaleAndBand, mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+
+        // 1) Create the test_results row FIRST with a placeholder score so recordings
+        //    can be linked even if grading fails later.
+        const speakingItemSpecsInitial: any[] = [];
+        orderedEntries.forEach((e) => {
           e.sub.items.forEach((it, itIdx) => {
-            const g = (perPartResults[partIdx] || [])[itIdx];
-            const ai = g && !("error" in g) ? {
-              partScore: (g as any).partScore,
-              maxPoints: (g as any).maxPoints,
-              grammarErrors: (g as any).grammarErrors || [],
-              pronunciationErrors: (g as any).pronunciationErrors || [],
-              feedback: (g as any).feedback || null,
-              transcript: (g as any).transcript || null,
-              improvedVersion: (g as any).improvedVersion || null,
-            } : null;
-            speakingItemSpecs.push({
+            speakingItemSpecsInitial.push({
               questionText: it.spec.questionText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
               recordingPath: null,
-              ai,
+              ai: null,
             });
-            if (ai) itemAIByIndex[runningIdx] = ai;
-            runningIdx += 1;
           });
         });
-        const { scaled50, band } = computeScaleAndBand("speaking", totalRounded, maxRounded);
-        const speakingSnap = buildReviewSnapshot({
+        const initialSnap = buildReviewSnapshot({
           skill: "speaking",
           part: null,
           testTitle: "Full Test · Speaking",
-          score: totalRounded, total: maxRounded,
-          scaled50, band,
-          items: buildSpeakingItems(speakingItemSpecs),
+          score: 0, total: maxRounded,
+          scaled50: null, band: null,
+          items: buildSpeakingItems(speakingItemSpecsInitial),
           raw: {
-            perPart: orderedEntries.map((e, i) => ({
+            perPart: orderedEntries.map((e) => ({
               partType: e.sub.partType,
               partId: e.partId,
               itemCount: e.sub.items.length,
-              gradings: (perPartResults[i] || []).map((r) => (r && !("error" in r) ? r : null)),
+              gradings: [],
             })),
           },
         });
         const testResultId = await saveExamResult({
           examSetId: orderedEntries[0]?.partId ?? null,
           skill: "speaking",
-          correct: totalRounded,
+          correct: 0,
           total: maxRounded,
           fullTestSessionId: sessionIdRef.current,
           fullTestId: testId,
-          reviewSnapshot: speakingSnap,
+          reviewSnapshot: initialSnap,
         });
 
-        // Upload recordings (linked to the attempt via test_result_id). Collect paths
-        // to bake into the snapshot so review can render them without re-fetching.
+        // 2) Upload recordings immediately, independent of grading.
         const pathByIndex: Record<number, string> = {};
-        let cursor = 0;
-        for (const entry of orderedEntries) {
-          const partNorm = entry.sub.partType;
-          const baseIdx = cursor;
-          await Promise.all(entry.sub.items.map(async (item, idx) => {
-            if (!item.blob) return;
-            try {
-              const path = await saveSpeakingRecording({
-                examSetId: entry.partId,
-                part: `${partNorm}_q${idx + 1}`,
-                blob: item.blob,
-                durationSeconds: item.actualSpoken,
-                testResultId,
-              });
-              if (path) pathByIndex[baseIdx + idx] = path;
-            } catch (e) {
-              console.warn("[FullTestEngine] saveSpeakingRecording failed", e);
-            }
-          }));
-          cursor += entry.sub.items.length;
-        }
-
-        // Save per-question gradings linked to that row
-        for (let i = 0; i < orderedEntries.length; i++) {
-          const entry = orderedEntries[i];
-          const results = perPartResults[i];
-          await saveSpeakingGradings({
-            testResultId,
-            examSetId: entry.partId,
-            partLabel: entry.partLabel,
-            gradings: results,
-            questionTexts: entry.sub.items.map((it) => it.spec.questionText),
-          });
-        }
-
-        // Bake recordingPath into snapshot items.
         try {
-          const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+          let cursor = 0;
+          for (const entry of orderedEntries) {
+            const partNorm = entry.sub.partType;
+            const baseIdx = cursor;
+            await Promise.all(entry.sub.items.map(async (item, idx) => {
+              if (!item.blob) return;
+              try {
+                const path = await saveSpeakingRecording({
+                  examSetId: entry.partId,
+                  part: `${partNorm}_q${idx + 1}`,
+                  blob: item.blob,
+                  durationSeconds: item.actualSpoken,
+                  testResultId,
+                });
+                if (path) pathByIndex[baseIdx + idx] = path;
+              } catch (e) {
+                console.warn("[FullTestEngine] saveSpeakingRecording failed", e);
+              }
+            }));
+            cursor += entry.sub.items.length;
+          }
+        } catch (e) {
+          console.warn("[FullTestEngine] speaking recordings upload failed", e);
+        }
+
+        // 3) Grade in a separate try/catch — recordings already saved above.
+        const perPartResults: Awaited<ReturnType<typeof gradeSpeakingItems>>[] = [];
+        let totalScore = 0;
+        try {
+          for (const entry of orderedEntries) {
+            const specs = entry.sub.items.map((i) => i.spec);
+            const blobs = entry.sub.items.map((i) => i.blob);
+            const actuals = entry.sub.items.map((i) => i.actualSpoken);
+            const results = await gradeSpeakingItems(specs, blobs, actuals);
+            for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
+            perPartResults.push(results);
+          }
+        } catch (e) {
+          console.warn("[FullTestEngine] speaking grading failed", e);
+        }
+
+        // 4) Save per-question gradings + bake recordingPath + AI into snapshot + update score.
+        const totalRounded = Math.round(totalScore);
+        try {
+          for (let i = 0; i < orderedEntries.length; i++) {
+            const entry = orderedEntries[i];
+            const results = perPartResults[i];
+            if (!results) continue;
+            await saveSpeakingGradings({
+              testResultId,
+              examSetId: entry.partId,
+              partLabel: entry.partLabel,
+              gradings: results,
+              questionTexts: entry.sub.items.map((it) => it.spec.questionText),
+            });
+          }
+        } catch (e) {
+          console.warn("[FullTestEngine] saveSpeakingGradings failed", e);
+        }
+
+        try {
           const aiByIndex: Record<number, any> = {};
-          for (const [k, p] of Object.entries(pathByIndex)) {
-            aiByIndex[Number(k)] = { recordingPath: p };
+          let runningIdx = 0;
+          orderedEntries.forEach((e, partIdx) => {
+            e.sub.items.forEach((_it, itIdx) => {
+              const g = (perPartResults[partIdx] || [])[itIdx];
+              const ai: any = {};
+              if (g && !("error" in g)) {
+                ai.partScore = (g as any).partScore;
+                ai.maxPoints = (g as any).maxPoints;
+                ai.grammarErrors = (g as any).grammarErrors || [];
+                ai.pronunciationErrors = (g as any).pronunciationErrors || [];
+                ai.feedback = (g as any).feedback || null;
+                ai.transcript = (g as any).transcript || null;
+                ai.improvedVersion = (g as any).improvedVersion || null;
+              }
+              if (pathByIndex[runningIdx]) ai.recordingPath = pathByIndex[runningIdx];
+              if (Object.keys(ai).length > 0) aiByIndex[runningIdx] = ai;
+              runningIdx += 1;
+            });
+          });
+          const { scaled50, band } = computeScaleAndBand("speaking", totalRounded, maxRounded);
+          if (testResultId) {
+            await mergeSnapshotAI(testResultId, aiByIndex, {
+              score: totalRounded,
+              total: maxRounded,
+              scaled50,
+              band,
+            });
           }
-          if (testResultId && Object.keys(aiByIndex).length > 0) {
-            await mergeSnapshotAI(testResultId, aiByIndex);
-          }
-        } catch { /* swallow */ }
+        } catch (e) {
+          console.warn("[FullTestEngine] mergeSnapshotAI failed", e);
+        }
 
         setScores((prev) => ({
           ...prev,
