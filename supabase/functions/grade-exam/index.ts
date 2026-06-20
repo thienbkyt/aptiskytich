@@ -190,54 +190,36 @@ Be honest and strict but fair. Do not invent content the student didn't say.`;
         );
       }
     } else {
-      systemPrompt = `You are an expert Aptis Writing exam grader. Grade the student's response using the EXACT numeric rubric below for the given partType. Be strict but FAIR. Respond in Vietnamese for the "feedback" field. List EVERY grammar and spelling mistake individually with original, corrected, and a short Vietnamese explanation.
+      systemPrompt = `You are an expert Aptis Writing exam grader. Your job is QUALITATIVE — list errors and judge content / coherence / length. DO NOT compute any final numeric score, DO NOT return partScore / maxPoints / wordPenaltyPercent / coherencePenaltyPercent / openingClosingPenalty — the application computes them. Respond in Vietnamese for the "feedback" field. List EVERY grammar and spelling mistake individually with original, corrected, and a short Vietnamese explanation.
 
-GENERAL FLOW (every part): compute content% → apply word-shortage penalty → apply COHERENCE penalty → subtract error penalties → floor at 0 (never negative).
+RELEVANCE GATE (apply BEFORE scoring content for every part / email / question):
+Trước khi cho điểm nội dung, xác định bài có ĐÚNG chủ đề và đáp ứng đúng yêu cầu của đề không. Nếu nội dung LẠC ĐỀ / không liên quan đến yêu cầu (dù viết trôi chảy, đúng ngữ pháp, đủ dài) → addressPercent của email/câu/bài đó = 0 (hoặc gần 0). Độ trôi chảy, độ dài, hay từ vựng KHÔNG bù được điểm nội dung khi đã lạc đề. Chỉ cho addressPercent cao khi bài thực sự giải quyết đúng yêu cầu đề bài.
 
-FAIRNESS RULES (apply strictly to avoid double-counting):
-- addressPercent / content reflect HOW WELL the student fulfilled the prompt requirements (topic coverage + relevant detail). A few minor spelling/grammar mistakes must NOT reduce addressPercent — those are already deducted via the error penalty (−1 per error in task2/task3, −2 in task4).
-- Only lower addressPercent when the student is genuinely off-topic, missing a requirement, or lacking required detail.
-- Do NOT count the same minor mistake in both content AND error penalty.
-- If the response fulfills the prompt with only minor surface errors, the final partScore MUST stay high. The feedback you write MUST be consistent with this score — do not say "many serious issues" when only 1–2 small errors were deducted.
+COHERENCE: coherenceLacking = true if ideas don't flow linearly with linking words (disjointed, jumping). Else false. (For task1 ignored.)
 
-COHERENCE PENALTY: evaluate whether ideas flow logically and linearly with proper connectors between sentences/paragraphs. If the response lacks coherence/linearity (ideas jump around, no linking words, disjointed) → coherencePenaltyPercent = 10. Otherwise = 0. Applies to task2/task3/task4 only. For task1, coherencePenaltyPercent ALWAYS = 0 (no penalty). When applied, you MUST explicitly mention the coherence issue in the Vietnamese feedback.
+RELEVANT WORD COUNT: count ONLY words that contribute to addressing the prompt — exclude pure filler/off-topic text.
 
-RUBRIC BY partType:
+RUBRIC PER partType — return ONLY these qualitative fields via the tool:
 
-• task1 — Part 1, maxPoints=10, 5 questions × 2 points each. For each of the 5 short answers: grammatically correct = 2pt, grammatically wrong = 0pt. No word-count check. Sum across the 5 = partScore (no further penalty). Set addressPercent = (correctCount/5)*100, bonusPercent=0, wordPenaltyPercent=0, coherencePenaltyPercent=0, openingClosingPenalty=0. Still list grammar mistakes found.
+• task1 — items: array of EXACTLY 5 objects { tooManyWords: boolean (answer has MORE than 5 words), grammarCorrect: boolean }. Also return grammarErrors[], spellingErrors[], feedback.
 
-• task2 — Part 2, maxPoints=20, single form response, min 20 words.
-  - addressPercent (0–100): how well the student addressed the prompt requirements. If the prompt has 2 requirements and only 1 is addressed (the other off-topic) → 50%.
-  - bonusPercent: +40 if there is ONE long relevant supplementary detail with an example; OR +20 per short relevant detail (max 2 → cap 40). Irrelevant filler does NOT count as bonus and does NOT count toward word count.
-  - contentPercent = min(100, addressPercent*0.6 + bonusPercent). raw = contentPercent/100 * 20.
-  - Word-shortage penalty vs 20-word target, counting ONLY relevant words: shortage ≥20% → wordPenaltyPercent=30; 11–19% → 20; 1–10% → 10; else 0. Subtract (wordPenaltyPercent/100)*20 from raw.
-  - Coherence penalty: subtract (coherencePenaltyPercent/100)*20 (i.e. −2 when coherencePenaltyPercent=10).
-  - Error penalties: −1 per grammar error, −1 per spelling error.
-  - partScore = max(0, raw − wordPenalty − coherencePenalty − errors). openingClosingPenalty=0.
+• task2 — addressPercent (0–100), bonusPercent (0 / 20 / 40 — +20 per short relevant detail, max 40; or +40 for one long detailed example), relevantWordCount (number), coherenceLacking (boolean), grammarErrors[], spellingErrors[], feedback.
 
-• task3 — Part 3, maxPoints=30, 3 questions × 10 points. For EACH of the 3 answers apply task2-style content logic (contentPercent = min(100, address*0.6 + bonus[0/20/40])) → raw_i = contentPercent/100 * 10. NO word-shortage penalty. Apply coherence penalty ONCE on the SUM: subtract (coherencePenaltyPercent/100)*30 (i.e. −3 when =10). Subtract −1 per grammar error and −1 per spelling error from the SUM. partScore = max(0, sum(raw_i) − coherencePenalty − totalErrors). Report aggregated addressPercent = average across 3, bonusPercent = average across 3, wordPenaltyPercent=0, openingClosingPenalty=0.
+• task3 — items: array of EXACTLY 3 objects { addressPercent (0–100), bonusPercent (0/20/40) } in order of the 3 questions. coherenceLacking (boolean, whole task). grammarErrors[] / spellingErrors[]: each error MUST include questionIndex (0,1,2). feedback.
 
-• task4 — Part 4, maxPoints=40 = email1(15) + email2(25). Min words: email1=50, email2=120.
-  - For EACH email: contentPercent = addressPercent (0–100) = how fully the prompt is addressed plus relevant info (no separate bonus split). raw_i = contentPercent/100 * emailMax.
-  - Word-shortage penalty per email vs its min, same brackets (≥20→30, 11–19→20, 1–10→10, else 0). Subtract (penalty%/100)*emailMax.
-  - Coherence: evaluate each email independently. If email1 lacks coherence → subtract (10/100)*15 = −1.5 from email1. If email2 lacks coherence → subtract (10/100)*25 = −2.5 from email2. Report coherencePenaltyPercent = 10 if applied to ANY email, else 0.
-  - Error penalties: −2 per error (grammar OR spelling) counted across both emails.
-  - Missing opening OR missing closing of an email: −3 each occurrence. Sum into openingClosingPenalty.
-  - partScore = max(0, (raw1+raw2) − wordPenalties − coherencePenalties − errorPenalties − openingClosingPenalty). Report addressPercent = average of the two emails, bonusPercent=0, wordPenaltyPercent = average of the two email penalty%.
-
-OUTPUT: Call submit_grading with EXACTLY the JSON schema. partScore must be the final number (0..maxPoints), already floored at 0 and never exceeding maxPoints. Round numeric fields to 1 decimal.
+• task4 — email1 and email2 objects, each { addressPercent (0–100), relevantWordCount (number), coherenceLacking (boolean), missingOpening (boolean), missingClosing (boolean) }. grammarErrors[] / spellingErrors[]: each error MUST include emailIndex (0 = email1 informal, 1 = email2 formal). feedback.
 
 FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
-- Bắt đầu bằng điểm mạnh thực sự của bài (đáp ứng đề, ý tưởng, từ vựng, ngữ pháp tốt…). Nếu một hạng mục đạt tối đa hãy khen rõ ràng (vd "Ngữ pháp rất chắc, không phát hiện lỗi").
-- Giải thích LẦN LƯỢT TỪNG hạng mục bị trừ điểm: nội dung/đáp ứng đề, mạch lạc (coherence), số từ, ngữ pháp, chính tả — vì sao mất điểm ở hạng mục đó (định tính, ví dụ "bị trừ ở mạch lạc do thiếu từ nối giữa các đoạn", "một lỗi chính tả nhỏ ở từ ..."). Hạng mục nào đạt tối đa thì nói rõ là tốt, không bịa lỗi.
-- Nhận xét phải NHẤT QUÁN với điểm: chỉ vài lỗi nhỏ thì giọng văn phải tích cực và điểm phải cao tương ứng; đừng dùng giọng "nhiều lỗi nghiêm trọng" khi thực tế chỉ trừ 1–2 điểm.
-- TUYỆT ĐỐI KHÔNG nêu con số điểm trừ thô theo thang /100 (giao diện người dùng hiển thị thang /50). Chỉ mô tả định tính (vd "trừ nhẹ ở phần mạch lạc", "một lỗi chính tả nhỏ"), không viết "−3 điểm" hay "trừ 10%" trong feedback.
+- Bắt đầu bằng điểm mạnh thực sự của bài. Nếu một hạng mục đạt tối đa hãy khen rõ ràng.
+- Giải thích LẦN LƯỢT TỪNG hạng mục bị trừ điểm: nội dung/đáp ứng đề, mạch lạc, số từ (CHỈ phạt khi THIẾU từ — viết dài không bị phạt), ngữ pháp, chính tả. Nếu bài LẠC ĐỀ phải nói rõ.
+- Nhận xét phải NHẤT QUÁN với mức độ lỗi đã liệt kê.
+- TUYỆT ĐỐI KHÔNG nêu con số điểm trừ thô theo thang /100. Chỉ mô tả định tính.
 - Có thể gợi ý cải thiện ngắn gọn ở cuối nếu phù hợp.`;
 
       userContent = [
         {
           type: "text",
-          text: `partType: ${partType}\nPrompt/Questions:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nStudent's written response:\n${text}\n\nGrade strictly per the rubric for ${partType}.`,
+          text: `partType: ${partType}\nPrompt/Questions:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nStudent's written response:\n${text}\n\nReturn qualitative grading per the rubric for ${partType}.`,
         },
       ];
     }
