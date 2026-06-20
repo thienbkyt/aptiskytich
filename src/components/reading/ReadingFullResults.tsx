@@ -177,36 +177,7 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
 
   if (!current) return null;
 
-  const handlePageCount = useCallback((n: number) => {
-    setPageCount(n);
-    if (enterAtLast) {
-      setPageInPart(Math.max(0, n - 1));
-      setEnterAtLast(false);
-    } else if (pageInPart > n - 1) {
-      setPageInPart(0);
-    }
-  }, [enterAtLast, pageInPart]);
 
-  const goNextPage = () => {
-    if (pageInPart < pageCount - 1) {
-      setPageInPart((p) => p + 1);
-    } else if (reviewPartIndex < parts.length - 1) {
-      setReviewPartIndex((i) => i + 1);
-      setPageInPart(0);
-      setPageCount(1);
-      setEnterAtLast(false);
-    }
-  };
-
-  const goPrevPage = () => {
-    if (pageInPart > 0) {
-      setPageInPart((p) => p - 1);
-    } else if (reviewPartIndex > 0) {
-      setEnterAtLast(true);
-      setReviewPartIndex((i) => i - 1);
-      setPageCount(1);
-    }
-  };
 
 
 
