@@ -43,8 +43,9 @@ export interface SpeakingReviewViewProps {
 const SpeakingReviewView = ({
   partType, part1Data, part2Data, part3Data, part4Data,
   recordings, gradings, reviewIndex, onChangeIndex, onBack, onExit,
-  totalParts = 4, hidePager = false,
+  totalParts = 4, hidePager = false, onRegrade,
 }: SpeakingReviewViewProps) => {
+  const [regradingIdx, setRegradingIdx] = useState<number | null>(null);
   const partNumber = PART_NUMBERS[partType];
 
   const promptsList: string[] = (() => {
