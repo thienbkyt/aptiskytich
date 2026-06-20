@@ -179,6 +179,7 @@ const SpeakingFullResults = ({ parts: initialParts, totalScore: initialTotalScor
                 onBack={() => setReviewDetail(false)}
                 onExit={onExit}
                 totalParts={parts.length}
+                onRegrade={handleRegrade}
               />
             )}
           </div>
