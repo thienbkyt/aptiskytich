@@ -149,6 +149,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
       skill: "listening",
       correct: accCorrect,
       total: accTotal,
+      extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
     });
   }, [phase, savedOnce, accCorrect, accTotal]);
 
