@@ -81,22 +81,36 @@ const SpeakingReviewPage = ({
       else if (pt === "part4") { const d = toSpeakingPart4(rows); setPart4Data(d); promptCount = 1; }
       setPartType(pt);
 
-      const windowMs = 2 * 60 * 60 * 1000;
-      const target = new Date(attemptCreatedAt).getTime();
-
-      // 2. Recordings — match by user+examSetId, within time window.
-      const { data: recsRaw } = await supabase
-        .from("speaking_recordings")
-        .select("id,part,audio_url,duration_seconds,created_at")
-        .eq("user_id", userId)
-        .eq("exam_set_id", examSetId)
-        .order("created_at", { ascending: true });
-      const recs = ((recsRaw || []) as any[]).filter(
-        (r) => Math.abs(new Date(r.created_at).getTime() - target) < windowMs,
-      );
+      // 2. Recordings — scoped by test_result_id (preferred). Fallback to
+      // user+examSetId only for legacy rows where test_result_id is NULL.
+      let recsRaw: any[] = [];
+      if (testResultId) {
+        const { data } = await supabase
+          .from("speaking_recordings")
+          .select("id,part,audio_url,duration_seconds,created_at,test_result_id")
+          .eq("user_id", userId)
+          .eq("test_result_id", testResultId)
+          .order("created_at", { ascending: true });
+        recsRaw = (data || []) as any[];
+      }
+      if (recsRaw.length === 0) {
+        // Legacy fallback: rows without test_result_id, scoped by examSetId + time window.
+        const windowMs = 2 * 60 * 60 * 1000;
+        const target = new Date(attemptCreatedAt).getTime();
+        const { data: legacy } = await supabase
+          .from("speaking_recordings")
+          .select("id,part,audio_url,duration_seconds,created_at,test_result_id")
+          .eq("user_id", userId)
+          .eq("exam_set_id", examSetId)
+          .is("test_result_id", null)
+          .order("created_at", { ascending: true });
+        recsRaw = ((legacy || []) as any[]).filter(
+          (r) => !target || Math.abs(new Date(r.created_at).getTime() - target) < windowMs,
+        );
+      }
       // recordings.part is like "part1_q1"; index by question position
       const recByIdx: (any | null)[] = new Array(Math.max(promptCount, 1)).fill(null);
-      for (const r of recs) {
+      for (const r of recsRaw) {
         const m = (r.part as string).match(/_q(\d+)/);
         const idx = m ? parseInt(m[1], 10) - 1 : -1;
         if (idx >= 0 && idx < recByIdx.length) recByIdx[idx] = r;
@@ -113,21 +127,18 @@ const SpeakingReviewPage = ({
         }),
       );
 
-      // 3. Gradings — match by test_result_id (preferred) + part label; fallback time window.
-      let q = supabase
-        .from("speaking_question_gradings")
-        .select("item_index,max_points,part_score,transcript,grammar_errors,pronunciation_errors,improved_version,feedback,part,created_at")
-        .eq("user_id", userId);
-      if (testResultId) q = q.eq("test_result_id", testResultId);
-      const { data: gradingRows } = await q;
-      const matching = ((gradingRows || []) as any[])
-        .filter((g) =>
-          // Allow partLabel match in either direction ("Part 1" vs "Part 1")
-          (g.part || "").toLowerCase().replace(/\s+/g, "") ===
-            (partLabel || "").toLowerCase().replace(/\s+/g, "")
-          && (testResultId || Math.abs(new Date(g.created_at).getTime() - target) < windowMs),
-        )
-        .sort((a, b) => a.item_index - b.item_index);
+      // 3. Gradings — scoped strictly by test_result_id (no part-label filter,
+      // no time-window fallback). Each test_result_id maps to exactly one part.
+      let matching: any[] = [];
+      if (testResultId) {
+        const { data: gradingRows } = await supabase
+          .from("speaking_question_gradings")
+          .select("item_index,max_points,part_score,transcript,grammar_errors,pronunciation_errors,improved_version,feedback,part")
+          .eq("user_id", userId)
+          .eq("test_result_id", testResultId)
+          .order("item_index", { ascending: true });
+        matching = (gradingRows || []) as any[];
+      }
       const gradeArr: (SpeakingGradingResult | null)[] = new Array(Math.max(promptCount, 1)).fill(null);
       for (const g of matching) {
         const item: SpeakingItemGrading = {
