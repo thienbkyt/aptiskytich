@@ -181,12 +181,32 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
       // Persist for the current part's exam_set
       const setIdForGrammar = parts[0]?.id ?? null;
       const examSetId = skill === "grammar_vocab" ? setIdForGrammar : (parts[currentPartIndex]?.id ?? null);
-      saveExamResult({
-        examSetId,
-        skill,
-        correct, total,
-        perQuestion,
-      });
+      (async () => {
+        const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+        const snap = buildReviewSnapshot({
+          skill,
+          part: parts[currentPartIndex]?.partNorm ?? null,
+          testTitle,
+          score: correct, total,
+          scaled50: total > 0 ? Math.round((correct / total) * 50) : null,
+          items: (perQuestion || []).map((p) => ({
+            userAnswer: p.user_answer ?? null,
+            isCorrect: !!p.is_correct,
+          })),
+          raw: {
+            skill,
+            partType: parts[currentPartIndex]?.partNorm ?? null,
+            questions: parts[currentPartIndex]?.questions ?? [],
+            perQuestion: perQuestion || [],
+          },
+        });
+        saveExamResult({
+          examSetId, skill,
+          correct, total,
+          perQuestion,
+          reviewSnapshot: snap,
+        });
+      })();
     }
 
     const isGrammar = skill === "grammar_vocab";
@@ -410,12 +430,26 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         user_answer: "(recorded)",
         is_correct: false,
       }));
+      const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const snap = buildReviewSnapshot({
+        skill: "speaking",
+        part: currentPart.partNorm,
+        testTitle,
+        score: 0, total: perQuestion.length,
+        items: perQuestion.map(() => ({})),
+        raw: {
+          partType: currentPart.partNorm,
+          questions: currentPart.questions,
+          perQuestion,
+        },
+      });
       const _trId = await saveExamResult({
         examSetId: currentPart.id,
         skill: "speaking",
         correct: 0,
         total: perQuestion.length,
         perQuestion,
+        reviewSnapshot: snap,
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
@@ -729,12 +763,29 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
     const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
       if (adminNavigationRef.current) return;
       // Persist essay first and capture test_result_id so AI grading can link to this attempt.
+      const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+      const snap = buildReviewSnapshot({
+        skill: "writing",
+        part: currentPart.partNorm,
+        testTitle,
+        score: 0, total: perQuestion?.length || 0,
+        items: (perQuestion || []).map((p) => ({
+          userAnswer: p.user_answer ?? null,
+          isCorrect: false,
+        })),
+        raw: {
+          partType: currentPart.partNorm,
+          questions: currentPart.questions,
+          perQuestion: perQuestion || [],
+        },
+      });
       const trid = await saveExamResult({
         examSetId: currentPart.id,
         skill: "writing",
         correct: 0,
         total: perQuestion?.length || 0,
         perQuestion,
+        reviewSnapshot: snap,
       });
       const existing = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
       writingSubmissionsByPartRef.current[currentPartIndex] = {
