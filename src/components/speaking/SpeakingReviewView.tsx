@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import SignedImage from "@/components/exam/SignedImage";
 import type {
   SpeakingPartType,
