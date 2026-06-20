@@ -85,7 +85,7 @@ const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
   externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
-  onExit, onComplete, onPrevious, sourceQuestionIds,
+  onExit, onComplete, onPrevious, sourceQuestionIds, examSetId,
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
 }: WritingExamEngineProps) => {
