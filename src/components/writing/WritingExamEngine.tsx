@@ -90,6 +90,7 @@ const WritingExamEngine = ({
   onExit, onComplete, onPrevious, sourceQuestionIds, examSetId,
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
+  allowReveal = false,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
