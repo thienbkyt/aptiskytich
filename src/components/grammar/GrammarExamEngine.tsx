@@ -434,6 +434,9 @@ const GrammarExamEngine = ({
           questionNumber={currentIndex + 1}
         />
       )}
+      {allowReveal && phase === "practice" && !submitted && !reviewMode && (
+        <RevealAnswerButton revealed={isRevealedHere} onToggle={toggleRevealHere} />
+      )}
       <ExamHeader
         skillLabel="Grammar & Vocabulary"
         partLabel={testTitle}
