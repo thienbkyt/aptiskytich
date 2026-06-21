@@ -70,8 +70,8 @@ const WritingPart1Short = ({
               initialValue={answers[i] || ""}
             />
             {showSample && (
-              <p className="text-xs text-muted-foreground mt-2">
-                💡 Đáp án mẫu: <span className="text-success font-medium">{q.sampleAnswer}</span>
+              <p className="text-sm text-foreground mt-2">
+                💡 Đáp án mẫu: <span className="text-success font-semibold">{q.sampleAnswer}</span>
               </p>
             )}
           </motion.div>

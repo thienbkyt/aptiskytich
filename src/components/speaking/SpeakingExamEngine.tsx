@@ -1162,7 +1162,7 @@ const SpeakingExamEngine = ({
                   💡 Bài nói mẫu
                 </p>
                 {sample ? (
-                  <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">{sample}</p>
+                  <p className="text-sm text-gray-900 font-medium whitespace-pre-line leading-relaxed">{sample}</p>
                 ) : (
                   <p className="text-sm text-gray-500 italic">Chưa có bài nói mẫu.</p>
                 )}
