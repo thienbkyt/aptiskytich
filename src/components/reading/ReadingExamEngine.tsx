@@ -612,7 +612,8 @@ const ReadingExamEngine = ({
           <ReadingPart3Opinion
             question={part3Question}
             answers={p3Answers}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             currentStatement={currentIndex}
             onAnswer={onAnswerP3}
             {...navProps}
