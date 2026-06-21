@@ -84,11 +84,6 @@ const ListeningExamEngine = ({
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
   allowReveal = false,
 }: ListeningExamEngineProps) => {
-  const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
-  // Reset reveal when switching part (engine instance reused in full-flow).
-  useEffect(() => { setRevealedIdx(new Set()); }, [partType]);
-  const isRevealedHere = allowReveal && revealedIdx.has(currentIndexSafe());
-  function currentIndexSafe() { return 0; } // placeholder; real index below
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
