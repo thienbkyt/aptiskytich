@@ -253,6 +253,7 @@ const AdminReport = () => {
             <TabsList className="mb-6">
               <TabsTrigger value="outcomes">Học tập</TabsTrigger>
               <TabsTrigger value="activity">Người dùng</TabsTrigger>
+              <TabsTrigger value="content">Nội dung</TabsTrigger>
               <TabsTrigger value="manual">Chi phí nhập tay</TabsTrigger>
               <TabsTrigger value="auto">Chi phí ước lượng (tự động)</TabsTrigger>
             </TabsList>
@@ -263,6 +264,10 @@ const AdminReport = () => {
 
             <TabsContent value="activity" className="mt-0">
               <ActivityTab />
+            </TabsContent>
+
+            <TabsContent value="content" className="mt-0">
+              <ContentQualityTab />
             </TabsContent>
 
             <TabsContent value="manual" className="space-y-8 mt-0">
