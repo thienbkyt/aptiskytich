@@ -464,6 +464,7 @@ const WritingExamEngine = ({
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
             reviewMode={reviewMode}
+            revealAnswers={revealed}
           />
         )}
 
