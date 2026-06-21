@@ -3,6 +3,7 @@ import { Shield, Plus, Pencil, Trash2, TrendingUp, TrendingDown, Minus, Loader2,
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AutoCostTab from "@/components/admin/report/AutoCostTab";
+import OutcomesTab from "@/components/admin/report/OutcomesTab";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -246,11 +247,16 @@ const AdminReport = () => {
             </Button>
           </div>
 
-          <Tabs defaultValue="manual" className="w-full">
+          <Tabs defaultValue="outcomes" className="w-full">
             <TabsList className="mb-6">
+              <TabsTrigger value="outcomes">Học tập</TabsTrigger>
               <TabsTrigger value="manual">Chi phí nhập tay</TabsTrigger>
               <TabsTrigger value="auto">Chi phí ước lượng (tự động)</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="outcomes" className="mt-0">
+              <OutcomesTab />
+            </TabsContent>
 
             <TabsContent value="manual" className="space-y-8 mt-0">
           {/* PHẦN 1 — TỔNG QUAN THÁNG */}
