@@ -87,7 +87,7 @@ const ListeningExamEngine = ({
   allowReveal = false,
   enterAtLastQuestion = false,
 }: ListeningExamEngineProps) => {
-  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
+  const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
@@ -95,7 +95,7 @@ const ListeningExamEngine = ({
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
-  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
   // Reset reveal whenever partType changes (engine instance reused in full-flow).
   useEffect(() => { setRevealedIdx(new Set()); }, [partType]);
