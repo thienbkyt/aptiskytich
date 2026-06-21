@@ -118,7 +118,7 @@ const ReadingExamEngine = ({
   useEffect(() => { setRevealedKeys(new Set()); }, [partType]);
   const revealKey = partType === "part2" ? currentIndex : 0;
   const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedKeys.has(revealKey);
-  const effectiveSubmitted = submitted || isRevealedHere;
+  // Reveal is display-only; navigation always uses real `submitted`.
   const toggleRevealHere = () => {
     setRevealedKeys((prev) => {
       const n = new Set(prev);
