@@ -308,8 +308,12 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       onExit={onExit}
       onComplete={handleComplete}
       onPreviousPart={() => {
-        if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+        if (currentIndex > 0) {
+          setEnterAtLast(true);
+          setCurrentIndex((i) => i - 1);
+        }
       }}
+      enterAtLastQuestion={enterAtLast}
       initialAnswers={initialAnswers}
       pageBase={currentIndex * pagesPerSet}
       pageTotal={sets.length * pagesPerSet}
