@@ -60,6 +60,7 @@ interface ExamState {
   examSetId?: string | null;
   startedAt?: number;
   totalForScore?: number | null;
+  skipIntro?: boolean;
 }
 
 interface FullPracticeState {
@@ -113,9 +114,11 @@ const Reading = () => {
     const target = examSets.find((s) => s.id === setId);
     if (target) {
       autoStartedRef.current = setId;
-      handleStartFromDB(target);
+      const jump = searchParams.get("jump") === "1";
+      handleStartFromDB(target, { skipIntro: jump });
       const next = new URLSearchParams(searchParams);
       next.delete("set");
+      next.delete("jump");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, examSets, loading]);
@@ -132,9 +135,9 @@ const Reading = () => {
     [examSets, marathon.partType]
   );
 
-  const handleStartFromDB = async (set: ExamSetRow) => {
+  const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ReadingPartType;
-    setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now(), totalForScore: null }));
+    setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now(), totalForScore: null, skipIntro: opts?.skipIntro ?? false }));
     const [questions, fullRow] = await Promise.all([
       fetchExamQuestions(set.id),
       supabase.from("exam_sets").select("full_test_id").eq("id", set.id).maybeSingle(),
@@ -289,7 +292,7 @@ const Reading = () => {
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={READING_TIME[exam.partType] ?? 2100}
         examSetId={exam.examSetId ?? null}
         totalForScore={exam.totalForScore ?? null}
-        onExit={handleExit} onComplete={handleComplete} showResultsOnSubmit {...exam.engineData}
+        onExit={handleExit} onComplete={handleComplete} showResultsOnSubmit {...exam.engineData} skipIntro={exam.skipIntro}
       />
     );
   }

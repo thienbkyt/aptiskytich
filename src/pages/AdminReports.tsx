@@ -282,7 +282,7 @@ const AdminReports = () => {
 
                 const examUrl =
                   r.skill && SKILL_ROUTE[r.skill] && setIdForLink
-                    ? `${SKILL_ROUTE[r.skill]}?set=${setIdForLink}`
+                    ? `${SKILL_ROUTE[r.skill]}?set=${setIdForLink}&jump=1`
                     : r.page_url;
 
                 return (
