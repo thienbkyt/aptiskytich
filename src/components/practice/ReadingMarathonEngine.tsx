@@ -35,6 +35,7 @@ const HUGE_TIME = 24 * 60 * 60;
 
 const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
   const [savedOnce, setSavedOnce] = useState(false);
