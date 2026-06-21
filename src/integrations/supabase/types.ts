@@ -715,6 +715,27 @@ export type Database = {
         }
         Relationships: []
       }
+      site_visits: {
+        Row: {
+          created_at: string
+          id: string
+          path: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          path?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          path?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       speaking_question_gradings: {
         Row: {
           created_at: string
