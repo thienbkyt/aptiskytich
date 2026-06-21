@@ -31,12 +31,13 @@ interface Props {
 
 const ReadingPart1Sentence = ({
   question, answers, timeLeft, totalTime,
-  submitted, onAnswer, onPrevious, onNext, onSubmit,
+  submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
   pageNumber, pageTotal,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
 
   const renderPassage = () => {
     const parts = question.passage.split(/\{(\d+)\}/g);
@@ -48,8 +49,8 @@ const ReadingPart1Sentence = ({
             const gap = question.gaps[gapIndex];
             if (!gap) return null;
             const selectedValue = answers[gapIndex];
-            const isCorrect = submitted && selectedValue === gap.correct;
-            const isWrong = submitted && selectedValue !== null && selectedValue !== gap.correct;
+            const isCorrect = reveal && selectedValue === gap.correct;
+            const isWrong = reveal && selectedValue !== null && selectedValue !== gap.correct;
 
             return (
               <select
@@ -57,9 +58,9 @@ const ReadingPart1Sentence = ({
                 data-question-index={gapIndex}
                 value={selectedValue !== null && selectedValue !== undefined ? selectedValue : ""}
                 onChange={(e) => onAnswer(gapIndex, parseInt(e.target.value))}
-                disabled={submitted}
+                disabled={reveal}
                 className={`inline-block mx-1 px-3 py-1 text-sm border rounded bg-background appearance-auto cursor-pointer min-w-[120px]
-                  ${submitted
+                  ${reveal
                     ? isCorrect
                       ? "border-success bg-success/10 text-success"
                       : isWrong
@@ -110,7 +111,7 @@ const ReadingPart1Sentence = ({
         <p className="text-base font-bold text-foreground mb-8">{question.instruction}</p>
         {renderPassage()}
 
-        {submitted && (
+        {reveal && (
           <div className="mt-10 border-t border-border pt-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-foreground">Đáp án &amp; dịch nghĩa</p>

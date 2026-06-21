@@ -23,6 +23,7 @@ interface Props {
   timeLeft: number;
   totalTime: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onAnswer: (qi: number, ai: number) => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -42,10 +43,11 @@ interface Props {
 
 const ListeningPart1Word = ({
   questions, currentIndex, answers, timeLeft, totalTime,
-  submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
+  submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
   highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
   if (!q) return null;
 
@@ -94,7 +96,7 @@ const ListeningPart1Word = ({
             {q.options.map((opt, i) => {
               const isLast = i === q.options.length - 1;
               let cls = "bg-background hover:bg-muted/50 text-foreground";
-              if (submitted) {
+              if (reveal) {
                 if (i === q.correct) cls = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
                 else if (i === selected) cls = "bg-destructive/10 text-destructive";
                 else cls = "bg-background text-muted-foreground";
@@ -104,8 +106,8 @@ const ListeningPart1Word = ({
               return (
                 <button
                   key={i}
-                  onClick={() => !submitted && onAnswer(currentIndex, i)}
-                  disabled={submitted}
+                  onClick={() => !reveal && onAnswer(currentIndex, i)}
+                  disabled={reveal}
                   className={`w-full flex items-stretch text-left transition-colors ${cls} ${
                     !isLast ? "border-b border-border" : ""
                   }`}
@@ -115,15 +117,15 @@ const ListeningPart1Word = ({
                   </span>
                   <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
                     <span>{opt}</span>
-                    {submitted && i === q.correct && <CheckCircle2 className="w-4 h-4" />}
-                    {submitted && i === selected && i !== q.correct && <XCircle className="w-4 h-4" />}
+                    {reveal && i === q.correct && <CheckCircle2 className="w-4 h-4" />}
+                    {reveal && i === selected && i !== q.correct && <XCircle className="w-4 h-4" />}
                   </span>
                 </button>
               );
             })}
           </div>
 
-          {submitted && q.script && (
+          {reveal && q.script && (
             <ScriptBlock
               script={q.script}
               spans={[highlights[l1Id(currentIndex)]].filter(Boolean) as string[]}

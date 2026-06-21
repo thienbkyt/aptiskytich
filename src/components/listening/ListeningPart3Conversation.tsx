@@ -22,6 +22,7 @@ interface Props {
   timeLeft: number;
   totalTime: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onAnswer: (qi: number, ai: any) => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -47,17 +48,18 @@ const ANSWER_OPTIONS = [
 
 const ListeningPart3Conversation = ({
   questions, currentIndex, answers, timeLeft, totalTime,
-  submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
+  submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
   highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
   if (!q) return null;
 
   const selected: Record<number, string> = (answers[currentIndex] || {}) as Record<number, string>;
 
   const handleSelect = (idx: number, value: string) => {
-    if (submitted) return;
+    if (reveal) return;
     onAnswer(currentIndex, { ...selected, [idx]: value });
   };
 
@@ -96,11 +98,11 @@ const ListeningPart3Conversation = ({
         <div className="space-y-7">
           {q.statements.map((s, i) => {
             const value = selected[i] || "";
-            const isCorrect = submitted && value === s.correctAnswer;
+            const isCorrect = reveal && value === s.correctAnswer;
             const correctLabel = ANSWER_OPTIONS.find((o) => o.value === s.correctAnswer)?.label || s.correctAnswer;
 
             let selectCls = "border-border bg-background";
-            if (submitted) {
+            if (reveal) {
               if (value === s.correctAnswer) selectCls = "border-emerald-500 bg-emerald-500/10";
               else selectCls = "border-destructive bg-destructive/10";
             }
@@ -112,7 +114,7 @@ const ListeningPart3Conversation = ({
                 <select
                   value={value}
                   onChange={(e) => handleSelect(i, e.target.value)}
-                  disabled={submitted}
+                  disabled={reveal}
                   className={`border rounded-md px-3 py-1.5 text-sm text-foreground disabled:opacity-70 ${selectCls}`}
                 >
                   <option value=""></option>
@@ -120,7 +122,7 @@ const ListeningPart3Conversation = ({
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
-                {submitted && (
+                {reveal && (
                   <>
                     {isCorrect ? (
                       <Check className="w-5 h-5 text-emerald-500 shrink-0" />
@@ -139,7 +141,7 @@ const ListeningPart3Conversation = ({
           })}
         </div>
 
-        {submitted && q.script && (
+        {reveal && q.script && (
           <ScriptBlock
             script={q.script}
             spans={q.statements.map((_, si) => highlights[l3Id(si)]).filter(Boolean) as string[]}

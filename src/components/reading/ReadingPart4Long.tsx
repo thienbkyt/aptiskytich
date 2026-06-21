@@ -13,6 +13,7 @@ interface Props {
   timeLeft?: number;
   totalTime?: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onAnswer: (paragraphIdx: number, headingIdx: number) => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -30,11 +31,12 @@ interface Props {
 
 const ReadingPart4Long = ({
   question, answers, currentIndex, timeLeft, totalTime,
-  submitted, onAnswer, onPrevious, onNext, onSubmit,
+  submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit,
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +64,7 @@ const ReadingPart4Long = ({
   });
 
   const handleSelect = (paragraphArrayIdx: number, headingIdx: number) => {
-    if (submitted) return;
+    if (reveal) return;
     onAnswer(paragraphArrayIdx, headingIdx);
     setOpenDropdown(null);
   };
@@ -102,8 +104,8 @@ const ReadingPart4Long = ({
         {paragraphs.map((para, pIdx) => {
           const selected = answers[pIdx];
           const correctHeadingIdx = correctMap[pIdx];
-          const isCorrect = submitted && selected === correctHeadingIdx;
-          const isWrong = submitted && selected !== null && selected !== correctHeadingIdx;
+          const isCorrect = reveal && selected === correctHeadingIdx;
+          const isWrong = reveal && selected !== null && selected !== correctHeadingIdx;
 
           return (
             <motion.div
@@ -117,7 +119,7 @@ const ReadingPart4Long = ({
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-sm font-bold text-foreground min-w-[24px]">{para.index}.</span>
                 <div className="relative flex-1 max-w-sm">
-                  {submitted ? (
+                  {reveal ? (
                     <div
                       className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm ${
                         isCorrect
@@ -166,7 +168,7 @@ const ReadingPart4Long = ({
                 </div>
               </div>
 
-              {submitted && selected !== correctHeadingIdx && correctHeadingIdx !== undefined && (
+              {reveal && selected !== correctHeadingIdx && correctHeadingIdx !== undefined && (
                 <div className="flex flex-wrap items-center gap-2 mb-3 ml-9">
                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
                   <span className="text-xs text-green-600 dark:text-green-400 font-medium">
@@ -199,7 +201,7 @@ const ReadingPart4Long = ({
         })}
       </div>
 
-      {submitted && question.explanation && (
+      {reveal && question.explanation && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
