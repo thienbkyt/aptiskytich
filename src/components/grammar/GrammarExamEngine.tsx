@@ -80,6 +80,8 @@ const GrammarExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(false);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  // Reveal-on-demand for practice mode (keyed by group index).
+  const [revealedGroups, setRevealedGroups] = useState<Set<number>>(new Set());
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
   const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching", "collocation"] as const;
