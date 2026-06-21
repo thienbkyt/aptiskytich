@@ -477,6 +477,9 @@ const ListeningExamEngine = ({
           questionNumber={currentIndex + 1}
         />
       )}
+      {allowReveal && !submitted && !reviewMode && (
+        <RevealAnswerButton revealed={isRevealedHere} onToggle={toggleRevealHere} />
+      )}
       <ExamHeader
         skillLabel="Listening"
         partLabel={partLabel}
@@ -491,7 +494,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -511,7 +514,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -531,7 +534,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -551,7 +554,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
