@@ -11,6 +11,7 @@ import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
