@@ -425,13 +425,18 @@ const WritingExamEngine = ({
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
       {adminControls}
       {phase === "practice" && !submitted && !reviewMode && (
-        <ExamReportButton
-          examQuestionId={sourceQuestionIds?.[0] ?? null}
-          examSetId={null}
-          skill="writing"
-          partType={partType}
-          questionNumber={1}
-        />
+        <>
+          <ExamReportButton
+            examQuestionId={sourceQuestionIds?.[0] ?? null}
+            examSetId={null}
+            skill="writing"
+            partType={partType}
+            questionNumber={1}
+          />
+          {allowReveal && (
+            <RevealAnswerButton revealed={revealed} onToggle={() => setRevealed(v => !v)} />
+          )}
+        </>
       )}
       <ExamHeader
         skillLabel="Writing"
