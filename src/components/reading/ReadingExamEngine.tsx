@@ -554,6 +554,9 @@ const ReadingExamEngine = ({
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
       {reportButton}
+      {allowReveal && !submitted && !reviewMode && phase === "practice" && (
+        <RevealAnswerButton revealed={isRevealedHere} onToggle={toggleRevealHere} />
+      )}
       <ExamHeader
         skillLabel="Reading"
         partLabel={partLabel}
