@@ -577,7 +577,7 @@ const GrammarExamEngine = ({
                                   onValueChange={(v) =>
                                     handleAnswerSelect(idx, parseInt(v, 10))
                                   }
-                                  disabled={submitted}
+                                  disabled={effectiveSubmitted}
                                 >
                                   <SelectTrigger className={`h-10 ${triggerCls}`}>
                                     <SelectValue placeholder="Select..." />
@@ -594,7 +594,7 @@ const GrammarExamEngine = ({
                               {afterGap && (
                                 <span className="text-sm text-gray-900">{afterGap}</span>
                               )}
-                              {submitted && !itemCorrect && (
+                              {effectiveSubmitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
@@ -615,7 +615,7 @@ const GrammarExamEngine = ({
                                   onValueChange={(v) =>
                                     handleAnswerSelect(idx, parseInt(v, 10))
                                   }
-                                  disabled={submitted}
+                                  disabled={effectiveSubmitted}
                                 >
                                   <SelectTrigger className={`h-10 ${triggerCls}`}>
                                     <SelectValue placeholder="Select..." />
@@ -629,7 +629,7 @@ const GrammarExamEngine = ({
                                   </SelectContent>
                                 </Select>
                               </div>
-                              {submitted && !itemCorrect && (
+                              {effectiveSubmitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
@@ -669,7 +669,7 @@ const GrammarExamEngine = ({
                         const isLastOpt = i === q.options.length - 1;
                         let cls =
                           "bg-background hover:bg-muted/50 text-foreground";
-                        if (submitted) {
+                        if (effectiveSubmitted) {
                           if (i === q.correct_answer)
                             cls = "bg-emerald-500/10 text-emerald-700";
                           else if (i === selected)
@@ -682,9 +682,9 @@ const GrammarExamEngine = ({
                           <button
                             key={i}
                             onClick={() =>
-                              !submitted && handleAnswerSelect(currentIndex, i)
+                              !effectiveSubmitted && handleAnswerSelect(currentIndex, i)
                             }
-                            disabled={submitted}
+                            disabled={effectiveSubmitted}
                             className={`w-full flex items-stretch text-left transition-colors ${cls} ${
                               !isLastOpt ? "border-b border-border" : ""
                             }`}
@@ -694,10 +694,10 @@ const GrammarExamEngine = ({
                             </span>
                             <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
                               <span>{opt}</span>
-                              {submitted && i === q.correct_answer && (
+                              {effectiveSubmitted && i === q.correct_answer && (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                               )}
-                              {submitted &&
+                              {effectiveSubmitted &&
                                 i === selected &&
                                 i !== q.correct_answer && (
                                   <XCircle className="w-4 h-4 text-destructive" />
@@ -718,16 +718,16 @@ const GrammarExamEngine = ({
                           handleFillAnswer(currentIndex, e.target.value)
                         }
                         placeholder="Nhập đáp án của bạn..."
-                        disabled={submitted}
+                        disabled={effectiveSubmitted}
                         className={`text-base h-12 ${
-                          submitted
+                          effectiveSubmitted
                             ? isCorrect(currentIndex)
                               ? "border-green-500 bg-green-50"
                               : "border-red-500 bg-red-50"
                             : ""
                         }`}
                       />
-                      {submitted && (
+                      {effectiveSubmitted && (
                         <p className="text-sm text-gray-500">
                           Đáp án đúng:{" "}
                           <span className="font-bold text-green-600">
@@ -739,7 +739,7 @@ const GrammarExamEngine = ({
                   )}
 
                   {/* Explanation */}
-                  {submitted && (
+                  {effectiveSubmitted && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
