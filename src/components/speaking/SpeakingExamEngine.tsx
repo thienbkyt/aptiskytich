@@ -1080,6 +1080,9 @@ const SpeakingExamEngine = ({
         partType={partType}
         questionNumber={currentIndex + 1}
       />
+      {allowReveal && (
+        <RevealAnswerButton revealed={revealed} onToggle={() => setRevealed(v => !v)} />
+      )}
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}
