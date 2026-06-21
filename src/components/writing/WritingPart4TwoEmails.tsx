@@ -20,14 +20,16 @@ interface Props {
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
   reviewMode?: boolean;
+  revealAnswers?: boolean;
 }
 
 const WritingPart4TwoEmails = ({
   data, informalAnswer, formalAnswer,
   onInformalChange, onFormalChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers,
 }: Props) => {
+  const showSample = submitted || !!revealAnswers;
   return (
     <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
       <div className="flex items-start justify-between mb-6">
@@ -67,7 +69,7 @@ const WritingPart4TwoEmails = ({
           wordLimit={data.informalEmail.wordLimit}
           initialValue={informalAnswer}
         />
-        {submitted && data.informalEmail.sampleAnswer && (
+        {showSample && data.informalEmail.sampleAnswer && (
           <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">
             <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
             <p className="text-muted-foreground whitespace-pre-line">{data.informalEmail.sampleAnswer}</p>
@@ -86,7 +88,7 @@ const WritingPart4TwoEmails = ({
           wordLimit={data.formalEmail.wordLimit}
           initialValue={formalAnswer}
         />
-        {submitted && data.formalEmail.sampleAnswer && (
+        {showSample && data.formalEmail.sampleAnswer && (
           <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">
             <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
             <p className="text-muted-foreground whitespace-pre-line">{data.formalEmail.sampleAnswer}</p>

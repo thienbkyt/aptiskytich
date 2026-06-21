@@ -19,13 +19,15 @@ interface Props {
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
   reviewMode?: boolean;
+  revealAnswers?: boolean;
 }
 
 const WritingPart3Questions = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers,
 }: Props) => {
+  const showSample = submitted || !!revealAnswers;
   return (
     <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
       <div className="flex items-start justify-between mb-6">
@@ -67,7 +69,7 @@ const WritingPart3Questions = ({
               wordLimit={data.wordLimit}
               initialValue={answers[i] || ""}
             />
-            {submitted && (
+            {showSample && (
               <div className="mt-3 bg-muted/50 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground">
                   💡 Đáp án mẫu: <span className="text-foreground">{q.sampleAnswer}</span>

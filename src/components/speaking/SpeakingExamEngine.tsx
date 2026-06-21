@@ -13,6 +13,7 @@ import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import { supabase } from "@/integrations/supabase/client";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 
 import type {
   SpeakingPartType,
@@ -66,6 +67,8 @@ interface SpeakingExamEngineProps {
   fullFlow?: boolean;
   isLastPart?: boolean;
   onPartSubmissions?: (submission: SpeakingPartSubmission) => void;
+  /** Practice-only: show "Reveal answer" button (sample spoken answer). Default false. Never set in Full Test. */
+  allowReveal?: boolean;
 }
 
 type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
@@ -111,6 +114,7 @@ const SpeakingExamEngine = ({
   examSetId, sourceQuestionIds, fullTestSessionId, fullTestId,
   onExit, onComplete, skipIntro = false, onAdminPrevious,
   fullFlow = false, isLastPart, onPartSubmissions,
+  allowReveal = false,
 }: SpeakingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -124,6 +128,7 @@ const SpeakingExamEngine = ({
   const [isGrading, setIsGrading] = useState(false);
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
   const sessionStartIsoRef = useRef<string>(new Date().toISOString());
@@ -213,6 +218,7 @@ const SpeakingExamEngine = ({
   // Cleanup on unmount
   useEffect(() => {
     currentIndexRef.current = currentIndex;
+    setRevealed(false);
   }, [currentIndex]);
 
   useEffect(() => {
@@ -1074,6 +1080,9 @@ const SpeakingExamEngine = ({
         partType={partType}
         questionNumber={currentIndex + 1}
       />
+      {allowReveal && (
+        <RevealAnswerButton revealed={revealed} onToggle={() => setRevealed(v => !v)} />
+      )}
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}
@@ -1138,6 +1147,28 @@ const SpeakingExamEngine = ({
             {/* Question text */}
             {partType !== "part4" && <p className="text-sm text-gray-800 mt-4">{question}</p>}
           </div>
+
+          {allowReveal && revealed && (() => {
+            const sample = (() => {
+              if (partType === "part1") return part1Data?.sampleAnswers?.[currentIndex] || "";
+              if (partType === "part2") return part2Data?.sampleAnswers?.[currentIndex] || "";
+              if (partType === "part3") return part3Data?.sampleAnswers?.[currentIndex] || "";
+              if (partType === "part4") return part4Data?.sampleAnswers?.[0] || "";
+              return "";
+            })();
+            return (
+              <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
+                <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+                  💡 Bài nói mẫu
+                </p>
+                {sample ? (
+                  <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">{sample}</p>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">Chưa có bài nói mẫu.</p>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Right: Timer panel */}

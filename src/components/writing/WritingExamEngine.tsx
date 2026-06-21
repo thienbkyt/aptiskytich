@@ -11,6 +11,7 @@ import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import type {
   WritingPart1Data,
@@ -70,6 +71,8 @@ interface WritingExamEngineProps {
   }) => void;
   /** When true, mount directly into practice phase (used when navigating back to a previous part). */
   enterAtLastQuestion?: boolean;
+  /** Practice-only: show "Reveal answer" button (sample essay). Default false. Never set in Full Test. */
+  allowReveal?: boolean;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
@@ -88,6 +91,7 @@ const WritingExamEngine = ({
   onExit, onComplete, onPrevious, sourceQuestionIds, examSetId,
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
+  allowReveal = false,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
@@ -116,6 +120,8 @@ const WritingExamEngine = ({
   );
   const [informalAnswer, setInformalAnswer] = useState(initialAnswers?.informalAnswer ?? "");
   const [formalAnswer, setFormalAnswer] = useState(initialAnswers?.formalAnswer ?? "");
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => { setRevealed(false); }, [partType]);
 
   const { grading, isGrading, gradeExam } = useExamGrading();
   const effectiveGrading = (gradingResult ?? grading) as WritingGradingResult | null;
@@ -419,13 +425,18 @@ const WritingExamEngine = ({
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
       {adminControls}
       {phase === "practice" && !submitted && !reviewMode && (
-        <ExamReportButton
-          examQuestionId={sourceQuestionIds?.[0] ?? null}
-          examSetId={null}
-          skill="writing"
-          partType={partType}
-          questionNumber={1}
-        />
+        <>
+          <ExamReportButton
+            examQuestionId={sourceQuestionIds?.[0] ?? null}
+            examSetId={null}
+            skill="writing"
+            partType={partType}
+            questionNumber={1}
+          />
+          {allowReveal && (
+            <RevealAnswerButton revealed={revealed} onToggle={() => setRevealed(v => !v)} />
+          )}
+        </>
       )}
       <ExamHeader
         skillLabel="Writing"
@@ -453,6 +464,7 @@ const WritingExamEngine = ({
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
             reviewMode={reviewMode}
+            revealAnswers={revealed}
           />
         )}
 
@@ -471,6 +483,7 @@ const WritingExamEngine = ({
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
             reviewMode={reviewMode}
+            revealAnswers={revealed}
           />
         )}
 
@@ -493,6 +506,7 @@ const WritingExamEngine = ({
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
             reviewMode={reviewMode}
+            revealAnswers={revealed}
           />
         )}
 
@@ -513,6 +527,7 @@ const WritingExamEngine = ({
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
             reviewMode={reviewMode}
+            revealAnswers={revealed}
           />
         )}
 
