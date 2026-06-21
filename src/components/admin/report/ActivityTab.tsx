@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown } from "lucide-react";
+import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,20 +40,25 @@ const ActivityTab = () => {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [results, setResults] = useState<TestResultRow[]>([]);
   const [streaks, setStreaks] = useState<StreakRow[]>([]);
+  const [visitsToday, setVisitsToday] = useState<number>(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [p, t, s] = await Promise.all([
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const [p, t, s, v] = await Promise.all([
         supabase.from("profiles").select("user_id, created_at"),
         supabase.from("test_results").select("user_id, created_at"),
         supabase.from("learning_streaks").select("current_streak, last_activity_date"),
+        supabase.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", startOfToday.toISOString()),
       ]);
       if (cancelled) return;
       setProfiles((p.data as ProfileRow[]) || []);
       setResults((t.data as TestResultRow[]) || []);
       setStreaks((s.data as StreakRow[]) || []);
+      setVisitsToday(v.count ?? 0);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -228,7 +233,16 @@ const ActivityTab = () => {
       </div>
 
       {/* Top cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+            <Eye className="w-4 h-4" /> Truy cập hôm nay
+          </div>
+          <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_PRIMARY }}>
+            {visitsToday.toLocaleString("vi-VN")}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">Số phiên truy cập web trong hôm nay</p>
+        </Card>
         <Card className="p-5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
             <Users className="w-4 h-4" /> Tổng user
