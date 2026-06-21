@@ -111,13 +111,23 @@ const OpsTab = () => {
   const totalAiCount = speakingCount + writingCount;
 
   const emailDaily = useMemo(() => {
-    const span = days ?? 90;
     const arr: { day: string; label: string; sent: number; failed: number }[] = [];
-    for (let i = span - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - i);
-      arr.push({ day: dayKey(d), label: fmtDay(d), sent: 0, failed: 0 });
+    if (range === "custom" && customFrom && customTo) {
+      const start = new Date(`${customFrom}T00:00:00`);
+      const end = new Date(`${customTo}T00:00:00`);
+      const cur = new Date(start);
+      while (cur <= end) {
+        arr.push({ day: dayKey(cur), label: fmtDay(cur), sent: 0, failed: 0 });
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      const span = days ?? 90;
+      for (let i = span - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        arr.push({ day: dayKey(d), label: fmtDay(d), sent: 0, failed: 0 });
+      }
     }
     const map = new Map(arr.map((x, i) => [x.day, i]));
     for (const r of emails) {
@@ -129,7 +139,7 @@ const OpsTab = () => {
       else if (r.status === "failed" || r.status === "dlq") arr[idx].failed += 1;
     }
     return arr;
-  }, [emails, days, now]);
+  }, [emails, days, now, range, customFrom, customTo]);
 
   const hasEmailData = emails.length > 0;
   const hasAiData = speaking.length > 0 || writing.length > 0;
@@ -142,21 +152,35 @@ const OpsTab = () => {
     );
   }
 
-  const periodLabel = days == null ? "Tất cả" : `${days} ngày qua`;
+  const periodLabel =
+    range === "custom"
+      ? customFrom && customTo
+        ? `${customFrom} → ${customTo}`
+        : "Tùy chọn"
+      : days == null
+      ? "Tất cả"
+      : `${days} ngày qua`;
 
   return (
     <div className="space-y-6">
       {/* Filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm text-muted-foreground">Khoảng thời gian:</span>
         <Select value={range} onValueChange={setRange}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {RANGE_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {range === "custom" && (
+          <>
+            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-[160px]" aria-label="Từ ngày" />
+            <span className="text-sm text-muted-foreground">→</span>
+            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-[160px]" aria-label="Đến ngày" />
+          </>
+        )}
       </div>
 
       {/* Email health cards */}
