@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Mail, CheckCircle, XCircle, AlertTriangle, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -18,6 +19,7 @@ const RANGE_OPTIONS = [
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
   { value: "all", label: "Tất cả" },
+  { value: "custom", label: "Tùy chọn (từ - đến)" },
 ];
 
 const COLOR_PRIMARY = "#CC1C01";
@@ -32,19 +34,30 @@ const dayKey = (d: Date) =>
 
 const OpsTab = () => {
   const [range, setRange] = useState<string>("30");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [emails, setEmails] = useState<EmailRow[]>([]);
   const [speaking, setSpeaking] = useState<SpeakingRow[]>([]);
   const [writing, setWriting] = useState<WritingRow[]>([]);
 
   const now = useMemo(() => new Date(), []);
-  const days = range === "all" ? null : Number(range);
-  const cutoff = useMemo(() => {
-    if (days == null) return null;
+  const days = range === "all" || range === "custom" ? null : Number(range);
+  const bounds = useMemo<{ gte: string | null; lte: string | null }>(() => {
+    if (range === "custom") {
+      if (customFrom && customTo) {
+        return {
+          gte: new Date(`${customFrom}T00:00:00`).toISOString(),
+          lte: new Date(`${customTo}T23:59:59.999`).toISOString(),
+        };
+      }
+      return { gte: null, lte: null };
+    }
+    if (range === "all") return { gte: null, lte: null };
     const d = new Date(now);
-    d.setDate(d.getDate() - days);
-    return d.toISOString();
-  }, [days, now]);
+    d.setDate(d.getDate() - Number(range));
+    return { gte: d.toISOString(), lte: null };
+  }, [range, customFrom, customTo, now]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,10 +67,15 @@ const OpsTab = () => {
       const sq = supabase.from("speaking_question_gradings").select("test_result_id, created_at");
       const wq = supabase.from("writing_question_gradings").select("test_result_id, created_at");
 
-      if (cutoff) {
-        eq.gte("created_at", cutoff);
-        sq.gte("created_at", cutoff);
-        wq.gte("created_at", cutoff);
+      if (bounds.gte) {
+        eq.gte("created_at", bounds.gte);
+        sq.gte("created_at", bounds.gte);
+        wq.gte("created_at", bounds.gte);
+      }
+      if (bounds.lte) {
+        eq.lte("created_at", bounds.lte);
+        sq.lte("created_at", bounds.lte);
+        wq.lte("created_at", bounds.lte);
       }
 
       const [e, s, w] = await Promise.all([eq, sq, wq]);
@@ -68,7 +86,7 @@ const OpsTab = () => {
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [cutoff]);
+  }, [bounds.gte, bounds.lte]);
 
   const sent = useMemo(() => emails.filter((r) => r.status === "sent").length, [emails]);
   const failed = useMemo(() => emails.filter((r) => r.status === "failed").length, [emails]);
