@@ -47,6 +47,7 @@ interface ExamState {
   engineData?: any;
   loadingExam: boolean;
   examSetId?: string | null;
+  skipIntro?: boolean;
 }
 
 interface FullPracticeState {
@@ -79,7 +80,7 @@ const Speaking = () => {
       const target = examSets.find((s) => s.id === exam.examSetId);
       if (target) {
         rehydratedRef.current = true;
-        handleStartFromDB(target);
+        handleStartFromDB(target, { skipIntro: exam.skipIntro });
       }
     } else {
       rehydratedRef.current = true;
@@ -91,13 +92,15 @@ const Speaking = () => {
   const autoStartedRef = useRef<string | null>(null);
   useEffect(() => {
     const setId = searchParams.get("set");
+    const jump = searchParams.get("jump") === "1";
     if (!setId || loading || autoStartedRef.current === setId) return;
     const target = examSets.find((s) => s.id === setId);
     if (target) {
       autoStartedRef.current = setId;
-      handleStartFromDB(target);
+      handleStartFromDB(target, { skipIntro: jump });
       const next = new URLSearchParams(searchParams);
       next.delete("set");
+      next.delete("jump");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, examSets, loading]);
@@ -109,9 +112,9 @@ const Speaking = () => {
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
 
-  const handleStartFromDB = async (set: ExamSetRow) => {
+  const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as SpeakingPartType;
-    setExam({ active: true, partType, testTitle: set.title, loadingExam: true, ...( { examSetId: set.id } as any) });
+    setExam({ active: true, partType, testTitle: set.title, loadingExam: true, skipIntro: opts?.skipIntro ?? false, ...( { examSetId: set.id } as any) });
     const questions = await fetchExamQuestions(set.id);
     const sourceQuestionIds = questions.map((q: any) => q.id);
     let engineData: any = { sourceQuestionIds };
@@ -190,7 +193,7 @@ const Speaking = () => {
         partType={exam.partType} testTitle={exam.testTitle}
         timeLimit={TIME_LIMITS[exam.partType]} onExit={handleExit} onComplete={() => {}}
         examSetId={(exam as any).examSetId ?? null}
-        {...exam.engineData}
+        {...exam.engineData} skipIntro={exam.skipIntro}
       />
     );
   }
