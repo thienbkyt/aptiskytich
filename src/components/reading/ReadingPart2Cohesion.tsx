@@ -33,12 +33,13 @@ interface Props {
 
 const ReadingPart2Cohesion = ({
   question, placements, onPlacementsChange,
-  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections, onSubmitTest,
+  timeLeft, totalTime, submitted, revealAnswers, onSubmit, onPrevious, sections, onSubmitTest,
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
   pageNumber, pageTotal, hideTimer = false,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
   const setCurrentSection = (updater: number | ((p: number) => number)) => {
