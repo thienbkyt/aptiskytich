@@ -502,7 +502,7 @@ const GrammarExamEngine = ({
                   ? "Collocation Matching"
                   : "Synonym Matching";
                 const instruction = isGapFill
-                  ? "Complete each sentence using a word from each drop-down list."
+                  ? "Select a word from each drop-down list on the right that has the same or a very similar meaning to each word on the left."
                   : isAnyDefinition
                   ? "Complete each definition using a word from the drop-down list."
                   : isCollocation
