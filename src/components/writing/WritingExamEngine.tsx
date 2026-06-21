@@ -70,6 +70,8 @@ interface WritingExamEngineProps {
   }) => void;
   /** When true, mount directly into practice phase (used when navigating back to a previous part). */
   enterAtLastQuestion?: boolean;
+  /** Practice-only: show "Reveal answer" button (sample essay). Default false. Never set in Full Test. */
+  allowReveal?: boolean;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
