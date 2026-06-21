@@ -68,6 +68,14 @@ const CATEGORY_OPTIONS = [
   { value: "functional", label: "Lỗi chức năng" },
 ];
 
+const SKILL_ROUTE: Record<string, string> = {
+  reading: "/reading",
+  listening: "/listening",
+  grammar_vocab: "/grammar",
+  speaking: "/speaking",
+  writing: "/writing",
+};
+
 const fmtDate = (s: string) => {
   const d = new Date(s);
   return d.toLocaleString("vi-VN", {
@@ -272,6 +280,11 @@ const AdminReports = () => {
                 const setIdForLink = lookup?.setId || r.exam_set_id;
                 const setTitle = lookup?.setTitle;
 
+                const examUrl =
+                  r.skill && SKILL_ROUTE[r.skill] && setIdForLink
+                    ? `${SKILL_ROUTE[r.skill]}?set=${setIdForLink}`
+                    : r.page_url;
+
                 return (
                   <Card
                     key={r.id}
@@ -334,14 +347,14 @@ const AdminReports = () => {
                           </div>
                         </div>
 
-                        {!isFunctional && setIdForLink && (
+                        {(examUrl || (!isFunctional && setIdForLink)) && (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
-                            {r.page_url && (
+                            {examUrl && (
                               <Button asChild size="sm" variant="outline" className="gap-1.5">
-                                <Link to={r.page_url}>
+                                <a href={examUrl} target="_blank" rel="noopener noreferrer">
                                   <ExternalLink className="w-3.5 h-3.5" />
                                   Mở trang gặp lỗi
-                                </Link>
+                                </a>
                               </Button>
                             )}
                             {!isFunctional && setIdForLink && (
