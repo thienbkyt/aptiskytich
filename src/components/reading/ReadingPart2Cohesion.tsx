@@ -14,6 +14,7 @@ interface Props {
   timeLeft?: number;
   totalTime?: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onSubmit?: () => void;
   onPrevious?: () => void;
   onExitToSections?: () => void;
