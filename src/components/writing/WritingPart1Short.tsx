@@ -19,6 +19,7 @@ interface Props {
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
   reviewMode?: boolean;
+  revealAnswers?: boolean;
 }
 
 const WritingPart1Short = ({
