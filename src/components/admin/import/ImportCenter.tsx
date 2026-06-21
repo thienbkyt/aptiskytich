@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { FileSpreadsheet, Sparkles, BookOpen, FolderOpen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +20,34 @@ const ImportCenter = () => {
   const [editingSet, setEditingSet] = useState<ExamSetRow | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [prefillQuestions, setPrefillQuestions] = useState<ExcelImportRow[] | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const editSetId = searchParams.get("editSet");
+    if (!editSetId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("exam_sets")
+        .select("*")
+        .eq("id", editSetId)
+        .single();
+      if (cancelled || error || !data) return;
+      setSkill(data.skill as Skill);
+      setExamType(data.exam_type as ExamType);
+      setEditingSet(data as ExamSetRow);
+      setPrefillQuestions(null);
+      setMode("form");
+      // dọn param để bấm Back / refresh không mở lại editor
+      setSearchParams((prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("editSet");
+        return p;
+      }, { replace: true });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelect = (set: ExamSetRow) => {
     setEditingSet(set);
