@@ -70,10 +70,11 @@ const WritingPart3Questions = ({
               initialValue={answers[i] || ""}
             />
             {showSample && (
-              <div className="mt-3 bg-muted/50 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground">
-                  💡 Đáp án mẫu: <span className="text-foreground">{q.sampleAnswer}</span>
+              <div className="mt-3 bg-white rounded-xl shadow-sm p-4 border-l-4 border-[#24085a]">
+                <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-1">
+                  💡 Đáp án mẫu
                 </p>
+                <p className="text-sm text-foreground font-medium leading-relaxed">{q.sampleAnswer}</p>
               </div>
             )}
           </motion.div>

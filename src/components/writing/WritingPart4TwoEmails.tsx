@@ -70,9 +70,11 @@ const WritingPart4TwoEmails = ({
           initialValue={informalAnswer}
         />
         {showSample && data.informalEmail.sampleAnswer && (
-          <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">
-            <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
-            <p className="text-muted-foreground whitespace-pre-line">{data.informalEmail.sampleAnswer}</p>
+          <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
+            <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+              💡 Bài viết mẫu
+            </p>
+            <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{data.informalEmail.sampleAnswer}</p>
           </div>
         )}
       </div>
@@ -89,9 +91,11 @@ const WritingPart4TwoEmails = ({
           initialValue={formalAnswer}
         />
         {showSample && data.formalEmail.sampleAnswer && (
-          <div className="bg-muted/50 rounded-xl p-4 mt-3 text-sm">
-            <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
-            <p className="text-muted-foreground whitespace-pre-line">{data.formalEmail.sampleAnswer}</p>
+          <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
+            <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+              💡 Bài viết mẫu
+            </p>
+            <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{data.formalEmail.sampleAnswer}</p>
           </div>
         )}
       </div>

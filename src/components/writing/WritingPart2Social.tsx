@@ -66,9 +66,11 @@ const WritingPart2Social = ({
       </div>
 
       {showSample && data.sampleAnswer && (
-        <div className="bg-muted/50 rounded-xl p-4 mt-4 text-sm">
-          <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
-          <p className="text-muted-foreground whitespace-pre-line">{data.sampleAnswer}</p>
+        <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
+          <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+            💡 Bài viết mẫu
+          </p>
+          <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{data.sampleAnswer}</p>
         </div>
       )}
 
