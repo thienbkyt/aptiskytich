@@ -16,6 +16,7 @@ import ExamInstructions from "@/components/exam/ExamInstructions";
 import GrammarResults from "@/components/grammar/GrammarResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
@@ -41,6 +42,8 @@ interface GrammarExamEngineProps {
   initialFillAnswers?: string[];
   initialGroup?: number;
   onGroupCount?: (n: number) => void;
+  /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
+  allowReveal?: boolean;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -60,6 +63,7 @@ const GrammarExamEngine = ({
   initialFillAnswers,
   initialGroup,
   onGroupCount,
+  allowReveal = false,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
