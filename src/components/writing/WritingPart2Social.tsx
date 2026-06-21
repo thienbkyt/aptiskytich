@@ -65,7 +65,7 @@ const WritingPart2Social = ({
         </span>
       </div>
 
-      {submitted && data.sampleAnswer && (
+      {showSample && data.sampleAnswer && (
         <div className="bg-muted/50 rounded-xl p-4 mt-4 text-sm">
           <p className="font-semibold text-foreground mb-2">Bài viết mẫu:</p>
           <p className="text-muted-foreground whitespace-pre-line">{data.sampleAnswer}</p>
