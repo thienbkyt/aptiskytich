@@ -65,6 +65,8 @@ interface ListeningExamEngineProps {
   onQuestionCount?: (n: number) => void;
   /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
   allowReveal?: boolean;
+  /** When true (and not reviewMode), open this part at the last question (used when navigating Back from next part). */
+  enterAtLastQuestion?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
