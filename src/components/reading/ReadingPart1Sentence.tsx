@@ -11,6 +11,7 @@ interface Props {
   timeLeft?: number;
   totalTime?: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onAnswer: (gapIndex: number, value: number) => void;
   onPrevious?: () => void;
   onNext?: () => void;
