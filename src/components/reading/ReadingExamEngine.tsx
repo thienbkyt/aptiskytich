@@ -636,7 +636,8 @@ const ReadingExamEngine = ({
             question={part4Question}
             answers={p4Answers}
             currentIndex={currentIndex}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={onAnswerP4}
             {...navProps}
             onNext={onPart1Next}
