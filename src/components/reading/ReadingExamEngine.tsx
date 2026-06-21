@@ -568,7 +568,8 @@ const ReadingExamEngine = ({
           <ReadingPart1Sentence
             question={part1Question}
             answers={p1Answers}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={onAnswerP1}
             {...navProps}
             onNext={onPart1Next}
