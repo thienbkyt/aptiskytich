@@ -10,6 +10,7 @@ import ListeningPart4Monologue from "@/components/listening/ListeningPart4Monolo
 import ListeningResults from "@/components/listening/ListeningResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
 import type {
@@ -62,6 +63,8 @@ interface ListeningExamEngineProps {
   initialQuestion?: number;
   /** Notifies parent of total question count for this part (used by review pager). */
   onQuestionCount?: (n: number) => void;
+  /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
+  allowReveal?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -79,7 +82,13 @@ const ListeningExamEngine = ({
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
+  allowReveal = false,
 }: ListeningExamEngineProps) => {
+  const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
+  // Reset reveal when switching part (engine instance reused in full-flow).
+  useEffect(() => { setRevealedIdx(new Set()); }, [partType]);
+  const isRevealedHere = allowReveal && revealedIdx.has(currentIndexSafe());
+  function currentIndexSafe() { return 0; } // placeholder; real index below
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
