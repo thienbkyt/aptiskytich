@@ -194,6 +194,7 @@ const Speaking = () => {
         timeLimit={TIME_LIMITS[exam.partType]} onExit={handleExit} onComplete={() => {}}
         examSetId={(exam as any).examSetId ?? null}
         {...exam.engineData} skipIntro={exam.skipIntro}
+        allowReveal
       />
     );
   }
