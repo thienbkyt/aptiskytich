@@ -218,6 +218,7 @@ const SpeakingExamEngine = ({
   // Cleanup on unmount
   useEffect(() => {
     currentIndexRef.current = currentIndex;
+    setRevealed(false);
   }, [currentIndex]);
 
   useEffect(() => {
