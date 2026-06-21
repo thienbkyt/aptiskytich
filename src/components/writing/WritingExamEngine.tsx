@@ -120,6 +120,8 @@ const WritingExamEngine = ({
   );
   const [informalAnswer, setInformalAnswer] = useState(initialAnswers?.informalAnswer ?? "");
   const [formalAnswer, setFormalAnswer] = useState(initialAnswers?.formalAnswer ?? "");
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => { setRevealed(false); }, [partType]);
 
   const { grading, isGrading, gradeExam } = useExamGrading();
   const effectiveGrading = (gradingResult ?? grading) as WritingGradingResult | null;
