@@ -69,7 +69,7 @@ const WritingPart3Questions = ({
               wordLimit={data.wordLimit}
               initialValue={answers[i] || ""}
             />
-            {submitted && (
+            {showSample && (
               <div className="mt-3 bg-muted/50 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground">
                   💡 Đáp án mẫu: <span className="text-foreground">{q.sampleAnswer}</span>
