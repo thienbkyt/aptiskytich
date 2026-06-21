@@ -663,6 +663,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         onComplete={handleSpeakingPartComplete}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
         onAdminPrevious={handleAdminPreviousPart}
+        allowReveal
         {...speakingProps}
       /></>
     );
