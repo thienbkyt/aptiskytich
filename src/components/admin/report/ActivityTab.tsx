@@ -131,16 +131,29 @@ const ActivityTab = () => {
 
   // Daily series for the chosen period
   const dailySeries = useMemo(() => {
-    const span = days ?? 90;
     const arr: { day: string; label: string; new: number; learners: number }[] = [];
     const learnerSets: Record<string, Set<string>> = {};
-    for (let i = span - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - i);
-      const key = dayKey(d);
-      arr.push({ day: key, label: fmtDay(d), new: 0, learners: 0 });
-      learnerSets[key] = new Set();
+    if (range === "custom" && fromDate && toDate) {
+      const cur = new Date(fromDate);
+      cur.setHours(0, 0, 0, 0);
+      const end = new Date(toDate);
+      end.setHours(0, 0, 0, 0);
+      while (cur <= end) {
+        const key = dayKey(cur);
+        arr.push({ day: key, label: fmtDay(cur), new: 0, learners: 0 });
+        learnerSets[key] = new Set();
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      const span = windowDays ?? 90;
+      for (let i = span - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        const key = dayKey(d);
+        arr.push({ day: key, label: fmtDay(d), new: 0, learners: 0 });
+        learnerSets[key] = new Set();
+      }
     }
     const map = new Map(arr.map((x, i) => [x.day, i]));
     for (const p of profiles) {
@@ -156,7 +169,7 @@ const ActivityTab = () => {
     }
     for (const x of arr) x.learners = learnerSets[x.day].size;
     return arr;
-  }, [profiles, results, days, now]);
+  }, [profiles, results, windowDays, now, range, fromDate, toDate]);
 
   // Streak distribution
   const streakDist = useMemo(() => {
@@ -183,21 +196,35 @@ const ActivityTab = () => {
     );
   }
 
-  const periodLabel = days == null ? "Tất cả" : `${days} ngày qua`;
+  const periodLabel =
+    range === "custom"
+      ? customFrom && customTo
+        ? `${customFrom} → ${customTo}`
+        : "Tùy chọn"
+      : windowDays == null
+      ? "Tất cả"
+      : `${windowDays} ngày qua`;
 
   return (
     <div className="space-y-6">
       {/* Filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm text-muted-foreground">Khoảng thời gian:</span>
         <Select value={range} onValueChange={setRange}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {RANGE_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {range === "custom" && (
+          <>
+            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-[160px]" aria-label="Từ ngày" />
+            <span className="text-sm text-muted-foreground">→</span>
+            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-[160px]" aria-label="Đến ngày" />
+          </>
+        )}
       </div>
 
       {/* Top cards */}
