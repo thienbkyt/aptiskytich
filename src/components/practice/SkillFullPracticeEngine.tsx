@@ -380,6 +380,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         onPreviousPart={handleAdminPreviousPart}
         showResultsOnSubmit
+        allowReveal
       /></>
     );
   }
@@ -709,6 +710,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         onTimeTick={(t) => setListeningTimeLeft(t)}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
+        allowReveal
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         onPreviousPart={handleAdminPreviousPart}
@@ -767,6 +769,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         onTimeTick={(t) => setReadingTimeLeft(t)}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
+        allowReveal
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
         onPreviousPart={readingPreviousPart}
