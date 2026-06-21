@@ -718,6 +718,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         showResultsOnSubmit={false}
         initialAnswers={listeningAnswersByPartRef.current[currentPartIndex]}
         onAnswersChange={(a) => { listeningAnswersByPartRef.current[currentPartIndex] = a; }}
+        enterAtLastQuestion={lastNavDirectionRef.current === "back"}
         {...listeningProps}
       /></>
     );
