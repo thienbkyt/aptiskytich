@@ -139,6 +139,16 @@ const ListeningExamEngine = ({
     if (initialQuestion != null) setCurrentIndex(initialQuestion);
   }, [initialQuestion]);
 
+  // On initial mount, if asked, jump to last question of the part (used when navigating back from next part).
+  useEffect(() => {
+    if (enterAtLastQuestion && !reviewMode && totalQuestions > 0) {
+      setCurrentIndex(totalQuestions - 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+
 
   const [answers, setAnswers] = useState<any[]>(
     initialAnswers && initialAnswers.length === totalQuestions
