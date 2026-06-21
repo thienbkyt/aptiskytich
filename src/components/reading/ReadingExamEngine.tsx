@@ -568,7 +568,7 @@ const ReadingExamEngine = ({
           <ReadingPart1Sentence
             question={part1Question}
             answers={p1Answers}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={onAnswerP1}
             {...navProps}
             onNext={onPart1Next}
@@ -590,7 +590,7 @@ const ReadingExamEngine = ({
             question={part2Question}
             placements={p2Placements}
             onPlacementsChange={onPlacementsChangeP2}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onSubmit={!submitted ? handleSubmit : undefined}
             onPrevious={goToPrevPhase}
             sections={sections}
@@ -610,7 +610,7 @@ const ReadingExamEngine = ({
           <ReadingPart3Opinion
             question={part3Question}
             answers={p3Answers}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             currentStatement={currentIndex}
             onAnswer={onAnswerP3}
             {...navProps}
@@ -633,7 +633,7 @@ const ReadingExamEngine = ({
             question={part4Question}
             answers={p4Answers}
             currentIndex={currentIndex}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={onAnswerP4}
             {...navProps}
             onNext={onPart1Next}
