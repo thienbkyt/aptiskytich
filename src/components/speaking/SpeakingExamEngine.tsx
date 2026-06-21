@@ -114,6 +114,7 @@ const SpeakingExamEngine = ({
   examSetId, sourceQuestionIds, fullTestSessionId, fullTestId,
   onExit, onComplete, skipIntro = false, onAdminPrevious,
   fullFlow = false, isLastPart, onPartSubmissions,
+  allowReveal = false,
 }: SpeakingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>(skipIntro ? "prompt" : "start");
   const [currentIndex, setCurrentIndex] = useState(0);
