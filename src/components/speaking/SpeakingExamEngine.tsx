@@ -1147,6 +1147,28 @@ const SpeakingExamEngine = ({
             {/* Question text */}
             {partType !== "part4" && <p className="text-sm text-gray-800 mt-4">{question}</p>}
           </div>
+
+          {allowReveal && revealed && (() => {
+            const sample = (() => {
+              if (partType === "part1") return part1Data?.sampleAnswers?.[currentIndex] || "";
+              if (partType === "part2") return part2Data?.sampleAnswers?.[currentIndex] || "";
+              if (partType === "part3") return part3Data?.sampleAnswers?.[currentIndex] || "";
+              if (partType === "part4") return part4Data?.sampleAnswers?.[0] || "";
+              return "";
+            })();
+            return (
+              <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
+                <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+                  💡 Bài nói mẫu
+                </p>
+                {sample ? (
+                  <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">{sample}</p>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">Chưa có bài nói mẫu.</p>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Right: Timer panel */}
