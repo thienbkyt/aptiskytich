@@ -69,7 +69,7 @@ const WritingPart1Short = ({
               wordLimit={5}
               initialValue={answers[i] || ""}
             />
-            {submitted && (
+            {showSample && (
               <p className="text-xs text-muted-foreground mt-2">
                 💡 Đáp án mẫu: <span className="text-success font-medium">{q.sampleAnswer}</span>
               </p>
