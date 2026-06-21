@@ -113,6 +113,21 @@ const ReadingExamEngine = ({
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
 
+  // Reveal-on-demand for practice mode (per page key).
+  const [revealedKeys, setRevealedKeys] = useState<Set<number>>(new Set());
+  useEffect(() => { setRevealedKeys(new Set()); }, [partType]);
+  const revealKey = partType === "part2" ? currentIndex : 0;
+  const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedKeys.has(revealKey);
+  const effectiveSubmitted = submitted || isRevealedHere;
+  const toggleRevealHere = () => {
+    setRevealedKeys((prev) => {
+      const n = new Set(prev);
+      if (n.has(revealKey)) n.delete(revealKey);
+      else n.add(revealKey);
+      return n;
+    });
+  };
+
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     initialAnswers?.p1 && initialAnswers.p1.length > 0
       ? initialAnswers.p1
