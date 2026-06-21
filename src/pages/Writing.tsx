@@ -57,6 +57,7 @@ interface ExamState {
   loadingExam: boolean;
   examSetId?: string | null;
   startedAt?: number;
+  skipIntro?: boolean;
 }
 
 interface FullPracticeState {
@@ -87,7 +88,7 @@ const Writing = () => {
       const target = examSets.find((s) => s.id === exam.examSetId);
       if (target) {
         rehydratedRef.current = true;
-        handleStartFromDB(target);
+        handleStartFromDB(target, { skipIntro: exam.skipIntro });
       }
     } else {
       rehydratedRef.current = true;
@@ -99,13 +100,15 @@ const Writing = () => {
   const autoStartedRef = useRef<string | null>(null);
   useEffect(() => {
     const setId = searchParams.get("set");
+    const jump = searchParams.get("jump") === "1";
     if (!setId || loading || autoStartedRef.current === setId) return;
     const target = examSets.find((s) => s.id === setId);
     if (target) {
       autoStartedRef.current = setId;
-      handleStartFromDB(target);
+      handleStartFromDB(target, { skipIntro: jump });
       const next = new URLSearchParams(searchParams);
       next.delete("set");
+      next.delete("jump");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, examSets, loading]);
@@ -119,10 +122,10 @@ const Writing = () => {
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets, activePartKey]);
 
-  const handleStartFromDB = async (set: ExamSetRow) => {
+  const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const normalizedPart = normalizePart(set.part);
     const partType = partToTask[normalizedPart] || "task1";
-    setExam({ active: true, partType, testTitle: set.title, completed: false, loadingExam: true, examSetId: set.id, startedAt: Date.now() });
+    setExam({ active: true, partType, testTitle: set.title, completed: false, loadingExam: true, examSetId: set.id, startedAt: Date.now(), skipIntro: opts?.skipIntro ?? false });
     const questions = await fetchExamQuestions(set.id);
     const sourceQuestionIds = questions.map((q: any) => q.id);
     let engineData: any = { sourceQuestionIds };
@@ -228,7 +231,7 @@ const Writing = () => {
           });
           return id ?? null;
         }}
-        {...exam.engineData}
+        {...exam.engineData} skipIntro={exam.skipIntro}
       />
     );
   }
