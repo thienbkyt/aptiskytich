@@ -272,7 +272,7 @@ const Listening = () => {
     return (
       <ListeningExamEngine
         partType={exam.partType} testTitle={exam.testTitle} timeLimit={LISTENING_TIME[exam.partType] ?? 2400}
-        onExit={handleExit} onComplete={handleComplete} showResultsOnSubmit
+        onExit={handleExit} onComplete={handleComplete} showResultsOnSubmit allowReveal
         examSetId={exam.examSetId ?? null}
         {...exam.engineData} skipIntro={exam.skipIntro}
       />

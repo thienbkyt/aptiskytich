@@ -16,6 +16,7 @@ import ExamInstructions from "@/components/exam/ExamInstructions";
 import GrammarResults from "@/components/grammar/GrammarResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
@@ -41,6 +42,8 @@ interface GrammarExamEngineProps {
   initialFillAnswers?: string[];
   initialGroup?: number;
   onGroupCount?: (n: number) => void;
+  /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
+  allowReveal?: boolean;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -60,6 +63,7 @@ const GrammarExamEngine = ({
   initialFillAnswers,
   initialGroup,
   onGroupCount,
+  allowReveal = false,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -76,6 +80,8 @@ const GrammarExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(false);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  // Reveal-on-demand for practice mode (keyed by group index).
+  const [revealedGroups, setRevealedGroups] = useState<Set<number>>(new Set());
 
   // Group consecutive vocab_matching questions of same groupable vocabType into one page
   const GROUPABLE_VOCAB_TYPES = ["synonym", "sentence_definition", "gap_fill", "definition_matching", "collocation"] as const;
@@ -132,6 +138,16 @@ const GrammarExamEngine = ({
     groups.findIndex((g) => g.indices.includes(currentIndex))
   );
   const currentGroup = groups[currentGroupIdx];
+  const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedGroups.has(currentGroupIdx);
+  const effectiveSubmitted = submitted || isRevealedHere;
+  const toggleRevealHere = () => {
+    setRevealedGroups((prev) => {
+      const n = new Set(prev);
+      if (n.has(currentGroupIdx)) n.delete(currentGroupIdx);
+      else n.add(currentGroupIdx);
+      return n;
+    });
+  };
 
   useEffect(() => {
     if (phase === "practice" && currentGroup) {
@@ -380,8 +396,8 @@ const GrammarExamEngine = ({
   const selected = answers[currentIndex];
   const isFillBlank = q.question_type === "fill-in-blank";
   const isSynonymGroup = !!currentGroup?.isSynonym;
-  const qIsCorrect = submitted && isCorrect(currentIndex);
-  const qIsWrong = submitted && isAnswered(currentIndex) && !isCorrect(currentIndex);
+  const qIsCorrect = effectiveSubmitted && isCorrect(currentIndex);
+  const qIsWrong = effectiveSubmitted && isAnswered(currentIndex) && !isCorrect(currentIndex);
 
   const groupStartLabel = currentGroup
     ? currentGroup.indices[0] + 1
@@ -417,6 +433,9 @@ const GrammarExamEngine = ({
           partType={null}
           questionNumber={currentIndex + 1}
         />
+      )}
+      {allowReveal && phase === "practice" && !submitted && !reviewMode && (
+        <RevealAnswerButton revealed={isRevealedHere} onToggle={toggleRevealHere} />
       )}
       <ExamHeader
         skillLabel="Grammar & Vocabulary"
@@ -529,10 +548,10 @@ const GrammarExamEngine = ({
                         (item.extra_data as any)?.optionLabels ||
                         ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
                       const userAns = answers[idx];
-                      const itemCorrect = submitted && userAns === item.correct_answer;
+                      const itemCorrect = effectiveSubmitted && userAns === item.correct_answer;
                       const itemWrong =
-                        submitted && userAns !== null && userAns !== item.correct_answer;
-                      const itemBlank = submitted && (userAns === null || userAns === undefined);
+                        effectiveSubmitted && userAns !== null && userAns !== item.correct_answer;
+                      const itemBlank = effectiveSubmitted && (userAns === null || userAns === undefined);
 
                       let triggerCls = "";
                       if (itemCorrect)
@@ -561,7 +580,7 @@ const GrammarExamEngine = ({
                                   onValueChange={(v) =>
                                     handleAnswerSelect(idx, parseInt(v, 10))
                                   }
-                                  disabled={submitted}
+                                  disabled={effectiveSubmitted}
                                 >
                                   <SelectTrigger className={`h-10 ${triggerCls}`}>
                                     <SelectValue placeholder="Select..." />
@@ -578,7 +597,7 @@ const GrammarExamEngine = ({
                               {afterGap && (
                                 <span className="text-sm text-gray-900">{afterGap}</span>
                               )}
-                              {submitted && !itemCorrect && (
+                              {effectiveSubmitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
@@ -599,7 +618,7 @@ const GrammarExamEngine = ({
                                   onValueChange={(v) =>
                                     handleAnswerSelect(idx, parseInt(v, 10))
                                   }
-                                  disabled={submitted}
+                                  disabled={effectiveSubmitted}
                                 >
                                   <SelectTrigger className={`h-10 ${triggerCls}`}>
                                     <SelectValue placeholder="Select..." />
@@ -613,7 +632,7 @@ const GrammarExamEngine = ({
                                   </SelectContent>
                                 </Select>
                               </div>
-                              {submitted && !itemCorrect && (
+                              {effectiveSubmitted && !itemCorrect && (
                                 <span className="text-xs text-emerald-700">
                                   ✓ {opts[item.correct_answer]}
                                 </span>
@@ -653,7 +672,7 @@ const GrammarExamEngine = ({
                         const isLastOpt = i === q.options.length - 1;
                         let cls =
                           "bg-background hover:bg-muted/50 text-foreground";
-                        if (submitted) {
+                        if (effectiveSubmitted) {
                           if (i === q.correct_answer)
                             cls = "bg-emerald-500/10 text-emerald-700";
                           else if (i === selected)
@@ -666,9 +685,9 @@ const GrammarExamEngine = ({
                           <button
                             key={i}
                             onClick={() =>
-                              !submitted && handleAnswerSelect(currentIndex, i)
+                              !effectiveSubmitted && handleAnswerSelect(currentIndex, i)
                             }
-                            disabled={submitted}
+                            disabled={effectiveSubmitted}
                             className={`w-full flex items-stretch text-left transition-colors ${cls} ${
                               !isLastOpt ? "border-b border-border" : ""
                             }`}
@@ -678,10 +697,10 @@ const GrammarExamEngine = ({
                             </span>
                             <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
                               <span>{opt}</span>
-                              {submitted && i === q.correct_answer && (
+                              {effectiveSubmitted && i === q.correct_answer && (
                                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                               )}
-                              {submitted &&
+                              {effectiveSubmitted &&
                                 i === selected &&
                                 i !== q.correct_answer && (
                                   <XCircle className="w-4 h-4 text-destructive" />
@@ -702,16 +721,16 @@ const GrammarExamEngine = ({
                           handleFillAnswer(currentIndex, e.target.value)
                         }
                         placeholder="Nhập đáp án của bạn..."
-                        disabled={submitted}
+                        disabled={effectiveSubmitted}
                         className={`text-base h-12 ${
-                          submitted
+                          effectiveSubmitted
                             ? isCorrect(currentIndex)
                               ? "border-green-500 bg-green-50"
                               : "border-red-500 bg-red-50"
                             : ""
                         }`}
                       />
-                      {submitted && (
+                      {effectiveSubmitted && (
                         <p className="text-sm text-gray-500">
                           Đáp án đúng:{" "}
                           <span className="font-bold text-green-600">
@@ -723,7 +742,7 @@ const GrammarExamEngine = ({
                   )}
 
                   {/* Explanation */}
-                  {submitted && (
+                  {effectiveSubmitted && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}

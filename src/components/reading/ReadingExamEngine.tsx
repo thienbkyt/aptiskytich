@@ -9,6 +9,7 @@ import ReadingPart4Long from "@/components/reading/ReadingPart4Long";
 import ReadingResults from "@/components/reading/ReadingResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { TimerProvider } from "@/components/reading/TimerContext";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import type {
@@ -83,6 +84,8 @@ interface ReadingExamEngineProps {
   initialSection?: number;
   /** Notifies parent of total page count for this part (used by review pager). */
   onPageCount?: (n: number) => void;
+  /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
+  allowReveal?: boolean;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -94,7 +97,7 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
-  pageBase, pageTotal, initialSection, onPageCount,
+  pageBase, pageTotal, initialSection, onPageCount, allowReveal = false,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
@@ -109,6 +112,21 @@ const ReadingExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+
+  // Reveal-on-demand for practice mode (per page key).
+  const [revealedKeys, setRevealedKeys] = useState<Set<number>>(new Set());
+  useEffect(() => { setRevealedKeys(new Set()); }, [partType]);
+  const revealKey = partType === "part2" ? currentIndex : 0;
+  const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedKeys.has(revealKey);
+  const effectiveSubmitted = submitted || isRevealedHere;
+  const toggleRevealHere = () => {
+    setRevealedKeys((prev) => {
+      const n = new Set(prev);
+      if (n.has(revealKey)) n.delete(revealKey);
+      else n.add(revealKey);
+      return n;
+    });
+  };
 
   const [p1Answers, setP1Answers] = useState<(number | null)[]>(
     initialAnswers?.p1 && initialAnswers.p1.length > 0
@@ -141,7 +159,7 @@ const ReadingExamEngine = ({
 
   // Internal fetch of translate-review when parent did not supply reviewData.
   // Enabled only in review/submitted mode to avoid pre-fetching during practice.
-  const internalFetchEnabled = reviewData === undefined && (submitted || isReviewing || !!reviewMode);
+  const internalFetchEnabled = reviewData === undefined && (submitted || isReviewing || !!reviewMode || revealedKeys.size > 0);
   const cacheKey = examSetId ?? sourceQuestionIds?.[0] ?? null;
   const partSnapshot = useMemo(
     () => ({ partType, part1Question, part2Question, part3Question, part4Question }),
@@ -536,6 +554,9 @@ const ReadingExamEngine = ({
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
       {reportButton}
+      {allowReveal && !submitted && !reviewMode && phase === "practice" && (
+        <RevealAnswerButton revealed={isRevealedHere} onToggle={toggleRevealHere} />
+      )}
       <ExamHeader
         skillLabel="Reading"
         partLabel={partLabel}
@@ -547,7 +568,7 @@ const ReadingExamEngine = ({
           <ReadingPart1Sentence
             question={part1Question}
             answers={p1Answers}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={onAnswerP1}
             {...navProps}
             onNext={onPart1Next}
@@ -569,7 +590,7 @@ const ReadingExamEngine = ({
             question={part2Question}
             placements={p2Placements}
             onPlacementsChange={onPlacementsChangeP2}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onSubmit={!submitted ? handleSubmit : undefined}
             onPrevious={goToPrevPhase}
             sections={sections}
@@ -589,7 +610,7 @@ const ReadingExamEngine = ({
           <ReadingPart3Opinion
             question={part3Question}
             answers={p3Answers}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             currentStatement={currentIndex}
             onAnswer={onAnswerP3}
             {...navProps}
@@ -612,7 +633,7 @@ const ReadingExamEngine = ({
             question={part4Question}
             answers={p4Answers}
             currentIndex={currentIndex}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={onAnswerP4}
             {...navProps}
             onNext={onPart1Next}

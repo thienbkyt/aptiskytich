@@ -10,6 +10,7 @@ import ListeningPart4Monologue from "@/components/listening/ListeningPart4Monolo
 import ListeningResults from "@/components/listening/ListeningResults";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
+import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
 import type {
@@ -62,6 +63,8 @@ interface ListeningExamEngineProps {
   initialQuestion?: number;
   /** Notifies parent of total question count for this part (used by review pager). */
   onQuestionCount?: (n: number) => void;
+  /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
+  allowReveal?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -79,6 +82,7 @@ const ListeningExamEngine = ({
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
+  allowReveal = false,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -89,6 +93,19 @@ const ListeningExamEngine = ({
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
+  const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
+  // Reset reveal whenever partType changes (engine instance reused in full-flow).
+  useEffect(() => { setRevealedIdx(new Set()); }, [partType]);
+  const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedIdx.has(currentIndex);
+  const effectiveSubmitted = submitted || isRevealedHere;
+  const toggleRevealHere = () => {
+    setRevealedIdx((prev) => {
+      const n = new Set(prev);
+      if (n.has(currentIndex)) n.delete(currentIndex);
+      else n.add(currentIndex);
+      return n;
+    });
+  };
 
   useEffect(() => {
     if (phase === "practice") setHasStarted(true);
@@ -134,7 +151,7 @@ const ListeningExamEngine = ({
   // Internal fetch: only if parent did not supply highlightData and we're in submitted/review state.
   const cacheKey = examSetId ?? sourceQuestionIds?.[0] ?? null;
   const internalFetchEnabled =
-    highlightData === undefined && !!cacheKey && (submitted || !!reviewMode);
+    highlightData === undefined && !!cacheKey && (submitted || !!reviewMode || revealedIdx.size > 0);
   const partSnapshot = {
     partType,
     part1Questions,
@@ -460,6 +477,9 @@ const ListeningExamEngine = ({
           questionNumber={currentIndex + 1}
         />
       )}
+      {allowReveal && !submitted && !reviewMode && (
+        <RevealAnswerButton revealed={isRevealedHere} onToggle={toggleRevealHere} />
+      )}
       <ExamHeader
         skillLabel="Listening"
         partLabel={partLabel}
@@ -474,7 +494,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -494,7 +514,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -514,7 +534,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -534,7 +554,7 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={submitted}
+            submitted={effectiveSubmitted}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}

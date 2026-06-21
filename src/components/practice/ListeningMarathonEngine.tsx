@@ -360,6 +360,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
       timeLimit={HUGE_TIME}
       hideTimer
       skipIntro
+      allowReveal
       showResultsOnSubmit={false}
       onExit={onExit}
       onComplete={handleComplete}
