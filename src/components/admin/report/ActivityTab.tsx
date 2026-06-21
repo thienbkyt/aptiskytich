@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -19,6 +20,7 @@ const RANGE_OPTIONS = [
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
   { value: "all", label: "Tất cả" },
+  { value: "custom", label: "Tùy chọn (từ - đến)" },
 ];
 
 const COLOR_PRIMARY = "#CC1C01";
@@ -32,6 +34,8 @@ const dayKey = (d: Date) =>
 
 const ActivityTab = () => {
   const [range, setRange] = useState<string>("30");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [results, setResults] = useState<TestResultRow[]>([]);
@@ -56,40 +60,54 @@ const ActivityTab = () => {
   }, []);
 
   const now = useMemo(() => new Date(), []);
-  const days = range === "all" ? null : Number(range);
-  const cutoff = useMemo(() => {
-    if (days == null) return null;
-    const d = new Date(now);
-    d.setDate(d.getDate() - days);
-    return d;
-  }, [days, now]);
-  const prevCutoff = useMemo(() => {
-    if (days == null || !cutoff) return null;
-    const d = new Date(cutoff);
-    d.setDate(d.getDate() - days);
-    return d;
-  }, [days, cutoff]);
+
+  const { fromDate, toDate, windowDays } = useMemo(() => {
+    if (range === "custom") {
+      if (!customFrom || !customTo) return { fromDate: null as Date | null, toDate: null as Date | null, windowDays: null as number | null };
+      const f = new Date(`${customFrom}T00:00:00`);
+      const t = new Date(`${customTo}T23:59:59.999`);
+      const wd = Math.max(1, Math.round((t.getTime() - f.getTime()) / 86400_000) + 1);
+      return { fromDate: f, toDate: t, windowDays: wd };
+    }
+    if (range === "all") return { fromDate: null as Date | null, toDate: null as Date | null, windowDays: null as number | null };
+    const n = Number(range);
+    const f = new Date(now);
+    f.setDate(f.getDate() - n);
+    return { fromDate: f, toDate: null as Date | null, windowDays: n };
+  }, [range, customFrom, customTo, now]);
+
+  const { prevFrom, prevTo } = useMemo(() => {
+    if (!fromDate || !windowDays) return { prevFrom: null as Date | null, prevTo: null as Date | null };
+    const pf = new Date(fromDate);
+    pf.setDate(pf.getDate() - windowDays);
+    return { prevFrom: pf, prevTo: fromDate };
+  }, [fromDate, windowDays]);
 
   const totalUsers = profiles.length;
 
   const newUsersInPeriod = useMemo(() => {
-    if (!cutoff) return profiles.length;
-    return profiles.filter((p) => new Date(p.created_at) >= cutoff).length;
-  }, [profiles, cutoff]);
-
-  const newUsersPrevPeriod = useMemo(() => {
-    if (!cutoff || !prevCutoff) return 0;
+    if (!fromDate && !toDate) return profiles.length;
     return profiles.filter((p) => {
       const d = new Date(p.created_at);
-      return d >= prevCutoff && d < cutoff;
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
     }).length;
-  }, [profiles, cutoff, prevCutoff]);
+  }, [profiles, fromDate, toDate]);
+
+  const newUsersPrevPeriod = useMemo(() => {
+    if (!prevFrom || !prevTo) return 0;
+    return profiles.filter((p) => {
+      const d = new Date(p.created_at);
+      return d >= prevFrom && d < prevTo;
+    }).length;
+  }, [profiles, prevFrom, prevTo]);
 
   const newUsersDiffPct = useMemo(() => {
-    if (!cutoff) return null;
+    if (!fromDate) return null;
     if (newUsersPrevPeriod === 0) return newUsersInPeriod > 0 ? 100 : 0;
     return ((newUsersInPeriod - newUsersPrevPeriod) / newUsersPrevPeriod) * 100;
-  }, [newUsersInPeriod, newUsersPrevPeriod, cutoff]);
+  }, [newUsersInPeriod, newUsersPrevPeriod, fromDate]);
 
   const consistentUsers = useMemo(
     () => streaks.filter((s) => (s.current_streak ?? 0) >= 7).length,
