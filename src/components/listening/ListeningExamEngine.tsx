@@ -151,7 +151,7 @@ const ListeningExamEngine = ({
   // Internal fetch: only if parent did not supply highlightData and we're in submitted/review state.
   const cacheKey = examSetId ?? sourceQuestionIds?.[0] ?? null;
   const internalFetchEnabled =
-    highlightData === undefined && !!cacheKey && (submitted || !!reviewMode);
+    highlightData === undefined && !!cacheKey && (submitted || !!reviewMode || revealedIdx.size > 0);
   const partSnapshot = {
     partType,
     part1Questions,
