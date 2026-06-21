@@ -55,11 +55,12 @@ interface SkillFullPracticeEngineProps {
   skill: SkillType;
   testTitle: string;
   onExit: () => void;
+  skipFirstIntro?: boolean;
 }
 
 type FlowPhase = "loading" | "exam" | "completed";
 
-const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: SkillFullPracticeEngineProps) => {
+const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFirstIntro }: SkillFullPracticeEngineProps) => {
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [parts, setParts] = useState<PartSet[]>([]);
   const [currentPartIndex, setCurrentPartIndex] = useState(0);
@@ -659,7 +660,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         isLastPart={isLastPart}
         onPartSubmissions={handleSpeakingPartSubmissions}
         onComplete={handleSpeakingPartComplete}
-        skipIntro={currentPartIndex > 0}
+        skipIntro={skipFirstIntro || currentPartIndex > 0}
         onAdminPrevious={handleAdminPreviousPart}
         {...speakingProps}
       /></>
@@ -706,7 +707,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         externalTimeLeft={listeningTimeLeft}
         onTimeTick={(t) => setListeningTimeLeft(t)}
-        skipIntro={currentPartIndex > 0}
+        skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
@@ -764,7 +765,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
         onTimeTick={(t) => setReadingTimeLeft(t)}
-        skipIntro={currentPartIndex > 0}
+        skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
         onExit={onExit}
         onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
@@ -962,7 +963,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit }: Skill
         timeLimit={timeLimit}
         externalTimeLeft={writingTimeLeft}
         onTimeTick={(t) => setWritingTimeLeft(t)}
-        skipIntro={currentPartIndex > 0}
+        skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
         isLastPart={isLastPart}
         onExit={onExit}
