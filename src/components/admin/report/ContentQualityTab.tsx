@@ -4,6 +4,7 @@ import { Loader2, Pencil, AlertTriangle, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -20,6 +21,7 @@ const RANGE_OPTIONS = [
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
   { value: "all", label: "Tất cả" },
+  { value: "custom", label: "Tùy chọn (từ - đến)" },
 ];
 
 const COLOR_PRIMARY = "#CC1C01";
@@ -32,6 +34,8 @@ const truncate = (s: string | null | undefined, n = 60) => {
 
 const ContentQualityTab = () => {
   const [range, setRange] = useState<string>("all");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   const [reports, setReports] = useState<ReportRow[]>([]);
@@ -41,13 +45,21 @@ const ContentQualityTab = () => {
   const [setMap, setSetMap] = useState<Record<string, string>>({});
 
   const now = useMemo(() => new Date(), []);
-  const days = range === "all" ? null : Number(range);
-  const cutoff = useMemo(() => {
-    if (days == null) return null;
+  const bounds = useMemo<{ gte: string | null; lte: string | null }>(() => {
+    if (range === "custom") {
+      if (customFrom && customTo) {
+        return {
+          gte: new Date(`${customFrom}T00:00:00`).toISOString(),
+          lte: new Date(`${customTo}T23:59:59.999`).toISOString(),
+        };
+      }
+      return { gte: null, lte: null };
+    }
+    if (range === "all") return { gte: null, lte: null };
     const d = new Date(now);
-    d.setDate(d.getDate() - days);
-    return d.toISOString();
-  }, [days, now]);
+    d.setDate(d.getDate() - Number(range));
+    return { gte: d.toISOString(), lte: null };
+  }, [range, customFrom, customTo, now]);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,10 +72,15 @@ const ContentQualityTab = () => {
         .not("is_correct", "is", null);
       const rt = supabase.from("test_results").select("exam_set_id, created_at");
 
-      if (cutoff) {
-        rq.gte("created_at", cutoff);
-        rr.gte("created_at", cutoff);
-        rt.gte("created_at", cutoff);
+      if (bounds.gte) {
+        rq.gte("created_at", bounds.gte);
+        rr.gte("created_at", bounds.gte);
+        rt.gte("created_at", bounds.gte);
+      }
+      if (bounds.lte) {
+        rq.lte("created_at", bounds.lte);
+        rr.lte("created_at", bounds.lte);
+        rt.lte("created_at", bounds.lte);
       }
 
       const [a, b, c] = await Promise.all([rq, rr, rt]);
@@ -114,7 +131,7 @@ const ContentQualityTab = () => {
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [cutoff]);
+  }, [bounds.gte, bounds.lte]);
 
   // Top reported questions
   const topReported = useMemo(() => {
@@ -200,16 +217,23 @@ const ContentQualityTab = () => {
   return (
     <div className="space-y-6">
       {/* Filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm text-muted-foreground">Khoảng thời gian:</span>
         <Select value={range} onValueChange={setRange}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {RANGE_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {range === "custom" && (
+          <>
+            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-[160px]" aria-label="Từ ngày" />
+            <span className="text-sm text-muted-foreground">→</span>
+            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-[160px]" aria-label="Đến ngày" />
+          </>
+        )}
       </div>
 
       {/* Top reported */}
