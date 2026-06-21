@@ -22,6 +22,7 @@ interface FullPracticeState {
   active: boolean;
   fullTestId: string;
   title: string;
+  skipIntro?: boolean;
 }
 
 const GrammarVocabulary = () => {
@@ -37,13 +38,15 @@ const GrammarVocabulary = () => {
   const autoStartedRef = useRef<string | null>(null);
   useEffect(() => {
     const setId = searchParams.get("set");
+    const jump = searchParams.get("jump") === "1";
     if (!setId || fullLoading || autoStartedRef.current === setId) return;
     const target = fullSets.find((s) => s.examSetIds.includes(setId) || s.fullTestId === setId);
     if (target) {
       autoStartedRef.current = setId;
-      handleStartFullPractice(target);
+      handleStartFullPractice(target, jump);
       const next = new URLSearchParams(searchParams);
       next.delete("set");
+      next.delete("jump");
       setSearchParams(next, { replace: true });
     }
   }, [searchParams, fullSets, fullLoading]);
@@ -54,8 +57,8 @@ const GrammarVocabulary = () => {
     return fullSets.filter((s) => s.title.toLowerCase().includes(q));
   }, [searchQuery, fullSets]);
 
-  const handleStartFullPractice = (set: SkillFullSetItem) => {
-    setFullPractice({ active: true, fullTestId: set.fullTestId, title: set.title });
+  const handleStartFullPractice = (set: SkillFullSetItem, skipIntro = false) => {
+    setFullPractice({ active: true, fullTestId: set.fullTestId, title: set.title, skipIntro });
   };
 
   const handleExitFullPractice = () => {
@@ -75,6 +78,7 @@ const GrammarVocabulary = () => {
         skill="grammar_vocab"
         testTitle={fullPractice.title}
         onExit={handleExitFullPractice}
+        skipFirstIntro={fullPractice.skipIntro}
       />
     );
   }
