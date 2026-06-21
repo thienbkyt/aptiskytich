@@ -13,6 +13,7 @@ import RouteProgressBar from "@/components/layout/RouteProgressBar";
 
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
+import VisitLogger from "@/components/VisitLogger";
 
 const Index = lazy(() => import("./pages/Index"));
 
@@ -105,6 +106,7 @@ const App = () => (
           </Suspense>
           <AICoachFab />
           <ReportFab />
+          <VisitLogger />
         </AuthProvider>
       </BrowserRouter>
 
