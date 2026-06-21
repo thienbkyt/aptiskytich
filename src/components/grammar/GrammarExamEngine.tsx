@@ -138,6 +138,16 @@ const GrammarExamEngine = ({
     groups.findIndex((g) => g.indices.includes(currentIndex))
   );
   const currentGroup = groups[currentGroupIdx];
+  const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedGroups.has(currentGroupIdx);
+  const effectiveSubmitted = submitted || isRevealedHere;
+  const toggleRevealHere = () => {
+    setRevealedGroups((prev) => {
+      const n = new Set(prev);
+      if (n.has(currentGroupIdx)) n.delete(currentGroupIdx);
+      else n.add(currentGroupIdx);
+      return n;
+    });
+  };
 
   useEffect(() => {
     if (phase === "practice" && currentGroup) {
