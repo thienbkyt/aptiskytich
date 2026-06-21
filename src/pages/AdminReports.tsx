@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText, ExternalLink } from "lucide-react";
+import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText, ExternalLink, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -335,13 +335,23 @@ const AdminReports = () => {
                         </div>
 
                         {!isFunctional && setIdForLink && (
-                          <div className="mt-3">
-                            <Button asChild size="sm" variant="outline" className="gap-1.5">
-                              <Link to={`/admin?tab=legacy&examSet=${setIdForLink}`}>
-                                <ExternalLink className="w-3.5 h-3.5" />
-                                Mở câu hỏi
-                              </Link>
-                            </Button>
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            {r.page_url && (
+                              <Button asChild size="sm" variant="outline" className="gap-1.5">
+                                <Link to={r.page_url}>
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  Mở trang gặp lỗi
+                                </Link>
+                              </Button>
+                            )}
+                            {!isFunctional && setIdForLink && (
+                              <Button asChild size="sm" variant="outline" className="gap-1.5">
+                                <Link to={`/admin?editSet=${setIdForLink}`}>
+                                  <Pencil className="w-3.5 h-3.5" />
+                                  Sửa câu
+                                </Link>
+                              </Button>
+                            )}
                           </div>
                         )}
                       </div>
