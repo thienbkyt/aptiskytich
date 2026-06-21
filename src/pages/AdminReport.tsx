@@ -6,6 +6,7 @@ import AutoCostTab from "@/components/admin/report/AutoCostTab";
 import OutcomesTab from "@/components/admin/report/OutcomesTab";
 import ActivityTab from "@/components/admin/report/ActivityTab";
 import ContentQualityTab from "@/components/admin/report/ContentQualityTab";
+import OpsTab from "@/components/admin/report/OpsTab";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -254,6 +255,7 @@ const AdminReport = () => {
               <TabsTrigger value="outcomes">Học tập</TabsTrigger>
               <TabsTrigger value="activity">Người dùng</TabsTrigger>
               <TabsTrigger value="content">Nội dung</TabsTrigger>
+              <TabsTrigger value="ops">Vận hành</TabsTrigger>
               <TabsTrigger value="manual">Chi phí nhập tay</TabsTrigger>
               <TabsTrigger value="auto">Chi phí ước lượng (tự động)</TabsTrigger>
             </TabsList>
@@ -268,6 +270,10 @@ const AdminReport = () => {
 
             <TabsContent value="content" className="mt-0">
               <ContentQualityTab />
+            </TabsContent>
+
+            <TabsContent value="ops" className="mt-0">
+              <OpsTab />
             </TabsContent>
 
             <TabsContent value="manual" className="space-y-8 mt-0">
