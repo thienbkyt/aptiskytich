@@ -232,6 +232,7 @@ const Writing = () => {
           return id ?? null;
         }}
         {...exam.engineData} skipIntro={exam.skipIntro}
+        allowReveal
       />
     );
   }
