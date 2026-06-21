@@ -536,7 +536,8 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
