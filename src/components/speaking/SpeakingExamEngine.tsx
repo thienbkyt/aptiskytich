@@ -67,6 +67,8 @@ interface SpeakingExamEngineProps {
   fullFlow?: boolean;
   isLastPart?: boolean;
   onPartSubmissions?: (submission: SpeakingPartSubmission) => void;
+  /** Practice-only: show "Reveal answer" button (sample spoken answer). Default false. Never set in Full Test. */
+  allowReveal?: boolean;
 }
 
 type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
