@@ -97,7 +97,7 @@ const Reading = () => {
       const target = examSets.find((s) => s.id === exam.examSetId);
       if (target) {
         rehydratedRef.current = true;
-        handleStartFromDB(target);
+        handleStartFromDB(target, { skipIntro: exam.skipIntro });
       }
     } else {
       rehydratedRef.current = true;
