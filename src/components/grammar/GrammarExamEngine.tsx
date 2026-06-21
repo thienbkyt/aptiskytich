@@ -396,8 +396,8 @@ const GrammarExamEngine = ({
   const selected = answers[currentIndex];
   const isFillBlank = q.question_type === "fill-in-blank";
   const isSynonymGroup = !!currentGroup?.isSynonym;
-  const qIsCorrect = submitted && isCorrect(currentIndex);
-  const qIsWrong = submitted && isAnswered(currentIndex) && !isCorrect(currentIndex);
+  const qIsCorrect = effectiveSubmitted && isCorrect(currentIndex);
+  const qIsWrong = effectiveSubmitted && isAnswered(currentIndex) && !isCorrect(currentIndex);
 
   const groupStartLabel = currentGroup
     ? currentGroup.indices[0] + 1
@@ -545,10 +545,10 @@ const GrammarExamEngine = ({
                         (item.extra_data as any)?.optionLabels ||
                         ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
                       const userAns = answers[idx];
-                      const itemCorrect = submitted && userAns === item.correct_answer;
+                      const itemCorrect = effectiveSubmitted && userAns === item.correct_answer;
                       const itemWrong =
-                        submitted && userAns !== null && userAns !== item.correct_answer;
-                      const itemBlank = submitted && (userAns === null || userAns === undefined);
+                        effectiveSubmitted && userAns !== null && userAns !== item.correct_answer;
+                      const itemBlank = effectiveSubmitted && (userAns === null || userAns === undefined);
 
                       let triggerCls = "";
                       if (itemCorrect)
