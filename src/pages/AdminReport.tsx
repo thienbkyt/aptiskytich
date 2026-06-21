@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AutoCostTab from "@/components/admin/report/AutoCostTab";
 import OutcomesTab from "@/components/admin/report/OutcomesTab";
+import ActivityTab from "@/components/admin/report/ActivityTab";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
