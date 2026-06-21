@@ -249,6 +249,34 @@ Deno.serve(async (req) => {
       }
 
       try {
+        // Lovable API yêu cầu unsubscribe_token cho email transactional.
+        // Lấy/tạo token theo địa chỉ người nhận (bảng email_unsubscribe_tokens).
+        let unsubToken: string | undefined = payload.unsubscribe_token;
+        if (!unsubToken && payload.to) {
+          const { data: tok } = await supabase
+            .from('email_unsubscribe_tokens')
+            .select('token')
+            .eq('email', payload.to)
+            .maybeSingle();
+          unsubToken = tok?.token;
+          if (!unsubToken) {
+            const newTok = crypto.randomUUID();
+            const { error: insErr } = await supabase
+              .from('email_unsubscribe_tokens')
+              .insert({ email: payload.to, token: newTok });
+            if (!insErr) {
+              unsubToken = newTok;
+            } else {
+              const { data: again } = await supabase
+                .from('email_unsubscribe_tokens')
+                .select('token')
+                .eq('email', payload.to)
+                .maybeSingle();
+              unsubToken = again?.token;
+            }
+          }
+        }
+
         await sendLovableEmail(
           {
             run_id: payload.run_id,
@@ -261,7 +289,7 @@ Deno.serve(async (req) => {
             purpose: payload.purpose,
             label: payload.label,
             idempotency_key: payload.idempotency_key,
-            unsubscribe_token: payload.unsubscribe_token,
+            unsubscribe_token: unsubToken,
             message_id: payload.message_id,
           },
           // sendUrl is optional — when LOVABLE_SEND_URL is not set, the library
