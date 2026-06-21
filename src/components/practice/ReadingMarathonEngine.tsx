@@ -258,6 +258,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
+                  setEnterAtLast(false);
                   setSavedOnce(false);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
