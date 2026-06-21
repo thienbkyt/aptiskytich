@@ -97,7 +97,7 @@ const ListeningExamEngine = ({
   // Reset reveal whenever partType changes (engine instance reused in full-flow).
   useEffect(() => { setRevealedIdx(new Set()); }, [partType]);
   const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedIdx.has(currentIndex);
-  const effectiveSubmitted = submitted || isRevealedHere;
+  // Reveal is display-only; navigation always uses real `submitted`.
   const toggleRevealHere = () => {
     setRevealedIdx((prev) => {
       const n = new Set(prev);
@@ -494,7 +494,8 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -514,7 +515,8 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -534,7 +536,8 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -554,7 +557,8 @@ const ListeningExamEngine = ({
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}

@@ -12,6 +12,7 @@ interface Props {
   timeLeft?: number;
   totalTime?: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   currentStatement: number;
   onAnswer: (statementIndex: number, personIndex: number) => void;
   onPrevious?: () => void;
@@ -31,12 +32,13 @@ interface Props {
 }
 
 const ReadingPart3Opinion = ({
-  question, answers, timeLeft, totalTime, submitted, currentStatement,
+  question, answers, timeLeft, totalTime, submitted, revealAnswers, currentStatement,
   onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
   pageNumber, pageTotal, hideTimer = false,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
@@ -67,7 +69,7 @@ const ReadingPart3Opinion = ({
       {/* Instruction */}
       <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{question.instruction}</p>
 
-      {submitted && reviewDataLoading && (
+      {reveal && reviewDataLoading && (
         <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
           <Loader2 className="w-3 h-3 animate-spin" /> Đang tìm câu dẫn chứng…
         </p>
@@ -79,7 +81,7 @@ const ReadingPart3Opinion = ({
           // Collect evidence sentences in this person's block (from AI), then render
           // the block text with each occurrence wrapped in a highlight.
           const evidences: string[] = [];
-          if (submitted && reviewData?.part3Evidence) {
+          if (reveal && reviewData?.part3Evidence) {
             Object.values(reviewData.part3Evidence).forEach((ev) => {
               if (!ev?.sentence || !ev?.person) return;
               if (personLetterToIndex(ev.person) === pi && person.text.includes(ev.sentence)) {
@@ -132,8 +134,8 @@ const ReadingPart3Opinion = ({
       <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
         {question.statements.map((stmt, si) => {
           const selected = answers[si];
-          const isCorrect = submitted && selected === stmt.correctPerson;
-          const isWrong = submitted && selected !== null && selected !== stmt.correctPerson;
+          const isCorrect = reveal && selected === stmt.correctPerson;
+          const isWrong = reveal && selected !== null && selected !== stmt.correctPerson;
 
           return (
             <div key={si} data-question-index={si} className="flex items-center gap-3 flex-wrap">
@@ -146,13 +148,13 @@ const ReadingPart3Opinion = ({
                 <select
                   value={selected !== null && selected !== undefined ? selected : ""}
                   onChange={(e) => {
-                    if (submitted) return;
+                    if (reveal) return;
                     const val = e.target.value;
                     if (val !== "") onAnswer(si, Number(val));
                   }}
-                  disabled={submitted}
+                  disabled={reveal}
                   className={`appearance-none rounded-lg border-2 px-3 py-2 pr-8 text-sm font-medium min-w-[140px] bg-white transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
-                    submitted
+                    reveal
                       ? isCorrect
                         ? "border-green-500 bg-green-50 text-green-700"
                         : isWrong
@@ -171,8 +173,8 @@ const ReadingPart3Opinion = ({
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-muted-foreground" />
               </div>
 
-              {submitted && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />}
-              {submitted && selected !== stmt.correctPerson && (
+              {reveal && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />}
+              {reveal && selected !== stmt.correctPerson && (
                 <div className="flex items-center gap-1 shrink-0">
                   <XCircle className="w-5 h-5 text-red-500" />
                   <span className="text-xs text-green-600 font-medium">
@@ -186,7 +188,7 @@ const ReadingPart3Opinion = ({
       </div>
 
       {/* Explanation after submit */}
-      {submitted && question.explanation && (
+      {reveal && question.explanation && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

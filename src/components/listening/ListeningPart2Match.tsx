@@ -25,6 +25,7 @@ interface Props {
   timeLeft: number;
   totalTime: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onAnswer: (qi: number, ai: Part2AnswerMap) => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -44,10 +45,11 @@ interface Props {
 
 const ListeningPart2Match = ({
   questions, currentIndex, answers, timeLeft, totalTime,
-  submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
+  submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
   highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
   if (!q) return null;
 
@@ -56,7 +58,7 @@ const ListeningPart2Match = ({
   const audioSrc = q.audioUrl || q.persons?.[0]?.audioUrl || "";
 
   const handleSelect = (speakerName: string, text: string) => {
-    if (submitted) return;
+    if (reveal) return;
     onAnswer(currentIndex, { ...current, [speakerName]: text });
   };
 
@@ -106,8 +108,8 @@ const ListeningPart2Match = ({
             {q.persons.map((person) => {
               const selectedText = current[person.name] || "";
               const correctText = getCorrectTextForSpeaker(person.name);
-              const isCorrect = submitted && selectedText && selectedText === correctText;
-              const isWrong = submitted && selectedText && selectedText !== correctText;
+              const isCorrect = reveal && selectedText && selectedText === correctText;
+              const isWrong = reveal && selectedText && selectedText !== correctText;
 
               let selectCls = "border-border bg-background text-foreground";
               if (isCorrect) selectCls = "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
@@ -121,9 +123,9 @@ const ListeningPart2Match = ({
                   <select
                     value={selectedText}
                     onChange={(e) => handleSelect(person.name, e.target.value)}
-                    disabled={submitted}
+                    disabled={reveal}
                     className={`flex-1 max-w-md text-sm px-3 py-1.5 rounded border transition-colors ${selectCls} ${
-                      submitted ? "cursor-not-allowed" : "cursor-pointer"
+                      reveal ? "cursor-not-allowed" : "cursor-pointer"
                     }`}
                   >
                     <option value=""></option>
@@ -133,14 +135,14 @@ const ListeningPart2Match = ({
                       </option>
                     ))}
                   </select>
-                  {submitted && (
+                  {reveal && (
                     <>
                       {selectedText === correctText ? (
                         <Check className="w-5 h-5 text-emerald-500 shrink-0" />
                       ) : (
                         <X className="w-5 h-5 text-destructive shrink-0" />
                       )}
-                      {submitted && selectedText !== correctText && correctText && (
+                      {reveal && selectedText !== correctText && correctText && (
                         <span className="text-sm text-emerald-600 dark:text-emerald-400 shrink-0">
                           → {correctText}
                         </span>
@@ -152,7 +154,7 @@ const ListeningPart2Match = ({
             })}
           </div>
 
-          {submitted && q.script && (
+          {reveal && q.script && (
             <ScriptBlock
               script={q.script}
               spans={q.persons.map((p) => highlights[l2Id(p.name)]).filter(Boolean) as string[]}

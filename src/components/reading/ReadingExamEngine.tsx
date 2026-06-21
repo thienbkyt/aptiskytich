@@ -118,7 +118,7 @@ const ReadingExamEngine = ({
   useEffect(() => { setRevealedKeys(new Set()); }, [partType]);
   const revealKey = partType === "part2" ? currentIndex : 0;
   const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedKeys.has(revealKey);
-  const effectiveSubmitted = submitted || isRevealedHere;
+  // Reveal is display-only; navigation always uses real `submitted`.
   const toggleRevealHere = () => {
     setRevealedKeys((prev) => {
       const n = new Set(prev);
@@ -568,7 +568,8 @@ const ReadingExamEngine = ({
           <ReadingPart1Sentence
             question={part1Question}
             answers={p1Answers}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={onAnswerP1}
             {...navProps}
             onNext={onPart1Next}
@@ -590,7 +591,8 @@ const ReadingExamEngine = ({
             question={part2Question}
             placements={p2Placements}
             onPlacementsChange={onPlacementsChangeP2}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onSubmit={!submitted ? handleSubmit : undefined}
             onPrevious={goToPrevPhase}
             sections={sections}
@@ -610,7 +612,8 @@ const ReadingExamEngine = ({
           <ReadingPart3Opinion
             question={part3Question}
             answers={p3Answers}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             currentStatement={currentIndex}
             onAnswer={onAnswerP3}
             {...navProps}
@@ -633,7 +636,8 @@ const ReadingExamEngine = ({
             question={part4Question}
             answers={p4Answers}
             currentIndex={currentIndex}
-            submitted={effectiveSubmitted}
+            submitted={submitted}
+            revealAnswers={isRevealedHere}
             onAnswer={onAnswerP4}
             {...navProps}
             onNext={onPart1Next}

@@ -14,6 +14,7 @@ interface Props {
   timeLeft?: number;
   totalTime?: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onSubmit?: () => void;
   onPrevious?: () => void;
   onExitToSections?: () => void;
@@ -32,12 +33,13 @@ interface Props {
 
 const ReadingPart2Cohesion = ({
   question, placements, onPlacementsChange,
-  timeLeft, totalTime, submitted, onSubmit, onPrevious, sections, onSubmitTest,
+  timeLeft, totalTime, submitted, revealAnswers, onSubmit, onPrevious, sections, onSubmitTest,
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
   pageNumber, pageTotal, hideTimer = false,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
   const setCurrentSection = (updater: number | ((p: number) => number)) => {
@@ -68,7 +70,7 @@ const ReadingPart2Cohesion = ({
 
   const handleDropOnSlot = (pos: number, e: React.DragEvent) => {
     e.preventDefault();
-    if (submitted) return;
+    if (reveal) return;
     const text = e.dataTransfer.getData("text/plain") || dragging;
     if (!text) return;
     const next: Record<number, string> = { ...current };
@@ -83,7 +85,7 @@ const ReadingPart2Cohesion = ({
 
   const handleDropOnPool = (e: React.DragEvent) => {
     e.preventDefault();
-    if (submitted) return;
+    if (reveal) return;
     const text = e.dataTransfer.getData("text/plain") || dragging;
     if (!text) return;
     const next: Record<number, string> = { ...current };
@@ -153,8 +155,8 @@ const ReadingPart2Cohesion = ({
             {[1, 2, 3, 4, 5].map((pos) => {
               const placed = current[pos];
               const correctText = correctTextForPosition(pos);
-              const isCorrect = submitted && placed && placed === correctText;
-              const isWrong = submitted && placed && placed !== correctText;
+              const isCorrect = reveal && placed && placed === correctText;
+              const isWrong = reveal && placed && placed !== correctText;
               const slotCls = isCorrect
                 ? "border-success bg-success/10"
                 : isWrong
@@ -187,7 +189,7 @@ const ReadingPart2Cohesion = ({
                 >
                   {placed ? (
                     <div
-                      draggable={!submitted}
+                      draggable={!reveal}
                       onDragStart={(e) => {
                         e.dataTransfer.setData("text/plain", placed);
                         handleDragStart(placed);
@@ -214,7 +216,7 @@ const ReadingPart2Cohesion = ({
           </div>
 
           {/* Right: pool of unplaced sentences (or correct order + translations when submitted) */}
-          {submitted ? (
+          {reveal ? (
             <div className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-xs font-semibold text-foreground">Thứ tự đúng &amp; dịch nghĩa</p>
@@ -259,7 +261,7 @@ const ReadingPart2Cohesion = ({
               {unplaced.map((s) => (
                 <div
                   key={s.text}
-                  draggable={!submitted}
+                  draggable={!reveal}
                   onDragStart={(e) => {
                     e.dataTransfer.setData("text/plain", s.text);
                     handleDragStart(s.text);

@@ -23,6 +23,7 @@ interface Props {
   timeLeft: number;
   totalTime: number;
   submitted: boolean;
+  revealAnswers?: boolean;
   onAnswer: (qi: number, ai: Record<number, number>) => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -42,17 +43,18 @@ interface Props {
 
 const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
-  submitted, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
+  submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
   highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal,
 }: Props) => {
+  const reveal = submitted || !!revealAnswers;
   const clip = questions[currentIndex];
   if (!clip) return null;
 
   const clipAnswers: Record<number, number> = answers[currentIndex] || {};
 
   const handleSelect = (qi: number, oi: number) => {
-    if (submitted) return;
+    if (reveal) return;
     onAnswer(currentIndex, { ...clipAnswers, [qi]: oi });
   };
 
@@ -104,7 +106,7 @@ const ListeningPart4Monologue = ({
                     {qq.options.map((opt, oi) => {
                       const isLastRow = oi === qq.options.length - 1;
                       let cls = "bg-background hover:bg-muted/50 text-foreground";
-                      if (submitted) {
+                      if (reveal) {
                         if (oi === qq.correct) cls = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
                         else if (oi === selected) cls = "bg-destructive/10 text-destructive";
                         else cls = "bg-background text-muted-foreground";
@@ -115,7 +117,7 @@ const ListeningPart4Monologue = ({
                         <button
                           key={oi}
                           onClick={() => handleSelect(qi, oi)}
-                          disabled={submitted}
+                          disabled={reveal}
                           className={`w-full flex items-stretch text-left transition-colors ${cls} ${
                             !isLastRow ? "border-b border-border" : ""
                           }`}
@@ -125,8 +127,8 @@ const ListeningPart4Monologue = ({
                           </span>
                           <span className="flex-1 px-4 py-3 text-sm flex items-center justify-between">
                             <span>{opt}</span>
-                            {submitted && oi === qq.correct && <CheckCircle2 className="w-4 h-4" />}
-                            {submitted && oi === selected && oi !== qq.correct && <XCircle className="w-4 h-4" />}
+                            {reveal && oi === qq.correct && <CheckCircle2 className="w-4 h-4" />}
+                            {reveal && oi === selected && oi !== qq.correct && <XCircle className="w-4 h-4" />}
                           </span>
                         </button>
                       );
@@ -137,7 +139,7 @@ const ListeningPart4Monologue = ({
             })}
           </div>
 
-          {submitted && clip.script && (
+          {reveal && clip.script && (
             <ScriptBlock
               script={clip.script}
               spans={clip.questions.map((_, qi) => highlights[l4Id(currentIndex, qi)]).filter(Boolean) as string[]}
