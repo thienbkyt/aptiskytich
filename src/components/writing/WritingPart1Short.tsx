@@ -25,8 +25,9 @@ interface Props {
 const WritingPart1Short = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers,
 }: Props) => {
+  const showSample = submitted || !!revealAnswers;
   return (
     <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
       <div className="flex items-start justify-between mb-6">
