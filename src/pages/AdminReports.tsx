@@ -137,7 +137,7 @@ const AdminReports = () => {
     const qIds = Array.from(
       new Set(
         rows
-          .filter((r) => (r.report_category ?? "content") === "content" && r.exam_question_id)
+          .filter((r) => r.exam_question_id)
           .map((r) => r.exam_question_id as string)
       )
     );
