@@ -35,6 +35,7 @@ const HUGE_TIME = 24 * 60 * 60;
 
 const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
   const [savedOnce, setSavedOnce] = useState(false);
@@ -102,6 +103,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       return next;
     });
     if (currentIndex < sets.length - 1) {
+      setEnterAtLast(false);
       setCurrentIndex((i) => i + 1);
     } else {
       setPhase("completed");
@@ -256,6 +258,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
+                  setEnterAtLast(false);
                   setSavedOnce(false);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
@@ -306,8 +309,12 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       onExit={onExit}
       onComplete={handleComplete}
       onPreviousPart={() => {
-        if (currentIndex > 0) setCurrentIndex((i) => i - 1);
+        if (currentIndex > 0) {
+          setEnterAtLast(true);
+          setCurrentIndex((i) => i - 1);
+        }
       }}
+      enterAtLastQuestion={enterAtLast}
       initialAnswers={initialAnswers}
       pageBase={currentIndex * pagesPerSet}
       pageTotal={sets.length * pagesPerSet}

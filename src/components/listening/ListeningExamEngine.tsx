@@ -65,6 +65,8 @@ interface ListeningExamEngineProps {
   onQuestionCount?: (n: number) => void;
   /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
   allowReveal?: boolean;
+  /** When true (and not reviewMode), open this part at the last question (used when navigating Back from next part). */
+  enterAtLastQuestion?: boolean;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -83,6 +85,7 @@ const ListeningExamEngine = ({
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
   allowReveal = false,
+  enterAtLastQuestion = false,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -135,6 +138,16 @@ const ListeningExamEngine = ({
   useEffect(() => {
     if (initialQuestion != null) setCurrentIndex(initialQuestion);
   }, [initialQuestion]);
+
+  // On initial mount, if asked, jump to last question of the part (used when navigating back from next part).
+  useEffect(() => {
+    if (enterAtLastQuestion && !reviewMode && totalQuestions > 0) {
+      setCurrentIndex(totalQuestions - 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
 
 
   const [answers, setAnswers] = useState<any[]>(
