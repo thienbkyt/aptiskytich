@@ -977,6 +977,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         initialAnswers={writingAnswersByPartRef.current[currentPartIndex]}
         onAnswersChange={(a) => { writingAnswersByPartRef.current[currentPartIndex] = a; }}
         enterAtLastQuestion={lastNavDirectionRef.current === "back"}
+        allowReveal
         {...writingProps}
       /></>
     );
