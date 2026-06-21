@@ -103,6 +103,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       return next;
     });
     if (currentIndex < sets.length - 1) {
+      setEnterAtLast(false);
       setCurrentIndex((i) => i + 1);
     } else {
       setPhase("completed");
