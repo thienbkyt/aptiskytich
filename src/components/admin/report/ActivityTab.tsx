@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -19,6 +20,7 @@ const RANGE_OPTIONS = [
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
   { value: "all", label: "Tất cả" },
+  { value: "custom", label: "Tùy chọn (từ - đến)" },
 ];
 
 const COLOR_PRIMARY = "#CC1C01";
@@ -32,6 +34,8 @@ const dayKey = (d: Date) =>
 
 const ActivityTab = () => {
   const [range, setRange] = useState<string>("30");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [results, setResults] = useState<TestResultRow[]>([]);
@@ -56,40 +60,54 @@ const ActivityTab = () => {
   }, []);
 
   const now = useMemo(() => new Date(), []);
-  const days = range === "all" ? null : Number(range);
-  const cutoff = useMemo(() => {
-    if (days == null) return null;
-    const d = new Date(now);
-    d.setDate(d.getDate() - days);
-    return d;
-  }, [days, now]);
-  const prevCutoff = useMemo(() => {
-    if (days == null || !cutoff) return null;
-    const d = new Date(cutoff);
-    d.setDate(d.getDate() - days);
-    return d;
-  }, [days, cutoff]);
+
+  const { fromDate, toDate, windowDays } = useMemo(() => {
+    if (range === "custom") {
+      if (!customFrom || !customTo) return { fromDate: null as Date | null, toDate: null as Date | null, windowDays: null as number | null };
+      const f = new Date(`${customFrom}T00:00:00`);
+      const t = new Date(`${customTo}T23:59:59.999`);
+      const wd = Math.max(1, Math.round((t.getTime() - f.getTime()) / 86400_000) + 1);
+      return { fromDate: f, toDate: t, windowDays: wd };
+    }
+    if (range === "all") return { fromDate: null as Date | null, toDate: null as Date | null, windowDays: null as number | null };
+    const n = Number(range);
+    const f = new Date(now);
+    f.setDate(f.getDate() - n);
+    return { fromDate: f, toDate: null as Date | null, windowDays: n };
+  }, [range, customFrom, customTo, now]);
+
+  const { prevFrom, prevTo } = useMemo(() => {
+    if (!fromDate || !windowDays) return { prevFrom: null as Date | null, prevTo: null as Date | null };
+    const pf = new Date(fromDate);
+    pf.setDate(pf.getDate() - windowDays);
+    return { prevFrom: pf, prevTo: fromDate };
+  }, [fromDate, windowDays]);
 
   const totalUsers = profiles.length;
 
   const newUsersInPeriod = useMemo(() => {
-    if (!cutoff) return profiles.length;
-    return profiles.filter((p) => new Date(p.created_at) >= cutoff).length;
-  }, [profiles, cutoff]);
-
-  const newUsersPrevPeriod = useMemo(() => {
-    if (!cutoff || !prevCutoff) return 0;
+    if (!fromDate && !toDate) return profiles.length;
     return profiles.filter((p) => {
       const d = new Date(p.created_at);
-      return d >= prevCutoff && d < cutoff;
+      if (fromDate && d < fromDate) return false;
+      if (toDate && d > toDate) return false;
+      return true;
     }).length;
-  }, [profiles, cutoff, prevCutoff]);
+  }, [profiles, fromDate, toDate]);
+
+  const newUsersPrevPeriod = useMemo(() => {
+    if (!prevFrom || !prevTo) return 0;
+    return profiles.filter((p) => {
+      const d = new Date(p.created_at);
+      return d >= prevFrom && d < prevTo;
+    }).length;
+  }, [profiles, prevFrom, prevTo]);
 
   const newUsersDiffPct = useMemo(() => {
-    if (!cutoff) return null;
+    if (!fromDate) return null;
     if (newUsersPrevPeriod === 0) return newUsersInPeriod > 0 ? 100 : 0;
     return ((newUsersInPeriod - newUsersPrevPeriod) / newUsersPrevPeriod) * 100;
-  }, [newUsersInPeriod, newUsersPrevPeriod, cutoff]);
+  }, [newUsersInPeriod, newUsersPrevPeriod, fromDate]);
 
   const consistentUsers = useMemo(
     () => streaks.filter((s) => (s.current_streak ?? 0) >= 7).length,
@@ -113,16 +131,29 @@ const ActivityTab = () => {
 
   // Daily series for the chosen period
   const dailySeries = useMemo(() => {
-    const span = days ?? 90;
     const arr: { day: string; label: string; new: number; learners: number }[] = [];
     const learnerSets: Record<string, Set<string>> = {};
-    for (let i = span - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - i);
-      const key = dayKey(d);
-      arr.push({ day: key, label: fmtDay(d), new: 0, learners: 0 });
-      learnerSets[key] = new Set();
+    if (range === "custom" && fromDate && toDate) {
+      const cur = new Date(fromDate);
+      cur.setHours(0, 0, 0, 0);
+      const end = new Date(toDate);
+      end.setHours(0, 0, 0, 0);
+      while (cur <= end) {
+        const key = dayKey(cur);
+        arr.push({ day: key, label: fmtDay(cur), new: 0, learners: 0 });
+        learnerSets[key] = new Set();
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      const span = windowDays ?? 90;
+      for (let i = span - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        const key = dayKey(d);
+        arr.push({ day: key, label: fmtDay(d), new: 0, learners: 0 });
+        learnerSets[key] = new Set();
+      }
     }
     const map = new Map(arr.map((x, i) => [x.day, i]));
     for (const p of profiles) {
@@ -138,7 +169,7 @@ const ActivityTab = () => {
     }
     for (const x of arr) x.learners = learnerSets[x.day].size;
     return arr;
-  }, [profiles, results, days, now]);
+  }, [profiles, results, windowDays, now, range, fromDate, toDate]);
 
   // Streak distribution
   const streakDist = useMemo(() => {
@@ -165,21 +196,35 @@ const ActivityTab = () => {
     );
   }
 
-  const periodLabel = days == null ? "Tất cả" : `${days} ngày qua`;
+  const periodLabel =
+    range === "custom"
+      ? customFrom && customTo
+        ? `${customFrom} → ${customTo}`
+        : "Tùy chọn"
+      : windowDays == null
+      ? "Tất cả"
+      : `${windowDays} ngày qua`;
 
   return (
     <div className="space-y-6">
       {/* Filter */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm text-muted-foreground">Khoảng thời gian:</span>
         <Select value={range} onValueChange={setRange}>
-          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {RANGE_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {range === "custom" && (
+          <>
+            <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-[160px]" aria-label="Từ ngày" />
+            <span className="text-sm text-muted-foreground">→</span>
+            <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-[160px]" aria-label="Đến ngày" />
+          </>
+        )}
       </div>
 
       {/* Top cards */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -38,6 +39,7 @@ const RANGES = [
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
   { value: "all", label: "Tất cả" },
+  { value: "custom", label: "Tùy chọn (từ - đến)" },
 ] as const;
 
 const bandable = (s: SkillKey): s is "reading" | "listening" | "speaking" | "writing" =>
@@ -45,15 +47,23 @@ const bandable = (s: SkillKey): s is "reading" | "listening" | "speaking" | "wri
 
 export default function OutcomesTab() {
   const [range, setRange] = useState<string>("30");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const cutoff =
-      range === "all"
-        ? null
-        : new Date(Date.now() - Number(range) * 86400_000).toISOString();
+    let gte: string | null = null;
+    let lte: string | null = null;
+    if (range === "custom") {
+      if (customFrom && customTo) {
+        gte = new Date(`${customFrom}T00:00:00`).toISOString();
+        lte = new Date(`${customTo}T23:59:59.999`).toISOString();
+      }
+    } else if (range !== "all") {
+      gte = new Date(Date.now() - Number(range) * 86400_000).toISOString();
+    }
 
     const trQ = supabase
       .from("test_results")
@@ -65,10 +75,15 @@ export default function OutcomesTab() {
       .from("speaking_question_gradings")
       .select("user_id, test_result_id, part_score, max_points, created_at");
 
-    if (cutoff) {
-      trQ.gte("created_at", cutoff);
-      wQ.gte("created_at", cutoff);
-      sQ.gte("created_at", cutoff);
+    if (gte) {
+      trQ.gte("created_at", gte);
+      wQ.gte("created_at", gte);
+      sQ.gte("created_at", gte);
+    }
+    if (lte) {
+      trQ.lte("created_at", lte);
+      wQ.lte("created_at", lte);
+      sQ.lte("created_at", lte);
     }
 
     const [trRes, wRes, sRes] = await Promise.all([trQ, wQ, sQ]);
@@ -133,7 +148,7 @@ export default function OutcomesTab() {
 
     setAttempts(out);
     setLoading(false);
-  }, [range]);
+  }, [range, customFrom, customTo]);
 
   useEffect(() => {
     load();
@@ -227,16 +242,25 @@ export default function OutcomesTab() {
     <div className="space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-heading font-bold text-foreground">Kết quả học tập</h2>
-        <Select value={range} onValueChange={setRange}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {RANGES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={range} onValueChange={setRange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RANGES.map((r) => (
+                <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {range === "custom" && (
+            <>
+              <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-[160px]" aria-label="Từ ngày" />
+              <span className="text-sm text-muted-foreground">→</span>
+              <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-[160px]" aria-label="Đến ngày" />
+            </>
+          )}
+        </div>
       </div>
 
       {loading ? (
