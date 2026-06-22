@@ -18,12 +18,13 @@ interface Props {
   onSubmitTest?: () => void;
   reviewMode?: boolean;
   revealAnswers?: boolean;
+  isLast?: boolean;
 }
 
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
 }: Props) => {
   const showSample = submitted || !!revealAnswers;
   const wordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0;
@@ -74,7 +75,7 @@ const WritingPart2Social = ({
         </div>
       )}
 
-      {!reviewMode && <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
+      {!reviewMode && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
     </div>
   );
 };

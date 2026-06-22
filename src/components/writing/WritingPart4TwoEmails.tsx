@@ -21,13 +21,14 @@ interface Props {
   onSubmitTest?: () => void;
   reviewMode?: boolean;
   revealAnswers?: boolean;
+  isLast?: boolean;
 }
 
 const WritingPart4TwoEmails = ({
   data, informalAnswer, formalAnswer,
   onInformalChange, onFormalChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
 }: Props) => {
   const showSample = submitted || !!revealAnswers;
   return (
@@ -100,7 +101,7 @@ const WritingPart4TwoEmails = ({
         )}
       </div>
 
-      {!reviewMode && <BottomNavBar isFirst={!onPrevious} isLast={false} onNext={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
+      {!reviewMode && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
     </div>
   );
 };

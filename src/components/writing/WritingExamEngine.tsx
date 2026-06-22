@@ -421,8 +421,10 @@ const WritingExamEngine = ({
     );
   }
 
+  const isLast = isLastPart ?? true;
   return (
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
+
       {adminControls}
       {phase === "practice" && !submitted && !reviewMode && (
         <>
@@ -463,6 +465,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
@@ -482,6 +485,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
@@ -505,6 +509,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
@@ -526,6 +531,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
