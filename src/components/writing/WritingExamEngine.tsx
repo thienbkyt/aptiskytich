@@ -421,8 +421,10 @@ const WritingExamEngine = ({
     );
   }
 
+  const isLast = isLastPart ?? true;
   return (
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
+
       {adminControls}
       {phase === "practice" && !submitted && !reviewMode && (
         <>
