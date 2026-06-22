@@ -84,15 +84,15 @@ const Navbar = () => {
         </Link>
 
         {/* ── Desktop nav ── */}
-        <div className="hidden md:flex items-center flex-1 justify-center gap-1">
+        <div className="hidden md:flex items-center flex-1 justify-center gap-2">
           {/* 1. Thi thử Aptis - red CTA */}
           <Link to="/thi-thu" {...prefetchHandlers("/thi-thu")}>
             <Button
               size="sm"
               variant="glow"
-              className="rounded-full px-4 py-2 h-auto text-xs font-semibold gap-1.5"
+              className="rounded-full px-4 py-2 h-auto text-sm font-semibold gap-1.5"
             >
-              <ClipboardCheck className="w-3.5 h-3.5" />
+              <ClipboardCheck className="w-4 h-4" />
               Thi thử Aptis
             </Button>
           </Link>
@@ -101,13 +101,13 @@ const Navbar = () => {
           <Link
             to="/vocabulary"
             {...prefetchHandlers("/vocabulary")}
-            className={`group relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+            className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
               isActive("/vocabulary")
                 ? "text-primary"
                 : "text-secondary-foreground hover:text-primary"
             }`}
           >
-            <BookText className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
+            <BookText className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
             Học từ vựng bài thi Aptis
             {isActive("/vocabulary") && (
               <motion.div
@@ -127,13 +127,13 @@ const Navbar = () => {
             onFocus={handleSkillEnter}
           >
             <button
-              className={`group flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+              className={`group flex items-center gap-1 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
                 isSkillActive
                   ? "text-primary"
                   : "text-secondary-foreground hover:text-primary"
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110" />
+              <BookOpen className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
               Luyện tập theo kỹ năng
               <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${skillHover ? "rotate-180" : ""}`} />
             </button>
@@ -180,13 +180,13 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               {...prefetchHandlers(link.path)}
-              className={`group relative flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+              className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
                 isActive(link.path)
                   ? "text-primary"
                   : "text-secondary-foreground hover:text-primary"
               }`}
             >
-              <link.icon className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
+              <link.icon className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
               {link.label}
               {isActive(link.path) && (
                 <motion.div
@@ -201,7 +201,7 @@ const Navbar = () => {
         </div>
 
         {/* ── Desktop right actions ── */}
-        <div className="hidden md:flex items-center gap-1.5">
+        <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
           {isAdmin && (
             <div
@@ -210,13 +210,13 @@ const Navbar = () => {
               onMouseLeave={handleAdminLeave}
             >
               <button
-                className={`flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-md transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-1 px-3.5 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
                   isAdminActive
                     ? "text-primary"
                     : "text-secondary-foreground"
                 }`}
               >
-                <Shield className="w-3.5 h-3.5" />
+                <Shield className="w-4 h-4" />
                 Admin
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${adminHover ? "rotate-180" : ""}`} />
               </button>
@@ -289,8 +289,8 @@ const Navbar = () => {
             <>
               <NotificationBell />
               <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
-                <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
-                  <Flame className="w-3.5 h-3.5 text-primary" />
+                <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-8 px-3">
+                  <Flame className="w-4 h-4 text-primary" />
                   Dashboard
                 </Button>
               </Link>
@@ -308,8 +308,8 @@ const Navbar = () => {
             </>
           ) : (
             <Link to="/auth" {...prefetchHandlers("/auth")}>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
-                <LogIn className="w-3.5 h-3.5" />
+              <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-8 px-3">
+                <LogIn className="w-4 h-4" />
                 Đăng nhập
               </Button>
             </Link>
