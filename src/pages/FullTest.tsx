@@ -12,6 +12,7 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
+import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -27,6 +28,7 @@ const FullTest = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("aptis");
   const { tests, loading } = useFullTests(activeTab);
   const { user: authUser, loading: authLoading } = useAuth();
+  const { bands } = useUserFullTestBands();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
 
   const handleStartTest = (test: FullTestItem) => {
@@ -157,6 +159,13 @@ const FullTest = () => {
                   transition={{ duration: 0.25, delay: index * 0.03 }}
                 >
                   <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
+                    {bands.get(test.fullTestId) && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
+                          {bands.get(test.fullTestId)}
+                        </span>
+                      </div>
+                    )}
                     <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
                       Full Test
                     </Badge>
