@@ -250,7 +250,8 @@ const Speaking = () => {
               <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
             ) : (
               <FullPartSection
-                progress={progress}
+                progress={gradedProgress}
+                skillKey="speaking"
                 skillName="Speaking"
                 sets={fullSets}
                 loading={fullLoading}
