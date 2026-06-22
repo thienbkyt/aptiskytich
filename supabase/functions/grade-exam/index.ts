@@ -125,40 +125,51 @@ B. Likely transcription mishears (not student errors) — use CONTEXT to ignore:
 C. Self-correction: if the student says something wrong then SELF-CORRECTS it immediately (same sentence or the next), do NOT count the original mistake — this is a positive sign.
 D. Filler words: completely ignore "uh, um, er, ah, like" when analyzing grammar. Evaluate the sentence AS IF fillers were removed. E.g. "my mother had me uh deliver the groceries" = "my mother had me deliver the groceries" → grammatically CORRECT, no deduction.`;
 
+      const calibration = `
+
+CALIBRATION ANCHORS (interpolate, do NOT snap):
+A) addressPercent ≈ 75 — Q: "Tell me about your favorite hobby." A: "I like reading books. I read every day. It's interesting." → on-topic, names hobby, thin detail, simple sentences; lỗi văn nói chấp nhận được KHÔNG trừ.
+B) addressPercent ≈ 92 — Q: same. A: "My favorite hobby is reading novels, especially mystery ones, because they help me relax after work and improve my vocabulary. For example, last weekend I finished a great Agatha Christie book." → on-topic, developed reasons + example, varied structure.
+
+CONTINUOUS RUBRIC for addressPercent (pick ANY integer, do NOT snap to 70/100):
+0 silent/off-topic · 30–50 partial/off-topic · 55–65 on-topic but cut short · 72–80 on-topic, sparse detail, simple sentences · 82–88 on-topic with a developed reason/example · 88–95 well-developed, coherent, vocab/structure at expected level · 96–100 exceptional. Quality of expression at the part's expected level is part of this score.
+
+ORDER OF REASONING (mandatory): analyze relevance → idea development → real errors FIRST, write that into "analysis" (Vietnamese, 2–3 short sentences), THEN choose addressPercent. The analysis must justify the score.
+
+ERROR-DETECTION PRIORITY: prioritize errors that BLOCK understanding; do NOT flag minor spoken-language patterns that a fluent listener accepts.`;
+
       if (isPart4Aggregated) {
         systemPrompt = `You are an expert Aptis Speaking Part 4 grader. You receive ONE audio file (the student's full ~120-second monologue) and the list of sub-questions of the topic. Your job is QUALITATIVE — DO NOT compute a numeric score; the application will.
 
 Return via the tool call:
-1. transcript: accurate English transcription of what the student actually said. Empty string if silent/unintelligible.
-2. addressPercents: an array of numbers (0–100), ONE entry per sub-question in the same order, indicating how well the student addressed EACH sub-question. Off-topic / silent / unintelligible → 0. Bare on-topic answer without supporting detail → ~70. Fully addressed with at least one supporting detail → ~100.
-3. usedConnectors: boolean — true ONLY if the student clearly uses linking words/discourse markers between ideas (e.g. "however", "for example", "in addition", "on the other hand", "firstly/secondly", "because of that", "as a result"). False if the speech is just a flat list of disconnected sentences.
-4. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (explanation in Vietnamese). Empty array if none.
-5. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic), as { word, note } (Vietnamese). If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry.
-6. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve, mention connectors if missing.
-7. improvedVersion: a rewritten upgraded English version of the STUDENT'S OWN monologue (one combined version for the whole Part 4). KEEP the student's ideas/content — only fix errors, upgrade vocabulary & sentence structures, and add linking words. It must read like a high-scoring version of THEIR answer, not a generic model answer.${leniencyRules}
+1. transcript: accurate English transcription. Empty string if silent/unintelligible.
+2. analyses: array of Vietnamese strings (2–3 short sentences each), ONE per sub-question in the same order — phân tích relevance + độ phát triển ý + lỗi thật. WRITE THIS BEFORE addressPercents.
+3. addressPercents: array of numbers (0–100), one per sub-question, using the CONTINUOUS rubric.
+4. usedConnectors: boolean — true ONLY if the student clearly uses linking words/discourse markers between ideas (e.g. "however", "for example", "in addition", "on the other hand", "firstly/secondly", "because of that", "as a result").
+5. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (Vietnamese explanation). Empty array if none.
+6. pronunciationErrors: only flag words whose pronunciation makes meaning unclear/wrong (holistic), as { word, note } (Vietnamese). If audio received but transcript empty/unreadable, treat pronunciation as failing and add at least one entry.
+7. feedback: ≤3 short sentences in Vietnamese — chỉ 1–2 điểm yếu cụ thể NHẤT + 1 việc làm ngay. Tránh khen chung chung.
+8. improvedVersion: a rewritten upgraded English version of the STUDENT'S OWN monologue (one combined version). KEEP ideas, fix errors, upgrade vocab/structure, add linking words.${calibration}${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       } else {
         const pictureExtra = itemType === "picture" ? `
 
 THIS ITEM IS A PICTURE DESCRIPTION. In addition, return TWO booleans:
-- pictureLogicIssue: true if the description is disorganized / not linear (e.g. jumps randomly between people/objects/background without a clear order).
-- pictureNoAction: true if the student only describes appearance (people, objects, colors) but fails to describe what is HAPPENING / the action in the picture.
-Set both to false when the description is well-structured and covers actions.` : "";
+- pictureLogicIssue: true if disorganized/not linear.
+- pictureNoAction: true if only appearance described, no action.
+Set both false when well-structured and covers actions.` : "";
 
-        systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will compute it from your structured output.
+        systemPrompt = `You are an expert Aptis Speaking exam grader. You receive the audio of ONE student answer plus the exam question(s) for that item. Your job is QUALITATIVE only — DO NOT compute a final numeric score; the application will.
 
 Return via the tool call:
-1. transcript: an accurate transcription of what the student actually said (English). If the audio is silent or unintelligible, return an empty string.
-2. addressPercent (0–100): how well the answer addresses the question.
-   - 100 = fully on-topic AND includes at least one clear supporting detail/example.
-   - 70  = on-topic but no supporting detail (just the bare answer).
-   - Partially off-topic → scale proportionally (e.g. only half the prompt addressed → ~35–50).
-   - Off-topic, silent, or unintelligible → 0.
-3. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } with explanation in Vietnamese. Empty array if none.
-4. pronunciationErrors: only flag words whose pronunciation makes the meaning unclear or wrong (holistic, not phoneme-by-phoneme), as { word, note } with note in Vietnamese. If audio was received but transcript is empty/unreadable, treat pronunciation as failing and add at least one entry describing the issue.
-5. feedback: ≤3 short sentences in Vietnamese — what was good, what to improve.
-6. improvedVersion: a rewritten upgraded English version of THE STUDENT'S OWN answer for this item. KEEP the student's ideas/content — only fix errors, upgrade vocabulary & sentence structures, and add linking words. It must read like a high-scoring version of THEIR answer, not a generic model answer. If the student was silent/unintelligible, return an empty string.${pictureExtra}${leniencyRules}
+1. transcript: accurate English transcription. Empty string if silent/unintelligible.
+2. analysis: Vietnamese, 2–3 short sentences — phân tích relevance, độ phát triển ý, lỗi thật sự ảnh hưởng. WRITE THIS BEFORE addressPercent; it must justify the score.
+3. addressPercent (0–100, CONTINUOUS): use the rubric below; pick ANY integer; do NOT snap to 70/100.
+4. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (Vietnamese). Empty array if none.
+5. pronunciationErrors: only flag words whose pronunciation makes meaning unclear/wrong (holistic), as { word, note } (Vietnamese). If audio received but transcript empty/unreadable, treat pronunciation as failing and add at least one entry.
+6. feedback: ≤3 short sentences in Vietnamese — chỉ 1–2 điểm yếu cụ thể NHẤT + 1 việc làm ngay. Tránh khen chung chung.
+7. improvedVersion: upgraded English rewrite of THE STUDENT'S OWN answer (same ideas, fixed errors, richer vocab/structure, linking words). Empty if silent.${pictureExtra}${calibration}${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       }
