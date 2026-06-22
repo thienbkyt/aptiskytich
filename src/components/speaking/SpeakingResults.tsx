@@ -39,6 +39,12 @@ const SpeakingResults = ({ isGrading, grading, onExit }: SpeakingResultsProps) =
         <div className={`inline-block px-4 py-2 rounded-full text-lg font-bold mt-2 ${levelColors[grading.overallLevel] || "bg-muted text-foreground"}`}>
           Overall: {grading.overallLevel}
         </div>
+        <div className="mt-4 mx-auto max-w-md rounded-lg border border-[#24085a]/20 bg-[#24085a]/5 px-3 py-2 text-left">
+          <p className="text-[11px] font-semibold text-[#24085a] mb-0.5">📐 Tiêu chí chấm</p>
+          <p className="text-[11px] text-foreground/80 leading-snug">
+            AI Kỳ Tích chấm dựa trên: trả lời đúng & đủ ý đề · ngữ pháp · từ vựng · phát âm · độ trôi chảy.
+          </p>
+        </div>
       </div>
 
       {/* Transcript */}

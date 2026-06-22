@@ -21,12 +21,39 @@ export interface SpeakingItemGrading {
   partScore: number;
   maxPoints: number;
   feedback: string;
+  /** AI's reasoning for the score (Vietnamese, 2–3 short sentences). */
+  analysis?: string;
   improvedVersion?: string;
   itemType?: "question" | "picture";
   // Part 4 aggregated extras
   addressPercents?: number[];
+  /** Per sub-question analyses for Part 4. */
+  analyses?: string[];
   usedConnectors?: boolean;
   connectorPenalty?: number;
+}
+
+const ANALYSIS_DELIM = "<<<ANALYSIS>>>";
+const ANALYSIS_END = "<<<END_ANALYSIS>>>";
+
+/** Encode analysis + feedback into a single string for the single `feedback` DB column. */
+export function encodeAnalysisFeedback(analysis: string | undefined, feedback: string | undefined): string {
+  const a = (analysis ?? "").trim();
+  const f = feedback ?? "";
+  if (!a) return f;
+  return `${ANALYSIS_DELIM}${a}${ANALYSIS_END}${f}`;
+}
+
+/** Reverse of encodeAnalysisFeedback. Tolerant to legacy rows without delimiters. */
+export function decodeAnalysisFeedback(raw: string | null | undefined): { analysis: string; feedback: string } {
+  const s = raw ?? "";
+  if (!s.startsWith(ANALYSIS_DELIM)) return { analysis: "", feedback: s };
+  const end = s.indexOf(ANALYSIS_END);
+  if (end < 0) return { analysis: s.slice(ANALYSIS_DELIM.length), feedback: "" };
+  return {
+    analysis: s.slice(ANALYSIS_DELIM.length, end),
+    feedback: s.slice(end + ANALYSIS_END.length),
+  };
 }
 
 export type SpeakingGradingResult = SpeakingItemGrading | { error: string };
@@ -220,7 +247,7 @@ export async function saveSpeakingGradings(opts: {
           grammar_errors: (g.grammarErrors ?? []) as any,
           pronunciation_errors: (g.pronunciationErrors ?? []) as any,
           improved_version: g.improvedVersion ?? null,
-          feedback: g.feedback ?? null,
+          feedback: encodeAnalysisFeedback(g.analysis, g.feedback ?? ""),
         };
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);

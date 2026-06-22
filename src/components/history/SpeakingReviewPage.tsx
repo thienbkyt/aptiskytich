@@ -13,6 +13,7 @@ import type {
 } from "@/data/speakingQuestions";
 import {
   buildSpeakingGradingSpecs, gradeSpeakingSpec, blobToBase64,
+  encodeAnalysisFeedback, decodeAnalysisFeedback,
   type SpeakingGradingResult, type SpeakingItemGrading,
 } from "@/components/speaking/speakingGrading";
 
@@ -141,6 +142,7 @@ const SpeakingReviewPage = ({
       }
       const gradeArr: (SpeakingGradingResult | null)[] = new Array(Math.max(promptCount, 1)).fill(null);
       for (const g of matching) {
+        const { analysis, feedback } = decodeAnalysisFeedback(g.feedback as any);
         const item: SpeakingItemGrading = {
           transcript: g.transcript || "",
           addressPercent: 0,
@@ -150,7 +152,8 @@ const SpeakingReviewPage = ({
           errorPenalty: 0,
           partScore: g.part_score || 0,
           maxPoints: g.max_points || 0,
-          feedback: g.feedback || "",
+          feedback,
+          analysis,
           improvedVersion: g.improved_version || undefined,
         };
         if (g.item_index >= 0 && g.item_index < gradeArr.length) gradeArr[g.item_index] = item;
@@ -223,7 +226,7 @@ const SpeakingReviewPage = ({
             grammar_errors: (r.grammarErrors ?? []) as any,
             pronunciation_errors: (r.pronunciationErrors ?? []) as any,
             improved_version: r.improvedVersion ?? null,
-            feedback: r.feedback ?? null,
+            feedback: encodeAnalysisFeedback(r.analysis, r.feedback ?? ""),
           } as any);
         } catch (e) {
           console.warn("[SpeakingReviewPage] persist regrade failed", e);
