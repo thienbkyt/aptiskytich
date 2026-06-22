@@ -715,6 +715,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sentence_translation_cache: {
+        Row: {
+          created_at: string
+          source_text: string
+          text_hash: string
+          translation_vi: string
+        }
+        Insert: {
+          created_at?: string
+          source_text: string
+          text_hash: string
+          translation_vi: string
+        }
+        Update: {
+          created_at?: string
+          source_text?: string
+          text_hash?: string
+          translation_vi?: string
+        }
+        Relationships: []
+      }
       site_visits: {
         Row: {
           created_at: string
