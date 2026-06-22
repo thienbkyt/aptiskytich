@@ -344,7 +344,7 @@ const GrammarExamEngine = ({
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
           <h1 className="text-xl mb-6">Aptis General Grammar & Vocabulary Instructions</h1>
           <p className="font-bold mb-2">Grammar & Vocabulary</p>
-          <p className="mb-2">The test has {questions.length} questions.</p>
+          <p className="mb-2">The test has {groups.length} questions.</p>
           <p className="mb-2">You have {Math.ceil(timeLimit / 60)} minutes to complete the test.</p>
           <div className="h-6" />
           <p>When you click on the &apos;Next&apos; button, the test will begin.</p>
@@ -420,7 +420,7 @@ const GrammarExamEngine = ({
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {phase === "practice" && !submitted && (
         <AdminExamControls
-          label={`Grammar · Câu ${groupStartLabel}/${questions.length}`}
+          label={`Grammar · Câu ${currentGroupIdx + 1}/${groups.length}`}
           onSkip={!isLastGroup ? goNextGroup : handleSubmit}
           onBack={!isFirstGroup ? goPrevGroup : onPreviousPart}
         />
@@ -452,7 +452,7 @@ const GrammarExamEngine = ({
                 Grammar & Vocabulary
               </p>
               <p className="text-sm text-gray-700">
-                {`Question ${isSynonymGroup ? groupStartLabel : currentIndex + 1} of ${questions.length}`}
+              {`Question ${currentGroupIdx + 1} of ${groups.length}`}
               </p>
             </div>
             <div className="flex items-center gap-4">
