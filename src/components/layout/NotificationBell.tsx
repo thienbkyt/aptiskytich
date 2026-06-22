@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, CheckCheck, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type NotifType = "feature" | "content" | "general";
 
@@ -67,10 +69,11 @@ interface Props {
 
 const NotificationBell = ({ variant = "desktop" }: Props) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Notification | null>(null);
   const [loading, setLoading] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -150,10 +153,22 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
 
   const handleItemClick = (n: Notification) => {
     markRead(n.id);
-    setExpanded((prev) => (prev === n.id ? null : n.id));
+    setSelected(n);
+    setOpen(false);
+  };
+
+  const handleGoTo = (url: string) => {
+    setSelected(null);
+    if (url.startsWith("/")) {
+      navigate(url);
+    } else {
+      window.open(url, "_blank", "noreferrer");
+    }
   };
 
   const isMobile = variant === "mobile";
+  const selectedMeta = selected ? TYPE_META[selected.type] || TYPE_META.general : null;
+  const SelectedIcon = selectedMeta?.icon;
 
   return (
     <div ref={rootRef} className={isMobile ? "relative w-full" : "relative"}>
@@ -228,7 +243,6 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
                     const meta = TYPE_META[n.type] || TYPE_META.general;
                     const Icon = meta.icon;
                     const isRead = readIds.has(n.id);
-                    const isOpen = expanded === n.id;
                     return (
                       <li
                         key={n.id}
@@ -272,11 +286,7 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
                               {n.title}
                             </p>
 
-                            <p
-                              className={`text-xs text-[#4D0D0D]/55 mt-0.5 whitespace-pre-wrap leading-relaxed ${
-                                isOpen ? "" : "line-clamp-1"
-                              }`}
-                            >
+                            <p className="text-xs text-[#4D0D0D]/55 mt-0.5 whitespace-pre-wrap leading-relaxed line-clamp-2">
                               {n.body}
                             </p>
 
@@ -285,17 +295,6 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
                                 <Clock className="w-3 h-3" />
                                 {timeAgo(n.created_at)}
                               </span>
-                              {isOpen && n.link_url && (
-                                <a
-                                  href={n.link_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-xs font-semibold text-[#CC1C01] hover:underline flex items-center gap-1"
-                                >
-                                  Đi tới <ExternalLink className="w-3 h-3" />
-                                </a>
-                              )}
                             </div>
                           </div>
                         </button>
@@ -308,6 +307,56 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Detail modal */}
+      <Dialog open={selected !== null} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-[480px] p-0 overflow-hidden bg-white border border-[#4D0D0D]/10 rounded-2xl">
+          {selected && selectedMeta && SelectedIcon && (
+            <div className="flex flex-col">
+              {/* Header */}
+              <div className="flex items-start gap-3 px-5 pt-5 pb-3">
+                <span className="shrink-0 w-10 h-10 rounded-full bg-[#CC1C01] flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-white" />
+                </span>
+                <div className="flex-1 min-w-0 pr-6">
+                  <h3 className="text-base font-bold text-[#4D0D0D] leading-snug">
+                    {selected.title}
+                  </h3>
+                  <span
+                    className={`inline-flex items-center gap-1 mt-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full ${selectedMeta.pillClass}`}
+                  >
+                    <SelectedIcon className="w-3 h-3" />
+                    {selectedMeta.label}
+                  </span>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="px-5 pb-4 max-h-[50vh] overflow-y-auto">
+                <p className="text-sm text-[#4D0D0D]/80 whitespace-pre-wrap leading-relaxed">
+                  {selected.body}
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between px-5 py-3 border-t border-[#4D0D0D]/[0.08] bg-[#FFF3E6]/40">
+                <span className="flex items-center gap-1 text-[11px] text-[#4D0D0D]/50">
+                  <Clock className="w-3 h-3" />
+                  {timeAgo(selected.created_at)}
+                </span>
+                {selected.link_url && (
+                  <button
+                    onClick={() => handleGoTo(selected.link_url!)}
+                    className="text-xs font-semibold text-white bg-[#CC1C01] hover:bg-[#4D0D0D] transition-colors px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                  >
+                    Đi tới <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
