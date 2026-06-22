@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, Check, X } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 
 type NotifType = "feature" | "content" | "general";
@@ -21,27 +21,6 @@ const TYPE_META: Record<NotifType, { label: string; icon: typeof Sparkles; color
   content: { label: "Update bài", icon: BookOpen, color: "text-[#CC1C01] bg-[#CC1C01]/10" },
   general: { label: "Thông báo chung", icon: Megaphone, color: "text-[#4D0D0D] bg-[#4D0D0D]/10" },
 };
-
-const PREVIEW_SEEN_KEY = "notif_preview_seen";
-
-function getPreviewSeen(): Set<string> {
-  try {
-    const raw = localStorage.getItem(PREVIEW_SEEN_KEY);
-    if (!raw) return new Set();
-    const arr = JSON.parse(raw);
-    return new Set(Array.isArray(arr) ? arr : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function addPreviewSeen(id: string) {
-  try {
-    const cur = getPreviewSeen();
-    cur.add(id);
-    localStorage.setItem(PREVIEW_SEEN_KEY, JSON.stringify(Array.from(cur).slice(-200)));
-  } catch {}
-}
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -62,13 +41,11 @@ interface Props {
 
 const NotificationBell = ({ variant = "desktop" }: Props) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [previewId, setPreviewId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -115,26 +92,6 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
     };
   }, [open]);
 
-  const isMobile = variant === "mobile";
-
-  // Auto-preview: find newest unread, not in preview_seen
-  useEffect(() => {
-    if (isMobile) return;
-    if (!user) return;
-    if (open) return;
-    if (items.length === 0) return;
-    const seen = getPreviewSeen();
-    const candidate = items.find((n) => !readIds.has(n.id) && !seen.has(n.id));
-    if (candidate && previewId !== candidate.id) {
-      setPreviewId(candidate.id);
-    }
-  }, [items, readIds, open, user, isMobile, previewId]);
-
-  const previewItem = useMemo(
-    () => (previewId ? items.find((n) => n.id === previewId) ?? null : null),
-    [previewId, items],
-  );
-
   if (!user) return null;
 
   const unreadCount = items.filter((n) => !readIds.has(n.id)).length;
@@ -167,35 +124,10 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
 
   const handleItemClick = (n: Notification) => {
     markRead(n.id);
-    if (n.link_url && n.link_url.trim()) {
-      setOpen(false);
-      const url = n.link_url.trim();
-      if (url.startsWith("/")) {
-        navigate(url);
-      } else {
-        window.open(url, "_blank", "noopener");
-      }
-      return;
-    }
     setExpanded((prev) => (prev === n.id ? null : n.id));
   };
 
-  const dismissPreview = () => {
-    if (previewId) addPreviewSeen(previewId);
-    setPreviewId(null);
-  };
-
-  const handlePreviewClick = (n: Notification) => {
-    addPreviewSeen(n.id);
-    setPreviewId(null);
-    if (n.link_url && n.link_url.trim()) {
-      handleItemClick(n);
-    } else {
-      setOpen(true);
-      setExpanded(n.id);
-      markRead(n.id);
-    }
-  };
+  const isMobile = variant === "mobile";
 
   return (
     <div ref={rootRef} className={isMobile ? "relative w-full" : "relative"}>
@@ -218,61 +150,6 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
         </span>
         {isMobile && <span className="text-sm font-medium">Thông báo</span>}
       </button>
-
-      {/* Auto-preview popup (desktop only, hidden when dropdown open) */}
-      {!isMobile && (
-        <AnimatePresence>
-          {previewItem && !open && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-full right-0 mt-2 w-[300px] max-w-[calc(100vw-1rem)] bg-popover border border-[#FEAD5F]/40 rounded-xl shadow-xl overflow-hidden z-[60]"
-            >
-              {(() => {
-                const meta = TYPE_META[previewItem.type] || TYPE_META.general;
-                const Icon = meta.icon;
-                return (
-                  <div className="relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        dismissPreview();
-                      }}
-                      aria-label="Đóng"
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground z-10"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handlePreviewClick(previewItem)}
-                      className="w-full text-left p-3 pr-8 hover:bg-accent transition-colors flex gap-3"
-                    >
-                      <div
-                        className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${meta.color}`}
-                      >
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-0.5">
-                          {meta.label}
-                        </div>
-                        <p className="text-sm font-bold text-foreground leading-snug truncate">
-                          {previewItem.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                          {previewItem.body}
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-                );
-              })()}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
 
       <AnimatePresence>
         {open && (
