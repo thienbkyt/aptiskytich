@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  Menu, X, LogIn, LogOut, Shield, Flame, ChevronDown,
+  Menu, X, LogIn, Shield, Flame, ChevronDown,
   BookText, GraduationCap, Book, Headphones, Mic, PenLine,
   BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, type LucideIcon,
 } from "lucide-react";
@@ -37,7 +37,8 @@ const Navbar = () => {
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, isAdmin } = useAuth();
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
@@ -296,14 +297,14 @@ const Navbar = () => {
               <button
                 onClick={() => setProfileOpen(true)}
                 aria-label="Thông tin tài khoản"
-                className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity"
+                className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
               >
-                {(user.email?.[0] ?? "U").toUpperCase()}
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="avatar" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ) : (
+                  (user.email?.[0] ?? "U").toUpperCase()
+                )}
               </button>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8 px-2.5" onClick={signOut}>
-                <LogOut className="w-3.5 h-3.5" />
-                Đăng xuất
-              </Button>
             </>
           ) : (
             <Link to="/auth" {...prefetchHandlers("/auth")}>
@@ -492,8 +493,12 @@ const Navbar = () => {
                       onClick={() => setProfileOpen(true)}
                       className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted transition-colors text-left"
                     >
-                      <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center">
-                        {(user.email?.[0] ?? "U").toUpperCase()}
+                      <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center overflow-hidden">
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="avatar" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        ) : (
+                          (user.email?.[0] ?? "U").toUpperCase()
+                        )}
                       </span>
                       <span className="text-sm font-medium truncate">{user.email}</span>
                     </button>
@@ -504,13 +509,6 @@ const Navbar = () => {
                         Dashboard
                       </Button>
                     </Link>
-                    <Button
-                      className="w-full text-sm"
-                      variant="destructive"
-                      onClick={signOut}
-                    >
-                      Đăng xuất
-                    </Button>
                   </>
                 ) : (
                   <Link to="/auth">
