@@ -73,7 +73,7 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, onSubmitExit, immediateExit
           cancelText="Cancel"
           onSubmit={() => {
             setShowConfirm(false);
-            onExit?.();
+            (onSubmitExit ?? onExit)?.();
           }}
           onCancel={() => setShowConfirm(false)}
         />
