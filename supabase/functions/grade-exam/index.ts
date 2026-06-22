@@ -573,6 +573,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
 
       const payload = {
         transcript: grading?.transcript ?? "",
+        analysis: String(grading?.analysis ?? ""),
         addressPercent: Math.round(addr * 10) / 10,
         grammarErrors: grading?.grammarErrors ?? [],
         pronunciationErrors: grading?.pronunciationErrors ?? [],
