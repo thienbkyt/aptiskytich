@@ -19,8 +19,9 @@ import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSet
 import { toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4 } from "@/lib/examTransformers";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
-import CompletionBadge from "@/components/practice/CompletionBadge";
+import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
+import { useUserGradedProgress } from "@/hooks/useUserGradedProgress";
 import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
@@ -70,6 +71,7 @@ const Writing = () => {
   const { examSets, loading } = useExamSets("writing");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("writing");
   const { progress } = useUserExamProgress();
+  const { progress: gradedProgress } = useUserGradedProgress("writing");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
@@ -311,12 +313,12 @@ const Writing = () => {
                   {filteredSets.map((set, index) => (
                     <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
+                        <div className="absolute top-3 right-3"><CornerResultBadge item={gradedProgress.get(set.id)} /></div>
                         <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary border-0">{activeTaskInfo?.label}</Badge>
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                           <span className="flex items-center gap-1.5">✍️ {set.description || "Đề luyện tập"}</span>
                         </div>
-                        <div className="mb-4"><CompletionBadge item={progress.get(set.id)} /></div>
                         <div className="flex-1" />
                         <div className="flex justify-end">
                           <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
