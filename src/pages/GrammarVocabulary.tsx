@@ -138,6 +138,14 @@ const GrammarVocabulary = () => {
               {filteredSets.map((set, index) => (
                 <motion.div key={set.fullTestId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                   <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
+                    {(() => {
+                      const done = set.examSetIds.filter(id => progress.has(id)).length;
+                      if (done === 0 || done !== set.examSetIds.length) return null;
+                      let s = 0, t = 0;
+                      set.examSetIds.forEach(id => { const p = progress.get(id); if (p) { s += p.bestScore; t += p.total; } });
+                      if (t <= 0) return null;
+                      return <div className="absolute top-3 right-3 z-10"><span className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">{Math.round((s / t) * 100)}%</span></div>;
+                    })()}
                     <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
                       Grammar & Vocab
                     </Badge>
