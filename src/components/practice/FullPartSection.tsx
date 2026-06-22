@@ -13,9 +13,10 @@ interface FullPartSectionProps {
   loading: boolean;
   onStart: (set: SkillFullSetItem) => void;
   progress?: ExamProgressMap;
+  skillKey?: "listening" | "reading" | "writing" | "speaking";
 }
 
-const FullPartSection = ({ skillName, sets, loading, onStart, progress }: FullPartSectionProps) => {
+const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey }: FullPartSectionProps) => {
 
   return (
     <div>
