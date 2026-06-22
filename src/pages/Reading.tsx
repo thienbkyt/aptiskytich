@@ -24,6 +24,7 @@ import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
+import { useUserMarathonProgress } from "@/hooks/useUserMarathonProgress";
 import { saveTestResult } from "@/lib/testResults";
 import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
@@ -73,6 +74,7 @@ const Reading = () => {
   const { examSets, loading } = useExamSets("reading");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const { progress } = useUserExamProgress();
+  const { progress: marathonProgress } = useUserMarathonProgress("reading");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
@@ -374,6 +376,7 @@ const Reading = () => {
                   {filteredSets.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
+                        <div className="absolute top-3 right-3"><CornerResultBadge item={marathonProgress.get(activeTab)} /></div>
                         <Badge className="w-fit text-[11px] font-semibold mb-3 bg-primary text-primary-foreground border-0 gap-1">
                           <InfinityIcon className="w-3 h-3" /> Marathon
                         </Badge>
