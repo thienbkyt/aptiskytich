@@ -101,6 +101,7 @@ const App = () => (
             <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/report/pricing" element={<AdminReportPricing />} />
             <Route path="/admin/students" element={<AdminStudents />} />
+            <Route path="/admin/notifications" element={<AdminNotifications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </PageTransition>
