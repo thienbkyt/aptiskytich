@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
+import { toScaledScore, getSkillBand } from "@/data/questions";
 
 interface FullPartSectionProps {
   skillName: string;
