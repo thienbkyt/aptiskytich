@@ -236,6 +236,8 @@ const BottomNavBar = ({
                               if (!section.questions?.length) {
                                 
                                 setShowQuestionList(false);
+                              } else {
+                                toggleSection(i);
                               }
                             }}
                             className="w-full text-left"
