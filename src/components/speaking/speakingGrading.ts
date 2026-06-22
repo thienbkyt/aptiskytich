@@ -247,7 +247,7 @@ export async function saveSpeakingGradings(opts: {
           grammar_errors: (g.grammarErrors ?? []) as any,
           pronunciation_errors: (g.pronunciationErrors ?? []) as any,
           improved_version: g.improvedVersion ?? null,
-          feedback: g.feedback ?? null,
+          feedback: encodeAnalysisFeedback(g.analysis, g.feedback ?? ""),
         };
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
