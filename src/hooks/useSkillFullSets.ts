@@ -40,7 +40,7 @@ export const useSkillFullSets = (skill: string) => {
       }
 
       // Group by full_test_id
-      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[] }>();
+      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[] }>();
       for (const row of data) {
         if (!row.full_test_id) continue;
         if (!grouped.has(row.full_test_id)) {
@@ -48,11 +48,13 @@ export const useSkillFullSets = (skill: string) => {
             title: row.full_test_title || "Full Practice",
             parts: new Set(),
             ids: [],
+            rows: [],
           });
         }
         const g = grouped.get(row.full_test_id)!;
         g.parts.add(row.part);
         g.ids.push(row.id);
+        g.rows.push({ id: row.id, part: row.part });
       }
 
       const result: SkillFullSetItem[] = [];
@@ -60,17 +62,35 @@ export const useSkillFullSets = (skill: string) => {
         const partsArr = Array.from(info.parts).sort();
         // Only include sets with 2+ parts
         if (partsArr.length >= 2) {
-          const { count } = await supabase
-            .from("exam_questions")
-            .select("id", { count: "exact", head: true })
-            .in("exam_set_id", info.ids);
+          let questionCount = 0;
+          if (skill === "grammar_vocab") {
+            // Aptis Core: mỗi Vocab task tính 1 "câu" (25 grammar item + 5 vocab task = 30)
+            const isVocab = (p: string) => /vocab/i.test(p);
+            const vocabPartCount = partsArr.filter(isVocab).length;
+            const grammarIds = info.rows.filter((r) => !isVocab(r.part)).map((r) => r.id);
+            let grammarQ = 0;
+            if (grammarIds.length) {
+              const { count: gc } = await supabase
+                .from("exam_questions")
+                .select("id", { count: "exact", head: true })
+                .in("exam_set_id", grammarIds);
+              grammarQ = gc ?? 0;
+            }
+            questionCount = grammarQ + vocabPartCount;
+          } else {
+            const { count } = await supabase
+              .from("exam_questions")
+              .select("id", { count: "exact", head: true })
+              .in("exam_set_id", info.ids);
+            questionCount = count ?? 0;
+          }
           result.push({
             fullTestId: ftId,
             title: info.title,
             partCount: partsArr.length,
             parts: partsArr,
             examSetIds: info.ids,
-            questionCount: count ?? 0,
+            questionCount,
           });
         }
       }
