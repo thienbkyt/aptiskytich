@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, Check } from "lucide-react";
+import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, CheckCheck, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 
 type NotifType = "feature" | "content" | "general";
@@ -16,10 +15,37 @@ interface Notification {
   created_at: string;
 }
 
-const TYPE_META: Record<NotifType, { label: string; icon: typeof Sparkles; color: string }> = {
-  feature: { label: "Tính năng mới", icon: Sparkles, color: "text-[#FEAD5F] bg-[#FEAD5F]/15" },
-  content: { label: "Update bài", icon: BookOpen, color: "text-[#CC1C01] bg-[#CC1C01]/10" },
-  general: { label: "Thông báo chung", icon: Megaphone, color: "text-[#4D0D0D] bg-[#4D0D0D]/10" },
+const TYPE_META: Record<
+  NotifType,
+  {
+    label: string;
+    icon: typeof Sparkles;
+    iconBg: string;
+    iconText: string;
+    pillClass: string;
+  }
+> = {
+  feature: {
+    label: "Tính năng mới",
+    icon: Sparkles,
+    iconBg: "bg-[#FEAD5F]",
+    iconText: "text-[#4D0D0D]",
+    pillClass: "text-[#4D0D0D] bg-[#FEAD5F]/20",
+  },
+  content: {
+    label: "Update bài",
+    icon: BookOpen,
+    iconBg: "bg-[#CC1C01]",
+    iconText: "text-white",
+    pillClass: "text-[#CC1C01] bg-[#CC1C01]/10",
+  },
+  general: {
+    label: "Thông báo chung",
+    icon: Megaphone,
+    iconBg: "bg-[#4D0D0D]",
+    iconText: "text-white",
+    pillClass: "text-[#4D0D0D] bg-[#4D0D0D]/7",
+  },
 };
 
 function timeAgo(iso: string): string {
@@ -160,81 +186,103 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
             transition={{ duration: 0.15 }}
             className={
               isMobile
-                ? "mt-2 w-full bg-popover border border-[#FEAD5F]/40 rounded-xl shadow-lg overflow-hidden"
-                : "absolute top-full right-0 mt-2 w-[360px] max-w-[calc(100vw-1rem)] bg-popover border border-[#FEAD5F]/40 rounded-xl shadow-lg overflow-hidden z-50"
+                ? "mt-2 w-full bg-white border border-[#4D0D0D]/10 rounded-2xl overflow-hidden shadow-[0_12px_32px_-12px_rgba(77,13,13,0.28)]"
+                : "absolute top-full right-0 mt-2 w-[360px] max-w-[calc(100vw-1rem)] bg-white border border-[#4D0D0D]/10 rounded-2xl overflow-hidden shadow-[0_12px_32px_-12px_rgba(77,13,13,0.28)] z-50"
             }
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-[#FEAD5F]/10">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-[#CC1C01]" />
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-[#FFF3E6] border-b border-[#FEAD5F]/30">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full bg-[#CC1C01] flex items-center justify-center shrink-0">
+                  <Bell className="w-3.5 h-3.5 text-white" />
+                </span>
                 <span className="text-sm font-bold text-[#4D0D0D]">Thông báo</span>
                 {unreadCount > 0 && (
-                  <span className="text-xs text-muted-foreground">({unreadCount} chưa đọc)</span>
+                  <span className="text-[10px] font-semibold text-[#CC1C01] bg-[#CC1C01]/12 px-2 py-0.5 rounded-full">
+                    {unreadCount} mới
+                  </span>
                 )}
               </div>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-[#CC1C01] hover:underline font-medium flex items-center gap-1"
+                  className="text-xs font-semibold text-[#CC1C01] hover:underline flex items-center gap-1"
                 >
-                  <Check className="w-3 h-3" />
+                  <CheckCheck className="w-3.5 h-3.5" />
                   Đọc tất cả
                 </button>
               )}
             </div>
 
+            {/* List */}
             <div className="max-h-[420px] overflow-y-auto">
               {loading && items.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-muted-foreground text-center">Đang tải...</p>
+                <p className="px-4 py-8 text-sm text-[#4D0D0D]/40 text-center">Đang tải...</p>
               ) : items.length === 0 ? (
-                <p className="px-4 py-8 text-sm text-muted-foreground text-center">
+                <p className="px-4 py-10 text-sm text-[#4D0D0D]/40 text-center">
                   Chưa có thông báo nào.
                 </p>
               ) : (
-                <ul className="divide-y divide-border">
-                  {items.map((n) => {
+                <ul>
+                  {items.map((n, idx) => {
                     const meta = TYPE_META[n.type] || TYPE_META.general;
                     const Icon = meta.icon;
                     const isRead = readIds.has(n.id);
                     const isOpen = expanded === n.id;
                     return (
-                      <li key={n.id}>
+                      <li
+                        key={n.id}
+                        className={idx > 0 ? "border-t border-[#4D0D0D]/[0.06]" : ""}
+                      >
                         <button
                           onClick={() => handleItemClick(n)}
-                          className={`w-full text-left px-4 py-3 hover:bg-accent transition-colors flex gap-3 ${
-                            isRead ? "" : "bg-[#FEAD5F]/5"
+                          className={`w-full text-left flex gap-3 px-4 py-3 transition-colors border-l-[3px] ${
+                            isRead
+                              ? "bg-white border-transparent hover:bg-[#FEAD5F]/5"
+                              : "bg-[#FEAD5F]/[0.03] border-[#CC1C01]"
                           }`}
                         >
+                          {/* Icon box */}
                           <div
-                            className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${meta.color}`}
+                            className={`shrink-0 w-[38px] h-[38px] rounded-[11px] flex items-center justify-center ${meta.iconBg} ${meta.iconText}`}
                           >
                             <Icon className="w-4 h-4" />
                           </div>
+
+                          {/* Content */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${meta.pillClass}`}
+                              >
                                 {meta.label}
                               </span>
                               {!isRead && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#CC1C01]" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#CC1C01] shrink-0" />
                               )}
                             </div>
+
                             <p
                               className={`text-sm leading-snug ${
-                                isRead ? "font-medium text-foreground" : "font-bold text-foreground"
+                                isRead
+                                  ? "font-medium text-[#4D0D0D]/70"
+                                  : "font-bold text-[#4D0D0D]"
                               }`}
                             >
                               {n.title}
                             </p>
+
                             <p
-                              className={`text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap ${
-                                isOpen ? "" : "line-clamp-2"
+                              className={`text-xs text-[#4D0D0D]/55 mt-0.5 whitespace-pre-wrap leading-relaxed ${
+                                isOpen ? "" : "line-clamp-1"
                               }`}
                             >
                               {n.body}
                             </p>
+
                             <div className="flex items-center justify-between mt-1.5">
-                              <span className="text-[11px] text-muted-foreground">
+                              <span className="flex items-center gap-1 text-[11px] text-[#4D0D0D]/35">
+                                <Clock className="w-3 h-3" />
                                 {timeAgo(n.created_at)}
                               </span>
                               {isOpen && n.link_url && (
