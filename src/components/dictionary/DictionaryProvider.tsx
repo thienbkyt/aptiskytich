@@ -256,6 +256,186 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   /* ─── REMOVED mouseup auto-lookup to prevent wasteful API calls ─── */
   /* Dictionary lookup is now ONLY triggered by double-click (manual) */
 
+  /* ─── Sentence translate: show floating "Dịch" button on multi-word selection ─── */
+  const [translateBtn, setTranslateBtn] = useState<{
+    x: number;
+    y: number;
+    text: string;
+  } | null>(null);
+  const [translatePopup, setTranslatePopup] = useState<{
+    x: number;
+    y: number;
+    source: string;
+    translation: string | null;
+    loading: boolean;
+    error: string | null;
+    visible: boolean;
+  } | null>(null);
+  const translateRateRef = useRef(0);
+  const sentenceCacheRef = useRef<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("sentence_translate_cache");
+      if (!raw) return;
+      const parsed: Record<string, { t: string; ts: number }> = JSON.parse(raw);
+      const ttl = 7 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      Object.entries(parsed).forEach(([k, v]) => {
+        if (now - v.ts < ttl) sentenceCacheRef.current.set(k, v.t);
+      });
+    } catch {}
+  }, []);
+
+  const persistSentenceCache = useCallback((key: string, translation: string) => {
+    try {
+      const raw = localStorage.getItem("sentence_translate_cache");
+      const parsed: Record<string, { t: string; ts: number }> = raw ? JSON.parse(raw) : {};
+      parsed[key] = { t: translation, ts: Date.now() };
+      const keys = Object.keys(parsed);
+      const MAX = 300;
+      if (keys.length > MAX) {
+        const sorted = keys.sort((a, b) => parsed[a].ts - parsed[b].ts);
+        sorted.slice(0, keys.length - MAX).forEach((k) => delete parsed[k]);
+      }
+      localStorage.setItem("sentence_translate_cache", JSON.stringify(parsed));
+    } catch {}
+  }, []);
+
+  const normalizeSentence = (s: string) =>
+    s.replace(/\s+/g, " ").trim().toLowerCase();
+
+  useEffect(() => {
+    const onMouseUp = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target) return;
+      if (target.closest(".sentence-translate-btn")) return;
+      if (target.closest(".sentence-translate-popup")) return;
+      if (popupRef.current?.contains(target)) return;
+      if (isInteractive(target)) {
+        setTranslateBtn(null);
+        return;
+      }
+      setTimeout(() => {
+        const sel = window.getSelection();
+        const raw = sel?.toString() ?? "";
+        const text = raw.trim();
+        if (!text || !sel || sel.rangeCount === 0) {
+          setTranslateBtn(null);
+          return;
+        }
+        const isSingleWord = ENGLISH_WORD_RE.test(text) && !/\s/.test(text);
+        if (isSingleWord) {
+          setTranslateBtn(null);
+          return;
+        }
+        if (text.length > 2000) {
+          setTranslateBtn(null);
+          return;
+        }
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) {
+          setTranslateBtn(null);
+          return;
+        }
+        const x = Math.min(
+          Math.max(40, rect.left + rect.width / 2),
+          window.innerWidth - 80
+        );
+        const y = rect.bottom + 6;
+        setTranslateBtn({ x, y, text });
+      }, 0);
+    };
+    document.addEventListener("mouseup", onMouseUp);
+    return () => document.removeEventListener("mouseup", onMouseUp);
+  }, []);
+
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const sel = window.getSelection();
+      const text = sel?.toString().trim() ?? "";
+      if (!text) setTranslateBtn(null);
+    };
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => document.removeEventListener("selectionchange", onSelectionChange);
+  }, []);
+
+  const closeTranslatePopup = useCallback(() => {
+    setTranslatePopup((prev) => (prev ? { ...prev, visible: false } : prev));
+    setTimeout(() => setTranslatePopup(null), 200);
+  }, []);
+
+  const runTranslate = useCallback(async () => {
+    if (!translateBtn) return;
+    const text = translateBtn.text;
+    const key = normalizeSentence(text);
+    const x = translateBtn.x;
+    const y = translateBtn.y;
+    setTranslateBtn(null);
+
+    const cached = sentenceCacheRef.current.get(key);
+    if (cached) {
+      setTranslatePopup({
+        x, y, source: text, translation: cached, loading: false, error: null, visible: true,
+      });
+      return;
+    }
+
+    const now = Date.now();
+    if (now - translateRateRef.current < 1500) {
+      setTranslatePopup({
+        x, y, source: text, translation: null, loading: false,
+        error: "Vui lòng đợi vài giây rồi thử lại.", visible: true,
+      });
+      return;
+    }
+    translateRateRef.current = now;
+
+    setTranslatePopup({
+      x, y, source: text, translation: null, loading: true, error: null, visible: true,
+    });
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "translate-text",
+        { body: { text } }
+      );
+      if (fnError) throw fnError;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const translation = (data as any)?.translation as string;
+      if (!translation) throw new Error("Empty translation");
+      sentenceCacheRef.current.set(key, translation);
+      persistSentenceCache(key, translation);
+      setTranslatePopup((prev) =>
+        prev ? { ...prev, translation, loading: false } : prev
+      );
+    } catch (e: any) {
+      console.error("translate-text failed:", e);
+      setTranslatePopup((prev) =>
+        prev ? { ...prev, loading: false, error: "Không thể dịch. Thử lại sau." } : prev
+      );
+    }
+  }, [translateBtn, persistSentenceCache]);
+
+  useEffect(() => {
+    if (!translatePopup?.visible) return;
+    const onClick = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest(".sentence-translate-popup")) return;
+      if (t.closest(".sentence-translate-btn")) return;
+      closeTranslatePopup();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeTranslatePopup();
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [translatePopup?.visible, closeTranslatePopup]);
+
   /* ─── Escape key ─── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -281,7 +461,135 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
           />,
           document.body
         )}
+      {translateBtn &&
+        createPortal(
+          <button
+            type="button"
+            className="sentence-translate-btn fixed z-[9998] flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg hover:opacity-90 transition-all"
+            style={{
+              left: translateBtn.x,
+              top: translateBtn.y,
+              transform: "translateX(-50%)",
+            }}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              void runTranslate();
+            }}
+          >
+            <BookOpen className="w-3 h-3" />
+            Dịch
+          </button>,
+          document.body
+        )}
+      {translatePopup &&
+        createPortal(
+          <SentenceTranslatePopup data={translatePopup} onClose={closeTranslatePopup} />,
+          document.body
+        )}
     </DictionaryContext.Provider>
+  );
+};
+
+/* ══════════════════ Sentence Translate Popup ══════════════════ */
+interface SentencePopupData {
+  x: number;
+  y: number;
+  source: string;
+  translation: string | null;
+  loading: boolean;
+  error: string | null;
+  visible: boolean;
+}
+
+const SentenceTranslatePopup: React.FC<{
+  data: SentencePopupData;
+  onClose: () => void;
+}> = ({ data, onClose }) => {
+  const width = 360;
+  const clampedX = Math.max(
+    12,
+    Math.min(data.x - width / 2, window.innerWidth - width - 12)
+  );
+  const spaceBelow = window.innerHeight - data.y;
+  const showAbove = spaceBelow < 240;
+
+  return (
+    <div
+      className={`sentence-translate-popup fixed z-[9999] transition-all duration-200 ${
+        data.visible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+      }`}
+      style={{
+        left: clampedX,
+        top: showAbove ? undefined : data.y,
+        bottom: showAbove ? window.innerHeight - data.y + 24 : undefined,
+        width,
+        transformOrigin: showAbove ? "bottom center" : "top center",
+      }}
+    >
+      <div className="bg-popover border border-border rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)] overflow-hidden">
+        <div className="px-4 py-2.5 flex items-center justify-between border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
+          <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-primary" />
+            Dịch câu
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                void speakWithTTS(data.source, "en");
+              }}
+              title="Đọc câu gốc"
+            >
+              <Volume2 className="w-3.5 h-3.5 text-primary" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+        <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
+              English
+            </p>
+            <p className="text-sm text-foreground italic leading-relaxed">
+              {data.source}
+            </p>
+          </div>
+          <div className="border-t border-border pt-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
+              Tiếng Việt
+            </p>
+            {data.loading && (
+              <div className="flex items-center gap-2 py-2">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <span className="text-xs text-muted-foreground">Đang dịch…</span>
+              </div>
+            )}
+            {data.error && !data.loading && (
+              <p className="text-sm text-destructive">{data.error}</p>
+            )}
+            {data.translation && !data.loading && (
+              <p className="text-sm text-foreground font-medium leading-relaxed">
+                {data.translation}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
