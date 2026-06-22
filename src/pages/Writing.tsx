@@ -6,16 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2 } from "lucide-react";
+import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2, Inbox } from "lucide-react";
 import { motion } from "framer-motion";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { WritingPartType } from "@/components/writing/WritingExamEngine";
-import {
-  mockWritingPart1, mockWritingPart2, mockWritingPart3, mockWritingPart4,
-} from "@/data/writingQuestions";
+import { toast } from "sonner";
 import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4 } from "@/lib/examTransformers";
@@ -92,7 +90,6 @@ const Writing = () => {
       }
     } else {
       rehydratedRef.current = true;
-      handleStartMock(exam.partType);
     }
   }, [exam.active, exam.engineData, exam.examSetId, exam.partType, examSets, loading]);
 
@@ -142,24 +139,8 @@ const Writing = () => {
     if (examSets.length > 0) {
       handleStartFromDB(examSets[Math.floor(Math.random() * examSets.length)]);
     } else {
-      const randomTask = TASKS.filter(t => t.id !== "full")[Math.floor(Math.random() * 4)];
-      handleStartMock(randomTask.id as WritingPartType);
+      toast("Chưa có đề để luyện");
     }
-  };
-
-  const handleStartMock = (taskId: WritingPartType) => {
-    const mockData: any = {};
-    switch (taskId) {
-      case "task1": mockData.part1Data = mockWritingPart1[0]; break;
-      case "task2": mockData.part2Data = mockWritingPart2[0]; break;
-      case "task3": mockData.part3Data = mockWritingPart3[0]; break;
-      case "task4": mockData.part4Data = mockWritingPart4[0]; break;
-    }
-    setExam({
-      active: true, partType: taskId, testTitle: `${TASKS.find(p => p.id === taskId)?.label} – Đề mẫu`,
-      completed: false, engineData: mockData, loadingExam: false,
-      examSetId: null, startedAt: Date.now(),
-    });
   };
 
   const handleExit = () => {
@@ -238,7 +219,6 @@ const Writing = () => {
   }
 
   const activeTaskInfo = TASKS.find((t) => t.id === activeTab);
-  const hasMockFallback = activeTab !== "full" && filteredSets.length === 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -315,7 +295,7 @@ const Writing = () => {
                 <div className="mb-6">
                   <h2 className="text-lg font-heading font-semibold text-foreground">{activeTaskInfo.label} – {activeTaskInfo.subtitle}</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {loading ? "Đang tải..." : `${filteredSets.length + (hasMockFallback ? 1 : 0)} bộ đề luyện tập`}
+                    {loading ? "Đang tải..." : `${filteredSets.length} bộ đề luyện tập`}
                   </p>
                 </div>
               )}
@@ -347,22 +327,11 @@ const Writing = () => {
                     </motion.div>
                   ))}
 
-                  {hasMockFallback && (
-                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                      <div className="group relative tech-card bg-card border border-dashed border-border rounded-xl p-5 flex flex-col h-full">
-                        <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-muted text-muted-foreground border-0">Đề mẫu</Badge>
-                        <h3 className="text-xl font-heading font-bold text-foreground mb-3">Đề mẫu</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                          <span className="flex items-center gap-1.5">✍️ Dữ liệu mẫu để luyện tập</span>
-                        </div>
-                        <div className="flex-1" />
-                        <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => handleStartMock(activeTab as WritingPartType)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
-                            Luyện tập<ArrowRight className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
+                  {filteredSets.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                      <Inbox className="w-10 h-10 text-muted-foreground mb-3" />
+                      <p className="text-sm text-muted-foreground">Chưa có đề cho phần này</p>
+                    </div>
                   )}
                 </div>
               )}
