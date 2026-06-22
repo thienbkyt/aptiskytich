@@ -77,9 +77,9 @@ const BottomNavBar = ({
   const effectiveBookmarkedCount = bookmarkedCount ?? autoBookmarkedCount;
 
   const skillName = useMemo(() => {
-    if (!sections[0]?.title) return "Reading";
-    const parts = sections[0].title.split(" ");
-    return parts[2] || "Reading";
+    const t = sections[0]?.title;
+    if (!t) return "";
+    return t.replace(/^Aptis\s+General\s+/i, "").replace(/\s+Instructions$/i, "").trim();
   }, [sections]);
 
   const bookmarkedFlat = useMemo(
