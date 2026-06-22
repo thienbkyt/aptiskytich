@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, List, Info, PersonStanding, LogOut, X, Plus, Minus, Bookmark } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
@@ -52,6 +52,9 @@ const BottomNavBar = ({
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const [magnification, setMagnification] = useState(100);
+  useEffect(() => {
+    return () => { document.documentElement.style.fontSize = ""; };
+  }, []);
   const [showProceedDialog, setShowProceedDialog] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewExpanded, setReviewExpanded] = useState<Set<number>>(new Set());
