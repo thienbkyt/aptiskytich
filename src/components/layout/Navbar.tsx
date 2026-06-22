@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 /* ── Nav data ── */
 const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
@@ -285,6 +286,7 @@ const Navbar = () => {
           )}
           {user ? (
             <>
+              <NotificationBell />
               <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
                   <Flame className="w-3.5 h-3.5 text-primary" />
@@ -495,6 +497,7 @@ const Navbar = () => {
                       </span>
                       <span className="text-sm font-medium truncate">{user.email}</span>
                     </button>
+                    <NotificationBell variant="mobile" />
                     <Link to="/dashboard">
                       <Button variant="outline" className="w-full justify-center gap-2 text-sm">
                         <Flame className="w-4 h-4 text-primary" />
