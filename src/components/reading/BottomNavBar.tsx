@@ -234,7 +234,7 @@ const BottomNavBar = ({
                           <button
                             onClick={() => {
                               if (!section.questions?.length) {
-                                section.onClick?.();
+                                
                                 setShowQuestionList(false);
                               }
                             }}
