@@ -286,6 +286,7 @@ const Navbar = () => {
           )}
           {user ? (
             <>
+              <NotificationBell />
               <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8 px-2.5">
                   <Flame className="w-3.5 h-3.5 text-primary" />
