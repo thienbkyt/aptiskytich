@@ -461,7 +461,135 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
           />,
           document.body
         )}
+      {translateBtn &&
+        createPortal(
+          <button
+            type="button"
+            className="sentence-translate-btn fixed z-[9998] flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg hover:opacity-90 transition-all"
+            style={{
+              left: translateBtn.x,
+              top: translateBtn.y,
+              transform: "translateX(-50%)",
+            }}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              void runTranslate();
+            }}
+          >
+            <BookOpen className="w-3 h-3" />
+            Dịch
+          </button>,
+          document.body
+        )}
+      {translatePopup &&
+        createPortal(
+          <SentenceTranslatePopup data={translatePopup} onClose={closeTranslatePopup} />,
+          document.body
+        )}
     </DictionaryContext.Provider>
+  );
+};
+
+/* ══════════════════ Sentence Translate Popup ══════════════════ */
+interface SentencePopupData {
+  x: number;
+  y: number;
+  source: string;
+  translation: string | null;
+  loading: boolean;
+  error: string | null;
+  visible: boolean;
+}
+
+const SentenceTranslatePopup: React.FC<{
+  data: SentencePopupData;
+  onClose: () => void;
+}> = ({ data, onClose }) => {
+  const width = 360;
+  const clampedX = Math.max(
+    12,
+    Math.min(data.x - width / 2, window.innerWidth - width - 12)
+  );
+  const spaceBelow = window.innerHeight - data.y;
+  const showAbove = spaceBelow < 240;
+
+  return (
+    <div
+      className={`sentence-translate-popup fixed z-[9999] transition-all duration-200 ${
+        data.visible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+      }`}
+      style={{
+        left: clampedX,
+        top: showAbove ? undefined : data.y,
+        bottom: showAbove ? window.innerHeight - data.y + 24 : undefined,
+        width,
+        transformOrigin: showAbove ? "bottom center" : "top center",
+      }}
+    >
+      <div className="bg-popover border border-border rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)] overflow-hidden">
+        <div className="px-4 py-2.5 flex items-center justify-between border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
+          <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-primary" />
+            Dịch câu
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                void speakWithTTS(data.source, "en");
+              }}
+              title="Đọc câu gốc"
+            >
+              <Volume2 className="w-3.5 h-3.5 text-primary" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+        <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
+              English
+            </p>
+            <p className="text-sm text-foreground italic leading-relaxed">
+              {data.source}
+            </p>
+          </div>
+          <div className="border-t border-border pt-2">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
+              Tiếng Việt
+            </p>
+            {data.loading && (
+              <div className="flex items-center gap-2 py-2">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <span className="text-xs text-muted-foreground">Đang dịch…</span>
+              </div>
+            )}
+            {data.error && !data.loading && (
+              <p className="text-sm text-destructive">{data.error}</p>
+            )}
+            {data.translation && !data.loading && (
+              <p className="text-sm text-foreground font-medium leading-relaxed">
+                {data.translation}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
