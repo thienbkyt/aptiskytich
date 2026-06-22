@@ -226,7 +226,7 @@ const SpeakingReviewPage = ({
             grammar_errors: (r.grammarErrors ?? []) as any,
             pronunciation_errors: (r.pronunciationErrors ?? []) as any,
             improved_version: r.improvedVersion ?? null,
-            feedback: r.feedback ?? null,
+            feedback: encodeAnalysisFeedback(r.analysis, r.feedback ?? ""),
           } as any);
         } catch (e) {
           console.warn("[SpeakingReviewPage] persist regrade failed", e);
