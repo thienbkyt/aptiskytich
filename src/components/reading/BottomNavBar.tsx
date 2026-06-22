@@ -52,6 +52,9 @@ const BottomNavBar = ({
   const [listFilter, setListFilter] = useState<"all" | "bookmarked">("all");
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const [magnification, setMagnification] = useState(100);
+  useEffect(() => {
+    return () => { document.documentElement.style.fontSize = ""; };
+  }, []);
   const [showProceedDialog, setShowProceedDialog] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewExpanded, setReviewExpanded] = useState<Set<number>>(new Set());
