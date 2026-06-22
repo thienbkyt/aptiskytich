@@ -20,12 +20,13 @@ interface Props {
   onSubmitTest?: () => void;
   reviewMode?: boolean;
   revealAnswers?: boolean;
+  isLast?: boolean;
 }
 
 const WritingPart3Questions = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
-  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
 }: Props) => {
   const showSample = submitted || !!revealAnswers;
   return (
