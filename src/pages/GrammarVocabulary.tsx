@@ -13,6 +13,7 @@ import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CompletionBadge from "@/components/practice/CompletionBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
+import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
@@ -144,7 +145,7 @@ const GrammarVocabulary = () => {
                       let s = 0, t = 0;
                       set.examSetIds.forEach(id => { const p = progress.get(id); if (p) { s += p.bestScore; t += p.total; } });
                       if (t <= 0) return null;
-                      return <div className="absolute top-3 right-3 z-10"><span className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">{Math.round((s / t) * 100)}%</span></div>;
+                      return <div className="absolute top-3 right-3 z-10"><CornerResultBadge label={`${Math.round((s / t) * 100)}%`} /></div>;
                     })()}
                     <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
                       Grammar & Vocab
