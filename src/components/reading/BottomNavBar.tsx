@@ -77,9 +77,9 @@ const BottomNavBar = ({
   const effectiveBookmarkedCount = bookmarkedCount ?? autoBookmarkedCount;
 
   const skillName = useMemo(() => {
-    if (!sections[0]?.title) return "Reading";
-    const parts = sections[0].title.split(" ");
-    return parts[2] || "Reading";
+    const t = sections[0]?.title;
+    if (!t) return "";
+    return t.replace(/^Aptis\s+General\s+/i, "").replace(/\s+Instructions$/i, "").trim();
   }, [sections]);
 
   const bookmarkedFlat = useMemo(
@@ -236,6 +236,8 @@ const BottomNavBar = ({
                               if (!section.questions?.length) {
                                 
                                 setShowQuestionList(false);
+                              } else {
+                                toggleSection(i);
                               }
                             }}
                             className="w-full text-left"
@@ -380,7 +382,7 @@ const BottomNavBar = ({
               <div className="p-6 space-y-6">
                 <img src={britishCouncilLogo} alt="British Council Aptis" className="h-28 object-contain" />
                 <div className="border-l-4 border-primary/30 pl-3">
-                  <p className="text-sm font-medium text-foreground">{skillName} Practice Test Version 001</p>
+                  <p className="text-sm font-medium text-foreground">{skillName} Practice Test</p>
                 </div>
                 <div className="border-l-4 border-primary/30 pl-3">
                   <p className="text-sm font-bold text-foreground">Description</p>
