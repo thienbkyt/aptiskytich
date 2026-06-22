@@ -465,6 +465,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
@@ -484,6 +485,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
@@ -507,6 +509,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
@@ -528,6 +531,7 @@ const WritingExamEngine = ({
             isBookmarked={isBookmarked}
             onToggleBookmark={toggleBookmark}
             onSubmitTest={!submitted ? handleSubmit : undefined}
+            isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
           />
