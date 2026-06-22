@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Headphones, Search, Clock, Shuffle, ArrowRight, Loader2, Infinity as InfinityIcon } from "lucide-react";
+import { Headphones, Search, Clock, Shuffle, ArrowRight, Loader2, Infinity as InfinityIcon, Inbox } from "lucide-react";
 import { motion } from "framer-motion";
 import ListeningExamEngine from "@/components/listening/ListeningExamEngine";
 import ListeningMarathonEngine from "@/components/practice/ListeningMarathonEngine";
@@ -14,9 +14,7 @@ import ListeningMarathonEngine from "@/components/practice/ListeningMarathonEngi
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { ListeningPartType } from "@/components/listening/ListeningExamEngine";
-import {
-  mockListeningPart1, mockListeningPart2, mockListeningPart3, mockListeningPart4,
-} from "@/data/listeningQuestions";
+import { toast } from "sonner";
 import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4 } from "@/lib/examTransformers";
@@ -98,7 +96,6 @@ const Listening = () => {
       }
     } else {
       rehydratedRef.current = true;
-      handleStartMock(exam.partType);
     }
   }, [exam.active, exam.engineData, exam.examSetId, exam.partType, examSets, loading]);
 
@@ -151,24 +148,8 @@ const Listening = () => {
     if (examSets.length > 0) {
       handleStartFromDB(examSets[Math.floor(Math.random() * examSets.length)]);
     } else {
-      const parts: ListeningPartType[] = ["part1", "part2", "part3", "part4"];
-      handleStartMock(parts[Math.floor(Math.random() * parts.length)]);
+      toast("Chưa có đề để luyện");
     }
-  };
-
-  const handleStartMock = (partType: ListeningPartType) => {
-    const mockData: any = {};
-    switch (partType) {
-      case "part1": mockData.part1Questions = mockListeningPart1; break;
-      case "part2": mockData.part2Questions = mockListeningPart2; break;
-      case "part3": mockData.part3Questions = mockListeningPart3; break;
-      case "part4": mockData.part4Questions = mockListeningPart4; break;
-    }
-    setExam({
-      active: true, partType, testTitle: `${PARTS.find(p => p.id === partType)?.label} – Đề mẫu`,
-      showResults: false, correct: 0, total: 0, engineData: mockData, loadingExam: false,
-      examSetId: null, startedAt: Date.now(),
-    });
   };
 
   const handleComplete = async (correct: number, total: number, perQuestion?: any[]) => {
@@ -280,7 +261,6 @@ const Listening = () => {
   }
 
   const activePartInfo = PARTS.find((t) => t.id === activeTab);
-  const hasMockFallback = activeTab !== "full" && filteredSets.length === 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -359,7 +339,7 @@ const Listening = () => {
                 <div className="mb-6">
                   <h2 className="text-lg font-heading font-semibold text-foreground">{activePartInfo.label} – {activePartInfo.subtitle}</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {loading ? "Đang tải..." : `${filteredSets.length + (hasMockFallback ? 1 : 0)} bộ đề luyện tập`}
+                    {loading ? "Đang tải..." : `${filteredSets.length} bộ đề luyện tập`}
                   </p>
                 </div>
               )}
@@ -416,22 +396,11 @@ const Listening = () => {
                     </motion.div>
                   ))}
 
-                  {hasMockFallback && (
-                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-                      <div className="group relative tech-card bg-card border border-dashed border-border rounded-xl p-5 flex flex-col h-full">
-                        <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-muted text-muted-foreground border-0">Đề mẫu</Badge>
-                        <h3 className="text-xl font-heading font-bold text-foreground mb-3">Đề mẫu</h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                          <span className="flex items-center gap-1.5">🎧 Dữ liệu mẫu để luyện tập</span>
-                        </div>
-                        <div className="flex-1" />
-                        <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => handleStartMock(activeTab as ListeningPartType)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
-                            Luyện tập<ArrowRight className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
+                  {filteredSets.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                      <Inbox className="w-10 h-10 text-muted-foreground mb-3" />
+                      <p className="text-sm text-muted-foreground">Chưa có đề cho phần này</p>
+                    </div>
                   )}
                 </div>
               )}
