@@ -38,6 +38,7 @@ export const useUserExamProgress = () => {
         const map: ExamProgressMap = new Map();
         (data || []).forEach((r: any) => {
           if (!r.exam_set_id) return;
+          if (r.total <= 0 || r.score > r.total) return;
           const prev = map.get(r.exam_set_id);
           const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
           if (!prev || r.score > prev.bestScore) {
