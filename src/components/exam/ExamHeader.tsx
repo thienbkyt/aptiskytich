@@ -7,6 +7,7 @@ interface ExamHeaderProps {
   skillLabel: string;
   partLabel: string;
   onExit?: () => void;
+  onSubmitExit?: () => void;
   /** If true, skip the confirm popup and exit immediately on click. */
   immediateExit?: boolean;
   /** When provided, render a "← Quay lại kết quả" button (review mode). */
