@@ -13,6 +13,7 @@ import type {
 } from "@/data/speakingQuestions";
 import {
   buildSpeakingGradingSpecs, gradeSpeakingSpec, blobToBase64,
+  encodeAnalysisFeedback, decodeAnalysisFeedback,
   type SpeakingGradingResult, type SpeakingItemGrading,
 } from "@/components/speaking/speakingGrading";
 
