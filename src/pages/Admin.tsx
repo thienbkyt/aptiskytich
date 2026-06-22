@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle } from "lucide-react";
+import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
@@ -47,13 +47,22 @@ const Admin = () => {
               <Shield className="w-6 h-6 text-primary" />
               <h1 className="text-2xl font-heading font-extrabold text-foreground">Admin Import Center</h1>
             </div>
-            <Link
-              to="/admin/reports"
-              className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
-            >
-              <AlertTriangle className="w-4 h-4" />
-              Xem báo lỗi câu hỏi
-            </Link>
+            <div className="flex items-center gap-4 flex-wrap">
+              <Link
+                to="/admin/notifications"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                <Bell className="w-4 h-4" />
+                Thông báo người dùng
+              </Link>
+              <Link
+                to="/admin/reports"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Xem báo lỗi câu hỏi
+              </Link>
+            </div>
           </div>
 
           <Tabs defaultValue="import-center" className="space-y-6">

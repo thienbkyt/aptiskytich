@@ -29,6 +29,7 @@ const AdminReport = lazy(() => import("./pages/AdminReport"));
 const AdminReports = lazy(() => import("./pages/AdminReports"));
 const AdminReportPricing = lazy(() => import("./pages/AdminReportPricing"));
 const AdminStudents = lazy(() => import("./pages/AdminStudents"));
+const AdminNotifications = lazy(() => import("./pages/AdminNotifications"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SkillPractice = lazy(() => import("./pages/SkillPractice"));
 const VocabStudy = lazy(() => import("./pages/VocabStudy"));
@@ -100,6 +101,7 @@ const App = () => (
             <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/report/pricing" element={<AdminReportPricing />} />
             <Route path="/admin/students" element={<AdminStudents />} />
+            <Route path="/admin/notifications" element={<AdminNotifications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </PageTransition>
