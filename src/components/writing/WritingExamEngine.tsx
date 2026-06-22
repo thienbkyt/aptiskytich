@@ -444,7 +444,7 @@ const WritingExamEngine = ({
         skillLabel="Writing"
         partLabel={partLabel}
         onExit={onExit}
-        onSubmitExit={fullFlow ? undefined : () => { handleSubmit(); onExit?.(); }}
+        
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
       <div className={`flex-1 px-4 pt-8 ${reviewMode ? "pb-4" : "pb-20"} max-w-3xl mx-auto w-full`}>
