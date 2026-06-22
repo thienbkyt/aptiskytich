@@ -7,13 +7,14 @@ interface ExamHeaderProps {
   skillLabel: string;
   partLabel: string;
   onExit?: () => void;
+  onSubmitExit?: () => void;
   /** If true, skip the confirm popup and exit immediately on click. */
   immediateExit?: boolean;
   /** When provided, render a "← Quay lại kết quả" button (review mode). */
   onBackToResults?: () => void;
 }
 
-const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBackToResults }: ExamHeaderProps) => {
+const ExamHeader = ({ skillLabel, partLabel, onExit, onSubmitExit, immediateExit = false, onBackToResults }: ExamHeaderProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Mark body so global floating UI (e.g. Zalo FAB) hides while in-exam.
@@ -72,7 +73,7 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBa
           cancelText="Cancel"
           onSubmit={() => {
             setShowConfirm(false);
-            onExit?.();
+            (onSubmitExit ?? onExit)?.();
           }}
           onCancel={() => setShowConfirm(false)}
         />
