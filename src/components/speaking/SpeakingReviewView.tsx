@@ -196,6 +196,18 @@ const SpeakingReviewView = ({
                     {g.partScore.toFixed(1)} / {g.maxPoints}
                   </p>
                 </div>
+                <div className="rounded-lg border border-[#24085a]/20 bg-[#24085a]/5 px-3 py-2">
+                  <p className="text-[11px] font-semibold text-[#24085a] mb-0.5">📐 Tiêu chí chấm</p>
+                  <p className="text-[11px] text-foreground/80 leading-snug">
+                    AI Kỳ Tích chấm dựa trên: trả lời đúng & đủ ý đề · ngữ pháp · từ vựng · phát âm · độ trôi chảy.
+                  </p>
+                </div>
+                {(g as any).analysis && (
+                  <div className="rounded-lg border border-amber-300/40 bg-amber-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold text-amber-800 mb-0.5">🔎 Vì sao điểm này</p>
+                    <p className="text-xs text-foreground whitespace-pre-wrap leading-snug">{(g as any).analysis}</p>
+                  </div>
+                )}
                 {g.transcript && (
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
@@ -236,6 +248,7 @@ const SpeakingReviewView = ({
                   </div>
                 )}
               </div>
+
 
               {g.improvedVersion && (
                 <div className="bg-success/5 border border-success/20 rounded-xl p-4">
