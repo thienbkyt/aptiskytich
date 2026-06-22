@@ -314,7 +314,7 @@ const GrammarExamEngine = ({
             skillName="Grammar & Vocabulary"
             timeLeft={timeLeft}
             totalTime={timeLimit}
-            totalParts={questions.length}
+            totalParts={groups.length}
             totalMinutes={Math.ceil(timeLimit / 60)}
             onStart={() => setPhase("grammar_intro")}
             sections={sections}
