@@ -273,21 +273,21 @@ const GrammarExamEngine = ({
     },
     {
       title: testTitle,
-      questionCount: questions.length,
+      questionCount: groups.length,
       isCurrent: phase !== "instructions",
       onClick: () => {
         setPhase("practice");
         setCurrentIndex(0);
       },
-      questions: questions.map((_, qi) => ({
-        label: String(qi + 1).padStart(2, "0"),
-        seen: seenQuestions.has(qi),
-        attempted: isAnswered(qi),
-        bookmarked: bookmarked.has(qi),
-        isCurrent: phase === "practice" && currentIndex === qi,
+      questions: groups.map((g, gi) => ({
+        label: String(gi + 1).padStart(2, "0"),
+        seen: g.indices.some((i) => seenQuestions.has(i)),
+        attempted: g.indices.some((i) => isAnswered(i)),
+        bookmarked: g.indices.some((i) => bookmarked.has(i)),
+        isCurrent: phase === "practice" && currentGroupIdx === gi,
         onClick: () => {
           setPhase("practice");
-          setCurrentIndex(qi);
+          setCurrentIndex(g.startIdx);
         },
       })),
     },
