@@ -505,7 +505,7 @@ const BottomNavBar = ({
               </Button>
             )}
             {isLast && onSubmit ? (
-              <Button onClick={onSubmit} className="exam-nav-submit exam-nav-next-button gap-2 px-6">
+              <Button onClick={() => runNavLocked(onSubmit)} className="exam-nav-submit exam-nav-next-button gap-2 px-6">
                 {submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
