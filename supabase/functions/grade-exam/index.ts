@@ -530,8 +530,13 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         const rawScore = contentTotal - timePenalty - connectorPenalty - errorPenalty;
         const partScore = Math.round(Math.max(0, Math.min(mpTotal, rawScore)) * 10) / 10;
 
+        const analyses: string[] = Array.isArray(grading?.analyses)
+          ? grading.analyses.map((a: any) => String(a ?? ""))
+          : [];
         const payload = {
           transcript: grading?.transcript ?? "",
+          analyses,
+          analysis: analyses.filter(Boolean).join("\n\n"),
           addressPercents: percents.map((p) => Math.round(Math.max(0, Math.min(100, Number(p))) * 10) / 10),
           usedConnectors,
           grammarErrors: grading?.grammarErrors ?? [],
