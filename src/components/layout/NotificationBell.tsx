@@ -187,7 +187,7 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
             className={
               isMobile
                 ? "mt-2 w-full bg-white border border-[#4D0D0D]/10 rounded-2xl overflow-hidden shadow-[0_12px_32px_-12px_rgba(77,13,13,0.28)]"
-                : "absolute top-full right-0 mt-2 w-[360px] max-w-[calc(100vw-1rem)] bg-white border border-[#4D0D0D]/10 rounded-2xl overflow-hidden shadow-[0_12px_32px_-12px_rgba(77,13,13,0.28)] z-50"
+                : "fixed top-[64px] right-4 w-[360px] max-w-[calc(100vw-2rem)] bg-white border border-[#4D0D0D]/10 rounded-2xl overflow-hidden shadow-[0_12px_32px_-12px_rgba(77,13,13,0.28)] z-50"
             }
           >
             {/* Header */}
