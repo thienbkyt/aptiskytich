@@ -13,21 +13,19 @@ const CornerResultBadge = ({ item, label }: Props) => {
   if (value) {
     return (
       <span
-        className="inline-flex flex-col items-center justify-center select-none"
+        className="inline-flex items-center gap-1 select-none"
         style={{
-          minWidth: 48,
-          height: 48,
-          padding: "0 8px",
-          borderRadius: 14,
-          color: "#7c2d12",
-          background: "#fbbf24",
-          border: "2px solid #fff",
-          boxShadow: "0 5px 13px rgba(245,158,11,.55)",
-          lineHeight: 1.05,
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#92400e",
+          background: "#fef3c7",
+          padding: "3px 9px",
+          borderRadius: 999,
+          border: "1px solid #fde68a",
         }}
       >
-        <Trophy style={{ width: 15, height: 15 }} strokeWidth={2.5} />
-        <span style={{ fontSize: 12, fontWeight: 800, marginTop: 1 }}>{value}</span>
+        <Trophy style={{ width: 13, height: 13 }} strokeWidth={2.25} />
+        {value}
       </span>
     );
   }
