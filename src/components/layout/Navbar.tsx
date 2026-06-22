@@ -497,6 +497,7 @@ const Navbar = () => {
                       </span>
                       <span className="text-sm font-medium truncate">{user.email}</span>
                     </button>
+                    <NotificationBell variant="mobile" />
                     <Link to="/dashboard">
                       <Button variant="outline" className="w-full justify-center gap-2 text-sm">
                         <Flame className="w-4 h-4 text-primary" />
