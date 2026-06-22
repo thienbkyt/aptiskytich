@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,7 +24,7 @@ function translateAuthError(msg: string): string {
 }
 
 const ProfileModal = ({ open, onOpenChange }: Props) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [savingName, setSavingName] = useState(false);
@@ -141,6 +142,13 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
               className="w-full"
             >
               {changingPwd ? "Đang đổi..." : "Đổi mật khẩu"}
+            </Button>
+          </div>
+
+          {/* Logout */}
+          <div className="border-t border-border pt-4">
+            <Button variant="outline" className="w-full gap-2" onClick={() => { onOpenChange(false); signOut(); }}>
+              <LogOut className="w-4 h-4" /> Đăng xuất
             </Button>
           </div>
         </div>
