@@ -360,7 +360,7 @@ const ListeningExamEngine = ({
   ];
 
   const navProps = {
-    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : onPreviousPart,
+    onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : (onPreviousPart ?? (() => setPhase("listening_intro"))),
     onNext: currentIndex < totalQuestions - 1
       ? () => setCurrentIndex((p) => p + 1)
       : (!submitted ? handleSubmit : undefined),
