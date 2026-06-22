@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
+import { toScaledScore, getSkillBand } from "@/data/questions";
 
 interface FullPartSectionProps {
   skillName: string;
@@ -12,9 +13,10 @@ interface FullPartSectionProps {
   loading: boolean;
   onStart: (set: SkillFullSetItem) => void;
   progress?: ExamProgressMap;
+  skillKey?: "listening" | "reading" | "writing" | "speaking";
 }
 
-const FullPartSection = ({ skillName, sets, loading, onStart, progress }: FullPartSectionProps) => {
+const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey }: FullPartSectionProps) => {
 
   return (
     <div>
@@ -44,6 +46,15 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress }: FullPa
               ? set.examSetIds.filter((id) => progress.has(id)).length
               : 0;
             const allDone = doneCount > 0 && doneCount === set.examSetIds.length;
+            let bandLabel: string | null = null;
+            if (allDone && progress && skillKey) {
+              let sumScore = 0, sumTotal = 0;
+              set.examSetIds.forEach((id) => {
+                const p = progress.get(id);
+                if (p) { sumScore += p.bestScore; sumTotal += p.total; }
+              });
+              if (sumTotal > 0) bandLabel = getSkillBand(toScaledScore(sumScore, sumTotal), skillKey);
+            }
             return (
             <motion.div
               key={set.fullTestId}
@@ -52,6 +63,11 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress }: FullPa
               transition={{ duration: 0.25, delay: index * 0.03 }}
             >
               <div className="group relative bg-card border-2 border-[#CC1C01] rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
+                {bandLabel && (
+                  <span className="absolute top-3 right-3 text-xs font-semibold text-success bg-success/10 px-2 py-0.5 rounded-full">
+                    {bandLabel}
+                  </span>
+                )}
                 <Badge className="w-fit text-[11px] font-medium mb-3 bg-[#CC1C01]/10 text-[#CC1C01] border-0">
                   Full Part
                 </Badge>

@@ -284,7 +284,8 @@ const Writing = () => {
               <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
             ) : (
               <FullPartSection
-                progress={progress}
+                progress={gradedProgress}
+                skillKey="writing"
                 skillName="Writing"
                 sets={fullSets}
                 loading={fullLoading}

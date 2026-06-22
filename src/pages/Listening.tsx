@@ -327,6 +327,7 @@ const Listening = () => {
             ) : (
               <FullPartSection
                 progress={progress}
+                skillKey="listening"
                 skillName="Listening"
                 sets={fullSets}
                 loading={fullLoading}
