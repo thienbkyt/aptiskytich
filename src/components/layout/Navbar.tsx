@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
 import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 /* ── Nav data ── */
 const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
