@@ -1097,29 +1097,41 @@ const SpeakingExamEngine = ({
             </p>
 
             {/* Part 2 image */}
-            {partType === "part2" && part2Data?.imageUrl && (
+            {partType === "part2" && (
               <div className="mb-4">
-                <SignedImage
-                  src={part2Data.imageUrl}
-                  alt="Describe this picture"
-                  className="w-full max-w-md rounded-lg object-cover"
-                />
+                {part2Data?.imageUrl ? (
+                  <SignedImage
+                    src={part2Data.imageUrl}
+                    alt="Describe this picture"
+                    className="w-full max-w-md rounded-lg object-cover"
+                  />
+                ) : (
+                  <MissingMediaNotice kind="image" skill="speaking" partType="part2" questionNumber={currentIndex + 1} />
+                )}
               </div>
             )}
 
             {/* Part 3 two images side by side */}
             {partType === "part3" && part3Data && (
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <SignedImage
-                  src={part3Data.imageUrl1}
-                  alt="Picture 1"
-                  className="w-full rounded-lg object-cover h-56"
-                />
-                <SignedImage
-                  src={part3Data.imageUrl2}
-                  alt="Picture 2"
-                  className="w-full rounded-lg object-cover h-56"
-                />
+                {part3Data.imageUrl1 ? (
+                  <SignedImage
+                    src={part3Data.imageUrl1}
+                    alt="Picture 1"
+                    className="w-full rounded-lg object-cover h-56"
+                  />
+                ) : (
+                  <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={1} />
+                )}
+                {part3Data.imageUrl2 ? (
+                  <SignedImage
+                    src={part3Data.imageUrl2}
+                    alt="Picture 2"
+                    className="w-full rounded-lg object-cover h-56"
+                  />
+                ) : (
+                  <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={2} />
+                )}
               </div>
             )}
 
