@@ -28,8 +28,8 @@ const fadeUp = {
 const stats = [
   { value: "350+", label: "Đề thi thật" },
   { value: "1.166", label: "Câu hỏi luyện tập" },
-  { value: "5", label: "Kỹ năng đầy đủ" },
-  { value: "Miễn phí", label: "Toàn bộ tính năng" },
+  { value: "AI", label: "Chấm bài sát với thi thật" },
+  { value: "Mô phỏng", label: "Giống bài thi thật 100%" },
 ];
 
 const heroChips = [
@@ -126,7 +126,11 @@ const Index = () => {
                 className="text-base md:text-lg mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
                 style={{ color: "#6b4a4a" }}
               >
-                Đầy đủ 350+ đề, 5 kỹ năng. AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp — biết chính xác bạn đang ở đâu.
+                Đầy đủ 350+ đề thi Aptis thật, 5 kỹ năng.{"\u00A0"}AI Kỳ Tích chấm điểm
+                <br />
+                Speaking & Writing và trả band điểm ngay sau khi làm bài thi
+                <br />
+                Biết chính xác band điểm hiện tại.
               </motion.p>
 
               <motion.div
@@ -270,7 +274,7 @@ const Index = () => {
               Tính năng nổi bật
             </motion.div>
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
-              Trải nghiệm luyện thi cùng <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Kỳ Tích</span>
+              Trải nghiệm luyện thi cùng{"\u00A0"}<span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Kỳ Tích</span>
             </motion.h2>
             <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#8B6B5C" }}>
               Mọi công cụ bạn cần để luyện Aptis hiệu quả, ngay trên một nền tảng.
