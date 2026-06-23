@@ -13,7 +13,7 @@ export interface ListeningPart1Question {
 // Part 2: Matching Information – 4 speakers, match each to one of 6 info items
 export interface ListeningPart2Person {
   name: string; // "A" | "B" | "C" | "D"
-  audioUrl: string;
+  audioUrl: string | null;
 }
 
 export interface ListeningPart2InfoItem {
@@ -23,7 +23,7 @@ export interface ListeningPart2InfoItem {
 
 export interface ListeningPart2Question {
   id: number;
-  audioUrl: string;
+  audioUrl: string | null;
   questionText: string;
   persons: ListeningPart2Person[];
   infoItems: ListeningPart2InfoItem[];
@@ -38,7 +38,7 @@ export interface ListeningPart3Statement {
 
 export interface ListeningPart3Question {
   id: number;
-  audioUrl: string;
+  audioUrl: string | null;
   questionText: string;
   statements: ListeningPart3Statement[];
   script?: string;
