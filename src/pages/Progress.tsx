@@ -182,7 +182,7 @@ const ProgressPage = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl space-y-8">
+      <main className="flex-1 container mx-auto px-4 pt-24 pb-8 max-w-6xl space-y-8">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-heading font-bold text-foreground">Tiến độ học tập</h1>
           <p className="text-muted-foreground mt-1">Theo dõi sự tiến bộ của bạn qua thời gian</p>
