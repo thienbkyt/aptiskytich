@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { enforceDailyQuota } from "../_shared/quota.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
