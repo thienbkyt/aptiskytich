@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, Flame, BookOpen,
   Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
-  GripVertical, Timer,
+  GripVertical, Timer, ShieldCheck, Repeat, GraduationCap, Briefcase, Search,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -126,11 +126,7 @@ const Index = () => {
                 className="text-base md:text-lg mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
                 style={{ color: "#6b4a4a" }}
               >
-                Đầy đủ 350+ đề thi Aptis thật, 5 kỹ năng.{"\u00A0"}AI Kỳ Tích chấm điểm
-                <br />
-                Speaking & Writing và trả band điểm ngay sau khi làm bài thi
-                <br />
-                Biết chính xác band điểm hiện tại.
+                Sắp thi Aptis mà chưa biết mình đang ở band nào? Luyện với 350+ đề sát đề thật, AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp — biết chính xác bạn đang ở đâu.
               </motion.p>
 
               <motion.div
@@ -263,6 +259,79 @@ const Index = () => {
               </div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* Trust strip */}
+      <section className="relative py-8 md:py-10" style={{ background: "#FFFFFF" }}>
+        <div className="section-container">
+          <motion.div
+            variants={fadeUp} custom={0}
+            initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="max-w-5xl mx-auto rounded-[20px] bg-white border border-[#F2E2D4] px-6 py-5 md:px-8 md:py-6 grid grid-cols-1 md:grid-cols-3 md:divide-x md:divide-[#F2E2D4] gap-5 md:gap-0"
+            style={{ boxShadow: "0 8px 22px -14px rgba(204, 28, 1, 0.18)" }}
+          >
+            {[
+              { icon: ShieldCheck, title: "Bám sát format kỳ thi Aptis (British Council)", sub: "4 kỹ năng, đúng dạng bài & cách tính band", isNum: false },
+              { icon: Repeat, title: "1.000+", sub: "lượt luyện đã thực hiện", isNum: true },
+              { icon: Sparkles, title: "100+", sub: "bài Speaking–Writing đã được AI chấm", isNum: true },
+            ].map((t, i) => (
+              <div key={i} className="flex items-start gap-3 md:px-6 first:md:pl-0 last:md:pr-0">
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFE9DC] to-[#FFD6BC] flex items-center justify-center">
+                  <t.icon className="w-5 h-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <div
+                    className={`font-heading font-extrabold leading-tight ${t.isNum ? "text-2xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]" : "text-sm md:text-base"}`}
+                    style={t.isNum ? undefined : { color: "#4D0D0D" }}
+                  >
+                    {t.title}
+                  </div>
+                  <div className="text-xs md:text-sm mt-1" style={{ color: "#8B6B5C" }}>{t.sub}</div>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* For whom */}
+      <section className="relative py-16 md:py-20" style={{ background: "#FFFFFF" }}>
+        <div className="section-container">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
+            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
+              Phù hợp với bạn nếu
+            </motion.div>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold" style={{ color: "#4D0D0D" }}>
+              Aptis Kỳ Tích dành cho{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">ai?</span>
+            </motion.h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+            {[
+              { icon: GraduationCap, title: "Sinh viên cần chuẩn đầu ra", desc: "Cần đạt Aptis để xét tốt nghiệp / điều kiện ra trường." },
+              { icon: Briefcase, title: "Người đi làm", desc: "Cần chứng chỉ Aptis để thăng tiến, ứng tuyển, định cư." },
+              { icon: Target, title: "Người sắp thi", desc: "Muốn luyện sát đề và bấm giờ y như thi thật." },
+              { icon: Search, title: "Chưa rõ trình độ", desc: "Không biết mình band nào, cần kiểm tra nhanh." },
+            ].map((p, i) => (
+              <motion.div
+                key={p.title}
+                variants={fadeUp} custom={i}
+                initial="hidden" whileInView="visible" viewport={{ once: true }}
+                className="rounded-[22px] bg-white border border-[#F2E2D4] p-6 transition-all hover:-translate-y-1 hover:shadow-lg"
+                style={{ boxShadow: "0 8px 20px -14px rgba(204, 28, 1, 0.18)" }}
+              >
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center mb-4">
+                  <p.icon className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-heading font-extrabold text-base md:text-lg leading-tight mb-2" style={{ color: "#4D0D0D" }}>
+                  {p.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: "#8B6B5C" }}>{p.desc}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
