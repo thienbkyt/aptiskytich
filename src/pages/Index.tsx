@@ -74,13 +74,6 @@ const showcasePanels = [
   },
 ];
 
-const examSections = [
-  { skill: "Grammar & Vocabulary", questions: "25 câu", time: "25 phút" },
-  { skill: "Reading", questions: "4 phần", time: "30 phút" },
-  { skill: "Listening", questions: "25 câu", time: "25 phút" },
-  { skill: "Speaking", questions: "4 phần", time: "12 phút" },
-  { skill: "Writing", questions: "4 phần", time: "25 phút" },
-];
 
 const Index = () => {
   return (
