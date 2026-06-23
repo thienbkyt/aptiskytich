@@ -74,24 +74,12 @@ const showcasePanels = [
   },
 ];
 
-const testimonials = [
-  { name: "Nguyễn Thị Mai", score: "B2", text: "Chỉ luyện 7 ngày mà đạt B2, không tin nổi! Cảm ơn Aptis Kỳ Tích.", avatar: "NM" },
-  { name: "Trần Văn Hùng", score: "B1", text: "Giao diện dễ dùng, câu hỏi sát đề thi thật. Mình đã pass Aptis lần đầu.", avatar: "TH" },
-  { name: "Lê Phương Anh", score: "B2", text: "Tính năng streak giúp mình duy trì học mỗi ngày. Đạt B2 chỉ sau 2 tuần.", avatar: "LA" },
-];
-
 const examSections = [
   { skill: "Grammar & Vocabulary", questions: "25 câu", time: "25 phút" },
   { skill: "Reading", questions: "4 phần", time: "30 phút" },
   { skill: "Listening", questions: "25 câu", time: "25 phút" },
   { skill: "Speaking", questions: "4 phần", time: "12 phút" },
   { skill: "Writing", questions: "4 phần", time: "25 phút" },
-];
-
-const trustBadges = [
-  { icon: Cpu, label: "AI Kỳ Tích chấm tự động" },
-  { icon: ShieldCheck, label: "Sát đề thi thật 100%" },
-  { icon: Sparkles, label: "5,000+ học viên" },
 ];
 
 const Index = () => {
