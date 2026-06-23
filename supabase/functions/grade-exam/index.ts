@@ -841,6 +841,20 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       };
     }
 
+    // Persist to cache so identical resubmits don't burn AI again.
+    if (userId) {
+      try {
+        await serviceClient
+          .from("grading_cache")
+          .upsert(
+            { user_id: userId, request_hash: requestHash, response: payload },
+            { onConflict: "user_id,request_hash" },
+          );
+      } catch (e) {
+        console.warn("[grade-exam] cache write failed:", (e as any)?.message || e);
+      }
+    }
+
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
