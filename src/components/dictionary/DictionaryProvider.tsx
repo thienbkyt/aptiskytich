@@ -202,7 +202,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         setResult(data as DictResult);
       } catch (e: any) {
         console.error("Dictionary lookup failed:", e);
-        setError("Không thể tra từ này. Thử lại sau.");
+        const msg = e?.message || "";
+        setError(/giới hạn hôm nay/i.test(msg) ? msg : "Không thể tra từ này. Thử lại sau.");
       } finally {
         setLoading(false);
       }
