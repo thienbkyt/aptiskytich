@@ -131,6 +131,8 @@ const SpeakingExamEngine = ({
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
+  const [micError, setMicError] = useState<string | null>(null);
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
