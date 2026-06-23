@@ -696,17 +696,28 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         // 3) Grade in a separate try/catch — recordings already saved above.
         const perPartResults: Awaited<ReturnType<typeof gradeSpeakingItems>>[] = [];
         let totalScore = 0;
+        let speakingFailedItems = 0;
         try {
           for (const entry of orderedEntries) {
             const specs = entry.sub.items.map((i) => i.spec);
             const blobs = entry.sub.items.map((i) => i.blob);
             const actuals = entry.sub.items.map((i) => i.actualSpoken);
             const results = await gradeSpeakingItems(specs, blobs, actuals);
-            for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
+            for (const r of results) {
+              if (r && !("error" in r)) totalScore += r.partScore || 0;
+              else speakingFailedItems += 1;
+            }
             perPartResults.push(results);
           }
         } catch (e) {
           console.warn("[FullTestEngine] speaking grading failed", e);
+        }
+        if (speakingFailedItems > 0) {
+          toast.error(
+            speakingFailedItems === 1
+              ? "Một câu Speaking chưa chấm được, vui lòng thử lại."
+              : `${speakingFailedItems} câu Speaking chưa chấm được, vui lòng thử lại.`,
+          );
         }
 
         // 4) Save per-question gradings + bake recordingPath + AI into snapshot + update score.
