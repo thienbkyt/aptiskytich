@@ -3,7 +3,7 @@
 // Part 1: Word Recognition – Listen to short audio, pick the word/phrase you hear
 export interface ListeningPart1Question {
   id: number;
-  audioUrl: string;
+  audioUrl: string | null;
   questionText?: string;
   options: string[];
   correct: number;
