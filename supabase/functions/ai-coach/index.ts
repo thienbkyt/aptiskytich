@@ -6,6 +6,8 @@
 // - Per-user in-memory rate limit (30/min) with Retry-After header
 // - Analytics insertion into usage_events
 
+import { requireUser } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
