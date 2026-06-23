@@ -183,9 +183,10 @@ export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Questio
 export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Question[] => {
   if (rows.length === 0) return [];
   const first = rows[0];
+  if (!first.audio_url) console.warn("[toListeningPart3] missing audio_url", { id: first.id });
   return [{
     id: 1,
-    audioUrl: first.audio_url || "",
+    audioUrl: first.audio_url ?? null,
     questionText: first.question_text || "",
     statements: rows.map((r) => ({
       text: r.question_text || "",
