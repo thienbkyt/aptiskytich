@@ -1,5 +1,6 @@
 import { Bookmark, Check, X } from "lucide-react";
 import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
+import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
