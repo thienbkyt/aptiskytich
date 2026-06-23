@@ -161,12 +161,13 @@ export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Questio
   if (rows.length === 0) return [];
   const first = rows[0];
   const ed: any = first.extra_data || {};
-  const fallbackAudio = first.audio_url || "";
-  const rawPersons: Array<{ name: string; audioUrl: string }> = Array.isArray(ed.persons) ? ed.persons : [];
+  const fallbackAudio = first.audio_url ?? null;
+  if (!fallbackAudio) console.warn("[toListeningPart2] missing audio_url", { id: first.id });
+  const rawPersons: Array<{ name: string; audioUrl: string | null }> = Array.isArray(ed.persons) ? ed.persons : [];
   const byName = new Map(rawPersons.map((p) => [p.name, p]));
   const persons = ["A", "B", "C", "D"].map((name) => {
     const existing = byName.get(name);
-    return { name, audioUrl: existing?.audioUrl || fallbackAudio };
+    return { name, audioUrl: existing?.audioUrl ?? fallbackAudio };
   });
   return [{
     id: 1,
