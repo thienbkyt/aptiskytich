@@ -1,5 +1,6 @@
 import { Bookmark, Check, X } from "lucide-react";
 import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
+import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
@@ -55,7 +56,7 @@ const ListeningPart2Match = ({
 
   const current: Part2AnswerMap = answers[currentIndex] || {};
   // Use first person's audio (or q.audioUrl) for the single Play/Stop button
-  const audioSrc = q.audioUrl || q.persons?.[0]?.audioUrl || "";
+  const audioSrc = q.audioUrl || q.persons?.[0]?.audioUrl || null;
 
   const handleSelect = (speakerName: string, text: string) => {
     if (reveal) return;
@@ -102,7 +103,11 @@ const ListeningPart2Match = ({
           className="flex-1"
         >
           <p className="text-sm text-foreground mb-1">{q.questionText}</p>
-          <LimitedAudioPlayer src={audioSrc} maxPlays={2} questionKey={q.id} />
+          {audioSrc ? (
+            <LimitedAudioPlayer src={audioSrc} maxPlays={2} questionKey={q.id} />
+          ) : (
+            <MissingMediaNotice kind="audio" skill="listening" partType="part2" questionNumber={currentIndex + 1} />
+          )}
 
           <div className="mt-4 space-y-3">
             {q.persons.map((person) => {

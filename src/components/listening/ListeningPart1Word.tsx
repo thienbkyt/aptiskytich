@@ -1,5 +1,6 @@
 import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
 import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
+import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
@@ -90,7 +91,16 @@ const ListeningPart1Word = ({
           <p className="text-sm text-foreground mb-1">
             {q.questionText || "Which word do you hear?"}
           </p>
-          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+          {q.audioUrl ? (
+            <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+          ) : (
+            <MissingMediaNotice
+              kind="audio"
+              skill="listening"
+              partType="part1"
+              questionNumber={currentIndex + 1}
+            />
+          )}
 
           <div className="mt-4 border border-border rounded-md overflow-hidden bg-background">
             {q.options.map((opt, i) => {

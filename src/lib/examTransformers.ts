@@ -142,26 +142,32 @@ export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Questio
       }
       return true;
     })
-    .map((r, i) => ({
-      id: i + 1,
-      audioUrl: r.audio_url || "",
-      questionText: r.question_text || "",
-      options: r.options,
-      correct: r.correct_answer as number,
-      script: r.explanation || "",
-    }));
+    .map((r, i) => {
+      if (!r.audio_url) {
+        console.warn("[toListeningPart1] missing audio_url", { id: r.id });
+      }
+      return {
+        id: i + 1,
+        audioUrl: r.audio_url ?? null,
+        questionText: r.question_text || "",
+        options: r.options,
+        correct: r.correct_answer as number,
+        script: r.explanation || "",
+      };
+    });
 
 
 export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] => {
   if (rows.length === 0) return [];
   const first = rows[0];
   const ed: any = first.extra_data || {};
-  const fallbackAudio = first.audio_url || "";
-  const rawPersons: Array<{ name: string; audioUrl: string }> = Array.isArray(ed.persons) ? ed.persons : [];
+  const fallbackAudio = first.audio_url ?? null;
+  if (!fallbackAudio) console.warn("[toListeningPart2] missing audio_url", { id: first.id });
+  const rawPersons: Array<{ name: string; audioUrl: string | null }> = Array.isArray(ed.persons) ? ed.persons : [];
   const byName = new Map(rawPersons.map((p) => [p.name, p]));
   const persons = ["A", "B", "C", "D"].map((name) => {
     const existing = byName.get(name);
-    return { name, audioUrl: existing?.audioUrl || fallbackAudio };
+    return { name, audioUrl: existing?.audioUrl ?? fallbackAudio };
   });
   return [{
     id: 1,
@@ -177,9 +183,10 @@ export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Questio
 export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Question[] => {
   if (rows.length === 0) return [];
   const first = rows[0];
+  if (!first.audio_url) console.warn("[toListeningPart3] missing audio_url", { id: first.id });
   return [{
     id: 1,
-    audioUrl: first.audio_url || "",
+    audioUrl: first.audio_url ?? null,
     questionText: first.question_text || "",
     statements: rows.map((r) => ({
       text: r.question_text || "",
@@ -215,9 +222,10 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
         options: r.options || [],
         correct: r.correct_answer as number,
       }));
+    if (!a.audio_url) console.warn("[toListeningPart4] missing audio_url", { id: a.id });
     clips.push({
       id: clips.length + 1,
-      audioUrl: a.audio_url || "",
+      audioUrl: a.audio_url ?? null,
       questions,
       script: a.explanation || "",
     });
@@ -243,8 +251,9 @@ export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {
 export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
   const first = rows[0];
   const ed = first?.extra_data || {};
+  if (!first?.image_url) console.warn("[toSpeakingPart2] missing image_url", { id: first?.id });
   return {
-    imageUrl: first?.image_url || "",
+    imageUrl: first?.image_url ?? null,
     prompt: first?.question_text || "",
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 45,
@@ -256,9 +265,12 @@ export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
 export const toSpeakingPart3 = (rows: ExamQuestionRow[]): SpeakingPart3Data => {
   const first = rows[0];
   const ed = first?.extra_data || {};
+  const img1 = ed.imageUrl1 ?? first?.image_url ?? null;
+  const img2 = ed.imageUrl2 ?? null;
+  if (!img1 || !img2) console.warn("[toSpeakingPart3] missing image_url", { id: first?.id, img1: !!img1, img2: !!img2 });
   return {
-    imageUrl1: ed.imageUrl1 || first?.image_url || "",
-    imageUrl2: ed.imageUrl2 || "",
+    imageUrl1: img1,
+    imageUrl2: img2,
     prompt: first?.question_text || "",
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 45,
@@ -272,7 +284,7 @@ export const toSpeakingPart4 = (rows: ExamQuestionRow[]): SpeakingPart4Data => {
   const ed = first?.extra_data || {};
   return {
     topic: ed.topic || first?.question_text || "",
-    imageUrl: first?.image_url || "",
+    imageUrl: first?.image_url ?? undefined,
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 60,
     speakTime: ed.speakTime ?? 120,

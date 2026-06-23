@@ -7,6 +7,7 @@ import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
+import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -130,6 +131,8 @@ const SpeakingExamEngine = ({
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
+  const [micError, setMicError] = useState<string | null>(null);
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
@@ -376,21 +379,67 @@ const SpeakingExamEngine = ({
     const recordingIndex = currentIndexRef.current;
     setSpeakTimeLeft(speakTime);
     setCanFinish(false);
+    setMicError(null);
     setPhase("recording");
 
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
-        stream.getTracks().forEach(t => t.stop());
-        return;
-      }
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err: any) {
+      console.error("[SpeakingExamEngine] mic permission error:", err);
+      // Pause the countdown — we don't want to silently count this as recorded time.
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+      const name = err?.name || "";
+      const msg = name === "NotAllowedError" || name === "SecurityError"
+        ? "Trình duyệt đã chặn quyền micro. Hãy cho phép micro trong cài đặt trình duyệt rồi bấm Thử lại."
+        : name === "NotFoundError" || name === "OverconstrainedError"
+        ? "Không tìm thấy micro. Hãy cắm/chọn lại thiết bị micro rồi bấm Thử lại."
+        : "Không truy cập được micro. Hãy kiểm tra thiết bị rồi bấm Thử lại.";
+      setMicError(msg);
+      return;
+    }
+
+    if (token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    try {
       streamRef.current = stream;
+
+      // Detect mid-recording disconnects (mic unplugged, OS revokes permission, etc.)
+      stream.getAudioTracks().forEach((track) => {
+        track.onended = () => {
+          if (token !== flowTokenRef.current) return;
+          if (!streamRef.current) return; // already cleaned up normally
+          console.warn("[SpeakingExamEngine] mic track ended unexpectedly");
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+          // Discard the partial chunk so we don't save a corrupted recording silently.
+          suppressRecordingSaveRef.current = true;
+          try {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+              mediaRecorderRef.current.stop();
+            }
+          } catch { /* ignore */ }
+          setMicError("Mất kết nối micro giữa chừng. Đã tạm dừng đồng hồ. Hãy kiểm tra thiết bị rồi bấm Thử lại.");
+        };
+      });
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onerror = (e: any) => {
+        console.error("[SpeakingExamEngine] mediaRecorder error", e);
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+        setMicError("Lỗi khi ghi âm. Đã tạm dừng đồng hồ. Bấm Thử lại để ghi lại.");
       };
 
       mediaRecorder.onstop = () => {
@@ -475,6 +524,11 @@ const SpeakingExamEngine = ({
 
     } catch (err) {
       console.error("Mic error:", err);
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+      try { stream.getTracks().forEach(t => t.stop()); } catch { /* ignore */ }
+      streamRef.current = null;
+      setMicError("Không khởi tạo được ghi âm. Bấm Thử lại để thử lại.");
     }
   }, [partType]);
 
@@ -1065,6 +1119,8 @@ const SpeakingExamEngine = ({
   }
 
 
+
+
   // Reading-question, Prep or Recording phase
   const question = getCurrentQuestion();
   const isRec = phase === "recording";
@@ -1074,6 +1130,28 @@ const SpeakingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      {micError && (
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center px-4">
+          <div role="alertdialog" aria-modal="true" className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">!</div>
+              <div className="flex-1">
+                <h3 className="font-heading font-bold text-gray-900 mb-1">Vấn đề với micro</h3>
+                <p className="text-sm text-gray-700">{micError}</p>
+                <p className="text-xs text-gray-500 mt-2">Đồng hồ đã tạm dừng cho đến khi bạn ghi lại.</p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => { setMicError(null); startRecording(); }}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90"
+              >
+                Thử lại
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
       <ExamReportButton
         examQuestionId={sourceQuestionIds?.[currentIndex] ?? sourceQuestionIds?.[0] ?? null}
@@ -1096,29 +1174,41 @@ const SpeakingExamEngine = ({
             </p>
 
             {/* Part 2 image */}
-            {partType === "part2" && part2Data?.imageUrl && (
+            {partType === "part2" && (
               <div className="mb-4">
-                <SignedImage
-                  src={part2Data.imageUrl}
-                  alt="Describe this picture"
-                  className="w-full max-w-md rounded-lg object-cover"
-                />
+                {part2Data?.imageUrl ? (
+                  <SignedImage
+                    src={part2Data.imageUrl}
+                    alt="Describe this picture"
+                    className="w-full max-w-md rounded-lg object-cover"
+                  />
+                ) : (
+                  <MissingMediaNotice kind="image" skill="speaking" partType="part2" questionNumber={currentIndex + 1} />
+                )}
               </div>
             )}
 
             {/* Part 3 two images side by side */}
             {partType === "part3" && part3Data && (
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <SignedImage
-                  src={part3Data.imageUrl1}
-                  alt="Picture 1"
-                  className="w-full rounded-lg object-cover h-56"
-                />
-                <SignedImage
-                  src={part3Data.imageUrl2}
-                  alt="Picture 2"
-                  className="w-full rounded-lg object-cover h-56"
-                />
+                {part3Data.imageUrl1 ? (
+                  <SignedImage
+                    src={part3Data.imageUrl1}
+                    alt="Picture 1"
+                    className="w-full rounded-lg object-cover h-56"
+                  />
+                ) : (
+                  <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={1} />
+                )}
+                {part3Data.imageUrl2 ? (
+                  <SignedImage
+                    src={part3Data.imageUrl2}
+                    alt="Picture 2"
+                    className="w-full rounded-lg object-cover h-56"
+                  />
+                ) : (
+                  <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={2} />
+                )}
               </div>
             )}
 

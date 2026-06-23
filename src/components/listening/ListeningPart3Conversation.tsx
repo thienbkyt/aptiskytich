@@ -1,5 +1,6 @@
 import { Bookmark, Check, X } from "lucide-react";
 import LimitedAudioPlayer from "@/components/exam/LimitedAudioPlayer";
+import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
@@ -91,7 +92,11 @@ const ListeningPart3Conversation = ({
       <div className="flex-1">
         <p className="text-base text-foreground leading-relaxed mb-4">{q.questionText}</p>
 
-        <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+        {q.audioUrl ? (
+          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+        ) : (
+          <MissingMediaNotice kind="audio" skill="listening" partType="part3" questionNumber={currentIndex + 1} />
+        )}
 
         <p className="text-sm text-foreground mt-8 mb-6">Who expresses which opinion?</p>
 

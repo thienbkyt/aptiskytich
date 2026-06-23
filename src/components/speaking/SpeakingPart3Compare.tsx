@@ -29,11 +29,11 @@ const SpeakingPart3Compare = ({ data, recording, onRecordingComplete }: Props) =
       </h2>
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="rounded-xl overflow-hidden border border-border">
-          <SignedImage src={data.imageUrl1} alt="Picture 1" className="w-full h-48 object-cover" />
+          <SignedImage src={data.imageUrl1 ?? ""} alt="Picture 1" className="w-full h-48 object-cover" />
           <p className="text-xs text-center py-2 text-muted-foreground font-medium">Picture 1</p>
         </div>
         <div className="rounded-xl overflow-hidden border border-border">
-          <SignedImage src={data.imageUrl2} alt="Picture 2" className="w-full h-48 object-cover" />
+          <SignedImage src={data.imageUrl2 ?? ""} alt="Picture 2" className="w-full h-48 object-cover" />
           <p className="text-xs text-center py-2 text-muted-foreground font-medium">Picture 2</p>
         </div>
       </div>
