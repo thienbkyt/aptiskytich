@@ -611,6 +611,7 @@ const VocabListDetail = () => {
       return;
     }
 
+    const prevWords = words;
     const newWords = [...words];
     const [moved] = newWords.splice(dragIndex, 1);
     newWords.splice(dropIndex, 0, moved);
@@ -618,18 +619,8 @@ const VocabListDetail = () => {
     setDragOverIndex(null);
     dragIndexRef.current = null;
 
-    // Persist new order
-    const updates = newWords.map((w, i) => ({
-      id: w.id,
-      sort_order: i,
-      // required fields for upsert
-      user_id: w.id, // placeholder, won't change
-      word: w.word,
-      vocab_set_id: listId!,
-    }));
-
-    // Update each item's sort_order
-    await Promise.all(
+    // Persist new order — check for failures and rollback if needed
+    const results = await Promise.all(
       newWords.map((w, i) =>
         supabase
           .from("vocab_items")
@@ -637,6 +628,15 @@ const VocabListDetail = () => {
           .eq("id", w.id)
       )
     );
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      setWords(prevWords);
+      toast({
+        title: "Không lưu được thứ tự mới",
+        description: failed.error.message,
+        variant: "destructive",
+      });
+    }
   }, [words, listId]);
 
   const handleDragEnd = useCallback(() => {
@@ -1384,8 +1384,8 @@ const VocabListDetail = () => {
 
               ) : (
                 <>
-                  <div className="border border-border rounded-md max-h-[300px] overflow-y-auto">
-                    <table className="w-full text-sm">
+                  <div className="border border-border rounded-md max-h-[300px] overflow-auto">
+                    <table className="w-full min-w-[480px] text-sm">
                       <thead className="bg-muted sticky top-0">
                         <tr>
                           <th className="px-2 py-2 text-left w-10"></th>
@@ -1484,8 +1484,8 @@ const VocabListDetail = () => {
 
               {bulkRows.length > 0 && (
                 <>
-                  <div className="border border-border rounded-md overflow-hidden">
-                    <table className="w-full text-sm">
+                  <div className="border border-border rounded-md overflow-x-auto">
+                    <table className="w-full min-w-[480px] text-sm">
                       <thead className="bg-muted">
                         <tr>
                           <th className="px-2 py-2 text-left w-10"></th>
