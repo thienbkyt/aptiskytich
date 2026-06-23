@@ -6,26 +6,38 @@ import type { SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingP
 import type { WritingPart1Data, WritingPart2Data, WritingPart3Data, WritingPart4Data } from "@/data/writingQuestions";
 
 // ─── Grammar ────────────────────────────────────────────────
-export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] =>
-  rows.map((r, i) => {
+export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] => {
+  const result: Question[] = [];
+  rows.forEach((r, i) => {
+    if (r.correct_answer === null || r.correct_answer === undefined) {
+      console.warn("[toGrammarQuestions] dropping question with missing correct_answer", {
+        index: i,
+        id: r.id,
+        question_text: r.question_text,
+      });
+      return;
+    }
     const qt: Question["question_type"] =
       r.question_type === "fill_in_blank"
         ? "fill-in-blank"
         : r.question_type === "vocab_matching"
         ? "vocab_matching"
         : "mcq";
-    return {
-      id: i + 1,
+    result.push({
+      id: result.length + 1,
       skill: "grammar" as const,
       question_text: r.question_text,
       options: r.options,
-      correct_answer: r.correct_answer ?? 0,
+      correct_answer: r.correct_answer as number,
       explanation: r.explanation || "",
       question_type: qt,
       audio_url: r.audio_url,
       extra_data: { ...(r.extra_data || {}), _eqId: r.id },
-    };
+    });
   });
+  return result;
+};
+
 
 // ─── Reading ────────────────────────────────────────────────
 export const toReadingPart1 = (rows: ExamQuestionRow[]): ReadingSentenceQuestion | null => {
