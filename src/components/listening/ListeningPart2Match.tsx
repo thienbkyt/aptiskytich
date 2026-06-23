@@ -103,7 +103,11 @@ const ListeningPart2Match = ({
           className="flex-1"
         >
           <p className="text-sm text-foreground mb-1">{q.questionText}</p>
-          <LimitedAudioPlayer src={audioSrc} maxPlays={2} questionKey={q.id} />
+          {audioSrc ? (
+            <LimitedAudioPlayer src={audioSrc} maxPlays={2} questionKey={q.id} />
+          ) : (
+            <MissingMediaNotice kind="audio" skill="listening" partType="part2" questionNumber={currentIndex + 1} />
+          )}
 
           <div className="mt-4 space-y-3">
             {q.persons.map((person) => {
