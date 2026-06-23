@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import GradientText from "@/components/ui/gradient-text";
+
 import AnimatedGrid from "@/components/ui/animated-grid";
 import ParticlesBackground from "@/components/ui/particles-background";
 import SpotlightCard from "@/components/ui/spotlight-card";
