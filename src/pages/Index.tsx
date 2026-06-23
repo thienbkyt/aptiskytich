@@ -198,7 +198,7 @@ const Index = () => {
                 </div>
                 {/* Screenshot */}
                 <img
-                  src={heroAiFeedbackAsset.url}
+                  src={writingResultAsset.url}
                   alt="Kết quả Writing 44/50 — Trình độ B2 chấm bởi AI Kỳ Tích"
                   className="block w-full h-auto rounded-b-[20px]"
                   loading="eager"
@@ -401,7 +401,7 @@ const Index = () => {
                           <span className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
                         </div>
                         {p.mock === "ai" && (
-                          <img src={writingResultAsset.url} alt="AI chấm Writing — band B2" className="block w-full h-auto" loading="lazy" />
+                          <img src={heroAiFeedbackAsset.url} alt="AI chấm Writing — band B2" className="block w-full h-auto" loading="lazy" />
                         )}
                         {p.mock === "reading" && (
                           <div className="p-5 md:p-6 bg-white">
