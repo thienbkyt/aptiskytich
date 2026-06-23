@@ -53,7 +53,7 @@ export interface ListeningPart4ClipQuestion {
 
 export interface ListeningPart4Clip {
   id: number;
-  audioUrl: string;
+  audioUrl: string | null;
   questions: ListeningPart4ClipQuestion[];
   script?: string;
 }
