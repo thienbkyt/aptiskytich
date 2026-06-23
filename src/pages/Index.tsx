@@ -41,12 +41,39 @@ const heroChips = [
 ];
 
 const features = [
-  { icon: Cpu, title: "AI Kỳ Tích chấm Speaking & Writing", desc: "Phân tích phát âm, ngữ pháp, từ vựng theo CEFR." },
-  { icon: Clock, title: "Thi thử 10 phút", desc: "Kiểm tra trình độ nhanh với bài thi mini Aptis." },
-  { icon: BarChart3, title: "Theo dõi tiến bộ", desc: "Biểu đồ chi tiết theo từng kỹ năng." },
-  { icon: Flame, title: "Chuỗi học tập", desc: "Duy trì streak hàng ngày để tạo thói quen." },
-  { icon: Target, title: "Luyện theo kỹ năng", desc: "5 kỹ năng Aptis riêng biệt + Vocab 3R." },
-  { icon: Zap, title: "Giải thích chi tiết", desc: "Mỗi câu hỏi đều có đáp án & giải thích." },
+  { icon: Target, title: "Mô phỏng giống đề thật 100%", desc: "Giao diện kéo thả, dropdown, timer y hệt bài thi Aptis." },
+  { icon: Layers, title: "Đầy đủ đề thật, cập nhật liên tục", desc: "350+ đề bám sát kỳ thi, bổ sung thường xuyên." },
+  { icon: Cpu, title: "AI chấm & chữa Speaking–Writing", desc: "Sát thực tế, trả kết quả & nhận xét ngay." },
+  { icon: TrendingUp, title: "Nắm rõ band điểm", desc: "Biết chính xác band từng kỹ năng để ôn đúng chỗ yếu." },
+  { icon: Lightbulb, title: "Giải thích chi tiết từng câu", desc: "Mỗi câu có đáp án + lý do, hiểu sâu không học vẹt." },
+  { icon: Flame, title: "Theo dõi tiến bộ + streak", desc: "Biểu đồ tiến bộ từng kỹ năng, giữ thói quen mỗi ngày." },
+];
+
+const showcasePanels = [
+  {
+    num: "01",
+    title: "Thi thử & AI chấm Speaking–Writing",
+    desc: "Làm bài mô phỏng đề thật, AI Kỳ Tích chấm cả Speaking & Writing — trả điểm, band và nhận xét chi tiết ngay sau khi nộp.",
+    features: ["Chấm theo tiêu chí CEFR", "Chỉ rõ lỗi & cách sửa"],
+    bg: "linear-gradient(135deg, #FFF1E6 0%, #FFE2D0 100%)",
+    mock: "ai" as const,
+  },
+  {
+    num: "02",
+    title: "Luyện theo kỹ năng sát đề thật",
+    desc: "5 kỹ năng riêng biệt với đúng thao tác bài thi: kéo thả, dropdown inline, bấm giờ. Luyện từng phần hoặc trọn bộ như thi thật.",
+    features: ["Kéo-thả, dropdown, timer y như thật", "Luyện từng part hoặc full test"],
+    bg: "linear-gradient(135deg, #FFE9DC 0%, #FFD6BC 100%)",
+    mock: "reading" as const,
+  },
+  {
+    num: "03",
+    title: "Theo dõi tiến bộ & giữ streak",
+    desc: "Xem band tăng theo từng kỹ năng, biểu đồ tiến bộ theo thời gian và giữ chuỗi streak để học đều mỗi ngày.",
+    features: ["Biểu đồ tiến bộ từng kỹ năng", "Streak & lịch sử học tập"],
+    bg: "linear-gradient(135deg, #FFEFE3 0%, #FFDFC8 100%)",
+    mock: "dashboard" as const,
+  },
 ];
 
 const testimonials = [
