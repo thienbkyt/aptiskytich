@@ -113,6 +113,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
+  useExitWarning(phase !== "loading" && phase !== "completed" && phase !== "finalizing-writing");
   const { gradeExam } = useExamGrading();
 
 
