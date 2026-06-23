@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useExitWarning } from "@/hooks/useExitWarning";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
