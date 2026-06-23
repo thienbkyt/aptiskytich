@@ -56,7 +56,7 @@ const ListeningPart2Match = ({
 
   const current: Part2AnswerMap = answers[currentIndex] || {};
   // Use first person's audio (or q.audioUrl) for the single Play/Stop button
-  const audioSrc = q.audioUrl || q.persons?.[0]?.audioUrl || "";
+  const audioSrc = q.audioUrl || q.persons?.[0]?.audioUrl || null;
 
   const handleSelect = (speakerName: string, text: string) => {
     if (reveal) return;
