@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useExitWarning } from "@/hooks/useExitWarning";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
 import {
