@@ -113,6 +113,7 @@ const ReadingExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  useExitWarning(hasStarted && !submitted && !reviewMode);
 
   // Reveal-on-demand for practice mode (per page key).
   const [revealedKeys, setRevealedKeys] = useState<Set<number>>(new Set());
