@@ -100,6 +100,7 @@ const WritingExamEngine = ({
   const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
   const timeLeft = externalTimeLeft ?? internalTimeLeft;
   const [submitted, setSubmitted] = useState(!!reviewMode);
+  useExitWarning(hasStarted && !submitted && !reviewMode);
   const [isReviewing, setIsReviewing] = useState(false);
   const [bookmarked, setBookmarked] = useState<Set<WritingPartType>>(new Set());
   const isBookmarked = bookmarked.has(partType);
