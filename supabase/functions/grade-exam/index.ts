@@ -425,35 +425,78 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
     // Speaking needs audio understanding → use gemini-2.5-pro. Writing stays on flash.
     const model = "google/gemini-2.5-flash";
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          reasoning_effort: type === "speaking" ? "medium" : "low",
-          temperature: 0,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userContent },
-          ],
-          tools,
-          tool_choice: {
-            type: "function",
-            function: { name: "submit_grading" },
-          },
-        }),
+    // Gateway call with 30s timeout + 1 retry on transient failures (timeout / 5xx / network).
+    const callGateway = async (): Promise<Response> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30_000);
+      try {
+        return await fetch(
+          "https://ai.gateway.lovable.dev/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              reasoning_effort: type === "speaking" ? "medium" : "low",
+              temperature: 0,
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userContent },
+              ],
+              tools,
+              tool_choice: {
+                type: "function",
+                function: { name: "submit_grading" },
+              },
+            }),
+            signal: controller.signal,
+          }
+        );
+      } finally {
+        clearTimeout(timeoutId);
       }
-    );
+    };
+
+    let response: Response | null = null;
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        response = await callGateway();
+        // Retry only on transient gateway errors (5xx). Pass-through 4xx (429/402/etc) without retrying.
+        if (response.status >= 500 && attempt === 0) {
+          console.warn(`[grade-exam] gateway ${response.status} on attempt ${attempt + 1}, retrying...`);
+          lastErr = new Error(`gateway ${response.status}`);
+          response = null;
+          continue;
+        }
+        break;
+      } catch (e) {
+        lastErr = e;
+        const isAbort = (e as any)?.name === "AbortError";
+        console.warn(`[grade-exam] gateway call failed on attempt ${attempt + 1}`, isAbort ? "timeout" : (e as any)?.message ?? e);
+        if (attempt === 0) continue;
+      }
+    }
+
+    if (!response) {
+      const isAbort = (lastErr as any)?.name === "AbortError";
+      return new Response(
+        JSON.stringify({
+          error: isAbort ? "Hết thời gian chấm bài. Vui lòng thử lại." : "Không liên lạc được dịch vụ chấm bài. Vui lòng thử lại.",
+          notGraded: true,
+          partType,
+        }),
+        { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limited. Please try again later." }),
+          JSON.stringify({ error: "Rate limited. Please try again later.", notGraded: true, partType }),
           {
             status: 429,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -462,7 +505,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Credits exhausted. Please add funds." }),
+          JSON.stringify({ error: "Credits exhausted. Please add funds.", notGraded: true, partType }),
           {
             status: 402,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -471,7 +514,14 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       }
       const errText = await response.text();
       console.error("AI gateway error:", response.status, errText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      return new Response(
+        JSON.stringify({
+          error: `AI gateway error: ${response.status}`,
+          notGraded: true,
+          partType,
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
