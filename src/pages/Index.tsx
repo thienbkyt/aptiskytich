@@ -16,6 +16,7 @@ import BorderBeam from "@/components/ui/border-beam";
 import MagneticButton from "@/components/ui/magnetic-button";
 import GradientOrb from "@/components/ui/gradient-orb";
 import writingResultAsset from "@/assets/writing-result.jpg.asset.json";
+import heroAiFeedbackAsset from "@/assets/hero-ai-feedback.png.asset.json";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
