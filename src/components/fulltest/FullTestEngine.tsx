@@ -915,6 +915,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       let totalScore = 0;
       let totalMax = 0;
+      let failedParts = 0;
       for (let i = 0; i < orderedEntries.length; i++) {
         const e = orderedEntries[i];
         const res = (await gradeExam({
@@ -924,8 +925,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType: e.partType,
         })) as WritingGradingResult | null;
 
-        const partScore = res?.partScore || 0;
-        const partMax = res?.maxPoints || 0;
+        // If grading failed (gateway/timeout): do NOT silently bake a 0 into totals.
+        // Skip this part from totals and surface a clear "not graded" flag to the user.
+        if (!res) {
+          failedParts += 1;
+          setWritingGradedCount(i + 1);
+          continue;
+        }
+
+        const partScore = res.partScore || 0;
+        const partMax = res.maxPoints || 0;
         totalScore += partScore;
         totalMax += partMax;
 
@@ -985,6 +994,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         }
 
         setWritingGradedCount(i + 1);
+      }
+
+      if (failedParts > 0) {
+        toast.error(
+          failedParts === 1
+            ? "Một phần chưa chấm được, vui lòng thử lại."
+            : `${failedParts} phần chưa chấm được, vui lòng thử lại.`,
+        );
       }
 
       const totalRounded = Math.round(totalScore);
