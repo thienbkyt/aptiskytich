@@ -115,9 +115,15 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
 }
 
 
+/** Today's date in Asia/Ho_Chi_Minh as YYYY-MM-DD. */
+function getVNToday(): string {
+  // sv-SE locale formats as YYYY-MM-DD; timeZone shifts the wall clock to VN.
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+}
+
 async function updateLearningStreak(userId: string) {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getVNToday();
 
     const { data: existing, error: selErr } = await supabase
       .from("learning_streaks")
@@ -140,10 +146,11 @@ async function updateLearningStreak(userId: string) {
       return;
     }
 
-    // Same day → nothing to update
+    // Same VN day → nothing to update
     if (existing.last_activity_date === today) return;
 
-    // Compute yesterday (UTC date math is fine for day diff)
+    // Compute day diff using calendar-date math (no timezone drift here since
+    // both dates are already VN-local YYYY-MM-DD strings).
     const todayD = new Date(today + "T00:00:00Z").getTime();
     const lastD = existing.last_activity_date
       ? new Date(existing.last_activity_date + "T00:00:00Z").getTime()

@@ -781,13 +781,13 @@ const SpeakingExamEngine = ({
   // ===== Admin-only controls: skip current part / go to previous part =====
   const stopEverything = (suppressCurrentRecording = false) => {
     flowTokenRef.current += 1;
-    try { stopTTS(); } catch {}
-    try { window.speechSynthesis?.cancel(); } catch {}
+    try { stopTTS(); } catch (e) { console.warn("[SpeakingExamEngine] stopTTS failed:", e); }
+    try { window.speechSynthesis?.cancel(); } catch (e) { console.warn("[SpeakingExamEngine] speechSynthesis.cancel failed:", e); }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       suppressRecordingSaveRef.current = suppressCurrentRecording;
-      try { mediaRecorderRef.current.stop(); } catch {}
+      try { mediaRecorderRef.current.stop(); } catch (e) { console.warn("[SpeakingExamEngine] mediaRecorder.stop failed:", e); }
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());

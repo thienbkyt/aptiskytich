@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
@@ -77,6 +78,11 @@ const showcasePanels = [
 
 
 const Index = () => {
+  usePageMeta({
+    title: "Aptis Kỳ Tích — Luyện thi Aptis & Thi thử miễn phí",
+    description: "Luyện thi Aptis với ngân hàng đề sát thi thật, AI chấm Speaking & Writing, lộ trình 7 ngày đạt B1–B2. Thi thử miễn phí ngay.",
+    path: "/",
+  });
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -27,6 +28,11 @@ interface FullPracticeState {
 }
 
 const GrammarVocabulary = () => {
+  usePageMeta({
+    title: "Luyện Grammar & Vocabulary Aptis — 50 câu / 25 phút | Aptis Kỳ Tích",
+    description: "Ôn Grammar & Vocabulary Aptis: 25 câu ngữ pháp + 25 câu từ vựng trong 25 phút, có giải thích chi tiết và tra từ ngay tại chỗ.",
+    path: "/grammar",
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
   const { progress } = useUserExamProgress();

@@ -16,6 +16,7 @@ import RouteProgressBar from "@/components/layout/RouteProgressBar";
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
 import VisitLogger from "@/components/VisitLogger";
+import RequireAdmin from "@/components/auth/RequireAdmin";
 
 const Index = lazy(() => import("./pages/Index"));
 
@@ -98,12 +99,12 @@ const App = () => (
             <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
             <Route path="/history/:id" element={<HistoryDetail />} />
             <Route path="/progress" element={<ProgressPage />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/report" element={<AdminReport />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/report/pricing" element={<AdminReportPricing />} />
-            <Route path="/admin/students" element={<AdminStudents />} />
-            <Route path="/admin/notifications" element={<AdminNotifications />} />
+            <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
+            <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
+            <Route path="/admin/reports" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
+            <Route path="/admin/report/pricing" element={<RequireAdmin><AdminReportPricing /></RequireAdmin>} />
+            <Route path="/admin/students" element={<RequireAdmin><AdminStudents /></RequireAdmin>} />
+            <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </PageTransition>

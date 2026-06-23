@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,11 @@ const SKILL_BREAKDOWN = [
 type TabKey = "aptis" | "key";
 
 const FullTest = () => {
+  usePageMeta({
+    title: "Thi thử Aptis online miễn phí — Aptis Kỳ Tích",
+    description: "Làm bài thi thử Aptis General sát đề thật: Speaking, Listening, Grammar & Vocab, Reading, Writing. AI chấm tự động, có giải thích chi tiết.",
+    path: "/thi-thu",
+  });
   const [activeTab, setActiveTab] = useState<TabKey>("aptis");
   const { tests, loading } = useFullTests(activeTab);
   const { user: authUser, loading: authLoading } = useAuth();

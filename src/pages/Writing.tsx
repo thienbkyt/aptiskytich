@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -66,6 +67,11 @@ interface FullPracticeState {
 }
 
 const Writing = () => {
+  usePageMeta({
+    title: "Luyện Writing Aptis — AI chấm bài viết theo CEFR | Aptis Kỳ Tích",
+    description: "Luyện Writing Aptis 4 parts: AI chấm Task Response, Grammar, Vocabulary, Coherence; highlight lỗi và gợi ý nâng cấp câu.",
+    path: "/writing",
+  });
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("writing");

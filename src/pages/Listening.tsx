@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -66,6 +67,11 @@ interface FullPracticeState {
 }
 
 const Listening = () => {
+  usePageMeta({
+    title: "Luyện Listening Aptis — 4 parts, audio chuẩn đề thật | Aptis Kỳ Tích",
+    description: "Luyện Listening Aptis 4 parts với audio chuẩn đề thật. Giới hạn 2 lần nghe mỗi câu, có script và giải thích sau khi nộp bài.",
+    path: "/listening",
+  });
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("listening");
