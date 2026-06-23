@@ -130,6 +130,7 @@ const SpeakingExamEngine = ({
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
   const sessionStartIsoRef = useRef<string>(new Date().toISOString());
