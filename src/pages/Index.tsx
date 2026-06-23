@@ -198,7 +198,7 @@ const Index = () => {
                 </div>
                 {/* Screenshot */}
                 <img
-                  src={writingResultAsset.url}
+                  src={heroAiFeedbackAsset.url}
                   alt="Kết quả Writing 44/50 — Trình độ B2 chấm bởi AI Kỳ Tích"
                   className="block w-full h-auto rounded-b-[20px]"
                   loading="eager"
