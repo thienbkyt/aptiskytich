@@ -119,6 +119,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingFullParts, setSpeakingFullParts] = useState<SpeakingFullPartResult[]>([]);
   const [speakingTotalScore, setSpeakingTotalScore] = useState(0);
   const [speakingTotalMax, setSpeakingTotalMax] = useState(0);
+  useExitWarning(phase !== "loading" && phase !== "completed");
 
 
   const skillLabel = SKILL_LABELS[skill] || skill;
