@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useExitWarning } from "@/hooks/useExitWarning";
 import ExamHeader from "@/components/exam/ExamHeader";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import ExamInstructions from "@/components/exam/ExamInstructions";
