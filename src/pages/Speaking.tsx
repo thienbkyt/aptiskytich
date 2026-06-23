@@ -205,8 +205,9 @@ const Speaking = () => {
                 </Badge>
               </div>
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">Phần thi Speaking</h1>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                Luyện nói qua các đề thi với format Aptis Speaking. Ghi âm câu trả lời với thời gian chuẩn bị và trả lời giống bài thi thật.
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl whitespace-pre-line">
+                Luyện nói qua các đề thi với format Aptis Speaking. Ghi âm câu trả lời với thời gian chuẩn bị và trả lời giống bài thi thật.{"\u00a0"}
+                AI chấm bài và nhận band điểm Speaking ngay sau khi làm bài.
               </p>
             </div>
           </div>
