@@ -28,7 +28,7 @@ const SpeakingPart2Describe = ({ data, recording, onRecordingComplete }: Props) 
         {data.prompt}
       </h2>
       <div className="rounded-xl overflow-hidden border border-border mb-6">
-        <SignedImage src={data.imageUrl} alt="Describe this picture" className="w-full h-64 object-cover" />
+        <SignedImage src={data.imageUrl ?? ""} alt="Describe this picture" className="w-full h-64 object-cover" />
       </div>
 
 
