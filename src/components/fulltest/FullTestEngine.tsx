@@ -26,6 +26,7 @@ import { normalizePart } from "@/hooks/useExamSets";
 import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
+import { toast } from "sonner";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -695,17 +696,28 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         // 3) Grade in a separate try/catch — recordings already saved above.
         const perPartResults: Awaited<ReturnType<typeof gradeSpeakingItems>>[] = [];
         let totalScore = 0;
+        let speakingFailedItems = 0;
         try {
           for (const entry of orderedEntries) {
             const specs = entry.sub.items.map((i) => i.spec);
             const blobs = entry.sub.items.map((i) => i.blob);
             const actuals = entry.sub.items.map((i) => i.actualSpoken);
             const results = await gradeSpeakingItems(specs, blobs, actuals);
-            for (const r of results) if (r && !("error" in r)) totalScore += r.partScore || 0;
+            for (const r of results) {
+              if (r && !("error" in r)) totalScore += r.partScore || 0;
+              else speakingFailedItems += 1;
+            }
             perPartResults.push(results);
           }
         } catch (e) {
           console.warn("[FullTestEngine] speaking grading failed", e);
+        }
+        if (speakingFailedItems > 0) {
+          toast.error(
+            speakingFailedItems === 1
+              ? "Một câu Speaking chưa chấm được, vui lòng thử lại."
+              : `${speakingFailedItems} câu Speaking chưa chấm được, vui lòng thử lại.`,
+          );
         }
 
         // 4) Save per-question gradings + bake recordingPath + AI into snapshot + update score.
@@ -914,6 +926,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       let totalScore = 0;
       let totalMax = 0;
+      let failedParts = 0;
       for (let i = 0; i < orderedEntries.length; i++) {
         const e = orderedEntries[i];
         const res = (await gradeExam({
@@ -923,8 +936,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType: e.partType,
         })) as WritingGradingResult | null;
 
-        const partScore = res?.partScore || 0;
-        const partMax = res?.maxPoints || 0;
+        // If grading failed (gateway/timeout): do NOT silently bake a 0 into totals.
+        // Skip this part from totals and surface a clear "not graded" flag to the user.
+        if (!res) {
+          failedParts += 1;
+          setWritingGradedCount(i + 1);
+          continue;
+        }
+
+        const partScore = res.partScore || 0;
+        const partMax = res.maxPoints || 0;
         totalScore += partScore;
         totalMax += partMax;
 
@@ -984,6 +1005,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         }
 
         setWritingGradedCount(i + 1);
+      }
+
+      if (failedParts > 0) {
+        toast.error(
+          failedParts === 1
+            ? "Một phần chưa chấm được, vui lòng thử lại."
+            : `${failedParts} phần chưa chấm được, vui lòng thử lại.`,
+        );
       }
 
       const totalRounded = Math.round(totalScore);

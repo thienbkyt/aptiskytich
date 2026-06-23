@@ -6,26 +6,38 @@ import type { SpeakingPart1Data, SpeakingPart2Data, SpeakingPart3Data, SpeakingP
 import type { WritingPart1Data, WritingPart2Data, WritingPart3Data, WritingPart4Data } from "@/data/writingQuestions";
 
 // ─── Grammar ────────────────────────────────────────────────
-export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] =>
-  rows.map((r, i) => {
+export const toGrammarQuestions = (rows: ExamQuestionRow[]): Question[] => {
+  const result: Question[] = [];
+  rows.forEach((r, i) => {
+    if (r.correct_answer === null || r.correct_answer === undefined) {
+      console.warn("[toGrammarQuestions] dropping question with missing correct_answer", {
+        index: i,
+        id: r.id,
+        question_text: r.question_text,
+      });
+      return;
+    }
     const qt: Question["question_type"] =
       r.question_type === "fill_in_blank"
         ? "fill-in-blank"
         : r.question_type === "vocab_matching"
         ? "vocab_matching"
         : "mcq";
-    return {
-      id: i + 1,
+    result.push({
+      id: result.length + 1,
       skill: "grammar" as const,
       question_text: r.question_text,
       options: r.options,
-      correct_answer: r.correct_answer ?? 0,
+      correct_answer: r.correct_answer as number,
       explanation: r.explanation || "",
       question_type: qt,
       audio_url: r.audio_url,
       extra_data: { ...(r.extra_data || {}), _eqId: r.id },
-    };
+    });
   });
+  return result;
+};
+
 
 // ─── Reading ────────────────────────────────────────────────
 export const toReadingPart1 = (rows: ExamQuestionRow[]): ReadingSentenceQuestion | null => {
@@ -103,25 +115,42 @@ export const toReadingPart4 = (rows: ExamQuestionRow[]): ReadingLongQuestion | n
     type: "long-reading" as const,
     instruction: ed.instruction || "Read the text below and answer the questions.",
     passage: ed.passage || first.question_text,
-    questions: ed.questions || rows.map((r) => ({
-      text: r.question_text,
-      options: r.options,
-      correct: r.correct_answer ?? 0,
-    })),
+    questions: ed.questions || rows
+      .filter((r) => {
+        if (r.correct_answer === null || r.correct_answer === undefined) {
+          console.warn("[toReadingPart4] dropping MCQ with missing correct_answer", { id: r.id });
+          return false;
+        }
+        return true;
+      })
+      .map((r) => ({
+        text: r.question_text,
+        options: r.options,
+        correct: r.correct_answer as number,
+      })),
     explanation: first.explanation || "",
   };
 };
 
 // ─── Listening ──────────────────────────────────────────────
 export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Question[] =>
-  rows.map((r, i) => ({
-    id: i + 1,
-    audioUrl: r.audio_url || "",
-    questionText: r.question_text || "",
-    options: r.options,
-    correct: r.correct_answer ?? 0,
-    script: r.explanation || "",
-  }));
+  rows
+    .filter((r) => {
+      if (r.correct_answer === null || r.correct_answer === undefined) {
+        console.warn("[toListeningPart1] dropping question with missing correct_answer", { id: r.id });
+        return false;
+      }
+      return true;
+    })
+    .map((r, i) => ({
+      id: i + 1,
+      audioUrl: r.audio_url || "",
+      questionText: r.question_text || "",
+      options: r.options,
+      correct: r.correct_answer as number,
+      script: r.explanation || "",
+    }));
+
 
 export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] => {
   if (rows.length === 0) return [];
@@ -172,11 +201,20 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
     const a = rows[i];
     const b = rows[i + 1];
     if (!a) break;
-    const questions = [a, b].filter(Boolean).map((r) => ({
-      text: r!.question_text || "",
-      options: r!.options || [],
-      correct: r!.correct_answer ?? 0,
-    }));
+    const questions = [a, b]
+      .filter((r): r is ExamQuestionRow => Boolean(r))
+      .filter((r) => {
+        if (r.correct_answer === null || r.correct_answer === undefined) {
+          console.warn("[toListeningPart4] dropping question with missing correct_answer", { id: r.id });
+          return false;
+        }
+        return true;
+      })
+      .map((r) => ({
+        text: r.question_text || "",
+        options: r.options || [],
+        correct: r.correct_answer as number,
+      }));
     clips.push({
       id: clips.length + 1,
       audioUrl: a.audio_url || "",

@@ -24,6 +24,7 @@ import ListeningFullResults, { type ListeningFullPartResult } from "@/components
 import WritingFullResults from "@/components/writing/WritingFullResults";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
+import { toast } from "sonner";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -919,6 +920,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         .filter(Boolean) as Array<{ partType: string; text: string; questions: string[]; partId?: string; testResultId?: string | null }>;
       writingPartsRef.current = orderedSubmissions;
       const results: WritingGradingResult[] = [];
+      let failedParts = 0;
       for (let i = 0; i < orderedSubmissions.length; i++) {
         const p = orderedSubmissions[i];
         const res = await gradeExam({
@@ -930,7 +932,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           examSetId: p.partId ?? null,
           partLabel: WRITING_PART_LABELS[p.partType] ?? p.partType,
         });
-        if (res) results.push(res as WritingGradingResult);
+        if (res) {
+          results.push(res as WritingGradingResult);
+        } else {
+          failedParts += 1;
+        }
         // Bake this part's AI into its snapshot.
         try {
           if (p.testResultId && res && (res as any).partScore !== undefined) {
@@ -952,6 +958,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           }
         } catch (e) { console.warn("[SkillFullPractice] writing bake AI failed", e); }
         setWritingGradedCount(i + 1);
+      }
+      if (failedParts > 0) {
+        toast.error(
+          failedParts === 1
+            ? "Một phần chưa chấm được, vui lòng thử lại."
+            : `${failedParts} phần chưa chấm được, vui lòng thử lại.`,
+        );
       }
       const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
       setWritingResults(results);
