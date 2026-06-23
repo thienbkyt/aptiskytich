@@ -283,6 +283,139 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Showcase — 3 panels */}
+      <section className="relative py-20 md:py-28" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
+        <div className="section-container">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
+            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
+              Tính năng nổi bật
+            </motion.div>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
+              Trải nghiệm luyện thi cùng <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Kỳ Tích</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#8B6B5C" }}>
+              Mọi công cụ bạn cần để luyện Aptis hiệu quả, ngay trên một nền tảng.
+            </motion.p>
+          </motion.div>
+
+          <div className="space-y-10 md:space-y-14 max-w-6xl mx-auto">
+            {showcasePanels.map((p, i) => {
+              const reverse = i % 2 === 1;
+              return (
+                <motion.div
+                  key={p.num}
+                  variants={fadeUp} custom={i}
+                  initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }}
+                  className="rounded-[28px] p-6 md:p-10 lg:p-14 border border-[#F2D7C5]"
+                  style={{ background: p.bg, boxShadow: "0 20px 50px -25px rgba(204, 28, 1, 0.22)" }}
+                >
+                  <div className={`grid lg:grid-cols-2 gap-8 lg:gap-12 items-center ${reverse ? "lg:[&>*:first-child]:order-2" : ""}`}>
+                    {/* Text */}
+                    <div>
+                      <div className="text-6xl md:text-7xl font-heading font-extrabold leading-none mb-4 select-none" style={{ color: "rgba(204, 28, 1, 0.14)" }}>
+                        {p.num}
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-heading font-extrabold mb-4 leading-tight" style={{ color: "#4D0D0D" }}>
+                        {p.title}
+                      </h3>
+                      <p className="text-base md:text-lg mb-6 leading-relaxed" style={{ color: "#6b4a4a" }}>
+                        {p.desc}
+                      </p>
+                      <ul className="space-y-3">
+                        {p.features.map((f) => (
+                          <li key={f} className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white border border-primary/30 flex items-center justify-center mt-0.5" style={{ boxShadow: "0 2px 6px -2px rgba(204, 28, 1, 0.3)" }}>
+                              <Check className="w-3.5 h-3.5 text-primary" strokeWidth={3} />
+                            </span>
+                            <span className="text-sm md:text-base font-medium" style={{ color: "#4D0D0D" }}>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Mock visual */}
+                    <div>
+                      <div
+                        className="relative rounded-[20px] overflow-hidden bg-white border border-[#F0D9C8]"
+                        style={{ boxShadow: "0 30px 60px -25px rgba(204, 28, 1, 0.28), 0 12px 24px -12px rgba(77, 13, 13, 0.12)" }}
+                      >
+                        <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-[#F2E2D4] bg-[#FFF9F3]">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F57]" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
+                        </div>
+                        {p.mock === "ai" && (
+                          <img src={writingResultAsset.url} alt="AI chấm Writing — band B2" className="block w-full h-auto" loading="lazy" />
+                        )}
+                        {p.mock === "reading" && (
+                          <div className="p-5 md:p-6 bg-white">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="text-xs font-bold text-[#4D0D0D]">Reading · Part 2</div>
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                                <Timer className="w-3 h-3" /> 18:42
+                              </div>
+                            </div>
+                            <div className="space-y-2 mb-4 text-sm leading-relaxed" style={{ color: "#4D0D0D" }}>
+                              <p>The festival begins with a parade through the town centre.</p>
+                              <p>People gather early to find the best spots along the route.</p>
+                            </div>
+                            <div className="space-y-2">
+                              {[
+                                { label: "Afterwards, there are live music performances.", active: true },
+                                { label: "The mayor gives a short welcome speech.", active: false },
+                                { label: "Food stalls open in the main square.", active: false },
+                              ].map((s, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${s.active ? "border-primary bg-primary/5" : "border-[#F2E2D4] bg-white"}`}
+                                >
+                                  <GripVertical className="w-4 h-4 text-[#C2A08A] flex-shrink-0" />
+                                  <span className="text-sm" style={{ color: "#4D0D0D" }}>{s.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {p.mock === "dashboard" && (
+                          <div className="p-5 md:p-6 bg-white">
+                            <div className="flex items-center justify-between mb-5">
+                              <div>
+                                <div className="text-xs font-semibold text-[#8B6B5C] mb-0.5">Tiến độ tuần này</div>
+                                <div className="text-2xl font-extrabold" style={{ color: "#4D0D0D" }}>B1+ → B2</div>
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-xs font-bold">
+                                <Flame className="w-3.5 h-3.5" /> 18 ngày
+                              </div>
+                            </div>
+                            <div className="flex items-end gap-2 h-24 mb-4">
+                              {[40, 55, 48, 70, 62, 85, 92].map((h, idx) => (
+                                <div key={idx} className="flex-1 rounded-t-md bg-gradient-to-t from-[#CC1C01] to-[#FEAD5F]" style={{ height: `${h}%`, opacity: 0.55 + idx * 0.06 }} />
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[
+                                { k: "Reading", v: "B2" },
+                                { k: "Listening", v: "B1+" },
+                                { k: "Writing", v: "B2" },
+                              ].map((s) => (
+                                <div key={s.k} className="text-center py-2 rounded-lg bg-[#FFF7F0] border border-[#F2E2D4]">
+                                  <div className="text-[10px] text-[#8B6B5C] font-medium">{s.k}</div>
+                                  <div className="text-sm font-bold text-primary">{s.v}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
 
       {/* Exam Structure */}
       <section className="section-padding bg-background relative overflow-hidden">
