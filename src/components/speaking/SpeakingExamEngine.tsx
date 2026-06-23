@@ -379,21 +379,67 @@ const SpeakingExamEngine = ({
     const recordingIndex = currentIndexRef.current;
     setSpeakTimeLeft(speakTime);
     setCanFinish(false);
+    setMicError(null);
     setPhase("recording");
 
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
-        stream.getTracks().forEach(t => t.stop());
-        return;
-      }
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err: any) {
+      console.error("[SpeakingExamEngine] mic permission error:", err);
+      // Pause the countdown — we don't want to silently count this as recorded time.
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+      const name = err?.name || "";
+      const msg = name === "NotAllowedError" || name === "SecurityError"
+        ? "Trình duyệt đã chặn quyền micro. Hãy cho phép micro trong cài đặt trình duyệt rồi bấm Thử lại."
+        : name === "NotFoundError" || name === "OverconstrainedError"
+        ? "Không tìm thấy micro. Hãy cắm/chọn lại thiết bị micro rồi bấm Thử lại."
+        : "Không truy cập được micro. Hãy kiểm tra thiết bị rồi bấm Thử lại.";
+      setMicError(msg);
+      return;
+    }
+
+    if (token !== flowTokenRef.current || recordingIndex !== currentIndexRef.current) {
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    try {
       streamRef.current = stream;
+
+      // Detect mid-recording disconnects (mic unplugged, OS revokes permission, etc.)
+      stream.getAudioTracks().forEach((track) => {
+        track.onended = () => {
+          if (token !== flowTokenRef.current) return;
+          if (!streamRef.current) return; // already cleaned up normally
+          console.warn("[SpeakingExamEngine] mic track ended unexpectedly");
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+          // Discard the partial chunk so we don't save a corrupted recording silently.
+          suppressRecordingSaveRef.current = true;
+          try {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+              mediaRecorderRef.current.stop();
+            }
+          } catch { /* ignore */ }
+          setMicError("Mất kết nối micro giữa chừng. Đã tạm dừng đồng hồ. Hãy kiểm tra thiết bị rồi bấm Thử lại.");
+        };
+      });
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onerror = (e: any) => {
+        console.error("[SpeakingExamEngine] mediaRecorder error", e);
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+        setMicError("Lỗi khi ghi âm. Đã tạm dừng đồng hồ. Bấm Thử lại để ghi lại.");
       };
 
       mediaRecorder.onstop = () => {
@@ -478,6 +524,11 @@ const SpeakingExamEngine = ({
 
     } catch (err) {
       console.error("Mic error:", err);
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+      try { stream.getTracks().forEach(t => t.stop()); } catch { /* ignore */ }
+      streamRef.current = null;
+      setMicError("Không khởi tạo được ghi âm. Bấm Thử lại để thử lại.");
     }
   }, [partType]);
 
