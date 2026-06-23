@@ -285,7 +285,7 @@ const Index = () => {
                 </div>
                 <div className="min-w-0">
                   <div
-                    className={`font-heading font-extrabold leading-tight ${t.isNum ? "text-2xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]" : "text-sm md:text-base"}`}
+                    className={`font-heading font-extrabold leading-tight whitespace-pre-line ${t.isNum ? "text-2xl md:text-3xl bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]" : "text-sm md:text-base"}`}
                     style={t.isNum ? undefined : { color: "#4D0D0D" }}
                   >
                     {t.title}
