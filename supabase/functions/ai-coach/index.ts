@@ -278,6 +278,10 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Daily quota: 50 chat messages per user
+    const quota = await enforceDailyQuota(userId, "ai-coach", 50, corsHeaders);
+    if (quota) return quota;
+
     const body = await req.json().catch(() => null) as
       | { messages?: ChatMessage[]; context?: CoachContext }
       | null;
