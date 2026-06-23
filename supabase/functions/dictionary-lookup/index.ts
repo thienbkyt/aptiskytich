@@ -47,7 +47,10 @@ serve(async (req) => {
       });
     }
 
-    // Not cached — call AI
+    // Not cached — enforce daily quota before calling AI
+    const quota = await enforceDailyQuota(auth.userId, "dictionary-lookup", 200, corsHeaders);
+    if (quota) return quota;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
