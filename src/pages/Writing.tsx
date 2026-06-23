@@ -239,10 +239,10 @@ const Writing = () => {
                 <Badge variant="secondary" className="text-xs font-medium gap-1.5"><Clock className="w-3 h-3" />50 phút</Badge>
               </div>
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">Phần thi Writing</h1>
-              <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl whitespace-pre-line">
+              <div className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl whitespace-pre-line">
                 Luyện viết theo format bài thi Aptis Writing. Hoàn thành các task viết với thời gian giống bài thi thật.{"\n"}
                 AI chấm bài và nhận band điểm Writing ngay sau khi làm bài.{"\n\n"}
-              </p>
+              </div>
             </div>
           </div>
         </section>
