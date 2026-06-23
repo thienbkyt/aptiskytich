@@ -7,3 +7,5 @@ project_id = "bacoamhbatqpxatrrflz"
     verify_jwt = true
   [functions.cleanup-exams]
     verify_jwt = false
+  [functions.ai-coach]
+    verify_jwt = true
