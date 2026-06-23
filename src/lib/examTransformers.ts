@@ -142,14 +142,19 @@ export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Questio
       }
       return true;
     })
-    .map((r, i) => ({
-      id: i + 1,
-      audioUrl: r.audio_url || "",
-      questionText: r.question_text || "",
-      options: r.options,
-      correct: r.correct_answer as number,
-      script: r.explanation || "",
-    }));
+    .map((r, i) => {
+      if (!r.audio_url) {
+        console.warn("[toListeningPart1] missing audio_url", { id: r.id });
+      }
+      return {
+        id: i + 1,
+        audioUrl: r.audio_url ?? null,
+        questionText: r.question_text || "",
+        options: r.options,
+        correct: r.correct_answer as number,
+        script: r.explanation || "",
+      };
+    });
 
 
 export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] => {
