@@ -69,6 +69,11 @@ interface FullPracticeState {
 }
 
 const Reading = () => {
+  usePageMeta({
+    title: "Luyện Reading Aptis — 4 parts có giải thích | Aptis Kỳ Tích",
+    description: "Luyện Reading Aptis 4 parts: điền từ, sắp xếp câu, ghép tiêu đề. Có giải thích chi tiết và tra từ ngay trong bài.",
+    path: "/reading",
+  });
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("reading");
