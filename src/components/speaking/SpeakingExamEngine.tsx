@@ -1130,6 +1130,28 @@ const SpeakingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      {micError && (
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center px-4">
+          <div role="alertdialog" aria-modal="true" className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">!</div>
+              <div className="flex-1">
+                <h3 className="font-heading font-bold text-gray-900 mb-1">Vấn đề với micro</h3>
+                <p className="text-sm text-gray-700">{micError}</p>
+                <p className="text-xs text-gray-500 mt-2">Đồng hồ đã tạm dừng cho đến khi bạn ghi lại.</p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => { setMicError(null); startRecording(); }}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90"
+              >
+                Thử lại
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <SpeakingHeader partLabel={`Speaking Part ${partNumber}`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
       <ExamReportButton
         examQuestionId={sourceQuestionIds?.[currentIndex] ?? sourceQuestionIds?.[0] ?? null}
