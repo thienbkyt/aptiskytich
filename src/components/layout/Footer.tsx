@@ -23,8 +23,6 @@ const Footer = () => (
           <div className="flex items-center gap-2">
             {[
               { Icon: Facebook, href: "https://www.facebook.com/Aptiskytich", label: "Facebook" },
-              { Icon: Youtube, href: "https://youtube.com", label: "YouTube" },
-              { Icon: MessageCircle, href: "https://zalo.me/0867833227", label: "Zalo" },
             ].map(({ Icon, href, label }) => (
               <a
                 key={label}
