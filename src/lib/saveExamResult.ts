@@ -53,7 +53,12 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
 
 
     const total = Math.max(opts.total, 0);
-    const correct = Math.max(opts.correct, 0);
+    // Clamp correct to [0, total] to prevent score > total from buggy callers.
+    const correctRaw = Math.max(opts.correct, 0);
+    const correct = total > 0 ? Math.min(correctRaw, total) : correctRaw;
+    if (correctRaw > total && total > 0) {
+      console.warn("[saveExamResult] correct > total; clamped", { skill: opts.skill, correct: correctRaw, total });
+    }
     const level = total > 0 ? getLevel(correct, total) : "A1";
 
     // Always insert a new test_results row per attempt (no best-score dedup).
