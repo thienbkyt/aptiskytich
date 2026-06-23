@@ -51,16 +51,26 @@ const Footer = () => (
           </ul>
         </div>
         <div>
-          <h4 className="font-heading font-semibold text-sidebar-foreground mb-4 uppercase text-xs tracking-wider">Khóa học</h4>
+          <h4 className="font-heading font-semibold text-sidebar-foreground mb-4 uppercase text-xs tracking-wider">Tính năng</h4>
           <ul className="space-y-2.5 text-sm">
             <li>
-              <Link to="/course" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
-                Aptis Kỳ Tích – 7 Ngày <ArrowUpRight className="w-3.5 h-3.5" />
+              <Link to="/thi-thu" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                Thi thử Aptis <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </li>
             <li>
-              <Link to="/thi-thu" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
-                Thi thử Full Test <ArrowUpRight className="w-3.5 h-3.5" />
+              <Link to="/grammar" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                Luyện theo kỹ năng <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </li>
+            <li>
+              <Link to="/speaking" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                AI chấm Speaking–Writing <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </li>
+            <li>
+              <Link to="/progress" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                Theo dõi tiến bộ <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </li>
           </ul>
