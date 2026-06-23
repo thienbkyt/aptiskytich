@@ -20,22 +20,6 @@ const Footer = () => (
           <p className="text-sm text-sidebar-foreground/50 leading-relaxed mb-5">
             Nền tảng luyện thi Aptis có AI Kỳ Tích hỗ trợ. Giúp bạn đạt B1–B2 nhanh nhất.
           </p>
-          <div className="flex items-center gap-2">
-            {[
-              { Icon: Facebook, href: "https://www.facebook.com/Aptiskytich", label: "Facebook" },
-            ].map(({ Icon, href, label }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                className="w-9 h-9 rounded-lg border border-sidebar-border/60 flex items-center justify-center text-sidebar-foreground/70 hover:text-primary hover:border-primary/60 hover:shadow-glow-soft transition-all"
-              >
-                <Icon className="w-4 h-4" />
-              </a>
-            ))}
-          </div>
         </div>
         <div>
           <h4 className="font-heading font-semibold text-sidebar-foreground mb-4 uppercase text-xs tracking-wider">Luyện tập</h4>
@@ -81,6 +65,11 @@ const Footer = () => (
             <li className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-primary" />
               <a href="https://zalo.me/0867833227" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
                 Zalo: 0867 833 227
+              </a>
+            </li>
+            <li className="flex items-center gap-2"><Facebook className="w-4 h-4 text-primary" />
+              <a href="https://www.facebook.com/Aptiskytich" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                Facebook: Aptis Kỳ Tích
               </a>
             </li>
           </ul>
