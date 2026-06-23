@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, Clock, BarChart3, Flame, BookOpen,
   GraduationCap, Star, MessageCircle, Zap, Target,
-  Sparkles, ShieldCheck, Cpu, TrendingUp,
+  Sparkles, ShieldCheck, Cpu, TrendingUp, Check, Layers, Lightbulb,
+  Mic, GripVertical, Timer,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
