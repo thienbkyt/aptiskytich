@@ -27,10 +27,16 @@ const fadeUp = {
 };
 
 const stats = [
-  { value: "10,000+", label: "Câu hỏi luyện tập" },
-  { value: "95%", label: "Tỉ lệ đạt B1–B2" },
-  { value: "5,000+", label: "Học viên tin dùng" },
-  { value: "7 ngày", label: "Lộ trình tối ưu" },
+  { value: "350+", label: "Đề thi thật" },
+  { value: "1.166", label: "Câu hỏi luyện tập" },
+  { value: "5", label: "Kỹ năng đầy đủ" },
+  { value: "Miễn phí", label: "Toàn bộ tính năng" },
+];
+
+const heroChips = [
+  { icon: Target, label: "Mô phỏng 100% đề thật" },
+  { icon: Cpu, label: "AI chấm Speaking–Writing" },
+  { icon: TrendingUp, label: "Có band điểm ngay" },
 ];
 
 const features = [
