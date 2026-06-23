@@ -222,9 +222,10 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
         options: r.options || [],
         correct: r.correct_answer as number,
       }));
+    if (!a.audio_url) console.warn("[toListeningPart4] missing audio_url", { id: a.id });
     clips.push({
       id: clips.length + 1,
-      audioUrl: a.audio_url || "",
+      audioUrl: a.audio_url ?? null,
       questions,
       script: a.explanation || "",
     });
