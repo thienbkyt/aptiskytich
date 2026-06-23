@@ -60,6 +60,13 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const userId = String((claims.claims as any).sub || "");
+
+    // Service-role client for cache + quota writes (bypasses RLS).
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     // --- Parse & validate input ---
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
