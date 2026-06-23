@@ -93,7 +93,11 @@ const ListeningPart4Monologue = ({
           transition={{ duration: 0.25 }}
           className="flex-1"
         >
-          <LimitedAudioPlayer src={clip.audioUrl} maxPlays={2} questionKey={`part4-${clip.id}`} />
+          {clip.audioUrl ? (
+            <LimitedAudioPlayer src={clip.audioUrl} maxPlays={2} questionKey={`part4-${clip.id}`} />
+          ) : (
+            <MissingMediaNotice kind="audio" skill="listening" partType="part4" questionNumber={currentIndex + 1} />
+          )}
 
           <div className="space-y-8 mt-4">
             {clip.questions.map((qq, qi) => {
