@@ -361,11 +361,12 @@ const Navbar = () => {
               {/* Skill accordion */}
               <button
                 onClick={() => setMobileSkillOpen(!mobileSkillOpen)}
-                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-bold text-[#CC1C01] transition-colors ${
                   isSkillActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "bg-primary/10"
+                    : "hover:bg-primary/5"
                 }`}
+
               >
                 <span className="flex items-center gap-3">
                   <BookOpen className="w-4 h-4" />
