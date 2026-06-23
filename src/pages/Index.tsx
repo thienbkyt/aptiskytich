@@ -16,6 +16,7 @@ import BorderBeam from "@/components/ui/border-beam";
 import MagneticButton from "@/components/ui/magnetic-button";
 import GradientOrb from "@/components/ui/gradient-orb";
 import writingResultAsset from "@/assets/writing-result.jpg.asset.json";
+import heroAiFeedbackAsset from "@/assets/hero-ai-feedback.png.asset.json";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -197,7 +198,7 @@ const Index = () => {
                 </div>
                 {/* Screenshot */}
                 <img
-                  src={writingResultAsset.url}
+                  src={heroAiFeedbackAsset.url}
                   alt="Kết quả Writing 44/50 — Trình độ B2 chấm bởi AI Kỳ Tích"
                   className="block w-full h-auto rounded-b-[20px]"
                   loading="eager"
