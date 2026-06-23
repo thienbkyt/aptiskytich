@@ -115,25 +115,42 @@ export const toReadingPart4 = (rows: ExamQuestionRow[]): ReadingLongQuestion | n
     type: "long-reading" as const,
     instruction: ed.instruction || "Read the text below and answer the questions.",
     passage: ed.passage || first.question_text,
-    questions: ed.questions || rows.map((r) => ({
-      text: r.question_text,
-      options: r.options,
-      correct: r.correct_answer ?? 0,
-    })),
+    questions: ed.questions || rows
+      .filter((r) => {
+        if (r.correct_answer === null || r.correct_answer === undefined) {
+          console.warn("[toReadingPart4] dropping MCQ with missing correct_answer", { id: r.id });
+          return false;
+        }
+        return true;
+      })
+      .map((r) => ({
+        text: r.question_text,
+        options: r.options,
+        correct: r.correct_answer as number,
+      })),
     explanation: first.explanation || "",
   };
 };
 
 // ─── Listening ──────────────────────────────────────────────
 export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Question[] =>
-  rows.map((r, i) => ({
-    id: i + 1,
-    audioUrl: r.audio_url || "",
-    questionText: r.question_text || "",
-    options: r.options,
-    correct: r.correct_answer ?? 0,
-    script: r.explanation || "",
-  }));
+  rows
+    .filter((r) => {
+      if (r.correct_answer === null || r.correct_answer === undefined) {
+        console.warn("[toListeningPart1] dropping question with missing correct_answer", { id: r.id });
+        return false;
+      }
+      return true;
+    })
+    .map((r, i) => ({
+      id: i + 1,
+      audioUrl: r.audio_url || "",
+      questionText: r.question_text || "",
+      options: r.options,
+      correct: r.correct_answer as number,
+      script: r.explanation || "",
+    }));
+
 
 export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Question[] => {
   if (rows.length === 0) return [];
