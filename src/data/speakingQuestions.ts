@@ -10,7 +10,7 @@ export interface SpeakingPart1Data {
 
 // Part 2: Describe a Picture – Describe what you see (45s prep, 45s speak)
 export interface SpeakingPart2Data {
-  imageUrl: string;
+  imageUrl: string | null;
   prompt: string;
   questions: string[];
   prepTime: number;
@@ -20,8 +20,8 @@ export interface SpeakingPart2Data {
 
 // Part 3: Compare Pictures – Compare two images (45s prep, 60s speak)
 export interface SpeakingPart3Data {
-  imageUrl1: string;
-  imageUrl2: string;
+  imageUrl1: string | null;
+  imageUrl2: string | null;
   prompt: string;
   questions: string[];
   prepTime: number;
