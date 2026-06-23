@@ -194,7 +194,16 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
           "dictionary-lookup",
           { body: { word: clean } }
         );
-        if (fnError) throw fnError;
+        if (fnError) {
+          const ctx: any = (fnError as any)?.context;
+          if (ctx && typeof ctx.json === "function") {
+            try {
+              const b = await ctx.json();
+              if (b?.error) throw new Error(b.error);
+            } catch { /* fall through */ }
+          }
+          throw fnError;
+        }
         if (data?.error) throw new Error(data.error);
 
         cacheRef.current.set(clean, data as DictResult);
@@ -202,7 +211,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         setResult(data as DictResult);
       } catch (e: any) {
         console.error("Dictionary lookup failed:", e);
-        setError("Không thể tra từ này. Thử lại sau.");
+        const msg = e?.message || "";
+        setError(/giới hạn hôm nay/i.test(msg) ? msg : "Không thể tra từ này. Thử lại sau.");
       } finally {
         setLoading(false);
       }

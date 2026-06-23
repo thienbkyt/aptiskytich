@@ -61,7 +61,21 @@ export function useExamGrading() {
         },
       });
 
-      if (error) throw error;
+
+      if (error) {
+        // FunctionsHttpError stashes the Response in .context — read its JSON body
+        // so quota messages ("Bạn đã đạt giới hạn hôm nay...") reach the user.
+        const ctx: any = (error as any)?.context;
+        if (ctx && typeof ctx.json === "function") {
+          try {
+            const body = await ctx.json();
+            if (body?.error) throw new Error(body.error);
+          } catch (parseErr: any) {
+            if (parseErr?.message && parseErr.message !== (error as any)?.message) throw parseErr;
+          }
+        }
+        throw error;
+      }
       if (data?.error) throw new Error(data.error);
 
       const result = data as AnyGradingResult;
@@ -133,7 +147,12 @@ export function useExamGrading() {
       return result;
     } catch (e: any) {
       console.error("Grading error:", e);
-      toast.error("Không thể chấm điểm. Vui lòng thử lại.");
+      const msg = e?.message || "";
+      if (/giới hạn hôm nay/i.test(msg)) {
+        toast.error(msg);
+      } else {
+        toast.error("Không thể chấm điểm. Vui lòng thử lại.");
+      }
       return null;
     } finally {
       setIsGrading(false);

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
+import { enforceDailyQuota } from "../_shared/quota.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -59,6 +60,13 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const userId = String((claims.claims as any).sub || "");
+
+    // Service-role client for cache + quota writes (bypasses RLS).
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
     // --- Parse & validate input ---
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -105,6 +113,43 @@ serve(async (req) => {
         status: 413,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // --- Idempotency cache: avoid re-grading identical submissions ---
+    const hashInput = JSON.stringify({
+      type, partType, itemType, questions, subQuestions,
+      text: text ?? null,
+      audioLen: audioBase64 ? audioBase64.length : 0,
+      audioHead: audioBase64 ? audioBase64.slice(0, 256) : "",
+      audioTail: audioBase64 ? audioBase64.slice(-256) : "",
+      actualSpoken, speakTime, maxPoints,
+      timePenaltyTiers: tiersIn,
+      usedConnectorsRequired: !!body.usedConnectorsRequired,
+    });
+    const hashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(hashInput));
+    const requestHash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    if (userId) {
+      try {
+        const { data: cachedRow } = await serviceClient
+          .from("grading_cache")
+          .select("response")
+          .eq("user_id", userId)
+          .eq("request_hash", requestHash)
+          .maybeSingle();
+        if (cachedRow?.response) {
+          console.log("[grade-exam] cache hit, skipping AI call");
+          return new Response(JSON.stringify(cachedRow.response), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch (e) {
+        console.warn("[grade-exam] cache lookup failed:", (e as any)?.message || e);
+      }
+
+      // Daily quota: 10 graded submissions per user
+      const quota = await enforceDailyQuota(userId, "grade-exam", 10, corsHeaders);
+      if (quota) return quota;
     }
 
     // --- Build AI prompt ---
@@ -794,6 +839,20 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         partScore,
         feedback,
       };
+    }
+
+    // Persist to cache so identical resubmits don't burn AI again.
+    if (userId) {
+      try {
+        await serviceClient
+          .from("grading_cache")
+          .upsert(
+            { user_id: userId, request_hash: requestHash, response: payload },
+            { onConflict: "user_id,request_hash" },
+          );
+      } catch (e) {
+        console.warn("[grade-exam] cache write failed:", (e as any)?.message || e);
+      }
     }
 
     return new Response(JSON.stringify(payload), {

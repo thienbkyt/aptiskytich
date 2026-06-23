@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { logAIUsage, logInvocation } from "../_shared/usage-logger.ts";
 import { requireUser } from "../_shared/auth.ts";
+import { enforceDailyQuota } from "../_shared/quota.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,7 +47,10 @@ serve(async (req) => {
       });
     }
 
-    // Not cached — call AI
+    // Not cached — enforce daily quota before calling AI
+    const quota = await enforceDailyQuota(auth.userId, "dictionary-lookup", 200, corsHeaders);
+    if (quota) return quota;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 

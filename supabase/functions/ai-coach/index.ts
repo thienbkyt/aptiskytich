@@ -7,6 +7,7 @@
 // - Analytics insertion into usage_events
 
 import { requireUser } from "../_shared/auth.ts";
+import { enforceDailyQuota } from "../_shared/quota.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -276,6 +277,10 @@ Deno.serve(async (req: Request) => {
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(rl.retryAfter) } },
       );
     }
+
+    // Daily quota: 50 chat messages per user
+    const quota = await enforceDailyQuota(userId, "ai-coach", 50, corsHeaders);
+    if (quota) return quota;
 
     const body = await req.json().catch(() => null) as
       | { messages?: ChatMessage[]; context?: CoachContext }

@@ -164,12 +164,23 @@ export async function gradeSpeakingSpec(
   for (let attempt = 0; attempt <= 2; attempt++) {
     try {
       const { data, error } = await supabase.functions.invoke("grade-exam", { body });
-      if (error) throw error;
+      if (error) {
+        const ctx: any = (error as any)?.context;
+        if (ctx && typeof ctx.json === "function") {
+          try {
+            const b = await ctx.json();
+            if (b?.error) throw new Error(b.error);
+          } catch { /* fall through */ }
+        }
+        throw error;
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       return data as SpeakingItemGrading;
     } catch (e: any) {
       lastErr = e;
       console.warn(`[gradeSpeakingSpec] attempt ${attempt + 1} failed`, e?.message ?? e);
+      // Quota errors are deterministic — don't retry, surface immediately
+      if (/giới hạn hôm nay/i.test(e?.message || "")) break;
       if (attempt < 2) await new Promise((r) => setTimeout(r, delays[attempt]));
     }
   }
