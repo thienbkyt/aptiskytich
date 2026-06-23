@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -38,11 +39,16 @@ const SERVICE_COLORS: Record<string, string> = {
   gemini_direct: "#0F0F10",
 };
 
+const RANGES = [
+  { value: "7", label: "7 ngày" },
+  { value: "30", label: "30 ngày" },
+  { value: "90", label: "90 ngày" },
+  { value: "all", label: "Tất cả" },
+  { value: "custom", label: "Tùy chọn (từ - đến)" },
+] as const;
+
 const fmtVND = (n: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n);
-
-const monthKey = (d: Date) =>
-  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
 
 const VN_MONTHS = Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`);
 
@@ -50,25 +56,75 @@ export default function AutoCostTab() {
   const { toast } = useToast();
   const today = new Date();
   const [events, setEvents] = useState<UsageEvent[]>([]);
+  const [prevEvents, setPrevEvents] = useState<UsageEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [snapshotting, setSnapshotting] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(monthKey(today));
+  const [range, setRange] = useState<string>("30");
+  const [customFrom, setCustomFrom] = useState<string>("");
+  const [customTo, setCustomTo] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState(today.getUTCFullYear());
+  const [allEvents, setAllEvents] = useState<UsageEvent[]>([]);
+
+  // Resolve range -> {gte, lte, prevGte, prevLte}
+  const rangeBounds = useMemo(() => {
+    let gte: Date | null = null;
+    let lte: Date | null = null;
+    if (range === "custom") {
+      if (customFrom && customTo) {
+        gte = new Date(`${customFrom}T00:00:00`);
+        lte = new Date(`${customTo}T23:59:59.999`);
+      }
+    } else if (range !== "all") {
+      const days = Number(range);
+      lte = new Date();
+      gte = new Date(Date.now() - days * 86400_000);
+    }
+    let prevGte: Date | null = null;
+    let prevLte: Date | null = null;
+    if (gte && lte) {
+      const spanMs = lte.getTime() - gte.getTime();
+      prevLte = new Date(gte.getTime() - 1);
+      prevGte = new Date(prevLte.getTime() - spanMs);
+    }
+    return { gte, lte, prevGte, prevLte };
+  }, [range, customFrom, customTo]);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("usage_events")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(10000);
+    const { gte, lte, prevGte, prevLte } = rangeBounds;
+
+    let q = supabase.from("usage_events").select("*").order("created_at", { ascending: false }).limit(20000);
+    if (gte) q = q.gte("created_at", gte.toISOString());
+    if (lte) q = q.lte("created_at", lte.toISOString());
+    const { data, error } = await q;
     if (error) {
       toast({ title: "Lỗi tải usage", description: error.message, variant: "destructive" });
+      setEvents([]);
     } else {
       setEvents((data || []) as UsageEvent[]);
     }
+
+    if (prevGte && prevLte) {
+      const { data: prev } = await supabase
+        .from("usage_events").select("*")
+        .gte("created_at", prevGte.toISOString())
+        .lte("created_at", prevLte.toISOString())
+        .limit(20000);
+      setPrevEvents((prev || []) as UsageEvent[]);
+    } else {
+      setPrevEvents([]);
+    }
+
+    // For yearly chart, load all events of selected year
+    const yStart = new Date(Date.UTC(selectedYear, 0, 1)).toISOString();
+    const yEnd = new Date(Date.UTC(selectedYear + 1, 0, 1)).toISOString();
+    const { data: yearData } = await supabase
+      .from("usage_events").select("service,estimated_cost_vnd,created_at")
+      .gte("created_at", yStart).lt("created_at", yEnd).limit(50000);
+    setAllEvents((yearData || []) as UsageEvent[]);
+
     setLoading(false);
-  }, [toast]);
+  }, [rangeBounds, selectedYear, toast]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -87,42 +143,24 @@ export default function AutoCostTab() {
     }
   };
 
-  const monthEvents = useMemo(() => {
-    const d = new Date(selectedMonth);
-    const y = d.getUTCFullYear();
-    const m = d.getUTCMonth();
-    return events.filter(e => {
-      const ed = new Date(e.created_at);
-      return ed.getUTCFullYear() === y && ed.getUTCMonth() === m;
-    });
-  }, [events, selectedMonth]);
-
-  const monthTotal = useMemo(
-    () => monthEvents.reduce((s, e) => s + Number(e.estimated_cost_vnd), 0),
-    [monthEvents]
+  const total = useMemo(
+    () => events.reduce((s, e) => s + Number(e.estimated_cost_vnd), 0),
+    [events]
   );
-
-  const prevMonthTotal = useMemo(() => {
-    const d = new Date(selectedMonth);
-    d.setUTCMonth(d.getUTCMonth() - 1);
-    const y = d.getUTCFullYear();
-    const m = d.getUTCMonth();
-    return events
-      .filter(e => {
-        const ed = new Date(e.created_at);
-        return ed.getUTCFullYear() === y && ed.getUTCMonth() === m;
-      })
-      .reduce((s, e) => s + Number(e.estimated_cost_vnd), 0);
-  }, [events, selectedMonth]);
-
+  const prevTotal = useMemo(
+    () => prevEvents.reduce((s, e) => s + Number(e.estimated_cost_vnd), 0),
+    [prevEvents]
+  );
+  const hasCompare = rangeBounds.prevGte !== null;
   const diffPct = useMemo(() => {
-    if (prevMonthTotal === 0) return monthTotal > 0 ? 100 : 0;
-    return ((monthTotal - prevMonthTotal) / prevMonthTotal) * 100;
-  }, [monthTotal, prevMonthTotal]);
+    if (!hasCompare) return 0;
+    if (prevTotal === 0) return total > 0 ? 100 : 0;
+    return ((total - prevTotal) / prevTotal) * 100;
+  }, [total, prevTotal, hasCompare]);
 
   const breakdown = useMemo(() => {
     const map = new Map<string, { cost: number; units: number; unitTypes: Set<string> }>();
-    for (const e of monthEvents) {
+    for (const e of events) {
       const cur = map.get(e.service) || { cost: 0, units: 0, unitTypes: new Set() };
       cur.cost += Number(e.estimated_cost_vnd);
       cur.units += Number(e.units);
@@ -132,31 +170,40 @@ export default function AutoCostTab() {
     return Array.from(map.entries())
       .map(([service, v]) => ({ service, ...v, unitTypes: Array.from(v.unitTypes).join(", ") }))
       .sort((a, b) => b.cost - a.cost);
-  }, [monthEvents]);
+  }, [events]);
+
+  // By-day breakdown
+  const dailyServices = useMemo(
+    () => ["lovable_ai", "supabase_db", "google_tts", "supabase_storage", "edge_function"],
+    []
+  );
+  const byDay = useMemo(() => {
+    const map = new Map<string, Record<string, number>>();
+    for (const e of events) {
+      const day = e.created_at.slice(0, 10);
+      const row = map.get(day) || {};
+      row[e.service] = (row[e.service] || 0) + Number(e.estimated_cost_vnd);
+      row.__total = (row.__total || 0) + Number(e.estimated_cost_vnd);
+      map.set(day, row);
+    }
+    return Array.from(map.entries())
+      .filter(([, r]) => (r.__total || 0) > 0)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([day, r]) => ({ day, ...r }));
+  }, [events]);
 
   const yearChart = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
       const row: Record<string, string | number> = { month: VN_MONTHS[i] };
-      const services = new Set<string>();
-      events.forEach(e => {
+      allEvents.forEach(e => {
         const ed = new Date(e.created_at);
         if (ed.getUTCFullYear() !== selectedYear || ed.getUTCMonth() !== i) return;
-        services.add(e.service);
         row[e.service] = (Number(row[e.service] || 0)) + Number(e.estimated_cost_vnd);
       });
       Object.keys(SERVICE_LABEL).forEach(s => { if (!(s in row)) row[s] = 0; });
       return row;
     });
-  }, [events, selectedYear]);
-
-  const availableMonths = useMemo(() => {
-    const set = new Set<string>([monthKey(today)]);
-    events.forEach(e => {
-      const d = new Date(e.created_at);
-      set.add(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`);
-    });
-    return Array.from(set).sort().reverse();
-  }, [events]);
+  }, [allEvents, selectedYear]);
 
   const availableYears = useMemo(() => {
     const set = new Set<number>([today.getUTCFullYear()]);
@@ -164,22 +211,29 @@ export default function AutoCostTab() {
     return Array.from(set).sort((a, b) => b - a);
   }, [events]);
 
-  const monthLabel = (key: string) => {
-    const d = new Date(key);
-    return `Tháng ${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
+  const fmtDay = (d: string) => {
+    const [y, m, dd] = d.split("-");
+    return `${dd}/${m}/${y}`;
   };
 
   return (
     <Card className="p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-heading font-bold text-foreground">Chi phí ước lượng (tự động)</h2>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="text-lg font-heading font-bold text-foreground">Chi phí</h2>
+          <Select value={range} onValueChange={setRange}>
+            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {availableMonths.map(m => <SelectItem key={m} value={m}>{monthLabel(m)}</SelectItem>)}
+              {RANGES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          {range === "custom" && (
+            <>
+              <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-[160px]" aria-label="Từ ngày" />
+              <span className="text-sm text-muted-foreground">→</span>
+              <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-[160px]" aria-label="Đến ngày" />
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleSnapshot} disabled={snapshotting} className="gap-2">
@@ -195,26 +249,69 @@ export default function AutoCostTab() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className={`grid grid-cols-1 ${hasCompare ? "md:grid-cols-2" : ""} gap-4 mb-6`}>
         <div className="rounded-xl border border-border bg-card p-5">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Tổng ước lượng</p>
-          <p className="text-3xl font-heading font-extrabold text-primary">{fmtVND(monthTotal)}</p>
-          <p className="text-xs text-muted-foreground mt-1">{monthLabel(selectedMonth)}</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Tổng chi phí</p>
+          <p className="text-3xl font-heading font-extrabold text-primary">{fmtVND(total)}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {range === "all" ? "Tất cả thời gian" : range === "custom" ? `${customFrom || "?"} → ${customTo || "?"}` : `${range} ngày gần nhất`}
+          </p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-5">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">So với tháng trước</p>
-          <div className="flex items-center gap-2">
-            {diffPct > 0 ? <TrendingUp className="w-6 h-6 text-destructive" /> :
-             diffPct < 0 ? <TrendingDown className="w-6 h-6 text-emerald-600" /> :
-             <Minus className="w-6 h-6 text-muted-foreground" />}
-            <p className={`text-3xl font-heading font-extrabold ${
-              diffPct > 0 ? "text-destructive" : diffPct < 0 ? "text-emerald-600" : "text-muted-foreground"
-            }`}>{diffPct > 0 ? "+" : ""}{diffPct.toFixed(1)}%</p>
+        {hasCompare && (
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">So với kỳ trước cùng độ dài</p>
+            <div className="flex items-center gap-2">
+              {diffPct > 0 ? <TrendingUp className="w-6 h-6 text-destructive" /> :
+               diffPct < 0 ? <TrendingDown className="w-6 h-6 text-emerald-600" /> :
+               <Minus className="w-6 h-6 text-muted-foreground" />}
+              <p className={`text-3xl font-heading font-extrabold ${
+                diffPct > 0 ? "text-destructive" : diffPct < 0 ? "text-emerald-600" : "text-muted-foreground"
+              }`}>{diffPct > 0 ? "+" : ""}{diffPct.toFixed(1)}%</p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Kỳ trước: {fmtVND(prevTotal)}</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Tháng trước: {fmtVND(prevMonthTotal)}</p>
-        </div>
+        )}
       </div>
 
+      {/* By-day */}
+      <h3 className="text-sm font-heading font-bold text-foreground mb-2">Chi phí theo ngày</h3>
+      <div className="rounded-xl border border-border overflow-hidden mb-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ngày</TableHead>
+              {dailyServices.map(s => (
+                <TableHead key={s} className="text-right">{SERVICE_LABEL[s]}</TableHead>
+              ))}
+              <TableHead className="text-right">Tổng</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow><TableCell colSpan={dailyServices.length + 2} className="text-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin inline" />
+              </TableCell></TableRow>
+            ) : byDay.length === 0 ? (
+              <TableRow><TableCell colSpan={dailyServices.length + 2} className="text-center py-8 text-muted-foreground">
+                Không có chi phí trong khoảng này
+              </TableCell></TableRow>
+            ) : byDay.map((r: any) => (
+              <TableRow key={r.day}>
+                <TableCell className="font-medium">{fmtDay(r.day)}</TableCell>
+                {dailyServices.map(s => (
+                  <TableCell key={s} className="text-right font-mono text-sm">
+                    {r[s] ? fmtVND(Math.round(r[s])) : "—"}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right font-semibold">{fmtVND(Math.round(r.__total))}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Total by service */}
+      <h3 className="text-sm font-heading font-bold text-foreground mb-2">Tổng theo dịch vụ</h3>
       <div className="rounded-xl border border-border overflow-hidden mb-6">
         <Table>
           <TableHeader>
@@ -232,7 +329,7 @@ export default function AutoCostTab() {
               </TableCell></TableRow>
             ) : breakdown.length === 0 ? (
               <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                Chưa có usage trong tháng này
+                Chưa có usage trong khoảng này
               </TableCell></TableRow>
             ) : breakdown.map(b => (
               <TableRow key={b.service}>
