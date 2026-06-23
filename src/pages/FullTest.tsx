@@ -75,8 +75,8 @@ const FullTest = () => {
                 Thi thử bài thi Aptis
               </h1>
               <p className="text-base text-muted-foreground leading-relaxed max-w-2xl mb-6 whitespace-pre-line md:text-lg font-medium">
-                Thi thử bài thi Aptis giống đề thì thật 100% với tổng thời gian 162 phút. 
-                Thứ tự của các phần thi trong bài thi:
+                Thi thử đề Aptis với format mô phỏng giống thi thật 100%.
+                {"\n"}Tổng thời gian 162 phút.{"\u00a0"}Thứ tự của các phần thi trong bài thi:
               </p>
 
               {/* Skill breakdown */}
