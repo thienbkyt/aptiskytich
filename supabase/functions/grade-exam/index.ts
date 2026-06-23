@@ -115,6 +115,43 @@ serve(async (req) => {
       });
     }
 
+    // --- Idempotency cache: avoid re-grading identical submissions ---
+    const hashInput = JSON.stringify({
+      type, partType, itemType, questions, subQuestions,
+      text: text ?? null,
+      audioLen: audioBase64 ? audioBase64.length : 0,
+      audioHead: audioBase64 ? audioBase64.slice(0, 256) : "",
+      audioTail: audioBase64 ? audioBase64.slice(-256) : "",
+      actualSpoken, speakTime, maxPoints,
+      timePenaltyTiers: tiersIn,
+      usedConnectorsRequired: !!body.usedConnectorsRequired,
+    });
+    const hashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(hashInput));
+    const requestHash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+    if (userId) {
+      try {
+        const { data: cachedRow } = await serviceClient
+          .from("grading_cache")
+          .select("response")
+          .eq("user_id", userId)
+          .eq("request_hash", requestHash)
+          .maybeSingle();
+        if (cachedRow?.response) {
+          console.log("[grade-exam] cache hit, skipping AI call");
+          return new Response(JSON.stringify(cachedRow.response), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch (e) {
+        console.warn("[grade-exam] cache lookup failed:", (e as any)?.message || e);
+      }
+
+      // Daily quota: 10 graded submissions per user
+      const quota = await enforceDailyQuota(userId, "grade-exam", 10, corsHeaders);
+      if (quota) return quota;
+    }
+
     // --- Build AI prompt ---
     let userContent: any[];
     let systemPrompt: string;
