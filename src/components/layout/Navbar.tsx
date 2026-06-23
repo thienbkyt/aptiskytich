@@ -130,16 +130,13 @@ const Navbar = () => {
             onFocus={handleSkillEnter}
           >
             <button
-              className={`group flex items-center gap-1 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
-                isSkillActive
-                  ? "text-primary"
-                  : "text-secondary-foreground hover:text-primary"
-              }`}
+              className={`group flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full border-[1.5px] border-[#CC1C01] text-[#CC1C01] bg-transparent hover:bg-[#CC1C01]/10 transition-all whitespace-nowrap`}
             >
               <BookOpen className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
               Luyện tập theo kỹ năng
               <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${skillHover ? "rotate-180" : ""}`} />
             </button>
+
 
             <AnimatePresence>
               {skillHover && (
@@ -364,11 +361,12 @@ const Navbar = () => {
               {/* Skill accordion */}
               <button
                 onClick={() => setMobileSkillOpen(!mobileSkillOpen)}
-                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-bold text-[#CC1C01] transition-colors ${
                   isSkillActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "bg-primary/10"
+                    : "hover:bg-primary/5"
                 }`}
+
               >
                 <span className="flex items-center gap-3">
                   <BookOpen className="w-4 h-4" />
