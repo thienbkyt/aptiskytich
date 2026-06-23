@@ -114,6 +114,7 @@ const ListeningExamEngine = ({
   useEffect(() => {
     if (phase === "practice") setHasStarted(true);
   }, [phase]);
+  useExitWarning(hasStarted && !submitted && !reviewMode);
 
   const toggleBookmark = useCallback((qi: number) => {
     setBookmarked((prev) => {
