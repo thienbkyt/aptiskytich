@@ -78,7 +78,7 @@ const Footer = () => (
         <div>
           <h4 className="font-heading font-semibold text-sidebar-foreground mb-4 uppercase text-xs tracking-wider">Liên hệ</h4>
           <ul className="space-y-2.5 text-sm">
-            <li className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> contact@aptiskytich.vn</li>
+            <li className="flex items-center gap-2"><Mail className="w-4 h-4 text-primary" /> aptiskytich.admin@gmail.com</li>
             <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" /> 0867 833 227</li>
             <li className="flex items-center gap-2"><MessageCircle className="w-4 h-4 text-primary" />
               <a href="https://zalo.me/0867833227" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
