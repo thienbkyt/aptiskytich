@@ -21,6 +21,7 @@ import type {
 } from "@/data/listeningQuestions";
 import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
 import type { ListeningHighlightData } from "@/lib/listeningReview";
+import { useExitWarning } from "@/hooks/useExitWarning";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
