@@ -2,14 +2,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
-  ArrowRight, Clock, BarChart3, Flame, BookOpen,
-  GraduationCap, Star, MessageCircle, Zap, Target,
-  Sparkles, ShieldCheck, Cpu, TrendingUp, Check, Layers, Lightbulb,
-  Mic, GripVertical, Timer,
+  ArrowRight, Flame, BookOpen,
+  Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
+  GripVertical, Timer,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import GlowCard from "@/components/ui/glow-card";
 import GradientText from "@/components/ui/gradient-text";
 import AnimatedGrid from "@/components/ui/animated-grid";
 import ParticlesBackground from "@/components/ui/particles-background";
