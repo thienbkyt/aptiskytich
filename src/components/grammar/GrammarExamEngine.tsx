@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useExitWarning } from "@/hooks/useExitWarning";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
 import {
@@ -80,6 +81,7 @@ const GrammarExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(false);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  useExitWarning(hasStarted && !submitted && !reviewMode);
   // Reveal-on-demand for practice mode (keyed by group index).
   const [revealedGroups, setRevealedGroups] = useState<Set<number>>(new Set());
 

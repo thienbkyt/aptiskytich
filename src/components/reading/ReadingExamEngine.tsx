@@ -20,6 +20,7 @@ import type {
 } from "@/data/readingQuestions";
 import type { ReadingReviewData } from "@/lib/readingReview";
 import { useReadingReviewData } from "@/hooks/useReadingReviewData";
+import { useExitWarning } from "@/hooks/useExitWarning";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -112,6 +113,7 @@ const ReadingExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  useExitWarning(hasStarted && !submitted && !reviewMode);
 
   // Reveal-on-demand for practice mode (per page key).
   const [revealedKeys, setRevealedKeys] = useState<Set<number>>(new Set());

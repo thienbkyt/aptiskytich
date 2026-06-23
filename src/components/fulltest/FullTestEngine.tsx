@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useExitWarning } from "@/hooks/useExitWarning";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
@@ -112,6 +113,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
+  useExitWarning(phase !== "loading" && phase !== "completed" && phase !== "finalizing-writing");
   const { gradeExam } = useExamGrading();
 
 

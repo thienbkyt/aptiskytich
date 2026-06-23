@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useExitWarning } from "@/hooks/useExitWarning";
 import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,6 +119,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingFullParts, setSpeakingFullParts] = useState<SpeakingFullPartResult[]>([]);
   const [speakingTotalScore, setSpeakingTotalScore] = useState(0);
   const [speakingTotalMax, setSpeakingTotalMax] = useState(0);
+  useExitWarning(phase !== "loading" && phase !== "completed");
 
 
   const skillLabel = SKILL_LABELS[skill] || skill;
