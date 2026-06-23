@@ -1,6 +1,8 @@
 import { lazy, Suspense, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { FEATURES } from "@/config/features";
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -80,7 +82,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/course" element={<Course />} />
+            <Route path="/course" element={FEATURES.course ? <Course /> : <Navigate to="/" replace />} />
             <Route path="/grammar" element={<WithDict><GrammarVocabulary /></WithDict>} />
             <Route path="/reading" element={<WithDict><Reading /></WithDict>} />
             <Route path="/listening" element={<WithDict><Listening /></WithDict>} />

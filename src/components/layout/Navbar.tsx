@@ -13,11 +13,14 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
 import NotificationBell from "@/components/layout/NotificationBell";
+import { FEATURES } from "@/config/features";
 
 /* ── Nav data ── */
-const topLinks: { label: string; path: string; icon: LucideIcon }[] = [
+const allTopLinks: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap },
 ];
+const topLinks = allTopLinks.filter((l) => l.path !== "/course" || FEATURES.course);
+
 
 const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
   { label: "Speaking", path: "/speaking", icon: Mic, desc: "Luyện nói theo đề Aptis" },
