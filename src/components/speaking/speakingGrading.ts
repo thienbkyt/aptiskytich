@@ -170,6 +170,8 @@ export async function gradeSpeakingSpec(
     } catch (e: any) {
       lastErr = e;
       console.warn(`[gradeSpeakingSpec] attempt ${attempt + 1} failed`, e?.message ?? e);
+      // Quota errors are deterministic — don't retry, surface immediately
+      if (/giới hạn hôm nay/i.test(e?.message || "")) break;
       if (attempt < 2) await new Promise((r) => setTimeout(r, delays[attempt]));
     }
   }
