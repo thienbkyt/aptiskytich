@@ -186,8 +186,18 @@ const VocabListDetail = () => {
     const { data, error } = await supabase.functions.invoke("dictionary-lookup", {
       body: { word },
     });
-    if (error || !data || (data as any).error) {
-      throw new Error((data as any)?.error || error?.message || "Lookup failed");
+    if (error) {
+      const ctx: any = (error as any)?.context;
+      if (ctx && typeof ctx.json === "function") {
+        try {
+          const b = await ctx.json();
+          if (b?.error) throw new Error(b.error);
+        } catch { /* fall through */ }
+      }
+      throw new Error(error.message || "Lookup failed");
+    }
+    if (!data || (data as any).error) {
+      throw new Error((data as any)?.error || "Lookup failed");
     }
     return data as any;
   }, []);
