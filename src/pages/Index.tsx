@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, Clock, BarChart3, Flame, BookOpen,
   GraduationCap, Star, MessageCircle, Zap, Target,
-  Sparkles, ShieldCheck, Cpu,
+  Sparkles, ShieldCheck, Cpu, TrendingUp,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -16,6 +16,7 @@ import SpotlightCard from "@/components/ui/spotlight-card";
 import BorderBeam from "@/components/ui/border-beam";
 import MagneticButton from "@/components/ui/magnetic-button";
 import GradientOrb from "@/components/ui/gradient-orb";
+import writingResultAsset from "@/assets/writing-result.jpg.asset.json";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
