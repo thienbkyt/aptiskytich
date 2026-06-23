@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_daily_quota: {
+        Row: {
+          action: string
+          day: string
+          updated_at: string
+          used: number
+          user_id: string
+        }
+        Insert: {
+          action: string
+          day?: string
+          updated_at?: string
+          used?: number
+          user_id: string
+        }
+        Update: {
+          action?: string
+          day?: string
+          updated_at?: string
+          used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       answers: {
         Row: {
           answer_text: string
@@ -432,6 +456,30 @@ export type Database = {
           is_published?: boolean
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      grading_cache: {
+        Row: {
+          created_at: string
+          id: string
+          request_hash: string
+          response: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          request_hash: string
+          response: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          request_hash?: string
+          response?: Json
+          user_id?: string
         }
         Relationships: []
       }
@@ -1362,6 +1410,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_ai_quota: {
+        Args: { _action: string; _limit: number; _user_id: string }
+        Returns: Json
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
