@@ -251,8 +251,9 @@ export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {
 export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
   const first = rows[0];
   const ed = first?.extra_data || {};
+  if (!first?.image_url) console.warn("[toSpeakingPart2] missing image_url", { id: first?.id });
   return {
-    imageUrl: first?.image_url || "",
+    imageUrl: first?.image_url ?? null,
     prompt: first?.question_text || "",
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 45,
@@ -264,9 +265,12 @@ export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
 export const toSpeakingPart3 = (rows: ExamQuestionRow[]): SpeakingPart3Data => {
   const first = rows[0];
   const ed = first?.extra_data || {};
+  const img1 = ed.imageUrl1 ?? first?.image_url ?? null;
+  const img2 = ed.imageUrl2 ?? null;
+  if (!img1 || !img2) console.warn("[toSpeakingPart3] missing image_url", { id: first?.id, img1: !!img1, img2: !!img2 });
   return {
-    imageUrl1: ed.imageUrl1 || first?.image_url || "",
-    imageUrl2: ed.imageUrl2 || "",
+    imageUrl1: img1,
+    imageUrl2: img2,
     prompt: first?.question_text || "",
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 45,
@@ -280,7 +284,7 @@ export const toSpeakingPart4 = (rows: ExamQuestionRow[]): SpeakingPart4Data => {
   const ed = first?.extra_data || {};
   return {
     topic: ed.topic || first?.question_text || "",
-    imageUrl: first?.image_url || "",
+    imageUrl: first?.image_url ?? undefined,
     questions: rows.map((r) => r.question_text),
     prepTime: ed.prepTime ?? 60,
     speakTime: ed.speakTime ?? 120,
