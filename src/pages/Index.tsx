@@ -451,15 +451,18 @@ const Index = () => {
       </section>
 
       {/* Features */}
-      <section className="section-padding bg-muted/30 relative overflow-hidden">
-        <div className="absolute inset-0 tech-grid-bg opacity-30 pointer-events-none" />
+      <section className="section-padding relative overflow-hidden" style={{ background: "linear-gradient(180deg, #FFF7F0 0%, #FFFFFF 100%)" }}>
+        <div className="absolute inset-0 tech-grid-bg opacity-[0.12] pointer-events-none" />
         <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14">
-            <motion.h2 variants={fadeUp} custom={0} className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-4">
-              Tại sao chọn <GradientText>Aptis Kỳ Tích?</GradientText>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
+            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
+              Điểm mạnh
+            </motion.div>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
+              Vì sao chọn <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Aptis Kỳ Tích</span>
             </motion.h2>
-            <motion.p variants={fadeUp} custom={1} className="text-muted-foreground max-w-xl mx-auto">
-              Mọi thứ bạn cần để vượt qua kỳ thi Aptis
+            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#8B6B5C" }}>
+              Những điều làm nên khác biệt khi luyện thi cùng Kỳ Tích.
             </motion.p>
           </motion.div>
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
