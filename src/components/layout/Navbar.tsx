@@ -358,6 +358,19 @@ const Navbar = () => {
 
               <div className="my-1 mx-4 border-t border-border" />
 
+              {/* Thi thử CTA */}
+              <Link
+                to="/thi-thu"
+                className="block px-2 pt-1"
+              >
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] text-sm font-semibold gap-2">
+                  <ClipboardCheck className="w-4 h-4" />
+                  Thi thử Aptis
+                </Button>
+              </Link>
+
+              <div className="my-1 mx-4 border-t border-border" />
+
               {/* Skill accordion */}
               <button
                 onClick={() => setMobileSkillOpen(!mobileSkillOpen)}
@@ -404,18 +417,6 @@ const Navbar = () => {
                 )}
               </AnimatePresence>
 
-              <div className="my-1 mx-4 border-t border-border" />
-
-              {/* Thi thử CTA */}
-              <Link
-                to="/thi-thu"
-                className="block px-2 pt-1"
-              >
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] text-sm font-semibold gap-2">
-                  <ClipboardCheck className="w-4 h-4" />
-                  Thi thử Aptis
-                </Button>
-              </Link>
 
               {isAdmin && (
                 <>
