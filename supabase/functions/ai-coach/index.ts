@@ -7,6 +7,7 @@
 // - Analytics insertion into usage_events
 
 import { requireUser } from "../_shared/auth.ts";
+import { enforceDailyQuota } from "../_shared/quota.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
