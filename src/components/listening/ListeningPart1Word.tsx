@@ -91,7 +91,16 @@ const ListeningPart1Word = ({
           <p className="text-sm text-foreground mb-1">
             {q.questionText || "Which word do you hear?"}
           </p>
-          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+          {q.audioUrl ? (
+            <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+          ) : (
+            <MissingMediaNotice
+              kind="audio"
+              skill="listening"
+              partType="part1"
+              questionNumber={currentIndex + 1}
+            />
+          )}
 
           <div className="mt-4 border border-border rounded-md overflow-hidden bg-background">
             {q.options.map((opt, i) => {
