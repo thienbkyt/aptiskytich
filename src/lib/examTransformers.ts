@@ -201,11 +201,20 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
     const a = rows[i];
     const b = rows[i + 1];
     if (!a) break;
-    const questions = [a, b].filter(Boolean).map((r) => ({
-      text: r!.question_text || "",
-      options: r!.options || [],
-      correct: r!.correct_answer ?? 0,
-    }));
+    const questions = [a, b]
+      .filter((r): r is ExamQuestionRow => Boolean(r))
+      .filter((r) => {
+        if (r.correct_answer === null || r.correct_answer === undefined) {
+          console.warn("[toListeningPart4] dropping question with missing correct_answer", { id: r.id });
+          return false;
+        }
+        return true;
+      })
+      .map((r) => ({
+        text: r.question_text || "",
+        options: r.options || [],
+        correct: r.correct_answer as number,
+      }));
     clips.push({
       id: clips.length + 1,
       audioUrl: a.audio_url || "",
