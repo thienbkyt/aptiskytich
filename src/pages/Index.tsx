@@ -73,92 +73,188 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero */}
-      <section className="relative pt-28 pb-20 md:pt-36 md:pb-28 overflow-hidden bg-gradient-hero">
-        <AnimatedGrid />
-        <ParticlesBackground />
+      {/* Hero — light theme (landing only) */}
+      <section
+        className="relative pt-28 pb-20 md:pt-32 md:pb-24 overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(180deg, #FFF7F0 0%, #FFFBF6 55%, #FFFFFF 100%)",
+        }}
+      >
+        <AnimatedGrid className="opacity-[0.18]" withOrbs={false} />
+        <ParticlesBackground color="204, 28, 1" count={18} />
         <GradientOrb tone="red" size={520} className="-top-40 -left-40" />
-        <GradientOrb tone="violet" size={460} className="-bottom-40 -right-40" />
+        <GradientOrb tone="orange" size={460} className="-bottom-40 -right-40" />
+
         <div className="section-container relative z-10">
-          <motion.div
-            className="max-w-3xl mx-auto text-center"
-            initial="hidden"
-            animate="visible"
-          >
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left column */}
             <motion.div
-              variants={fadeUp} custom={0}
-              className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-on-dark text-xs font-semibold mb-6 backdrop-blur-sm overflow-hidden"
+              initial="hidden"
+              animate="visible"
+              className="text-center lg:text-left"
             >
-              <Sparkles className="w-3.5 h-3.5 text-primary-glow" /> Nền tảng luyện Aptis có AI Kỳ Tích · Miễn phí
-              <BorderBeam size={120} duration={6} />
+              <motion.div
+                variants={fadeUp} custom={0}
+                className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-primary/25 text-primary text-xs font-semibold mb-6 shadow-sm overflow-hidden"
+              >
+                <Sparkles className="w-3.5 h-3.5" /> Nền tảng luyện Aptis có AI Kỳ Tích · Miễn phí
+                <BorderBeam size={120} duration={6} colorFrom="#CC1C01" colorTo="#FEAD5F" />
+              </motion.div>
+
+              <motion.h1
+                variants={fadeUp} custom={1}
+                className="font-heading font-extrabold leading-[1.1] mb-6 text-[34px] md:text-[46px]"
+                style={{ color: "#4D0D0D" }}
+              >
+                Luyện thi Aptis{" "}
+                <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] via-[#E85A1F] to-[#FEAD5F] animate-gradient-shift">
+                  mô phỏng 100% đề thật
+                </span>
+                , có AI chấm
+              </motion.h1>
+
+              <motion.p
+                variants={fadeUp} custom={2}
+                className="text-base md:text-lg mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+                style={{ color: "#6b4a4a" }}
+              >
+                Đầy đủ 350+ đề, 5 kỹ năng. AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp — biết chính xác bạn đang ở đâu.
+              </motion.p>
+
+              <motion.div
+                variants={fadeUp} custom={3}
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8"
+              >
+                <MagneticButton>
+                  <Link to="/grammar">
+                    <Button size="lg" variant="glow" className="text-base px-8 h-12 gap-2 w-full sm:w-auto rounded-full animate-glow-pulse">
+                      Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
+                    </Button>
+                  </Link>
+                </MagneticButton>
+                <MagneticButton>
+                  <Link to="/thi-thu">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="text-base px-8 h-12 w-full sm:w-auto rounded-full bg-white border-2 border-primary text-primary hover:bg-primary/5"
+                    >
+                      Thi thử miễn phí
+                    </Button>
+                  </Link>
+                </MagneticButton>
+              </motion.div>
+
+              <motion.div
+                variants={fadeUp} custom={4}
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5"
+              >
+                {heroChips.map((c) => (
+                  <div
+                    key={c.label}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#F2D7C5] text-xs font-medium shadow-sm"
+                    style={{ color: "#4D0D0D" }}
+                  >
+                    <c.icon className="w-3.5 h-3.5 text-primary" /> {c.label}
+                  </div>
+                ))}
+              </motion.div>
             </motion.div>
-            <motion.h1
-              variants={fadeUp} custom={1}
-              className="text-4xl md:text-6xl font-heading font-extrabold text-on-dark leading-[1.1] mb-6"
-            >
-              Thi thử Aptis miễn phí –{" "}
-              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary-glow animate-gradient-shift">
-                Kiểm tra trình độ
-              </span>{" "}
-              trong 10 phút
-            </motion.h1>
-            <motion.p
+
+            {/* Right column — product window */}
+            <motion.div
               variants={fadeUp} custom={2}
-              className="text-lg md:text-xl text-on-dark/70 mb-10 max-w-2xl mx-auto leading-relaxed"
+              initial="hidden" animate="visible"
+              className="relative"
             >
-              Luyện tập với hơn 10,000 câu hỏi sát đề thi Aptis thật. AI Kỳ Tích chấm Speaking & Writing. Đạt B1–B2 nhanh nhất.
-            </motion.p>
-            <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
-              <MagneticButton>
-                <Link to="/grammar">
-                  <Button size="lg" variant="glow" className="text-base px-8 h-12 gap-2 w-full sm:w-auto rounded-full animate-glow-pulse">
-                    Bắt đầu luyện tập <ArrowRight className="w-5 h-5" />
-                  </Button>
-                </Link>
-              </MagneticButton>
-              <MagneticButton>
-                <Link to="/course">
-                  <Button size="lg" variant="glow-outline" className="text-base px-8 h-12 w-full sm:w-auto rounded-full">
-                    Xem khóa học 7 ngày
-                  </Button>
-                </Link>
-              </MagneticButton>
-            </motion.div>
-
-            {/* Trust badges */}
-            <motion.div
-              variants={fadeUp} custom={4}
-              className="flex flex-wrap items-center justify-center gap-3 mt-8"
-            >
-              {trustBadges.map((b) => (
-                <div
-                  key={b.label}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-on-dark/5 border border-on-dark/10 text-xs text-on-dark/80 backdrop-blur-sm"
-                >
-                  <b.icon className="w-3.5 h-3.5 text-primary-glow" /> {b.label}
+              <div
+                className="relative rounded-[20px] overflow-hidden bg-white border border-[#F0D9C8]"
+                style={{ boxShadow: "0 30px 60px -20px rgba(204, 28, 1, 0.25), 0 12px 24px -12px rgba(77, 13, 13, 0.12)" }}
+              >
+                {/* Browser title bar */}
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-[#F2E2D4] bg-[#FFF9F3]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+                    <span className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+                    <span className="w-3 h-3 rounded-full bg-[#28C840]" />
+                  </div>
+                  <div className="flex-1 flex justify-center">
+                    <div className="px-3 py-1 rounded-md bg-white border border-[#F0E0D0] text-[11px] text-[#8B6B5C] font-medium">
+                      aptiskytich.vn
+                    </div>
+                  </div>
+                  <div className="w-12" />
                 </div>
-              ))}
-            </motion.div>
-          </motion.div>
+                {/* Screenshot */}
+                <img
+                  src={writingResultAsset.url}
+                  alt="Kết quả Writing 44/50 — Trình độ B2 chấm bởi AI Kỳ Tích"
+                  className="block w-full h-auto rounded-b-[20px]"
+                  loading="eager"
+                />
+              </div>
 
-          {/* Stats */}
+              {/* Floating card — top right */}
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="hidden md:flex absolute -top-4 -right-4 items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-[#F2D7C5]"
+                style={{ boxShadow: "0 12px 24px -12px rgba(204, 28, 1, 0.25)" }}
+              >
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-[#8B6B5C] font-medium">AI chấm Writing</div>
+                  <div className="text-sm font-bold" style={{ color: "#4D0D0D" }}>Band B2</div>
+                </div>
+              </motion.div>
+
+              {/* Floating card — bottom left */}
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                className="hidden md:flex absolute -bottom-4 -left-4 items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-[#F2D7C5]"
+                style={{ boxShadow: "0 12px 24px -12px rgba(204, 28, 1, 0.25)" }}
+              >
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center">
+                  <Flame className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-[#8B6B5C] font-medium">Streak</div>
+                  <div className="text-sm font-bold" style={{ color: "#4D0D0D" }}>18 ngày</div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats strip */}
+      <section className="relative py-10 md:py-14" style={{ background: "#FFFFFF" }}>
+        <div className="section-container">
           <motion.div
-            variants={fadeUp} custom={5}
-            initial="hidden" animate="visible"
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-14 max-w-3xl mx-auto"
+            variants={fadeUp} custom={0}
+            initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto"
           >
             {stats.map((s) => (
               <div
                 key={s.label}
-                className="text-center p-4 rounded-2xl bg-on-dark/5 backdrop-blur-md border border-on-dark/10 hover:border-primary/40 hover:shadow-glow-soft transition-all"
+                className="text-center p-5 rounded-[20px] bg-white border border-[#F2E2D4] transition-all hover:-translate-y-0.5"
+                style={{ boxShadow: "0 8px 20px -12px rgba(204, 28, 1, 0.18)" }}
               >
-                <div className="text-2xl md:text-3xl font-heading font-extrabold gradient-text">{s.value}</div>
-                <div className="text-sm text-on-dark/60 mt-1">{s.label}</div>
+                <div className="text-2xl md:text-3xl font-heading font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">
+                  {s.value}
+                </div>
+                <div className="text-sm mt-1.5" style={{ color: "#8B6B5C" }}>{s.label}</div>
               </div>
             ))}
           </motion.div>
         </div>
       </section>
+
 
       {/* Exam Structure */}
       <section className="section-padding bg-background relative overflow-hidden">
