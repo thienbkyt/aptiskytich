@@ -114,11 +114,11 @@ const Index = () => {
                 className="font-heading font-extrabold leading-[1.1] mb-6 text-[34px] md:text-[46px]"
                 style={{ color: "#4D0D0D" }}
               >
-                Luyện thi Aptis{" "}
-                <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] via-[#E85A1F] to-[#FEAD5F] animate-gradient-shift">
-                  mô phỏng 100% đề thật
+                Luyện thi Aptis mô phỏng 100% đề thật
+                <br />
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] via-[#E85A1F] to-[#FEAD5F] animate-gradient-shift">
+                  AI Kỳ Tích chấm điểm
                 </span>
-                , có AI chấm
               </motion.h1>
 
               <motion.p
@@ -126,7 +126,9 @@ const Index = () => {
                 className="text-base md:text-lg mb-8 max-w-xl mx-auto lg:mx-0 leading-relaxed"
                 style={{ color: "#6b4a4a" }}
               >
-                Sắp thi Aptis mà chưa biết mình đang ở band nào? Luyện với 350+ đề sát đề thật, AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp — biết chính xác bạn đang ở đâu.
+                Sắp thi Aptis mà chưa biết mình đang ở band nào?&nbsp;
+                <br />
+                Luyện với 350+ đề sát đề thật, AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp&nbsp;
               </motion.p>
 
               <motion.div
@@ -272,7 +274,8 @@ const Index = () => {
             style={{ boxShadow: "0 8px 22px -14px rgba(204, 28, 1, 0.18)" }}
           >
             {[
-              { icon: ShieldCheck, title: "Bám sát format kỳ thi Aptis (British Council)", sub: "4 kỹ năng, đúng dạng bài & cách tính band", isNum: false },
+              { icon: ShieldCheck, title: "Bám sát format kỳ thi\u00A0\nAptis (British Council)", sub: "5 kỹ năng, đúng dạng bài & cách tính band", isNum: false },
+
               { icon: Repeat, title: "1.000+", sub: "lượt luyện đã thực hiện", isNum: true },
               { icon: Sparkles, title: "100+", sub: "bài Speaking–Writing đã được AI chấm", isNum: true },
             ].map((t, i) => (
