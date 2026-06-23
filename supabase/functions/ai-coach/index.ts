@@ -6,6 +6,8 @@
 // - Per-user in-memory rate limit (30/min) with Retry-After header
 // - Analytics insertion into usage_events
 
+import { requireUser } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -262,15 +264,10 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    let userId = "anon";
-    if (token && token.split(".").length === 3) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-        if (payload?.sub) userId = String(payload.sub);
-      } catch {/* ignore */}
-    }
+    const auth = await requireUser(req, corsHeaders);
+    if (auth instanceof Response) return auth;
+    const userId = auth.userId;
+    const token = auth.token;
 
     const rl = rateLimit(userId);
     if (!rl.ok) {
