@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
   BookText, GraduationCap, Book, Headphones, Mic, PenLine,
-  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, type LucideIcon,
+  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
@@ -46,7 +46,7 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
-  const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students");
+  const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
 
   // Close mobile menu on route change
   useEffect(() => {
