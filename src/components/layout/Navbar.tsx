@@ -306,6 +306,23 @@ const Navbar = () => {
           )}
           {user ? (
             <>
+              {isPro ? (
+                <span
+                  title="Bạn đang là thành viên Pro"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold shadow-sm"
+                >
+                  <Crown className="w-3 h-3" /> Pro
+                </span>
+              ) : (
+                <Link to="/pricing" {...prefetchHandlers("/pricing")}>
+                  <Button
+                    size="sm"
+                    className="rounded-full h-8 px-3 text-xs font-bold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0 shadow-sm"
+                  >
+                    <Crown className="w-3.5 h-3.5" /> Nâng cấp Pro
+                  </Button>
+                </Link>
+              )}
               <NotificationBell />
               <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-8 px-3">
