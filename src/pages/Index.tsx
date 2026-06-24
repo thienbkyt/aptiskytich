@@ -30,7 +30,7 @@ const fadeUp = {
 const stats = [
   { value: "350+", label: "Đề thi thật" },
   { value: "1.166", label: "Câu hỏi luyện tập" },
-  { value: "AI", label: "Chấm bài sát với thi thật" },
+  { value: "AI\u00A0", label: "Giải thích chi tiết từng câu" },
   { value: "Mô phỏng", label: "Giống bài thi thật 100%" },
 ];
 
@@ -172,7 +172,7 @@ const Index = () => {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#F2D7C5] text-xs font-medium shadow-sm"
                     style={{ color: "#4D0D0D" }}
                   >
-                    <c.icon className="w-3.5 h-3.5 text-primary" /> {c.label}
+                    <c.icon className="w-3.5 h-3.5 text-primary" />{c.label}
                   </div>
                 ))}
               </motion.div>
