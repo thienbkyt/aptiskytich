@@ -113,6 +113,7 @@ const AdminPro = () => {
 
           <PromoSection />
           <FeatureFlagsSection />
+          <PricingPlansSection />
           <ProUsersSection />
         </div>
       </div>
@@ -805,3 +806,151 @@ const ProUsersSection = () => {
     </Card>
   );
 };
+
+// ─────────────────────────────────────────────────────────────
+// 4. Pricing plans
+// ─────────────────────────────────────────────────────────────
+type PricingPlan = {
+  key: string;
+  label: string;
+  duration_days: number | null;
+  price_vnd: number;
+  active: boolean;
+  highlight: boolean;
+  sort_order: number;
+  note: string | null;
+};
+
+const PricingPlansSection = () => {
+  const [loading, setLoading] = useState(true);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
+  const [dirty, setDirty] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const { data, error } = await (supabase as any)
+        .from("pricing_plans")
+        .select("*")
+        .order("sort_order", { ascending: true });
+      if (error) toast.error("Không tải được bảng giá");
+      setPlans((data as any) ?? []);
+      setLoading(false);
+    })();
+  }, []);
+
+  const updateRow = (key: string, patch: Partial<PricingPlan>) => {
+    setPlans((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+    setDirty((d) => new Set(d).add(key));
+  };
+
+  const saveRow = async (key: string) => {
+    const row = plans.find((r) => r.key === key);
+    if (!row) return;
+    setSavingKey(key);
+    const { error } = await (supabase as any)
+      .from("pricing_plans")
+      .update({
+        label: row.label,
+        price_vnd: row.price_vnd,
+        active: row.active,
+        highlight: row.highlight,
+      })
+      .eq("key", key);
+    setSavingKey(null);
+    if (error) { toast.error("Lưu thất bại: " + error.message); return; }
+    setDirty((d) => { const next = new Set(d); next.delete(key); return next; });
+    toast.success(`Đã lưu gói "${row.label}"`);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Gói & giá</CardTitle>
+        <CardDescription>
+          Sửa giá, bật/tắt gói, đánh dấu gói nổi bật. Trang /pricing sẽ cập nhật ngay.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+          </div>
+        ) : (
+          <div className="rounded-lg border border-border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Gói</TableHead>
+                  <TableHead className="w-[110px]">Thời hạn</TableHead>
+                  <TableHead className="w-[160px]">Giá (VND)</TableHead>
+                  <TableHead className="w-[100px] text-center">Nổi bật</TableHead>
+                  <TableHead className="w-[90px] text-center">Bật</TableHead>
+                  <TableHead className="w-[110px] text-right">Hành động</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {plans.map((p) => {
+                  const isDirty = dirty.has(p.key);
+                  return (
+                    <TableRow key={p.key} className={cn(isDirty && "bg-[#FEAD5F]/5")}>
+                      <TableCell>
+                        <Input
+                          className="h-9"
+                          value={p.label}
+                          onChange={(e) => updateRow(p.key, { label: e.target.value })}
+                        />
+                        <div className="text-xs text-muted-foreground font-mono mt-1">{p.key}</div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {p.duration_days == null ? "Trọn đời" : `${p.duration_days} ngày`}
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={1000}
+                          className="h-9"
+                          value={p.price_vnd}
+                          onChange={(e) => updateRow(p.key, { price_vnd: Number(e.target.value || 0) })}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={p.highlight}
+                          onCheckedChange={(v) => updateRow(p.key, { highlight: v })}
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={p.active}
+                          onCheckedChange={(v) => updateRow(p.key, { active: v })}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant={isDirty ? "default" : "outline"}
+                          disabled={!isDirty || savingKey === p.key}
+                          onClick={() => saveRow(p.key)}
+                          className="gap-1.5"
+                        >
+                          {savingKey === p.key
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Save className="w-3.5 h-3.5" />}
+                          Lưu
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
