@@ -84,6 +84,7 @@ export function useExamGrading() {
           used: Number(data.used ?? 0),
           remaining: Number(data.remaining ?? 0),
         });
+        toast.error(`Bạn đã dùng hết ${data.freeQuota ?? 3} lượt chấm AI tháng này. Nâng cấp Pro để chấm không giới hạn.`);
         return null;
       }
       if (data?.error) throw new Error(data.error);
