@@ -8,4 +8,19 @@ window.addEventListener("beforeinstallprompt", (e) => {
   window.dispatchEvent(new Event("kt-install-available"));
 });
 
+// Auto-reload on stale chunk errors (after a new deploy)
+window.addEventListener("vite:preloadError", () => {
+  if (!sessionStorage.getItem("kt_chunk_reloaded")) {
+    sessionStorage.setItem("kt_chunk_reloaded", "1");
+    window.location.reload();
+  }
+});
+window.addEventListener("error", (e) => {
+  const msg = e?.message || "";
+  if (msg.includes("Failed to fetch dynamically imported module") && !sessionStorage.getItem("kt_chunk_reloaded")) {
+    sessionStorage.setItem("kt_chunk_reloaded", "1");
+    window.location.reload();
+  }
+});
+
 createRoot(document.getElementById("root")!).render(<App />);
