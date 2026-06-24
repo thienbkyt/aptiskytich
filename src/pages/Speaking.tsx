@@ -66,6 +66,7 @@ const Speaking = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("speaking");
+  const { guard, isLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
   const { progress } = useUserExamProgress();
   const { progress: gradedProgress } = useUserGradedProgress("speaking");
