@@ -146,6 +146,12 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
             </Button>
           </div>
 
+          {/* Contact admin */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <Label>Liên hệ hỗ trợ</Label>
+            <ContactAdminLinks />
+          </div>
+
           {/* Logout */}
           <div className="border-t border-border pt-4">
             <Button variant="outline" className="w-full gap-2" onClick={() => { onOpenChange(false); signOut(); }}>
