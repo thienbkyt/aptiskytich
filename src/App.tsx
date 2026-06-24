@@ -2,6 +2,7 @@ import { lazy, Suspense, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { FEATURES } from "@/config/features";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -68,58 +69,59 @@ const WithDict = ({ children }: { children: ReactNode }) => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <RouteProgressBar />
-          <Suspense fallback={<PageLoadingSkeleton />}>
-          <PageTransition>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/course" element={FEATURES.course ? <Course /> : <Navigate to="/" replace />} />
-            <Route path="/grammar" element={<WithDict><GrammarVocabulary /></WithDict>} />
-            <Route path="/reading" element={<WithDict><Reading /></WithDict>} />
-            <Route path="/listening" element={<WithDict><Listening /></WithDict>} />
-            <Route path="/speaking" element={<WithDict><Speaking /></WithDict>} />
-            <Route path="/writing" element={<WithDict><Writing /></WithDict>} />
-            <Route path="/vocabulary" element={<SkillPractice />} />
-            <Route path="/vocabulary/:id" element={<VocabStudy />} />
-            <Route path="/vocab/:listId" element={<VocabListDetail />} />
-            <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
-            <Route path="/history" element={<History />} />
-            <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
-            <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
-            <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
-            <Route path="/history/:id" element={<HistoryDetail />} />
-            <Route path="/progress" element={<ProgressPage />} />
-            <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
-            <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
-            <Route path="/admin/reports" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
-            <Route path="/admin/report/pricing" element={<RequireAdmin><AdminReportPricing /></RequireAdmin>} />
-            <Route path="/admin/students" element={<RequireAdmin><AdminStudents /></RequireAdmin>} />
-            <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
-            <Route path="/admin/pro" element={<RequireAdmin><AdminPro /></RequireAdmin>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </PageTransition>
-          </Suspense>
-          <AICoachFab />
-          <ReportFab />
-          <VisitLogger />
-        </AuthProvider>
-      </BrowserRouter>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <RouteProgressBar />
+              <Suspense fallback={<PageLoadingSkeleton />}>
+                <PageTransition>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
-    </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/course" element={FEATURES.course ? <Course /> : <Navigate to="/" replace />} />
+                    <Route path="/grammar" element={<WithDict><GrammarVocabulary /></WithDict>} />
+                    <Route path="/reading" element={<WithDict><Reading /></WithDict>} />
+                    <Route path="/listening" element={<WithDict><Listening /></WithDict>} />
+                    <Route path="/speaking" element={<WithDict><Speaking /></WithDict>} />
+                    <Route path="/writing" element={<WithDict><Writing /></WithDict>} />
+                    <Route path="/vocabulary" element={<SkillPractice />} />
+                    <Route path="/vocabulary/:id" element={<VocabStudy />} />
+                    <Route path="/vocab/:listId" element={<VocabListDetail />} />
+                    <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
+                    <Route path="/history" element={<History />} />
+                    <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
+                    <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
+                    <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
+                    <Route path="/history/:id" element={<HistoryDetail />} />
+                    <Route path="/progress" element={<ProgressPage />} />
+                    <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
+                    <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
+                    <Route path="/admin/reports" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
+                    <Route path="/admin/report/pricing" element={<RequireAdmin><AdminReportPricing /></RequireAdmin>} />
+                    <Route path="/admin/students" element={<RequireAdmin><AdminStudents /></RequireAdmin>} />
+                    <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
+                    <Route path="/admin/pro" element={<RequireAdmin><AdminPro /></RequireAdmin>} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </PageTransition>
+              </Suspense>
+              <AICoachFab />
+              <ReportFab />
+              <VisitLogger />
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
