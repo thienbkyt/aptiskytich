@@ -9,6 +9,7 @@ import {
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
 import ThemeToggle from "@/components/ThemeToggle";
 
 import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
@@ -42,6 +43,7 @@ const Navbar = () => {
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
+  const { isPro } = useIsPro();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
