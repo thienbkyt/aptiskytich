@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { parseDateSafe, toTimeSafe } from "@/lib/safeDate";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -722,7 +723,7 @@ const ProUsersSection = () => {
                 ) : (
                   subs.map((s) => {
                     const stu = emailById.get(s.user_id);
-                    const expired = s.pro_until && new Date(s.pro_until) < new Date();
+                    const expired = s.pro_until && toTimeSafe(s.pro_until) < Date.now();
                     return (
                       <TableRow key={s.user_id}>
                         <TableCell>
@@ -739,7 +740,7 @@ const ProUsersSection = () => {
                               "text-sm",
                               expired ? "text-destructive" : "text-foreground",
                             )}>
-                              {format(new Date(s.pro_until), "dd/MM/yyyy HH:mm")}
+                              {format(parseDateSafe(s.pro_until) ?? new Date(0), "dd/MM/yyyy HH:mm")}
                               {expired && " (đã hết)"}
                             </span>
                           ) : (
@@ -749,7 +750,7 @@ const ProUsersSection = () => {
                           )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {format(new Date(s.updated_at), "dd/MM/yyyy HH:mm")}
+                          {format(parseDateSafe(s.updated_at) ?? new Date(0), "dd/MM/yyyy HH:mm")}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button

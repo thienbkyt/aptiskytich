@@ -41,6 +41,7 @@ import MyMatchingMode from "@/components/vocab/MyMatchingMode";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { TechSkeleton, SkillVocabSkeleton } from "@/components/ui/tech-skeleton";
+import { parseDateSafe } from "@/lib/safeDate";
 
 
 /* ───── colour helpers ───── */
@@ -510,7 +511,7 @@ const SkillPractice = () => {
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-auto pt-2">
-                              Tạo ngày {new Date(list.created_at).toLocaleDateString("vi-VN")}
+                              Tạo ngày {(parseDateSafe(list.created_at) ?? new Date(0)).toLocaleDateString("vi-VN")}
                             </p>
                           </CardContent>
                         </Card>
