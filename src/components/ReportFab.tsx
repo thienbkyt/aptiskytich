@@ -88,6 +88,7 @@ export default function ReportFab() {
         report_category: "functional",
         page_url: getPageUrl(),
         device_info: getDeviceInfo(),
+        section: inferSectionFromPath(location.pathname),
       });
       if (error) throw error;
       toast.success("Đã gửi báo lỗi, cảm ơn bạn");
