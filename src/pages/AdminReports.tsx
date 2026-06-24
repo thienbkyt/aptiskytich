@@ -29,7 +29,10 @@ type ReportRow = {
   report_category: string | null;
   page_url: string | null;
   device_info: string | null;
+  section: string | null;
 };
+
+type ReporterInfo = { email: string; display_name: string | null };
 
 const CONTENT_REASON_LABELS: Record<string, string> = {
   wrong_answer: "Sai đáp án",
