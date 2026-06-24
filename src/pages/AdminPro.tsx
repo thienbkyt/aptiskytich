@@ -113,6 +113,7 @@ const AdminPro = () => {
 
           <PromoSection />
           <FeatureFlagsSection />
+          <PricingPlansSection />
           <ProUsersSection />
         </div>
       </div>
