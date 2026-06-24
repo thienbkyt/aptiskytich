@@ -470,10 +470,11 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
     // Speaking needs audio understanding → use gemini-2.5-pro. Writing stays on flash.
     const model = "google/gemini-2.5-flash";
 
-    // Gateway call with 30s timeout + 1 retry on transient failures (timeout / 5xx / network).
+    // Gateway call with per-type timeout + 1 retry on transient failures (timeout / 5xx / network).
+    const timeoutMs = isPart4Aggregated ? 90_000 : (type === "speaking" ? 60_000 : 30_000);
     const callGateway = async (): Promise<Response> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30_000);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       try {
         return await fetch(
           "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -485,7 +486,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
             },
             body: JSON.stringify({
               model,
-              reasoning_effort: type === "speaking" ? "medium" : "low",
+              reasoning_effort: type === "speaking" ? (isPart4Aggregated ? "low" : "medium") : "low",
               temperature: 0,
               messages: [
                 { role: "system", content: systemPrompt },
