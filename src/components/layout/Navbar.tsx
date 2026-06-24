@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
   BookText, GraduationCap, Book, Headphones, Mic, PenLine,
-  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, type LucideIcon,
+  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
@@ -46,7 +46,7 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
-  const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students");
+  const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -265,6 +265,22 @@ const Navbar = () => {
                         </div>
                       </Link>
                       <Link
+                        to="/admin/pro"
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive("/admin/pro")
+                            ? "bg-primary/5 text-primary"
+                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Crown className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-tight">Quản lý Pro</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Gói Pro, công tắc Free, tính năng</p>
+                        </div>
+                      </Link>
+                      <Link
                         to="/admin/report"
                         className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                           isActive("/admin/report")
@@ -468,6 +484,17 @@ const Navbar = () => {
                           >
                             <Users className="w-4 h-4" />
                             Người dùng
+                          </Link>
+                          <Link
+                            to="/admin/pro"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                              isActive("/admin/pro")
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <Crown className="w-4 h-4" />
+                            Quản lý Pro
                           </Link>
                           <Link
                             to="/admin/report"
