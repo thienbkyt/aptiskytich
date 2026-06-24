@@ -1,5 +1,6 @@
 import type { GradingResult } from "@/hooks/useExamGrading";
 import { Loader2 } from "lucide-react";
+import UpgradeLock from "@/components/pro/UpgradeLock";
 
 interface SpeakingResultsProps {
   isGrading: boolean;
