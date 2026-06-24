@@ -160,7 +160,9 @@ const FullTest = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {tests.map((test, index) => (
+              {tests.map((test, index) => {
+                const locked = isLocked(test as any);
+                return (
                 <motion.div
                   key={test.fullTestId}
                   initial={{ opacity: 0, y: 12 }}
@@ -173,9 +175,12 @@ const FullTest = () => {
                         <CornerResultBadge label={bands.get(test.fullTestId)} />
                       </div>
                     )}
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
-                      Full Test
-                    </Badge>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
+                        Full Test
+                      </Badge>
+                      <ExamTierBadge tier={(test as any).access_tier} locked={locked} />
+                    </div>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">
                       {test.title}
                     </h3>
@@ -188,16 +193,19 @@ const FullTest = () => {
                     </div>
                     <div className="flex-1" />
                     <Button
-                      onClick={() => handleStartTest(test)}
+                      onClick={() => guard(test as any, () => handleStartTest(test))}
                       disabled={!test.isReady}
                       className="w-full bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
                     >
-                      {test.isReady ? "Bắt đầu thi thử" : `Chưa đủ kỹ năng (${test.skillCount}/5)`}
+                      {!test.isReady
+                        ? `Chưa đủ kỹ năng (${test.skillCount}/5)`
+                        : locked ? "Mở khóa Pro" : "Bắt đầu thi thử"}
                       {test.isReady && <ArrowRight className="w-4 h-4" />}
                     </Button>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
