@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import ContactAdminLinks from "@/components/ContactAdminLinks";
 
 function inferSectionFromPath(path: string): string {
   const p = (path || "").toLowerCase();
@@ -177,6 +178,12 @@ export default function ReportFab() {
               className="w-full rounded-md border border-slate-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
               style={{ color: "#111" }}
             />
+
+
+            <div className="mt-4 border-t border-slate-200 pt-3">
+              <div className="text-xs font-semibold mb-2 text-slate-600">Liên hệ admin</div>
+              <ContactAdminLinks />
+            </div>
 
             <div className="mt-4 flex items-center justify-end gap-2">
               <button
