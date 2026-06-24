@@ -552,6 +552,17 @@ const Navbar = () => {
                       <span className="text-sm font-medium truncate">{user.email}</span>
                     </button>
                     <NotificationBell variant="mobile" />
+                    {isPro ? (
+                      <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#CC1C01]/10 to-[#FEAD5F]/10 border border-[#CC1C01]/30 text-[#CC1C01] text-xs font-extrabold">
+                        <Crown className="w-3.5 h-3.5" /> Bạn đang là thành viên Pro
+                      </div>
+                    ) : (
+                      <Link to="/pricing">
+                        <Button className="w-full justify-center gap-2 text-sm font-bold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0">
+                          <Crown className="w-4 h-4" /> Nâng cấp Pro
+                        </Button>
+                      </Link>
+                    )}
                     <Link to="/dashboard">
                       <Button variant="outline" className="w-full justify-center gap-2 text-sm">
                         <Flame className="w-4 h-4 text-primary" />
