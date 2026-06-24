@@ -486,6 +486,17 @@ const Navbar = () => {
                             Người dùng
                           </Link>
                           <Link
+                            to="/admin/pro"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                              isActive("/admin/pro")
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <Crown className="w-4 h-4" />
+                            Quản lý Pro
+                          </Link>
+                          <Link
                             to="/admin/report"
                             className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
                               isActive("/admin/report")
