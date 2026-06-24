@@ -328,6 +328,7 @@ const Speaking = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };
