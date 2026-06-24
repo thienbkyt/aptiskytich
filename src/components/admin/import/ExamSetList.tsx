@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search } from "lucide-react";
+import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search, Crown, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -86,6 +86,18 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
   const togglePublish = async (set: ExamSetRow) => {
     const { error } = await supabase.from("exam_sets").update({ is_published: !set.is_published }).eq("id", set.id);
     if (!error) setSets((s) => s.map((x) => x.id === set.id ? { ...x, is_published: !x.is_published } : x));
+  };
+
+  const toggleAccessTier = async (set: ExamSetRow) => {
+    const current = (set as any).access_tier ?? "pro";
+    const next = current === "free" ? "pro" : "free";
+    const { error } = await supabase.from("exam_sets").update({ access_tier: next } as any).eq("id", set.id);
+    if (error) {
+      toast({ title: "Lỗi cập nhật", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => x.id === set.id ? ({ ...x, access_tier: next } as any) : x));
+    toast({ title: `Đề chuyển sang ${next === "free" ? "Free" : "Pro"}` });
   };
 
   const handlePublishAll = async () => {
@@ -181,6 +193,15 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                   <Badge variant={set.is_published ? "default" : "secondary"} className="text-xs">
                     {set.is_published ? "Đã xuất bản" : "Nháp"}
                   </Badge>
+                  {(((set as any).access_tier ?? "pro") === "free") ? (
+                    <Badge variant="secondary" className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-0">
+                      FREE
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border-0">
+                      PRO
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {set.part} · {set.time_limit} phút · {new Date(set.created_at).toLocaleDateString("vi-VN")}
@@ -188,6 +209,15 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                 </p>
               </div>
               <div className="flex items-center gap-1 ml-3">
+                <Button
+                  variant="ghost" size="icon"
+                  onClick={(e) => { e.stopPropagation(); toggleAccessTier(set); }}
+                  title={((set as any).access_tier ?? "pro") === "free" ? "Chuyển sang Pro" : "Mở Free"}
+                >
+                  {((set as any).access_tier ?? "pro") === "free"
+                    ? <Unlock className="w-4 h-4 text-emerald-600" />
+                    : <Crown className="w-4 h-4 text-amber-600" />}
+                </Button>
                 <Button
                   variant="ghost" size="icon"
                   onClick={(e) => { e.stopPropagation(); togglePublish(set); }}

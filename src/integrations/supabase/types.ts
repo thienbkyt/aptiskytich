@@ -374,6 +374,7 @@ export type Database = {
       }
       exam_sets: {
         Row: {
+          access_tier: string
           created_at: string
           description: string | null
           exam_type: string
@@ -389,6 +390,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_tier?: string
           created_at?: string
           description?: string | null
           exam_type?: string
@@ -404,6 +406,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_tier?: string
           created_at?: string
           description?: string | null
           exam_type?: string

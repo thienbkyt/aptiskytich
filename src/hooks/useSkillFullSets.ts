@@ -8,6 +8,8 @@ export interface SkillFullSetItem {
   parts: string[];
   examSetIds: string[];
   questionCount: number;
+  /** 'free' if ANY constituent exam_set is free, else 'pro'. */
+  access_tier?: "free" | "pro";
 }
 
 
@@ -27,7 +29,7 @@ export const useSkillFullSets = (skill: string) => {
       // Full Test section, not to per-skill Full Part practice.
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, full_test_id, full_test_title, part, skill, full_test_category")
+        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
@@ -40,8 +42,8 @@ export const useSkillFullSets = (skill: string) => {
       }
 
       // Group by full_test_id
-      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[] }>();
-      for (const row of data) {
+      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[]; anyFree: boolean }>();
+      for (const row of data as any[]) {
         if (!row.full_test_id) continue;
         if (!grouped.has(row.full_test_id)) {
           grouped.set(row.full_test_id, {
@@ -49,12 +51,14 @@ export const useSkillFullSets = (skill: string) => {
             parts: new Set(),
             ids: [],
             rows: [],
+            anyFree: false,
           });
         }
         const g = grouped.get(row.full_test_id)!;
         g.parts.add(row.part);
         g.ids.push(row.id);
         g.rows.push({ id: row.id, part: row.part });
+        if (row.access_tier === "free") g.anyFree = true;
       }
 
       const result: SkillFullSetItem[] = [];
@@ -91,6 +95,7 @@ export const useSkillFullSets = (skill: string) => {
             parts: partsArr,
             examSetIds: info.ids,
             questionCount,
+            access_tier: info.anyFree ? "free" : "pro",
           });
         }
       }

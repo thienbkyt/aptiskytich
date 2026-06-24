@@ -8,6 +8,8 @@ export interface FullTestItem {
   skillCount: number;
   isReady: boolean; // has all 5 skills
   category: "aptis" | "key" | null;
+  /** 'free' if ANY constituent published exam_set is free, else 'pro'. */
+  access_tier?: "free" | "pro";
 }
 
 export type FullTestCategory = "aptis" | "key";
@@ -46,12 +48,12 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
       const setIds = Array.from(new Set((members || []).map((m) => m.exam_set_id)));
       const { data: sets } = await supabase
         .from("exam_sets")
-        .select("id, skill, is_published")
+        .select("id, skill, is_published, access_tier")
         .in("id", setIds.length ? setIds : ["00000000-0000-0000-0000-000000000000"]);
 
-      const setSkillMap = new Map<string, { skill: string; published: boolean }>();
-      for (const s of sets || []) {
-        setSkillMap.set(s.id, { skill: s.skill, published: s.is_published });
+      const setSkillMap = new Map<string, { skill: string; published: boolean; tier: string }>();
+      for (const s of (sets || []) as any[]) {
+        setSkillMap.set(s.id, { skill: s.skill, published: s.is_published, tier: s.access_tier ?? "pro" });
       }
 
       const requiredSkills = ["speaking", "listening", "grammar_vocab", "reading", "writing"];
@@ -59,9 +61,13 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
       for (const ft of ftRows) {
         const memberIds = (members || []).filter((m) => m.full_test_id === ft.id).map((m) => m.exam_set_id);
         const skillsSet = new Set<string>();
+        let anyFree = false;
         for (const sid of memberIds) {
           const info = setSkillMap.get(sid);
-          if (info && info.published) skillsSet.add(info.skill);
+          if (info && info.published) {
+            skillsSet.add(info.skill);
+            if (info.tier === "free") anyFree = true;
+          }
         }
         const skillArr = Array.from(skillsSet);
         const isReady = requiredSkills.every((s) => skillArr.includes(s));
@@ -73,6 +79,7 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
           skillCount: skillArr.length,
           isReady,
           category: (ft.category as "aptis" | "key") ?? null,
+          access_tier: anyFree ? "free" : "pro",
         });
       }
 

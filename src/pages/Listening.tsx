@@ -30,6 +30,7 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
+import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -75,6 +76,7 @@ const Listening = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("listening");
+  const { guard, isLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("listening");
   const { progress } = useUserExamProgress();
   const { progress: marathonProgress } = useUserMarathonProgress("listening");
@@ -387,24 +389,31 @@ const Listening = () => {
                       </div>
                     </motion.div>
                   )}
-                  {filteredSets.map((set, index) => (
+                  {filteredSets.map((set, index) => {
+                    const locked = isLocked(set);
+                    return (
                     <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
                         <div className="absolute top-3 right-3"><CornerResultBadge item={progress.get(set.id)} /></div>
-                        <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">{activePartInfo?.label}</Badge>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activePartInfo?.label}</Badge>
+                          <ExamTierBadge tier={set.access_tier} locked={locked} />
+                        </div>
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                           <span className="flex items-center gap-1.5">🎧 {set.description || "Đề luyện tập"}</span>
                         </div>
                         <div className="flex-1" />
                         <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
-                            Luyện tập<ArrowRight className="w-4 h-4" />
+                          <Button variant="ghost" size="sm" onClick={() => guard(set, () => handleStartFromDB(set))} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                            {locked ? "Mở khóa" : "Luyện tập"}<ArrowRight className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
+
 
                   {filteredSets.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
@@ -421,6 +430,7 @@ const Listening = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };

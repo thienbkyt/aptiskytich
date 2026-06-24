@@ -27,6 +27,7 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
+import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 
 const TASKS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -65,6 +66,7 @@ const Speaking = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("speaking");
+  const { guard, isLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
   const { progress } = useUserExamProgress();
   const { progress: gradedProgress } = useUserGradedProgress("speaking");
@@ -284,11 +286,16 @@ const Speaking = () => {
                 <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-                  {filteredSets.map((set, index) => (
+                  {filteredSets.map((set, index) => {
+                    const locked = isLocked(set);
+                    return (
                     <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
                         <div className="absolute top-3 right-3"><CornerResultBadge item={gradedProgress.get(set.id)} /></div>
-                        <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
+                          <ExamTierBadge tier={set.access_tier} locked={locked} />
+                        </div>
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                           <span className="flex items-center gap-1.5">🎤 Ghi âm</span>
@@ -296,13 +303,15 @@ const Speaking = () => {
                         </div>
                         <div className="flex-1" />
                         <div className="flex justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => handleStartFromDB(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
-                            Luyện tập<ArrowRight className="w-4 h-4" />
+                          <Button variant="ghost" size="sm" onClick={() => guard(set, () => handleStartFromDB(set))} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                            {locked ? "Mở khóa" : "Luyện tập"}<ArrowRight className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
                     </motion.div>
-                  ))}
+                    );
+                  })}
+
 
                   {filteredSets.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
@@ -319,6 +328,7 @@ const Speaking = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };

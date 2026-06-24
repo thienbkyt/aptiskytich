@@ -19,6 +19,7 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
+import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 
 interface FullPracticeState {
   active: boolean;
@@ -36,6 +37,7 @@ const GrammarVocabulary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
   const { progress } = useUserExamProgress();
+  const { guard, isLocked, LockModal } = useExamAccessGate();
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
@@ -142,7 +144,9 @@ const GrammarVocabulary = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {filteredSets.map((set, index) => (
+              {filteredSets.map((set, index) => {
+                const locked = isLocked(set as any);
+                return (
                 <motion.div key={set.fullTestId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                   <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
                     {(() => {
@@ -153,26 +157,31 @@ const GrammarVocabulary = () => {
                       if (t <= 0) return null;
                       return <div className="absolute top-3 right-3 z-10"><CornerResultBadge label={`${Math.round((s / t) * 100)}%`} /></div>;
                     })()}
-                    <Badge variant="secondary" className="w-fit text-[11px] font-medium mb-3 bg-primary/10 text-primary dark:text-accent border-0">
-                      Grammar & Vocab
-                    </Badge>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
+                        Grammar & Vocab
+                      </Badge>
+                      <ExamTierBadge tier={(set as any).access_tier} locked={locked} />
+                    </div>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">{set.title}</h3>
                     <p className="text-sm text-muted-foreground mb-3">{set.questionCount} câu · {set.partCount} phần</p>
                     <div className="mb-4">{(() => { const done = set.examSetIds.filter(id => progress.has(id)).length; if (done === set.examSetIds.length && done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">Đã hoàn thành tất cả {set.partCount} Part</span>; if (done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-info bg-info/10 px-2.5 py-1 rounded-full">Đã làm {done}/{set.partCount} Part</span>; return <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>; })()}</div>
                     <div className="flex-1" />
                     <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => handleStartFullPractice(set)} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
-                        Luyện tập<ArrowRight className="w-4 h-4" />
+                      <Button variant="ghost" size="sm" onClick={() => guard(set as any, () => handleStartFullPractice(set))} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                        {locked ? "Mở khóa" : "Luyện tập"}<ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
                 </motion.div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };
