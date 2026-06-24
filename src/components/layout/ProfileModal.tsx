@@ -158,6 +158,24 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
             </Button>
           </div>
 
+          {/* My plan */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <Label>Gói của tôi</Label>
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isPro ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white" : "bg-muted text-muted-foreground"}`}>
+                  <Crown className="w-4 h-4" />
+                </span>
+                <span className="text-sm font-semibold text-foreground truncate">{proStatusText}</span>
+              </div>
+              <Button asChild size="sm" variant={isPro ? "outline" : "default"} className={isPro ? "" : "bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"}>
+                <Link to="/pricing" onClick={() => onOpenChange(false)}>
+                  {isPro ? "Xem gói" : "Nâng cấp"}
+                </Link>
+              </Button>
+            </div>
+          </div>
+
           {/* Contact admin */}
           <div className="border-t border-border pt-4 space-y-2">
             <Label>Liên hệ hỗ trợ</Label>
