@@ -8,7 +8,7 @@ interface Props {
 }
 
 const ContactAdminLinks = ({ className = "" }: Props) => {
-  const btnStyle = { background: "linear-gradient(90deg,#F2722E,#CC1C01)" } as const;
+  const btnStyle = { backgroundColor: "#002F5F" } as const;
   return (
     <div className={`flex flex-col sm:flex-row gap-2 ${className}`}>
       <a
@@ -19,7 +19,7 @@ const ContactAdminLinks = ({ className = "" }: Props) => {
         style={btnStyle}
       >
         <MessageCircle className="w-4 h-4" />
-        Zalo · 0867 833 227
+        Zalo
       </a>
       <a
         href={FB_URL}
