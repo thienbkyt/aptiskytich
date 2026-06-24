@@ -606,6 +606,7 @@ const Index = () => {
       </section>
 
       <Footer />
+      <InstallAppCard />
     </div>
   );
 };
