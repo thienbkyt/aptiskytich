@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogOut } from "lucide-react";
+import { LogOut, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
+import { parseDateSafe } from "@/lib/safeDate";
 
 interface Props {
   open: boolean;
@@ -26,12 +29,21 @@ function translateAuthError(msg: string): string {
 
 const ProfileModal = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
+  const { isPro, proUntil } = useIsPro();
   const [displayName, setDisplayName] = useState("");
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [changingPwd, setChangingPwd] = useState(false);
+
+  const proStatusText = (() => {
+    if (!isPro) return "Bạn đang dùng gói Free";
+    if (!proUntil) return "Pro · Trọn đời";
+    const d = parseDateSafe(proUntil);
+    if (!d) return "Pro";
+    return `Pro · hết hạn ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  })();
 
   useEffect(() => {
     if (!open || !user) return;
