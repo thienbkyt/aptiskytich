@@ -76,6 +76,7 @@ const Writing = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("writing");
+  const { guard, isLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("writing");
   const { progress } = useUserExamProgress();
   const { progress: gradedProgress } = useUserGradedProgress("writing");
