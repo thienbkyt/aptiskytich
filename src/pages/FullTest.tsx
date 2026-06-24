@@ -38,6 +38,7 @@ const FullTest = () => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { bands } = useUserFullTestBands();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
+  const { guard, isLocked, LockModal } = useExamAccessGate();
 
   const handleStartTest = (test: FullTestItem) => {
     setActiveTest(test);
