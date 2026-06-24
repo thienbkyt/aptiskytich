@@ -10,6 +10,7 @@ import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import ThemeToggle from "@/components/ThemeToggle";
+import InstallAppButton from "@/components/pwa/InstallAppButton";
 import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -202,6 +203,7 @@ const Navbar = () => {
 
         {/* ── Desktop right actions ── */}
         <div className="hidden md:flex items-center gap-2">
+          <InstallAppButton />
           <ThemeToggle />
           {isAdmin && (
             <div
