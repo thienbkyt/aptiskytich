@@ -417,6 +417,7 @@ const WritingExamEngine = ({
             onExit={onExit}
             submission={submission}
             onReview={!isGrading && grading ? () => setIsReviewing(true) : undefined}
+            quotaExceeded={quotaExceeded}
           />
         </div>
       </div>
