@@ -70,6 +70,33 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          id: number
+          promo_free_all: boolean
+          promo_from: string | null
+          promo_label: string | null
+          promo_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          promo_free_all?: boolean
+          promo_from?: string | null
+          promo_label?: string | null
+          promo_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          promo_free_all?: boolean
+          promo_from?: string | null
+          promo_label?: string | null
+          promo_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cost_records: {
         Row: {
           amount: number
@@ -389,6 +416,42 @@ export type Database = {
           skill?: string
           time_limit?: number
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          enabled: boolean
+          free_quota: number | null
+          key: string
+          label: string | null
+          note: string | null
+          quota_period: string | null
+          required_tier: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          free_quota?: number | null
+          key: string
+          label?: string | null
+          note?: string | null
+          quota_period?: string | null
+          required_tier?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          free_quota?: number | null
+          key?: string
+          label?: string | null
+          note?: string | null
+          quota_period?: string | null
+          required_tier?: string
+          sort_order?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -1274,6 +1337,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          plan: string
+          pro_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          plan?: string
+          pro_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          plan?: string
+          pro_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vocab_items: {
         Row: {
           created_at: string
@@ -1417,6 +1501,7 @@ export type Database = {
         Args: { _action: string; _limit: number; _user_id: string }
         Returns: Json
       }
+      current_user_is_pro: { Args: never; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1440,6 +1525,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_pro: { Args: { p_uid: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -1449,6 +1535,7 @@ export type Database = {
         }
         Returns: number
       }
+      promo_active: { Args: never; Returns: boolean }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
