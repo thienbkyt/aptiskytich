@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
     }),
   ].filter(Boolean),
   build: {
-    target: "esnext",
+    target: "safari14",
     rollupOptions: {
       output: {
         manualChunks(id) {

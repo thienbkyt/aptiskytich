@@ -34,10 +34,16 @@ const ParticlesBackground = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  if (isMobile) return null;
-
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (isMobile) return;
+
+    const reduced = (() => {
+      try {
+        return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+      } catch {
+        return false;
+      }
+    })();
     if (reduced) return;
 
     const canvas = canvasRef.current;
@@ -64,8 +70,9 @@ const ParticlesBackground = ({
     };
 
     resize();
-    const ro = new ResizeObserver(resize);
-    if (canvas.parentElement) ro.observe(canvas.parentElement);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+    if (canvas.parentElement) ro?.observe(canvas.parentElement);
+    if (!ro) window.addEventListener("resize", resize);
 
     type P = { x: number; y: number; vx: number; vy: number; r: number };
     const particles: P[] = Array.from({ length: N }, () => ({
@@ -136,10 +143,13 @@ const ParticlesBackground = ({
     return () => {
       running = false;
       cancelAnimationFrame(raf);
-      ro.disconnect();
+      ro?.disconnect();
+      if (!ro) window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [count, linkDistance, color]);
+  }, [count, linkDistance, color, isMobile]);
+
+  if (isMobile) return null;
 
   return (
     <canvas
