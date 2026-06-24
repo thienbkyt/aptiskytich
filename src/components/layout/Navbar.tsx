@@ -203,7 +203,6 @@ const Navbar = () => {
 
         {/* ── Desktop right actions ── */}
         <div className="hidden md:flex items-center gap-2">
-          <InstallAppButton />
           <ThemeToggle />
           {isAdmin && (
             <div
