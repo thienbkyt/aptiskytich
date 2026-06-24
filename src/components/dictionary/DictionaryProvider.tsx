@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { speakWithTTS } from "@/lib/tts";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 /* ─── Types ─── */
 interface DictMeaning {
@@ -77,7 +78,7 @@ interface CacheEntry { data: DictResult; ts: number; }
 
 function getDictCache(): Record<string, CacheEntry> {
   try {
-    const raw = localStorage.getItem(DICT_CACHE_KEY);
+    const raw = safeLocalStorage.getItem(DICT_CACHE_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
@@ -100,7 +101,7 @@ function setDictCache(word: string, data: DictResult) {
     const toRemove = sorted.slice(0, keys.length - DICT_CACHE_MAX);
     toRemove.forEach((k) => delete cache[k]);
   }
-  try { localStorage.setItem(DICT_CACHE_KEY, JSON.stringify(cache)); } catch {}
+  safeLocalStorage.setItem(DICT_CACHE_KEY, JSON.stringify(cache));
 }
 
 /* ══════════════════ Provider ══════════════════ */
@@ -286,7 +287,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("sentence_translate_cache");
+      const raw = safeLocalStorage.getItem("sentence_translate_cache");
       if (!raw) return;
       const parsed: Record<string, { t: string; ts: number }> = JSON.parse(raw);
       const ttl = 7 * 24 * 60 * 60 * 1000;
@@ -299,7 +300,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const persistSentenceCache = useCallback((key: string, translation: string) => {
     try {
-      const raw = localStorage.getItem("sentence_translate_cache");
+      const raw = safeLocalStorage.getItem("sentence_translate_cache");
       const parsed: Record<string, { t: string; ts: number }> = raw ? JSON.parse(raw) : {};
       parsed[key] = { t: translation, ts: Date.now() };
       const keys = Object.keys(parsed);
@@ -308,7 +309,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         const sorted = keys.sort((a, b) => parsed[a].ts - parsed[b].ts);
         sorted.slice(0, keys.length - MAX).forEach((k) => delete parsed[k]);
       }
-      localStorage.setItem("sentence_translate_cache", JSON.stringify(parsed));
+      safeLocalStorage.setItem("sentence_translate_cache", JSON.stringify(parsed));
     } catch {}
   }, []);
 

@@ -16,6 +16,8 @@ import {
   encodeAnalysisFeedback, decodeAnalysisFeedback,
   type SpeakingGradingResult, type SpeakingItemGrading,
 } from "@/components/speaking/speakingGrading";
+import { safeSessionStorage } from "@/lib/safeStorage";
+import { toTimeSafe } from "@/lib/safeDate";
 
 interface Props {
   userId: string;
@@ -34,15 +36,15 @@ const SIGNED_TTL = 50 * 60 * 1000;
 const cacheKey = (id: string) => `rec_signed:${id}`;
 const getCached = (id: string): string | null => {
   try {
-    const raw = sessionStorage.getItem(cacheKey(id));
+    const raw = safeSessionStorage.getItem(cacheKey(id));
     if (!raw) return null;
     const { url, exp } = JSON.parse(raw);
-    if (Date.now() > exp) { sessionStorage.removeItem(cacheKey(id)); return null; }
+    if (Date.now() > exp) { safeSessionStorage.removeItem(cacheKey(id)); return null; }
     return url as string;
   } catch { return null; }
 };
 const setCached = (id: string, url: string) => {
-  try { sessionStorage.setItem(cacheKey(id), JSON.stringify({ url, exp: Date.now() + SIGNED_TTL })); } catch {}
+  safeSessionStorage.setItem(cacheKey(id), JSON.stringify({ url, exp: Date.now() + SIGNED_TTL }));
 };
 
 const SpeakingReviewPage = ({
@@ -97,7 +99,7 @@ const SpeakingReviewPage = ({
       if (recsRaw.length === 0) {
         // Legacy fallback: rows without test_result_id, scoped by examSetId + time window.
         const windowMs = 2 * 60 * 60 * 1000;
-        const target = new Date(attemptCreatedAt).getTime();
+        const target = toTimeSafe(attemptCreatedAt);
         const { data: legacy } = await supabase
           .from("speaking_recordings")
           .select("id,part,audio_url,duration_seconds,created_at,test_result_id")
@@ -106,7 +108,7 @@ const SpeakingReviewPage = ({
           .is("test_result_id", null)
           .order("created_at", { ascending: true });
         recsRaw = ((legacy || []) as any[]).filter(
-          (r) => !target || Math.abs(new Date(r.created_at).getTime() - target) < windowMs,
+          (r) => !target || Math.abs(toTimeSafe(r.created_at) - target) < windowMs,
         );
       }
       // recordings.part is like "part1_q1"; index by question position
