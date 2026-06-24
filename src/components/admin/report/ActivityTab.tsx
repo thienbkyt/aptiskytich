@@ -10,6 +10,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { parseDateSafe } from "@/lib/safeDate";
 
 type ProfileRow = { user_id: string; created_at: string };
 type TestResultRow = { user_id: string; created_at: string };
@@ -93,7 +94,8 @@ const ActivityTab = () => {
   const newUsersInPeriod = useMemo(() => {
     if (!fromDate && !toDate) return profiles.length;
     return profiles.filter((p) => {
-      const d = new Date(p.created_at);
+      const d = parseDateSafe(p.created_at);
+      if (!d) return false;
       if (fromDate && d < fromDate) return false;
       if (toDate && d > toDate) return false;
       return true;
@@ -103,7 +105,8 @@ const ActivityTab = () => {
   const newUsersPrevPeriod = useMemo(() => {
     if (!prevFrom || !prevTo) return 0;
     return profiles.filter((p) => {
-      const d = new Date(p.created_at);
+      const d = parseDateSafe(p.created_at);
+      if (!d) return false;
       return d >= prevFrom && d < prevTo;
     }).length;
   }, [profiles, prevFrom, prevTo]);
@@ -126,7 +129,8 @@ const ActivityTab = () => {
     c.setDate(c.getDate() - windowDays);
     const set = new Set<string>();
     for (const r of results) {
-      if (new Date(r.created_at) >= c) set.add(r.user_id);
+      const d = parseDateSafe(r.created_at);
+      if (d && d >= c) set.add(r.user_id);
     }
     return set.size;
   };
@@ -162,13 +166,15 @@ const ActivityTab = () => {
     }
     const map = new Map(arr.map((x, i) => [x.day, i]));
     for (const p of profiles) {
-      const d = new Date(p.created_at);
+      const d = parseDateSafe(p.created_at);
+      if (!d) continue;
       const k = dayKey(d);
       const idx = map.get(k);
       if (idx != null) arr[idx].new += 1;
     }
     for (const r of results) {
-      const d = new Date(r.created_at);
+      const d = parseDateSafe(r.created_at);
+      if (!d) continue;
       const k = dayKey(d);
       if (learnerSets[k]) learnerSets[k].add(r.user_id);
     }

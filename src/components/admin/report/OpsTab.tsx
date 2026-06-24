@@ -9,6 +9,7 @@ import {
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
+import { parseDateSafe } from "@/lib/safeDate";
 
 type EmailRow = { status: string; created_at: string; template_name: string | null };
 type SpeakingRow = { test_result_id: string | null; created_at: string };
@@ -131,7 +132,8 @@ const OpsTab = () => {
     }
     const map = new Map(arr.map((x, i) => [x.day, i]));
     for (const r of emails) {
-      const d = new Date(r.created_at);
+      const d = parseDateSafe(r.created_at);
+      if (!d) continue;
       const k = dayKey(d);
       const idx = map.get(k);
       if (idx == null) continue;

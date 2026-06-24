@@ -26,6 +26,7 @@ import WritingFullResults from "@/components/writing/WritingFullResults";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
 import { toast } from "sonner";
+import { safeRandomId } from "@/lib/browserCompat";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -74,9 +75,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const adminNavigationRef = useRef(false);
   const lastNavDirectionRef = useRef<"forward" | "back">("forward");
   const fullPartSessionRef = useRef<string>(
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    safeRandomId("full_part_session")
   );
 
   // Reading full-practice: keep per-part answers + results so user can revisit/edit

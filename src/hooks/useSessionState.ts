@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 /**
  * useState backed by sessionStorage so component state survives
@@ -17,7 +18,7 @@ export function useSessionState<T>(
   const [state, setState] = useState<T>(() => {
     if (typeof window === "undefined") return initial;
     try {
-      const raw = sessionStorage.getItem(key);
+      const raw = safeSessionStorage.getItem(key);
       if (raw == null) return initial;
       const parsed = JSON.parse(raw);
       return { ...(initial as any), ...parsed } as T;
@@ -32,7 +33,7 @@ export function useSessionState<T>(
       const toStore: any = { ...(state as any) };
       const omit = omitKeysRef.current;
       if (omit) for (const k of omit) delete toStore[k as string];
-      sessionStorage.setItem(key, JSON.stringify(toStore));
+      safeSessionStorage.setItem(key, JSON.stringify(toStore));
     } catch {
       // quota / circular refs — ignore
     }
@@ -42,5 +43,5 @@ export function useSessionState<T>(
 }
 
 export function clearSessionState(key: string) {
-  try { sessionStorage.removeItem(key); } catch {}
+  safeSessionStorage.removeItem(key);
 }

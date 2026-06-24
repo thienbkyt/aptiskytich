@@ -11,6 +11,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { parseDateSafe } from "@/lib/safeDate";
 
 interface Props {
   examType: ExamType;
@@ -204,7 +205,7 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {set.part} · {set.time_limit} phút · {new Date(set.created_at).toLocaleDateString("vi-VN")}
+                  {set.part} · {set.time_limit} phút · {(parseDateSafe(set.created_at) ?? new Date(0)).toLocaleDateString("vi-VN")}
                   {(set as any).full_test_title && <span className="ml-1">· 📦 {(set as any).full_test_title}</span>}
                 </p>
               </div>

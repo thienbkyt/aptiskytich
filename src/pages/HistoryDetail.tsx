@@ -9,6 +9,7 @@ import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw, Eye } fro
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
+import { toTimeSafe } from "@/lib/safeDate";
 
 interface ResultRow {
   id: string;
@@ -141,7 +142,7 @@ const HistoryDetail = () => {
             const setIds = (sibSets || []).map((x: any) => x.id);
             if (setIds.length > 1) {
               // Find latest test_result per sibling set for this user, in the same attempt window
-              const target = new Date(r.created_at).getTime();
+              const target = toTimeSafe(r.created_at);
               const { data: sibResults } = await supabase
                 .from("test_results")
                 .select("id,exam_set_id,created_at")
@@ -158,7 +159,7 @@ const HistoryDetail = () => {
               for (const sid of setIds) {
                 const matches = (sibResults || [])
                   .filter((x: any) => x.exam_set_id === sid)
-                  .map((x: any) => ({ ...x, delta: Math.abs(new Date(x.created_at).getTime() - target) }))
+                  .map((x: any) => ({ ...x, delta: Math.abs(toTimeSafe(x.created_at) - target) }))
                   .sort((a: any, b: any) => a.delta - b.delta);
                 const best = matches[0];
                 if (best && best.delta < 4 * 60 * 60 * 1000) {
@@ -219,9 +220,9 @@ const HistoryDetail = () => {
             .eq("user_id", user.id).eq("exam_set_id", r.exam_set_id)
             .order("created_at", { ascending: false });
           // Take recordings from the same attempt window (within 2h of result.created_at)
-          const target = new Date(r.created_at).getTime();
+          const target = toTimeSafe(r.created_at);
           const sameAttempt = (recs || []).filter((rec: any) =>
-            Math.abs(new Date(rec.created_at).getTime() - target) < 2 * 60 * 60 * 1000
+            Math.abs(toTimeSafe(rec.created_at) - target) < 2 * 60 * 60 * 1000
           );
           const signed = await Promise.all(sameAttempt.map(async (rec: any) => {
             const { data } = await supabase.storage

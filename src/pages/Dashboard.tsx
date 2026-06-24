@@ -22,6 +22,7 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
 import { computeHistoryDisplay, SKILL_LABELS } from "@/lib/historyDisplay";
+import { parseDateSafe, toTimeSafe } from "@/lib/safeDate";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -65,7 +66,7 @@ const vnDayKey = (date: Date) => {
   return `${vn.getUTCFullYear()}-${vn.getUTCMonth()}-${vn.getUTCDate()}`;
 };
 const formatDate = (iso: string) => {
-  const d = new Date(iso);
+  const d = parseDateSafe(iso) ?? new Date();
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   return `${dd}/${mm}/${d.getFullYear()}`;
@@ -186,8 +187,9 @@ const Dashboard = () => {
         }
         const activeDayKeys = new Set<string>();
         allResults.forEach((row: any) => {
-          if (row.created_at && new Date(row.created_at).toISOString() >= weekAgo) {
-            activeDayKeys.add(vnDayKey(new Date(row.created_at)));
+          const created = parseDateSafe(row.created_at);
+          if (created && created.toISOString() >= weekAgo) {
+            activeDayKeys.add(vnDayKey(created));
           }
         });
         const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
@@ -231,7 +233,7 @@ const Dashboard = () => {
         }
 
         const formatDateTime = (iso: string) => {
-          const dt = new Date(iso);
+          const dt = parseDateSafe(iso) ?? new Date(0);
           const pad = (n: number) => String(n).padStart(2, "0");
           return `${pad(dt.getDate())}/${pad(dt.getMonth() + 1)} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
         };

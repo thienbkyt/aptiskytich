@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Save, Loader2, Layers, Wand2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { safeRandomId } from "@/lib/browserCompat";
 
 type SkillKey = "speaking" | "listening" | "reading" | "writing" | "grammar_vocab";
 
@@ -129,7 +130,7 @@ const MergeFullPart = () => {
     }
 
     setSaving(true);
-    const fullTestId = crypto.randomUUID();
+    const fullTestId = safeRandomId("full_part");
     const { error } = await supabase
       .from("exam_sets")
       .update({ full_test_id: fullTestId, full_test_title: title.trim(), full_test_category: null })
@@ -229,7 +230,7 @@ const MergeFullPart = () => {
 
         let fullTestId = prefixToFullTestId.get(prefix);
         if (!fullTestId) {
-          fullTestId = crypto.randomUUID();
+          fullTestId = safeRandomId("full_part");
           prefixToFullTestId.set(prefix, fullTestId);
         }
 

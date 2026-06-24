@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { parseDateSafe } from "@/lib/safeDate";
 
 type NotifType = "feature" | "content" | "general";
 
@@ -269,7 +270,7 @@ const AdminNotifications = () => {
                           {TYPE_LABEL[n.type] || n.type}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(n.created_at).toLocaleString("vi-VN")}
+                          {(parseDateSafe(n.created_at) ?? new Date(0)).toLocaleString("vi-VN")}
                         </span>
                         {!n.is_active && (
                           <span className="text-xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground">

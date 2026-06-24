@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 /**
  * Floating Zalo CTA — for sub-B2 users to reach a human tutor quickly.
@@ -13,7 +14,7 @@ const ZaloFab = () => {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("zalo_fab_dismissed") === "1") {
+    if (safeSessionStorage.getItem("zalo_fab_dismissed") === "1") {
       setDismissed(true);
       return;
     }
@@ -51,7 +52,7 @@ const ZaloFab = () => {
         type="button"
         onClick={() => {
           setDismissed(true);
-          sessionStorage.setItem("zalo_fab_dismissed", "1");
+          safeSessionStorage.setItem("zalo_fab_dismissed", "1");
         }}
         className="w-6 h-6 rounded-full bg-white border border-border shadow-sm flex items-center justify-center text-muted-foreground hover:text-foreground -mr-1 self-start"
         aria-label="Đóng"

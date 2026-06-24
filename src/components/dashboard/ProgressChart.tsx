@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { LineChart as LineIcon, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import GlowCard from "@/components/ui/glow-card";
+import { parseDateSafe } from "@/lib/safeDate";
 
 interface Props {
   userId: string;
@@ -26,7 +27,7 @@ interface ChartPoint {
 }
 
 const fmtDate = (iso: string) => {
-  const d = new Date(iso);
+  const d = parseDateSafe(iso) ?? new Date(0);
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
 };
 
@@ -67,7 +68,8 @@ const ProgressChart = ({ userId }: Props) => {
         if (!skill) return;
         if (r.total <= 0) return;
         const pct = Math.round((r.score / r.total) * 100);
-        const d = new Date(r.created_at);
+        const d = parseDateSafe(r.created_at);
+        if (!d) return;
         const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
         if (!buckets.has(key)) buckets.set(key, new Map());
         const inner = buckets.get(key)!;

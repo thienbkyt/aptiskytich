@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SkipForward, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 const ADMIN_NAV_LOCK_MS = 700;
 let adminNavLockedUntil = 0;
@@ -34,26 +35,24 @@ const AdminExamControls = ({
   // Fallback: support both cached `isAdmin:*` and `user_roles` formats.
   const [sessionIsAdmin, setSessionIsAdmin] = useState(false);
   useEffect(() => {
-    try {
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const k = sessionStorage.key(i) || "";
-        if (k.startsWith("isAdmin:") && sessionStorage.getItem(k) === "1") {
-          setSessionIsAdmin(true);
-          return;
-        }
+    for (let i = 0; i < safeSessionStorage.length; i++) {
+      const k = safeSessionStorage.key(i) || "";
+      if (k.startsWith("isAdmin:") && safeSessionStorage.getItem(k) === "1") {
+        setSessionIsAdmin(true);
+        return;
       }
-      const rawRoles = sessionStorage.getItem("user_roles");
-      if (rawRoles) {
-        let parsed: any = rawRoles;
-        try { parsed = JSON.parse(rawRoles); } catch {}
-        const roles = Array.isArray(parsed) ? parsed : parsed?.roles ?? parsed;
-        if (Array.isArray(roles) && roles.some((r) => (typeof r === "string" ? r : r?.role) === "admin")) {
-          setSessionIsAdmin(true);
-        } else if (typeof roles === "string" && roles.includes("admin")) {
-          setSessionIsAdmin(true);
-        }
+    }
+    const rawRoles = safeSessionStorage.getItem("user_roles");
+    if (rawRoles) {
+      let parsed: any = rawRoles;
+      try { parsed = JSON.parse(rawRoles); } catch {}
+      const roles = Array.isArray(parsed) ? parsed : parsed?.roles ?? parsed;
+      if (Array.isArray(roles) && roles.some((r) => (typeof r === "string" ? r : r?.role) === "admin")) {
+        setSessionIsAdmin(true);
+      } else if (typeof roles === "string" && roles.includes("admin")) {
+        setSessionIsAdmin(true);
       }
-    } catch {}
+    }
   }, [authIsAdmin]);
 
   useEffect(() => {

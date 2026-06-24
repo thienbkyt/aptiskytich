@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 import { getSkillBand } from "@/data/questions";
 import { computeHistoryDisplay } from "@/lib/historyDisplay";
+import { toTimeSafe } from "@/lib/safeDate";
 
 interface HistoryRow {
   id: string;
@@ -249,7 +250,7 @@ const History = () => {
               g.skillAgg[r.skill] = cur;
             }
           }
-          if (new Date(r.created_at).getTime() < new Date(g.created_at).getTime()) {
+          if (toTimeSafe(r.created_at) < toTimeSafe(g.created_at)) {
             g.created_at = r.created_at;
           }
         }
@@ -267,7 +268,7 @@ const History = () => {
           g.totalScaled = total; g.gvScaled = gv; g.hasScaled = has;
           return g;
         });
-        groups.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        groups.sort((a, b) => toTimeSafe(b.created_at) - toTimeSafe(a.created_at));
 
         // Full Part grouping
         const fpMap = new Map<string, FullPartGroup>();
@@ -295,7 +296,7 @@ const History = () => {
           } else {
             g.num += r.score; g.den += r.total;
           }
-          if (new Date(r.created_at).getTime() > new Date(g.created_at).getTime()) {
+          if (toTimeSafe(r.created_at) > toTimeSafe(g.created_at)) {
             g.created_at = r.created_at;
           }
         }
@@ -336,7 +337,7 @@ const History = () => {
       .filter((g) => skillFilter === "all" || g.skill === skillFilter)
       .map((g) => ({ kind: "group", created_at: g.created_at, group: g }));
     return [...rowItems, ...groupItems].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      (a, b) => toTimeSafe(b.created_at) - toTimeSafe(a.created_at),
     );
   }, [perSkillRows, fullPartGroups, skillFilter]);
 
@@ -345,8 +346,8 @@ const History = () => {
     const totalAttempts = perSkillRows.length + fullTestGroups.length;
     const weekStart = startOfWeek().getTime();
     const thisWeek =
-      perSkillRows.filter((r) => new Date(r.created_at).getTime() >= weekStart).length +
-      fullTestGroups.filter((g) => new Date(g.created_at).getTime() >= weekStart).length;
+      perSkillRows.filter((r) => toTimeSafe(r.created_at) >= weekStart).length +
+      fullTestGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
     return { totalAttempts, thisWeek };
   }, [perSkillRows, fullTestGroups]);
 

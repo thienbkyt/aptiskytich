@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoachContext, getSuggestedPrompts } from "@/hooks/useCoachContext";
 import { toast } from "@/hooks/use-toast";
+import { safeRandomId } from "@/lib/browserCompat";
 
 type Attachment = { id: string; dataUrl: string; label: string };
 type Msg = {
@@ -154,7 +155,7 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
       }
       setAttachments((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), dataUrl: small, label: file.name || "image.jpg" },
+        { id: safeRandomId("attachment"), dataUrl: small, label: file.name || "image.jpg" },
       ].slice(-4));
     } catch {
       toast({ title: "Không đọc được ảnh", variant: "destructive" });
@@ -181,7 +182,7 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
       stream.getTracks().forEach((t) => t.stop());
       const raw = canvas.toDataURL("image/jpeg", 0.85);
       const small = await downscaleImage(raw, 1800);
-      setAttachments((prev) => [...prev, { id: crypto.randomUUID(), dataUrl: small, label: "Ảnh chụp màn hình" }].slice(-4));
+      setAttachments((prev) => [...prev, { id: safeRandomId("attachment"), dataUrl: small, label: "Ảnh chụp màn hình" }].slice(-4));
     } catch (e: any) {
       if (e?.name !== "NotAllowedError") {
         toast({ title: "Không chụp được màn hình", description: e?.message || "", variant: "destructive" });
@@ -233,12 +234,12 @@ export default function AICoachPanel({ open, onClose }: { open: boolean; onClose
     setError(null);
 
     const userMsg: Msg = {
-      id: crypto.randomUUID(), role: "user",
+      id: safeRandomId("msg"), role: "user",
       content: trimmed || (attachments.length ? "Giúp mình phân tích ảnh này nhé." : "Giúp mình xem nội dung trang này."),
       images: attachments.length ? attachments.map((a) => ({ dataUrl: a.dataUrl, label: a.label })) : undefined,
       pageText: pageSnippet || undefined,
     };
-    const assistantId = crypto.randomUUID();
+    const assistantId = safeRandomId("msg");
     const newMsgs = [...messages, userMsg];
     setMessages([...newMsgs, { id: assistantId, role: "assistant", content: "" }]);
     setInput("");

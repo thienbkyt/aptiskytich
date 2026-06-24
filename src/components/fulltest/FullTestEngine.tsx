@@ -28,6 +28,7 @@ import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 import { toast } from "sonner";
+import { safeRandomId } from "@/lib/browserCompat";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -97,9 +98,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const { isAdmin } = useAuth();
   // Unique id for this Full Test attempt — groups all 5 skills' rows in /history.
   const sessionIdRef = useRef<string>(
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    safeRandomId("full_test_session")
   );
 
   // Background grading state for Speaking in Full Test

@@ -13,6 +13,7 @@ import { Tooltip as UiTooltip, TooltipContent, TooltipTrigger, TooltipProvider }
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
+import { parseDateSafe, toTimeSafe } from "@/lib/safeDate";
 
 const SKILL_META = [
   { key: "grammar",   label: "Grammar",   color: "hsl(var(--primary))" },
@@ -83,7 +84,7 @@ const ProgressPage = () => {
     const cutoff = opt.days > 0 ? Date.now() - opt.days * 86400000 : 0;
     return rows.filter(r =>
       (skillFilter === "all" || r.skill === skillFilter) &&
-      (cutoff === 0 || new Date(r.created_at).getTime() >= cutoff)
+      (cutoff === 0 || toTimeSafe(r.created_at) >= cutoff)
     );
   }, [rows, skillFilter, rangeKey]);
 
@@ -92,7 +93,8 @@ const ProgressPage = () => {
     filtered.forEach(r => {
       if (r.total <= 0) return;
       const pct = Math.round((r.score / r.total) * 100);
-      const d = new Date(r.created_at);
+      const d = parseDateSafe(r.created_at);
+      if (!d) return;
       const k = dayKey(d);
       if (!buckets.has(k)) buckets.set(k, { ts: d.getTime(), per: new Map() });
       const b = buckets.get(k)!;
@@ -118,7 +120,9 @@ const ProgressPage = () => {
   const heatmap = useMemo(() => {
     const counts = new Map<string, number>();
     rows.forEach(r => {
-      const k = dayKey(new Date(r.created_at));
+      const d = parseDateSafe(r.created_at);
+      if (!d) return;
+      const k = dayKey(d);
       counts.set(k, (counts.get(k) || 0) + 1);
     });
     const today = new Date();
@@ -158,7 +162,8 @@ const ProgressPage = () => {
     const acc = (m: number, y: number) => {
       const per = new Map<SkillKey, { sum: number; n: number }>();
       rows.forEach(r => {
-        const d = new Date(r.created_at);
+        const d = parseDateSafe(r.created_at);
+        if (!d) return;
         if (d.getMonth() === m && d.getFullYear() === y && r.total > 0) {
           const pct = (r.score / r.total) * 100;
           const cur = per.get(r.skill) || { sum: 0, n: 0 };

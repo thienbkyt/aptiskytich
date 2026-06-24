@@ -19,6 +19,7 @@ import {
   Download,
   FileSpreadsheet,
 } from "lucide-react";
+import { parseDateSafe } from "@/lib/safeDate";
 
 interface VocabSet {
   id: string;
@@ -355,7 +356,7 @@ const VocabManager = () => {
                     <Badge variant="outline" className="text-xs">{set.group_name}</Badge>
                     {set.is_published && <Badge className="text-xs bg-green-500/10 text-green-600 border-green-300">Published</Badge>}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{set.word_count} từ · {new Date(set.created_at).toLocaleDateString("vi-VN")}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{set.word_count} từ · {(parseDateSafe(set.created_at) ?? new Date(0)).toLocaleDateString("vi-VN")}</p>
                 </div>
                 <Switch checked={set.is_published} onCheckedChange={() => handleTogglePublish(set)} />
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteSet(set.id)}>

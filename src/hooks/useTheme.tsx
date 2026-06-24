@@ -12,7 +12,11 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function getSystemTheme(): "light" | "dark" {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  try {
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  } catch {
+    return "light";
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -37,15 +41,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.add(resolved);
 
     if (theme === "auto") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
       const handler = (e: MediaQueryListEvent) => {
         const newTheme = e.matches ? "dark" : "light";
         setResolvedTheme(newTheme);
         root.classList.remove("light", "dark");
         root.classList.add(newTheme);
       };
-      mq.addEventListener("change", handler);
-      return () => mq.removeEventListener("change", handler);
+      if (mq?.addEventListener) mq.addEventListener("change", handler);
+      else mq?.addListener?.(handler as any);
+      return () => {
+        if (mq?.removeEventListener) mq.removeEventListener("change", handler);
+        else mq?.removeListener?.(handler as any);
+      };
     }
   }, [theme]);
 

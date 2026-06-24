@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 interface AuthContextType {
   session: Session | null;
@@ -60,13 +61,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkAdmin = async (userId: string) => {
     // Cache admin status in sessionStorage to avoid repeat queries on route changes / remounts
     const cacheKey = `isAdmin:${userId}`;
-    try {
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached !== null) {
-        setIsAdmin(cached === "1");
-        return;
-      }
-    } catch {}
+    const cached = safeSessionStorage.getItem(cacheKey);
+    if (cached !== null) {
+      setIsAdmin(cached === "1");
+      return;
+    }
     const { data } = await supabase
       .from("user_roles")
       .select("role")
@@ -75,15 +74,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .maybeSingle();
     const admin = !!data;
     setIsAdmin(admin);
-    try { sessionStorage.setItem(cacheKey, admin ? "1" : "0"); } catch {}
+    safeSessionStorage.setItem(cacheKey, admin ? "1" : "0");
   };
 
   const signOut = async () => {
-    try {
-      Object.keys(sessionStorage)
-        .filter((k) => k.startsWith("isAdmin:"))
-        .forEach((k) => sessionStorage.removeItem(k));
-    } catch {}
+    for (let i = safeSessionStorage.length - 1; i >= 0; i--) {
+      const k = safeSessionStorage.key(i) || "";
+      if (k.startsWith("isAdmin:")) safeSessionStorage.removeItem(k);
+    }
     await supabase.auth.signOut();
   };
 

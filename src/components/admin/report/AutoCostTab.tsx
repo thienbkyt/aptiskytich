@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { parseDateSafe } from "@/lib/safeDate";
 
 type UsageEvent = {
   id: string;
@@ -196,7 +197,8 @@ export default function AutoCostTab() {
     return Array.from({ length: 12 }, (_, i) => {
       const row: Record<string, string | number> = { month: VN_MONTHS[i] };
       allEvents.forEach(e => {
-        const ed = new Date(e.created_at);
+        const ed = parseDateSafe(e.created_at);
+        if (!ed) return;
         if (ed.getUTCFullYear() !== selectedYear || ed.getUTCMonth() !== i) return;
         row[e.service] = (Number(row[e.service] || 0)) + Number(e.estimated_cost_vnd);
       });
@@ -207,7 +209,10 @@ export default function AutoCostTab() {
 
   const availableYears = useMemo(() => {
     const set = new Set<number>([today.getUTCFullYear()]);
-    events.forEach(e => set.add(new Date(e.created_at).getUTCFullYear()));
+    events.forEach(e => {
+      const d = parseDateSafe(e.created_at);
+      if (d) set.add(d.getUTCFullYear());
+    });
     return Array.from(set).sort((a, b) => b - a);
   }, [events]);
 
