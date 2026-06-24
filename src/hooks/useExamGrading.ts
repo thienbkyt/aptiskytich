@@ -169,7 +169,7 @@ export function useExamGrading() {
     }
   };
 
-  return { grading, isGrading, gradeExam, setGrading };
+  return { grading, isGrading, gradeExam, setGrading, quotaExceeded, setQuotaExceeded };
 }
 
 // Utility: convert blob URL to base64
