@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
+import { safeMatches } from "@/lib/browserCompat";
 
 const DISMISS_KEY = "kt_install_card_dismissed";
 
@@ -11,7 +12,7 @@ const InstallAppCard = () => {
 
   useEffect(() => {
     if (safeLocalStorage.getItem(DISMISS_KEY) === "1") return;
-    if (window.matchMedia("(display-mode: standalone)").matches) return;
+    if (safeMatches("(display-mode: standalone)")) return;
     const pick = () => {
       const e = (window as any).__ktInstallPrompt;
       if (e) { setDeferred(e); setTimeout(() => setMounted(true), 50); }

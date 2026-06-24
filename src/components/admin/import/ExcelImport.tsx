@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FULL_EXAM_SHEETS } from "./types";
 import { parseSheet } from "./excelParsers";
+import { safeRandomId } from "@/lib/browserCompat";
 
 interface ParsedSheet {
   sheetName: string;
@@ -275,7 +276,7 @@ const ExcelImport = ({ examType, onImportComplete }: Props) => {
     let setsCreated = 0;
 
     // Generate a shared full_test_id if importing multiple parts
-    const fullTestId = parsedSheets.length > 1 ? crypto.randomUUID() : null;
+    const fullTestId = parsedSheets.length > 1 ? safeRandomId("full_test") : null;
 
     for (const sheet of parsedSheets) {
       if (sheet.errors.length > 0 || sheet.questions.length === 0) continue;

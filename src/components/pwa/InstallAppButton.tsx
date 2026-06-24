@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { safeMatches } from "@/lib/browserCompat";
 
 const InstallAppButton = () => {
   const [deferred, setDeferred] = useState<any>(null);
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    if (window.matchMedia("(display-mode: standalone)").matches) { setInstalled(true); return; }
+    if (safeMatches("(display-mode: standalone)")) { setInstalled(true); return; }
     const onPrompt = (e: any) => { e.preventDefault(); setDeferred(e); };
     const onInstalled = () => setInstalled(true);
     window.addEventListener("beforeinstallprompt", onPrompt);

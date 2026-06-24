@@ -1,13 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { safeLocalStorage, safeSessionStorage } from "@/lib/safeStorage";
-
-const safeId = () => {
-  try {
-    if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
-  } catch {}
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-};
+import { safeRandomId } from "@/lib/browserCompat";
 
 const VisitLogger = () => {
   useEffect(() => {
@@ -15,7 +9,7 @@ const VisitLogger = () => {
       if (safeSessionStorage.getItem("kt_visit_logged") === "1") return;
       let visitorId = safeLocalStorage.getItem("kt_visitor_id");
       if (!visitorId) {
-        visitorId = safeId();
+        visitorId = safeRandomId("visitor");
         safeLocalStorage.setItem("kt_visitor_id", visitorId);
       }
       supabase
