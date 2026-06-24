@@ -181,6 +181,7 @@ const GrammarVocabulary = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };
