@@ -179,6 +179,12 @@ export default function ReportFab() {
               style={{ color: "#111" }}
             />
 
+
+            <div className="mt-4 border-t border-slate-200 pt-3">
+              <div className="text-xs font-semibold mb-2 text-slate-600">Liên hệ admin</div>
+              <ContactAdminLinks />
+            </div>
+
             <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 type="button"
