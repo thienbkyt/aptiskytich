@@ -29,7 +29,7 @@ export const useSkillFullSets = (skill: string) => {
       // Full Test section, not to per-skill Full Part practice.
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, full_test_id, full_test_title, part, skill, full_test_category")
+        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
