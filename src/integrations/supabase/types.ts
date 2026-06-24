@@ -716,6 +716,7 @@ export type Database = {
           question_number: number | null
           reason: string
           report_category: string
+          section: string | null
           skill: string | null
           status: string
           user_id: string | null
@@ -732,6 +733,7 @@ export type Database = {
           question_number?: number | null
           reason: string
           report_category?: string
+          section?: string | null
           skill?: string | null
           status?: string
           user_id?: string | null
@@ -748,6 +750,7 @@ export type Database = {
           question_number?: number | null
           reason?: string
           report_category?: string
+          section?: string | null
           skill?: string | null
           status?: string
           user_id?: string | null

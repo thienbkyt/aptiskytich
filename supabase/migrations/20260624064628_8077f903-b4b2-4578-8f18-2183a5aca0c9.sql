@@ -1,0 +1,1 @@
+ALTER TABLE public.question_reports ADD COLUMN IF NOT EXISTS section text;

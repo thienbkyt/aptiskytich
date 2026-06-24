@@ -29,7 +29,10 @@ type ReportRow = {
   report_category: string | null;
   page_url: string | null;
   device_info: string | null;
+  section: string | null;
 };
+
+type ReporterInfo = { email: string; display_name: string | null };
 
 const CONTENT_REASON_LABELS: Record<string, string> = {
   wrong_answer: "Sai đáp án",
@@ -103,6 +106,7 @@ const AdminReports = () => {
   const [questionSetMap, setQuestionSetMap] = useState<
     Record<string, { setId: string | null; setTitle: string | null }>
   >({});
+  const [reporterMap, setReporterMap] = useState<Record<string, ReporterInfo>>({});
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -161,6 +165,29 @@ const AdminReports = () => {
       }
     } else {
       setQuestionSetMap({});
+    }
+
+    // Load reporter emails via list-students (admin-only edge function)
+    const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean) as string[]));
+    if (userIds.length > 0) {
+      try {
+        const { data: sData, error: sErr } = await supabase.functions.invoke("list-students");
+        if (!sErr && sData?.students) {
+          const map: Record<string, ReporterInfo> = {};
+          for (const s of sData.students as any[]) {
+            if (userIds.includes(s.user_id)) {
+              map[s.user_id] = { email: s.email ?? "", display_name: s.display_name ?? null };
+            }
+          }
+          setReporterMap(map);
+        } else {
+          setReporterMap({});
+        }
+      } catch {
+        setReporterMap({});
+      }
+    } else {
+      setReporterMap({});
     }
 
     setLoading(false);
@@ -326,6 +353,35 @@ const AdminReports = () => {
                         </p>
 
                         <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                          {(() => {
+                            const hasContentLoc = !!(r.skill || r.part_type || r.question_number);
+                            let sectionText: string | null = null;
+                            if (hasContentLoc) {
+                              sectionText = [
+                                r.skill || "",
+                                r.part_type ? r.part_type : "",
+                                r.question_number ? `Câu ${r.question_number}` : "",
+                              ].filter(Boolean).join(" • ");
+                            } else if (r.section) {
+                              sectionText = r.section;
+                            }
+                            return sectionText ? (
+                              <span>Phần: <span className="text-foreground font-medium">{sectionText}</span></span>
+                            ) : null;
+                          })()}
+                          {(() => {
+                            if (!r.user_id) {
+                              return <span>Người báo lỗi: <span className="text-foreground">Ẩn danh</span></span>;
+                            }
+                            const info = reporterMap[r.user_id];
+                            if (!info) {
+                              return <span>Người báo lỗi: <code className="text-foreground bg-muted rounded px-1">{r.user_id}</code></span>;
+                            }
+                            const label = info.display_name
+                              ? `${info.display_name} (${info.email})`
+                              : info.email || r.user_id;
+                            return <span>Người báo lỗi: <span className="text-foreground">{label}</span></span>;
+                          })()}
                           {isFunctional && r.page_url && (
                             <span>
                               Trang: <code className="text-foreground bg-muted rounded px-1 break-all">{r.page_url}</code>
@@ -346,6 +402,7 @@ const AdminReports = () => {
                             <span>Thời gian: {fmtDate(r.created_at)}</span>
                           </div>
                         </div>
+
 
                         {(examUrl || (!isFunctional && setIdForLink)) && (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
