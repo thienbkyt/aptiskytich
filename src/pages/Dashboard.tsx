@@ -5,12 +5,13 @@ import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
   BarChart3, CheckCircle2, Calendar, Zap, History,
-  GraduationCap, Sparkles, Mic,
+  GraduationCap, Sparkles, Mic, Crown,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
 import ProgressChart from "@/components/dashboard/ProgressChart";
 import AnimatedGrid from "@/components/ui/animated-grid";
 import GradientText from "@/components/ui/gradient-text";
@@ -90,6 +91,7 @@ const LEVEL_GRAD: Record<string, string> = {
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
+  const { isPro } = useIsPro();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
