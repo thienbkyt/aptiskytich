@@ -211,6 +211,7 @@ const FullTest = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };
