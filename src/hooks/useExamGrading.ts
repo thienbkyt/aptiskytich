@@ -78,6 +78,14 @@ export function useExamGrading() {
         }
         throw error;
       }
+      if (data?.error === "quota_exceeded") {
+        setQuotaExceeded({
+          freeQuota: Number(data.freeQuota ?? 3),
+          used: Number(data.used ?? 0),
+          remaining: Number(data.remaining ?? 0),
+        });
+        return null;
+      }
       if (data?.error) throw new Error(data.error);
 
       const result = data as AnyGradingResult;
