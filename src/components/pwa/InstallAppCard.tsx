@@ -31,22 +31,22 @@ const InstallAppCard = () => {
   const install = async () => { deferred.prompt(); await deferred.userChoice; (window as any).__ktInstallPrompt = null; setDeferred(null); };
 
   return createPortal(
-    <div className={`fixed bottom-5 left-5 z-[200] w-[344px] max-w-[calc(100vw-2.5rem)] transition-all duration-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-      <div className="relative rounded-2xl bg-card border border-border shadow-2xl p-4">
-        <button onClick={dismiss} aria-label="Đóng" className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground">
-          <X className="w-4 h-4" />
+    <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-[200] w-[300px] max-w-[calc(100vw-2rem)] transition-all duration-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+      <div className="relative rounded-xl bg-card border border-border shadow-2xl p-3.5">
+        <button onClick={dismiss} aria-label="Đóng" className="absolute top-2.5 right-2.5 text-muted-foreground/60 hover:text-foreground">
+          <X className="w-3.5 h-3.5" />
         </button>
-        <div className="flex items-start gap-3 pr-5">
-          <div className="w-11 h-11 shrink-0 rounded-xl bg-[#CC1C01]/10 flex items-center justify-center">
-            <Download className="w-5 h-5 text-[#CC1C01]" />
+        <div className="flex items-start gap-2.5 pr-4">
+          <div className="w-9 h-9 shrink-0 rounded-lg bg-[#CC1C01]/10 flex items-center justify-center">
+            <Download className="w-4 h-4 text-[#CC1C01]" />
           </div>
           <div>
-            <h4 className="font-heading font-bold text-foreground leading-tight">Cài đặt ứng dụng Aptis Kỳ Tích</h4>
-            <p className="text-sm text-muted-foreground mt-0.5">Học mọi lúc mọi nơi — cài miễn phí từ trình duyệt</p>
+            <h4 className="text-sm font-heading font-bold text-foreground leading-tight">Cài đặt ứng dụng Aptis Kỳ Tích</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">Cài app tập trung học tập, tránh xao nhãng</p>
           </div>
         </div>
-        <button onClick={install} className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 font-semibold text-white transition-opacity hover:opacity-95" style={{ background: "linear-gradient(90deg,#F2722E,#CC1C01)" }}>
-          <Download className="w-4 h-4" /> Cài đặt ngay
+        <button onClick={install} className="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-white transition-opacity hover:opacity-95" style={{ background: "linear-gradient(90deg,#F2722E,#CC1C01)" }}>
+          <Download className="w-3.5 h-3.5" /> Cài đặt miễn phí
         </button>
       </div>
     </div>,
