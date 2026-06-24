@@ -11,6 +11,7 @@ export interface ExamSetRow {
   description: string | null;
   is_published: boolean;
   created_at: string;
+  access_tier?: "free" | "pro";
 }
 
 export interface ExamQuestionRow {
