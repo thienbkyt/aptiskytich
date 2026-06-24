@@ -50,6 +50,7 @@ export function useExamGrading() {
   }): Promise<AnyGradingResult | null> => {
     setIsGrading(true);
     setGrading(null);
+    setQuotaExceeded(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("grade-exam", {
