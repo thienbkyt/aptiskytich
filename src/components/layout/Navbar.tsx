@@ -9,6 +9,7 @@ import {
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
 import ThemeToggle from "@/components/ThemeToggle";
 
 import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
@@ -42,6 +43,7 @@ const Navbar = () => {
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
+  const { isPro } = useIsPro();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
@@ -304,6 +306,23 @@ const Navbar = () => {
           )}
           {user ? (
             <>
+              {isPro ? (
+                <span
+                  title="Bạn đang là thành viên Pro"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold shadow-sm"
+                >
+                  <Crown className="w-3 h-3" /> Pro
+                </span>
+              ) : (
+                <Link to="/pricing" {...prefetchHandlers("/pricing")}>
+                  <Button
+                    size="sm"
+                    className="rounded-full h-8 px-3 text-xs font-bold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0 shadow-sm"
+                  >
+                    <Crown className="w-3.5 h-3.5" /> Nâng cấp Pro
+                  </Button>
+                </Link>
+              )}
               <NotificationBell />
               <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-8 px-3">
@@ -533,6 +552,17 @@ const Navbar = () => {
                       <span className="text-sm font-medium truncate">{user.email}</span>
                     </button>
                     <NotificationBell variant="mobile" />
+                    {isPro ? (
+                      <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#CC1C01]/10 to-[#FEAD5F]/10 border border-[#CC1C01]/30 text-[#CC1C01] text-xs font-extrabold">
+                        <Crown className="w-3.5 h-3.5" /> Bạn đang là thành viên Pro
+                      </div>
+                    ) : (
+                      <Link to="/pricing">
+                        <Button className="w-full justify-center gap-2 text-sm font-bold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0">
+                          <Crown className="w-4 h-4" /> Nâng cấp Pro
+                        </Button>
+                      </Link>
+                    )}
                     <Link to="/dashboard">
                       <Button variant="outline" className="w-full justify-center gap-2 text-sm">
                         <Flame className="w-4 h-4 text-primary" />

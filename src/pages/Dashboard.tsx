@@ -5,12 +5,13 @@ import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
   BarChart3, CheckCircle2, Calendar, Zap, History,
-  GraduationCap, Sparkles, Mic,
+  GraduationCap, Sparkles, Mic, Crown,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
 import ProgressChart from "@/components/dashboard/ProgressChart";
 import AnimatedGrid from "@/components/ui/animated-grid";
 import GradientText from "@/components/ui/gradient-text";
@@ -90,6 +91,7 @@ const LEVEL_GRAD: Record<string, string> = {
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
+  const { isPro } = useIsPro();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -368,6 +370,39 @@ const Dashboard = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* UPGRADE BANNER (free only) */}
+          {!isPro && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-2xl border border-[#CC1C01]/30 bg-gradient-to-r from-[#CC1C01]/10 via-[#FEAD5F]/10 to-transparent p-4 md:p-5"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-heading font-extrabold text-foreground text-base md:text-lg leading-tight">
+                    Nâng cấp Pro — mở toàn bộ kho đề + chấm AI không giới hạn
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                    Học không giới hạn Speaking/Writing AI, full đề thi thử & luyện theo kỹ năng.
+                  </p>
+                </div>
+                <Button
+                  asChild
+                  className="shrink-0 bg-[#CC1C01] hover:bg-[#4D0D0D] text-white font-bold gap-1.5"
+                >
+                  <Link to="/pricing">
+                    <Crown className="w-4 h-4" /> Nâng cấp Pro
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+
 
 
 

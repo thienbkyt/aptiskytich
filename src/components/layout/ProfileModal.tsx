@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogOut } from "lucide-react";
+import { LogOut, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsPro } from "@/hooks/useIsPro";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
+import { parseDateSafe } from "@/lib/safeDate";
 
 interface Props {
   open: boolean;
@@ -26,12 +29,21 @@ function translateAuthError(msg: string): string {
 
 const ProfileModal = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
+  const { isPro, proUntil } = useIsPro();
   const [displayName, setDisplayName] = useState("");
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [changingPwd, setChangingPwd] = useState(false);
+
+  const proStatusText = (() => {
+    if (!isPro) return "Bạn đang dùng gói Free";
+    if (!proUntil) return "Pro · Trọn đời";
+    const d = parseDateSafe(proUntil);
+    if (!d) return "Pro";
+    return `Pro · hết hạn ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  })();
 
   useEffect(() => {
     if (!open || !user) return;
@@ -144,6 +156,24 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
             >
               {changingPwd ? "Đang đổi..." : "Đổi mật khẩu"}
             </Button>
+          </div>
+
+          {/* My plan */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <Label>Gói của tôi</Label>
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isPro ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white" : "bg-muted text-muted-foreground"}`}>
+                  <Crown className="w-4 h-4" />
+                </span>
+                <span className="text-sm font-semibold text-foreground truncate">{proStatusText}</span>
+              </div>
+              <Button asChild size="sm" variant={isPro ? "outline" : "default"} className={isPro ? "" : "bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"}>
+                <Link to="/pricing" onClick={() => onOpenChange(false)}>
+                  {isPro ? "Xem gói" : "Nâng cấp"}
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {/* Contact admin */}
