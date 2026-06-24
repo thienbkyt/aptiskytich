@@ -447,6 +447,7 @@ const Reading = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };
