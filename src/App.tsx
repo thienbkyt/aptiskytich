@@ -103,6 +103,7 @@ const App = () => (
                     <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
                     <Route path="/history/:id" element={<HistoryDetail />} />
                     <Route path="/progress" element={<ProgressPage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
                     <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
                     <Route path="/admin/reports" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
