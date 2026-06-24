@@ -361,6 +361,7 @@ const Writing = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };
