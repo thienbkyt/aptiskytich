@@ -898,6 +898,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       }
     }
 
+    await logFeatureUsageOnce();
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
