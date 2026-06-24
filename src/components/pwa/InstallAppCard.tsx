@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 
 const DISMISS_KEY = "kt_install_card_dismissed";
@@ -29,7 +30,7 @@ const InstallAppCard = () => {
   const dismiss = () => { localStorage.setItem(DISMISS_KEY, "1"); setMounted(false); setTimeout(() => setDeferred(null), 300); };
   const install = async () => { deferred.prompt(); await deferred.userChoice; (window as any).__ktInstallPrompt = null; setDeferred(null); };
 
-  return (
+  return createPortal(
     <div className={`fixed bottom-5 left-5 z-[200] w-[344px] max-w-[calc(100vw-2.5rem)] transition-all duration-300 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
       <div className="relative rounded-2xl bg-card border border-border shadow-2xl p-4">
         <button onClick={dismiss} aria-label="Đóng" className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground">
@@ -48,7 +49,8 @@ const InstallAppCard = () => {
           <Download className="w-4 h-4" /> Cài đặt ngay
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
