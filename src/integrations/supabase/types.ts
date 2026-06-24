@@ -456,6 +456,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_usage: {
+        Row: {
+          feature_key: string
+          id: string
+          ref_id: string | null
+          scope: string | null
+          used_at: string
+          user_id: string
+        }
+        Insert: {
+          feature_key: string
+          id?: string
+          ref_id?: string | null
+          scope?: string | null
+          used_at?: string
+          user_id: string
+        }
+        Update: {
+          feature_key?: string
+          id?: string
+          ref_id?: string | null
+          scope?: string | null
+          used_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       full_test_members: {
         Row: {
           created_at: string
@@ -1497,6 +1524,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_feature_access: {
+        Args: { p_key: string; p_scope?: string }
+        Returns: Json
+      }
       consume_ai_quota: {
         Args: { _action: string; _limit: number; _user_id: string }
         Returns: Json
@@ -1526,6 +1557,10 @@ export type Database = {
         Returns: boolean
       }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
+      log_feature_usage: {
+        Args: { p_key: string; p_ref?: string; p_scope?: string }
+        Returns: undefined
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
