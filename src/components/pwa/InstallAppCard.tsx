@@ -41,8 +41,8 @@ const InstallAppCard = () => {
             <Download className="w-4 h-4 text-[#CC1C01]" />
           </div>
           <div>
-            <h4 className="text-sm font-heading font-bold text-foreground leading-tight">Cài đặt ứng dụng Aptis Kỳ Tích</h4>
-            <p className="text-xs text-muted-foreground mt-0.5">Cài app tập trung học tập, tránh xao nhãng</p>
+            <h4 className="text-sm font-heading font-bold text-foreground leading-tight">Cài đặt Aptis Kỳ Tích</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">Tập trung học tập, tránh xao nhãng</p>
           </div>
         </div>
         <button onClick={install} className="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-white transition-opacity hover:opacity-95" style={{ background: "linear-gradient(90deg,#F2722E,#CC1C01)" }}>
