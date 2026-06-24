@@ -79,6 +79,7 @@ const Reading = () => {
   const [activeTab, setActiveTab] = useState("full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("reading");
+  const { guard, isLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const { progress } = useUserExamProgress();
   const { progress: marathonProgress } = useUserMarathonProgress("reading");
