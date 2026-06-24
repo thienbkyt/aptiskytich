@@ -125,7 +125,7 @@ const WritingExamEngine = ({
   const [revealed, setRevealed] = useState(false);
   useEffect(() => { setRevealed(false); }, [partType]);
 
-  const { grading, isGrading, gradeExam } = useExamGrading();
+  const { grading, isGrading, gradeExam, quotaExceeded } = useExamGrading();
   const effectiveGrading = (gradingResult ?? grading) as WritingGradingResult | null;
 
   // Ensure exam-mode dark overrides apply during intro phase too
