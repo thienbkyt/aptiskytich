@@ -34,7 +34,12 @@ export default defineConfig(({ mode }) => ({
           { src: "/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
-      workbox: { cleanupOutdatedCaches: true, clientsClaim: true, skipWaiting: true },
+      workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallbackDenylist: [/^\/~/],
+      },
     }),
   ].filter(Boolean),
   build: {
