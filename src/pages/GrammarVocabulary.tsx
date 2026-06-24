@@ -37,6 +37,7 @@ const GrammarVocabulary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("grammar_vocab");
   const { progress } = useUserExamProgress();
+  const { guard, isLocked, LockModal } = useExamAccessGate();
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
