@@ -1,8 +1,24 @@
 import { useEffect, useState } from "react";
 import { Flag, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+
+function inferSectionFromPath(path: string): string {
+  const p = (path || "").toLowerCase();
+  if (p.startsWith("/reading")) return "Reading";
+  if (p.startsWith("/listening")) return "Listening";
+  if (p.startsWith("/grammar")) return "Grammar & Vocabulary";
+  if (p.startsWith("/writing")) return "Writing";
+  if (p.startsWith("/speaking")) return "Speaking";
+  if (p.startsWith("/thi-thu") || p.startsWith("/full-test") || p.startsWith("/fulltest")) return "Thi thử (Full Test)";
+  if (p.startsWith("/history")) return "Lịch sử";
+  if (p.startsWith("/dashboard")) return "Dashboard";
+  if (p.startsWith("/vocabulary") || p.startsWith("/vocab")) return "Học từ vựng";
+  if (p.startsWith("/course")) return "Khóa học";
+  return "Khác";
+}
 
 type FunctionalReason = "cant_nav" | "cant_exit" | "button_broken" | "page_frozen" | "other";
 
