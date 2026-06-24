@@ -430,6 +430,7 @@ const Listening = () => {
         </section>
       </main>
       <Footer />
+      <LockModal />
     </div>
   );
 };
