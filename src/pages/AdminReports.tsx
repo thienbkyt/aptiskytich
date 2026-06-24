@@ -106,6 +106,7 @@ const AdminReports = () => {
   const [questionSetMap, setQuestionSetMap] = useState<
     Record<string, { setId: string | null; setTitle: string | null }>
   >({});
+  const [reporterMap, setReporterMap] = useState<Record<string, ReporterInfo>>({});
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
