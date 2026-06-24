@@ -152,6 +152,46 @@ serve(async (req) => {
       if (quota) return quota;
     }
 
+    // --- Pro / monthly free-quota gate (ai_grading_writing | ai_grading_speaking) ---
+    const featureKey = type === "writing" ? "ai_grading_writing" : "ai_grading_speaking";
+    if (userId) {
+      try {
+        const { data: access } = await supabaseClient.rpc("check_feature_access", {
+          p_key: featureKey,
+          p_scope: null,
+        });
+        const a = (access ?? {}) as any;
+        if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
+          return new Response(
+            JSON.stringify({
+              error: "quota_exceeded",
+              upgrade: true,
+              freeQuota: a.free_quota ?? 0,
+              used: a.used ?? 0,
+              remaining: a.remaining ?? 0,
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      } catch (e) {
+        console.warn("[grade-exam] feature access check failed:", (e as any)?.message || e);
+      }
+    }
+
+    const logFeatureUsageOnce = async () => {
+      if (!userId) return;
+      try {
+        await serviceClient.from("feature_usage").insert({
+          user_id: userId,
+          feature_key: featureKey,
+          scope: null,
+          ref_id: null,
+        });
+      } catch (e) {
+        console.warn("[grade-exam] feature_usage insert failed:", (e as any)?.message || e);
+      }
+    };
+
     // --- Build AI prompt ---
     let userContent: any[];
     let systemPrompt: string;
@@ -647,6 +687,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
           feedback: grading?.feedback ?? "",
           improvedVersion: grading?.improvedVersion ?? "",
         };
+        await logFeatureUsageOnce();
         return new Response(JSON.stringify(payload), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -687,6 +728,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         improvedVersion: grading?.improvedVersion ?? "",
       };
 
+      await logFeatureUsageOnce();
       return new Response(JSON.stringify(payload), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -856,6 +898,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       }
     }
 
+    await logFeatureUsageOnce();
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

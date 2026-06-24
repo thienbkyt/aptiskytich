@@ -35,6 +35,7 @@ export type AnyGradingResult = GradingResult | WritingGradingResult;
 export function useExamGrading() {
   const [grading, setGrading] = useState<AnyGradingResult | null>(null);
   const [isGrading, setIsGrading] = useState(false);
+  const [quotaExceeded, setQuotaExceeded] = useState<null | { freeQuota: number; used: number; remaining: number }>(null);
 
   const gradeExam = async (params: {
     type: "speaking" | "writing";
@@ -49,6 +50,7 @@ export function useExamGrading() {
   }): Promise<AnyGradingResult | null> => {
     setIsGrading(true);
     setGrading(null);
+    setQuotaExceeded(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("grade-exam", {
@@ -75,6 +77,15 @@ export function useExamGrading() {
           }
         }
         throw error;
+      }
+      if (data?.error === "quota_exceeded") {
+        setQuotaExceeded({
+          freeQuota: Number(data.freeQuota ?? 3),
+          used: Number(data.used ?? 0),
+          remaining: Number(data.remaining ?? 0),
+        });
+        toast.error(`Bạn đã dùng hết ${data.freeQuota ?? 3} lượt chấm AI tháng này. Nâng cấp Pro để chấm không giới hạn.`);
+        return null;
       }
       if (data?.error) throw new Error(data.error);
 
@@ -159,7 +170,7 @@ export function useExamGrading() {
     }
   };
 
-  return { grading, isGrading, gradeExam, setGrading };
+  return { grading, isGrading, gradeExam, setGrading, quotaExceeded, setQuotaExceeded };
 }
 
 // Utility: convert blob URL to base64

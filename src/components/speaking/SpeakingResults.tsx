@@ -1,10 +1,12 @@
 import type { GradingResult } from "@/hooks/useExamGrading";
 import { Loader2 } from "lucide-react";
+import UpgradeLock from "@/components/pro/UpgradeLock";
 
 interface SpeakingResultsProps {
   isGrading: boolean;
   grading: GradingResult | null;
   onExit: () => void;
+  quotaExceeded?: { freeQuota: number; used: number; remaining: number } | null;
 }
 
 const levelColors: Record<string, string> = {
@@ -15,7 +17,24 @@ const levelColors: Record<string, string> = {
   C1: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
 };
 
-const SpeakingResults = ({ isGrading, grading, onExit }: SpeakingResultsProps) => {
+const SpeakingResults = ({ isGrading, grading, onExit, quotaExceeded }: SpeakingResultsProps) => {
+  if (quotaExceeded) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4">
+        <UpgradeLock
+          reason="quota"
+          featureLabel="Chấm AI Speaking"
+          freeQuota={quotaExceeded.freeQuota}
+          remaining={quotaExceeded.remaining}
+        />
+        <div className="text-center">
+          <button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-medium transition-colors">
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (isGrading) {
     return (
       <div className="max-w-lg mx-auto bg-card border border-border rounded-2xl p-8 text-center">

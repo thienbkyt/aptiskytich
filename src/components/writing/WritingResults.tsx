@@ -1,5 +1,6 @@
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { Eye, Loader2 } from "lucide-react";
+import UpgradeLock from "@/components/pro/UpgradeLock";
 
 interface SubmissionPart {
   prompt: string;
@@ -14,9 +15,28 @@ interface WritingResultsProps {
   submission?: SubmissionPart[];
   /** When provided, render a "Xem lại từng câu →" button. */
   onReview?: () => void;
+  /** When set, show UpgradeLock instead of grading details. */
+  quotaExceeded?: { freeQuota: number; used: number; remaining: number } | null;
 }
 
-const WritingResults = ({ isGrading, grading, onExit, submission, onReview }: WritingResultsProps) => {
+const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quotaExceeded }: WritingResultsProps) => {
+  if (quotaExceeded) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4">
+        <UpgradeLock
+          reason="quota"
+          featureLabel="Chấm AI Writing"
+          freeQuota={quotaExceeded.freeQuota}
+          remaining={quotaExceeded.remaining}
+        />
+        <div className="text-center">
+          <button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg font-medium transition-colors">
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (isGrading) {
     return (
       <div className="max-w-lg mx-auto bg-card border border-border rounded-2xl p-8 text-center">
