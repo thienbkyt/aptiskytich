@@ -769,6 +769,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_plans: {
+        Row: {
+          active: boolean
+          duration_days: number | null
+          highlight: boolean
+          key: string
+          label: string
+          note: string | null
+          price_vnd: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          duration_days?: number | null
+          highlight?: boolean
+          key: string
+          label: string
+          note?: string | null
+          price_vnd: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          duration_days?: number | null
+          highlight?: boolean
+          key?: string
+          label?: string
+          note?: string | null
+          price_vnd?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
