@@ -7,6 +7,7 @@ import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import ContactAdminLinks from "@/components/ContactAdminLinks";
 
 interface Props {
   open: boolean;
