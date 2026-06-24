@@ -193,6 +193,15 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                   <Badge variant={set.is_published ? "default" : "secondary"} className="text-xs">
                     {set.is_published ? "Đã xuất bản" : "Nháp"}
                   </Badge>
+                  {(((set as any).access_tier ?? "pro") === "free") ? (
+                    <Badge variant="secondary" className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-0">
+                      FREE
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border-0">
+                      PRO
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {set.part} · {set.time_limit} phút · {new Date(set.created_at).toLocaleDateString("vi-VN")}
