@@ -84,6 +84,7 @@ const SkillPractice = () => {
 
   /* ── Quick view words ── */
   const { data: quickViewWords = [], isLoading: quickViewLoading } = useSystemVocabWords(quickViewSetId ?? undefined);
+  const { data: systemSets = [], isLoading: setsLoading } = useSystemVocabSets();
 
   /* ── Fetch user lists & stats ── */
   useEffect(() => {
@@ -146,7 +147,6 @@ const SkillPractice = () => {
     return <Navigate to="/" replace />;
   }
 
-  const { data: systemSets = [], isLoading: setsLoading } = useSystemVocabSets();
   const quickViewSet = systemSets.find((s) => s.id === quickViewSetId);
 
   const filtered = systemSets.filter(
