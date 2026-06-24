@@ -211,6 +211,15 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
               <div className="flex items-center gap-1 ml-3">
                 <Button
                   variant="ghost" size="icon"
+                  onClick={(e) => { e.stopPropagation(); toggleAccessTier(set); }}
+                  title={((set as any).access_tier ?? "pro") === "free" ? "Chuyển sang Pro" : "Mở Free"}
+                >
+                  {((set as any).access_tier ?? "pro") === "free"
+                    ? <Unlock className="w-4 h-4 text-emerald-600" />
+                    : <Crown className="w-4 h-4 text-amber-600" />}
+                </Button>
+                <Button
+                  variant="ghost" size="icon"
                   onClick={(e) => { e.stopPropagation(); togglePublish(set); }}
                   title={set.is_published ? "Ẩn" : "Xuất bản"}
                 >
