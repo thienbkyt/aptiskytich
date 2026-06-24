@@ -49,6 +49,7 @@ function getPageUrl() {
 }
 
 export default function ReportFab() {
+  const location = useLocation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<FunctionalReason>("cant_nav");
