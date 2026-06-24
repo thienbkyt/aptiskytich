@@ -353,6 +353,35 @@ const AdminReports = () => {
                         </p>
 
                         <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                          {(() => {
+                            const hasContentLoc = !!(r.skill || r.part_type || r.question_number);
+                            let sectionText: string | null = null;
+                            if (hasContentLoc) {
+                              sectionText = [
+                                r.skill || "",
+                                r.part_type ? r.part_type : "",
+                                r.question_number ? `Câu ${r.question_number}` : "",
+                              ].filter(Boolean).join(" • ");
+                            } else if (r.section) {
+                              sectionText = r.section;
+                            }
+                            return sectionText ? (
+                              <span>Phần: <span className="text-foreground font-medium">{sectionText}</span></span>
+                            ) : null;
+                          })()}
+                          {(() => {
+                            if (!r.user_id) {
+                              return <span>Người báo lỗi: <span className="text-foreground">Ẩn danh</span></span>;
+                            }
+                            const info = reporterMap[r.user_id];
+                            if (!info) {
+                              return <span>Người báo lỗi: <code className="text-foreground bg-muted rounded px-1">{r.user_id}</code></span>;
+                            }
+                            const label = info.display_name
+                              ? `${info.display_name} (${info.email})`
+                              : info.email || r.user_id;
+                            return <span>Người báo lỗi: <span className="text-foreground">{label}</span></span>;
+                          })()}
                           {isFunctional && r.page_url && (
                             <span>
                               Trang: <code className="text-foreground bg-muted rounded px-1 break-all">{r.page_url}</code>
@@ -373,6 +402,7 @@ const AdminReports = () => {
                             <span>Thời gian: {fmtDate(r.created_at)}</span>
                           </div>
                         </div>
+
 
                         {(examUrl || (!isFunctional && setIdForLink)) && (
                           <div className="mt-3 flex flex-wrap items-center gap-2">
