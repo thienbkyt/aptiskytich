@@ -88,6 +88,18 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
     if (!error) setSets((s) => s.map((x) => x.id === set.id ? { ...x, is_published: !x.is_published } : x));
   };
 
+  const toggleAccessTier = async (set: ExamSetRow) => {
+    const current = (set as any).access_tier ?? "pro";
+    const next = current === "free" ? "pro" : "free";
+    const { error } = await supabase.from("exam_sets").update({ access_tier: next } as any).eq("id", set.id);
+    if (error) {
+      toast({ title: "Lỗi cập nhật", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => x.id === set.id ? ({ ...x, access_tier: next } as any) : x));
+    toast({ title: `Đề chuyển sang ${next === "free" ? "Free" : "Pro"}` });
+  };
+
   const handlePublishAll = async () => {
     const drafts = sets.filter((s) => !s.is_published);
     if (drafts.length === 0) return;
