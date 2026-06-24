@@ -43,7 +43,7 @@ function ensureOverlay(): HTMLDivElement {
     whiteSpace: "pre-wrap",
     wordBreak: "break-word",
     WebkitOverflowScrolling: "touch",
-  } as CSSStyleDeclaration);
+  } as Partial<CSSStyleDeclaration> as any);
   const close = document.createElement("button");
   close.textContent = "×";
   Object.assign(close.style, {
@@ -55,7 +55,7 @@ function ensureOverlay(): HTMLDivElement {
     border: "none",
     fontSize: "20px",
     cursor: "pointer",
-  } as CSSStyleDeclaration);
+  } as Partial<CSSStyleDeclaration> as any);
   close.onclick = () => overlay && (overlay.style.display = "none");
   overlay.appendChild(close);
   if (document.body) document.body.prepend(overlay);
