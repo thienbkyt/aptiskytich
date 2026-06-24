@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { safeLocalStorage } from "@/lib/safeStorage";
 import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 
@@ -9,7 +10,7 @@ const InstallAppCard = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem(DISMISS_KEY) === "1") return;
+    if (safeLocalStorage.getItem(DISMISS_KEY) === "1") return;
     if (window.matchMedia("(display-mode: standalone)").matches) return;
     const pick = () => {
       const e = (window as any).__ktInstallPrompt;
@@ -27,7 +28,7 @@ const InstallAppCard = () => {
 
   if (!deferred) return null;
 
-  const dismiss = () => { localStorage.setItem(DISMISS_KEY, "1"); setMounted(false); setTimeout(() => setDeferred(null), 300); };
+  const dismiss = () => { safeLocalStorage.setItem(DISMISS_KEY, "1"); setMounted(false); setTimeout(() => setDeferred(null), 300); };
   const install = async () => { deferred.prompt(); await deferred.userChoice; (window as any).__ktInstallPrompt = null; setDeferred(null); };
 
   return createPortal(

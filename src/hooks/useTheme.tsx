@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 type Theme = "light" | "dark" | "auto";
 
@@ -16,7 +17,7 @@ function getSystemTheme(): "light" | "dark" {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    return (localStorage.getItem("theme") as Theme) || "light";
+    return (safeLocalStorage.getItem("theme") as Theme) || "light";
   });
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(
     theme === "auto" ? getSystemTheme() : theme
@@ -24,7 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = (t: Theme) => {
     setThemeState(t);
-    localStorage.setItem("theme", t);
+    safeLocalStorage.setItem("theme", t);
   };
 
   useEffect(() => {
