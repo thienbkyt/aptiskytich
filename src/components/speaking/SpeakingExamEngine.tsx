@@ -245,83 +245,71 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
-  // Single-part mode: when phase becomes "done", grade each item via shared helper.
+  // Single-part mode: when phase becomes "done", grade via NEW V2 system (5-criteria profile).
+  // Legacy per-item grading is intentionally disabled for single-part mode (replaced by V2).
   useEffect(() => {
-    if (phase !== "done" || gradingRanRef.current) return;
-    gradingRanRef.current = true;
-
-    const specs = buildSpeakingGradingSpecs(partType, { part1Data, part2Data, part3Data, part4Data });
-    if (specs.length === 0) return;
-
-    const blobs = recordingsRef.current.slice();
-    setIsGrading(true);
-    setGradings(new Array(specs.length).fill(null));
-
-    gradeSpeakingItems(specs, blobs, durationsRef.current, (idx, result) => {
-      setGradings(prev => {
-        const next = [...prev];
-        next[idx] = result;
-        return next;
-      });
-    }).finally(() => setIsGrading(false));
-  }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
-
-
-
-  // Persist per-question AI grading results to DB (once, after all gradings complete).
-  useEffect(() => {
-    if (phase !== "done") return;
-    if (gradingsSavedRef.current) return;
-    if (gradings.length === 0) return;
-    if (!gradings.every(g => g !== null)) return;
-    gradingsSavedRef.current = true;
+    if (fullFlow) return;
+    if (phase !== "done" || v2RanRef.current) return;
+    v2RanRef.current = true;
 
     const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions;
+      if (partType === "part1" && part1Data) return part1Data.questions || [];
       if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
       if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return [part4Data.topic];
+      if (partType === "part4" && part4Data) return part4Data.questions?.length ? part4Data.questions : [part4Data.topic];
       return [];
     })();
-    saveSpeakingGradings({
-      testResultId: testResultIdRef.current,
-      examSetId: examSetId ?? null,
-      partLabel: `Part ${PART_NUMBERS[partType]}`,
-      gradings,
-      questionTexts: promptsList,
-    });
-    // Bake AI grading into snapshot items so review is self-sufficient.
+    const blobs = recordingsRef.current.slice();
+    const questions = promptsList.map((q) => ({ questionText: q }));
+
+    setIsGrading(true);
+    setV2Error(null);
     (async () => {
       try {
-        if (!testResultIdRef.current) return;
-        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-        const aiByIndex: Record<number, any> = {};
-        let totalScore = 0, totalMax = 0;
-        gradings.forEach((g, i) => {
-          if (!g || (g as any).error) return;
-          const gg = g as any;
-          aiByIndex[i] = {
-            partScore: gg.partScore,
-            maxPoints: gg.maxPoints,
-            grammarErrors: gg.grammarErrors || [],
-            pronunciationErrors: gg.pronunciationErrors || [],
-            feedback: gg.feedback || null,
-            transcript: gg.transcript || null,
-            improvedVersion: gg.improvedVersion || null,
-          };
-          totalScore += gg.partScore || 0;
-          totalMax += gg.maxPoints || 0;
-        });
-        const scaled50 = totalMax > 0 ? Math.round((totalScore / totalMax) * 50) : null;
-        const extra = totalMax > 0
-          ? { score: totalScore, total: totalMax, scaled50 }
-          : undefined;
-        if (Object.keys(aiByIndex).length > 0) {
-          await mergeSnapshotAI(testResultIdRef.current, aiByIndex, extra);
+        const result = await gradeSpeakingPartV2(partType, questions, blobs);
+        // Merge questionText back into per-item results for display.
+        const mergedPerItem = (result.perItem || []).map((it, i) => ({
+          ...it,
+          questionText: it.questionText || promptsList[i] || `Question ${i + 1}`,
+        }));
+        const finalResult: SpeakingPartResultV2 = { ...result, perItem: mergedPerItem };
+        setV2Result(finalResult);
+
+        // Best-effort save to speaking_skill_results (parts contains only this part).
+        try {
+          await saveSpeakingSkillResult({
+            testResultId: testResultIdRef.current,
+            examSetId: examSetId ?? null,
+            fullTestSessionId: fullTestSessionId ?? null,
+            parts: {
+              [partType]: {
+                bands: finalResult.bands,
+                items: mergedPerItem,
+                analysis: finalResult.analysis,
+                feedback: finalResult.feedback,
+                improvedVersion: finalResult.improvedVersion,
+                rawPart: finalResult.rawPart,
+              },
+            },
+            rawTotal: finalResult.rawPart || 0,
+            scale50: 0,
+            cefr: "",
+            greyZone: false,
+            flagReview: false,
+            feedback: finalResult.feedback,
+          });
+        } catch (e) {
+          console.warn("[Speaking V2] save skill result failed:", e);
         }
-      } catch (e) { console.warn("[Speaking] bake AI failed", e); }
+      } catch (e: any) {
+        console.error("[Speaking V2] grading failed:", e);
+        setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
+      } finally {
+        setIsGrading(false);
+      }
     })();
-  }, [phase, gradings, partType, part1Data, part2Data, part3Data, part4Data, examSetId]);
+  }, [phase, fullFlow, partType, part1Data, part2Data, part3Data, part4Data, examSetId, fullTestSessionId]);
+
 
 
   // Read question aloud, beep, then start prep/recording
