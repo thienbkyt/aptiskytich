@@ -103,7 +103,7 @@ export async function finalizeSpeaking(
   if (!data) throw new Error("Empty response from grade-exam (speaking_finalize)");
 
   return {
-    rawTotal: Number(data.rawTotal ?? 0),
+    rawTotal: Number(data.rawTotal ?? data.raw_total ?? 0),
     scale50: Number(data.scale50 ?? 0),
     cefr: data.cefr ?? "",
     greyZone: !!data.greyZone,
