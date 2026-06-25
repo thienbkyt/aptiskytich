@@ -50,8 +50,9 @@ type AppSettings = {
 type FeatureFlag = {
   key: string;
   label: string | null;
-  required_tier: "free" | "pro";
+  required_tier: "free" | "pro" | "premium";
   free_quota: number | null;
+  pro_quota: number | null;
   quota_period: "day" | "month" | null;
   enabled: boolean;
   note: string | null;
@@ -71,7 +72,8 @@ type Student = {
   display_name: string | null;
 };
 
-type GrantDuration = "lifetime" | "7d" | "30d" | "custom";
+type GrantTier = "pro" | "premium";
+type GrantDuration = "lifetime" | "1d" | "7d" | "30d" | "custom";
 
 // ─────────────────────────────────────────────────────────────
 // Page
