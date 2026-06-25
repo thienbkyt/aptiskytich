@@ -309,23 +309,26 @@ const Navbar = () => {
               {isPremium ? (
                 <span
                   title="Bạn đang là thành viên Premium (trọn đời)"
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-sm"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-[0_0_12px_-2px_rgba(254,173,95,0.6)]"
                 >
-                  <Crown className="w-3 h-3" /> Premium
+                  <Crown className="w-3.5 h-3.5" /> Premium
                 </span>
               ) : isPro ? (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")} title="Bạn đang là Pro — nâng cấp Premium để dùng trọn đời">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold shadow-sm hover:brightness-110">
-                    <Crown className="w-3 h-3" /> Pro
-                  </span>
+                  <Button
+                    size="sm"
+                    className="rounded-full h-8 px-3 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] bg-[length:200%_100%] text-white hover:brightness-110 hover:bg-[position:100%_0] transition-all border-0 shadow-[0_0_14px_-3px_rgba(254,173,95,0.7)]"
+                  >
+                    <Crown className="w-3.5 h-3.5" /> Lên Premium
+                  </Button>
                 </Link>
               ) : (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")}>
                   <Button
                     size="sm"
-                    className="rounded-full h-8 px-3 text-xs font-bold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0 shadow-sm"
+                    className="rounded-full h-8 px-3.5 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] bg-[length:200%_100%] text-white hover:brightness-110 hover:bg-[position:100%_0] transition-all border-0 shadow-[0_0_14px_-3px_rgba(254,173,95,0.7)]"
                   >
-                    <Crown className="w-3.5 h-3.5" /> Nâng cấp Pro
+                    <Crown className="w-3.5 h-3.5" /> Nâng cấp
                   </Button>
                 </Link>
               )}
