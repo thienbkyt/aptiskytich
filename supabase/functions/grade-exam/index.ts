@@ -98,7 +98,10 @@ serve(async (req) => {
       const p4 = Number(rawParts.part4 ?? 0);
       const coreGV = (body as any).coreGV;
       const raw_total = p1 + p2 + p3 + p4 * 1.2; // max 126
-      const scale50 = Math.round((raw_total / 126) * 50);
+      const scale50_base = Math.round((raw_total / 126) * 50);
+      // LENIENCY: scoring runs strict; apply +20% scaling for user-facing score.
+      const LENIENCY = 1.2;
+      const scale50 = Math.min(50, Math.round(scale50_base * LENIENCY));
       const CUTS: Array<{ band: string; cut: number }> = [
         { band: "C", cut: 48 },
         { band: "B2", cut: 41 },
@@ -127,8 +130,10 @@ serve(async (req) => {
       }
       const cefr = bumpedTo ?? baseBand;
       const flagReview = greyZone;
+      const rawTotalRounded = Math.round(raw_total * 100) / 100;
       return new Response(JSON.stringify({
-        raw_total: Math.round(raw_total * 100) / 100,
+        rawTotal: rawTotalRounded,
+        raw_total: rawTotalRounded,
         scale50,
         cefr,
         greyZone,
