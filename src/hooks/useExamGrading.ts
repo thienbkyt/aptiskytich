@@ -35,7 +35,7 @@ export type AnyGradingResult = GradingResult | WritingGradingResult;
 export function useExamGrading() {
   const [grading, setGrading] = useState<AnyGradingResult | null>(null);
   const [isGrading, setIsGrading] = useState(false);
-  const [quotaExceeded, setQuotaExceeded] = useState<null | { freeQuota: number; used: number; remaining: number }>(null);
+  const [quotaExceeded, setQuotaExceeded] = useState<null | { freeQuota: number; used: number; remaining: number; need?: "pro" | "premium"; tier?: string }>(null);
 
   const gradeExam = async (params: {
     type: "speaking" | "writing";
