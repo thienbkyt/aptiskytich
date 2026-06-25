@@ -79,12 +79,19 @@ export function useExamGrading() {
         throw error;
       }
       if (data?.error === "quota_exceeded") {
+        const need: "pro" | "premium" = data.need === "premium" ? "premium" : "pro";
         setQuotaExceeded({
           freeQuota: Number(data.freeQuota ?? 3),
           used: Number(data.used ?? 0),
           remaining: Number(data.remaining ?? 0),
+          need,
+          tier: data.tier,
         });
-        toast.error(`Bạn đã dùng hết ${data.freeQuota ?? 3} lượt chấm AI tháng này. Nâng cấp Pro để chấm không giới hạn.`);
+        toast.error(
+          need === "premium"
+            ? `Bạn đã dùng hết lượt chấm AI tháng này. Nâng cấp Premium để chấm không giới hạn.`
+            : `Bạn đã dùng hết ${data.freeQuota ?? 3} lượt chấm AI tháng này. Nâng cấp Pro để có thêm lượt.`
+        );
         return null;
       }
       if (data?.error) throw new Error(data.error);
