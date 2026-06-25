@@ -34,6 +34,12 @@ import {
   type SpeakingGradingSpec,
 } from "./speakingGrading";
 import SpeakingReviewView from "./SpeakingReviewView";
+import {
+  gradeSpeakingPartV2,
+  saveSpeakingSkillResult,
+  type SpeakingPartResultV2,
+} from "./speakingGradingV2";
+import SpeakingProfileView from "./SpeakingProfileView";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
@@ -133,11 +139,14 @@ const SpeakingExamEngine = ({
   const [revealed, setRevealed] = useState(false);
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
+  const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
+  const [v2Error, setV2Error] = useState<string | null>(null);
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
   const sessionStartIsoRef = useRef<string>(new Date().toISOString());
   const gradingsSavedRef = useRef(false);
+  const v2RanRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -236,83 +245,71 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
-  // Single-part mode: when phase becomes "done", grade each item via shared helper.
+  // Single-part mode: when phase becomes "done", grade via NEW V2 system (5-criteria profile).
+  // Legacy per-item grading is intentionally disabled for single-part mode (replaced by V2).
   useEffect(() => {
-    if (phase !== "done" || gradingRanRef.current) return;
-    gradingRanRef.current = true;
-
-    const specs = buildSpeakingGradingSpecs(partType, { part1Data, part2Data, part3Data, part4Data });
-    if (specs.length === 0) return;
-
-    const blobs = recordingsRef.current.slice();
-    setIsGrading(true);
-    setGradings(new Array(specs.length).fill(null));
-
-    gradeSpeakingItems(specs, blobs, durationsRef.current, (idx, result) => {
-      setGradings(prev => {
-        const next = [...prev];
-        next[idx] = result;
-        return next;
-      });
-    }).finally(() => setIsGrading(false));
-  }, [phase, partType, part1Data, part2Data, part3Data, part4Data]);
-
-
-
-  // Persist per-question AI grading results to DB (once, after all gradings complete).
-  useEffect(() => {
-    if (phase !== "done") return;
-    if (gradingsSavedRef.current) return;
-    if (gradings.length === 0) return;
-    if (!gradings.every(g => g !== null)) return;
-    gradingsSavedRef.current = true;
+    if (fullFlow) return;
+    if (phase !== "done" || v2RanRef.current) return;
+    v2RanRef.current = true;
 
     const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions;
+      if (partType === "part1" && part1Data) return part1Data.questions || [];
       if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
       if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return [part4Data.topic];
+      if (partType === "part4" && part4Data) return part4Data.questions?.length ? part4Data.questions : [part4Data.topic];
       return [];
     })();
-    saveSpeakingGradings({
-      testResultId: testResultIdRef.current,
-      examSetId: examSetId ?? null,
-      partLabel: `Part ${PART_NUMBERS[partType]}`,
-      gradings,
-      questionTexts: promptsList,
-    });
-    // Bake AI grading into snapshot items so review is self-sufficient.
+    const blobs = recordingsRef.current.slice();
+    const questions = promptsList.map((q) => ({ questionText: q }));
+
+    setIsGrading(true);
+    setV2Error(null);
     (async () => {
       try {
-        if (!testResultIdRef.current) return;
-        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-        const aiByIndex: Record<number, any> = {};
-        let totalScore = 0, totalMax = 0;
-        gradings.forEach((g, i) => {
-          if (!g || (g as any).error) return;
-          const gg = g as any;
-          aiByIndex[i] = {
-            partScore: gg.partScore,
-            maxPoints: gg.maxPoints,
-            grammarErrors: gg.grammarErrors || [],
-            pronunciationErrors: gg.pronunciationErrors || [],
-            feedback: gg.feedback || null,
-            transcript: gg.transcript || null,
-            improvedVersion: gg.improvedVersion || null,
-          };
-          totalScore += gg.partScore || 0;
-          totalMax += gg.maxPoints || 0;
-        });
-        const scaled50 = totalMax > 0 ? Math.round((totalScore / totalMax) * 50) : null;
-        const extra = totalMax > 0
-          ? { score: totalScore, total: totalMax, scaled50 }
-          : undefined;
-        if (Object.keys(aiByIndex).length > 0) {
-          await mergeSnapshotAI(testResultIdRef.current, aiByIndex, extra);
+        const result = await gradeSpeakingPartV2(partType, questions, blobs);
+        // Merge questionText back into per-item results for display.
+        const mergedPerItem = (result.perItem || []).map((it, i) => ({
+          ...it,
+          questionText: it.questionText || promptsList[i] || `Question ${i + 1}`,
+        }));
+        const finalResult: SpeakingPartResultV2 = { ...result, perItem: mergedPerItem };
+        setV2Result(finalResult);
+
+        // Best-effort save to speaking_skill_results (parts contains only this part).
+        try {
+          await saveSpeakingSkillResult({
+            testResultId: testResultIdRef.current,
+            examSetId: examSetId ?? null,
+            fullTestSessionId: fullTestSessionId ?? null,
+            parts: {
+              [partType]: {
+                bands: finalResult.bands,
+                items: mergedPerItem,
+                analysis: finalResult.analysis,
+                feedback: finalResult.feedback,
+                improvedVersion: finalResult.improvedVersion,
+                rawPart: finalResult.rawPart,
+              },
+            },
+            rawTotal: finalResult.rawPart || 0,
+            scale50: 0,
+            cefr: "",
+            greyZone: false,
+            flagReview: false,
+            feedback: finalResult.feedback,
+          });
+        } catch (e) {
+          console.warn("[Speaking V2] save skill result failed:", e);
         }
-      } catch (e) { console.warn("[Speaking] bake AI failed", e); }
+      } catch (e: any) {
+        console.error("[Speaking V2] grading failed:", e);
+        setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
+      } finally {
+        setIsGrading(false);
+      }
     })();
-  }, [phase, gradings, partType, part1Data, part2Data, part3Data, part4Data, examSetId]);
+  }, [phase, fullFlow, partType, part1Data, part2Data, part3Data, part4Data, examSetId, fullTestSessionId]);
+
 
 
   // Read question aloud, beep, then start prep/recording
@@ -1011,111 +1008,74 @@ const SpeakingExamEngine = ({
     );
   }
 
-  // Grading / Done — submitted screen with per-question playback
+  // Grading / Done — V2 5-criteria profile
   if (phase === "grading" || phase === "done") {
-    const validGradings = gradings.filter((g): g is SpeakingItemGrading => !!g && !("error" in g));
-    const totalScore = validGradings.reduce((sum, g) => sum + (g.partScore || 0), 0);
-    const totalMax = (() => {
-      if (partType === "part1") return (part1Data?.questions.length || 0) * 2;
-      if (partType === "part2") {
-        const n = part2Data?.questions?.length || 0;
-        return n > 0 ? 4 + (n - 1) * 2 : 0;
-      }
-      if (partType === "part3") {
-        const n = part3Data?.questions?.length || 0;
-        return n > 0 ? 7 + (n - 1) * 4 : 0;
-      }
-      if (partType === "part4") return (part4Data?.questions?.length || 0) * 7;
-      return 0;
-    })();
-    const allGraded = gradings.length > 0 && gradings.every(g => g !== null);
+    const itemsForView = v2Result
+      ? v2Result.perItem.map((it, i) => ({
+          questionText: it.questionText,
+          transcript: it.transcript,
+          onTopic: it.onTopic,
+          improvedVersion: it.improvedVersion,
+          audioUrl: recordings[i] ?? null,
+        }))
+      : [];
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 py-8">
-          <div className={`${reviewDetail ? "max-w-6xl" : "max-w-2xl"} mx-auto space-y-6`}>
-            {!reviewDetail ? (
-              <>
-                <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
-                  <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                    <Loader2 className="w-7 h-7 text-green-500" />
-                  </div>
-                  <h2 className="text-xl font-heading font-bold text-foreground mb-2">
-                    Bài Speaking đã được nộp
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Cảm ơn bạn đã hoàn thành phần Speaking.
-                  </p>
-                </div>
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                <Loader2 className="w-7 h-7 text-green-500" />
+              </div>
+              <h2 className="text-xl font-heading font-bold text-foreground mb-2">
+                Bài Speaking đã được nộp
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Cảm ơn bạn đã hoàn thành Speaking Part {partNumber}.
+              </p>
+            </div>
 
-                {totalMax > 0 && (
-                  <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-3">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Tổng điểm Speaking
-                    </p>
-                    {isGrading && !allGraded ? (
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
-                      </div>
-                    ) : (
-                      <p className="text-4xl font-heading font-bold text-primary">
-                        {totalScore.toFixed(1)} <span className="text-base text-muted-foreground">/ {totalMax}</span>
-                      </p>
-                    )}
-                    <div className="border-t border-border pt-3 mt-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                        Speaking Part {partNumber}
-                      </p>
-                      {allGraded ? (
-                        <p className="text-lg font-bold text-foreground">
-                          {totalScore.toFixed(1)} / {totalMax}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground italic">Đang chấm...</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button
-                    onClick={() => { setReviewIndex(0); setReviewDetail(true); }}
-                    disabled={!allGraded}
-                    className="bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
-                  >
-                    🎙️ Xem lại từng câu
-                  </button>
-                  <button
-                    onClick={onExit}
-                    className="bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
-                  >
-                    Quay lại danh sách đề
-                  </button>
+            {isGrading && !v2Result && !v2Error && (
+              <div className="bg-card border border-border rounded-2xl p-6 text-center">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  AI Kỳ Tích đang chấm... Đừng thoát hay đổi tab nha.
                 </div>
-              </>
-            ) : (
-              <SpeakingReviewView
-                partType={partType}
-                part1Data={part1Data}
-                part2Data={part2Data}
-                part3Data={part3Data}
-                part4Data={part4Data}
-                recordings={recordings}
-                gradings={gradings}
-                reviewIndex={reviewIndex}
-                onChangeIndex={setReviewIndex}
-                onBack={() => setReviewDetail(false)}
-                onExit={onExit}
-                totalParts={totalParts}
+              </div>
+            )}
+
+            {v2Error && (
+              <div className="bg-card border border-rose-500/30 rounded-2xl p-6 text-center">
+                <p className="text-sm text-rose-600 dark:text-rose-400">{v2Error}</p>
+              </div>
+            )}
+
+            {v2Result && (
+              <SpeakingProfileView
+                bands={v2Result.bands}
+                items={itemsForView}
+                feedback={v2Result.feedback}
+                analysis={v2Result.analysis}
+                partLabel={`Part ${partNumber}`}
               />
             )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={onExit}
+                className="bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+              >
+                Quay lại danh sách đề
+              </button>
+            </div>
           </div>
         </div>
         {exitDialog}
       </div>
     );
+
   }
 
 
