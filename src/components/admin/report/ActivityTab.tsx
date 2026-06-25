@@ -17,6 +17,7 @@ type TestResultRow = { user_id: string; created_at: string };
 type StreakRow = { current_streak: number | null; last_activity_date: string | null };
 
 const RANGE_OPTIONS = [
+  { value: "today", label: "Hôm nay" },
   { value: "7", label: "7 ngày" },
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
