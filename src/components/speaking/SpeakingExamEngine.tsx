@@ -139,11 +139,14 @@ const SpeakingExamEngine = ({
   const [revealed, setRevealed] = useState(false);
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
+  const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
+  const [v2Error, setV2Error] = useState<string | null>(null);
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
   const sessionStartIsoRef = useRef<string>(new Date().toISOString());
   const gradingsSavedRef = useRef(false);
+  const v2RanRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
