@@ -57,6 +57,10 @@ const ContentQualityTab = () => {
       return { gte: null, lte: null };
     }
     if (range === "all") return { gte: null, lte: null };
+    if (range === "today") {
+      const s = new Date(now); s.setHours(0, 0, 0, 0);
+      return { gte: s.toISOString(), lte: new Date().toISOString() };
+    }
     const d = new Date(now);
     d.setDate(d.getDate() - Number(range));
     return { gte: d.toISOString(), lte: null };
