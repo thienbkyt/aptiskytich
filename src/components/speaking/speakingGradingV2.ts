@@ -79,10 +79,9 @@ export async function gradeSpeakingPartV2(
 
   return {
     bands: data.bands ?? { tf: "", gra: "", vra: "", pro: "", fc: "" },
-    rawPart: Number(data.rawPart ?? 0),
+    rawPart: Number(data.rawPart ?? data.raw_part ?? 0),
     perItem: Array.isArray(data.perItem) ? data.perItem : [],
     analysis: data.analysis ?? "",
-    feedback: data.feedback ?? "",
     improvedVersion: data.improvedVersion ?? "",
   };
 }
