@@ -34,6 +34,12 @@ import {
   type SpeakingGradingSpec,
 } from "./speakingGrading";
 import SpeakingReviewView from "./SpeakingReviewView";
+import {
+  gradeSpeakingPartV2,
+  saveSpeakingSkillResult,
+  type SpeakingPartResultV2,
+} from "./speakingGradingV2";
+import SpeakingProfileView from "./SpeakingProfileView";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
