@@ -97,7 +97,7 @@ export const useSkillFullSets = (skill: string) => {
             parts: partsArr,
             examSetIds: info.ids,
             questionCount,
-            access_tier: info.anyFree ? "free" : "pro",
+            access_tier: info.minTier,
           });
         }
       }
