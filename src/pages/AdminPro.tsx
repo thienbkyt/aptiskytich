@@ -50,8 +50,9 @@ type AppSettings = {
 type FeatureFlag = {
   key: string;
   label: string | null;
-  required_tier: "free" | "pro";
+  required_tier: "free" | "pro" | "premium";
   free_quota: number | null;
+  pro_quota: number | null;
   quota_period: "day" | "month" | null;
   enabled: boolean;
   note: string | null;
@@ -71,7 +72,8 @@ type Student = {
   display_name: string | null;
 };
 
-type GrantDuration = "lifetime" | "7d" | "30d" | "custom";
+type GrantTier = "pro" | "premium";
+type GrantDuration = "lifetime" | "1d" | "7d" | "30d" | "custom";
 
 // ─────────────────────────────────────────────────────────────
 // Page
@@ -333,9 +335,10 @@ const FeatureFlagsSection = () => {
       .update({
         required_tier: row.required_tier,
         free_quota: row.free_quota,
+        pro_quota: row.pro_quota,
         quota_period: row.quota_period,
         enabled: row.enabled,
-      })
+      } as any)
       .eq("key", key);
     setSavingKey(null);
     if (error) {
@@ -355,7 +358,7 @@ const FeatureFlagsSection = () => {
       <CardHeader>
         <CardTitle>Cấu hình tính năng</CardTitle>
         <CardDescription>
-          Đổi tier yêu cầu, hạn mức miễn phí và bật/tắt từng tính năng. Có hiệu lực ngay.
+          Đổi tier yêu cầu, hạn mức Free/Pro và bật/tắt từng tính năng. Premium = không giới hạn.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -369,11 +372,12 @@ const FeatureFlagsSection = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Tính năng</TableHead>
-                  <TableHead className="w-[140px]">Tier</TableHead>
-                  <TableHead className="w-[110px]">Hạn mức free</TableHead>
-                  <TableHead className="w-[150px]">Chu kỳ</TableHead>
-                  <TableHead className="w-[100px] text-center">Bật</TableHead>
-                  <TableHead className="w-[110px] text-right">Hành động</TableHead>
+                  <TableHead className="w-[130px]">Tier</TableHead>
+                  <TableHead className="w-[90px]">Free</TableHead>
+                  <TableHead className="w-[90px]">Pro</TableHead>
+                  <TableHead className="w-[130px]">Chu kỳ</TableHead>
+                  <TableHead className="w-[80px] text-center">Bật</TableHead>
+                  <TableHead className="w-[100px] text-right">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -391,7 +395,7 @@ const FeatureFlagsSection = () => {
                       <TableCell>
                         <Select
                           value={f.required_tier}
-                          onValueChange={(v) => updateRow(f.key, { required_tier: v as "free" | "pro" })}
+                          onValueChange={(v) => updateRow(f.key, { required_tier: v as FeatureFlag["required_tier"] })}
                         >
                           <SelectTrigger className="h-9">
                             <SelectValue />
@@ -399,6 +403,7 @@ const FeatureFlagsSection = () => {
                           <SelectContent>
                             <SelectItem value="free">Free</SelectItem>
                             <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -412,6 +417,19 @@ const FeatureFlagsSection = () => {
                             free_quota: e.target.value === "" ? null : Number(e.target.value),
                           })}
                           placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          className="h-9"
+                          value={f.pro_quota ?? ""}
+                          onChange={(e) => updateRow(f.key, {
+                            pro_quota: e.target.value === "" ? null : Number(e.target.value),
+                          })}
+                          placeholder="∞"
+                          title="Để trống = Pro không giới hạn"
                         />
                       </TableCell>
                       <TableCell>
@@ -476,6 +494,7 @@ const ProUsersSection = () => {
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Student | null>(null);
+  const [grantTier, setGrantTier] = useState<GrantTier>("pro");
   const [duration, setDuration] = useState<GrantDuration>("30d");
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [granting, setGranting] = useState(false);
@@ -528,6 +547,8 @@ const ProUsersSection = () => {
     const now = new Date();
     switch (duration) {
       case "lifetime": return null;
+      case "1d":
+        return new Date(now.getTime() + 1 * 24 * 3600 * 1000).toISOString();
       case "7d":
         return new Date(now.getTime() + 7 * 24 * 3600 * 1000).toISOString();
       case "30d":
@@ -549,16 +570,16 @@ const ProUsersSection = () => {
       .from("user_subscriptions")
       .upsert({
         user_id: selected.user_id,
-        tier: "pro",
+        tier: grantTier,
         pro_until: proUntil,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      } as any, { onConflict: "user_id" });
     setGranting(false);
     if (error) {
-      toast.error("Cấp Pro thất bại: " + error.message);
+      toast.error("Cấp gói thất bại: " + error.message);
       return;
     }
-    toast.success(`Đã cấp Pro cho ${selected.email}`);
+    toast.success(`Đã cấp ${grantTier === "premium" ? "Premium" : "Pro"} cho ${selected.email}`);
     setSelected(null);
     setSearch("");
     setCustomDate(undefined);
@@ -570,14 +591,14 @@ const ProUsersSection = () => {
     setRevoking(true);
     const { error } = await supabase
       .from("user_subscriptions")
-      .delete()
+      .update({ tier: "free", pro_until: null } as any)
       .eq("user_id", revokeTarget.user_id);
     setRevoking(false);
     if (error) {
-      toast.error("Gỡ Pro thất bại: " + error.message);
+      toast.error("Gỡ gói thất bại: " + error.message);
       return;
     }
-    toast.success("Đã gỡ Pro");
+    toast.success("Đã gỡ gói");
     setRevokeTarget(null);
     reloadSubs();
   };
@@ -585,15 +606,15 @@ const ProUsersSection = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cấp / gỡ Pro thủ công</CardTitle>
+        <CardTitle>Cấp / gỡ gói thủ công</CardTitle>
         <CardDescription>
-          Tìm user theo email, cấp Pro theo thời hạn. Bảng dưới hiển thị các user đang Pro.
+          Tìm user theo email, chọn tier (Pro / Premium) và thời hạn. Bảng dưới hiển thị các user đang trả phí.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Grant form */}
         <div className="rounded-xl border border-border p-4 space-y-4">
-          <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_auto]">
+          <div className="grid gap-3 md:grid-cols-[1.4fr_140px_1fr_auto]">
             <div className="space-y-1.5 relative">
               <Label>Tìm user theo email / tên</Label>
               <div className="relative">
@@ -623,14 +644,41 @@ const ProUsersSection = () => {
             </div>
 
             <div className="space-y-1.5">
+              <Label>Tier</Label>
+              <Select
+                value={grantTier}
+                onValueChange={(v) => {
+                  const t = v as GrantTier;
+                  setGrantTier(t);
+                  setDuration(t === "premium" ? "lifetime" : "30d");
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label>Thời hạn</Label>
               <Select value={duration} onValueChange={(v) => setDuration(v as GrantDuration)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lifetime">Trọn đời</SelectItem>
-                  <SelectItem value="7d">1 tuần (+7 ngày)</SelectItem>
-                  <SelectItem value="30d">1 tháng (+30 ngày)</SelectItem>
-                  <SelectItem value="custom">Tuỳ chọn ngày</SelectItem>
+                  {grantTier === "pro" ? (
+                    <>
+                      <SelectItem value="1d">1 ngày (+1)</SelectItem>
+                      <SelectItem value="7d">1 tuần (+7)</SelectItem>
+                      <SelectItem value="30d">1 tháng (+30)</SelectItem>
+                      <SelectItem value="custom">Tuỳ chọn ngày</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="lifetime">Trọn đời</SelectItem>
+                      <SelectItem value="custom">Tuỳ chọn ngày</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -640,10 +688,10 @@ const ProUsersSection = () => {
               <Button
                 onClick={handleGrant}
                 disabled={!selected || granting || (duration === "custom" && !customDate)}
-                className="gap-2 md:mt-0"
+                className={cn("gap-2 md:mt-0", grantTier === "premium" && "bg-[#FEAD5F] text-[#4D0D0D] hover:bg-[#FEAD5F]/90")}
               >
                 {granting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
-                Cấp Pro
+                Cấp {grantTier === "premium" ? "Premium" : "Pro"}
               </Button>
             </div>
           </div>
@@ -693,7 +741,7 @@ const ProUsersSection = () => {
         {/* Active pro list */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-foreground">Đang Pro</h3>
+            <h3 className="text-sm font-semibold text-foreground">Đang trả phí</h3>
             <Badge variant="secondary" className="text-xs">
               {subsLoading ? "..." : `${subs.length} user`}
             </Badge>
@@ -703,7 +751,8 @@ const ProUsersSection = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead className="w-[200px]">Hạn Pro</TableHead>
+                  <TableHead className="w-[110px]">Tier</TableHead>
+                  <TableHead className="w-[200px]">Hạn</TableHead>
                   <TableHead className="w-[180px]">Cập nhật</TableHead>
                   <TableHead className="w-[110px] text-right">Hành động</TableHead>
                 </TableRow>
@@ -711,20 +760,21 @@ const ProUsersSection = () => {
               <TableBody>
                 {subsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin inline mr-2" /> Đang tải...
                     </TableCell>
                   </TableRow>
                 ) : subs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-sm text-muted-foreground">
-                      Chưa có user nào được cấp Pro.
+                    <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
+                      Chưa có user nào trả phí.
                     </TableCell>
                   </TableRow>
                 ) : (
                   subs.map((s) => {
                     const stu = emailById.get(s.user_id);
                     const expired = s.pro_until && toTimeSafe(s.pro_until) < Date.now();
+                    const isPremium = s.tier === "premium";
                     return (
                       <TableRow key={s.user_id}>
                         <TableCell>
@@ -734,6 +784,18 @@ const ProUsersSection = () => {
                           <div className="text-xs text-muted-foreground">
                             {stu?.email || s.user_id}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={cn(
+                              "border-0 font-semibold",
+                              isPremium
+                                ? "bg-[#FEAD5F]/20 text-[#4D0D0D] hover:bg-[#FEAD5F]/30"
+                                : "bg-primary/15 text-primary hover:bg-primary/20",
+                            )}
+                          >
+                            {isPremium ? "Premium" : "Pro"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {s.pro_until ? (
@@ -761,7 +823,7 @@ const ProUsersSection = () => {
                             onClick={() => setRevokeTarget(s)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            Gỡ Pro
+                            Gỡ
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -776,7 +838,7 @@ const ProUsersSection = () => {
         <AlertDialog open={!!revokeTarget} onOpenChange={(o) => !o && setRevokeTarget(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Gỡ Pro?</AlertDialogTitle>
+              <AlertDialogTitle>Gỡ gói?</AlertDialogTitle>
               <AlertDialogDescription>
                 User sẽ trở về Free ngay lập tức.
                 {revokeTarget && (
@@ -797,7 +859,7 @@ const ProUsersSection = () => {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {revoking ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Gỡ Pro
+                Gỡ gói
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -819,6 +881,7 @@ type PricingPlan = {
   highlight: boolean;
   sort_order: number;
   note: string | null;
+  tier: "pro" | "premium" | null;
 };
 
 const PricingPlansSection = () => {
@@ -856,6 +919,7 @@ const PricingPlansSection = () => {
         price_vnd: row.price_vnd,
         active: row.active,
         highlight: row.highlight,
+        tier: row.tier,
       })
       .eq("key", key);
     setSavingKey(null);
@@ -883,6 +947,7 @@ const PricingPlansSection = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Gói</TableHead>
+                  <TableHead className="w-[120px]">Tier</TableHead>
                   <TableHead className="w-[110px]">Thời hạn</TableHead>
                   <TableHead className="w-[160px]">Giá (VND)</TableHead>
                   <TableHead className="w-[100px] text-center">Nổi bật</TableHead>
@@ -902,6 +967,18 @@ const PricingPlansSection = () => {
                           onChange={(e) => updateRow(p.key, { label: e.target.value })}
                         />
                         <div className="text-xs text-muted-foreground font-mono mt-1">{p.key}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={p.tier ?? "pro"}
+                          onValueChange={(v) => updateRow(p.key, { tier: v as "pro" | "premium" })}
+                        >
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {p.duration_days == null ? "Trọn đời" : `${p.duration_days} ngày`}

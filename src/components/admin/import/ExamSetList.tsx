@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search, Crown, Unlock } from "lucide-react";
+import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExamType, Skill, SKILL_LABELS, ExamSetRow } from "./types";
@@ -12,6 +15,20 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { parseDateSafe } from "@/lib/safeDate";
+
+type AccessTier = "free" | "pro" | "premium";
+
+const TIER_LABEL: Record<AccessTier, string> = {
+  free: "FREE",
+  pro: "PRO",
+  premium: "PREMIUM",
+};
+
+const TIER_BADGE_CLASS: Record<AccessTier, string> = {
+  free: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  pro: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  premium: "bg-[#FEAD5F]/25 text-[#4D0D0D] dark:text-[#FEAD5F]",
+};
 
 interface Props {
   examType: ExamType;
@@ -89,16 +106,16 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
     if (!error) setSets((s) => s.map((x) => x.id === set.id ? { ...x, is_published: !x.is_published } : x));
   };
 
-  const toggleAccessTier = async (set: ExamSetRow) => {
-    const current = (set as any).access_tier ?? "pro";
-    const next = current === "free" ? "pro" : "free";
+  const setAccessTier = async (set: ExamSetRow, next: AccessTier) => {
+    const current = ((set as any).access_tier ?? "pro") as AccessTier;
+    if (current === next) return;
     const { error } = await supabase.from("exam_sets").update({ access_tier: next } as any).eq("id", set.id);
     if (error) {
       toast({ title: "Lỗi cập nhật", description: error.message, variant: "destructive" });
       return;
     }
     setSets((s) => s.map((x) => x.id === set.id ? ({ ...x, access_tier: next } as any) : x));
-    toast({ title: `Đề chuyển sang ${next === "free" ? "Free" : "Pro"}` });
+    toast({ title: `Đề chuyển sang ${TIER_LABEL[next]}` });
   };
 
   const handlePublishAll = async () => {
@@ -194,31 +211,34 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                   <Badge variant={set.is_published ? "default" : "secondary"} className="text-xs">
                     {set.is_published ? "Đã xuất bản" : "Nháp"}
                   </Badge>
-                  {(((set as any).access_tier ?? "pro") === "free") ? (
-                    <Badge variant="secondary" className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-0">
-                      FREE
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border-0">
-                      PRO
-                    </Badge>
-                  )}
+                  {(() => {
+                    const t = (((set as any).access_tier ?? "pro") as AccessTier);
+                    return (
+                      <Badge variant="secondary" className={`text-[10px] font-semibold border-0 ${TIER_BADGE_CLASS[t]}`}>
+                        {TIER_LABEL[t]}
+                      </Badge>
+                    );
+                  })()}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {set.part} · {set.time_limit} phút · {(parseDateSafe(set.created_at) ?? new Date(0)).toLocaleDateString("vi-VN")}
                   {(set as any).full_test_title && <span className="ml-1">· 📦 {(set as any).full_test_title}</span>}
                 </p>
               </div>
-              <div className="flex items-center gap-1 ml-3">
-                <Button
-                  variant="ghost" size="icon"
-                  onClick={(e) => { e.stopPropagation(); toggleAccessTier(set); }}
-                  title={((set as any).access_tier ?? "pro") === "free" ? "Chuyển sang Pro" : "Mở Free"}
+              <div className="flex items-center gap-1 ml-3" onClick={(e) => e.stopPropagation()}>
+                <Select
+                  value={(((set as any).access_tier ?? "pro") as AccessTier)}
+                  onValueChange={(v) => setAccessTier(set, v as AccessTier)}
                 >
-                  {((set as any).access_tier ?? "pro") === "free"
-                    ? <Unlock className="w-4 h-4 text-emerald-600" />
-                    : <Crown className="w-4 h-4 text-amber-600" />}
-                </Button>
+                  <SelectTrigger className="h-8 w-[110px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="pro">Pro</SelectItem>
+                    <SelectItem value="premium">Premium</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button
                   variant="ghost" size="icon"
                   onClick={(e) => { e.stopPropagation(); togglePublish(set); }}
