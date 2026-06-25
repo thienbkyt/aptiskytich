@@ -335,10 +335,10 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
 
       return new Response(JSON.stringify({
         bands: { tf, gra, vra, pro, fc },
+        rawPart: raw_part,
         raw_part,
         perItem: Array.isArray(parsed.perItem) ? parsed.perItem : [],
         analysis: parsed.analysis ?? "",
-        feedback: parsed.feedback ?? "",
         improvedVersion: parsed.improvedVersion ?? "",
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
