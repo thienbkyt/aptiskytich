@@ -306,13 +306,19 @@ const Navbar = () => {
           )}
           {user ? (
             <>
-              {isPro ? (
+              {isPremium ? (
                 <span
-                  title="Bạn đang là thành viên Pro"
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold shadow-sm"
+                  title="Bạn đang là thành viên Premium (trọn đời)"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-sm"
                 >
-                  <Crown className="w-3 h-3" /> Pro
+                  <Crown className="w-3 h-3" /> Premium
                 </span>
+              ) : isPro ? (
+                <Link to="/pricing" {...prefetchHandlers("/pricing")} title="Bạn đang là Pro — nâng cấp Premium để dùng trọn đời">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold shadow-sm hover:brightness-110">
+                    <Crown className="w-3 h-3" /> Pro
+                  </span>
+                </Link>
               ) : (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")}>
                   <Button
