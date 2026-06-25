@@ -881,6 +881,7 @@ type PricingPlan = {
   highlight: boolean;
   sort_order: number;
   note: string | null;
+  tier: "pro" | "premium" | null;
 };
 
 const PricingPlansSection = () => {
@@ -918,6 +919,7 @@ const PricingPlansSection = () => {
         price_vnd: row.price_vnd,
         active: row.active,
         highlight: row.highlight,
+        tier: row.tier,
       })
       .eq("key", key);
     setSavingKey(null);
@@ -945,6 +947,7 @@ const PricingPlansSection = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Gói</TableHead>
+                  <TableHead className="w-[120px]">Tier</TableHead>
                   <TableHead className="w-[110px]">Thời hạn</TableHead>
                   <TableHead className="w-[160px]">Giá (VND)</TableHead>
                   <TableHead className="w-[100px] text-center">Nổi bật</TableHead>
@@ -964,6 +967,18 @@ const PricingPlansSection = () => {
                           onChange={(e) => updateRow(p.key, { label: e.target.value })}
                         />
                         <div className="text-xs text-muted-foreground font-mono mt-1">{p.key}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={p.tier ?? "pro"}
+                          onValueChange={(v) => updateRow(p.key, { tier: v as "pro" | "premium" })}
+                        >
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {p.duration_days == null ? "Trọn đời" : `${p.duration_days} ngày`}
