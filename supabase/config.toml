@@ -9,3 +9,5 @@ project_id = "bacoamhbatqpxatrrflz"
     verify_jwt = false
   [functions.ai-coach]
     verify_jwt = true
+  [functions.payos-webhook]
+    verify_jwt = false
