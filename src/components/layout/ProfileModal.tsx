@@ -29,7 +29,13 @@ function translateAuthError(msg: string): string {
 
 const ProfileModal = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
-  const { isPro, isPremium, tier, proUntil } = useIsPro();
+  const { isPro, isPremium, proUntil } = useIsPro();
+  const [displayName, setDisplayName] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [changingPwd, setChangingPwd] = useState(false);
 
   const proStatusText = (() => {
     if (isPremium) return "Premium · Trọn đời";
