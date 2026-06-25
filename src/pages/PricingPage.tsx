@@ -243,8 +243,9 @@ export default function PricingPage() {
                       <button
                         key={p.key}
                         onClick={() => onPick(p)}
+                        disabled={buying === p.key}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-xl border p-3 text-left transition-all hover:border-[#CC1C01] hover:bg-[#CC1C01]/5",
+                          "w-full flex items-center justify-between gap-3 rounded-xl border p-3 text-left transition-all hover:border-[#CC1C01] hover:bg-[#CC1C01]/5 disabled:opacity-60",
                           p.highlight ? "border-[#CC1C01] bg-[#CC1C01]/5" : "border-border",
                         )}
                       >
@@ -259,7 +260,8 @@ export default function PricingPage() {
                             {p.duration_days == null ? "Không thời hạn" : `${p.duration_days} ngày sử dụng`}
                           </p>
                         </div>
-                        <span className="text-lg font-extrabold text-[#CC1C01] shrink-0">
+                        <span className="text-lg font-extrabold text-[#CC1C01] shrink-0 flex items-center gap-1">
+                          {buying === p.key && <Loader2 className="w-4 h-4 animate-spin" />}
                           {formatVnd(p.price_vnd)}
                         </span>
                       </button>
@@ -273,7 +275,7 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-xs text-muted-foreground mt-auto">Bấm 1 gói ở trên để xem hướng dẫn thanh toán.</p>
+                <p className="text-xs text-muted-foreground mt-auto">Bấm 1 gói để thanh toán qua payOS (chuyển khoản tự động). Hoặc <button onClick={() => proPlans[0] && setPicked(proPlans[0])} className="underline hover:text-[#CC1C01]">liên hệ admin thủ công</button>.</p>
               </div>
 
               {/* PREMIUM */}
