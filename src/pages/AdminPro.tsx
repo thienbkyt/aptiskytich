@@ -767,13 +767,14 @@ const ProUsersSection = () => {
                 ) : subs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
-                      Chưa có user nào được cấp Pro.
+                      Chưa có user nào trả phí.
                     </TableCell>
                   </TableRow>
                 ) : (
                   subs.map((s) => {
                     const stu = emailById.get(s.user_id);
                     const expired = s.pro_until && toTimeSafe(s.pro_until) < Date.now();
+                    const isPremium = s.tier === "premium";
                     return (
                       <TableRow key={s.user_id}>
                         <TableCell>
@@ -783,6 +784,18 @@ const ProUsersSection = () => {
                           <div className="text-xs text-muted-foreground">
                             {stu?.email || s.user_id}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={cn(
+                              "border-0 font-semibold",
+                              isPremium
+                                ? "bg-[#FEAD5F]/20 text-[#4D0D0D] hover:bg-[#FEAD5F]/30"
+                                : "bg-primary/15 text-primary hover:bg-primary/20",
+                            )}
+                          >
+                            {isPremium ? "Premium" : "Pro"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {s.pro_until ? (
@@ -810,7 +823,7 @@ const ProUsersSection = () => {
                             onClick={() => setRevokeTarget(s)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            Gỡ Pro
+                            Gỡ
                           </Button>
                         </TableCell>
                       </TableRow>
