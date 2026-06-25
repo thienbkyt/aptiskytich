@@ -17,6 +17,7 @@ type ResultRow = { exam_question_id: string | null; is_correct: boolean | null; 
 type TestResultRow = { exam_set_id: string | null; created_at: string };
 
 const RANGE_OPTIONS = [
+  { value: "today", label: "Hôm nay" },
   { value: "7", label: "7 ngày" },
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
