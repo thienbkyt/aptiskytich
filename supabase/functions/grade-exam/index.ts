@@ -209,9 +209,8 @@ DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
 
 OUTPUT (via the tool, in this order — write "analysis" BEFORE choosing bands):
 - perItem: ${isPart4 ? "one entry per SUB-QUESTION (evaluating the same monologue)" : "one entry per QUESTION/AUDIO in order"} { transcript: string, onTopic: boolean }.
-- analysis: Vietnamese, 3-5 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band.
+- analysis: Vietnamese, 4-6 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band; KẾT THÚC bằng 1 câu gợi ý ngắn việc cần làm để cải thiện.
 - bands: { tf, gra, vra, pro, fc } each integer 0..5.
-- feedback: Vietnamese, ≤3 câu — 1-2 điểm yếu cụ thể nhất + 1 việc làm ngay.
 - improvedVersion: ONE upgraded English version of the student's own answer for this part — keep ideas, fix errors, upgrade vocab/structure, add linking words.
 
 Be honest, strict, fair. Do not invent content the student didn't say.`;
