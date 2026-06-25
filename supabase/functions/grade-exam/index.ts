@@ -239,8 +239,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                   properties: {
                     transcript: { type: "string" },
                     onTopic: { type: "boolean" },
+                    improvedVersion: { type: "string", description: "Upgraded English rewrite of THIS answer/sub-segment. Empty string if silent." },
                   },
-                  required: ["transcript", "onTopic"],
+                  required: ["transcript", "onTopic", "improvedVersion"],
                 },
               },
               analysis: { type: "string" },
@@ -256,9 +257,8 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                 },
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
-              improvedVersion: { type: "string" },
             },
-            required: ["perItem", "analysis", "bands", "improvedVersion"],
+            required: ["perItem", "analysis", "bands"],
           },
         },
       };
