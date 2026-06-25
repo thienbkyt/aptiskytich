@@ -606,15 +606,15 @@ const ProUsersSection = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cấp / gỡ Pro thủ công</CardTitle>
+        <CardTitle>Cấp / gỡ gói thủ công</CardTitle>
         <CardDescription>
-          Tìm user theo email, cấp Pro theo thời hạn. Bảng dưới hiển thị các user đang Pro.
+          Tìm user theo email, chọn tier (Pro / Premium) và thời hạn. Bảng dưới hiển thị các user đang trả phí.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Grant form */}
         <div className="rounded-xl border border-border p-4 space-y-4">
-          <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_auto]">
+          <div className="grid gap-3 md:grid-cols-[1.4fr_140px_1fr_auto]">
             <div className="space-y-1.5 relative">
               <Label>Tìm user theo email / tên</Label>
               <div className="relative">
@@ -644,14 +644,41 @@ const ProUsersSection = () => {
             </div>
 
             <div className="space-y-1.5">
+              <Label>Tier</Label>
+              <Select
+                value={grantTier}
+                onValueChange={(v) => {
+                  const t = v as GrantTier;
+                  setGrantTier(t);
+                  setDuration(t === "premium" ? "lifetime" : "30d");
+                }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label>Thời hạn</Label>
               <Select value={duration} onValueChange={(v) => setDuration(v as GrantDuration)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lifetime">Trọn đời</SelectItem>
-                  <SelectItem value="7d">1 tuần (+7 ngày)</SelectItem>
-                  <SelectItem value="30d">1 tháng (+30 ngày)</SelectItem>
-                  <SelectItem value="custom">Tuỳ chọn ngày</SelectItem>
+                  {grantTier === "pro" ? (
+                    <>
+                      <SelectItem value="1d">1 ngày (+1)</SelectItem>
+                      <SelectItem value="7d">1 tuần (+7)</SelectItem>
+                      <SelectItem value="30d">1 tháng (+30)</SelectItem>
+                      <SelectItem value="custom">Tuỳ chọn ngày</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="lifetime">Trọn đời</SelectItem>
+                      <SelectItem value="custom">Tuỳ chọn ngày</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -661,10 +688,10 @@ const ProUsersSection = () => {
               <Button
                 onClick={handleGrant}
                 disabled={!selected || granting || (duration === "custom" && !customDate)}
-                className="gap-2 md:mt-0"
+                className={cn("gap-2 md:mt-0", grantTier === "premium" && "bg-[#FEAD5F] text-[#4D0D0D] hover:bg-[#FEAD5F]/90")}
               >
                 {granting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
-                Cấp Pro
+                Cấp {grantTier === "premium" ? "Premium" : "Pro"}
               </Button>
             </div>
           </div>
