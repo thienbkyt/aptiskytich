@@ -6,7 +6,7 @@ interface SpeakingResultsProps {
   isGrading: boolean;
   grading: GradingResult | null;
   onExit: () => void;
-  quotaExceeded?: { freeQuota: number; used: number; remaining: number } | null;
+  quotaExceeded?: { freeQuota: number; used: number; remaining: number; need?: "pro" | "premium" } | null;
 }
 
 const levelColors: Record<string, string> = {
@@ -23,6 +23,7 @@ const SpeakingResults = ({ isGrading, grading, onExit, quotaExceeded }: Speaking
       <div className="max-w-2xl mx-auto space-y-4">
         <UpgradeLock
           reason="quota"
+          need={quotaExceeded.need ?? "pro"}
           featureLabel="Chấm AI Speaking"
           freeQuota={quotaExceeded.freeQuota}
           remaining={quotaExceeded.remaining}
