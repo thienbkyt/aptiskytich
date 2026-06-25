@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Crown, Gem, Loader2, Sparkles, X } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
@@ -78,9 +78,32 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [picked, setPicked] = useState<PricingPlan | null>(null);
+  const [buying, setBuying] = useState<string | null>(null);
   const { user } = useAuth();
-  const { isPro, isPremium, tier } = useIsPro();
+  const { isPro, isPremium, tier, refetch } = useIsPro();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+
+  useEffect(() => {
+    if (params.get("paid") === "1") {
+      toast.success("Đang xác nhận thanh toán...", { description: "Trạng thái gói sẽ tự cập nhật trong giây lát." });
+      // Poll tier a few times
+      let n = 0;
+      const t = setInterval(() => {
+        refetch?.();
+        n += 1;
+        if (n >= 6) clearInterval(t);
+      }, 2500);
+      params.delete("paid");
+      setParams(params, { replace: true });
+      return () => clearInterval(t);
+    }
+    if (params.get("cancel") === "1") {
+      toast.info("Bạn đã hủy thanh toán");
+      params.delete("cancel");
+      setParams(params, { replace: true });
+    }
+  }, [params, refetch, setParams]);
 
   useEffect(() => {
     (async () => {
@@ -105,9 +128,27 @@ export default function PricingPage() {
     [plans],
   );
 
-  const onPick = (p: PricingPlan) => {
+  const onPick = async (p: PricingPlan) => {
     if (!user) { navigate("/auth"); return; }
-    setPicked(p);
+    setBuying(p.key);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { plan_key: p.key },
+      });
+      if (error || !data?.checkoutUrl) {
+        toast.error("Không tạo được link thanh toán", {
+          description: "Vui lòng thử lại hoặc liên hệ admin qua Zalo/Facebook.",
+        });
+        setPicked(p); // fallback to manual
+        return;
+      }
+      window.location.href = data.checkoutUrl as string;
+    } catch (e) {
+      toast.error("Lỗi kết nối", { description: "Thử lại hoặc liên hệ admin." });
+      setPicked(p);
+    } finally {
+      setBuying(null);
+    }
   };
 
   const bankInfo = useMemo(() => ({
@@ -202,8 +243,9 @@ export default function PricingPage() {
                       <button
                         key={p.key}
                         onClick={() => onPick(p)}
+                        disabled={buying === p.key}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-xl border p-3 text-left transition-all hover:border-[#CC1C01] hover:bg-[#CC1C01]/5",
+                          "w-full flex items-center justify-between gap-3 rounded-xl border p-3 text-left transition-all hover:border-[#CC1C01] hover:bg-[#CC1C01]/5 disabled:opacity-60",
                           p.highlight ? "border-[#CC1C01] bg-[#CC1C01]/5" : "border-border",
                         )}
                       >
@@ -218,7 +260,8 @@ export default function PricingPage() {
                             {p.duration_days == null ? "Không thời hạn" : `${p.duration_days} ngày sử dụng`}
                           </p>
                         </div>
-                        <span className="text-lg font-extrabold text-[#CC1C01] shrink-0">
+                        <span className="text-lg font-extrabold text-[#CC1C01] shrink-0 flex items-center gap-1">
+                          {buying === p.key && <Loader2 className="w-4 h-4 animate-spin" />}
                           {formatVnd(p.price_vnd)}
                         </span>
                       </button>
@@ -232,7 +275,7 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-xs text-muted-foreground mt-auto">Bấm 1 gói ở trên để xem hướng dẫn thanh toán.</p>
+                <p className="text-xs text-muted-foreground mt-auto">Bấm 1 gói để thanh toán qua payOS (chuyển khoản tự động). Hoặc <button onClick={() => proPlans[0] && setPicked(proPlans[0])} className="underline hover:text-[#CC1C01]">liên hệ admin thủ công</button>.</p>
               </div>
 
               {/* PREMIUM */}
@@ -269,9 +312,13 @@ export default function PricingPage() {
                 {premiumPlans[0] && (
                   <Button
                     onClick={() => onPick(premiumPlans[0])}
+                    disabled={buying === premiumPlans[0].key}
                     className="mt-auto w-full gap-2 font-semibold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110"
                   >
-                    <Gem className="w-4 h-4" /> Mua Premium
+                    {buying === premiumPlans[0].key
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Gem className="w-4 h-4" />}
+                    Mua Premium
                   </Button>
                 )}
               </div>
