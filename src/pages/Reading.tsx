@@ -360,7 +360,10 @@ const Reading = () => {
                 sets={fullSets}
                 loading={fullLoading}
                 onStart={handleStartFullPractice}
+                isLocked={isLocked}
+                onLockedClick={(set) => guard(set, () => {})}
               />
+
             )
           ) : (
             <>
