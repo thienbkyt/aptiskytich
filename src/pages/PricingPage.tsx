@@ -128,9 +128,27 @@ export default function PricingPage() {
     [plans],
   );
 
-  const onPick = (p: PricingPlan) => {
+  const onPick = async (p: PricingPlan) => {
     if (!user) { navigate("/auth"); return; }
-    setPicked(p);
+    setBuying(p.key);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-payment", {
+        body: { plan_key: p.key },
+      });
+      if (error || !data?.checkoutUrl) {
+        toast.error("Không tạo được link thanh toán", {
+          description: "Vui lòng thử lại hoặc liên hệ admin qua Zalo/Facebook.",
+        });
+        setPicked(p); // fallback to manual
+        return;
+      }
+      window.location.href = data.checkoutUrl as string;
+    } catch (e) {
+      toast.error("Lỗi kết nối", { description: "Thử lại hoặc liên hệ admin." });
+      setPicked(p);
+    } finally {
+      setBuying(null);
+    }
   };
 
   const bankInfo = useMemo(() => ({
