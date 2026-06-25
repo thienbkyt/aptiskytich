@@ -16,7 +16,7 @@ interface WritingResultsProps {
   /** When provided, render a "Xem lại từng câu →" button. */
   onReview?: () => void;
   /** When set, show UpgradeLock instead of grading details. */
-  quotaExceeded?: { freeQuota: number; used: number; remaining: number } | null;
+  quotaExceeded?: { freeQuota: number; used: number; remaining: number; need?: "pro" | "premium" } | null;
 }
 
 const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quotaExceeded }: WritingResultsProps) => {
@@ -25,6 +25,7 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
       <div className="max-w-2xl mx-auto space-y-4">
         <UpgradeLock
           reason="quota"
+          need={quotaExceeded.need ?? "pro"}
           featureLabel="Chấm AI Writing"
           freeQuota={quotaExceeded.freeQuota}
           remaining={quotaExceeded.remaining}
