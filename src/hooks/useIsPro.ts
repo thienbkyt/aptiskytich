@@ -2,14 +2,21 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+export type UserTier = "free" | "pro" | "premium";
+
+export function tierRank(t: string | null | undefined): number {
+  if (t === "premium") return 2;
+  if (t === "pro") return 1;
+  return 0;
+}
+
 /**
- * Returns whether the current user has Pro access (real Pro OR active promo).
- * Source of truth: RPC `current_user_is_pro` (which respects promo_active + user_subscriptions).
- * Also returns `proUntil` (subscription expiry, null = lifetime / none) and `plan`.
+ * Returns current user's tier (free/pro/premium) plus legacy isPro flag.
+ * Source of truth: RPC `current_user_tier` (respects promo_active + user_subscriptions).
  */
 export function useIsPro() {
   const { user, loading: authLoading } = useAuth();
-  const [isPro, setIsPro] = useState(false);
+  const [tier, setTier] = useState<UserTier>("free");
   const [proUntil, setProUntil] = useState<string | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -17,26 +24,22 @@ export function useIsPro() {
   const refetch = useCallback(async () => {
     setLoading(true);
     try {
-      if (!user) {
-        const { data } = await supabase.rpc("promo_active");
-        setIsPro(!!data);
-        setProUntil(null);
-        setPlan(null);
-      } else {
-        const [proRes, subRes] = await Promise.all([
-          supabase.rpc("current_user_is_pro"),
-          supabase
-            .from("user_subscriptions")
-            .select("tier,pro_until")
-            .eq("user_id", user.id)
-            .maybeSingle(),
-        ]);
-        setIsPro(!!proRes.data);
-        setProUntil((subRes.data as any)?.pro_until ?? null);
-        setPlan((subRes.data as any)?.tier ?? null);
-      }
+      const [tierRes, subRes] = await Promise.all([
+        (supabase as any).rpc("current_user_tier"),
+        user
+          ? supabase
+              .from("user_subscriptions")
+              .select("tier,pro_until")
+              .eq("user_id", user.id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+      const t = (tierRes?.data as UserTier) ?? "free";
+      setTier(t === "premium" || t === "pro" ? t : "free");
+      setProUntil((subRes?.data as any)?.pro_until ?? null);
+      setPlan((subRes?.data as any)?.tier ?? null);
     } catch {
-      setIsPro(false);
+      setTier("free");
       setProUntil(null);
       setPlan(null);
     } finally {
@@ -49,5 +52,8 @@ export function useIsPro() {
     refetch();
   }, [authLoading, refetch]);
 
-  return { isPro, proUntil, plan, loading, refetch };
+  const isPro = tier === "pro" || tier === "premium";
+  const isPremium = tier === "premium";
+
+  return { isPro, isPremium, tier, proUntil, plan, loading, refetch };
 }
