@@ -17,6 +17,7 @@ import AnimatedGrid from "@/components/ui/animated-grid";
 import GradientText from "@/components/ui/gradient-text";
 import GlowCard from "@/components/ui/glow-card";
 import StatPill from "@/components/dashboard/StatPill";
+import TierPill from "@/components/dashboard/TierPill";
 import QuickActionCard from "@/components/dashboard/QuickActionCard";
 import StreakRing from "@/components/dashboard/StreakRing";
 import ParticlesBackground from "@/components/ui/particles-background";
