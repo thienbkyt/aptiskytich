@@ -1,12 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Layers, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Layers, CheckCircle2, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
 import { toScaledScore, getSkillBand } from "@/data/questions";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
+import { ExamTierBadge } from "@/hooks/useExamAccessGate";
 
 interface FullPartSectionProps {
   skillName: string;
@@ -15,9 +16,11 @@ interface FullPartSectionProps {
   onStart: (set: SkillFullSetItem) => void;
   progress?: ExamProgressMap;
   skillKey?: "listening" | "reading" | "writing" | "speaking";
+  isLocked?: (set: SkillFullSetItem) => boolean;
+  onLockedClick?: (set: SkillFullSetItem) => void;
 }
 
-const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey }: FullPartSectionProps) => {
+const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick }: FullPartSectionProps) => {
 
   return (
     <div>
