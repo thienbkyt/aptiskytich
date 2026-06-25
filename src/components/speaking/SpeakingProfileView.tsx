@@ -98,49 +98,19 @@ const SpeakingProfileView = ({
         )}
 
         {/* Radar chart 5 trục — nhãn tiếng Việt */}
-        <div className="mt-5 grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-4 items-center">
-          <div className="w-full h-[280px] sm:h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} outerRadius="75%">
-                <PolarGrid stroke="hsl(var(--border))" />
-                <PolarAngleAxis
-                  dataKey="criterion"
-                  tick={{ fontSize: 12, fill: "hsl(var(--foreground))" }}
-                />
-                <PolarRadiusAxis
-                  angle={90}
-                  domain={[0, 5]}
-                  tickCount={6}
-                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                  stroke="hsl(var(--border))"
-                />
-                <Radar
-                  name="Band"
-                  dataKey="value"
-                  stroke="hsl(var(--primary))"
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.35}
-                  isAnimationActive={false}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <ul className="space-y-2">
-            {rows.map((r) => (
-              <li
-                key={r.key}
-                className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/40 border border-border/60"
-              >
-                <p className="text-sm font-semibold text-foreground">{r.vi}</p>
-                <span className="font-mono font-semibold text-foreground shrink-0">
-                  {r.value != null ? r.value.toFixed(0) : "—"}
-                  <span className="text-muted-foreground">/5</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+        <div className="mt-5" style={{ width: "100%", height: 300 }}>
+          <ResponsiveContainer>
+            <RadarChart data={radarData} outerRadius="70%">
+              <PolarGrid />
+              <PolarAngleAxis dataKey="criterion" tick={{ fontSize: 13 }} />
+              <PolarRadiusAxis domain={[0, 5]} tickCount={6} />
+              <Radar dataKey="value" stroke="#24085a" fill="#24085a" fillOpacity={0.35} isAnimationActive={false} />
+            </RadarChart>
+          </ResponsiveContainer>
         </div>
+        <p className="mt-3 text-sm text-foreground text-center">
+          {rows.map((r) => `${r.vi} ${r.value != null ? r.value.toFixed(0) : "—"}/5`).join(" · ")}
+        </p>
 
         {analysis && (
           <div className="mt-5 p-4 rounded-lg bg-muted/40 border border-border/60">
