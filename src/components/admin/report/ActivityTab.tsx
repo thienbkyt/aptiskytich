@@ -15,6 +15,8 @@ import { parseDateSafe } from "@/lib/safeDate";
 type ProfileRow = { user_id: string; created_at: string };
 type TestResultRow = { user_id: string; created_at: string };
 type StreakRow = { current_streak: number | null; last_activity_date: string | null };
+type PaymentRow = { user_id: string; plan_key: string | null; tier: string | null; amount_vnd: number | null; status: string; paid_at: string | null; created_at: string };
+type SubRow = { user_id: string; tier: string; pro_until: string | null };
 
 const RANGE_OPTIONS = [
   { value: "today", label: "Hôm nay" },
