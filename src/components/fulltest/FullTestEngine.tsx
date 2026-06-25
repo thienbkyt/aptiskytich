@@ -25,6 +25,12 @@ import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
 import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import {
+  gradeSpeakingPartV2,
+  finalizeSpeaking,
+  saveSpeakingSkillResult,
+  type SpeakingPartResultV2,
+} from "@/components/speaking/speakingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 import { toast } from "sonner";
