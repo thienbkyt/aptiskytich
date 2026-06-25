@@ -536,7 +536,19 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         }
       } catch { /* swallow */ }
 
-      // V2 grading happens after the final part — no per-part kick needed.
+      // Kick off V2 grading IN BACKGROUND for the part just finished,
+      // so by the time the student reaches the last part most grading is done.
+      try {
+        const sub = speakingSubmissionsByPartRef.current[currentPartIndex];
+        if (sub && !speakingV2PromisesByPartRef.current[currentPartIndex]) {
+          const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
+          const blobs = sub.items.map((it) => it.blob ?? null);
+          speakingV2PromisesByPartRef.current[currentPartIndex] =
+            gradeSpeakingPartV2(sub.partType, questions, blobs);
+        }
+      } catch (e) {
+        console.warn("[SkillFullPractice V2] background kick failed", e);
+      }
 
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
