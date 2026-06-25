@@ -366,13 +366,23 @@ const Listening = () => {
                 <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-                  {filteredSets.length > 0 && (
+                  {filteredSets.length > 0 && (() => {
+                    const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
+                    const maxTier = filteredSets.reduce((acc, s) => {
+                      const rt = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
+                      return rankT(rt) > rankT(acc) ? rt : acc;
+                    }, "free" as "free" | "pro" | "premium");
+                    const marathonLocked = isLocked({ access_tier: maxTier } as any);
+                    return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
                         <div className="absolute top-3 right-3"><CornerResultBadge item={marathonProgress.get(activeTab)} /></div>
-                        <Badge className="w-fit text-[11px] font-semibold mb-3 bg-primary text-primary-foreground border-0 gap-1">
-                          <InfinityIcon className="w-3 h-3" /> Marathon
-                        </Badge>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
+                            <InfinityIcon className="w-3 h-3" /> Marathon
+                          </Badge>
+                          <ExamTierBadge tier={maxTier} locked={marathonLocked} />
+                        </div>
                         <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
                           Luyện tất cả đề {activePartInfo?.label}
                         </h3>
@@ -383,15 +393,16 @@ const Listening = () => {
                         <div className="flex justify-end">
                           <Button
                             size="sm"
-                            onClick={() => setMarathon({ active: true, partType: activeTab as ListeningPartType })}
+                            onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType }))}
                             className="gap-1.5 font-semibold"
                           >
-                            Bắt đầu <ArrowRight className="w-4 h-4" />
+                            {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
                           </Button>
                         </div>
                       </div>
                     </motion.div>
-                  )}
+                    );
+                  })()}
                   {filteredSets.map((set, index) => {
                     const locked = isLocked(set);
                     return (
