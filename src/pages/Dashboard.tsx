@@ -17,6 +17,7 @@ import AnimatedGrid from "@/components/ui/animated-grid";
 import GradientText from "@/components/ui/gradient-text";
 import GlowCard from "@/components/ui/glow-card";
 import StatPill from "@/components/dashboard/StatPill";
+import TierPill from "@/components/dashboard/TierPill";
 import QuickActionCard from "@/components/dashboard/QuickActionCard";
 import StreakRing from "@/components/dashboard/StreakRing";
 import ParticlesBackground from "@/components/ui/particles-background";
@@ -91,7 +92,7 @@ const LEVEL_GRAD: Record<string, string> = {
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isPro } = useIsPro();
+  const { isPro, isPremium, tier, proUntil } = useIsPro();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -362,11 +363,12 @@ const Dashboard = () => {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <StatPill icon={Flame} label="Chuỗi ngày" value={`${d.streak} ngày`} accent="red" />
                 <StatPill icon={CheckCircle2} label="Câu đã làm" value={d.totalQuestions} accent="orange" />
                 <StatPill icon={Target} label="Chính xác" value={`${d.accuracy}%`} accent="success" />
                 <StatPill icon={TrendingUp} label="Trình độ" value={d.currentLevel} accent="violet" />
+                <TierPill tier={tier} isPremium={isPremium} isPro={isPro} proUntil={proUntil} />
               </div>
             </div>
           </motion.div>
