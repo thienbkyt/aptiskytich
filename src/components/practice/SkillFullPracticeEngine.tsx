@@ -411,10 +411,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   if (skill === "speaking") {
     if (speakingPhase === "results") {
       return (
-        <SpeakingFullResults
-          parts={speakingFullParts}
-          totalScore={speakingTotalScore}
-          totalMax={speakingTotalMax}
+        <SpeakingFullResultsV2
+          parts={speakingV2Parts}
+          scale50={speakingV2Scale}
+          cefr={speakingV2Cefr}
+          greyZone={speakingV2GreyZone}
+          flagReview={speakingV2FlagReview}
+          rawTotal={speakingV2RawTotal}
           onExit={onExit}
         />
       );
@@ -424,16 +427,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
+            AI Kỳ Tích đang chấm Speaking 5 tiêu chí — đừng thoát hay đổi tab nha.
           </p>
-          {speakingGradeTotal > 0 && (
-            <p className="text-xs text-muted-foreground">
-              ({speakingGradedCount}/{speakingGradeTotal})
-            </p>
+          {speakingV2Message && (
+            <p className="text-xs text-muted-foreground">{speakingV2Message}</p>
           )}
         </div>
       );
     }
+
 
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const speakingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
