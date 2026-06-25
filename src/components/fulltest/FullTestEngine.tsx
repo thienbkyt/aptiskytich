@@ -25,6 +25,12 @@ import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart } from "@/hooks/useExamSets";
 import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import {
+  gradeSpeakingPartV2,
+  finalizeSpeaking,
+  saveSpeakingSkillResult,
+  type SpeakingPartResultV2,
+} from "@/components/speaking/speakingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 import { toast } from "sonner";
@@ -694,89 +700,90 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           console.warn("[FullTestEngine] speaking recordings upload failed", e);
         }
 
-        // 3) Grade in a separate try/catch — recordings already saved above.
-        const perPartResults: Awaited<ReturnType<typeof gradeSpeakingItems>>[] = [];
-        let totalScore = 0;
-        let speakingFailedItems = 0;
+        // 3) V2 grading per part — silent (no toast spam).
+        const v2ByPart: Record<string, SpeakingPartResultV2> = {};
+        const v2EntriesPayload: Record<string, any> = {};
         try {
           for (const entry of orderedEntries) {
-            const specs = entry.sub.items.map((i) => i.spec);
-            const blobs = entry.sub.items.map((i) => i.blob);
-            const actuals = entry.sub.items.map((i) => i.actualSpoken);
-            const results = await gradeSpeakingItems(specs, blobs, actuals);
-            for (const r of results) {
-              if (r && !("error" in r)) totalScore += r.partScore || 0;
-              else speakingFailedItems += 1;
+            const partType = entry.sub.partType as "part1" | "part2" | "part3" | "part4";
+            const questions = entry.sub.items.map((it) => ({ questionText: it.spec.questionText }));
+            const blobs = entry.sub.items.map((it) => it.blob ?? null);
+            try {
+              const r = await gradeSpeakingPartV2(partType, questions, blobs);
+              const merged: SpeakingPartResultV2 = {
+                ...r,
+                perItem: (r.perItem || []).map((it, i) => ({
+                  ...it,
+                  questionText: it.questionText || questions[i]?.questionText || `Question ${i + 1}`,
+                })),
+              };
+              v2ByPart[partType] = merged;
+              v2EntriesPayload[partType] = {
+                bands: merged.bands,
+                items: merged.perItem,
+                analysis: merged.analysis,
+                feedback: merged.feedback,
+                improvedVersion: merged.improvedVersion,
+                rawPart: merged.rawPart,
+              };
+            } catch (e) {
+              console.warn(`[FullTestEngine V2] gradeSpeakingPartV2 ${partType} failed`, e);
             }
-            perPartResults.push(results);
           }
         } catch (e) {
-          console.warn("[FullTestEngine] speaking grading failed", e);
-        }
-        if (speakingFailedItems > 0) {
-          toast.error(
-            speakingFailedItems === 1
-              ? "Một câu Speaking chưa chấm được, vui lòng thử lại."
-              : `${speakingFailedItems} câu Speaking chưa chấm được, vui lòng thử lại.`,
-          );
+          console.warn("[FullTestEngine V2] speaking V2 grading failed", e);
         }
 
-        // 4) Save per-question gradings + bake recordingPath + AI into snapshot + update score.
-        const totalRounded = Math.round(totalScore);
+        // 4) Finalize → /50 + CEFR + flags.
+        const rawParts = {
+          part1: v2ByPart.part1?.rawPart ?? 0,
+          part2: v2ByPart.part2?.rawPart ?? 0,
+          part3: v2ByPart.part3?.rawPart ?? 0,
+          part4: v2ByPart.part4?.rawPart ?? 0,
+        };
+        let scale50 = 0, cefr = "", greyZone = false, flagReview = false, rawTotal = 0;
         try {
-          for (let i = 0; i < orderedEntries.length; i++) {
-            const entry = orderedEntries[i];
-            const results = perPartResults[i];
-            if (!results) continue;
-            await saveSpeakingGradings({
-              testResultId,
-              examSetId: entry.partId,
-              partLabel: entry.partLabel,
-              gradings: results,
-              questionTexts: entry.sub.items.map((it) => it.spec.questionText),
-            });
-          }
+          const f = await finalizeSpeaking(rawParts, null);
+          scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone;
+          flagReview = f.flagReview; rawTotal = f.rawTotal;
         } catch (e) {
-          console.warn("[FullTestEngine] saveSpeakingGradings failed", e);
+          console.warn("[FullTestEngine V2] finalizeSpeaking failed", e);
         }
 
+        // 5) Save ONE speaking_skill_results row (all 4 parts + scale50 + cefr).
         try {
-          const aiByIndex: Record<number, any> = {};
-          let runningIdx = 0;
-          orderedEntries.forEach((e, partIdx) => {
-            e.sub.items.forEach((_it, itIdx) => {
-              const g = (perPartResults[partIdx] || [])[itIdx];
-              const ai: any = {};
-              if (g && !("error" in g)) {
-                ai.partScore = (g as any).partScore;
-                ai.maxPoints = (g as any).maxPoints;
-                ai.grammarErrors = (g as any).grammarErrors || [];
-                ai.pronunciationErrors = (g as any).pronunciationErrors || [];
-                ai.feedback = (g as any).feedback || null;
-                ai.transcript = (g as any).transcript || null;
-                ai.improvedVersion = (g as any).improvedVersion || null;
-              }
-              if (pathByIndex[runningIdx]) ai.recordingPath = pathByIndex[runningIdx];
-              if (Object.keys(ai).length > 0) aiByIndex[runningIdx] = ai;
-              runningIdx += 1;
-            });
+          await saveSpeakingSkillResult({
+            testResultId,
+            examSetId: orderedEntries[0]?.partId ?? null,
+            fullTestSessionId: sessionIdRef.current,
+            parts: v2EntriesPayload,
+            rawTotal,
+            scale50,
+            cefr,
+            greyZone,
+            flagReview,
           });
-          const { scaled50, band } = computeScaleAndBand("speaking", totalRounded, maxRounded);
+        } catch (e) {
+          console.warn("[FullTestEngine V2] saveSpeakingSkillResult failed", e);
+        }
+
+        // 6) Update review snapshot with scale50/band + put speaking score (/50) into full test scores.
+        try {
           if (testResultId) {
-            await mergeSnapshotAI(testResultId, aiByIndex, {
-              score: totalRounded,
-              total: maxRounded,
-              scaled50,
-              band,
+            await mergeSnapshotAI(testResultId, {}, {
+              score: scale50,
+              total: 50,
+              scaled50: scale50,
+              band: cefr || null,
             });
           }
         } catch (e) {
-          console.warn("[FullTestEngine] mergeSnapshotAI failed", e);
+          console.warn("[FullTestEngine V2] mergeSnapshotAI failed", e);
         }
 
         setScores((prev) => ({
           ...prev,
-          speaking: { correct: totalRounded, total: maxRounded },
+          speaking: { correct: scale50, total: 50 },
         }));
       } catch (e) {
         console.warn("[FullTestEngine] speaking grading failed", e);
@@ -784,6 +791,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         setSpeakingGradingPending(false);
       }
     };
+
 
     const handleSpeakingComplete = () => {
       const wasLast = isLastSpeakingPart;

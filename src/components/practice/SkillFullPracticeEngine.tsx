@@ -16,6 +16,13 @@ import {
 import SpeakingExamEngine, { type SpeakingPartSubmission } from "@/components/speaking/SpeakingExamEngine";
 import SpeakingFullResults, { type SpeakingFullPartResult } from "@/components/speaking/SpeakingFullResults";
 import { gradeSpeakingSpec, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import {
+  gradeSpeakingPartV2,
+  finalizeSpeaking,
+  saveSpeakingSkillResult,
+  type SpeakingPartResultV2,
+} from "@/components/speaking/speakingGradingV2";
+import SpeakingFullResultsV2, { type SpeakingV2PartEntry } from "@/components/speaking/SpeakingFullResultsV2";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
@@ -118,6 +125,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingFullParts, setSpeakingFullParts] = useState<SpeakingFullPartResult[]>([]);
   const [speakingTotalScore, setSpeakingTotalScore] = useState(0);
   const [speakingTotalMax, setSpeakingTotalMax] = useState(0);
+  const [speakingV2Parts, setSpeakingV2Parts] = useState<SpeakingV2PartEntry[]>([]);
+  const [speakingV2Scale, setSpeakingV2Scale] = useState(0);
+  const [speakingV2Cefr, setSpeakingV2Cefr] = useState("");
+  const [speakingV2GreyZone, setSpeakingV2GreyZone] = useState(false);
+  const [speakingV2FlagReview, setSpeakingV2FlagReview] = useState(false);
+  const [speakingV2RawTotal, setSpeakingV2RawTotal] = useState(0);
+  const [speakingV2Message, setSpeakingV2Message] = useState("");
   useExitWarning(phase !== "loading" && phase !== "completed");
 
 
@@ -397,10 +411,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   if (skill === "speaking") {
     if (speakingPhase === "results") {
       return (
-        <SpeakingFullResults
-          parts={speakingFullParts}
-          totalScore={speakingTotalScore}
-          totalMax={speakingTotalMax}
+        <SpeakingFullResultsV2
+          parts={speakingV2Parts}
+          scale50={speakingV2Scale}
+          cefr={speakingV2Cefr}
+          greyZone={speakingV2GreyZone}
+          flagReview={speakingV2FlagReview}
+          rawTotal={speakingV2RawTotal}
           onExit={onExit}
         />
       );
@@ -410,16 +427,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
+            AI Kỳ Tích đang chấm Speaking 5 tiêu chí — đừng thoát hay đổi tab nha.
           </p>
-          {speakingGradeTotal > 0 && (
-            <p className="text-xs text-muted-foreground">
-              ({speakingGradedCount}/{speakingGradeTotal})
-            </p>
+          {speakingV2Message && (
+            <p className="text-xs text-muted-foreground">{speakingV2Message}</p>
           )}
         </div>
       );
     }
+
 
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
     const speakingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
@@ -516,13 +532,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         }
       } catch { /* swallow */ }
 
-      // Kick background grading for THIS part now, so it overlaps the next part.
-      const subNow = speakingSubmissionsByPartRef.current[currentPartIndex];
-      if (subNow) {
-        setSpeakingGradeTotal((t) => t + subNow.items.length);
-        // Allow overwrite (e.g. if user re-completed this part after going back)
-        speakingGradingPromisesByPartRef.current[currentPartIndex] = gradePartItems(subNow);
-      }
+      // V2 grading happens after the final part — no per-part kick needed.
 
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
@@ -530,8 +540,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         return;
       }
 
-      // Last part → await every per-part grading promise (most already done).
+      // Last part → grade all 4 parts with V2, finalize, save one row.
       setSpeakingPhase("grading");
+      setSpeakingV2Message("Đang khởi động AI Kỳ Tích...");
 
       const orderedIndices = Object.keys(speakingSubmissionsByPartRef.current)
         .map((k) => parseInt(k, 10))
@@ -540,115 +551,137 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         .map((i) => speakingSubmissionsByPartRef.current[i])
         .filter(Boolean) as SpeakingPartSubmission[];
 
-      const gradingsByPart: Awaited<ReturnType<typeof gradeSpeakingSpec>>[][] = [];
-      for (const partIdx of orderedIndices) {
-        const p = speakingGradingPromisesByPartRef.current[partIdx];
-        gradingsByPart.push(p ? await p : []);
-      }
-
-      const partResults: SpeakingFullPartResult[] = [];
-      let runningScore = 0;
-      let runningMax = 0;
-
-      for (let oi = 0; oi < orderedSubs.length; oi++) {
-        const sub = orderedSubs[oi];
-        const originalPartIdx = orderedIndices[oi];
-        const originalPart = parts[originalPartIdx];
-        const gradings = gradingsByPart[oi];
-        for (const r of gradings) {
-          if (r && !("error" in r)) runningScore += r.partScore || 0;
-        }
-        const maxTotal = sub.items.reduce((s, i) => s + i.spec.maxPoints, 0);
-        runningMax += maxTotal;
-        const entry: SpeakingFullPartResult = {
-          partType: sub.partType,
-          partNumber: sub.partNumber,
-          prompts: sub.items.map((i) => i.spec.questionText),
-          recordingUrls: sub.items.map((i) => i.audioUrl),
-          gradings,
-          maxTotal,
-        };
-        if (originalPart) {
-          if (sub.partType === "part1") entry.part1Data = toSpeakingPart1(originalPart.questions);
-          else if (sub.partType === "part2") entry.part2Data = toSpeakingPart2(originalPart.questions);
-          else if (sub.partType === "part3") entry.part3Data = toSpeakingPart3(originalPart.questions);
-          else if (sub.partType === "part4") entry.part4Data = toSpeakingPart4(originalPart.questions);
-        }
-        partResults.push(entry);
-
-        if (originalPart) {
-          const pathByIdx: Record<number, string> = {};
+      // 1) Upload recordings (best-effort, parallel across parts).
+      try {
+        await Promise.all(orderedSubs.map(async (sub, oi) => {
+          const originalPartIdx = orderedIndices[oi];
+          const originalPart = parts[originalPartIdx];
+          if (!originalPart) return;
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
             try {
-              const path = await saveSpeakingRecording({
+              await saveSpeakingRecording({
                 examSetId: originalPart.id,
                 part: `${originalPart.partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
                 testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
               });
-              if (path) pathByIdx[idx] = path;
             } catch (e) {
-              console.warn("[SkillFullPractice] saveSpeakingRecording failed", e);
+              console.warn("[SkillFullPractice V2] saveSpeakingRecording failed", e);
             }
           }));
+        }));
+      } catch (e) {
+        console.warn("[SkillFullPractice V2] recordings upload failed", e);
+      }
 
-          try {
-            await saveSpeakingGradings({
-              testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
-              examSetId: originalPart.id,
-              partLabel: `Part ${sub.partNumber}`,
-              gradings,
-              questionTexts: sub.items.map((i) => i.spec.questionText),
-            });
-          } catch (e) {
-            console.warn("[SkillFullPractice] saveSpeakingGradings failed", e);
-          }
-
-          // Bake AI + recordingPaths into this part's snapshot.
-          try {
-            const trid = speakingTestResultIdByPartRef.current[originalPartIdx] ?? null;
-            if (trid) {
-              const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-              const aiByIndex: Record<number, any> = {};
-              let partScore = 0, partMax = 0;
-              gradings.forEach((g, i) => {
-                if (!g || (g as any).error) return;
-                const gg = g as any;
-                aiByIndex[i] = {
-                  partScore: gg.partScore,
-                  maxPoints: gg.maxPoints,
-                  grammarErrors: gg.grammarErrors || [],
-                  pronunciationErrors: gg.pronunciationErrors || [],
-                  feedback: gg.feedback || null,
-                  transcript: gg.transcript || null,
-                  improvedVersion: gg.improvedVersion || null,
-                  recordingPath: pathByIdx[i] ?? null,
-                };
-                partScore += gg.partScore || 0;
-                partMax += gg.maxPoints || 0;
-              });
-              // also include pure-recording rows with no AI
-              Object.entries(pathByIdx).forEach(([k, p]) => {
-                const i = Number(k);
-                if (!aiByIndex[i]) aiByIndex[i] = { recordingPath: p };
-              });
-              const scaled = partMax > 0 ? Math.round((partScore / partMax) * 50) : null;
-              await mergeSnapshotAI(trid, aiByIndex, partMax > 0 ? {
-                score: partScore, total: partMax, scaled50: scaled,
-              } : undefined);
-            }
-          } catch (e) { console.warn("[SkillFullPractice] mergeSnapshotAI failed", e); }
+      // 2) Grade each part with V2 sequentially (so progress is visible).
+      const v2ByPart: Record<string, SpeakingPartResultV2> = {};
+      const v2Entries: SpeakingV2PartEntry[] = [];
+      for (let oi = 0; oi < orderedSubs.length; oi++) {
+        const sub = orderedSubs[oi];
+        setSpeakingV2Message(`AI Kỳ Tích đang chấm Part ${sub.partNumber} (${oi + 1}/${orderedSubs.length})...`);
+        const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
+        const blobs = sub.items.map((it) => it.blob ?? null);
+        try {
+          const result = await gradeSpeakingPartV2(sub.partType, questions, blobs);
+          const merged: SpeakingPartResultV2 = {
+            ...result,
+            perItem: (result.perItem || []).map((it, i) => ({
+              ...it,
+              questionText: it.questionText || sub.items[i]?.spec.questionText || `Question ${i + 1}`,
+            })),
+          };
+          v2ByPart[sub.partType] = merged;
+          v2Entries.push({
+            partType: sub.partType as any,
+            partNumber: sub.partNumber,
+            result: merged,
+            recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+          });
+        } catch (e) {
+          console.warn(`[SkillFullPractice V2] gradeSpeakingPartV2 ${sub.partType} failed`, e);
+          const empty: SpeakingPartResultV2 = {
+            bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
+            rawPart: 0,
+            perItem: sub.items.map((it) => ({
+              questionText: it.spec.questionText,
+              transcript: "",
+              onTopic: false,
+            })),
+            analysis: "Không chấm được phần này. Vui lòng thử lại sau.",
+            feedback: "",
+            improvedVersion: "",
+          };
+          v2ByPart[sub.partType] = empty;
+          v2Entries.push({
+            partType: sub.partType as any,
+            partNumber: sub.partNumber,
+            result: empty,
+            recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+          });
         }
       }
 
-      setSpeakingFullParts(partResults);
-      setSpeakingTotalScore(runningScore);
-      setSpeakingTotalMax(runningMax);
+      // 3) Finalize → /50 + CEFR + flags.
+      setSpeakingV2Message("Đang tổng hợp điểm /50 và CEFR...");
+      const rawParts = {
+        part1: v2ByPart.part1?.rawPart ?? 0,
+        part2: v2ByPart.part2?.rawPart ?? 0,
+        part3: v2ByPart.part3?.rawPart ?? 0,
+        part4: v2ByPart.part4?.rawPart ?? 0,
+      };
+      let scale50 = 0, cefr = "", greyZone = false, flagReview = false, rawTotal = 0;
+      try {
+        const f = await finalizeSpeaking(rawParts, null);
+        scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
+      } catch (e) {
+        console.warn("[SkillFullPractice V2] finalizeSpeaking failed", e);
+      }
+
+      // 4) Save ONE speaking_skill_results row with all 4 parts.
+      const lastPartIdx = orderedIndices[orderedIndices.length - 1];
+      const lastTrId = speakingTestResultIdByPartRef.current[lastPartIdx] ?? null;
+      const lastExamSetId = parts[lastPartIdx]?.id ?? null;
+      try {
+        const partsPayload: Record<string, any> = {};
+        for (const entry of v2Entries) {
+          partsPayload[entry.partType] = {
+            bands: entry.result.bands,
+            items: entry.result.perItem,
+            analysis: entry.result.analysis,
+            feedback: entry.result.feedback,
+            improvedVersion: entry.result.improvedVersion,
+            rawPart: entry.result.rawPart,
+          };
+        }
+        await saveSpeakingSkillResult({
+          testResultId: lastTrId,
+          examSetId: lastExamSetId,
+          fullTestSessionId: null,
+          parts: partsPayload,
+          rawTotal,
+          scale50,
+          cefr,
+          greyZone,
+          flagReview,
+        });
+      } catch (e) {
+        console.warn("[SkillFullPractice V2] saveSpeakingSkillResult failed", e);
+      }
+
+      setSpeakingV2Parts(v2Entries);
+      setSpeakingV2Scale(scale50);
+      setSpeakingV2Cefr(cefr);
+      setSpeakingV2GreyZone(greyZone);
+      setSpeakingV2FlagReview(flagReview);
+      setSpeakingV2RawTotal(rawTotal);
       setSpeakingPhase("results");
-      setScores({ correct: Math.round(runningScore), total: Math.round(runningMax) });
+      // Align skill summary score with /50 (consistent with other skills).
+      setScores({ correct: scale50, total: 50 });
     };
+
 
     return (
       <>{adminOverlay}
