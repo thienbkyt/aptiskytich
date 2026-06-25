@@ -119,6 +119,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const speakingGradingPromisesByPartRef = useRef<
     Record<number, Promise<Awaited<ReturnType<typeof gradeSpeakingSpec>>[]>>
   >({});
+  // V2 background grading promises keyed by part index.
+  const speakingV2PromisesByPartRef = useRef<
+    Record<number, Promise<SpeakingPartResultV2>>
+  >({});
   const [speakingPhase, setSpeakingPhase] = useState<"none" | "grading" | "results">("none");
   const [speakingGradedCount, setSpeakingGradedCount] = useState(0);
   const [speakingGradeTotal, setSpeakingGradeTotal] = useState(0);
