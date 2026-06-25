@@ -9,7 +9,7 @@ export interface FullTestItem {
   isReady: boolean; // has all 5 skills
   category: "aptis" | "key" | null;
   /** 'free' if ANY constituent published exam_set is free, else 'pro'. */
-  access_tier?: "free" | "pro";
+  access_tier?: "free" | "pro" | "premium";
 }
 
 export type FullTestCategory = "aptis" | "key";
