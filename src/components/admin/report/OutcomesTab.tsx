@@ -62,6 +62,10 @@ export default function OutcomesTab() {
         gte = new Date(`${customFrom}T00:00:00`).toISOString();
         lte = new Date(`${customTo}T23:59:59.999`).toISOString();
       }
+    } else if (range === "today") {
+      const s = new Date(); s.setHours(0, 0, 0, 0);
+      gte = s.toISOString();
+      lte = new Date().toISOString();
     } else if (range !== "all") {
       gte = new Date(Date.now() - Number(range) * 86400_000).toISOString();
     }
