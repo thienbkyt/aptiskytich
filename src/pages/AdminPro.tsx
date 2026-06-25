@@ -335,9 +335,10 @@ const FeatureFlagsSection = () => {
       .update({
         required_tier: row.required_tier,
         free_quota: row.free_quota,
+        pro_quota: row.pro_quota,
         quota_period: row.quota_period,
         enabled: row.enabled,
-      })
+      } as any)
       .eq("key", key);
     setSavingKey(null);
     if (error) {
@@ -357,7 +358,7 @@ const FeatureFlagsSection = () => {
       <CardHeader>
         <CardTitle>Cấu hình tính năng</CardTitle>
         <CardDescription>
-          Đổi tier yêu cầu, hạn mức miễn phí và bật/tắt từng tính năng. Có hiệu lực ngay.
+          Đổi tier yêu cầu, hạn mức Free/Pro và bật/tắt từng tính năng. Premium = không giới hạn.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -371,11 +372,12 @@ const FeatureFlagsSection = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Tính năng</TableHead>
-                  <TableHead className="w-[140px]">Tier</TableHead>
-                  <TableHead className="w-[110px]">Hạn mức free</TableHead>
-                  <TableHead className="w-[150px]">Chu kỳ</TableHead>
-                  <TableHead className="w-[100px] text-center">Bật</TableHead>
-                  <TableHead className="w-[110px] text-right">Hành động</TableHead>
+                  <TableHead className="w-[130px]">Tier</TableHead>
+                  <TableHead className="w-[90px]">Free</TableHead>
+                  <TableHead className="w-[90px]">Pro</TableHead>
+                  <TableHead className="w-[130px]">Chu kỳ</TableHead>
+                  <TableHead className="w-[80px] text-center">Bật</TableHead>
+                  <TableHead className="w-[100px] text-right">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -393,7 +395,7 @@ const FeatureFlagsSection = () => {
                       <TableCell>
                         <Select
                           value={f.required_tier}
-                          onValueChange={(v) => updateRow(f.key, { required_tier: v as "free" | "pro" })}
+                          onValueChange={(v) => updateRow(f.key, { required_tier: v as FeatureFlag["required_tier"] })}
                         >
                           <SelectTrigger className="h-9">
                             <SelectValue />
@@ -401,6 +403,7 @@ const FeatureFlagsSection = () => {
                           <SelectContent>
                             <SelectItem value="free">Free</SelectItem>
                             <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -414,6 +417,19 @@ const FeatureFlagsSection = () => {
                             free_quota: e.target.value === "" ? null : Number(e.target.value),
                           })}
                           placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          className="h-9"
+                          value={f.pro_quota ?? ""}
+                          onChange={(e) => updateRow(f.key, {
+                            pro_quota: e.target.value === "" ? null : Number(e.target.value),
+                          })}
+                          placeholder="∞"
+                          title="Để trống = Pro không giới hạn"
                         />
                       </TableCell>
                       <TableCell>
