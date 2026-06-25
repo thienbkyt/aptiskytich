@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
-import { Lock } from "lucide-react";
-import { useIsPro } from "@/hooks/useIsPro";
+import { Lock, Gem, Crown } from "lucide-react";
+import { useIsPro, tierRank, type UserTier } from "@/hooks/useIsPro";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { Badge } from "@/components/ui/badge";
 
@@ -8,27 +8,35 @@ interface MinimalSet {
   access_tier?: string | null;
 }
 
+function normalizeTier(t?: string | null): UserTier {
+  if (t === "premium") return "premium";
+  if (t === "pro") return "pro";
+  return "free";
+}
+
 /**
- * Gate exam-set opening based on access_tier.
- * Pro/promo users can open all sets; free users only 'free' sets.
- * Usage:
- *   const { guard, isLocked, LockModal } = useExamAccessGate();
- *   onClick={() => guard(set, () => doOpen(set))}
- *   render <LockModal /> once at root.
+ * Gate exam-set opening based on access_tier (3 tiers: free/pro/premium).
+ * Opens if user's tier rank >= required set tier rank.
  */
 export function useExamAccessGate() {
-  const { isPro, loading } = useIsPro();
+  const { isPro, tier, loading } = useIsPro();
   const [open, setOpen] = useState(false);
+  const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
 
   const isLocked = useCallback(
-    (set: MinimalSet | null | undefined) =>
-      !!set && set.access_tier === "pro" && !isPro,
-    [isPro],
+    (set: MinimalSet | null | undefined) => {
+      if (!set) return false;
+      const req = normalizeTier(set.access_tier);
+      return tierRank(tier) < tierRank(req);
+    },
+    [tier],
   );
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void) => {
       if (isLocked(set)) {
+        const req = normalizeTier(set.access_tier);
+        setNeedTier(req === "premium" ? "premium" : "pro");
         setOpen(true);
         return;
       }
@@ -42,15 +50,16 @@ export function useExamAccessGate() {
       asModal
       open={open}
       onOpenChange={setOpen}
-      reason="pro"
+      reason={needTier}
+      need={needTier}
       featureLabel="Đề này"
     />
   );
 
-  return { isPro, isProLoading: loading, guard, isLocked, LockModal };
+  return { isPro, isProLoading: loading, guard, isLocked, LockModal, tier };
 }
 
-/** Small Pro/Free badge for an exam-set card. */
+/** Tier badge for an exam-set card. */
 export function ExamTierBadge({
   tier,
   locked,
@@ -60,16 +69,24 @@ export function ExamTierBadge({
   locked?: boolean;
   className?: string;
 }) {
-  if (tier === "free") {
+  const t = normalizeTier(tier);
+  if (t === "free") {
     return (
       <Badge variant="secondary" className={`text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-0 ${className ?? ""}`}>
         FREE
       </Badge>
     );
   }
+  if (t === "premium") {
+    return (
+      <Badge variant="secondary" className={`text-[10px] font-semibold bg-gradient-to-r from-[#CC1C01]/15 to-[#FEAD5F]/30 text-[#CC1C01] dark:text-[#FEAD5F] border-0 inline-flex items-center gap-1 ${className ?? ""}`}>
+        {locked ? <Lock className="w-3 h-3" /> : <Gem className="w-3 h-3" />} PREMIUM
+      </Badge>
+    );
+  }
   return (
     <Badge variant="secondary" className={`text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border-0 inline-flex items-center gap-1 ${className ?? ""}`}>
-      {locked && <Lock className="w-3 h-3" />} PRO
+      {locked ? <Lock className="w-3 h-3" /> : <Crown className="w-3 h-3" />} PRO
     </Badge>
   );
 }
