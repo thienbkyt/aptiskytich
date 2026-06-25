@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search, Crown, Unlock } from "lucide-react";
+import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExamType, Skill, SKILL_LABELS, ExamSetRow } from "./types";
@@ -12,6 +15,20 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { parseDateSafe } from "@/lib/safeDate";
+
+type AccessTier = "free" | "pro" | "premium";
+
+const TIER_LABEL: Record<AccessTier, string> = {
+  free: "FREE",
+  pro: "PRO",
+  premium: "PREMIUM",
+};
+
+const TIER_BADGE_CLASS: Record<AccessTier, string> = {
+  free: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  pro: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  premium: "bg-[#FEAD5F]/25 text-[#4D0D0D] dark:text-[#FEAD5F]",
+};
 
 interface Props {
   examType: ExamType;
