@@ -20,7 +20,7 @@ export type SpeakingPartResultV2 = {
   rawPart: number;
   perItem: SpeakingPartItemV2[];
   analysis: string;
-  feedback: string;
+  feedback?: string;
   improvedVersion: string;
 };
 
