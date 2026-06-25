@@ -29,7 +29,7 @@ function translateAuthError(msg: string): string {
 
 const ProfileModal = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
-  const { isPro, proUntil } = useIsPro();
+  const { isPro, isPremium, proUntil } = useIsPro();
   const [displayName, setDisplayName] = useState("");
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [savingName, setSavingName] = useState(false);
@@ -38,6 +38,7 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
   const [changingPwd, setChangingPwd] = useState(false);
 
   const proStatusText = (() => {
+    if (isPremium) return "Premium · Trọn đời";
     if (!isPro) return "Bạn đang dùng gói Free";
     if (!proUntil) return "Pro · Trọn đời";
     const d = parseDateSafe(proUntil);
@@ -168,9 +169,9 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
                 </span>
                 <span className="text-sm font-semibold text-foreground truncate">{proStatusText}</span>
               </div>
-              <Button asChild size="sm" variant={isPro ? "outline" : "default"} className={isPro ? "" : "bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"}>
+              <Button asChild size="sm" variant={isPremium ? "outline" : isPro ? "outline" : "default"} className={isPremium || isPro ? "" : "bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"}>
                 <Link to="/pricing" onClick={() => onOpenChange(false)}>
-                  {isPro ? "Xem gói" : "Nâng cấp"}
+                  {isPremium ? "Xem gói" : isPro ? "Nâng cấp Premium" : "Nâng cấp"}
                 </Link>
               </Button>
             </div>

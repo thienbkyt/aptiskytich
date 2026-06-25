@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import type { UserTier } from "@/hooks/useIsPro";
 
 export interface FeatureAccess {
   allowed: boolean;
   reason?: string;
   isPro: boolean;
-  requiredTier?: "free" | "pro";
+  tier: UserTier;
+  requiredTier?: "free" | "pro" | "premium";
   freeQuota?: number | null;
+  proQuota?: number | null;
   used?: number;
   remaining?: number | null;
   enabled: boolean;
@@ -21,13 +24,10 @@ export interface UseFeatureResult extends FeatureAccess {
 const DEFAULT: FeatureAccess = {
   allowed: false,
   isPro: false,
+  tier: "free",
   enabled: true,
 };
 
-/**
- * useFeature — gate UI by feature key.
- * Calls RPC check_feature_access(key, scope?) and returns access info.
- */
 export function useFeature(key: string, scope?: string | null): UseFeatureResult {
   const { user, loading: authLoading } = useAuth();
   const [state, setState] = useState<FeatureAccess>(DEFAULT);
@@ -41,15 +41,17 @@ export function useFeature(key: string, scope?: string | null): UseFeatureResult
         p_scope: scope ?? null,
       });
       if (error) {
-        setState({ allowed: false, isPro: false, enabled: true, reason: "error" });
+        setState({ allowed: false, isPro: false, tier: "free", enabled: true, reason: "error" });
       } else {
         const d = (data ?? {}) as any;
         setState({
           allowed: !!d.allowed,
           reason: d.reason,
           isPro: !!d.is_pro,
+          tier: (d.tier as UserTier) ?? "free",
           requiredTier: d.required_tier,
           freeQuota: d.free_quota,
+          proQuota: d.pro_quota,
           used: d.used,
           remaining: d.remaining,
           enabled: d.enabled !== false,
@@ -63,7 +65,7 @@ export function useFeature(key: string, scope?: string | null): UseFeatureResult
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      setState({ allowed: false, isPro: false, enabled: true, reason: "unauthenticated" });
+      setState({ allowed: false, isPro: false, tier: "free", enabled: true, reason: "unauthenticated" });
       setLoading(false);
       return;
     }

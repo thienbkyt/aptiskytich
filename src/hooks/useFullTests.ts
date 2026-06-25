@@ -9,7 +9,7 @@ export interface FullTestItem {
   isReady: boolean; // has all 5 skills
   category: "aptis" | "key" | null;
   /** 'free' if ANY constituent published exam_set is free, else 'pro'. */
-  access_tier?: "free" | "pro";
+  access_tier?: "free" | "pro" | "premium";
 }
 
 export type FullTestCategory = "aptis" | "key";
@@ -57,16 +57,18 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
       }
 
       const requiredSkills = ["speaking", "listening", "grammar_vocab", "reading", "writing"];
+      const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
       const result: FullTestItem[] = [];
       for (const ft of ftRows) {
         const memberIds = (members || []).filter((m) => m.full_test_id === ft.id).map((m) => m.exam_set_id);
         const skillsSet = new Set<string>();
-        let anyFree = false;
+        let minTier: "free" | "pro" | "premium" = "premium";
         for (const sid of memberIds) {
           const info = setSkillMap.get(sid);
           if (info && info.published) {
             skillsSet.add(info.skill);
-            if (info.tier === "free") anyFree = true;
+            const t = (info.tier === "free" || info.tier === "pro" || info.tier === "premium") ? info.tier : "pro";
+            if (rankT(t) < rankT(minTier)) minTier = t;
           }
         }
         const skillArr = Array.from(skillsSet);
@@ -79,7 +81,7 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
           skillCount: skillArr.length,
           isReady,
           category: (ft.category as "aptis" | "key") ?? null,
-          access_tier: anyFree ? "free" : "pro",
+          access_tier: minTier,
         });
       }
 
