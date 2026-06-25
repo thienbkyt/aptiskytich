@@ -591,14 +591,14 @@ const ProUsersSection = () => {
     setRevoking(true);
     const { error } = await supabase
       .from("user_subscriptions")
-      .delete()
+      .update({ tier: "free", pro_until: null } as any)
       .eq("user_id", revokeTarget.user_id);
     setRevoking(false);
     if (error) {
-      toast.error("Gỡ Pro thất bại: " + error.message);
+      toast.error("Gỡ gói thất bại: " + error.message);
       return;
     }
-    toast.success("Đã gỡ Pro");
+    toast.success("Đã gỡ gói");
     setRevokeTarget(null);
     reloadSubs();
   };
@@ -838,7 +838,7 @@ const ProUsersSection = () => {
         <AlertDialog open={!!revokeTarget} onOpenChange={(o) => !o && setRevokeTarget(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Gỡ Pro?</AlertDialogTitle>
+              <AlertDialogTitle>Gỡ gói?</AlertDialogTitle>
               <AlertDialogDescription>
                 User sẽ trở về Free ngay lập tức.
                 {revokeTarget && (
@@ -859,7 +859,7 @@ const ProUsersSection = () => {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {revoking ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Gỡ Pro
+                Gỡ gói
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
