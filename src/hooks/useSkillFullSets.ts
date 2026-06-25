@@ -8,8 +8,8 @@ export interface SkillFullSetItem {
   parts: string[];
   examSetIds: string[];
   questionCount: number;
-  /** 'free' if ANY constituent exam_set is free, else 'pro'. */
-  access_tier?: "free" | "pro";
+  /** Lowest tier of constituent exam_sets (most accessible). */
+  access_tier?: "free" | "pro" | "premium";
 }
 
 
