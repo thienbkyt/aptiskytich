@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Sparkles, CheckCircle2, AlertCircle, PenLine } from "lucide-react";
 import {
   Radar,
   RadarChart,
@@ -10,12 +10,12 @@ import {
 } from "recharts";
 import type { SpeakingPartResultV2 } from "./speakingGradingV2";
 
-const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; label: string; vi: string; viShort: string }> = [
-  { key: "tf", label: "TF", vi: "Hoàn thành yêu cầu (Task Fulfilment)", viShort: "Nội dung" },
-  { key: "gra", label: "GRA", vi: "Ngữ pháp (Grammatical Range & Accuracy)", viShort: "Ngữ pháp" },
-  { key: "vra", label: "VRA", vi: "Từ vựng (Vocabulary Range & Accuracy)", viShort: "Từ vựng" },
-  { key: "pro", label: "PRO", vi: "Phát âm (Pronunciation)", viShort: "Phát âm" },
-  { key: "fc", label: "FC", vi: "Trôi chảy & Mạch lạc (Fluency & Coherence)", viShort: "Sự trôi chảy" },
+const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; vi: string }> = [
+  { key: "tf", vi: "Nội dung" },
+  { key: "gra", vi: "Ngữ pháp" },
+  { key: "vra", vi: "Từ vựng" },
+  { key: "pro", vi: "Phát âm" },
+  { key: "fc", vi: "Sự trôi chảy" },
 ];
 
 function bandToNumber(b: string | number | null | undefined): number | null {
@@ -39,7 +39,7 @@ interface SpeakingProfileViewProps {
   /** @deprecated kept for backward compat; not rendered. */
   feedback?: string;
   analysis?: string;
-  /** Part-level improved English version (from edge speaking_v2). */
+  /** @deprecated part-level improvedVersion no longer rendered (moved per-item). */
   improvedVersion?: string;
   scale50?: number | null;
   cefr?: string | null;
@@ -50,7 +50,6 @@ const SpeakingProfileView = ({
   bands,
   items,
   analysis,
-  improvedVersion,
   scale50 = null,
   cefr = null,
   partLabel,
@@ -65,11 +64,7 @@ const SpeakingProfileView = ({
   );
 
   const radarData = useMemo(
-    () =>
-      rows.map((r) => ({
-        criterion: `${r.viShort} (${r.label})`,
-        value: r.value ?? 0,
-      })),
+    () => rows.map((r) => ({ criterion: r.vi, value: r.value ?? 0 })),
     [rows],
   );
 
@@ -84,7 +79,7 @@ const SpeakingProfileView = ({
           Hồ sơ chẩn đoán Speaking{partLabel ? ` — ${partLabel}` : ""}
         </h3>
         <p className="text-xs text-muted-foreground mt-1">
-          Profile 5 tiêu chí (band 0–5). Đây là kết quả chẩn đoán cho bài lẻ — không quy đổi điểm tổng.
+          Profile 5 tiêu chí (thang 0–5).
         </p>
 
         {(scale50 != null || cefr) && (
@@ -102,7 +97,7 @@ const SpeakingProfileView = ({
           </div>
         )}
 
-        {/* Radar chart 5 trục */}
+        {/* Radar chart 5 trục — nhãn tiếng Việt */}
         <div className="mt-5 grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-4 items-center">
           <div className="w-full h-[280px] sm:h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -110,7 +105,7 @@ const SpeakingProfileView = ({
                 <PolarGrid stroke="hsl(var(--border))" />
                 <PolarAngleAxis
                   dataKey="criterion"
-                  tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                  tick={{ fontSize: 12, fill: "hsl(var(--foreground))" }}
                 />
                 <PolarRadiusAxis
                   angle={90}
@@ -137,14 +132,9 @@ const SpeakingProfileView = ({
                 key={r.key}
                 className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/40 border border-border/60"
               >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">
-                    {r.viShort} <span className="text-xs text-muted-foreground font-normal">({r.label})</span>
-                  </p>
-                  <p className="text-[11px] text-muted-foreground truncate">{r.vi}</p>
-                </div>
+                <p className="text-sm font-semibold text-foreground">{r.vi}</p>
                 <span className="font-mono font-semibold text-foreground shrink-0">
-                  {r.value != null ? r.value.toFixed(1) : "—"}
+                  {r.value != null ? r.value.toFixed(0) : "—"}
                   <span className="text-muted-foreground">/5</span>
                 </span>
               </li>
@@ -156,20 +146,6 @@ const SpeakingProfileView = ({
           <div className="mt-5 p-4 rounded-lg bg-muted/40 border border-border/60">
             <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Phân tích bài làm</p>
             <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{analysis}</p>
-          </div>
-        )}
-
-        {improvedVersion && (
-          <div className="mt-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              <p className="text-xs font-semibold text-primary uppercase">
-                Phiên bản AI Kỳ Tích gợi ý cho bạn
-              </p>
-            </div>
-            <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-              {improvedVersion}
-            </p>
           </div>
         )}
       </div>
@@ -216,6 +192,20 @@ const SpeakingProfileView = ({
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Transcript</p>
                 <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                   {it.transcript}
+                </p>
+              </div>
+            )}
+
+            {it.improvedVersion && (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <PenLine className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-400">
+                    ✍️ AI Kỳ Tích sửa bài
+                  </p>
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                  {it.improvedVersion}
                 </p>
               </div>
             )}

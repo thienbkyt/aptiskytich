@@ -208,10 +208,9 @@ REWARDS: dám dùng cấu trúc phức tạp / từ vựng cao cấp / kết n�
 DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
 
 OUTPUT (via the tool, in this order — write "analysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? "one entry per SUB-QUESTION (evaluating the same monologue)" : "one entry per QUESTION/AUDIO in order"} { transcript: string, onTopic: boolean }.
+- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty." : "one entry per QUESTION/AUDIO in order. Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words). Empty string if the student was silent."}.
 - analysis: Vietnamese, 4-6 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band; KẾT THÚC bằng 1 câu gợi ý ngắn việc cần làm để cải thiện.
 - bands: { tf, gra, vra, pro, fc } each integer 0..5.
-- improvedVersion: ONE upgraded English version of the student's own answer for this part — keep ideas, fix errors, upgrade vocab/structure, add linking words.
 
 Be honest, strict, fair. Do not invent content the student didn't say.`;
 
@@ -240,8 +239,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                   properties: {
                     transcript: { type: "string" },
                     onTopic: { type: "boolean" },
+                    improvedVersion: { type: "string", description: "Upgraded English rewrite of THIS answer/sub-segment. Empty string if silent." },
                   },
-                  required: ["transcript", "onTopic"],
+                  required: ["transcript", "onTopic", "improvedVersion"],
                 },
               },
               analysis: { type: "string" },
@@ -257,9 +257,8 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                 },
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
-              improvedVersion: { type: "string" },
             },
-            required: ["perItem", "analysis", "bands", "improvedVersion"],
+            required: ["perItem", "analysis", "bands"],
           },
         },
       };
@@ -333,13 +332,19 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         }
       } catch { /* ignore */ }
 
+      const perItemOut = Array.isArray(parsed.perItem)
+        ? parsed.perItem.map((it: any) => ({
+            transcript: it?.transcript ?? "",
+            onTopic: !!it?.onTopic,
+            improvedVersion: it?.improvedVersion ?? "",
+          }))
+        : [];
       return new Response(JSON.stringify({
         bands: { tf, gra, vra, pro, fc },
         rawPart: raw_part,
         raw_part,
-        perItem: Array.isArray(parsed.perItem) ? parsed.perItem : [],
+        perItem: perItemOut,
         analysis: parsed.analysis ?? "",
-        improvedVersion: parsed.improvedVersion ?? "",
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     // ============================================================
