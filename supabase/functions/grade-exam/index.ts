@@ -152,7 +152,8 @@ serve(async (req) => {
       if (quota) return quota;
     }
 
-    // --- Pro / monthly free-quota gate (ai_grading_writing | ai_grading_speaking) ---
+    // --- Tier-based gate (ai_grading_writing | ai_grading_speaking) ---
+    // premium → unlimited; pro → cap = pro_quota/month; free → cap = free_quota/month
     const featureKey = type === "writing" ? "ai_grading_writing" : "ai_grading_speaking";
     if (userId) {
       try {
@@ -162,11 +163,17 @@ serve(async (req) => {
         });
         const a = (access ?? {}) as any;
         if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
+          const userTier = (a.tier as string) ?? "free";
+          // free out of quota → upgrade to pro; pro out of quota → upgrade to premium
+          const need = userTier === "pro" ? "premium" : "pro";
           return new Response(
             JSON.stringify({
-              error: "quota_exceeded",
+              error: a.reason === "disabled" ? "disabled" : "quota_exceeded",
               upgrade: true,
+              need,
+              tier: userTier,
               freeQuota: a.free_quota ?? 0,
+              proQuota: a.pro_quota ?? null,
               used: a.used ?? 0,
               remaining: a.remaining ?? 0,
             }),
