@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown, Eye } from "lucide-react";
+import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown, Eye, Wallet, CreditCard, BadgePercent, ShoppingCart, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,11 @@ import { parseDateSafe } from "@/lib/safeDate";
 type ProfileRow = { user_id: string; created_at: string };
 type TestResultRow = { user_id: string; created_at: string };
 type StreakRow = { current_streak: number | null; last_activity_date: string | null };
+type PaymentRow = { user_id: string; plan_key: string | null; tier: string | null; amount_vnd: number | null; status: string; paid_at: string | null; created_at: string };
+type SubRow = { user_id: string; tier: string; pro_until: string | null };
 
 const RANGE_OPTIONS = [
+  { value: "today", label: "Hôm nay" },
   { value: "7", label: "7 ngày" },
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
@@ -42,6 +45,8 @@ const ActivityTab = () => {
   const [results, setResults] = useState<TestResultRow[]>([]);
   const [streaks, setStreaks] = useState<StreakRow[]>([]);
   const [visitsToday, setVisitsToday] = useState<number>(0);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [subs, setSubs] = useState<SubRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,17 +54,21 @@ const ActivityTab = () => {
       setLoading(true);
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
-      const [p, t, s, v] = await Promise.all([
+      const [p, t, s, v, pay, sub] = await Promise.all([
         supabase.from("profiles").select("user_id, created_at"),
         supabase.from("test_results").select("user_id, created_at"),
         supabase.from("learning_streaks").select("current_streak, last_activity_date"),
         supabase.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", startOfToday.toISOString()),
+        supabase.from("payments").select("user_id, plan_key, tier, amount_vnd, status, paid_at, created_at"),
+        supabase.from("user_subscriptions").select("user_id, tier, pro_until"),
       ]);
       if (cancelled) return;
       setProfiles((p.data as ProfileRow[]) || []);
       setResults((t.data as TestResultRow[]) || []);
       setStreaks((s.data as StreakRow[]) || []);
       setVisitsToday(v.count ?? 0);
+      setPayments((pay.data as PaymentRow[]) || []);
+      setSubs((sub.data as SubRow[]) || []);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -76,6 +85,10 @@ const ActivityTab = () => {
       return { fromDate: f, toDate: t, windowDays: wd };
     }
     if (range === "all") return { fromDate: null as Date | null, toDate: null as Date | null, windowDays: null as number | null };
+    if (range === "today") {
+      const f = new Date(now); f.setHours(0, 0, 0, 0);
+      return { fromDate: f, toDate: null as Date | null, windowDays: 1 };
+    }
     const n = Number(range);
     const f = new Date(now);
     f.setDate(f.getDate() - n);
@@ -198,6 +211,86 @@ const ActivityTab = () => {
     }
     return buckets.map((b) => ({ bucket: b.label, count: b.count }));
   }, [streaks]);
+
+  // ===== Payments / Revenue =====
+  const paidAll = useMemo(() => payments.filter((p) => p.status === "paid"), [payments]);
+  const paidInPeriod = useMemo(() => {
+    const upperMs = toDate ? toDate.getTime() : now.getTime();
+    return paidAll.filter((p) => {
+      const d = parseDateSafe(p.paid_at);
+      if (!d) return false;
+      if (fromDate && d < fromDate) return false;
+      if (d.getTime() > upperMs) return false;
+      return true;
+    });
+  }, [paidAll, fromDate, toDate, now]);
+
+  const revenuePeriod = useMemo(
+    () => paidInPeriod.reduce((s, p) => s + (Number(p.amount_vnd) || 0), 0),
+    [paidInPeriod]
+  );
+  const revenueAllTime = useMemo(
+    () => paidAll.reduce((s, p) => s + (Number(p.amount_vnd) || 0), 0),
+    [paidAll]
+  );
+
+  const activeSubs = useMemo(
+    () => subs.filter((s) => (s.tier === "pro" || s.tier === "premium")
+      && (!s.pro_until || new Date(s.pro_until).getTime() > now.getTime())),
+    [subs, now]
+  );
+  const proCount = activeSubs.filter((s) => s.tier === "pro").length;
+  const premiumCount = activeSubs.filter((s) => s.tier === "premium").length;
+  const payingCount = activeSubs.length;
+  const conversionPct = profiles.length > 0 ? (payingCount / profiles.length) * 100 : 0;
+
+  const expiringSoonCount = useMemo(() => {
+    const limit = now.getTime() + 7 * 86400_000;
+    return subs.filter((s) => s.tier === "pro" && s.pro_until
+      && new Date(s.pro_until).getTime() > now.getTime()
+      && new Date(s.pro_until).getTime() <= limit).length;
+  }, [subs, now]);
+
+  const revenueDailySeries = useMemo(() => {
+    const arr: { day: string; label: string; revenue: number }[] = [];
+    if (range === "custom" && fromDate && toDate) {
+      const cur = new Date(fromDate); cur.setHours(0, 0, 0, 0);
+      const end = new Date(toDate); end.setHours(0, 0, 0, 0);
+      while (cur <= end) {
+        arr.push({ day: dayKey(cur), label: fmtDay(cur), revenue: 0 });
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      const span = windowDays ?? 30;
+      for (let i = span - 1; i >= 0; i--) {
+        const d = new Date(now); d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        arr.push({ day: dayKey(d), label: fmtDay(d), revenue: 0 });
+      }
+    }
+    const map = new Map(arr.map((x, i) => [x.day, i]));
+    for (const p of paidInPeriod) {
+      const d = parseDateSafe(p.paid_at);
+      if (!d) continue;
+      const idx = map.get(dayKey(d));
+      if (idx != null) arr[idx].revenue += Number(p.amount_vnd) || 0;
+    }
+    return arr;
+  }, [paidInPeriod, windowDays, now, range, fromDate, toDate]);
+
+  const topPlans = useMemo(() => {
+    const m = new Map<string, { plan_key: string; orders: number; revenue: number }>();
+    for (const p of paidInPeriod) {
+      const k = p.plan_key || "(không rõ)";
+      const e = m.get(k) || { plan_key: k, orders: 0, revenue: 0 };
+      e.orders += 1;
+      e.revenue += Number(p.amount_vnd) || 0;
+      m.set(k, e);
+    }
+    return [...m.values()].sort((a, b) => b.revenue - a.revenue);
+  }, [paidInPeriod]);
+
+  const fmtVND = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
 
   if (loading) {
     return (
@@ -366,6 +459,115 @@ const ActivityTab = () => {
           )}
         </div>
       </Card>
+
+      {/* ===== Trả phí & Doanh thu ===== */}
+      <div className="pt-2">
+        <h2 className="text-xl font-heading font-bold mb-4">Trả phí & Doanh thu</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <Wallet className="w-4 h-4" /> Doanh thu ({periodLabel})
+            </div>
+            <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_PRIMARY }}>
+              {fmtVND(revenuePeriod)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Tổng: {fmtVND(revenueAllTime)}</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <CreditCard className="w-4 h-4" /> User đang trả phí
+            </div>
+            <p className="text-3xl font-heading font-extrabold text-foreground">
+              {payingCount.toLocaleString("vi-VN")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Pro: {proCount} · Premium: {premiumCount}</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <BadgePercent className="w-4 h-4" /> Tỉ lệ chuyển đổi
+            </div>
+            <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_ACCENT }}>
+              {conversionPct.toFixed(1)}%
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">{payingCount}/{totalUsers} user</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <ShoppingCart className="w-4 h-4" /> Số đơn ({periodLabel})
+            </div>
+            <p className="text-3xl font-heading font-extrabold text-foreground">
+              {paidInPeriod.length.toLocaleString("vi-VN")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Tổng đơn đã thanh toán trong kỳ</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <Clock className="w-4 h-4" /> Pro sắp hết hạn
+            </div>
+            <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_PRIMARY }}>
+              {expiringSoonCount.toLocaleString("vi-VN")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Trong vòng 7 ngày tới</p>
+          </Card>
+        </div>
+
+        <Card className="p-6 mt-4">
+          <h3 className="text-lg font-heading font-bold mb-4">Doanh thu theo ngày ({periodLabel})</h3>
+          <div className="w-full h-[280px]">
+            {revenueDailySeries.length === 0 || revenueDailySeries.every((d) => d.revenue === 0) ? (
+              <p className="text-sm text-muted-foreground">Không có dữ liệu.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueDailySeries} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                    formatter={(v: number) => fmtVND(Number(v))}
+                  />
+                  <Line type="monotone" dataKey="revenue" stroke={COLOR_PRIMARY} strokeWidth={2} dot={false} name="Doanh thu" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-6 mt-4">
+          <h3 className="text-lg font-heading font-bold mb-4">Gói bán chạy ({periodLabel})</h3>
+          {topPlans.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Chưa có đơn thanh toán trong kỳ.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted-foreground uppercase tracking-wide border-b">
+                    <th className="py-2 pr-4">Gói</th>
+                    <th className="py-2 pr-4 text-right">Số đơn</th>
+                    <th className="py-2 text-right">Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topPlans.map((p) => (
+                    <tr key={p.plan_key} className="border-b last:border-0">
+                      <td className="py-2 pr-4 font-medium">{p.plan_key}</td>
+                      <td className="py-2 pr-4 text-right">{p.orders.toLocaleString("vi-VN")}</td>
+                      <td className="py-2 text-right font-semibold" style={{ color: COLOR_PRIMARY }}>
+                        {fmtVND(p.revenue)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };

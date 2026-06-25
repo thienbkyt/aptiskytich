@@ -41,6 +41,7 @@ const SERVICE_COLORS: Record<string, string> = {
 };
 
 const RANGES = [
+  { value: "today", label: "Hôm nay" },
   { value: "7", label: "7 ngày" },
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
@@ -75,6 +76,10 @@ export default function AutoCostTab() {
         gte = new Date(`${customFrom}T00:00:00`);
         lte = new Date(`${customTo}T23:59:59.999`);
       }
+    } else if (range === "today") {
+      const s = new Date(); s.setHours(0, 0, 0, 0);
+      gte = s;
+      lte = new Date();
     } else if (range !== "all") {
       const days = Number(range);
       lte = new Date();
