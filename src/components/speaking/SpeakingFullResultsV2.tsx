@@ -155,11 +155,10 @@ const SpeakingFullResultsV2 = ({
                   questionText: it.questionText,
                   transcript: it.transcript,
                   onTopic: it.onTopic,
-                  improvedVersion: it.improvedVersion,
                   audioUrl: current.recordingUrls[i] ?? null,
                 }))}
-                feedback={current.result.feedback}
                 analysis={current.result.analysis}
+                improvedVersion={current.result.improvedVersion}
                 partLabel={`Part ${current.partNumber}`}
               />
             )}
