@@ -695,6 +695,54 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount_vnd: number
+          checkout_url: string | null
+          created_at: string
+          gateway: string
+          id: string
+          order_code: number
+          paid_at: string | null
+          payos_link_id: string | null
+          plan_key: string | null
+          raw_response: Json | null
+          status: string
+          tier: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_vnd: number
+          checkout_url?: string | null
+          created_at?: string
+          gateway?: string
+          id?: string
+          order_code: number
+          paid_at?: string | null
+          payos_link_id?: string | null
+          plan_key?: string | null
+          raw_response?: Json | null
+          status?: string
+          tier?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_vnd?: number
+          checkout_url?: string | null
+          created_at?: string
+          gateway?: string
+          id?: string
+          order_code?: number
+          paid_at?: string | null
+          payos_link_id?: string | null
+          plan_key?: string | null
+          raw_response?: Json | null
+          status?: string
+          tier?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       practice_history: {
         Row: {
           created_at: string
