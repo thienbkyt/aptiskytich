@@ -42,7 +42,8 @@ export const useSkillFullSets = (skill: string) => {
       }
 
       // Group by full_test_id
-      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[]; minTier: "free" | "pro" | "premium" }>();
+      // Full Part requires user to access ALL constituent parts → gate by MOST restrictive tier.
+      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[]; maxTier: "free" | "pro" | "premium" }>();
       const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
       for (const row of data as any[]) {
         if (!row.full_test_id) continue;
@@ -52,7 +53,7 @@ export const useSkillFullSets = (skill: string) => {
             parts: new Set(),
             ids: [],
             rows: [],
-            minTier: "premium",
+            maxTier: "free",
           });
         }
         const g = grouped.get(row.full_test_id)!;
@@ -60,7 +61,7 @@ export const useSkillFullSets = (skill: string) => {
         g.ids.push(row.id);
         g.rows.push({ id: row.id, part: row.part });
         const rt = (row.access_tier === "free" || row.access_tier === "pro" || row.access_tier === "premium") ? row.access_tier : "pro";
-        if (rankT(rt) < rankT(g.minTier)) g.minTier = rt;
+        if (rankT(rt) > rankT(g.maxTier)) g.maxTier = rt;
       }
 
       const result: SkillFullSetItem[] = [];
