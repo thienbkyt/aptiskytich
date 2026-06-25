@@ -741,7 +741,7 @@ const ProUsersSection = () => {
         {/* Active pro list */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-foreground">Đang Pro</h3>
+            <h3 className="text-sm font-semibold text-foreground">Đang trả phí</h3>
             <Badge variant="secondary" className="text-xs">
               {subsLoading ? "..." : `${subs.length} user`}
             </Badge>
@@ -751,7 +751,8 @@ const ProUsersSection = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead className="w-[200px]">Hạn Pro</TableHead>
+                  <TableHead className="w-[110px]">Tier</TableHead>
+                  <TableHead className="w-[200px]">Hạn</TableHead>
                   <TableHead className="w-[180px]">Cập nhật</TableHead>
                   <TableHead className="w-[110px] text-right">Hành động</TableHead>
                 </TableRow>
@@ -759,13 +760,13 @@ const ProUsersSection = () => {
               <TableBody>
                 {subsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin inline mr-2" /> Đang tải...
                     </TableCell>
                   </TableRow>
                 ) : subs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-sm text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
                       Chưa có user nào được cấp Pro.
                     </TableCell>
                   </TableRow>
