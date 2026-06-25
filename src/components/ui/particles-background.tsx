@@ -25,10 +25,17 @@ const ParticlesBackground = ({
   color = "204, 28, 1", // brand red rgb
 }: ParticlesBackgroundProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  // Synchronous initial value: avoids a first-render → second-render flip
+  // (false → true) that could destabilise dependent render trees in WebKit.
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try { return window.innerWidth < 768; } catch { return false; }
+  });
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => {
+      try { setIsMobile(window.innerWidth < 768); } catch { /* noop */ }
+    };
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
