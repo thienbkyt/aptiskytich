@@ -165,9 +165,49 @@ const SpeakingReviewPage = ({
         if (g.item_index >= 0 && g.item_index < gradeArr.length) gradeArr[g.item_index] = item;
       }
 
+      // 4. NEW system (speaking_skill_results) — try test_result_id, then
+      // fall back to full_test_session_id / fullPartSession from test_results.
+      let v2Row: any = null;
+      if (testResultId) {
+        const { data } = await (supabase as any)
+          .from("speaking_skill_results")
+          .select("parts,scale50,cefr")
+          .eq("user_id", userId)
+          .eq("test_result_id", testResultId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data && (data.parts as any)?.[pt]) v2Row = data;
+      }
+      if (!v2Row && testResultId) {
+        try {
+          const { data: tr } = await supabase
+            .from("test_results").select("skill_scores")
+            .eq("id", testResultId).maybeSingle();
+          const ss: any = tr?.skill_scores || {};
+          const ssid: string | null = ss.fullTestSession || ss.fullPartSession || null;
+          if (ssid) {
+            const { data } = await (supabase as any)
+              .from("speaking_skill_results")
+              .select("parts,scale50,cefr")
+              .eq("user_id", userId)
+              .eq("full_test_session_id", ssid)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (data && (data.parts as any)?.[pt]) v2Row = data;
+          }
+        } catch (e) {
+          console.warn("[SpeakingReviewPage] v2 session lookup failed", e);
+        }
+      }
+
       if (cancelled) return;
       setRecordings(signed);
       setGradings(gradeArr);
+      setV2Part(v2Row ? (v2Row.parts as any)[pt] : null);
+      setV2Scale(v2Row?.scale50 ?? null);
+      setV2Cefr(v2Row?.cefr ?? null);
       setReviewIndex(0);
       setPromptCount(Math.max(promptCount, 1));
       setLoading(false);
