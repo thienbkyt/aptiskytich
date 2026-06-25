@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown, Eye } from "lucide-react";
+import { Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown, Eye, Wallet, CreditCard, BadgePercent, ShoppingCart, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
