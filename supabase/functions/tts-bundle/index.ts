@@ -128,7 +128,8 @@ async function fetchOrGenerateSegment(
 
   if (!ttsRes.ok) {
     const errText = await ttsRes.text();
-    throw new Error(`Google TTS error: ${errText}`);
+    console.error("Google TTS error:", ttsRes.status, errText);
+    throw new Error("TTS_UPSTREAM_ERROR");
   }
 
   const json = await ttsRes.json();
@@ -279,7 +280,7 @@ Deno.serve(async (req) => {
     });
   } catch (e: any) {
     console.error("tts-bundle error:", e);
-    return new Response(JSON.stringify({ error: e.message || "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "TTS service temporarily unavailable" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

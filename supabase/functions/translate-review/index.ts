@@ -19,6 +19,14 @@ interface Body {
   part3?: Part3Item[];
 }
 
+async function sha256Hex(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -32,7 +40,10 @@ Deno.serve(async (req) => {
     const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY missing" }, 500);
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY missing");
+      return json({ error: "Service misconfigured" }, 500);
+    }
 
     const userClient = createClient(SUPABASE_URL, ANON, {
       global: { headers: { Authorization: authHeader } },
@@ -41,23 +52,48 @@ Deno.serve(async (req) => {
     if (userErr || !userData?.user) return json({ error: "Unauthorized" }, 401);
 
     const body = (await req.json()) as Body;
-    if (!body?.exam_set_id) return json({ error: "exam_set_id required" }, 400);
+    if (!body?.exam_set_id || typeof body.exam_set_id !== "string") {
+      return json({ error: "exam_set_id required" }, 400);
+    }
 
     const admin = createClient(SUPABASE_URL, SERVICE);
+
+    // Validate exam_set_id exists
+    const { data: examSet } = await admin
+      .from("exam_sets")
+      .select("id,is_published")
+      .eq("id", body.exam_set_id)
+      .maybeSingle();
+    if (!examSet) return json({ error: "Invalid exam_set_id" }, 404);
+
+    const items = body.items ?? [];
+    const part3 = body.part3 ?? [];
+
+    // Content fingerprint scopes the cache to the exact request payload so
+    // an attacker with a crafted payload cannot poison the entry served to
+    // other users with a different payload.
+    const canonical = JSON.stringify({
+      items: items.map((it) => ({ id: it.id, text: it.text ?? "" })),
+      part3: part3.map((p) => ({
+        questionIndex: p.questionIndex,
+        questionText: p.questionText,
+        blocks: p.blocks,
+        correctPerson: p.correctPerson,
+      })),
+    });
+    const content_hash = await sha256Hex(canonical);
 
     // Check cache
     const { data: cached } = await admin
       .from("reading_review_cache")
       .select("data")
       .eq("exam_set_id", body.exam_set_id)
+      .eq("content_hash", content_hash)
       .maybeSingle();
 
     if (cached?.data) {
       return json({ cached: true, ...cached.data });
     }
-
-    const items = body.items ?? [];
-    const part3 = body.part3 ?? [];
 
     const prompt = `You are a translator and reading-comprehension assistant for Vietnamese learners of English (Aptis exam prep).
 
@@ -93,9 +129,10 @@ Return ONLY valid JSON with this exact shape:
 
     if (!aiRes.ok) {
       const txt = await aiRes.text();
+      console.error("AI gateway error", aiRes.status, txt);
       if (aiRes.status === 429) return json({ error: "Rate limited" }, 429);
       if (aiRes.status === 402) return json({ error: "Credits exhausted" }, 402);
-      return json({ error: "AI error", detail: txt }, 400);
+      return json({ error: "AI service temporarily unavailable" }, 400);
     }
 
     const aiJson = await aiRes.json();
@@ -117,12 +154,15 @@ Return ONLY valid JSON with this exact shape:
 
     await admin
       .from("reading_review_cache")
-      .upsert({ exam_set_id: body.exam_set_id, data }, { onConflict: "exam_set_id" });
+      .upsert(
+        { exam_set_id: body.exam_set_id, content_hash, data },
+        { onConflict: "exam_set_id,content_hash" },
+      );
 
     return json({ cached: false, ...data });
   } catch (e) {
     console.error("translate-review error", e);
-    return json({ error: String(e?.message ?? e) }, 500);
+    return json({ error: "Service error" }, 500);
   }
 });
 

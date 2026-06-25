@@ -611,16 +611,19 @@ export type Database = {
       }
       listening_review_cache: {
         Row: {
+          content_hash: string
           created_at: string
           data: Json
           exam_set_id: string
         }
         Insert: {
+          content_hash?: string
           created_at?: string
           data: Json
           exam_set_id: string
         }
         Update: {
+          content_hash?: string
           created_at?: string
           data?: Json
           exam_set_id?: string
@@ -950,16 +953,19 @@ export type Database = {
       }
       reading_review_cache: {
         Row: {
+          content_hash: string
           created_at: string
           data: Json
           exam_set_id: string
         }
         Insert: {
+          content_hash?: string
           created_at?: string
           data: Json
           exam_set_id: string
         }
         Update: {
+          content_hash?: string
           created_at?: string
           data?: Json
           exam_set_id?: string
