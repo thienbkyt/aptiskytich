@@ -257,10 +257,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                 },
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
-              feedback: { type: "string" },
               improvedVersion: { type: "string" },
             },
-            required: ["perItem", "analysis", "bands", "feedback", "improvedVersion"],
+            required: ["perItem", "analysis", "bands", "improvedVersion"],
           },
         },
       };
