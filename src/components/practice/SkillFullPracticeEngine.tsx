@@ -125,6 +125,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingFullParts, setSpeakingFullParts] = useState<SpeakingFullPartResult[]>([]);
   const [speakingTotalScore, setSpeakingTotalScore] = useState(0);
   const [speakingTotalMax, setSpeakingTotalMax] = useState(0);
+  const [speakingV2Parts, setSpeakingV2Parts] = useState<SpeakingV2PartEntry[]>([]);
+  const [speakingV2Scale, setSpeakingV2Scale] = useState(0);
+  const [speakingV2Cefr, setSpeakingV2Cefr] = useState("");
+  const [speakingV2GreyZone, setSpeakingV2GreyZone] = useState(false);
+  const [speakingV2FlagReview, setSpeakingV2FlagReview] = useState(false);
+  const [speakingV2RawTotal, setSpeakingV2RawTotal] = useState(0);
+  const [speakingV2Message, setSpeakingV2Message] = useState("");
   useExitWarning(phase !== "loading" && phase !== "completed");
 
 
