@@ -342,7 +342,10 @@ const Listening = () => {
                 sets={fullSets}
                 loading={fullLoading}
                 onStart={handleStartFullPractice}
+                isLocked={isLocked}
+                onLockedClick={(set) => guard(set, () => {})}
               />
+
             )
           ) : (
             <>
