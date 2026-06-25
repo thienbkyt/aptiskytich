@@ -150,7 +150,7 @@ export async function saveSpeakingSkillResult(
       full_test_session_id: args.fullTestSessionId ?? null,
       parts: args.parts,
       raw_total: args.rawTotal,
-      scale_50: args.scale50,
+      scale50: args.scale50,
       cefr: args.cefr,
       grey_zone: args.greyZone,
       flag_review: args.flagReview,
