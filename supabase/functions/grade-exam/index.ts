@@ -87,6 +87,262 @@ serve(async (req) => {
       ? (body.timePenaltyTiers.map((n) => Number(n) || 0) as [number, number, number])
       : defaultTiers;
 
+    // ============================================================
+    // SPEAKING V2 (new 5-criteria rubric) — runs PARALLEL to legacy.
+    // ============================================================
+    if ((type as string) === "speaking_finalize") {
+      const rawParts = (body as any).rawParts || {};
+      const p1 = Number(rawParts.part1 ?? 0);
+      const p2 = Number(rawParts.part2 ?? 0);
+      const p3 = Number(rawParts.part3 ?? 0);
+      const p4 = Number(rawParts.part4 ?? 0);
+      const coreGV = (body as any).coreGV;
+      const raw_total = p1 + p2 + p3 + p4 * 1.2; // max 126
+      const scale50 = Math.round((raw_total / 126) * 50);
+      const CUTS: Array<{ band: string; cut: number }> = [
+        { band: "C", cut: 48 },
+        { band: "B2", cut: 41 },
+        { band: "B1", cut: 34 },
+        { band: "A2", cut: 24 },
+        { band: "A1", cut: 12 },
+        { band: "A0", cut: 0 },
+      ];
+      const order = ["A0", "A1", "A2", "B1", "B2", "C"];
+      const rankOf = (b: string) => order.indexOf(b);
+      let baseBand = "A0";
+      for (const c of CUTS) {
+        if (scale50 >= c.cut) { baseBand = c.band; break; }
+      }
+      const GREY_WIDTH = 2;
+      let greyZone = false;
+      let bumpedTo: string | null = null;
+      for (const c of CUTS) {
+        if (scale50 >= c.cut - GREY_WIDTH && scale50 < c.cut) {
+          greyZone = true;
+          if (coreGV != null && rankOf(String(coreGV)) >= rankOf(c.band)) {
+            bumpedTo = c.band;
+          }
+          break;
+        }
+      }
+      const cefr = bumpedTo ?? baseBand;
+      const flagReview = greyZone;
+      return new Response(JSON.stringify({
+        raw_total: Math.round(raw_total * 100) / 100,
+        scale50,
+        cefr,
+        greyZone,
+        flagReview,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if ((type as string) === "speaking_v2") {
+      const audios: string[] = Array.isArray((body as any).audios) ? (body as any).audios : [];
+      if (!Array.isArray(questions) || questions.length === 0 || questions.length > 20) {
+        return new Response(JSON.stringify({ error: "Invalid questions" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!audios.length) {
+        return new Response(JSON.stringify({ error: "No audios provided" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const totalBytes = audios.reduce((s, a) => s + (a?.length || 0), 0);
+      if (totalBytes > 30_000_000) {
+        return new Response(JSON.stringify({ error: "Audio payload too large" }), {
+          status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Tier gate — reuse ai_grading_speaking quota
+      if (userId) {
+        try {
+          const { data: access } = await supabaseClient.rpc("check_feature_access", {
+            p_key: "ai_grading_speaking", p_scope: null,
+          });
+          const a = (access ?? {}) as any;
+          if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
+            const userTier = (a.tier as string) ?? "free";
+            const need = userTier === "pro" ? "premium" : "pro";
+            return new Response(JSON.stringify({
+              error: a.reason === "disabled" ? "disabled" : "quota_exceeded",
+              upgrade: true, need, tier: userTier,
+              freeQuota: a.free_quota ?? 0, proQuota: a.pro_quota ?? null,
+              used: a.used ?? 0, remaining: a.remaining ?? 0,
+            }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+        } catch (e) {
+          console.warn("[grade-exam v2] feature access check failed:", (e as any)?.message || e);
+        }
+      }
+
+      const isPart4 = partType === "part4";
+      const sysV2 = `You are an expert Aptis Speaking grader. You grade ONE PART at a time using the official 5-criteria rubric (TF, GRA, VRA, PRO, FC), each 0-5 integer.
+
+MASTER BAND ANCHORS (apply to EACH criterion):
+5 = C/C1 — natural, accurate, rich.
+4 = B2 — generally accurate & developed, occasional slips.
+3 = B1 — communicates simply, clear but limited.
+2 = A2 — basic, frequent errors that may impede.
+1 = A1 — very limited, often unclear.
+0 = below A1 — off-topic / silent / parroted / unintelligible.
+
+CRITERIA:
+- TF (Task Fulfilment) anchored by ON-TOPIC count of sub-answers:
+  5 = all on-topic AND ideas well developed; 4 = all on-topic, adequate ideas;
+  3 = 2/3 on-topic; 2 = 1/3 on-topic; 1 = barely touches topic; 0 = totally off / no answer.
+  A one-word reply or silence does NOT count as on-topic.
+  ${isPart4 ? "For PART 4: ONE monologue audio addresses several sub-questions. Judge on-topic PER SUB-QUESTION over the SAME monologue." : ""}
+- GRA (Grammar Range & Accuracy): reward attempts at complex structures even if not perfect. Only deduct band when errors block understanding. Do NOT count errors absolutely.
+- VRA (Vocabulary Range & Accuracy): same leniency; reward variety.
+- PRO (Pronunciation): JUDGE FROM AUDIO ONLY (intelligibility, rhythm, stress). Do not use spelling.
+- FC (Fluency & Coherence): pace, linking, hesitation, organisation.
+
+REWARDS: dám dùng cấu trúc phức tạp / từ vựng cao cấp / kết nối ý → cộng band ngay cả khi còn lỗi nhỏ.
+DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
+
+OUTPUT (via the tool, in this order — write "analysis" BEFORE choosing bands):
+- perItem: ${isPart4 ? "one entry per SUB-QUESTION (evaluating the same monologue)" : "one entry per QUESTION/AUDIO in order"} { transcript: string, onTopic: boolean }.
+- analysis: Vietnamese, 3-5 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band.
+- bands: { tf, gra, vra, pro, fc } each integer 0..5.
+- feedback: Vietnamese, ≤3 câu — 1-2 điểm yếu cụ thể nhất + 1 việc làm ngay.
+- improvedVersion: ONE upgraded English version of the student's own answer for this part — keep ideas, fix errors, upgrade vocab/structure, add linking words.
+
+Be honest, strict, fair. Do not invent content the student didn't say.`;
+
+      const userParts: any[] = [
+        { type: "text", text: `Exam Part: ${partType}\n${isPart4 ? "Sub-questions" : "Questions"}:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\n${isPart4 ? "ONE monologue audio follows." : `${audios.length} audio file(s) follow, one per question in order.`}` },
+      ];
+      for (const a of audios) {
+        if (!a) continue;
+        userParts.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
+      }
+
+      const toolSchemaV2 = {
+        type: "function",
+        function: {
+          name: "submit_speaking_v2",
+          description: "Submit 5-criteria Aptis Speaking grading for one part",
+          parameters: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              perItem: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    transcript: { type: "string" },
+                    onTopic: { type: "boolean" },
+                  },
+                  required: ["transcript", "onTopic"],
+                },
+              },
+              analysis: { type: "string" },
+              bands: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  tf: { type: "integer", minimum: 0, maximum: 5 },
+                  gra: { type: "integer", minimum: 0, maximum: 5 },
+                  vra: { type: "integer", minimum: 0, maximum: 5 },
+                  pro: { type: "integer", minimum: 0, maximum: 5 },
+                  fc: { type: "integer", minimum: 0, maximum: 5 },
+                },
+                required: ["tf", "gra", "vra", "pro", "fc"],
+              },
+              feedback: { type: "string" },
+              improvedVersion: { type: "string" },
+            },
+            required: ["perItem", "analysis", "bands", "feedback", "improvedVersion"],
+          },
+        },
+      };
+
+      const MODEL_V2 = "google/gemini-2.5-flash";
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: MODEL_V2,
+          messages: [
+            { role: "system", content: sysV2 },
+            { role: "user", content: userParts },
+          ],
+          tools: [toolSchemaV2],
+          tool_choice: { type: "function", function: { name: "submit_speaking_v2" } },
+        }),
+      });
+
+      if (!aiResp.ok) {
+        const txt = await aiResp.text().catch(() => "");
+        console.error("[grade-exam v2] AI error", aiResp.status, txt.slice(0, 400));
+        if (aiResp.status === 429) {
+          return new Response(JSON.stringify({ error: "AI đang quá tải, thử lại sau." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        if (aiResp.status === 402) {
+          return new Response(JSON.stringify({ error: "Hết credit AI." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        return new Response(JSON.stringify({ error: "Không chấm được, thử lại." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const aiJson = await aiResp.json();
+      const toolCall = aiJson?.choices?.[0]?.message?.tool_calls?.[0];
+      if (!toolCall?.function?.arguments) {
+        console.error("[grade-exam v2] no tool call", JSON.stringify(aiJson).slice(0, 500));
+        return new Response(JSON.stringify({ error: "Phản hồi AI không hợp lệ" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(toolCall.function.arguments); }
+      catch (_e) {
+        return new Response(JSON.stringify({ error: "Phản hồi AI không hợp lệ" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const b = parsed.bands || {};
+      const tf = Math.max(0, Math.min(5, Math.round(Number(b.tf ?? 0))));
+      const gra = Math.max(0, Math.min(5, Math.round(Number(b.gra ?? 0))));
+      const vra = Math.max(0, Math.min(5, Math.round(Number(b.vra ?? 0))));
+      const pro = Math.max(0, Math.min(5, Math.round(Number(b.pro ?? 0))));
+      const fc = Math.max(0, Math.min(5, Math.round(Number(b.fc ?? 0))));
+      const raw_part = tf * 2 + gra + vra + pro + fc;
+
+      try {
+        await logAIUsage({
+          model: MODEL_V2,
+          usage: aiJson?.usage,
+          source_function: "grade-exam",
+          metadata: { mode: "speaking_v2", partType },
+        });
+      } catch { /* ignore */ }
+      try {
+        if (userId) {
+          await serviceClient.from("feature_usage").insert({
+            user_id: userId, feature_key: "ai_grading_speaking", scope: null, ref_id: null,
+          });
+        }
+      } catch { /* ignore */ }
+
+      return new Response(JSON.stringify({
+        bands: { tf, gra, vra, pro, fc },
+        raw_part,
+        perItem: Array.isArray(parsed.perItem) ? parsed.perItem : [],
+        analysis: parsed.analysis ?? "",
+        feedback: parsed.feedback ?? "",
+        improvedVersion: parsed.improvedVersion ?? "",
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    // ============================================================
+    // END SPEAKING V2 BRANCH
+    // ============================================================
+
     if (type !== "speaking" && type !== "writing") {
       return new Response(JSON.stringify({ error: "Invalid type" }), {
         status: 400,

@@ -1165,6 +1165,54 @@ export type Database = {
           },
         ]
       }
+      speaking_skill_results: {
+        Row: {
+          cefr: string | null
+          created_at: string
+          exam_set_id: string | null
+          feedback: string | null
+          flag_review: boolean | null
+          full_test_session_id: string | null
+          grey_zone: boolean | null
+          id: string
+          parts: Json
+          raw_total: number | null
+          scale50: number | null
+          test_result_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cefr?: string | null
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string
+          parts?: Json
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cefr?: string | null
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string
+          parts?: Json
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
