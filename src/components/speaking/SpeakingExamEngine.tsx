@@ -1008,111 +1008,74 @@ const SpeakingExamEngine = ({
     );
   }
 
-  // Grading / Done — submitted screen with per-question playback
+  // Grading / Done — V2 5-criteria profile
   if (phase === "grading" || phase === "done") {
-    const validGradings = gradings.filter((g): g is SpeakingItemGrading => !!g && !("error" in g));
-    const totalScore = validGradings.reduce((sum, g) => sum + (g.partScore || 0), 0);
-    const totalMax = (() => {
-      if (partType === "part1") return (part1Data?.questions.length || 0) * 2;
-      if (partType === "part2") {
-        const n = part2Data?.questions?.length || 0;
-        return n > 0 ? 4 + (n - 1) * 2 : 0;
-      }
-      if (partType === "part3") {
-        const n = part3Data?.questions?.length || 0;
-        return n > 0 ? 7 + (n - 1) * 4 : 0;
-      }
-      if (partType === "part4") return (part4Data?.questions?.length || 0) * 7;
-      return 0;
-    })();
-    const allGraded = gradings.length > 0 && gradings.every(g => g !== null);
+    const itemsForView = v2Result
+      ? v2Result.perItem.map((it, i) => ({
+          questionText: it.questionText,
+          transcript: it.transcript,
+          onTopic: it.onTopic,
+          improvedVersion: it.improvedVersion,
+          audioUrl: recordings[i] ?? null,
+        }))
+      : [];
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 py-8">
-          <div className={`${reviewDetail ? "max-w-6xl" : "max-w-2xl"} mx-auto space-y-6`}>
-            {!reviewDetail ? (
-              <>
-                <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
-                  <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-                    <Loader2 className="w-7 h-7 text-green-500" />
-                  </div>
-                  <h2 className="text-xl font-heading font-bold text-foreground mb-2">
-                    Bài Speaking đã được nộp
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Cảm ơn bạn đã hoàn thành phần Speaking.
-                  </p>
-                </div>
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="text-center bg-card border border-border rounded-2xl p-8 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto mb-4">
+                <Loader2 className="w-7 h-7 text-green-500" />
+              </div>
+              <h2 className="text-xl font-heading font-bold text-foreground mb-2">
+                Bài Speaking đã được nộp
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Cảm ơn bạn đã hoàn thành Speaking Part {partNumber}.
+              </p>
+            </div>
 
-                {totalMax > 0 && (
-                  <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-3">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Tổng điểm Speaking
-                    </p>
-                    {isGrading && !allGraded ? (
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Chờ chút nhé. AI Kỳ Tích đang chấm điểm cho bạn, đừng thoát hay đổi tab nha.
-                      </div>
-                    ) : (
-                      <p className="text-4xl font-heading font-bold text-primary">
-                        {totalScore.toFixed(1)} <span className="text-base text-muted-foreground">/ {totalMax}</span>
-                      </p>
-                    )}
-                    <div className="border-t border-border pt-3 mt-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
-                        Speaking Part {partNumber}
-                      </p>
-                      {allGraded ? (
-                        <p className="text-lg font-bold text-foreground">
-                          {totalScore.toFixed(1)} / {totalMax}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground italic">Đang chấm...</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <button
-                    onClick={() => { setReviewIndex(0); setReviewDetail(true); }}
-                    disabled={!allGraded}
-                    className="bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-primary-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
-                  >
-                    🎙️ Xem lại từng câu
-                  </button>
-                  <button
-                    onClick={onExit}
-                    className="bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
-                  >
-                    Quay lại danh sách đề
-                  </button>
+            {isGrading && !v2Result && !v2Error && (
+              <div className="bg-card border border-border rounded-2xl p-6 text-center">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  AI Kỳ Tích đang chấm... Đừng thoát hay đổi tab nha.
                 </div>
-              </>
-            ) : (
-              <SpeakingReviewView
-                partType={partType}
-                part1Data={part1Data}
-                part2Data={part2Data}
-                part3Data={part3Data}
-                part4Data={part4Data}
-                recordings={recordings}
-                gradings={gradings}
-                reviewIndex={reviewIndex}
-                onChangeIndex={setReviewIndex}
-                onBack={() => setReviewDetail(false)}
-                onExit={onExit}
-                totalParts={totalParts}
+              </div>
+            )}
+
+            {v2Error && (
+              <div className="bg-card border border-rose-500/30 rounded-2xl p-6 text-center">
+                <p className="text-sm text-rose-600 dark:text-rose-400">{v2Error}</p>
+              </div>
+            )}
+
+            {v2Result && (
+              <SpeakingProfileView
+                bands={v2Result.bands}
+                items={itemsForView}
+                feedback={v2Result.feedback}
+                analysis={v2Result.analysis}
+                partLabel={`Part ${partNumber}`}
               />
             )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={onExit}
+                className="bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+              >
+                Quay lại danh sách đề
+              </button>
+            </div>
           </div>
         </div>
         {exitDialog}
       </div>
     );
+
   }
 
 
