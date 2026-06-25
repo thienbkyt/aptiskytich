@@ -35,6 +35,7 @@ const BAND_COLORS: Record<string, string> = {
 };
 
 const RANGES = [
+  { value: "today", label: "Hôm nay" },
   { value: "7", label: "7 ngày" },
   { value: "30", label: "30 ngày" },
   { value: "90", label: "90 ngày" },
