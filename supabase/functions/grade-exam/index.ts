@@ -332,13 +332,19 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         }
       } catch { /* ignore */ }
 
+      const perItemOut = Array.isArray(parsed.perItem)
+        ? parsed.perItem.map((it: any) => ({
+            transcript: it?.transcript ?? "",
+            onTopic: !!it?.onTopic,
+            improvedVersion: it?.improvedVersion ?? "",
+          }))
+        : [];
       return new Response(JSON.stringify({
         bands: { tf, gra, vra, pro, fc },
         rawPart: raw_part,
         raw_part,
-        perItem: Array.isArray(parsed.perItem) ? parsed.perItem : [],
+        perItem: perItemOut,
         analysis: parsed.analysis ?? "",
-        improvedVersion: parsed.improvedVersion ?? "",
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     // ============================================================
