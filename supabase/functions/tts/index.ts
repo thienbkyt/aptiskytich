@@ -102,8 +102,8 @@ Deno.serve(async (req) => {
 
     if (!ttsRes.ok) {
       const errText = await ttsRes.text();
-      console.error("Google TTS error:", errText);
-      return new Response(JSON.stringify({ error: "TTS API error", detail: errText }), {
+      console.error("Google TTS error:", ttsRes.status, errText);
+      return new Response(JSON.stringify({ error: "TTS service temporarily unavailable" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
