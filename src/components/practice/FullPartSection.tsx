@@ -72,9 +72,12 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                     <CornerResultBadge label={bandLabel} />
                   </div>
                 )}
-                <Badge className="w-fit text-[11px] font-medium mb-3 bg-[#CC1C01]/10 text-[#CC1C01] border-0">
-                  Full Part
-                </Badge>
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge className="w-fit text-[11px] font-medium bg-[#CC1C01]/10 text-[#CC1C01] border-0">
+                    Full Part
+                  </Badge>
+                  <ExamTierBadge tier={set.access_tier} locked={isLocked ? isLocked(set) : false} />
+                </div>
                 <h3 className="text-xl font-heading font-bold text-foreground mb-2">
                   {set.title}
                 </h3>
@@ -100,15 +103,27 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
 
                 <div className="flex-1" />
                 <div className="flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onStart(set)}
-                    className="text-[#CC1C01] hover:text-[#CC1C01] hover:bg-[#CC1C01]/10 font-semibold gap-1 group-hover:gap-2 transition-all"
-                  >
-                    Bắt đầu luyện tập
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  {isLocked && isLocked(set) ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onLockedClick?.(set)}
+                      className="text-[#CC1C01] hover:text-[#CC1C01] hover:bg-[#CC1C01]/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                    >
+                      <Lock className="w-4 h-4" />
+                      Mở khóa
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onStart(set)}
+                      className="text-[#CC1C01] hover:text-[#CC1C01] hover:bg-[#CC1C01]/10 font-semibold gap-1 group-hover:gap-2 transition-all"
+                    >
+                      Bắt đầu luyện tập
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </motion.div>
