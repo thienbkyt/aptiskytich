@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Crown, Gem, Loader2, Sparkles, X } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
