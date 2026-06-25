@@ -77,6 +77,10 @@ const ActivityTab = () => {
       return { fromDate: f, toDate: t, windowDays: wd };
     }
     if (range === "all") return { fromDate: null as Date | null, toDate: null as Date | null, windowDays: null as number | null };
+    if (range === "today") {
+      const f = new Date(now); f.setHours(0, 0, 0, 0);
+      return { fromDate: f, toDate: null as Date | null, windowDays: 1 };
+    }
     const n = Number(range);
     const f = new Date(now);
     f.setDate(f.getDate() - n);
