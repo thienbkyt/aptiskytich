@@ -312,9 +312,13 @@ export default function PricingPage() {
                 {premiumPlans[0] && (
                   <Button
                     onClick={() => onPick(premiumPlans[0])}
+                    disabled={buying === premiumPlans[0].key}
                     className="mt-auto w-full gap-2 font-semibold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110"
                   >
-                    <Gem className="w-4 h-4" /> Mua Premium
+                    {buying === premiumPlans[0].key
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Gem className="w-4 h-4" />}
+                    Mua Premium
                   </Button>
                 )}
               </div>
