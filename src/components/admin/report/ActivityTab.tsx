@@ -43,6 +43,8 @@ const ActivityTab = () => {
   const [results, setResults] = useState<TestResultRow[]>([]);
   const [streaks, setStreaks] = useState<StreakRow[]>([]);
   const [visitsToday, setVisitsToday] = useState<number>(0);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [subs, setSubs] = useState<SubRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,17 +52,21 @@ const ActivityTab = () => {
       setLoading(true);
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
-      const [p, t, s, v] = await Promise.all([
+      const [p, t, s, v, pay, sub] = await Promise.all([
         supabase.from("profiles").select("user_id, created_at"),
         supabase.from("test_results").select("user_id, created_at"),
         supabase.from("learning_streaks").select("current_streak, last_activity_date"),
         supabase.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", startOfToday.toISOString()),
+        supabase.from("payments").select("user_id, plan_key, tier, amount_vnd, status, paid_at, created_at"),
+        supabase.from("user_subscriptions").select("user_id, tier, pro_until"),
       ]);
       if (cancelled) return;
       setProfiles((p.data as ProfileRow[]) || []);
       setResults((t.data as TestResultRow[]) || []);
       setStreaks((s.data as StreakRow[]) || []);
       setVisitsToday(v.count ?? 0);
+      setPayments((pay.data as PaymentRow[]) || []);
+      setSubs((sub.data as SubRow[]) || []);
       setLoading(false);
     })();
     return () => { cancelled = true; };
