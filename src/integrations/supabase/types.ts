@@ -430,6 +430,7 @@ export type Database = {
           key: string
           label: string | null
           note: string | null
+          pro_quota: number | null
           quota_period: string | null
           required_tier: string
           sort_order: number | null
@@ -441,6 +442,7 @@ export type Database = {
           key: string
           label?: string | null
           note?: string | null
+          pro_quota?: number | null
           quota_period?: string | null
           required_tier?: string
           sort_order?: number | null
@@ -452,6 +454,7 @@ export type Database = {
           key?: string
           label?: string | null
           note?: string | null
+          pro_quota?: number | null
           quota_period?: string | null
           required_tier?: string
           sort_order?: number | null
@@ -779,6 +782,7 @@ export type Database = {
           note: string | null
           price_vnd: number
           sort_order: number
+          tier: string | null
           updated_at: string
         }
         Insert: {
@@ -790,6 +794,7 @@ export type Database = {
           note?: string | null
           price_vnd: number
           sort_order?: number
+          tier?: string | null
           updated_at?: string
         }
         Update: {
@@ -801,6 +806,7 @@ export type Database = {
           note?: string | null
           price_vnd?: number
           sort_order?: number
+          tier?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1405,20 +1411,20 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
-          plan: string
           pro_until: string | null
+          tier: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          plan?: string
           pro_until?: string | null
+          tier?: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          plan?: string
           pro_until?: string | null
+          tier?: string
           updated_at?: string
           user_id?: string
         }
@@ -1572,6 +1578,7 @@ export type Database = {
         Returns: Json
       }
       current_user_is_pro: { Args: never; Returns: boolean }
+      current_user_tier: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1595,6 +1602,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_premium: { Args: { p_uid: string }; Returns: boolean }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
       log_feature_usage: {
         Args: { p_key: string; p_ref?: string; p_scope?: string }
@@ -1618,6 +1626,8 @@ export type Database = {
           read_ct: number
         }[]
       }
+      tier_rank: { Args: { t: string }; Returns: number }
+      user_tier: { Args: { p_uid: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"

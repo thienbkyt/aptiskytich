@@ -27,13 +27,13 @@ export function useIsPro() {
           supabase.rpc("current_user_is_pro"),
           supabase
             .from("user_subscriptions")
-            .select("plan,pro_until")
+            .select("tier,pro_until")
             .eq("user_id", user.id)
             .maybeSingle(),
         ]);
         setIsPro(!!proRes.data);
         setProUntil((subRes.data as any)?.pro_until ?? null);
-        setPlan((subRes.data as any)?.plan ?? null);
+        setPlan((subRes.data as any)?.tier ?? null);
       }
     } catch {
       setIsPro(false);

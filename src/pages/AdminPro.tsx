@@ -60,7 +60,7 @@ type FeatureFlag = {
 
 type Subscription = {
   user_id: string;
-  plan: "free" | "pro";
+  tier: "free" | "pro" | "premium";
   pro_until: string | null;
   updated_at: string;
 };
@@ -487,7 +487,7 @@ const ProUsersSection = () => {
     const { data, error } = await supabase
       .from("user_subscriptions")
       .select("*")
-      .eq("plan", "pro")
+      .in("tier", ["pro", "premium"])
       .order("updated_at", { ascending: false });
     if (error) toast.error("Không tải được danh sách Pro");
     setSubs((data as any) ?? []);
@@ -549,7 +549,7 @@ const ProUsersSection = () => {
       .from("user_subscriptions")
       .upsert({
         user_id: selected.user_id,
-        plan: "pro",
+        tier: "pro",
         pro_until: proUntil,
         updated_at: new Date().toISOString(),
       }, { onConflict: "user_id" });
