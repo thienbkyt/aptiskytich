@@ -16,6 +16,13 @@ import {
 import SpeakingExamEngine, { type SpeakingPartSubmission } from "@/components/speaking/SpeakingExamEngine";
 import SpeakingFullResults, { type SpeakingFullPartResult } from "@/components/speaking/SpeakingFullResults";
 import { gradeSpeakingSpec, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import {
+  gradeSpeakingPartV2,
+  finalizeSpeaking,
+  saveSpeakingSkillResult,
+  type SpeakingPartResultV2,
+} from "@/components/speaking/speakingGradingV2";
+import SpeakingFullResultsV2, { type SpeakingV2PartEntry } from "@/components/speaking/SpeakingFullResultsV2";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
