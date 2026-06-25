@@ -212,6 +212,86 @@ const ActivityTab = () => {
     return buckets.map((b) => ({ bucket: b.label, count: b.count }));
   }, [streaks]);
 
+  // ===== Payments / Revenue =====
+  const paidAll = useMemo(() => payments.filter((p) => p.status === "paid"), [payments]);
+  const paidInPeriod = useMemo(() => {
+    const upperMs = toDate ? toDate.getTime() : now.getTime();
+    return paidAll.filter((p) => {
+      const d = parseDateSafe(p.paid_at);
+      if (!d) return false;
+      if (fromDate && d < fromDate) return false;
+      if (d.getTime() > upperMs) return false;
+      return true;
+    });
+  }, [paidAll, fromDate, toDate, now]);
+
+  const revenuePeriod = useMemo(
+    () => paidInPeriod.reduce((s, p) => s + (Number(p.amount_vnd) || 0), 0),
+    [paidInPeriod]
+  );
+  const revenueAllTime = useMemo(
+    () => paidAll.reduce((s, p) => s + (Number(p.amount_vnd) || 0), 0),
+    [paidAll]
+  );
+
+  const activeSubs = useMemo(
+    () => subs.filter((s) => (s.tier === "pro" || s.tier === "premium")
+      && (!s.pro_until || new Date(s.pro_until).getTime() > now.getTime())),
+    [subs, now]
+  );
+  const proCount = activeSubs.filter((s) => s.tier === "pro").length;
+  const premiumCount = activeSubs.filter((s) => s.tier === "premium").length;
+  const payingCount = activeSubs.length;
+  const conversionPct = profiles.length > 0 ? (payingCount / profiles.length) * 100 : 0;
+
+  const expiringSoonCount = useMemo(() => {
+    const limit = now.getTime() + 7 * 86400_000;
+    return subs.filter((s) => s.tier === "pro" && s.pro_until
+      && new Date(s.pro_until).getTime() > now.getTime()
+      && new Date(s.pro_until).getTime() <= limit).length;
+  }, [subs, now]);
+
+  const revenueDailySeries = useMemo(() => {
+    const arr: { day: string; label: string; revenue: number }[] = [];
+    if (range === "custom" && fromDate && toDate) {
+      const cur = new Date(fromDate); cur.setHours(0, 0, 0, 0);
+      const end = new Date(toDate); end.setHours(0, 0, 0, 0);
+      while (cur <= end) {
+        arr.push({ day: dayKey(cur), label: fmtDay(cur), revenue: 0 });
+        cur.setDate(cur.getDate() + 1);
+      }
+    } else {
+      const span = windowDays ?? 30;
+      for (let i = span - 1; i >= 0; i--) {
+        const d = new Date(now); d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        arr.push({ day: dayKey(d), label: fmtDay(d), revenue: 0 });
+      }
+    }
+    const map = new Map(arr.map((x, i) => [x.day, i]));
+    for (const p of paidInPeriod) {
+      const d = parseDateSafe(p.paid_at);
+      if (!d) continue;
+      const idx = map.get(dayKey(d));
+      if (idx != null) arr[idx].revenue += Number(p.amount_vnd) || 0;
+    }
+    return arr;
+  }, [paidInPeriod, windowDays, now, range, fromDate, toDate]);
+
+  const topPlans = useMemo(() => {
+    const m = new Map<string, { plan_key: string; orders: number; revenue: number }>();
+    for (const p of paidInPeriod) {
+      const k = p.plan_key || "(không rõ)";
+      const e = m.get(k) || { plan_key: k, orders: 0, revenue: 0 };
+      e.orders += 1;
+      e.revenue += Number(p.amount_vnd) || 0;
+      m.set(k, e);
+    }
+    return [...m.values()].sort((a, b) => b.revenue - a.revenue);
+  }, [paidInPeriod]);
+
+  const fmtVND = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
