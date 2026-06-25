@@ -283,6 +283,32 @@ const SpeakingReviewPage = ({
     }
   };
 
+  if (v2Part) {
+    const rawItems: any[] = Array.isArray(v2Part.items) ? v2Part.items : [];
+    const items = rawItems.map((it, i) => ({
+      questionText: it?.questionText,
+      transcript: it?.transcript,
+      onTopic: typeof it?.onTopic === "boolean" ? it.onTopic : undefined,
+      improvedVersion: it?.improvedVersion,
+      audioUrl: recordings[partType === "part4" ? 0 : i] ?? null,
+    }));
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        {skillHeader}
+        <div className="flex-1 px-4 py-6 max-w-3xl mx-auto w-full">
+          <SpeakingProfileView
+            bands={v2Part.bands || { tf: "", gra: "", vra: "", pro: "", fc: "" }}
+            items={items}
+            analysis={v2Part.analysis}
+            scale50={v2Scale}
+            cefr={v2Cefr}
+            partLabel={partLabel}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {skillHeader}
