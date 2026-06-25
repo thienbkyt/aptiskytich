@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ExamHeader from "@/components/exam/ExamHeader";
 import SpeakingReviewView from "@/components/speaking/SpeakingReviewView";
+import SpeakingProfileView from "@/components/speaking/SpeakingProfileView";
 import { fetchExamQuestions, normalizePart } from "@/hooks/useExamSets";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
@@ -58,6 +59,9 @@ const SpeakingReviewPage = ({
   const [part4Data, setPart4Data] = useState<SpeakingPart4Data | undefined>();
   const [recordings, setRecordings] = useState<(string | null)[]>([]);
   const [gradings, setGradings] = useState<(SpeakingGradingResult | null)[]>([]);
+  const [v2Part, setV2Part] = useState<any | null>(null);
+  const [v2Scale, setV2Scale] = useState<number | null>(null);
+  const [v2Cefr, setV2Cefr] = useState<string | null>(null);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [promptCount, setPromptCount] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -161,9 +165,49 @@ const SpeakingReviewPage = ({
         if (g.item_index >= 0 && g.item_index < gradeArr.length) gradeArr[g.item_index] = item;
       }
 
+      // 4. NEW system (speaking_skill_results) — try test_result_id, then
+      // fall back to full_test_session_id / fullPartSession from test_results.
+      let v2Row: any = null;
+      if (testResultId) {
+        const { data } = await (supabase as any)
+          .from("speaking_skill_results")
+          .select("parts,scale50,cefr")
+          .eq("user_id", userId)
+          .eq("test_result_id", testResultId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data && (data.parts as any)?.[pt]) v2Row = data;
+      }
+      if (!v2Row && testResultId) {
+        try {
+          const { data: tr } = await supabase
+            .from("test_results").select("skill_scores")
+            .eq("id", testResultId).maybeSingle();
+          const ss: any = tr?.skill_scores || {};
+          const ssid: string | null = ss.fullTestSession || ss.fullPartSession || null;
+          if (ssid) {
+            const { data } = await (supabase as any)
+              .from("speaking_skill_results")
+              .select("parts,scale50,cefr")
+              .eq("user_id", userId)
+              .eq("full_test_session_id", ssid)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (data && (data.parts as any)?.[pt]) v2Row = data;
+          }
+        } catch (e) {
+          console.warn("[SpeakingReviewPage] v2 session lookup failed", e);
+        }
+      }
+
       if (cancelled) return;
       setRecordings(signed);
       setGradings(gradeArr);
+      setV2Part(v2Row ? (v2Row.parts as any)[pt] : null);
+      setV2Scale(v2Row?.scale50 ?? null);
+      setV2Cefr(v2Row?.cefr ?? null);
       setReviewIndex(0);
       setPromptCount(Math.max(promptCount, 1));
       setLoading(false);
@@ -238,6 +282,32 @@ const SpeakingReviewPage = ({
       console.warn("[SpeakingReviewPage] regrade failed", e);
     }
   };
+
+  if (v2Part) {
+    const rawItems: any[] = Array.isArray(v2Part.items) ? v2Part.items : [];
+    const items = rawItems.map((it, i) => ({
+      questionText: it?.questionText,
+      transcript: it?.transcript,
+      onTopic: typeof it?.onTopic === "boolean" ? it.onTopic : undefined,
+      improvedVersion: it?.improvedVersion,
+      audioUrl: recordings[partType === "part4" ? 0 : i] ?? null,
+    }));
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        {skillHeader}
+        <div className="flex-1 px-4 py-6 max-w-3xl mx-auto w-full">
+          <SpeakingProfileView
+            bands={v2Part.bands || { tf: "", gra: "", vra: "", pro: "", fc: "" }}
+            items={items}
+            analysis={v2Part.analysis}
+            scale50={v2Scale}
+            cefr={v2Cefr}
+            partLabel={partLabel}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">

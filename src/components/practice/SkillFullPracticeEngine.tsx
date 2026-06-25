@@ -681,7 +681,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         await saveSpeakingSkillResult({
           testResultId: lastTrId,
           examSetId: lastExamSetId,
-          fullTestSessionId: null,
+          fullTestSessionId: fullPartSessionRef.current,
           parts: partsPayload,
           rawTotal,
           scale50,
