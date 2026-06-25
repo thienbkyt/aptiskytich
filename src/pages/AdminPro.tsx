@@ -494,6 +494,7 @@ const ProUsersSection = () => {
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Student | null>(null);
+  const [grantTier, setGrantTier] = useState<GrantTier>("pro");
   const [duration, setDuration] = useState<GrantDuration>("30d");
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [granting, setGranting] = useState(false);
@@ -546,6 +547,8 @@ const ProUsersSection = () => {
     const now = new Date();
     switch (duration) {
       case "lifetime": return null;
+      case "1d":
+        return new Date(now.getTime() + 1 * 24 * 3600 * 1000).toISOString();
       case "7d":
         return new Date(now.getTime() + 7 * 24 * 3600 * 1000).toISOString();
       case "30d":
@@ -567,16 +570,16 @@ const ProUsersSection = () => {
       .from("user_subscriptions")
       .upsert({
         user_id: selected.user_id,
-        tier: "pro",
+        tier: grantTier,
         pro_until: proUntil,
         updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      } as any, { onConflict: "user_id" });
     setGranting(false);
     if (error) {
-      toast.error("Cấp Pro thất bại: " + error.message);
+      toast.error("Cấp gói thất bại: " + error.message);
       return;
     }
-    toast.success(`Đã cấp Pro cho ${selected.email}`);
+    toast.success(`Đã cấp ${grantTier === "premium" ? "Premium" : "Pro"} cho ${selected.email}`);
     setSelected(null);
     setSearch("");
     setCustomDate(undefined);
