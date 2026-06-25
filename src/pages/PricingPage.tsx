@@ -78,9 +78,32 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [picked, setPicked] = useState<PricingPlan | null>(null);
+  const [buying, setBuying] = useState<string | null>(null);
   const { user } = useAuth();
-  const { isPro, isPremium, tier } = useIsPro();
+  const { isPro, isPremium, tier, refetch } = useIsPro();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+
+  useEffect(() => {
+    if (params.get("paid") === "1") {
+      toast.success("Đang xác nhận thanh toán...", { description: "Trạng thái gói sẽ tự cập nhật trong giây lát." });
+      // Poll tier a few times
+      let n = 0;
+      const t = setInterval(() => {
+        refetch?.();
+        n += 1;
+        if (n >= 6) clearInterval(t);
+      }, 2500);
+      params.delete("paid");
+      setParams(params, { replace: true });
+      return () => clearInterval(t);
+    }
+    if (params.get("cancel") === "1") {
+      toast.info("Bạn đã hủy thanh toán");
+      params.delete("cancel");
+      setParams(params, { replace: true });
+    }
+  }, [params, refetch, setParams]);
 
   useEffect(() => {
     (async () => {
