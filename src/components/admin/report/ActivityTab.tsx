@@ -459,6 +459,115 @@ const ActivityTab = () => {
           )}
         </div>
       </Card>
+
+      {/* ===== Trả phí & Doanh thu ===== */}
+      <div className="pt-2">
+        <h2 className="text-xl font-heading font-bold mb-4">Trả phí & Doanh thu</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <Wallet className="w-4 h-4" /> Doanh thu ({periodLabel})
+            </div>
+            <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_PRIMARY }}>
+              {fmtVND(revenuePeriod)}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Tổng: {fmtVND(revenueAllTime)}</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <CreditCard className="w-4 h-4" /> User đang trả phí
+            </div>
+            <p className="text-3xl font-heading font-extrabold text-foreground">
+              {payingCount.toLocaleString("vi-VN")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Pro: {proCount} · Premium: {premiumCount}</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <BadgePercent className="w-4 h-4" /> Tỉ lệ chuyển đổi
+            </div>
+            <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_ACCENT }}>
+              {conversionPct.toFixed(1)}%
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">{payingCount}/{totalUsers} user</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <ShoppingCart className="w-4 h-4" /> Số đơn ({periodLabel})
+            </div>
+            <p className="text-3xl font-heading font-extrabold text-foreground">
+              {paidInPeriod.length.toLocaleString("vi-VN")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Tổng đơn đã thanh toán trong kỳ</p>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+              <Clock className="w-4 h-4" /> Pro sắp hết hạn
+            </div>
+            <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_PRIMARY }}>
+              {expiringSoonCount.toLocaleString("vi-VN")}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">Trong vòng 7 ngày tới</p>
+          </Card>
+        </div>
+
+        <Card className="p-6 mt-4">
+          <h3 className="text-lg font-heading font-bold mb-4">Doanh thu theo ngày ({periodLabel})</h3>
+          <div className="w-full h-[280px]">
+            {revenueDailySeries.length === 0 || revenueDailySeries.every((d) => d.revenue === 0) ? (
+              <p className="text-sm text-muted-foreground">Không có dữ liệu.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueDailySeries} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => `${(Number(v) / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                    formatter={(v: number) => fmtVND(Number(v))}
+                  />
+                  <Line type="monotone" dataKey="revenue" stroke={COLOR_PRIMARY} strokeWidth={2} dot={false} name="Doanh thu" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-6 mt-4">
+          <h3 className="text-lg font-heading font-bold mb-4">Gói bán chạy ({periodLabel})</h3>
+          {topPlans.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Chưa có đơn thanh toán trong kỳ.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted-foreground uppercase tracking-wide border-b">
+                    <th className="py-2 pr-4">Gói</th>
+                    <th className="py-2 pr-4 text-right">Số đơn</th>
+                    <th className="py-2 text-right">Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topPlans.map((p) => (
+                    <tr key={p.plan_key} className="border-b last:border-0">
+                      <td className="py-2 pr-4 font-medium">{p.plan_key}</td>
+                      <td className="py-2 pr-4 text-right">{p.orders.toLocaleString("vi-VN")}</td>
+                      <td className="py-2 text-right font-semibold" style={{ color: COLOR_PRIMARY }}>
+                        {fmtVND(p.revenue)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 };
