@@ -119,6 +119,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const speakingGradingPromisesByPartRef = useRef<
     Record<number, Promise<Awaited<ReturnType<typeof gradeSpeakingSpec>>[]>>
   >({});
+  // V2 background grading promises keyed by part index.
+  const speakingV2PromisesByPartRef = useRef<
+    Record<number, Promise<SpeakingPartResultV2>>
+  >({});
   const [speakingPhase, setSpeakingPhase] = useState<"none" | "grading" | "results">("none");
   const [speakingGradedCount, setSpeakingGradedCount] = useState(0);
   const [speakingGradeTotal, setSpeakingGradeTotal] = useState(0);
@@ -532,7 +536,19 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         }
       } catch { /* swallow */ }
 
-      // V2 grading happens after the final part — no per-part kick needed.
+      // Kick off V2 grading IN BACKGROUND for the part just finished,
+      // so by the time the student reaches the last part most grading is done.
+      try {
+        const sub = speakingSubmissionsByPartRef.current[currentPartIndex];
+        if (sub && !speakingV2PromisesByPartRef.current[currentPartIndex]) {
+          const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
+          const blobs = sub.items.map((it) => it.blob ?? null);
+          speakingV2PromisesByPartRef.current[currentPartIndex] =
+            gradeSpeakingPartV2(sub.partType, questions, blobs);
+        }
+      } catch (e) {
+        console.warn("[SkillFullPractice V2] background kick failed", e);
+      }
 
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
@@ -576,16 +592,23 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         console.warn("[SkillFullPractice V2] recordings upload failed", e);
       }
 
-      // 2) Grade each part with V2 sequentially (so progress is visible).
+      // 2) Await V2 grading per part (most were kicked off in background as parts completed).
       const v2ByPart: Record<string, SpeakingPartResultV2> = {};
       const v2Entries: SpeakingV2PartEntry[] = [];
       for (let oi = 0; oi < orderedSubs.length; oi++) {
         const sub = orderedSubs[oi];
-        setSpeakingV2Message(`AI Kỳ Tích đang chấm Part ${sub.partNumber} (${oi + 1}/${orderedSubs.length})...`);
+        const originalIdx = orderedIndices[oi];
+        setSpeakingV2Message(`AI Kỳ Tích đang hoàn tất Part ${sub.partNumber} (${oi + 1}/${orderedSubs.length})...`);
         const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
         const blobs = sub.items.map((it) => it.blob ?? null);
+        // Reuse background promise if available; else fire fresh.
+        let pending = speakingV2PromisesByPartRef.current[originalIdx];
+        if (!pending) {
+          pending = gradeSpeakingPartV2(sub.partType, questions, blobs);
+          speakingV2PromisesByPartRef.current[originalIdx] = pending;
+        }
         try {
-          const result = await gradeSpeakingPartV2(sub.partType, questions, blobs);
+          const result = await pending;
           const merged: SpeakingPartResultV2 = {
             ...result,
             perItem: (result.perItem || []).map((it, i) => ({
@@ -611,7 +634,6 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
               onTopic: false,
             })),
             analysis: "Không chấm được phần này. Vui lòng thử lại sau.",
-            feedback: "",
             improvedVersion: "",
           };
           v2ByPart[sub.partType] = empty;

@@ -1056,8 +1056,8 @@ const SpeakingExamEngine = ({
               <SpeakingProfileView
                 bands={v2Result.bands}
                 items={itemsForView}
-                feedback={v2Result.feedback}
                 analysis={v2Result.analysis}
+                improvedVersion={v2Result.improvedVersion}
                 partLabel={`Part ${partNumber}`}
               />
             )}

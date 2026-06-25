@@ -20,7 +20,7 @@ export type SpeakingPartResultV2 = {
   rawPart: number;
   perItem: SpeakingPartItemV2[];
   analysis: string;
-  feedback: string;
+  feedback?: string;
   improvedVersion: string;
 };
 
@@ -79,10 +79,9 @@ export async function gradeSpeakingPartV2(
 
   return {
     bands: data.bands ?? { tf: "", gra: "", vra: "", pro: "", fc: "" },
-    rawPart: Number(data.rawPart ?? 0),
+    rawPart: Number(data.rawPart ?? data.raw_part ?? 0),
     perItem: Array.isArray(data.perItem) ? data.perItem : [],
     analysis: data.analysis ?? "",
-    feedback: data.feedback ?? "",
     improvedVersion: data.improvedVersion ?? "",
   };
 }
@@ -104,7 +103,7 @@ export async function finalizeSpeaking(
   if (!data) throw new Error("Empty response from grade-exam (speaking_finalize)");
 
   return {
-    rawTotal: Number(data.rawTotal ?? 0),
+    rawTotal: Number(data.rawTotal ?? data.raw_total ?? 0),
     scale50: Number(data.scale50 ?? 0),
     cefr: data.cefr ?? "",
     greyZone: !!data.greyZone,

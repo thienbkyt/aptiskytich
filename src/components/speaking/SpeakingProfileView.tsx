@@ -1,13 +1,21 @@
 import { useMemo } from "react";
 import { Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+} from "recharts";
 import type { SpeakingPartResultV2 } from "./speakingGradingV2";
 
-const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; label: string; vi: string }> = [
-  { key: "tf", label: "TF", vi: "Hoàn thành yêu cầu (Task Fulfilment)" },
-  { key: "gra", label: "GRA", vi: "Ngữ pháp (Grammatical Range & Accuracy)" },
-  { key: "vra", label: "VRA", vi: "Từ vựng (Vocabulary Range & Accuracy)" },
-  { key: "pro", label: "PRO", vi: "Phát âm (Pronunciation)" },
-  { key: "fc", label: "FC", vi: "Trôi chảy & Mạch lạc (Fluency & Coherence)" },
+const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; label: string; vi: string; viShort: string }> = [
+  { key: "tf", label: "TF", vi: "Hoàn thành yêu cầu (Task Fulfilment)", viShort: "Nội dung" },
+  { key: "gra", label: "GRA", vi: "Ngữ pháp (Grammatical Range & Accuracy)", viShort: "Ngữ pháp" },
+  { key: "vra", label: "VRA", vi: "Từ vựng (Vocabulary Range & Accuracy)", viShort: "Từ vựng" },
+  { key: "pro", label: "PRO", vi: "Phát âm (Pronunciation)", viShort: "Phát âm" },
+  { key: "fc", label: "FC", vi: "Trôi chảy & Mạch lạc (Fluency & Coherence)", viShort: "Sự trôi chảy" },
 ];
 
 function bandToNumber(b: string | number | null | undefined): number | null {
@@ -19,14 +27,6 @@ function bandToNumber(b: string | number | null | undefined): number | null {
   return Number.isFinite(n) ? Math.max(0, Math.min(5, n)) : null;
 }
 
-function bandColor(n: number | null): string {
-  if (n == null) return "bg-muted";
-  if (n >= 4) return "bg-emerald-500";
-  if (n >= 3) return "bg-amber-500";
-  if (n >= 2) return "bg-orange-500";
-  return "bg-rose-500";
-}
-
 interface SpeakingProfileViewProps {
   bands: SpeakingPartResultV2["bands"];
   items: Array<{
@@ -36,8 +36,11 @@ interface SpeakingProfileViewProps {
     improvedVersion?: string;
     audioUrl?: string | null;
   }>;
+  /** @deprecated kept for backward compat; not rendered. */
   feedback?: string;
   analysis?: string;
+  /** Part-level improved English version (from edge speaking_v2). */
+  improvedVersion?: string;
   scale50?: number | null;
   cefr?: string | null;
   partLabel?: string;
@@ -46,8 +49,8 @@ interface SpeakingProfileViewProps {
 const SpeakingProfileView = ({
   bands,
   items,
-  feedback,
   analysis,
+  improvedVersion,
   scale50 = null,
   cefr = null,
   partLabel,
@@ -59,6 +62,15 @@ const SpeakingProfileView = ({
         return { ...c, value: n };
       }),
     [bands],
+  );
+
+  const radarData = useMemo(
+    () =>
+      rows.map((r) => ({
+        criterion: `${r.viShort} (${r.label})`,
+        value: r.value ?? 0,
+      })),
+    [rows],
   );
 
   return (
@@ -90,42 +102,74 @@ const SpeakingProfileView = ({
           </div>
         )}
 
-        <div className="mt-5 space-y-3">
-          {rows.map((r) => {
-            const pct = r.value != null ? (r.value / 5) * 100 : 0;
-            return (
-              <div key={r.key}>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <div className="text-foreground">
-                    <span className="font-bold mr-2">{r.label}</span>
-                    <span className="text-muted-foreground text-xs">{r.vi}</span>
-                  </div>
-                  <span className="font-mono font-semibold text-foreground">
-                    {r.value != null ? r.value.toFixed(1) : "—"}<span className="text-muted-foreground">/5</span>
-                  </span>
+        {/* Radar chart 5 trục */}
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-4 items-center">
+          <div className="w-full h-[280px] sm:h-[320px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData} outerRadius="75%">
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis
+                  dataKey="criterion"
+                  tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                />
+                <PolarRadiusAxis
+                  angle={90}
+                  domain={[0, 5]}
+                  tickCount={6}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                  stroke="hsl(var(--border))"
+                />
+                <Radar
+                  name="Band"
+                  dataKey="value"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.35}
+                  isAnimationActive={false}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <ul className="space-y-2">
+            {rows.map((r) => (
+              <li
+                key={r.key}
+                className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/40 border border-border/60"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {r.viShort} <span className="text-xs text-muted-foreground font-normal">({r.label})</span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">{r.vi}</p>
                 </div>
-                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full ${bandColor(r.value)} transition-all`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+                <span className="font-mono font-semibold text-foreground shrink-0">
+                  {r.value != null ? r.value.toFixed(1) : "—"}
+                  <span className="text-muted-foreground">/5</span>
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {analysis && (
           <div className="mt-5 p-4 rounded-lg bg-muted/40 border border-border/60">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Phân tích</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Phân tích bài làm</p>
             <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{analysis}</p>
           </div>
         )}
 
-        {feedback && (
+        {improvedVersion && (
           <div className="mt-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-xs font-semibold text-primary uppercase mb-1">Nhận xét chung</p>
-            <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{feedback}</p>
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <p className="text-xs font-semibold text-primary uppercase">
+                Phiên bản AI Kỳ Tích gợi ý cho bạn
+              </p>
+            </div>
+            <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+              {improvedVersion}
+            </p>
           </div>
         )}
       </div>
@@ -172,20 +216,6 @@ const SpeakingProfileView = ({
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Transcript</p>
                 <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                   {it.transcript}
-                </p>
-              </div>
-            )}
-
-            {it.improvedVersion && (
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  <p className="text-xs font-semibold text-primary uppercase">
-                    Phiên bản AI Kỳ Tích gợi ý
-                  </p>
-                </div>
-                <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                  {it.improvedVersion}
                 </p>
               </div>
             )}

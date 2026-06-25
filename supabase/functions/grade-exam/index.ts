@@ -98,7 +98,10 @@ serve(async (req) => {
       const p4 = Number(rawParts.part4 ?? 0);
       const coreGV = (body as any).coreGV;
       const raw_total = p1 + p2 + p3 + p4 * 1.2; // max 126
-      const scale50 = Math.round((raw_total / 126) * 50);
+      const scale50_base = Math.round((raw_total / 126) * 50);
+      // LENIENCY: scoring runs strict; apply +20% scaling for user-facing score.
+      const LENIENCY = 1.2;
+      const scale50 = Math.min(50, Math.round(scale50_base * LENIENCY));
       const CUTS: Array<{ band: string; cut: number }> = [
         { band: "C", cut: 48 },
         { band: "B2", cut: 41 },
@@ -127,8 +130,10 @@ serve(async (req) => {
       }
       const cefr = bumpedTo ?? baseBand;
       const flagReview = greyZone;
+      const rawTotalRounded = Math.round(raw_total * 100) / 100;
       return new Response(JSON.stringify({
-        raw_total: Math.round(raw_total * 100) / 100,
+        rawTotal: rawTotalRounded,
+        raw_total: rawTotalRounded,
         scale50,
         cefr,
         greyZone,
@@ -204,9 +209,8 @@ DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
 
 OUTPUT (via the tool, in this order — write "analysis" BEFORE choosing bands):
 - perItem: ${isPart4 ? "one entry per SUB-QUESTION (evaluating the same monologue)" : "one entry per QUESTION/AUDIO in order"} { transcript: string, onTopic: boolean }.
-- analysis: Vietnamese, 3-5 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band.
+- analysis: Vietnamese, 4-6 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band; KẾT THÚC bằng 1 câu gợi ý ngắn việc cần làm để cải thiện.
 - bands: { tf, gra, vra, pro, fc } each integer 0..5.
-- feedback: Vietnamese, ≤3 câu — 1-2 điểm yếu cụ thể nhất + 1 việc làm ngay.
 - improvedVersion: ONE upgraded English version of the student's own answer for this part — keep ideas, fix errors, upgrade vocab/structure, add linking words.
 
 Be honest, strict, fair. Do not invent content the student didn't say.`;
@@ -253,10 +257,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                 },
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
-              feedback: { type: "string" },
               improvedVersion: { type: "string" },
             },
-            required: ["perItem", "analysis", "bands", "feedback", "improvedVersion"],
+            required: ["perItem", "analysis", "bands", "improvedVersion"],
           },
         },
       };
@@ -332,10 +335,10 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
 
       return new Response(JSON.stringify({
         bands: { tf, gra, vra, pro, fc },
+        rawPart: raw_part,
         raw_part,
         perItem: Array.isArray(parsed.perItem) ? parsed.perItem : [],
         analysis: parsed.analysis ?? "",
-        feedback: parsed.feedback ?? "",
         improvedVersion: parsed.improvedVersion ?? "",
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
