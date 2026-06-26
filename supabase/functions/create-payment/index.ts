@@ -75,9 +75,9 @@ Deno.serve(async (req) => {
     // Generate unique orderCode (max 9007199254740991, fits bigint). Use timestamp + random.
     const orderCode = Number(`${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`);
 
-    const origin = req.headers.get("origin") || "https://aptiskytich.vn";
-    const returnUrl = `${origin}/pricing?paid=1`;
-    const cancelUrl = `${origin}/pricing?cancel=1`;
+    const appOrigin = Deno.env.get("APP_ORIGIN") || "https://aptiskytich.vn";
+    const returnUrl = `${appOrigin}/pricing?paid=1`;
+    const cancelUrl = `${appOrigin}/pricing?cancel=1`;
     const description = `${tier === "premium" ? "Premium" : "Pro"} ${planKey}`.slice(0, 25);
 
     // Insert pending payment first
