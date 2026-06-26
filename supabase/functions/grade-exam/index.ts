@@ -170,7 +170,7 @@ serve(async (req) => {
       // No audio at all → don't call AI, return zeroed grading.
       if (!anySpoken) {
         const emptyPerItem = Array.from({ length: itemCount }, () => ({
-          transcript: "", onTopic: false, improvedVersion: "",
+          transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "",
         }));
         return new Response(JSON.stringify({
           bands: { tf: 0, gra: 0, vra: 0, pro: 0, fc: 0 },
@@ -178,6 +178,7 @@ serve(async (req) => {
           raw_part: 0,
           perItem: emptyPerItem,
           analysis: "Không có bài ghi âm.",
+          criteriaAnalysis: { tf: "Không có bài ghi âm.", gra: "Không có bài ghi âm.", vra: "Không có bài ghi âm.", pro: "Không có bài ghi âm.", fc: "Không có bài ghi âm." },
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
