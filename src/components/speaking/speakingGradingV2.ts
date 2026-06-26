@@ -65,6 +65,25 @@ export async function gradeSpeakingPartV2(
     }
   }
 
+  // Short-circuit: if NO audio was recorded at all, skip the edge call entirely.
+  const anySpoken = audios.some((a) => typeof a === "string" && a.length > 100);
+  if (!anySpoken) {
+    const count = Math.max(questions.length, 1);
+    return {
+      bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
+      rawPart: 0,
+      perItem: Array.from({ length: count }, () => ({
+        transcript: "",
+        onTopic: false,
+        improvedVersion: "",
+        questionText: "",
+      })),
+      analysis: "Không có bài ghi âm.",
+      improvedVersion: "",
+    };
+  }
+
+
   const { data, error } = await supabase.functions.invoke("grade-exam", {
     body: {
       type: "speaking_v2",
