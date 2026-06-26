@@ -8,11 +8,20 @@ export type SpeakingBandsV2 = {
   fc: string;
 };
 
+export type SpeakingCriteriaAnalysisV2 = {
+  tf: string;
+  gra: string;
+  vra: string;
+  pro: string;
+  fc: string;
+};
+
 export type SpeakingPartItemV2 = {
   transcript: string;
   onTopic: boolean;
   questionText?: string;
   improvedVersion?: string;
+  upgradeTips?: string;
 };
 
 export type SpeakingPartResultV2 = {
@@ -20,6 +29,7 @@ export type SpeakingPartResultV2 = {
   rawPart: number;
   perItem: SpeakingPartItemV2[];
   analysis: string;
+  criteriaAnalysis?: SpeakingCriteriaAnalysisV2;
   feedback?: string;
   improvedVersion: string;
 };
