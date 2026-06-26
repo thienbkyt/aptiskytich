@@ -160,6 +160,27 @@ serve(async (req) => {
         });
       }
 
+      const isPart4 = partType === "part4";
+      const MIN_AUDIO_LEN = 100;
+      // Treat very short / empty base64 strings as "silent" (no recording).
+      const spokenMask: boolean[] = audios.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN);
+      const anySpoken = spokenMask.some(Boolean);
+      const itemCount = isPart4 ? Math.max(questions.length, 1) : questions.length;
+
+      // No audio at all → don't call AI, return zeroed grading.
+      if (!anySpoken) {
+        const emptyPerItem = Array.from({ length: itemCount }, () => ({
+          transcript: "", onTopic: false, improvedVersion: "",
+        }));
+        return new Response(JSON.stringify({
+          bands: { tf: 0, gra: 0, vra: 0, pro: 0, fc: 0 },
+          rawPart: 0,
+          raw_part: 0,
+          perItem: emptyPerItem,
+          analysis: "Không có bài ghi âm.",
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       // Tier gate — reuse ai_grading_speaking quota
       if (userId) {
         try {
@@ -182,7 +203,6 @@ serve(async (req) => {
         }
       }
 
-      const isPart4 = partType === "part4";
       const sysV2 = `You are an expert Aptis Speaking grader. You grade ONE PART at a time using the official 5-criteria rubric (TF, GRA, VRA, PRO, FC), each 0-5 integer.
 
 MASTER BAND ANCHORS (apply to EACH criterion):
@@ -197,7 +217,7 @@ CRITERIA:
 - TF (Task Fulfilment) anchored by ON-TOPIC count of sub-answers:
   5 = all on-topic AND ideas well developed; 4 = all on-topic, adequate ideas;
   3 = 2/3 on-topic; 2 = 1/3 on-topic; 1 = barely touches topic; 0 = totally off / no answer.
-  A one-word reply or silence does NOT count as on-topic.
+  A one-word reply or silence does NOT count as on-topic. Questions with NO audio do NOT count as on-topic and must NOT be invented.
   ${isPart4 ? "For PART 4: ONE monologue audio addresses several sub-questions. Judge on-topic PER SUB-QUESTION over the SAME monologue." : ""}
 - GRA (Grammar Range & Accuracy): reward attempts at complex structures even if not perfect. Only deduct band when errors block understanding. Do NOT count errors absolutely.
 - VRA (Vocabulary Range & Accuracy): same leniency; reward variety.
@@ -207,20 +227,34 @@ CRITERIA:
 REWARDS: dám dùng cấu trúc phức tạp / từ vựng cao cấp / kết nối ý → cộng band ngay cả khi còn lỗi nhỏ.
 DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
 
+SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
+
 OUTPUT (via the tool, in this order — write "analysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty." : "one entry per QUESTION/AUDIO in order. Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words). Empty string if the student was silent."}.
+- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty." : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words). Empty string if the student was silent or had no audio."}.
 - analysis: Vietnamese, 4-6 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band; KẾT THÚC bằng 1 câu gợi ý ngắn việc cần làm để cải thiện.
 - bands: { tf, gra, vra, pro, fc } each integer 0..5.
 
 Be honest, strict, fair. Do not invent content the student didn't say.`;
 
+      // For non-Part4: send only spoken audios, but label every question and note which have NO AUDIO.
+      // For Part4: single monologue; we already know anySpoken is true here.
+      const spokenAudios = audios.filter((_, i) => spokenMask[i]);
+      const spokenIdx = audios.map((_, i) => i).filter((i) => spokenMask[i]);
+      const questionListText = isPart4
+        ? questions.map((q, i) => `${i + 1}. ${q}`).join("\n")
+        : questions.map((q, i) => `${i + 1}. ${q}${spokenMask[i] ? "" : "  [NO AUDIO — student did not record]"}`).join("\n");
+
+      const audioOrderNote = isPart4
+        ? "ONE monologue audio follows."
+        : `${spokenAudios.length} audio file(s) follow, IN ORDER, for question number(s): ${spokenIdx.map((i) => i + 1).join(", ")}. Other questions have NO AUDIO and MUST be returned with empty transcript and onTopic=false.`;
+
       const userParts: any[] = [
-        { type: "text", text: `Exam Part: ${partType}\n${isPart4 ? "Sub-questions" : "Questions"}:\n${questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\n${isPart4 ? "ONE monologue audio follows." : `${audios.length} audio file(s) follow, one per question in order.`}` },
+        { type: "text", text: `Exam Part: ${partType}\n${isPart4 ? "Sub-questions" : "Questions"}:\n${questionListText}\n\n${audioOrderNote}` },
       ];
-      for (const a of audios) {
-        if (!a) continue;
+      for (const a of spokenAudios) {
         userParts.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
       }
+
 
       const toolSchemaV2 = {
         type: "function",
