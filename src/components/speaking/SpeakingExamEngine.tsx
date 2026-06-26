@@ -286,6 +286,7 @@ const SpeakingExamEngine = ({
                 bands: finalResult.bands,
                 items: mergedPerItem,
                 analysis: finalResult.analysis,
+                criteriaAnalysis: finalResult.criteriaAnalysis,
                 feedback: finalResult.feedback,
                 improvedVersion: finalResult.improvedVersion,
                 rawPart: finalResult.rawPart,
