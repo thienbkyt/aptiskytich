@@ -1091,7 +1091,10 @@ const SpeakingExamEngine = ({
                 analysis={v2Result.analysis}
                 criteriaAnalysis={v2Result.criteriaAnalysis}
                 improvedVersion={v2Result.improvedVersion}
+                scale50={v2Scale}
+                cefr={v2Cefr}
                 partLabel={`Part ${partNumber}`}
+
               />
             )}
 
