@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Sparkles, CheckCircle2, AlertCircle, PenLine } from "lucide-react";
+import { Sparkles, CheckCircle2, AlertCircle, PenLine, Target } from "lucide-react";
 import {
   Radar,
   RadarChart,
@@ -8,7 +8,7 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
 } from "recharts";
-import type { SpeakingPartResultV2 } from "./speakingGradingV2";
+import type { SpeakingPartResultV2, SpeakingCriteriaAnalysisV2 } from "./speakingGradingV2";
 
 const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; vi: string }> = [
   { key: "tf", vi: "Nội dung" },
@@ -34,11 +34,13 @@ interface SpeakingProfileViewProps {
     transcript?: string;
     onTopic?: boolean;
     improvedVersion?: string;
+    upgradeTips?: string;
     audioUrl?: string | null;
   }>;
   /** @deprecated kept for backward compat; not rendered. */
   feedback?: string;
   analysis?: string;
+  criteriaAnalysis?: SpeakingCriteriaAnalysisV2;
   /** @deprecated part-level improvedVersion no longer rendered (moved per-item). */
   improvedVersion?: string;
   scale50?: number | null;
@@ -50,6 +52,7 @@ const SpeakingProfileView = ({
   bands,
   items,
   analysis,
+  criteriaAnalysis,
   scale50 = null,
   cefr = null,
   partLabel,
@@ -68,6 +71,10 @@ const SpeakingProfileView = ({
     [rows],
   );
 
+  const hasCriteriaAnalysis =
+    !!criteriaAnalysis &&
+    CRITERIA.some((c) => (criteriaAnalysis as any)[c.key]?.toString().trim());
+
   return (
     <div className="space-y-6">
       <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
@@ -78,9 +85,6 @@ const SpeakingProfileView = ({
         <h3 className="text-lg font-heading font-bold text-foreground">
           Hồ sơ chẩn đoán Speaking{partLabel ? ` — ${partLabel}` : ""}
         </h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          Profile 5 tiêu chí (thang 0–5).
-        </p>
 
         {(scale50 != null || cefr) && (
           <div className="mt-4 flex flex-wrap gap-3">
@@ -97,25 +101,39 @@ const SpeakingProfileView = ({
           </div>
         )}
 
-        {/* Radar chart 5 trục — nhãn tiếng Việt */}
+        {/* Radar chart 5 trục — nhãn tiếng Việt, ẩn số 0-5 */}
         <div className="mt-5" style={{ width: "100%", height: 300 }}>
           <ResponsiveContainer>
             <RadarChart data={radarData} outerRadius="70%">
               <PolarGrid />
               <PolarAngleAxis dataKey="criterion" tick={{ fontSize: 13 }} />
-              <PolarRadiusAxis domain={[0, 5]} tickCount={6} />
+              <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
               <Radar dataKey="value" stroke="#24085a" fill="#24085a" fillOpacity={0.35} isAnimationActive={false} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
-        <p className="mt-3 text-sm text-foreground text-center">
-          {rows.map((r) => `${r.vi} ${r.value != null ? r.value.toFixed(0) : "—"}/5`).join(" · ")}
-        </p>
 
-        {analysis && (
+        {(hasCriteriaAnalysis || analysis) && (
           <div className="mt-5 p-4 rounded-lg bg-muted/40 border border-border/60">
-            <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Phân tích bài làm</p>
-            <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{analysis}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Phân tích bài làm</p>
+            {hasCriteriaAnalysis ? (
+              <ul className="space-y-2.5">
+                {rows.map((r) => {
+                  const txt = (criteriaAnalysis as any)?.[r.key] as string | undefined;
+                  if (!txt) return null;
+                  return (
+                    <li key={r.key} className="text-sm text-foreground leading-relaxed">
+                      <span className="font-semibold">
+                        {r.vi} ({r.value != null ? r.value.toFixed(0) : "—"}/5):
+                      </span>{" "}
+                      <span className="whitespace-pre-line">{txt}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{analysis}</p>
+            )}
           </div>
         )}
       </div>
@@ -176,6 +194,20 @@ const SpeakingProfileView = ({
                 </div>
                 <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
                   {it.improvedVersion}
+                </p>
+              </div>
+            )}
+
+            {it.upgradeTips && (
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/30">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Target className="w-3.5 h-3.5 text-primary" />
+                  <p className="text-xs font-semibold uppercase text-primary">
+                    🎯 Mẹo đạt điểm cao Aptis
+                  </p>
+                </div>
+                <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                  {it.upgradeTips}
                 </p>
               </div>
             )}

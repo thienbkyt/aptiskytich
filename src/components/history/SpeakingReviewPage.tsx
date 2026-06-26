@@ -290,6 +290,7 @@ const SpeakingReviewPage = ({
       transcript: it?.transcript,
       onTopic: typeof it?.onTopic === "boolean" ? it.onTopic : undefined,
       improvedVersion: it?.improvedVersion,
+      upgradeTips: it?.upgradeTips,
       audioUrl: recordings[partType === "part4" ? 0 : i] ?? null,
     }));
     return (
@@ -300,6 +301,7 @@ const SpeakingReviewPage = ({
             bands={v2Part.bands || { tf: "", gra: "", vra: "", pro: "", fc: "" }}
             items={items}
             analysis={v2Part.analysis}
+            criteriaAnalysis={v2Part.criteriaAnalysis}
             scale50={v2Scale}
             cefr={v2Cefr}
             partLabel={partLabel}

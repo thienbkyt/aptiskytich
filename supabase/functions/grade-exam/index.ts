@@ -170,7 +170,7 @@ serve(async (req) => {
       // No audio at all → don't call AI, return zeroed grading.
       if (!anySpoken) {
         const emptyPerItem = Array.from({ length: itemCount }, () => ({
-          transcript: "", onTopic: false, improvedVersion: "",
+          transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "",
         }));
         return new Response(JSON.stringify({
           bands: { tf: 0, gra: 0, vra: 0, pro: 0, fc: 0 },
@@ -178,6 +178,7 @@ serve(async (req) => {
           raw_part: 0,
           perItem: emptyPerItem,
           analysis: "Không có bài ghi âm.",
+          criteriaAnalysis: { tf: "Không có bài ghi âm.", gra: "Không có bài ghi âm.", vra: "Không có bài ghi âm.", pro: "Không có bài ghi âm.", fc: "Không có bài ghi âm." },
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
@@ -229,9 +230,15 @@ DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
 
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
-OUTPUT (via the tool, in this order — write "analysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty." : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words). Empty string if the student was silent or had no audio."}.
-- analysis: Vietnamese, 4-6 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band; KẾT THÚC bằng 1 câu gợi ý ngắn việc cần làm để cải thiện.
+OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
+- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis (cấu trúc phức tạp gợi ý, từ nối, paraphrase, ví dụ minh hoạ, đa dạng từ vựng)." : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
+- analysis: Vietnamese, 4-6 câu — phân tích tổng quan TRƯỚC khi cho band.
+- criteriaAnalysis: object với 5 trường tiếng Việt { tf, gra, vra, pro, fc }. MỖI tiêu chí 2-3 câu: VÌ SAO được band đó + cách CẢI THIỆN CỤ THỂ.
+  • vra (Từ vựng): chỉ ra từ/cụm học viên đã dùng và GỢI Ý từ thay thế "xịn" hơn để nâng band (vd: "good → beneficial/remarkable", "a lot of → a considerable amount of").
+  • gra (Ngữ pháp): chỉ rõ lỗi/cấu trúc cần sửa và mẫu câu nên dùng (vd: "nên dùng mệnh đề quan hệ: ... which ...").
+  • pro (Phát âm): nêu âm/trọng âm cụ thể yếu, cách luyện.
+  • fc (Trôi chảy): nêu chỗ ngập ngừng/thiếu liên kết + từ nối nên dùng (however, moreover, as a result...).
+  • tf (Nội dung): nêu ý còn thiếu/lệch + cách triển khai sâu hơn (lý do + ví dụ).
 - bands: { tf, gra, vra, pro, fc } each integer 0..5.
 
 Be honest, strict, fair. Do not invent content the student didn't say.`;
@@ -274,11 +281,24 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                     transcript: { type: "string" },
                     onTopic: { type: "boolean" },
                     improvedVersion: { type: "string", description: "Upgraded English rewrite of THIS answer/sub-segment. Empty string if silent." },
+                    upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis-oriented tips to score higher on THIS answer (complex grammar, linking words, idea development, vocabulary upgrades). Empty if silent." },
                   },
-                  required: ["transcript", "onTopic", "improvedVersion"],
+                  required: ["transcript", "onTopic", "improvedVersion", "upgradeTips"],
                 },
               },
               analysis: { type: "string" },
+              criteriaAnalysis: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  tf: { type: "string", description: "Vietnamese, 2-3 sentences: why this band + concrete improvement for Task Fulfilment." },
+                  gra: { type: "string", description: "Vietnamese, 2-3 sentences: why this band + concrete grammar fix and structure to use." },
+                  vra: { type: "string", description: "Vietnamese, 2-3 sentences: why this band + name actual words used and suggest upgrade replacements." },
+                  pro: { type: "string", description: "Vietnamese, 2-3 sentences: why this band + concrete pronunciation/stress improvements." },
+                  fc: { type: "string", description: "Vietnamese, 2-3 sentences: why this band + linking words and fluency fixes." },
+                },
+                required: ["tf", "gra", "vra", "pro", "fc"],
+              },
               bands: {
                 type: "object",
                 additionalProperties: false,
@@ -292,7 +312,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
             },
-            required: ["perItem", "analysis", "bands"],
+            required: ["perItem", "analysis", "criteriaAnalysis", "bands"],
           },
         },
       };
@@ -371,22 +391,31 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
             transcript: it?.transcript ?? "",
             onTopic: !!it?.onTopic,
             improvedVersion: it?.improvedVersion ?? "",
+            upgradeTips: it?.upgradeTips ?? "",
           }))
         : [];
       // Hard-enforce: items without audio MUST be empty (don't trust model).
       if (!isPart4) {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "" };
-          return perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "" };
+          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          return perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
         });
       }
 
+      const ca = parsed.criteriaAnalysis || {};
       return new Response(JSON.stringify({
         bands: { tf, gra, vra, pro, fc },
         rawPart: raw_part,
         raw_part,
         perItem: perItemOut,
         analysis: parsed.analysis ?? "",
+        criteriaAnalysis: {
+          tf: ca.tf ?? "",
+          gra: ca.gra ?? "",
+          vra: ca.vra ?? "",
+          pro: ca.pro ?? "",
+          fc: ca.fc ?? "",
+        },
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     // ============================================================

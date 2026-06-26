@@ -155,9 +155,12 @@ const SpeakingFullResultsV2 = ({
                   questionText: it.questionText,
                   transcript: it.transcript,
                   onTopic: it.onTopic,
+                  improvedVersion: it.improvedVersion,
+                  upgradeTips: it.upgradeTips,
                   audioUrl: current.recordingUrls[i] ?? null,
                 }))}
                 analysis={current.result.analysis}
+                criteriaAnalysis={current.result.criteriaAnalysis}
                 improvedVersion={current.result.improvedVersion}
                 partLabel={`Part ${current.partNumber}`}
               />

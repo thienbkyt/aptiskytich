@@ -8,11 +8,20 @@ export type SpeakingBandsV2 = {
   fc: string;
 };
 
+export type SpeakingCriteriaAnalysisV2 = {
+  tf: string;
+  gra: string;
+  vra: string;
+  pro: string;
+  fc: string;
+};
+
 export type SpeakingPartItemV2 = {
   transcript: string;
   onTopic: boolean;
   questionText?: string;
   improvedVersion?: string;
+  upgradeTips?: string;
 };
 
 export type SpeakingPartResultV2 = {
@@ -20,6 +29,7 @@ export type SpeakingPartResultV2 = {
   rawPart: number;
   perItem: SpeakingPartItemV2[];
   analysis: string;
+  criteriaAnalysis?: SpeakingCriteriaAnalysisV2;
   feedback?: string;
   improvedVersion: string;
 };
@@ -76,9 +86,11 @@ export async function gradeSpeakingPartV2(
         transcript: "",
         onTopic: false,
         improvedVersion: "",
+        upgradeTips: "",
         questionText: "",
       })),
       analysis: "Không có bài ghi âm.",
+      criteriaAnalysis: { tf: "Không có bài ghi âm.", gra: "Không có bài ghi âm.", vra: "Không có bài ghi âm.", pro: "Không có bài ghi âm.", fc: "Không có bài ghi âm." },
       improvedVersion: "",
     };
   }
@@ -101,6 +113,7 @@ export async function gradeSpeakingPartV2(
     rawPart: Number(data.rawPart ?? data.raw_part ?? 0),
     perItem: Array.isArray(data.perItem) ? data.perItem : [],
     analysis: data.analysis ?? "",
+    criteriaAnalysis: data.criteriaAnalysis ?? undefined,
     improvedVersion: data.improvedVersion ?? "",
   };
 }
@@ -140,6 +153,7 @@ export type SaveSpeakingSkillResultArgs = {
       bands?: SpeakingBandsV2;
       items?: SpeakingPartItemV2[];
       analysis?: string;
+      criteriaAnalysis?: SpeakingCriteriaAnalysisV2;
       feedback?: string;
       improvedVersion?: string;
       rawPart?: number;

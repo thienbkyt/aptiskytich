@@ -286,6 +286,7 @@ const SpeakingExamEngine = ({
                 bands: finalResult.bands,
                 items: mergedPerItem,
                 analysis: finalResult.analysis,
+                criteriaAnalysis: finalResult.criteriaAnalysis,
                 feedback: finalResult.feedback,
                 improvedVersion: finalResult.improvedVersion,
                 rawPart: finalResult.rawPart,
@@ -1016,6 +1017,7 @@ const SpeakingExamEngine = ({
           transcript: it.transcript,
           onTopic: it.onTopic,
           improvedVersion: it.improvedVersion,
+          upgradeTips: it.upgradeTips,
           audioUrl: recordings[i] ?? null,
         }))
       : [];
@@ -1057,6 +1059,7 @@ const SpeakingExamEngine = ({
                 bands={v2Result.bands}
                 items={itemsForView}
                 analysis={v2Result.analysis}
+                criteriaAnalysis={v2Result.criteriaAnalysis}
                 improvedVersion={v2Result.improvedVersion}
                 partLabel={`Part ${partNumber}`}
               />

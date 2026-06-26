@@ -673,6 +673,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             bands: entry.result.bands,
             items: entry.result.perItem,
             analysis: entry.result.analysis,
+            criteriaAnalysis: entry.result.criteriaAnalysis,
             feedback: entry.result.feedback,
             improvedVersion: entry.result.improvedVersion,
             rawPart: entry.result.rawPart,
