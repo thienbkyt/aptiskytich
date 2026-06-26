@@ -294,7 +294,7 @@ const Speaking = () => {
                     return (
                     <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
-                        <div className="absolute top-3 right-3"><CornerResultBadge item={gradedProgress.get(set.id)} /></div>
+                        <div className="absolute top-3 right-3"><CornerResultBadge item={gradedProgress.get(set.id)} label={gradedProgress.get(set.id) ? `${gradedProgress.get(set.id)!.bestPct}% điểm` : undefined} /></div>
                         <div className="flex items-center gap-2 mb-3">
                           <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
                           <ExamTierBadge tier={set.access_tier} locked={locked} />

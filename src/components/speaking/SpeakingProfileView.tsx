@@ -87,19 +87,17 @@ const SpeakingProfileView = ({
         </h3>
 
         {(scale50 != null || cefr) && (
-          <div className="mt-4 flex flex-wrap gap-3">
-            {scale50 != null && (
-              <div className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-sm font-semibold">
-                Scale 50: {scale50}
-              </div>
-            )}
-            {cefr && (
-              <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-semibold">
-                CEFR: {cefr}
-              </div>
-            )}
+          <div className="mt-4 space-y-1">
+            <div className="text-sm font-semibold text-foreground">
+              Mức đạt: {scale50 != null ? `${Math.round((Number(scale50) / 50) * 100)}% điểm` : "—"}
+              {cefr ? ` · CEFR ${cefr}` : ""}
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Điểm chất lượng bài nói dựa trên 5 tiêu chí (nội dung, ngữ pháp, từ vựng, phát âm, trôi chảy) — không phải % câu đúng.
+            </p>
           </div>
         )}
+
 
         {/* Radar chart 5 trục — nhãn tiếng Việt, ẩn số 0-5 */}
         <div className="mt-5" style={{ width: "100%", height: 300 }}>

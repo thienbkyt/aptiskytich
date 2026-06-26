@@ -37,8 +37,10 @@ import SpeakingReviewView from "./SpeakingReviewView";
 import {
   gradeSpeakingPartV2,
   saveSpeakingSkillResult,
+  finalizeSpeaking,
   type SpeakingPartResultV2,
 } from "./speakingGradingV2";
+
 import SpeakingProfileView from "./SpeakingProfileView";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
@@ -140,7 +142,10 @@ const SpeakingExamEngine = ({
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
+  const [v2Scale, setV2Scale] = useState<number | null>(null);
+  const [v2Cefr, setV2Cefr] = useState<string | null>(null);
   const [v2Error, setV2Error] = useState<string | null>(null);
+
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
   const gradingRanRef = useRef(false);
   const testResultIdRef = useRef<string | null>(null);
@@ -275,6 +280,30 @@ const SpeakingExamEngine = ({
         const finalResult: SpeakingPartResultV2 = { ...result, perItem: mergedPerItem };
         setV2Result(finalResult);
 
+        // Compute scale50 + CEFR for this single part using the finalize edge.
+        // Trick: pass rawPart in all 4 slots so the server math (rawTotal/126*50)
+        // collapses to rawPart/30*50 — i.e. percent = round(rawPart/30 * 100).
+        let scale50Out = Math.round((Number(finalResult.rawPart || 0) / 30) * 50);
+        let cefrOut = "";
+        let greyOut = false;
+        let flagOut = false;
+        try {
+          const fin = await finalizeSpeaking({
+            part1: finalResult.rawPart,
+            part2: finalResult.rawPart,
+            part3: finalResult.rawPart,
+            part4: finalResult.rawPart,
+          });
+          scale50Out = Number(fin.scale50 ?? scale50Out);
+          cefrOut = fin.cefr || "";
+          greyOut = !!fin.greyZone;
+          flagOut = !!fin.flagReview;
+        } catch (e) {
+          console.warn("[Speaking V2] finalize (single part) failed:", e);
+        }
+        setV2Scale(scale50Out);
+        setV2Cefr(cefrOut);
+
         // Best-effort save to speaking_skill_results (parts contains only this part).
         try {
           await saveSpeakingSkillResult({
@@ -293,15 +322,16 @@ const SpeakingExamEngine = ({
               },
             },
             rawTotal: finalResult.rawPart || 0,
-            scale50: 0,
-            cefr: "",
-            greyZone: false,
-            flagReview: false,
+            scale50: scale50Out,
+            cefr: cefrOut,
+            greyZone: greyOut,
+            flagReview: flagOut,
             feedback: finalResult.feedback,
           });
         } catch (e) {
           console.warn("[Speaking V2] save skill result failed:", e);
         }
+
       } catch (e: any) {
         console.error("[Speaking V2] grading failed:", e);
         setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
@@ -1061,7 +1091,10 @@ const SpeakingExamEngine = ({
                 analysis={v2Result.analysis}
                 criteriaAnalysis={v2Result.criteriaAnalysis}
                 improvedVersion={v2Result.improvedVersion}
+                scale50={v2Scale}
+                cefr={v2Cefr}
                 partLabel={`Part ${partNumber}`}
+
               />
             )}
 
