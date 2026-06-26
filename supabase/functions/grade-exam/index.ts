@@ -230,9 +230,15 @@ DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
 
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
-OUTPUT (via the tool, in this order — write "analysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty." : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words). Empty string if the student was silent or had no audio."}.
-- analysis: Vietnamese, 4-6 câu — phân tích cụ thể (đáp ứng đề, ngữ pháp, từ vựng, phát âm, fluency) TRƯỚC khi cho band; KẾT THÚC bằng 1 câu gợi ý ngắn việc cần làm để cải thiện.
+OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
+- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis (cấu trúc phức tạp gợi ý, từ nối, paraphrase, ví dụ minh hoạ, đa dạng từ vựng)." : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
+- analysis: Vietnamese, 4-6 câu — phân tích tổng quan TRƯỚC khi cho band.
+- criteriaAnalysis: object với 5 trường tiếng Việt { tf, gra, vra, pro, fc }. MỖI tiêu chí 2-3 câu: VÌ SAO được band đó + cách CẢI THIỆN CỤ THỂ.
+  • vra (Từ vựng): chỉ ra từ/cụm học viên đã dùng và GỢI Ý từ thay thế "xịn" hơn để nâng band (vd: "good → beneficial/remarkable", "a lot of → a considerable amount of").
+  • gra (Ngữ pháp): chỉ rõ lỗi/cấu trúc cần sửa và mẫu câu nên dùng (vd: "nên dùng mệnh đề quan hệ: ... which ...").
+  • pro (Phát âm): nêu âm/trọng âm cụ thể yếu, cách luyện.
+  • fc (Trôi chảy): nêu chỗ ngập ngừng/thiếu liên kết + từ nối nên dùng (however, moreover, as a result...).
+  • tf (Nội dung): nêu ý còn thiếu/lệch + cách triển khai sâu hơn (lý do + ví dụ).
 - bands: { tf, gra, vra, pro, fc } each integer 0..5.
 
 Be honest, strict, fair. Do not invent content the student didn't say.`;
