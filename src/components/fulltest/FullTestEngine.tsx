@@ -722,6 +722,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                 bands: merged.bands,
                 items: merged.perItem,
                 analysis: merged.analysis,
+                criteriaAnalysis: merged.criteriaAnalysis,
                 feedback: merged.feedback,
                 improvedVersion: merged.improvedVersion,
                 rawPart: merged.rawPart,
