@@ -37,8 +37,10 @@ import SpeakingReviewView from "./SpeakingReviewView";
 import {
   gradeSpeakingPartV2,
   saveSpeakingSkillResult,
+  finalizeSpeaking,
   type SpeakingPartResultV2,
 } from "./speakingGradingV2";
+
 import SpeakingProfileView from "./SpeakingProfileView";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
