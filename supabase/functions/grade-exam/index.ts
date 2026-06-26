@@ -228,6 +228,27 @@ CRITERIA:
 REWARDS: dám dùng cấu trúc phức tạp / từ vựng cao cấp / kết nối ý → cộng band ngay cả khi còn lỗi nhỏ.
 DEDUCTIONS: chỉ trừ band khi lỗi cản trở hiểu hoặc gây mơ hồ.
 
+=== APTIS HIGH-SCORE LOGIC (use this to write criteriaAnalysis & upgradeTips) ===
+Band rises come from RANGE + ACCURACY + STRUCTURE + COHESION, NOT from "zero errors". Reward attempts at complex language even with minor slips; only penalize errors that impede meaning.
+
+1) CONTENT (Task Fulfilment): address every part fully; structure = opening → developed points (claim → reason → example/experience → result) → short conclusion. Develop, don't just state. To improve: add a reason + a concrete example/personal experience to each idea.
+2) GRAMMAR (range & accuracy): higher band = USING a RANGE of complex structures accurately — relative clauses (which/who/that), conditionals (If I had…, I would…), passives, present perfect/continuous, modals of speculation (might/could/would), comparatives/superlatives, cleft sentences (What I really enjoy is…). To improve: take a simple sentence the student said and RECAST it with one complex structure (show the recast).
+3) VOCABULARY (range & accuracy): higher band = precise, topic-specific, less-common words + collocations + paraphrase (avoid repetition). To improve: pick the weak/general words the student actually used and give STRONGER SWAPS, e.g. good→beneficial/effective, bad→detrimental, big→substantial, a lot of→a considerable amount of, nice→enjoyable/pleasant, I think→In my view/I'd argue, important→crucial/vital. Show the exact replacement.
+4) PRONUNCIATION: clear sounds + correct WORD STRESS and SENTENCE STRESS + varied INTONATION (avoid monotone) + CHUNKING (pause at meaning boundaries) + natural linking. To improve: name the specific feature to drill (e.g., stress on the 2nd syllable of "deVElop", chunk before "however").
+5) FLUENCY & COHERENCE: steady pace, few disruptive pauses/fillers, smooth self-reformulation; and a RANGE of cohesive devices — sequence (firstly, then, finally), addition (moreover, in addition), contrast (however, on the other hand, whereas), cause/result (because, therefore, as a result, consequently), example (for instance, such as), conclusion (overall, in conclusion). To improve: INSERT specific linkers between the student's ideas (quote where).
+
+PART-SPECIFIC HIGH-SCORE MOVES:
+- Use the FULL allotted time.
+- Part 1: answer + 1–2 supporting details + a reason.
+- Part 2 (describe picture): systematic order (place → people → actions → atmosphere) + speculation language (they seem to…/might be…); answer opinion Qs with reasons.
+- Part 3 (compare 2 pictures): explicit comparison (both…; whereas…; in contrast; similarly) + state a preference WITH justification (I'd rather… because…).
+- Part 4 (abstract monologue, ~2 min): intro → personal experience → reasons + examples → wider perspective → conclusion; use discourse markers throughout.
+
+HOW TO APPLY:
+- criteriaAnalysis[mỗi tiêu chí]: giải thích band theo các chiều RANGE / ACCURACY / STRUCTURE / COHESION, TRÍCH lại chính lời học viên đã nói (đặt trong dấu ngoặc kép), rồi đưa cách sửa cụ thể (riêng Vocabulary phải nêu rõ cặp swap "từ học viên dùng → từ xịn hơn", riêng Grammar phải show recast câu của học viên thành cấu trúc phức tạp hơn).
+- upgradeTips (mỗi item): chọn 1–2 move tác động cao nhất CHO RIÊNG câu này, TRÍCH lời học viên, rồi viết mẫu cách nói lại để đạt band Aptis cao hơn (KHÔNG nói mẹo chung chung).
+- Tuyệt đối KHÔNG dùng tip mẫu áp cho mọi bài; mọi đề xuất phải bám vào nội dung thực tế trong transcript của học viên.
+
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
 OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
