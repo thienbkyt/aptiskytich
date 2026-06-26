@@ -391,22 +391,31 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
             transcript: it?.transcript ?? "",
             onTopic: !!it?.onTopic,
             improvedVersion: it?.improvedVersion ?? "",
+            upgradeTips: it?.upgradeTips ?? "",
           }))
         : [];
       // Hard-enforce: items without audio MUST be empty (don't trust model).
       if (!isPart4) {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "" };
-          return perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "" };
+          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          return perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
         });
       }
 
+      const ca = parsed.criteriaAnalysis || {};
       return new Response(JSON.stringify({
         bands: { tf, gra, vra, pro, fc },
         rawPart: raw_part,
         raw_part,
         perItem: perItemOut,
         analysis: parsed.analysis ?? "",
+        criteriaAnalysis: {
+          tf: ca.tf ?? "",
+          gra: ca.gra ?? "",
+          vra: ca.vra ?? "",
+          pro: ca.pro ?? "",
+          fc: ca.fc ?? "",
+        },
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     // ============================================================
