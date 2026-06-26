@@ -153,6 +153,7 @@ export type SaveSpeakingSkillResultArgs = {
       bands?: SpeakingBandsV2;
       items?: SpeakingPartItemV2[];
       analysis?: string;
+      criteriaAnalysis?: SpeakingCriteriaAnalysisV2;
       feedback?: string;
       improvedVersion?: string;
       rawPart?: number;
