@@ -366,13 +366,21 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         }
       } catch { /* ignore */ }
 
-      const perItemOut = Array.isArray(parsed.perItem)
+      let perItemOut = Array.isArray(parsed.perItem)
         ? parsed.perItem.map((it: any) => ({
             transcript: it?.transcript ?? "",
             onTopic: !!it?.onTopic,
             improvedVersion: it?.improvedVersion ?? "",
           }))
         : [];
+      // Hard-enforce: items without audio MUST be empty (don't trust model).
+      if (!isPart4) {
+        perItemOut = Array.from({ length: itemCount }, (_, i) => {
+          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "" };
+          return perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "" };
+        });
+      }
+
       return new Response(JSON.stringify({
         bands: { tf, gra, vra, pro, fc },
         rawPart: raw_part,
