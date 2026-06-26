@@ -86,9 +86,11 @@ export async function gradeSpeakingPartV2(
         transcript: "",
         onTopic: false,
         improvedVersion: "",
+        upgradeTips: "",
         questionText: "",
       })),
       analysis: "Không có bài ghi âm.",
+      criteriaAnalysis: { tf: "Không có bài ghi âm.", gra: "Không có bài ghi âm.", vra: "Không có bài ghi âm.", pro: "Không có bài ghi âm.", fc: "Không có bài ghi âm." },
       improvedVersion: "",
     };
   }
@@ -111,6 +113,7 @@ export async function gradeSpeakingPartV2(
     rawPart: Number(data.rawPart ?? data.raw_part ?? 0),
     perItem: Array.isArray(data.perItem) ? data.perItem : [],
     analysis: data.analysis ?? "",
+    criteriaAnalysis: data.criteriaAnalysis ?? undefined,
     improvedVersion: data.improvedVersion ?? "",
   };
 }
