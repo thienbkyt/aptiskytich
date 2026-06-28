@@ -478,6 +478,12 @@ const MergedExamsList = () => {
                                 ? "Nháp"
                                 : `${publishedCount}/${g.parts.length} xuất bản`}
                           </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${mixedTier ? tierBadgeClass.mixed : tierBadgeClass[groupTier]}`}
+                          >
+                            {mixedTier ? "Hỗn hợp" : groupTier.toUpperCase()}
+                          </Badge>
                           {Array.from(g.skills)
                             .sort()
                             .map((s) => (
