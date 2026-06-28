@@ -56,6 +56,13 @@ const Admin = () => {
                 Thông báo người dùng
               </Link>
               <Link
+                to="/admin/prediction"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                <Sparkles className="w-4 h-4" />
+                Key Dự Đoán
+              </Link>
+              <Link
                 to="/admin/reports"
                 className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
