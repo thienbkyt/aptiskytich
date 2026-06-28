@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
   BarChart3, CheckCircle2, Calendar, Zap, History,
-  GraduationCap, Sparkles, Mic, Crown,
+  GraduationCap, Sparkles, Mic, Crown, KeyRound,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
