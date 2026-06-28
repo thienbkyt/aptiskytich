@@ -26,14 +26,23 @@ export function useExamAccessGate() {
   const isLocked = useCallback(
     (set: MinimalSet | null | undefined) => {
       if (!set) return false;
+      // Fail-open while tier is still loading — don't show a lock for a paying
+      // user just because the RPC hasn't resolved yet. Server (grade-exam) is
+      // the source of truth.
+      if (loading) return false;
       const req = normalizeTier(set.access_tier);
       return tierRank(tier) < tierRank(req);
     },
-    [tier],
+    [tier, loading],
   );
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void) => {
+      // If tier is still loading, just let the action through; server enforces.
+      if (loading) {
+        action();
+        return;
+      }
       if (isLocked(set)) {
         const req = normalizeTier(set.access_tier);
         setNeedTier(req === "premium" ? "premium" : "pro");
@@ -42,7 +51,7 @@ export function useExamAccessGate() {
       }
       action();
     },
-    [isLocked],
+    [isLocked, loading],
   );
 
   const LockModal = () => (
