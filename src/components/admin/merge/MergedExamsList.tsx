@@ -425,6 +425,15 @@ const MergedExamsList = () => {
             const nonePublished = g.kind === "full_part" ? publishedCount === 0 : !g.is_published;
             const isEditing = editingId === g.groupId;
             const isBusy = busyId === g.groupId;
+            const tiers = Array.from(new Set(g.parts.map((p) => p.access_tier || "pro")));
+            const mixedTier = tiers.length > 1;
+            const groupTier: AccessTier = mixedTier ? "pro" : (tiers[0] as AccessTier) || "pro";
+            const tierBadgeClass: Record<string, string> = {
+              free: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+              pro: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+              premium: "bg-violet-500/15 text-violet-700 border-violet-500/30",
+              mixed: "bg-muted text-muted-foreground border-border",
+            };
 
             return (
               <div key={g.groupId} className="rounded-xl border border-border bg-card overflow-hidden">
