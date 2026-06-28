@@ -402,6 +402,15 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
             const sortedParts = [...group.parts].sort(
               (a, b) => skillOrder.indexOf(a.skill) - skillOrder.indexOf(b.skill)
             );
+            const tiers = Array.from(new Set(group.parts.map((p) => p.access_tier || "pro")));
+            const mixedTier = tiers.length > 1;
+            const groupTier: AccessTier = mixedTier ? "pro" : (tiers[0] as AccessTier);
+            const tierBadgeClass: Record<string, string> = {
+              free: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+              pro: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+              premium: "bg-violet-500/15 text-violet-700 border-violet-500/30",
+              mixed: "bg-muted text-muted-foreground border-border",
+            };
 
             return (
               <div key={group.full_test_id} className="rounded-xl border border-border bg-card overflow-hidden">
