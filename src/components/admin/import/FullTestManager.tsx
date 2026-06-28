@@ -15,6 +15,8 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type AccessTier = "free" | "pro" | "premium";
+
 interface FullTestGroup {
   full_test_id: string;
   full_test_title: string;
@@ -26,6 +28,7 @@ interface FullTestGroup {
     title: string;
     is_published: boolean;
     question_count?: number;
+    access_tier?: AccessTier;
   }[];
 }
 
