@@ -38,6 +38,13 @@ function speakAsync(text: string): Promise<void> {
   return ttsSpeakAsync(text, "en");
 }
 
+// Module-level guard: if the same intro text was already spoken in the last 60s
+// (e.g. parent re-rendered and remounted this screen because a tier/auth hook
+// finally resolved), skip the TTS sequence and go straight to onNext so we
+// don't bump the TTS play token and kill the upcoming question audio.
+const SPOKEN_AT: Map<string, number> = new Map();
+const SPOKEN_TTL_MS = 60_000;
+
 const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onNext, onExit }: SpeakingPromptScreenProps) => {
   const hasStarted = useRef(false);
 
@@ -45,10 +52,17 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
     if (hasStarted.current) return;
     hasStarted.current = true;
 
+    const key = instructions || "";
+    const last = SPOKEN_AT.get(key) || 0;
+    const recentlySpoken = Date.now() - last < SPOKEN_TTL_MS;
+
     const run = async () => {
-      await speakAsync(instructions);
-      await playBeep();
-      await new Promise((r) => setTimeout(r, 1000));
+      if (!recentlySpoken) {
+        SPOKEN_AT.set(key, Date.now());
+        await speakAsync(instructions);
+        await playBeep();
+        await new Promise((r) => setTimeout(r, 1000));
+      }
       onNext();
     };
     run();
