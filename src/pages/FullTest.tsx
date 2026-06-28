@@ -128,7 +128,7 @@ const FullTest = () => {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Bộ đề Key Aptis
+                Đề Key Dự Đoán (Update hằng ngày)
               </button>
             </div>
             <p className="text-sm text-muted-foreground mt-3">
