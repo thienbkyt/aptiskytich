@@ -92,7 +92,7 @@ const LEVEL_GRAD: Record<string, string> = {
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isPro, isPremium, tier, proUntil } = useIsPro();
+  const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
