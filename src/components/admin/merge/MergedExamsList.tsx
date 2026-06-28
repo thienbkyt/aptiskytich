@@ -110,7 +110,7 @@ const MergedExamsList = () => {
       const { data: sets } = memberSetIds.length
         ? await supabase
             .from("exam_sets")
-            .select("id, title, part, skill, is_published")
+            .select("id, title, part, skill, is_published, access_tier")
             .in("id", memberSetIds)
         : { data: [] as any[] };
 
