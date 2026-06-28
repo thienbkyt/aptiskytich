@@ -198,7 +198,7 @@ const AdminPrediction = () => {
     toast.success("Đã thêm: " + set.title);
   };
 
-  const updateItem = async (id: string, patch: Partial<PredictionItem>) => {
+  const updateItem = async (id: string, patch: { priority?: Priority; sort_order?: number }) => {
     const prev = items;
     setItems((cur) => cur.map((i) => (i.id === id ? { ...i, ...patch } : i)));
     const { error } = await supabase.from("prediction_items").update(patch).eq("id", id);
