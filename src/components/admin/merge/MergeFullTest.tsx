@@ -170,7 +170,7 @@ const MergeFullTest = () => {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="aptis">Bộ đề thi Aptis</SelectItem>
-                <SelectItem value="key">Bộ đề Key Aptis</SelectItem>
+                <SelectItem value="key">Đề Key Dự Đoán (Update hằng ngày)</SelectItem>
               </SelectContent>
             </Select>
           </div>
