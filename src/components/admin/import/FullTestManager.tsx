@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExamType, FULL_EXAM_SHEETS, SKILL_LABELS, Skill } from "./types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { readExcelFile, createAndDownloadExcel } from "@/lib/excelUtils";
 import { parseSheet } from "./excelParsers";
 import {
@@ -14,6 +15,8 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+type AccessTier = "free" | "pro" | "premium";
 
 interface FullTestGroup {
   full_test_id: string;
@@ -26,6 +29,7 @@ interface FullTestGroup {
     title: string;
     is_published: boolean;
     question_count?: number;
+    access_tier?: AccessTier;
   }[];
 }
 
@@ -80,7 +84,7 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
       const { data: sets } = memberSetIds.length
         ? await supabase
             .from("exam_sets")
-            .select("id, title, skill, part, is_published, exam_type")
+            .select("id, title, skill, part, is_published, exam_type, access_tier")
             .in("id", memberSetIds)
         : { data: [] as any[] };
 
@@ -103,6 +107,7 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
               title: s.title,
               is_published: s.is_published,
               exam_type: s.exam_type,
+              access_tier: (s.access_tier as AccessTier) || "pro",
             };
           })
           .filter(Boolean) as any[];
@@ -179,6 +184,27 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
       )
     );
     toast({ title: publish ? "Đã xuất bản Full Test" : "Đã ẩn Full Test" });
+  };
+
+  const changeGroupTier = async (group: FullTestGroup, tier: AccessTier) => {
+    const ids = group.parts.map((p) => p.id);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("exam_sets")
+      .update({ access_tier: tier } as any)
+      .in("id", ids);
+    if (error) {
+      toast({ title: "Cập nhật tier thất bại", description: error.message, variant: "destructive" });
+      return;
+    }
+    setGroups((gs) =>
+      gs.map((g) =>
+        g.full_test_id === group.full_test_id
+          ? { ...g, parts: g.parts.map((p) => ({ ...p, access_tier: tier })) }
+          : g
+      )
+    );
+    toast({ title: `Đã đặt tier: ${tier.toUpperCase()}` });
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -376,6 +402,15 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
             const sortedParts = [...group.parts].sort(
               (a, b) => skillOrder.indexOf(a.skill) - skillOrder.indexOf(b.skill)
             );
+            const tiers = Array.from(new Set(group.parts.map((p) => p.access_tier || "pro")));
+            const mixedTier = tiers.length > 1;
+            const groupTier: AccessTier = mixedTier ? "pro" : (tiers[0] as AccessTier);
+            const tierBadgeClass: Record<string, string> = {
+              free: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+              pro: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+              premium: "bg-violet-500/15 text-violet-700 border-violet-500/30",
+              mixed: "bg-muted text-muted-foreground border-border",
+            };
 
             return (
               <div key={group.full_test_id} className="rounded-xl border border-border bg-card overflow-hidden">
@@ -395,6 +430,9 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
                         <Badge variant={allPublished ? "default" : "secondary"} className="text-xs">
                           {allPublished ? "Đã xuất bản" : "Nháp"}
                         </Badge>
+                        <Badge variant="outline" className={`text-xs ${mixedTier ? tierBadgeClass.mixed : tierBadgeClass[groupTier]}`}>
+                          {mixedTier ? "Hỗn hợp" : groupTier.toUpperCase()}
+                        </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {group.parts.length} parts · {totalQs} câu hỏi
@@ -402,6 +440,21 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={mixedTier ? "" : groupTier}
+                        onValueChange={(v) => changeGroupTier(group, v as AccessTier)}
+                      >
+                        <SelectTrigger className="h-8 w-[110px] text-xs">
+                          <SelectValue placeholder="Tier..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button
                       variant="ghost" size="icon"
                       onClick={(e) => { e.stopPropagation(); togglePublishAll(group, !allPublished); }}
