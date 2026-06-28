@@ -43,7 +43,7 @@ const Navbar = () => {
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
-  const { isPro, isPremium, tier } = useIsPro();
+  const { isPro, isPremium, tier, loading: tierLoading } = useIsPro();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
