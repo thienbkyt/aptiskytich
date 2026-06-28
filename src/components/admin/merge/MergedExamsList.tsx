@@ -81,7 +81,7 @@ const MergedExamsList = () => {
     // 1) Full Part groups → exam_sets with full_test_id but category IS NULL
     const { data: fpData, error: fpErr } = await supabase
       .from("exam_sets")
-      .select("id, title, part, skill, is_published, full_test_id, full_test_title")
+      .select("id, title, part, skill, is_published, full_test_id, full_test_title, access_tier")
       .not("full_test_id", "is", null)
       .is("full_test_category", null)
       .order("created_at", { ascending: true });
