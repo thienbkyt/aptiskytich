@@ -440,6 +440,21 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={mixedTier ? "" : groupTier}
+                        onValueChange={(v) => changeGroupTier(group, v as AccessTier)}
+                      >
+                        <SelectTrigger className="h-8 w-[110px] text-xs">
+                          <SelectValue placeholder="Tier..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Button
                       variant="ghost" size="icon"
                       onClick={(e) => { e.stopPropagation(); togglePublishAll(group, !allPublished); }}
