@@ -588,11 +588,13 @@ const GrammarExamEngine = ({
                                     <SelectValue placeholder="Select..." />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {opts.map((opt, oi) => (
-                                      <SelectItem key={oi} value={String(oi)}>
-                                        {labels[oi]}. {opt}
-                                      </SelectItem>
-                                    ))}
+                                    {opts.map((opt, oi) =>
+                                      opt && opt.trim() ? (
+                                        <SelectItem key={oi} value={String(oi)}>
+                                          {labels[oi]}. {opt}
+                                        </SelectItem>
+                                      ) : null
+                                    )}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -626,11 +628,13 @@ const GrammarExamEngine = ({
                                     <SelectValue placeholder="Select..." />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {opts.map((opt, oi) => (
-                                      <SelectItem key={oi} value={String(oi)}>
-                                        {labels[oi]}. {opt}
-                                      </SelectItem>
-                                    ))}
+                                    {opts.map((opt, oi) =>
+                                      opt && opt.trim() ? (
+                                        <SelectItem key={oi} value={String(oi)}>
+                                          {labels[oi]}. {opt}
+                                        </SelectItem>
+                                      ) : null
+                                    )}
                                   </SelectContent>
                                 </Select>
                               </div>
