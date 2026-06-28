@@ -132,6 +132,7 @@ const MergedExamsList = () => {
               is_published: s.is_published,
               full_test_id: ft.id,
               full_test_title: ft.title,
+              access_tier: (s.access_tier as AccessTier) || "pro",
             } as PartRow;
           })
           .filter(Boolean) as PartRow[];
