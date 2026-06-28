@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle, Bell } from "lucide-react";
+import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle, Bell, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
@@ -54,6 +54,13 @@ const Admin = () => {
               >
                 <Bell className="w-4 h-4" />
                 Thông báo người dùng
+              </Link>
+              <Link
+                to="/admin/prediction"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                <Sparkles className="w-4 h-4" />
+                Key Dự Đoán
               </Link>
               <Link
                 to="/admin/reports"

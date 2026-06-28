@@ -778,6 +778,75 @@ export type Database = {
           },
         ]
       }
+      prediction_items: {
+        Row: {
+          created_at: string
+          exam_set_id: string
+          id: string
+          key_id: string
+          priority: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          exam_set_id: string
+          id?: string
+          key_id: string
+          priority?: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          exam_set_id?: string
+          id?: string
+          key_id?: string
+          priority?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prediction_items_exam_set_id_fkey"
+            columns: ["exam_set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prediction_items_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "prediction_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prediction_keys: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          is_published: boolean
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          is_published?: boolean
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          is_published?: boolean
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pricing_config: {
         Row: {
           created_at: string
