@@ -306,7 +306,12 @@ const Navbar = () => {
           )}
           {user ? (
             <>
-              {isPremium ? (
+              {tierLoading ? (
+                <span
+                  aria-hidden
+                  className="inline-block h-8 w-24 rounded-full bg-muted/40 animate-pulse"
+                />
+              ) : isPremium ? (
                 <span
                   title="Bạn đang là thành viên Premium (trọn đời)"
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-[0_0_12px_-2px_rgba(254,173,95,0.6)]"
