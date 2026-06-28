@@ -83,7 +83,7 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
       const { data: sets } = memberSetIds.length
         ? await supabase
             .from("exam_sets")
-            .select("id, title, skill, part, is_published, exam_type")
+            .select("id, title, skill, part, is_published, exam_type, access_tier")
             .in("id", memberSetIds)
         : { data: [] as any[] };
 
