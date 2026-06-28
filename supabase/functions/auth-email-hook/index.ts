@@ -284,6 +284,23 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   console.log('Auth email enqueued', { emailType, email: payload.data.email, run_id })
 
+  // Kích dispatcher chạy NGAY (nền, không chặn response) — mail đi trong ~1-2s
+  try {
+    const dispatch = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/process-email-queue`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        'Lovable-Context': 'instant',
+      },
+      body: '{}',
+    }).catch((e) => console.error('Instant dispatch failed', e));
+    // @ts-ignore EdgeRuntime có sẵn trong Supabase Edge Functions
+    if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(dispatch);
+  } catch (e) {
+    console.error('Instant dispatch error', e);
+  }
+
   return new Response(
     JSON.stringify({ success: true, queued: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
