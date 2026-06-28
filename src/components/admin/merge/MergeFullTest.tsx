@@ -137,7 +137,7 @@ const MergeFullTest = () => {
     }
     toast({
       title: "Đã ghép Full Test",
-      description: `Bài thi "${title}" đã hiển thị ở ${category === "aptis" ? "Bộ đề thi Aptis" : "Bộ đề Key Aptis"}`,
+      description: `Bài thi "${title}" đã hiển thị ở ${category === "aptis" ? "Bộ đề thi Aptis" : "Đề Key Dự Đoán (Update hằng ngày)"}`,
     });
     setTitle("");
     setSelected({ speaking: "", listening: "", grammar_vocab: "", reading: "", writing: "" });
@@ -170,7 +170,7 @@ const MergeFullTest = () => {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="aptis">Bộ đề thi Aptis</SelectItem>
-                <SelectItem value="key">Bộ đề Key Aptis</SelectItem>
+                <SelectItem value="key">Đề Key Dự Đoán (Update hằng ngày)</SelectItem>
               </SelectContent>
             </Select>
           </div>

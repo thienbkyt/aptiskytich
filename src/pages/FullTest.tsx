@@ -128,7 +128,7 @@ const FullTest = () => {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Bộ đề Key Aptis
+                Đề Key Dự Đoán (Update hằng ngày)
               </button>
             </div>
             <p className="text-sm text-muted-foreground mt-3">
@@ -150,7 +150,7 @@ const FullTest = () => {
               <p className="text-muted-foreground font-medium mb-1">
                 {activeTab === "aptis"
                   ? "Chưa có đề thi Full Test nào được xuất bản"
-                  : "Bộ đề Key Aptis đang được cập nhật"}
+                  : "Đề Key Dự Đoán (Update hằng ngày) đang được cập nhật"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {activeTab === "aptis"
