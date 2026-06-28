@@ -92,7 +92,7 @@ const LEVEL_GRAD: Record<string, string> = {
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { isPro, isPremium, tier, proUntil } = useIsPro();
+  const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -368,13 +368,17 @@ const Dashboard = () => {
                 <StatPill icon={CheckCircle2} label="Câu đã làm" value={d.totalQuestions} accent="orange" />
                 <StatPill icon={Target} label="Chính xác" value={`${d.accuracy}%`} accent="success" />
                 <StatPill icon={TrendingUp} label="Trình độ" value={d.currentLevel} accent="violet" />
-                <TierPill tier={tier} isPremium={isPremium} isPro={isPro} proUntil={proUntil} />
+                {tierLoading ? (
+                  <div className="h-[92px] rounded-2xl border border-border bg-muted/30 animate-pulse" />
+                ) : (
+                  <TierPill tier={tier} isPremium={isPremium} isPro={isPro} proUntil={proUntil} />
+                )}
               </div>
             </div>
           </motion.div>
 
           {/* UPGRADE BANNER (free only) */}
-          {!isPro && (
+          {!tierLoading && !isPro && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}

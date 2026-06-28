@@ -21,8 +21,10 @@ export interface UseFeatureResult extends FeatureAccess {
   refetch: () => Promise<void>;
 }
 
+// Fail-open default: server (edge functions) is the source of truth.
+// UI must not lock a paying user just because the RPC hasn't resolved or errored.
 const DEFAULT: FeatureAccess = {
-  allowed: false,
+  allowed: true,
   isPro: false,
   tier: "free",
   enabled: true,
@@ -41,7 +43,9 @@ export function useFeature(key: string, scope?: string | null): UseFeatureResult
         p_scope: scope ?? null,
       });
       if (error) {
-        setState({ allowed: false, isPro: false, tier: "free", enabled: true, reason: "error" });
+        // Fail-open on RPC error so paying users aren't locked out by transient
+        // failures. Server enforcement still applies on the actual action.
+        setState({ allowed: true, isPro: false, tier: "free", enabled: true, reason: "error" });
       } else {
         const d = (data ?? {}) as any;
         setState({
@@ -65,7 +69,8 @@ export function useFeature(key: string, scope?: string | null): UseFeatureResult
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      setState({ allowed: false, isPro: false, tier: "free", enabled: true, reason: "unauthenticated" });
+      // Unauthenticated — leave UI permissive; route guards/server handle auth.
+      setState({ allowed: true, isPro: false, tier: "free", enabled: true, reason: "unauthenticated" });
       setLoading(false);
       return;
     }

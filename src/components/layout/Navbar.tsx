@@ -43,7 +43,7 @@ const Navbar = () => {
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
-  const { isPro, isPremium, tier } = useIsPro();
+  const { isPro, isPremium, tier, loading: tierLoading } = useIsPro();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
@@ -306,7 +306,12 @@ const Navbar = () => {
           )}
           {user ? (
             <>
-              {isPremium ? (
+              {tierLoading ? (
+                <span
+                  aria-hidden
+                  className="inline-block h-8 w-24 rounded-full bg-muted/40 animate-pulse"
+                />
+              ) : isPremium ? (
                 <span
                   title="Bạn đang là thành viên Premium (trọn đời)"
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-[0_0_12px_-2px_rgba(254,173,95,0.6)]"
