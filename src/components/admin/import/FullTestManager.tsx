@@ -430,6 +430,9 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
                         <Badge variant={allPublished ? "default" : "secondary"} className="text-xs">
                           {allPublished ? "Đã xuất bản" : "Nháp"}
                         </Badge>
+                        <Badge variant="outline" className={`text-xs ${mixedTier ? tierBadgeClass.mixed : tierBadgeClass[groupTier]}`}>
+                          {mixedTier ? "Hỗn hợp" : groupTier.toUpperCase()}
+                        </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {group.parts.length} parts · {totalQs} câu hỏi
