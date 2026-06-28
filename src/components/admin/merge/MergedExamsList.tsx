@@ -40,6 +40,8 @@ const SKILL_LABELS: Record<string, string> = {
   grammar_vocab: "Grammar & Vocab",
 };
 
+type AccessTier = "free" | "pro" | "premium";
+
 interface PartRow {
   id: string;
   title: string;
@@ -48,6 +50,7 @@ interface PartRow {
   is_published: boolean;
   full_test_id: string;
   full_test_title: string | null;
+  access_tier?: AccessTier;
 }
 
 interface MergedGroup {
@@ -78,7 +81,7 @@ const MergedExamsList = () => {
     // 1) Full Part groups → exam_sets with full_test_id but category IS NULL
     const { data: fpData, error: fpErr } = await supabase
       .from("exam_sets")
-      .select("id, title, part, skill, is_published, full_test_id, full_test_title")
+      .select("id, title, part, skill, is_published, full_test_id, full_test_title, access_tier")
       .not("full_test_id", "is", null)
       .is("full_test_category", null)
       .order("created_at", { ascending: true });
@@ -107,7 +110,7 @@ const MergedExamsList = () => {
       const { data: sets } = memberSetIds.length
         ? await supabase
             .from("exam_sets")
-            .select("id, title, part, skill, is_published")
+            .select("id, title, part, skill, is_published, access_tier")
             .in("id", memberSetIds)
         : { data: [] as any[] };
 
@@ -129,6 +132,7 @@ const MergedExamsList = () => {
               is_published: s.is_published,
               full_test_id: ft.id,
               full_test_title: ft.title,
+              access_tier: (s.access_tier as AccessTier) || "pro",
             } as PartRow;
           })
           .filter(Boolean) as PartRow[];
@@ -228,6 +232,33 @@ const MergedExamsList = () => {
       })),
     );
   };
+
+  const changeGroupTier = async (group: MergedGroup, tier: AccessTier) => {
+    const ids = group.parts.map((p) => p.id);
+    if (ids.length === 0) return;
+    setBusyId(group.groupId);
+    const { error } = await supabase
+      .from("exam_sets")
+      .update({ access_tier: tier } as any)
+      .in("id", ids);
+    setBusyId(null);
+    if (error) {
+      toast({ title: "Cập nhật tier thất bại", description: error.message, variant: "destructive" });
+      return;
+    }
+    setFullPartRows((prev) =>
+      prev.map((r) => (ids.includes(r.id) ? { ...r, access_tier: tier } : r)),
+    );
+    setFullTestGroups((prev) =>
+      prev.map((g) =>
+        g.groupId === group.groupId
+          ? { ...g, parts: g.parts.map((p) => ({ ...p, access_tier: tier })) }
+          : g,
+      ),
+    );
+    toast({ title: `Đã đặt tier: ${tier.toUpperCase()}` });
+  };
+
 
   const startEdit = (group: MergedGroup) => {
     setEditingId(group.groupId);
@@ -394,6 +425,15 @@ const MergedExamsList = () => {
             const nonePublished = g.kind === "full_part" ? publishedCount === 0 : !g.is_published;
             const isEditing = editingId === g.groupId;
             const isBusy = busyId === g.groupId;
+            const tiers = Array.from(new Set(g.parts.map((p) => p.access_tier || "pro")));
+            const mixedTier = tiers.length > 1;
+            const groupTier: AccessTier = mixedTier ? "pro" : (tiers[0] as AccessTier) || "pro";
+            const tierBadgeClass: Record<string, string> = {
+              free: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+              pro: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+              premium: "bg-violet-500/15 text-violet-700 border-violet-500/30",
+              mixed: "bg-muted text-muted-foreground border-border",
+            };
 
             return (
               <div key={g.groupId} className="rounded-xl border border-border bg-card overflow-hidden">
@@ -438,6 +478,12 @@ const MergedExamsList = () => {
                                 ? "Nháp"
                                 : `${publishedCount}/${g.parts.length} xuất bản`}
                           </Badge>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${mixedTier ? tierBadgeClass.mixed : tierBadgeClass[groupTier]}`}
+                          >
+                            {mixedTier ? "Hỗn hợp" : groupTier.toUpperCase()}
+                          </Badge>
                           {Array.from(g.skills)
                             .sort()
                             .map((s) => (
@@ -453,6 +499,21 @@ const MergedExamsList = () => {
 
                   {!isEditing && (
                     <div className="flex items-center gap-1 shrink-0">
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={mixedTier ? "" : groupTier}
+                          onValueChange={(v) => changeGroupTier(g, v as AccessTier)}
+                        >
+                          <SelectTrigger className="h-8 w-[110px] text-xs">
+                            <SelectValue placeholder="Tier..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
