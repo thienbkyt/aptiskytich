@@ -368,7 +368,11 @@ const Dashboard = () => {
                 <StatPill icon={CheckCircle2} label="Câu đã làm" value={d.totalQuestions} accent="orange" />
                 <StatPill icon={Target} label="Chính xác" value={`${d.accuracy}%`} accent="success" />
                 <StatPill icon={TrendingUp} label="Trình độ" value={d.currentLevel} accent="violet" />
-                <TierPill tier={tier} isPremium={isPremium} isPro={isPro} proUntil={proUntil} />
+                {tierLoading ? (
+                  <div className="h-[92px] rounded-2xl border border-border bg-muted/30 animate-pulse" />
+                ) : (
+                  <TierPill tier={tier} isPremium={isPremium} isPro={isPro} proUntil={proUntil} />
+                )}
               </div>
             </div>
           </motion.div>
