@@ -40,6 +40,8 @@ const SKILL_LABELS: Record<string, string> = {
   grammar_vocab: "Grammar & Vocab",
 };
 
+type AccessTier = "free" | "pro" | "premium";
+
 interface PartRow {
   id: string;
   title: string;
@@ -48,6 +50,7 @@ interface PartRow {
   is_published: boolean;
   full_test_id: string;
   full_test_title: string | null;
+  access_tier?: AccessTier;
 }
 
 interface MergedGroup {
