@@ -499,6 +499,21 @@ const MergedExamsList = () => {
 
                   {!isEditing && (
                     <div className="flex items-center gap-1 shrink-0">
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={mixedTier ? "" : groupTier}
+                          onValueChange={(v) => changeGroupTier(g, v as AccessTier)}
+                        >
+                          <SelectTrigger className="h-8 w-[110px] text-xs">
+                            <SelectValue placeholder="Tier..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="free">Free</SelectItem>
+                            <SelectItem value="pro">Pro</SelectItem>
+                            <SelectItem value="premium">Premium</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
