@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   Flame, Target, TrendingUp, BookOpen, ArrowRight,
   BarChart3, CheckCircle2, Calendar, Zap, History,
-  GraduationCap, Sparkles, Mic, Crown,
+  GraduationCap, Sparkles, Mic, Crown, KeyRound,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -95,6 +95,23 @@ const Dashboard = () => {
   const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasPredictionToday, setHasPredictionToday] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("prediction_keys")
+        .select("id,date")
+        .eq("is_published", true)
+        .order("date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      setHasPredictionToday(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const tipOfDay = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], []);
 
@@ -376,6 +393,39 @@ const Dashboard = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* PREDICTION KEY BANNER */}
+          {hasPredictionToday && !tierLoading && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-2xl border border-[#FEAD5F]/40 bg-gradient-to-r from-[#FEAD5F]/15 via-[#CC1C01]/10 to-transparent p-4 md:p-5"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#FEAD5F] to-[#CC1C01] text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-heading font-extrabold text-foreground text-base md:text-lg leading-tight">
+                    🔑 Key Dự Đoán hôm nay đã có
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                    {isPremium
+                      ? "Vào xem ngay danh sách đề dự đoán được cập nhật hôm nay."
+                      : "Dành riêng cho Premium — nâng cấp để xem key cập nhật mỗi ngày."}
+                  </p>
+                </div>
+                <Button
+                  asChild
+                  className="shrink-0 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] hover:brightness-110 text-white font-bold gap-1.5"
+                >
+                  <Link to={isPremium ? "/thi-thu?tab=prediction" : "/pricing"}>
+                    {isPremium ? <>Xem ngay <ArrowRight className="w-4 h-4" /></> : <><Crown className="w-4 h-4" /> Nâng cấp Premium</>}
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+          )}
 
           {/* UPGRADE BANNER (free only) */}
           {!tierLoading && !isPro && (

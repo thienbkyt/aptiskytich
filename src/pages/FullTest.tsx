@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -34,7 +35,13 @@ const FullTest = () => {
     description: "Làm bài thi thử Aptis General sát đề thật: Speaking, Listening, Grammar & Vocab, Reading, Writing. AI chấm tự động, có giải thích chi tiết.",
     path: "/thi-thu",
   });
-  const [activeTab, setActiveTab] = useState<TabKey>("aptis");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab: TabKey = searchParams.get("tab") === "prediction" || searchParams.get("tab") === "key" ? "key" : "aptis";
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if ((t === "prediction" || t === "key") && activeTab !== "key") setActiveTab("key");
+  }, [searchParams]);
   const { tests, loading } = useFullTests(activeTab);
   const { user: authUser, loading: authLoading } = useAuth();
   const { bands } = useUserFullTestBands();
