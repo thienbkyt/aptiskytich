@@ -95,6 +95,23 @@ const Dashboard = () => {
   const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasPredictionToday, setHasPredictionToday] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("prediction_keys")
+        .select("id,date")
+        .eq("is_published", true)
+        .order("date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      setHasPredictionToday(!!data);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const tipOfDay = useMemo(() => TIPS[Math.floor(Math.random() * TIPS.length)], []);
 
