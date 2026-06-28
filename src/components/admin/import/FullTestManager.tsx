@@ -186,6 +186,27 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
     toast({ title: publish ? "Đã xuất bản Full Test" : "Đã ẩn Full Test" });
   };
 
+  const changeGroupTier = async (group: FullTestGroup, tier: AccessTier) => {
+    const ids = group.parts.map((p) => p.id);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("exam_sets")
+      .update({ access_tier: tier } as any)
+      .in("id", ids);
+    if (error) {
+      toast({ title: "Cập nhật tier thất bại", description: error.message, variant: "destructive" });
+      return;
+    }
+    setGroups((gs) =>
+      gs.map((g) =>
+        g.full_test_id === group.full_test_id
+          ? { ...g, parts: g.parts.map((p) => ({ ...p, access_tier: tier })) }
+          : g
+      )
+    );
+    toast({ title: `Đã đặt tier: ${tier.toUpperCase()}` });
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
