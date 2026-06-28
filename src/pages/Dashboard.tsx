@@ -378,7 +378,7 @@ const Dashboard = () => {
           </motion.div>
 
           {/* UPGRADE BANNER (free only) */}
-          {!isPro && (
+          {!tierLoading && !isPro && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
