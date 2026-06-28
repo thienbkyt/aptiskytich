@@ -16,6 +16,7 @@ import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
+import PredictionKeyView from "@/components/prediction/PredictionKeyView";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -136,7 +137,13 @@ const FullTest = () => {
             </p>
           </div>
 
-          {loading || authLoading ? (
+          {activeTab === "key" ? (
+            !authUser ? (
+              <LoginToPracticePrompt message="Đăng nhập để xem Key Dự Đoán cập nhật hằng ngày" />
+            ) : (
+              <PredictionKeyView />
+            )
+          ) : loading || authLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <TechSkeleton key={i} variant="card" className="h-52" />
