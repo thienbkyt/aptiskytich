@@ -106,6 +106,7 @@ const FullTestManager = ({ examType, refreshKey, onRefresh }: Props) => {
               title: s.title,
               is_published: s.is_published,
               exam_type: s.exam_type,
+              access_tier: (s.access_tier as AccessTier) || "pro",
             };
           })
           .filter(Boolean) as any[];
