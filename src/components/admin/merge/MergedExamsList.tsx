@@ -233,6 +233,33 @@ const MergedExamsList = () => {
     );
   };
 
+  const changeGroupTier = async (group: MergedGroup, tier: AccessTier) => {
+    const ids = group.parts.map((p) => p.id);
+    if (ids.length === 0) return;
+    setBusyId(group.groupId);
+    const { error } = await supabase
+      .from("exam_sets")
+      .update({ access_tier: tier } as any)
+      .in("id", ids);
+    setBusyId(null);
+    if (error) {
+      toast({ title: "Cập nhật tier thất bại", description: error.message, variant: "destructive" });
+      return;
+    }
+    setFullPartRows((prev) =>
+      prev.map((r) => (ids.includes(r.id) ? { ...r, access_tier: tier } : r)),
+    );
+    setFullTestGroups((prev) =>
+      prev.map((g) =>
+        g.groupId === group.groupId
+          ? { ...g, parts: g.parts.map((p) => ({ ...p, access_tier: tier })) }
+          : g,
+      ),
+    );
+    toast({ title: `Đã đặt tier: ${tier.toUpperCase()}` });
+  };
+
+
   const startEdit = (group: MergedGroup) => {
     setEditingId(group.groupId);
     setEditTitle(group.title);
