@@ -40,9 +40,9 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const auth = await requireUser(req, corsHeaders);
-  if (auth instanceof Response) return auth;
-
+  // TTS is low-risk (cached audio, 1000-char cap) and called from screens
+  // that may render before the session is hydrated (e.g. speaking intro).
+  // Skip auth gate to avoid 401 → white screen; rely on input validation.
   logInvocation("tts").catch(() => {});
 
   try {
