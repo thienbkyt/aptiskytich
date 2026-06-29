@@ -2,6 +2,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { safeSessionStorage } from "./lib/safeStorage";
+import { registerPWA } from "./lib/registerPWA";
+
+registerPWA();
+
 
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
