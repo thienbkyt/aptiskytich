@@ -64,7 +64,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
               key={set.fullTestId}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: index * 0.03 }}
+              transition={{ duration: 0.25 }}
             >
               <div className="group relative bg-card border-2 border-[#CC1C01] rounded-xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col h-full">
                 {bandLabel && (
