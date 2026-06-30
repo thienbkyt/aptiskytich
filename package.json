@@ -97,18 +97,6 @@
     "tmp": "^0.2.6",
     "brace-expansion": "^2.0.2",
     "minimatch": "^10.0.3",
-    "glob": "^11.0.3",
-    "archiver-utils": {
-      "glob": "^11.0.3"
-    },
-    "rimraf": {
-      "glob": "^11.0.3"
-    },
-    "readdir-glob": {
-      "minimatch": "^10.0.3"
-    },
-    "filelist": {
-      "minimatch": "^10.0.3"
-    }
+    "glob": "^10.4.5"
   }
 }
