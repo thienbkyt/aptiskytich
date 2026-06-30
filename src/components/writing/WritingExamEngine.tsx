@@ -578,6 +578,23 @@ const WritingExamEngine = ({
                 )}
               </div>
 
+              {((effectiveGrading as any).improvedVersion || (effectiveGrading as any).upgradeTips) && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 space-y-3">
+                  {(effectiveGrading as any).improvedVersion && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-400 mb-1">✍️ AI Kỳ Tích sửa bài</p>
+                      <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{(effectiveGrading as any).improvedVersion}</p>
+                    </div>
+                  )}
+                  {(effectiveGrading as any).upgradeTips && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-primary mb-1">🎯 Mẹo đạt điểm cao Aptis</p>
+                      <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{(effectiveGrading as any).upgradeTips}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           );
         })()}
