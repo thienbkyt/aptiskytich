@@ -194,7 +194,7 @@ const ReadingPart3Opinion = ({
           animate={{ opacity: 1, y: 0 }}
           className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-200"
         >
-          <p className="text-sm text-blue-800">{question.explanation}</p>
+          <p className="text-sm text-blue-800 whitespace-pre-line">{question.explanation}</p>
         </motion.div>
       )}
 
