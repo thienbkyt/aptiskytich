@@ -207,7 +207,7 @@ const ReadingPart4Long = ({
           animate={{ opacity: 1, height: "auto" }}
           className="mt-4 p-4 rounded-lg bg-muted border border-border"
         >
-          <p className="text-sm text-muted-foreground">{question.explanation}</p>
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{question.explanation}</p>
         </motion.div>
       )}
 
