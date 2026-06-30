@@ -671,6 +671,10 @@ RUBRIC PER partType — return ONLY these qualitative fields via the tool:
 
 • task4 — email1 and email2 objects, each { addressPercent (0–100), relevantWordCount (number), coherenceLacking (boolean), missingOpening (boolean), missingClosing (boolean) }. grammarErrors[] / spellingErrors[]: each error MUST include emailIndex (0 = email1 informal, 1 = email2 formal). feedback.
 
+• EVERY task (task1–task4) MUST also return:
+  - improvedVersion: upgraded English rewrite of the student's whole submission for this part (keep ideas, fix grammar/vocab, upgrade structure, add linking words). For task4 cover BOTH emails (label clearly). Empty string if the student wrote nothing.
+  - upgradeTips: Vietnamese, 2–4 sentences. Mẹo CỤ THỂ để bài này đạt điểm cao hơn trong Aptis (cấu trúc phức tạp, từ nối, triển khai ý + ví dụ, paraphrase, đa dạng từ vựng, đúng register với task4).
+
 FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
 - Bắt đầu bằng điểm mạnh thực sự của bài. Nếu một hạng mục đạt tối đa hãy khen rõ ràng.
 - Giải thích LẦN LƯỢT TỪNG hạng mục bị trừ điểm: nội dung/đáp ứng đề, mạch lạc, số từ (CHỈ phạt khi THIẾU từ — viết dài không bị phạt), ngữ pháp, chính tả. Nếu bài LẠC ĐỀ phải nói rõ.
@@ -797,8 +801,10 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
           grammarErrors: { type: "array", items: errorItemSchema },
           spellingErrors: { type: "array", items: errorItemSchema },
           feedback: { type: "string" },
+          improvedVersion: { type: "string", description: "Upgraded English rewrite of the student's whole submission for this part — same ideas, fix grammar/vocab, upgrade structure, add linking words. Empty if blank." },
+          upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis tips to score higher on THIS submission: complex structures, linking words, idea development, vocabulary upgrades." },
         };
-        required = ["items", "grammarErrors", "spellingErrors", "feedback"];
+        required = ["items", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "upgradeTips"];
       } else if (pt === "task2") {
         props = {
           addressPercent: { type: "number" },
@@ -808,8 +814,10 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
           grammarErrors: { type: "array", items: errorItemSchema },
           spellingErrors: { type: "array", items: errorItemSchema },
           feedback: { type: "string" },
+          improvedVersion: { type: "string", description: "Upgraded English rewrite of the student's whole submission for this part — same ideas, fix grammar/vocab, upgrade structure, add linking words. Empty if blank." },
+          upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis tips to score higher on THIS submission: complex structures, linking words, idea development, vocabulary upgrades." },
         };
-        required = ["addressPercent", "bonusPercent", "relevantWordCount", "coherenceLacking", "grammarErrors", "spellingErrors", "feedback"];
+        required = ["addressPercent", "bonusPercent", "relevantWordCount", "coherenceLacking", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "upgradeTips"];
       } else if (pt === "task3") {
         const errWithIdx = writingErrorItemSchema({ name: "questionIndex", desc: "0,1,2 — which of the 3 answers" });
         props = {
@@ -830,8 +838,10 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
           grammarErrors: { type: "array", items: errWithIdx },
           spellingErrors: { type: "array", items: errWithIdx },
           feedback: { type: "string" },
+          improvedVersion: { type: "string", description: "Upgraded English rewrite of the student's whole submission for this part — same ideas, fix grammar/vocab, upgrade structure, add linking words. Empty if blank." },
+          upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis tips to score higher on THIS submission: complex structures, linking words, idea development, vocabulary upgrades." },
         };
-        required = ["items", "coherenceLacking", "grammarErrors", "spellingErrors", "feedback"];
+        required = ["items", "coherenceLacking", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "upgradeTips"];
       } else {
         // task4
         const emailSchema = {
@@ -853,8 +863,10 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
           grammarErrors: { type: "array", items: errWithIdx },
           spellingErrors: { type: "array", items: errWithIdx },
           feedback: { type: "string" },
+          improvedVersion: { type: "string", description: "Upgraded English rewrite of BOTH emails combined (or each clearly labeled) — same ideas, fix grammar/vocab, upgrade structure, add linking words. Empty if blank." },
+          upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis tips to score higher on THIS submission: complex structures, linking words, register (informal/formal), vocabulary upgrades." },
         };
-        required = ["email1", "email2", "grammarErrors", "spellingErrors", "feedback"];
+        required = ["email1", "email2", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "upgradeTips"];
       }
       return {
         type: "function",
@@ -1132,6 +1144,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     } else if (partType === "task2") {
       const max = 20;
@@ -1159,6 +1173,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     } else if (partType === "task3") {
       const max = 30;
@@ -1195,6 +1211,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     } else {
       // task4
@@ -1244,6 +1262,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     }
 

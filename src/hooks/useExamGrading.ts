@@ -28,6 +28,8 @@ export interface WritingGradingResult {
   openingClosingPenalty: number;
   partScore: number;
   feedback: string;
+  improvedVersion?: string;
+  upgradeTips?: string;
 }
 
 export type AnyGradingResult = GradingResult | WritingGradingResult;
