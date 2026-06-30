@@ -53,6 +53,10 @@ const ReadingPart4Long = ({
   }, [openDropdown]);
 
   const paragraphs: { index: number; text: string }[] = question.paragraphs || [];
+  const explByPara = (question.explanation || "")
+    .replace(/^---.*?---\s*/, "")
+    .split(/\n(?=\d+\.\s)/)
+    .map((s) => s.replace(/^\d+\.\s*/, "").trim());
   const headings: { text: string; paragraphIndex: number | null }[] = question.headings || [];
   const allHeadingTexts = headings.map(h => h.text);
   const title = question.title || "";
@@ -193,6 +197,11 @@ const ReadingPart4Long = ({
                 </div>
               )}
 
+              {reveal && explByPara[pIdx] && (
+                <div className="text-sm text-blue-800 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-300 rounded-lg p-3 mb-3 ml-9 whitespace-pre-line">
+                  {explByPara[pIdx]}
+                </div>
+              )}
               <div className="text-sm text-foreground leading-relaxed whitespace-pre-line pl-9">
                 {para.text}
               </div>
@@ -201,15 +210,6 @@ const ReadingPart4Long = ({
         })}
       </div>
 
-      {reveal && question.explanation && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="mt-4 p-4 rounded-lg bg-muted border border-border"
-        >
-          <p className="text-sm text-muted-foreground whitespace-pre-line">{question.explanation}</p>
-        </motion.div>
-      )}
 
       <BottomNavBar
         onPrevious={onPrevious}
