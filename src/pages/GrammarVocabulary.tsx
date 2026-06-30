@@ -147,7 +147,7 @@ const GrammarVocabulary = () => {
               {filteredSets.map((set, index) => {
                 const locked = isLocked(set as any);
                 return (
-                <motion.div key={set.fullTestId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
+                <motion.div key={set.fullTestId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                   <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
                     {(() => {
                       const done = set.examSetIds.filter(id => progress.has(id)).length;

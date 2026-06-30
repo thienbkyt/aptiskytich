@@ -424,7 +424,7 @@ const Reading = () => {
                   {filteredSets.map((set, index) => {
                     const locked = isLocked(set);
                     return (
-                    <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: index * 0.03 }}>
+                    <motion.div key={set.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
                         <div className="absolute top-3 right-3"><CornerResultBadge item={progress.get(set.id)} /></div>
                         <div className="flex items-center gap-2 mb-3">
