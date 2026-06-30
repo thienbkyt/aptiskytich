@@ -1266,7 +1266,7 @@ const SpeakingExamEngine = ({
               <div className="w-16 h-16 rounded-full bg-[#24085a]/10 flex items-center justify-center mb-4 animate-pulse">
                 <span className="text-3xl">🔊</span>
               </div>
-              <p className="text-sm font-semibold text-[#24085a] text-center">Đang đọc câu hỏi...</p>
+              <p className="text-sm font-semibold text-[#24085a] text-center">Instructions...</p>
               <p className="text-xs text-gray-500 text-center mt-2">Nghe xong sẽ có tiếng bíp rồi bắt đầu ghi âm</p>
             </div>
           ) : (
