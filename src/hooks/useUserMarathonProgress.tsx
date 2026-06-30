@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
@@ -6,17 +6,16 @@ import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
 /** Best marathon score per part (key "part1"..) for a skill. */
 export const useUserMarathonProgress = (skill: "reading" | "listening") => {
   const { user, loading: authLoading } = useAuth();
-  const [progress, setProgress] = useState<ExamProgressMap>(new Map());
+  const enabled = !authLoading && !!user;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) { setProgress(new Map()); return; }
-    let cancelled = false;
-    (async () => {
+  const { data } = useQuery({
+    queryKey: ["userMarathonProgress", skill, user?.id],
+    enabled,
+    queryFn: async (): Promise<ExamProgressMap> => {
       const { data } = await supabase
         .from("test_results")
         .select("score, total, skill_scores")
-        .eq("user_id", user.id)
+        .eq("user_id", user!.id)
         .is("exam_set_id", null);
       const map: ExamProgressMap = new Map();
       (data || []).forEach((r: any) => {
@@ -31,10 +30,12 @@ export const useUserMarathonProgress = (skill: "reading" | "listening") => {
           map.set(part, { bestScore: r.score, total: r.total, bestPct: Math.round((r.score / r.total) * 100) });
         }
       });
-      if (!cancelled) setProgress(map);
-    })();
-    return () => { cancelled = true; };
-  }, [user, authLoading, skill]);
+      return map;
+    },
+  });
 
-  return { progress };
+  if (!enabled) {
+    return { progress: new Map() as ExamProgressMap };
+  }
+  return { progress: data ?? (new Map() as ExamProgressMap) };
 };

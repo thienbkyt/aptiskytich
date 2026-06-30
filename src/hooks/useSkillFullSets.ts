@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface SkillFullSetItem {
@@ -18,12 +18,9 @@ export interface SkillFullSetItem {
  * Returns groups that have at least 2 parts (to qualify as "full practice").
  */
 export const useSkillFullSets = (skill: string) => {
-  const [sets, setSets] = useState<SkillFullSetItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
+  const { data, isLoading } = useQuery({
+    queryKey: ["skillFullSets", skill],
+    queryFn: async (): Promise<SkillFullSetItem[]> => {
       // Only include single-skill Full Part merges (full_test_category IS NULL).
       // Multi-skill Full Tests (category = 'aptis' / 'key') belong to the Aptis/Key
       // Full Test section, not to per-skill Full Part practice.
@@ -36,10 +33,7 @@ export const useSkillFullSets = (skill: string) => {
         .is("full_test_category", null)
         .order("part", { ascending: true });
 
-      if (error || !data) {
-        setLoading(false);
-        return;
-      }
+      if (error || !data) return [];
 
       // Group by full_test_id
       // Full Part requires user to access ALL constituent parts → gate by MOST restrictive tier.
@@ -109,7 +103,6 @@ export const useSkillFullSets = (skill: string) => {
       );
       const result: SkillFullSetItem[] = settled.filter((x): x is SkillFullSetItem => x !== null);
 
-
       const numOf = (t: string) => {
         const m = t.match(/\d+/);
         return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
@@ -120,10 +113,9 @@ export const useSkillFullSets = (skill: string) => {
         return a.title.localeCompare(b.title);
       });
 
-      setSets(result);
-      setLoading(false);
-    })();
-  }, [skill]);
+      return result;
+    },
+  });
 
-  return { sets, loading };
+  return { sets: data ?? [], loading: isLoading };
 };

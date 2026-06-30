@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ExamSetRow {
@@ -39,42 +39,35 @@ export const normalizePart = (part: string): string => {
 };
 
 /**
- * Fetches published exam_sets for a given skill with pagination
+ * Fetches published exam_sets for a given skill
  */
 export const useExamSets = (skill: string) => {
-  const [examSets, setExamSets] = useState<ExamSetRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-
+  const { data, isLoading } = useQuery({
+    queryKey: ["examSets", skill],
+    queryFn: async (): Promise<ExamSetRow[]> => {
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("*")
+        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier")
         .eq("skill", skill)
         .eq("is_published", true)
         .order("created_at", { ascending: true });
 
-      if (!error && data) {
-        const rows = data as unknown as ExamSetRow[];
-        const numOf = (t: string) => {
-          const m = t.match(/\d+/);
-          return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
-        };
-        rows.sort((a, b) => {
-          const na = numOf(a.title), nb = numOf(b.title);
-          if (na !== nb) return na - nb;
-          return a.title.localeCompare(b.title);
-        });
-        setExamSets(rows);
-      }
-      setLoading(false);
-    };
-    load();
-  }, [skill]);
+      if (error || !data) return [];
+      const rows = data as unknown as ExamSetRow[];
+      const numOf = (t: string) => {
+        const m = t.match(/\d+/);
+        return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
+      };
+      rows.sort((a, b) => {
+        const na = numOf(a.title), nb = numOf(b.title);
+        if (na !== nb) return na - nb;
+        return a.title.localeCompare(b.title);
+      });
+      return rows;
+    },
+  });
 
-  return { examSets, loading };
+  return { examSets: data ?? [], loading: isLoading };
 };
 
 /**
