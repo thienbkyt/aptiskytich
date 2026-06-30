@@ -1144,6 +1144,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     } else if (partType === "task2") {
       const max = 20;
@@ -1171,6 +1173,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     } else if (partType === "task3") {
       const max = 30;
@@ -1207,6 +1211,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     } else {
       // task4
@@ -1256,6 +1262,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         spellingErrors: stripIdx(allSpelling),
         partScore,
         feedback,
+        improvedVersion: grading?.improvedVersion ?? "",
+        upgradeTips: grading?.upgradeTips ?? "",
       };
     }
 
