@@ -98,12 +98,12 @@ const WritingPart4TwoEmails = ({
           wordLimit={data.formalEmail.wordLimit}
           initialValue={formalAnswer}
         />
-        {showSample && data.formalEmail.sampleAnswer && (
+        {showSample && formalSample && (
           <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
             <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
               💡 Bài viết mẫu
             </p>
-            <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{data.formalEmail.sampleAnswer}</p>
+            <p className="text-sm text-foreground font-medium whitespace-pre-line leading-relaxed">{formalSample}</p>
           </div>
         )}
       </div>
