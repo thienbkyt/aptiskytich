@@ -96,7 +96,7 @@ const Index = () => {
             "linear-gradient(180deg, #FFF7F0 0%, #FFFBF6 55%, #FFFFFF 100%)",
         }}
       >
-        <AnimatedGrid className="opacity-[0.18]" withOrbs={false} />
+        
         <ParticlesBackground color="204, 28, 1" count={18} />
         <GradientOrb tone="red" size={520} className="-top-40 -left-40" />
         <GradientOrb tone="orange" size={460} className="-bottom-40 -right-40" />
@@ -213,9 +213,7 @@ const Index = () => {
               </div>
 
               {/* Floating card — top right */}
-              <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              <div
                 className="hidden md:flex absolute -top-4 -right-4 items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-[#F2D7C5]"
                 style={{ boxShadow: "0 12px 24px -12px rgba(204, 28, 1, 0.25)" }}
               >
@@ -226,12 +224,10 @@ const Index = () => {
                   <div className="text-[10px] text-[#8B6B5C] font-medium">AI chấm Writing</div>
                   <div className="text-sm font-bold" style={{ color: "#4D0D0D" }}>Band B2</div>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Floating card — bottom left */}
-              <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+              <div
                 className="hidden md:flex absolute -bottom-4 -left-4 items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white border border-[#F2D7C5]"
                 style={{ boxShadow: "0 12px 24px -12px rgba(204, 28, 1, 0.25)" }}
               >
@@ -242,7 +238,7 @@ const Index = () => {
                   <div className="text-[10px] text-[#8B6B5C] font-medium">Streak</div>
                   <div className="text-sm font-bold" style={{ color: "#4D0D0D" }}>18 ngày</div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>
