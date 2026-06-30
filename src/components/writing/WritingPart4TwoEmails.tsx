@@ -31,6 +31,13 @@ const WritingPart4TwoEmails = ({
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
 }: Props) => {
   const showSample = submitted || !!revealAnswers;
+  const [informalSample, formalSample] = (() => {
+    const full = data.formalEmail.sampleAnswer || "";
+    if (data.informalEmail.sampleAnswer) return [data.informalEmail.sampleAnswer, full];
+    const i = full.search(/\n\s*\n/);
+    if (i < 0) return ["", full];
+    return [full.slice(0, i).trim(), full.slice(i).trim()];
+  })();
   return (
     <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
       <div className="flex items-start justify-between mb-6">
