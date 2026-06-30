@@ -64,44 +64,50 @@ export const useSkillFullSets = (skill: string) => {
         if (rankT(rt) > rankT(g.maxTier)) g.maxTier = rt;
       }
 
-      const result: SkillFullSetItem[] = [];
-      for (const [ftId, info] of grouped) {
+      const computeOne = async (
+        ftId: string,
+        info: { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[]; maxTier: "free" | "pro" | "premium" }
+      ): Promise<SkillFullSetItem | null> => {
         const partsArr = Array.from(info.parts).sort();
         // Only include sets with 2+ parts
-        if (partsArr.length >= 2) {
-          let questionCount = 0;
-          if (skill === "grammar_vocab") {
-            // Aptis Core: mỗi Vocab task tính 1 "câu" (25 grammar item + 5 vocab task = 30)
-            const isVocab = (p: string) => /vocab/i.test(p);
-            const vocabPartCount = partsArr.filter(isVocab).length;
-            const grammarIds = info.rows.filter((r) => !isVocab(r.part)).map((r) => r.id);
-            let grammarQ = 0;
-            if (grammarIds.length) {
-              const { count: gc } = await supabase
-                .from("exam_questions")
-                .select("id", { count: "exact", head: true })
-                .in("exam_set_id", grammarIds);
-              grammarQ = gc ?? 0;
-            }
-            questionCount = grammarQ + vocabPartCount;
-          } else {
-            const { count } = await supabase
+        if (partsArr.length < 2) return null;
+        let questionCount = 0;
+        if (skill === "grammar_vocab") {
+          // Aptis Core: mỗi Vocab task tính 1 "câu" (25 grammar item + 5 vocab task = 30)
+          const isVocab = (p: string) => /vocab/i.test(p);
+          const vocabPartCount = partsArr.filter(isVocab).length;
+          const grammarIds = info.rows.filter((r) => !isVocab(r.part)).map((r) => r.id);
+          let grammarQ = 0;
+          if (grammarIds.length) {
+            const { count: gc } = await supabase
               .from("exam_questions")
               .select("id", { count: "exact", head: true })
-              .in("exam_set_id", info.ids);
-            questionCount = count ?? 0;
+              .in("exam_set_id", grammarIds);
+            grammarQ = gc ?? 0;
           }
-          result.push({
-            fullTestId: ftId,
-            title: info.title,
-            partCount: partsArr.length,
-            parts: partsArr,
-            examSetIds: info.ids,
-            questionCount,
-            access_tier: info.maxTier,
-          });
+          questionCount = grammarQ + vocabPartCount;
+        } else {
+          const { count } = await supabase
+            .from("exam_questions")
+            .select("id", { count: "exact", head: true })
+            .in("exam_set_id", info.ids);
+          questionCount = count ?? 0;
         }
-      }
+        return {
+          fullTestId: ftId,
+          title: info.title,
+          partCount: partsArr.length,
+          parts: partsArr,
+          examSetIds: info.ids,
+          questionCount,
+          access_tier: info.maxTier,
+        };
+      };
+
+      const settled = await Promise.all(
+        Array.from(grouped.entries()).map(([ftId, info]) => computeOne(ftId, info))
+      );
+      const result: SkillFullSetItem[] = settled.filter((x): x is SkillFullSetItem => x !== null);
 
 
       const numOf = (t: string) => {
