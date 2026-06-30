@@ -859,8 +859,10 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
           grammarErrors: { type: "array", items: errWithIdx },
           spellingErrors: { type: "array", items: errWithIdx },
           feedback: { type: "string" },
+          improvedVersion: { type: "string", description: "Upgraded English rewrite of BOTH emails combined (or each clearly labeled) — same ideas, fix grammar/vocab, upgrade structure, add linking words. Empty if blank." },
+          upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis tips to score higher on THIS submission: complex structures, linking words, register (informal/formal), vocabulary upgrades." },
         };
-        required = ["email1", "email2", "grammarErrors", "spellingErrors", "feedback"];
+        required = ["email1", "email2", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "upgradeTips"];
       }
       return {
         type: "function",
