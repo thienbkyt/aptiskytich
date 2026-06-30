@@ -182,31 +182,34 @@ const SpeakingProfileView = ({
               </div>
             )}
 
-            {it.improvedVersion && (
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <PenLine className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-                  <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-400">
-                    ✍️ AI Kỳ Tích sửa bài
-                  </p>
-                </div>
-                <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                  {it.improvedVersion}
-                </p>
-              </div>
-            )}
-
-            {it.upgradeTips && (
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/30">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Target className="w-3.5 h-3.5 text-primary" />
-                  <p className="text-xs font-semibold uppercase text-primary">
-                    🎯 Mẹo đạt điểm cao Aptis
-                  </p>
-                </div>
-                <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                  {it.upgradeTips}
-                </p>
+            {(it.improvedVersion || it.upgradeTips) && (
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-3">
+                {it.improvedVersion && (
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <PenLine className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+                      <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-400">
+                        ✍️ AI Kỳ Tích sửa bài
+                      </p>
+                    </div>
+                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                      {it.improvedVersion}
+                    </p>
+                  </div>
+                )}
+                {it.upgradeTips && (
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Target className="w-3.5 h-3.5 text-primary" />
+                      <p className="text-xs font-semibold uppercase text-primary">
+                        🎯 Mẹo đạt điểm cao Aptis
+                      </p>
+                    </div>
+                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                      {it.upgradeTips}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
