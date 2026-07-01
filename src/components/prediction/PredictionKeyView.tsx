@@ -200,7 +200,7 @@ export default function PredictionKeyView() {
         items: bySkill.get(sk)!.get(p)!,
       })),
     }));
-  }, [items, activeSkills, activePriorities]);
+  }, [items, activeSkills, activePriorities, activeStatus, history]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
