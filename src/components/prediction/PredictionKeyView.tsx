@@ -174,7 +174,12 @@ export default function PredictionKeyView() {
       const sk = (it.skill || "other").toLowerCase();
       const okSkill = activeSkills.length === 0 || activeSkills.includes(sk);
       const okPrio = activePriorities.length === 0 || activePriorities.includes(it.priority);
-      return okSkill && okPrio;
+      const done = history.has(it.exam_set_id);
+      const okStatus =
+        activeStatus.length === 0 ||
+        (activeStatus.includes("done") && done) ||
+        (activeStatus.includes("undone") && !done);
+      return okSkill && okPrio && okStatus;
     });
     const bySkill = new Map<string, Map<Priority, ItemRow[]>>();
     visible.forEach((it) => {
