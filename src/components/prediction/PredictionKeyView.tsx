@@ -77,10 +77,13 @@ export default function PredictionKeyView() {
   const [loadingItems, setLoadingItems] = useState(false);
   const [activePriorities, setActivePriorities] = useState<Priority[]>([]);
   const [activeSkills, setActiveSkills] = useState<string[]>([]);
+  const [activeStatus, setActiveStatus] = useState<("done" | "undone")[]>([]);
   const togglePriority = (p: Priority) =>
     setActivePriorities((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
   const toggleSkill = (s: string) =>
     setActiveSkills((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+  const toggleStatus = (s: "done" | "undone") =>
+    setActiveStatus((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
 
   // Load keys
   useEffect(() => {
@@ -171,7 +174,12 @@ export default function PredictionKeyView() {
       const sk = (it.skill || "other").toLowerCase();
       const okSkill = activeSkills.length === 0 || activeSkills.includes(sk);
       const okPrio = activePriorities.length === 0 || activePriorities.includes(it.priority);
-      return okSkill && okPrio;
+      const done = history.has(it.exam_set_id);
+      const okStatus =
+        activeStatus.length === 0 ||
+        (activeStatus.includes("done") && done) ||
+        (activeStatus.includes("undone") && !done);
+      return okSkill && okPrio && okStatus;
     });
     const bySkill = new Map<string, Map<Priority, ItemRow[]>>();
     visible.forEach((it) => {
@@ -192,7 +200,7 @@ export default function PredictionKeyView() {
         items: bySkill.get(sk)!.get(p)!,
       })),
     }));
-  }, [items, activeSkills, activePriorities]);
+  }, [items, activeSkills, activePriorities, activeStatus, history]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
@@ -319,6 +327,33 @@ export default function PredictionKeyView() {
         })}
         {activePriorities.length > 0 && (
           <button onClick={() => setActivePriorities([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
+        )}
+      </div>
+
+      {/* Lọc theo trạng thái */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-muted-foreground">Trạng thái:</span>
+        {([["done", "Đã làm"], ["undone", "Chưa làm"]] as const).map(([val, label]) => {
+          const on = activeStatus.includes(val);
+          return (
+            <button
+              key={val}
+              onClick={() => toggleStatus(val)}
+              className={cn(
+                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                on
+                  ? (val === "done"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
+                      : "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/40")
+                  : "bg-transparent text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+        {activeStatus.length > 0 && (
+          <button onClick={() => setActiveStatus([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
         )}
       </div>
 
