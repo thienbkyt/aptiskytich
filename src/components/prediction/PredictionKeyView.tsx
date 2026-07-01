@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { cn } from "@/lib/utils";
@@ -193,28 +193,43 @@ export default function PredictionKeyView() {
     );
   }
 
+  const ymd = (d: Date) => format(d, "yyyy-MM-dd");
+  const keyByDate = useMemo(() => {
+    const m = new Map<string, KeyRow>();
+    keys.forEach((k) => m.set(k.date, k));
+    return m;
+  }, [keys]);
+  const keyDates = useMemo(() => keys.map((k) => new Date(k.date + "T00:00:00")), [keys]);
+  const selectedDate = useMemo(() => {
+    const k = keys.find((x) => x.id === selectedKeyId);
+    return k ? new Date(k.date + "T00:00:00") : undefined;
+  }, [keys, selectedKeyId]);
+
   return (
     <div className="space-y-5">
-      {/* Date picker */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <CalendarDays className="w-4 h-4 text-primary" /> Ngày:
+      {/* Date picker - calendar dạng bảng */}
+      <div className="bg-card border border-border rounded-xl p-4">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
+          <CalendarDays className="w-4 h-4 text-primary" /> Chọn ngày có Key Dự Đoán:
         </div>
-        <Select value={selectedKeyId ?? undefined} onValueChange={(v) => setSelectedKeyId(v)}>
-          <SelectTrigger className="w-[260px]">
-            <SelectValue placeholder="Chọn ngày" />
-          </SelectTrigger>
-          <SelectContent>
-            {keys.map((k) => {
-              const d = new Date(k.date + "T00:00:00");
-              return (
-                <SelectItem key={k.id} value={k.id}>
-                  {format(d, "dd/MM/yyyy")} {k.title ? `· ${k.title}` : ""}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={(d) => {
+            if (!d) return;
+            const k = keyByDate.get(ymd(d));
+            if (k) setSelectedKeyId(k.id);
+          }}
+          disabled={(date) => !keyByDate.has(ymd(date))}
+          modifiers={{ hasKey: keyDates }}
+          modifiersClassNames={{
+            hasKey: "bg-primary/15 text-primary font-bold ring-1 ring-primary/40",
+          }}
+          className="pointer-events-auto"
+        />
+        <p className="text-xs text-muted-foreground mt-2">
+          Ngày được tô màu là ngày đã có key. Các ngày khác không bấm được.
+        </p>
       </div>
 
       {/* Gate */}
