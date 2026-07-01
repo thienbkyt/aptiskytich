@@ -75,6 +75,12 @@ export default function PredictionKeyView() {
   const [history, setHistory] = useState<Map<string, { count: number; best: number }>>(new Map());
   const [loadingKeys, setLoadingKeys] = useState(true);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [activePriorities, setActivePriorities] = useState<Priority[]>([]);
+  const [activeSkills, setActiveSkills] = useState<string[]>([]);
+  const togglePriority = (p: Priority) =>
+    setActivePriorities((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
+  const toggleSkill = (s: string) =>
+    setActiveSkills((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
 
   // Load keys
   useEffect(() => {
