@@ -174,6 +174,18 @@ export default function PredictionKeyView() {
     }));
   }, [items]);
 
+  const ymd = (d: Date) => format(d, "yyyy-MM-dd");
+  const keyByDate = useMemo(() => {
+    const m = new Map<string, KeyRow>();
+    keys.forEach((k) => m.set(k.date, k));
+    return m;
+  }, [keys]);
+  const keyDates = useMemo(() => keys.map((k) => new Date(k.date + "T00:00:00")), [keys]);
+  const selectedDate = useMemo(() => {
+    const k = keys.find((x) => x.id === selectedKeyId);
+    return k ? new Date(k.date + "T00:00:00") : undefined;
+  }, [keys, selectedKeyId]);
+
   if (loadingKeys || tierLoading) {
     return (
       <div className="space-y-3">
@@ -193,17 +205,7 @@ export default function PredictionKeyView() {
     );
   }
 
-  const ymd = (d: Date) => format(d, "yyyy-MM-dd");
-  const keyByDate = useMemo(() => {
-    const m = new Map<string, KeyRow>();
-    keys.forEach((k) => m.set(k.date, k));
-    return m;
-  }, [keys]);
-  const keyDates = useMemo(() => keys.map((k) => new Date(k.date + "T00:00:00")), [keys]);
-  const selectedDate = useMemo(() => {
-    const k = keys.find((x) => x.id === selectedKeyId);
-    return k ? new Date(k.date + "T00:00:00") : undefined;
-  }, [keys, selectedKeyId]);
+
 
   return (
     <div className="space-y-5">
