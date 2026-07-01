@@ -8,6 +8,7 @@ import { useIsPro } from "@/hooks/useIsPro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { cn } from "@/lib/utils";
@@ -209,30 +210,44 @@ export default function PredictionKeyView() {
 
   return (
     <div className="space-y-5">
-      {/* Date picker - calendar dạng bảng */}
-      <div className="bg-card border border-border rounded-xl p-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground mb-3">
-          <CalendarDays className="w-4 h-4 text-primary" /> Chọn ngày có Key Dự Đoán:
-        </div>
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={(d) => {
-            if (!d) return;
-            const k = keyByDate.get(ymd(d));
-            if (k) setSelectedKeyId(k.id);
-          }}
-          disabled={(date) => !keyByDate.has(ymd(date))}
-          modifiers={{ hasKey: keyDates }}
-          modifiersClassNames={{
-            hasKey: "bg-primary/15 text-primary font-bold ring-1 ring-primary/40",
-          }}
-          className="pointer-events-auto"
-        />
-        <p className="text-xs text-muted-foreground mt-2">
-          Ngày được tô màu là ngày đã có key. Các ngày khác không bấm được.
-        </p>
+      {/* Date picker - popover lịch */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium text-foreground inline-flex items-center gap-1.5">
+          <CalendarDays className="w-4 h-4 text-primary" /> Ngày:
+        </span>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <CalendarDays className="w-4 h-4" />
+              {selectedDate
+                ? `${format(selectedDate, "dd/MM/yyyy")}${
+                    keyByDate.get(ymd(selectedDate))?.title
+                      ? ` · ${keyByDate.get(ymd(selectedDate))!.title}`
+                      : ""
+                  }`
+                : "Chọn ngày"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => {
+                if (!d) return;
+                const k = keyByDate.get(ymd(d));
+                if (k) setSelectedKeyId(k.id);
+              }}
+              disabled={(date) => !keyByDate.has(ymd(date))}
+              modifiers={{ hasKey: keyDates }}
+              modifiersClassNames={{
+                hasKey: "bg-primary/15 text-primary font-bold ring-1 ring-primary/40",
+              }}
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
+
 
       {/* Gate */}
       {!isPremium ? (
