@@ -122,7 +122,7 @@ function pushOverlay(text: string) {
 window.addEventListener("error", (e) => {
   const msg = e?.message || "";
   if (msg.includes("Failed to fetch dynamically imported module")) {
-    maybeReloadForStaleChunk();
+    showUpdateBanner();
     return;
   }
   pushOverlay(
