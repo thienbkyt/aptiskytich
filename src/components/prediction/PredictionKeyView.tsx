@@ -75,6 +75,12 @@ export default function PredictionKeyView() {
   const [history, setHistory] = useState<Map<string, { count: number; best: number }>>(new Map());
   const [loadingKeys, setLoadingKeys] = useState(true);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [activePriorities, setActivePriorities] = useState<Priority[]>([]);
+  const [activeSkills, setActiveSkills] = useState<string[]>([]);
+  const togglePriority = (p: Priority) =>
+    setActivePriorities((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
+  const toggleSkill = (s: string) =>
+    setActiveSkills((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
 
   // Load keys
   useEffect(() => {
@@ -153,9 +159,22 @@ export default function PredictionKeyView() {
     return () => { cancelled = true; };
   }, [user, items]);
 
+  const availableSkills = useMemo(() => {
+    const set = new Set(items.map((it) => (it.skill || "other").toLowerCase()));
+    return Array.from(set).sort(
+      (a, b) => (SKILL_ORDER.indexOf(a) + 1 || 999) - (SKILL_ORDER.indexOf(b) + 1 || 999)
+    );
+  }, [items]);
+
   const grouped = useMemo(() => {
+    const visible = items.filter((it) => {
+      const sk = (it.skill || "other").toLowerCase();
+      const okSkill = activeSkills.length === 0 || activeSkills.includes(sk);
+      const okPrio = activePriorities.length === 0 || activePriorities.includes(it.priority);
+      return okSkill && okPrio;
+    });
     const bySkill = new Map<string, Map<Priority, ItemRow[]>>();
-    items.forEach((it) => {
+    visible.forEach((it) => {
       const sk = (it.skill || "other").toLowerCase();
       if (!bySkill.has(sk)) bySkill.set(sk, new Map());
       const pmap = bySkill.get(sk)!;
@@ -173,7 +192,7 @@ export default function PredictionKeyView() {
         items: bySkill.get(sk)!.get(p)!,
       })),
     }));
-  }, [items]);
+  }, [items, activeSkills, activePriorities]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
@@ -254,6 +273,56 @@ export default function PredictionKeyView() {
           </PopoverContent>
         </Popover>
       </div>
+
+      {/* Lọc theo kỹ năng */}
+      {availableSkills.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-muted-foreground">Kỹ năng:</span>
+          {availableSkills.map((s) => {
+            const on = activeSkills.includes(s);
+            return (
+              <button
+                key={s}
+                onClick={() => toggleSkill(s)}
+                className={cn(
+                  "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                  on ? "bg-primary/15 text-primary border-primary/40" : "bg-transparent text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {SKILL_LABEL[s] || s}
+              </button>
+            );
+          })}
+          {activeSkills.length > 0 && (
+            <button onClick={() => setActiveSkills([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
+          )}
+        </div>
+      )}
+
+      {/* Lọc theo ưu tiên */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-muted-foreground">Ưu tiên:</span>
+        {(["high", "medium", "low", "backup"] as Priority[]).map((p) => {
+          const on = activePriorities.includes(p);
+          return (
+            <button
+              key={p}
+              onClick={() => togglePriority(p)}
+              className={cn(
+                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                on ? PRIORITY_COLOR[p] : "bg-transparent text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              {PRIORITY_LABEL[p]}
+            </button>
+          );
+        })}
+        {activePriorities.length > 0 && (
+          <button onClick={() => setActivePriorities([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
+        )}
+      </div>
+
+
 
 
       {/* Gate */}
