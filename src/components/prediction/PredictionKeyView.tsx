@@ -330,6 +330,33 @@ export default function PredictionKeyView() {
         )}
       </div>
 
+      {/* Lọc theo trạng thái */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-muted-foreground">Trạng thái:</span>
+        {([["done", "Đã làm"], ["undone", "Chưa làm"]] as const).map(([val, label]) => {
+          const on = activeStatus.includes(val);
+          return (
+            <button
+              key={val}
+              onClick={() => toggleStatus(val)}
+              className={cn(
+                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                on
+                  ? (val === "done"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
+                      : "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/40")
+                  : "bg-transparent text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+        {activeStatus.length > 0 && (
+          <button onClick={() => setActiveStatus([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
+        )}
+      </div>
+
 
 
 
