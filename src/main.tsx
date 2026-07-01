@@ -1,7 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { safeSessionStorage } from "./lib/safeStorage";
 import { registerPWA } from "./lib/registerPWA";
 
 registerPWA();
@@ -13,17 +12,57 @@ window.addEventListener("beforeinstallprompt", (e) => {
   window.dispatchEvent(new Event("kt-install-available"));
 });
 
-// Auto-reload on stale chunk errors (after a new deploy). Throttle to avoid loops.
-const maybeReloadForStaleChunk = () => {
-  const KEY = "kt_chunk_reloaded_at";
-  const last = Number(safeSessionStorage.getItem(KEY) || 0);
-  if (Date.now() - last < 10_000) return;
-  safeSessionStorage.setItem(KEY, String(Date.now()));
-  window.location.reload();
-};
+// Show a small update banner on chunk load errors (usually after a new deploy).
+// Do NOT auto-reload — user may be mid-exam. Only reload when they click.
+let updateBanner: HTMLDivElement | null = null;
+function showUpdateBanner() {
+  if (updateBanner) return;
+  try {
+    const el = document.createElement("div");
+    updateBanner = el;
+    el.setAttribute("data-kt-update-banner", "");
+    Object.assign(el.style, {
+      position: "fixed",
+      left: "0",
+      right: "0",
+      bottom: "0",
+      zIndex: "2147483647",
+      background: "#fff",
+      color: "#0F0F10",
+      borderTop: "1px solid #e5e5e5",
+      boxShadow: "0 -2px 8px rgba(0,0,0,0.08)",
+      padding: "12px 16px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "12px",
+      font: "14px/1.4 -apple-system, system-ui, sans-serif",
+    } as Partial<CSSStyleDeclaration> as any);
+    const msg = document.createElement("span");
+    msg.textContent = "Đã có bản cập nhật mới.";
+    const btn = document.createElement("button");
+    btn.textContent = "Tải lại";
+    Object.assign(btn.style, {
+      background: "#CC1C01",
+      color: "#fff",
+      border: "none",
+      padding: "8px 16px",
+      borderRadius: "6px",
+      fontWeight: "600",
+      cursor: "pointer",
+    } as Partial<CSSStyleDeclaration> as any);
+    btn.onclick = () => window.location.reload();
+    el.appendChild(msg);
+    el.appendChild(btn);
+    if (document.body) document.body.appendChild(el);
+    else document.addEventListener("DOMContentLoaded", () => document.body.appendChild(el));
+  } catch {
+    /* ignore */
+  }
+}
 window.addEventListener("vite:preloadError", (e) => {
   e.preventDefault?.();
-  maybeReloadForStaleChunk();
+  showUpdateBanner();
 });
 
 // ───────── Global error overlay (helps debug white-screen on iPhone Safari) ─────────
@@ -83,7 +122,7 @@ function pushOverlay(text: string) {
 window.addEventListener("error", (e) => {
   const msg = e?.message || "";
   if (msg.includes("Failed to fetch dynamically imported module")) {
-    maybeReloadForStaleChunk();
+    showUpdateBanner();
     return;
   }
   pushOverlay(
@@ -96,7 +135,7 @@ window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
   const msg = String(reason?.message || reason || "");
   if (msg.includes("Failed to fetch dynamically imported module")) {
-    maybeReloadForStaleChunk();
+    showUpdateBanner();
     return;
   }
   pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`);
