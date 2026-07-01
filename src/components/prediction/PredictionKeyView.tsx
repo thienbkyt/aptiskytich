@@ -228,10 +228,16 @@ export default function PredictionKeyView() {
                 : "Chọn ngày"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent
+            className="w-auto p-0 rounded-2xl border border-border shadow-xl bg-card"
+            align="start"
+            side="bottom"
+            sideOffset={8}
+          >
             <Calendar
               mode="single"
               selected={selectedDate}
+              defaultMonth={selectedDate}
               onSelect={(d) => {
                 if (!d) return;
                 const k = keyByDate.get(ymd(d));
@@ -240,7 +246,15 @@ export default function PredictionKeyView() {
               disabled={(date) => !keyByDate.has(ymd(date))}
               modifiers={{ hasKey: keyDates }}
               modifiersClassNames={{
-                hasKey: "bg-primary/15 text-primary font-bold ring-1 ring-primary/40",
+                hasKey:
+                  "font-semibold text-primary relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-primary",
+              }}
+              classNames={{
+                day: "h-9 w-9 p-0 font-normal rounded-full hover:bg-primary/10 transition-colors aria-selected:opacity-100",
+                day_selected:
+                  "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary rounded-full after:bg-primary-foreground",
+                day_today: "border border-primary/40",
+                day_disabled: "text-muted-foreground/30 hover:bg-transparent",
               }}
               className="p-3 pointer-events-auto"
             />
