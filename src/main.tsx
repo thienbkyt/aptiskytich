@@ -135,7 +135,7 @@ window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
   const msg = String(reason?.message || reason || "");
   if (msg.includes("Failed to fetch dynamically imported module")) {
-    maybeReloadForStaleChunk();
+    showUpdateBanner();
     return;
   }
   pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`);
