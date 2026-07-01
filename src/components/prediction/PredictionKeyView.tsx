@@ -159,9 +159,22 @@ export default function PredictionKeyView() {
     return () => { cancelled = true; };
   }, [user, items]);
 
+  const availableSkills = useMemo(() => {
+    const set = new Set(items.map((it) => (it.skill || "other").toLowerCase()));
+    return Array.from(set).sort(
+      (a, b) => (SKILL_ORDER.indexOf(a) + 1 || 999) - (SKILL_ORDER.indexOf(b) + 1 || 999)
+    );
+  }, [items]);
+
   const grouped = useMemo(() => {
+    const visible = items.filter((it) => {
+      const sk = (it.skill || "other").toLowerCase();
+      const okSkill = activeSkills.length === 0 || activeSkills.includes(sk);
+      const okPrio = activePriorities.length === 0 || activePriorities.includes(it.priority);
+      return okSkill && okPrio;
+    });
     const bySkill = new Map<string, Map<Priority, ItemRow[]>>();
-    items.forEach((it) => {
+    visible.forEach((it) => {
       const sk = (it.skill || "other").toLowerCase();
       if (!bySkill.has(sk)) bySkill.set(sk, new Map());
       const pmap = bySkill.get(sk)!;
@@ -179,7 +192,7 @@ export default function PredictionKeyView() {
         items: bySkill.get(sk)!.get(p)!,
       })),
     }));
-  }, [items]);
+  }, [items, activeSkills, activePriorities]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
