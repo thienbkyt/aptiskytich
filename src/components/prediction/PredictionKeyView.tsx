@@ -246,17 +246,10 @@ export default function PredictionKeyView() {
               disabled={(date) => !keyByDate.has(ymd(date))}
               modifiers={{ hasKey: keyDates }}
               modifiersClassNames={{
-                hasKey:
-                  "font-semibold text-primary relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:rounded-full after:bg-primary",
-              }}
-              classNames={{
-                day: "h-9 w-9 p-0 font-normal rounded-full hover:bg-primary/10 transition-colors aria-selected:opacity-100",
-                day_selected:
-                  "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary rounded-full after:bg-primary-foreground",
-                day_today: "border border-primary/40",
-                day_disabled: "text-muted-foreground/30 hover:bg-transparent",
+                hasKey: "font-bold text-primary underline underline-offset-4 decoration-2 decoration-primary",
               }}
               className="p-3 pointer-events-auto"
+
             />
           </PopoverContent>
         </Popover>
