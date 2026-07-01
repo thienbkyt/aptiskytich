@@ -274,6 +274,56 @@ export default function PredictionKeyView() {
         </Popover>
       </div>
 
+      {/* Lọc theo kỹ năng */}
+      {availableSkills.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-muted-foreground">Kỹ năng:</span>
+          {availableSkills.map((s) => {
+            const on = activeSkills.includes(s);
+            return (
+              <button
+                key={s}
+                onClick={() => toggleSkill(s)}
+                className={cn(
+                  "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                  on ? "bg-primary/15 text-primary border-primary/40" : "bg-transparent text-muted-foreground border-border hover:bg-muted"
+                )}
+              >
+                {SKILL_LABEL[s] || s}
+              </button>
+            );
+          })}
+          {activeSkills.length > 0 && (
+            <button onClick={() => setActiveSkills([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
+          )}
+        </div>
+      )}
+
+      {/* Lọc theo ưu tiên */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-muted-foreground">Ưu tiên:</span>
+        {(["high", "medium", "low", "backup"] as Priority[]).map((p) => {
+          const on = activePriorities.includes(p);
+          return (
+            <button
+              key={p}
+              onClick={() => togglePriority(p)}
+              className={cn(
+                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                on ? PRIORITY_COLOR[p] : "bg-transparent text-muted-foreground border-border hover:bg-muted"
+              )}
+            >
+              {PRIORITY_LABEL[p]}
+            </button>
+          );
+        })}
+        {activePriorities.length > 0 && (
+          <button onClick={() => setActivePriorities([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
+        )}
+      </div>
+
+
+
 
       {/* Gate */}
       {!isPremium ? (
