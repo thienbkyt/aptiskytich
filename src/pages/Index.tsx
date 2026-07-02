@@ -30,7 +30,7 @@ const fadeUp = {
 
 const stats = [
   { value: "350+", label: "Đề thi Aptis" },
-  { value: "1.166", label: "Câu hỏi luyện tập" },
+  { value: "Đề Key", label: "Update hằng ngày" },
   { value: "AI\u00A0", label: "Giải thích chi tiết từng câu" },
   { value: "Mô phỏng", label: "Giống bài thi thật 100%" },
 ];
