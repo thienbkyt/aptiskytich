@@ -39,12 +39,14 @@ interface BottomNavBarProps {
   onProceedFromInstructions?: () => void;
   /** Called when user confirms "Submit test" in the Exit submission flow */
   onSubmitTest?: () => void;
+  reviewScopeNote?: string;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
   sections = [], bookmarkedCount,
   isInstructionsPhase = false, onProceedFromInstructions, onSubmitTest,
+  reviewScopeNote,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
