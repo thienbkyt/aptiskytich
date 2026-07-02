@@ -508,10 +508,15 @@ const Listening = () => {
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, retryWrongSetIds: wrongSetIds }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
+                                active: true,
+                                partType: activeTab as ListeningPartType,
+                                retryWrongSetIds: wrongSetIds,
+                                wrongQuestionIdsBySet: isPart1 ? wrongQMap : undefined,
+                              }))}
                               className="gap-1.5 font-semibold"
                             >
-                              Làm lại đề có câu sai ({wrongCount})
+                              {isPart1 ? `Làm lại câu sai (${wrongQTotal} câu)` : `Làm lại đề có câu sai (${wrongSetIds.length})`}
                             </Button>
                           )}
                         </div>
