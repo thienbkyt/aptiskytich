@@ -12,6 +12,7 @@ export interface ExamSetRow {
   is_published: boolean;
   created_at: string;
   access_tier?: "free" | "pro" | "premium";
+  key_date?: string | null;
 }
 
 export interface ExamQuestionRow {
