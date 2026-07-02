@@ -77,7 +77,7 @@ const Footer = () => (
       </div>
       <div className="border-t border-sidebar-border/60 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-sidebar-foreground/40">
         <div>© 2026 Aptis Kỳ Tích. All rights reserved.</div>
-        <div className="text-xs">Made with <span className="text-primary">♥</span> for Aptis Kỳ Tích</div>
+        <div className="text-xs">Made with <span className="text-primary">♥</span> form Aptis Kỳ Tích</div>
       </div>
     </div>
   </footer>
