@@ -362,7 +362,7 @@ export default function PricingPage() {
           </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Cần hỗ trợ chọn gói? Nhắn Zalo / Facebook bên dưới — admin trả lời trong ngày.
+            Cần hỗ trợ chọn gói? Nhắn Zalo / Facebook bên dưới — admin trả lời trong ngay.
           </p>
           <div className="max-w-md mx-auto mt-3">
             <ContactAdminLinks />
