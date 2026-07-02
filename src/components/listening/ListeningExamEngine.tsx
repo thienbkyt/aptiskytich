@@ -452,6 +452,7 @@ const ListeningExamEngine = ({
           sections={sections}
           isInstructionsPhase
           onProceedFromInstructions={() => setPhase("practice")}
+          reviewScopeNote={reviewScopeNote}
         />
       </div>
     );
