@@ -115,13 +115,17 @@ export default function PredictionKeyView() {
       setLoadingKeys(true);
       const { data } = await supabase
         .from("prediction_keys")
-        .select("id,date,title,is_published")
+        .select("id,date,title,is_published, prediction_items(count)")
         .eq("is_published", true)
         .order("date", { ascending: false });
       if (cancelled) return;
-      const rows = (data || []) as any[];
+      const rows = (data || []).map((k: any) => ({
+        ...k,
+        itemCount: k.prediction_items?.[0]?.count ?? 0,
+      }));
       setKeys(rows);
-      if (rows.length > 0) setSelectedKeyId(rows[0].id);
+      const firstWithItems = rows.find((k: any) => k.itemCount > 0) || rows[0];
+      if (firstWithItems) setSelectedKeyId(firstWithItems.id);
       setLoadingKeys(false);
     })();
     return () => { cancelled = true; };
