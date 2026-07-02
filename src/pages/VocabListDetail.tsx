@@ -264,6 +264,7 @@ const VocabListDetail = () => {
           return obj;
         });
       } else {
+        const { readExcelFile } = await import("@/lib/excelUtils");
         const { sheets, sheetNames } = await readExcelFile(buf);
         rows = sheets[sheetNames[0]] || [];
       }
