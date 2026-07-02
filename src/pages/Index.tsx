@@ -408,7 +408,7 @@ const Index = () => {
                           <span className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
                         </div>
                         {p.mock === "ai" && (
-                          <img src={heroAiFeedbackAsset.url} alt="AI chấm Writing — band B2" className="block w-full h-auto" loading="lazy" />
+                          <img src={heroAiFeedbackAsset.url} alt="AI chấm Writing — band B2" className="block w-full h-auto" width={616} height={537} loading="lazy" decoding="async" />
                         )}
                         {p.mock === "reading" && (
                           <div className="p-5 md:p-6 bg-white">
