@@ -12,9 +12,11 @@ interface ExamHeaderProps {
   immediateExit?: boolean;
   /** When provided, render a "← Quay lại kết quả" button (review mode). */
   onBackToResults?: () => void;
+  /** When provided, exit button opens a Marathon submit dialog instead of the default confirm. */
+  onMarathonFinish?: () => void;
 }
 
-const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBackToResults }: ExamHeaderProps) => {
+const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBackToResults, onMarathonFinish }: ExamHeaderProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Mark body so global floating UI (e.g. Zalo FAB) hides while in-exam.
