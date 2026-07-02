@@ -411,6 +411,7 @@ const VocabListDetail = () => {
   }, [bulkRows, user, listId, words.length, resetBulk]);
 
   const downloadTemplate = useCallback(async () => {
+    const { createAndDownloadExcel } = await import("@/lib/excelUtils");
     await createAndDownloadExcel("vocab-template.xlsx", [
       {
         name: "Words",
