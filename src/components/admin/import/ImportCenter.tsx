@@ -118,7 +118,7 @@ const ImportCenter = () => {
           <FullTestManager examType={examType} refreshKey={refreshKey} onRefresh={() => setRefreshKey((k) => k + 1)} />
         ) : (
           <Tabs defaultValue="browse" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="browse" className="gap-1.5 text-xs sm:text-sm">
                 <BookOpen className="w-4 h-4" /> <span className="hidden sm:inline">Danh sách</span>
               </TabsTrigger>
@@ -130,6 +130,9 @@ const ImportCenter = () => {
               </TabsTrigger>
               <TabsTrigger value="media" className="gap-1.5 text-xs sm:text-sm">
                 <FolderOpen className="w-4 h-4" /> <span className="hidden sm:inline">Media</span>
+              </TabsTrigger>
+              <TabsTrigger value="keydate" className="gap-1.5 text-xs sm:text-sm">
+                <CalendarDays className="w-4 h-4" /> <span className="hidden sm:inline">Key ngày</span>
               </TabsTrigger>
             </TabsList>
 
