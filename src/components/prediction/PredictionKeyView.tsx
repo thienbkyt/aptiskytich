@@ -69,6 +69,7 @@ interface ItemRow {
 export default function PredictionKeyView() {
   const { user } = useAuth();
   const { isPremium, loading: tierLoading } = useIsPro();
+  const navigate = useNavigate();
 
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
