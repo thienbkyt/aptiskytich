@@ -448,6 +448,14 @@ const Reading = () => {
                       return rankT(rt) > rankT(acc) ? rt : acc;
                     }, "free" as "free" | "pro" | "premium");
                     const marathonLocked = isLocked({ access_tier: maxTier } as any);
+                    void progressTick;
+                    const savedProg = loadMarathonProgress("reading", activeTab);
+                    const lastRun = loadMarathonLast("reading", activeTab);
+                    const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
+                    const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
+                    const progWrongIds = (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
+                    const wrongSetIds = progWrongIds.length ? progWrongIds : (lastRun?.wrongSetIds ?? []);
+                    const wrongCount = wrongSetIds.length;
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
@@ -461,18 +469,62 @@ const Reading = () => {
                         <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
                           Luyện tất cả đề {activePartInfo?.label}
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-muted-foreground mb-1">
                           Làm liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ
                         </p>
+                        {hasResume && (
+                          <p className="text-xs text-primary font-semibold mb-3">
+                            Đang làm dở: đã xong {doneCount}/{filteredSets.length} đề ({Math.round((doneCount / filteredSets.length) * 100)}%)
+                          </p>
+                        )}
+                        {!hasResume && lastRun && (
+                          <p className="text-xs text-muted-foreground mb-3">
+                            Lần trước: đúng {lastRun.correct}/{lastRun.total}
+                          </p>
+                        )}
                         <div className="flex-1" />
-                        <div className="flex justify-end">
-                          <Button
-                            size="sm"
-                            onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType }))}
-                            className="gap-1.5 font-semibold"
-                          >
-                            {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
-                          </Button>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {hasResume ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType }); })}
+                                className="gap-1.5 font-semibold"
+                              >
+                                Làm lại từ đầu
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true }))}
+                                className="gap-1.5 font-semibold"
+                              >
+                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType }))}
+                              className="gap-1.5 font-semibold"
+                            >
+                              {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
+                            </Button>
+                          )}
+                          {wrongCount > 0 && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
+                                active: true,
+                                partType: activeTab as ReadingPartType,
+                                retryWrongSetIds: wrongSetIds,
+                              }))}
+                              className="gap-1.5 font-semibold"
+                            >
+                              Làm lại đề có câu sai ({wrongCount})
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </motion.div>
