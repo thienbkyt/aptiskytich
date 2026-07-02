@@ -438,7 +438,27 @@ const AdminPrediction = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Danh sách đề trong key ({items.length})</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Danh sách đề trong key ({items.length})</CardTitle>
+                {keyRow && items.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={async () => {
+                      if (!confirm(`Xóa hết ${items.length} đề khỏi key này?`)) return;
+                      const { error } = await supabase
+                        .from("prediction_items")
+                        .delete()
+                        .eq("key_id", keyRow.id);
+                      if (error) { toast.error(error.message); return; }
+                      setItems([]);
+                      toast.success("Đã xóa hết đề trong key");
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Xóa hết đề
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
