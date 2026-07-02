@@ -208,7 +208,11 @@ const Index = () => {
                   src={writingResultAsset.url}
                   alt="Kết quả Writing 44/50 — Trình độ B2 chấm bởi AI Kỳ Tích"
                   className="block w-full h-auto rounded-b-[20px]"
+                  width={1236}
+                  height={672}
                   loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </div>
 
