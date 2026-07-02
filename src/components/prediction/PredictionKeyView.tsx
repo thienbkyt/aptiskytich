@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { normalizePart } from "@/hooks/useExamSets";
 import { format } from "date-fns";
 import { ArrowRight, CalendarDays, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
