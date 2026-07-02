@@ -15,6 +15,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { normalizePart } from "@/hooks/useExamSets";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -74,6 +76,8 @@ const AdminPrediction = () => {
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<ExamSetRow[]>([]);
   const [addingPriority, setAddingPriority] = useState<Priority>("medium");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   const dateStr = useMemo(() => ymd(date), [date]);
 
@@ -196,6 +200,53 @@ const AdminPrediction = () => {
     }
     setItems((prev) => [...prev, data as any]);
     toast.success("Đã thêm: " + set.title);
+  };
+
+  const PRIO_MAP: Record<string, Priority> = {
+    "cao": "high", "high": "high",
+    "vừa": "medium", "vua": "medium", "medium": "medium",
+    "thấp": "low", "thap": "low", "low": "low",
+    "backup": "backup",
+  };
+
+  const bulkAdd = async () => {
+    const lines = bulkText.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+    setBulkRunning(true);
+    const k = await ensureKey();
+    if (!k) { setBulkRunning(false); return; }
+    let ok = 0, fail = 0;
+    let currentItems = [...items];
+    for (const line of lines) {
+      const parts = line.split("|").map((s) => s.trim());
+      if (parts.length < 3) { fail++; continue; }
+      const [skillRaw, partRaw, titleRaw, prioRaw] = parts;
+      const skill = skillRaw.toLowerCase();
+      const priority: Priority = PRIO_MAP[(prioRaw || "medium").toLowerCase()] ?? "medium";
+      const wantPart = normalizePart(partRaw);
+      const { data } = await supabase
+        .from("exam_sets")
+        .select("id,title,skill,part")
+        .eq("skill", skill)
+        .ilike("title", `%${titleRaw}%`)
+        .limit(50);
+      const match = (data ?? []).find((r: any) => normalizePart(r.part || "") === wantPart);
+      if (!match) { fail++; continue; }
+      if (currentItems.some((i) => i.exam_set_id === match.id)) { fail++; continue; }
+      const sort_order = currentItems.length;
+      const { data: inserted, error } = await supabase
+        .from("prediction_items")
+        .insert({ key_id: k.id, exam_set_id: match.id, priority, sort_order })
+        .select("*, exam_set:exam_sets(id,title,skill,part)")
+        .single();
+      if (error || !inserted) { fail++; continue; }
+      currentItems.push(inserted as any);
+      ok++;
+    }
+    setItems(currentItems);
+    setBulkRunning(false);
+    setBulkText("");
+    toast.success(`Đã thêm ${ok}, lỗi ${fail}`);
   };
 
   const updateItem = async (id: string, patch: { priority?: Priority; sort_order?: number }) => {
@@ -358,6 +409,32 @@ const AdminPrediction = () => {
               )}
             </CardContent>
           </Card>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Thêm hàng loạt</CardTitle>
+              <CardDescription>
+                Mỗi dòng: <code>skill | part | đề | priority</code> — priority ∈ cao / vừa / thấp / backup.
+                Ví dụ: <code>reading | Part 4 | Đề 09 | cao</code>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                rows={8}
+                placeholder={"reading | Part 4 | Đề 09 | cao\nlistening | Part 2 | Đề 03 | vừa"}
+                className="font-mono text-xs"
+              />
+              <div className="flex justify-end">
+                <Button onClick={bulkAdd} disabled={bulkRunning || !bulkText.trim()}>
+                  {bulkRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Thêm hàng loạt
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
 
           <Card>
             <CardHeader>
