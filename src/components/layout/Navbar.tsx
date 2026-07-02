@@ -79,7 +79,7 @@ const Navbar = () => {
       <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 mr-4 group">
-          <img src={logoImg} alt="Aptis Kỳ Tích" className="h-10 w-auto px-0 pb-0 transition-transform group-hover:scale-105" />
+          <img src={logoImg} alt="Aptis Kỳ Tích" width={40} height={40} className="h-10 w-10 px-0 pb-0 transition-transform group-hover:scale-105" decoding="async" />
           <span className="font-heading font-bold text-base text-foreground tracking-tight">
             Aptis <span className="gradient-text">Kỳ Tích</span>
           </span>
