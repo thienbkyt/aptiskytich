@@ -1568,6 +1568,36 @@ export type Database = {
           },
         ]
       }
+      user_devices: {
+        Row: {
+          created_at: string
+          device_id: string
+          device_label: string | null
+          device_type: string
+          id: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          device_label?: string | null
+          device_type: string
+          id?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          device_label?: string | null
+          device_type?: string
+          id?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1803,6 +1833,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      register_device: {
+        Args: { p_device_id: string; p_label: string; p_type: string }
+        Returns: undefined
       }
       tier_rank: { Args: { t: string }; Returns: number }
       user_tier: { Args: { p_uid: string }; Returns: string }
