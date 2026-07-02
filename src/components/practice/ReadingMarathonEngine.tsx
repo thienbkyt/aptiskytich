@@ -112,6 +112,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
     setSavedOnce(true);
+    if (accTotal === 0) return;
     (async () => {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildReadingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
