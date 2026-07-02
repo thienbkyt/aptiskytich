@@ -88,10 +88,11 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null }>({
-    active: false, partType: "part1", keyId: null,
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null }>({
+    active: false, partType: "part1", keyId: null, prio: null,
   });
   const [keySetIds, setKeySetIds] = useState<Set<string> | null>(null);
+  const [keyPrio, setKeyPrio] = useState<Map<string, string>>(new Map());
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
@@ -134,26 +135,32 @@ const Listening = () => {
     const mp = searchParams.get("marathon");
     if (!mp) return;
     const keyId = searchParams.get("keyId");
-    const token = `${mp}|${keyId ?? ""}`;
+    const prio = searchParams.get("prio");
+    const token = `${mp}|${keyId ?? ""}|${prio ?? ""}`;
     if (marathonAutoRef.current === token) return;
     marathonAutoRef.current = token;
-    setMarathon({ active: true, partType: mp as ListeningPartType, keyId: keyId || null });
+    setMarathon({ active: true, partType: mp as ListeningPartType, keyId: keyId || null, prio: prio || null });
     const next = new URLSearchParams(searchParams);
     next.delete("marathon");
     next.delete("keyId");
+    next.delete("prio");
     setSearchParams(next, { replace: true });
   }, [searchParams]);
 
   useEffect(() => {
-    if (!marathon.keyId) { setKeySetIds(null); return; }
+    if (!marathon.keyId) { setKeySetIds(null); setKeyPrio(new Map()); return; }
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("prediction_items")
-        .select("exam_set_id")
+        .select("exam_set_id, priority")
         .eq("key_id", marathon.keyId);
       if (cancelled) return;
-      setKeySetIds(new Set((data ?? []).map((r: any) => r.exam_set_id)));
+      const rows = (data ?? []) as any[];
+      setKeySetIds(new Set(rows.map((r) => r.exam_set_id)));
+      const m = new Map<string, string>();
+      rows.forEach((r) => { if (r.exam_set_id && r.priority) m.set(r.exam_set_id, r.priority); });
+      setKeyPrio(m);
     })();
     return () => { cancelled = true; };
   }, [marathon.keyId]);
@@ -166,8 +173,12 @@ const Listening = () => {
   }, [activeTab, searchQuery, examSets]);
 
   const marathonSets = useMemo(
-    () => examSets.filter((s) => normalizePart(s.part) === marathon.partType && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))),
-    [examSets, marathon.partType, marathon.keyId, keySetIds]
+    () => examSets.filter((s) =>
+      normalizePart(s.part) === marathon.partType
+      && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
+      && (!marathon.prio || keyPrio.get(s.id) === marathon.prio)
+    ),
+    [examSets, marathon.partType, marathon.keyId, marathon.prio, keySetIds, keyPrio]
   );
 
 
