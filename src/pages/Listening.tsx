@@ -174,14 +174,18 @@ const Listening = () => {
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
 
-  const marathonSets = useMemo(
-    () => examSets.filter((s) =>
+  const marathonSets = useMemo(() => {
+    let base = examSets.filter((s) =>
       normalizePart(s.part) === marathon.partType
       && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
       && (!marathon.prio || keyPrio.get(s.id) === marathon.prio)
-    ),
-    [examSets, marathon.partType, marathon.keyId, marathon.prio, keySetIds, keyPrio]
-  );
+    );
+    if (marathon.retryWrongSetIds?.length) {
+      const ids = new Set(marathon.retryWrongSetIds);
+      base = base.filter((s) => ids.has(s.id));
+    }
+    return base;
+  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.retryWrongSetIds, keySetIds, keyPrio]);
 
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
