@@ -133,23 +133,19 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
     const qResults: QResult[] = Array.isArray(perQuestion) ? (perQuestion as QResult[]) : [];
-    setResults((prev) => {
-      const next = prev.slice();
-      next[currentIndex] = {
-        correct, total,
-        examSetId: set.id,
-        part: set.part,
-        qResults,
-      };
-      return next;
-    });
+    const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults };
+    const nextResults = results.slice();
+    nextResults[currentIndex] = entry;
+    const isLastSet = currentIndex >= sets.length - 1;
+    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    setResults(nextResults);
     setEnterAtLast(false);
-    if (currentIndex < sets.length - 1) {
-      setCurrentIndex((i) => i + 1);
-    } else {
-      setPhase("completed");
+    if (persist) {
+      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
     }
-  }, [currentIndex, sets]);
+    if (!isLastSet) setCurrentIndex(nextIndex);
+    else setPhase("completed");
+  }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
