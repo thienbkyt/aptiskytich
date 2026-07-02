@@ -33,6 +33,7 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
+import { loadMarathonProgress, loadMarathonLast, clearMarathonProgress } from "@/lib/marathonProgress";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
