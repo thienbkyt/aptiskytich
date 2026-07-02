@@ -189,6 +189,13 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
         reviewSnapshot: snap,
       });
+      if (persist) {
+        const wrongSetIds = reviewable
+          .filter((r) => r.qResults.some((q) => !q.is_correct))
+          .map((r) => r.examSetId);
+        saveMarathonLast("listening", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+        clearMarathonProgress("listening", partType);
+      }
     })();
   }, [phase, savedOnce, accCorrect, accTotal]);
 
