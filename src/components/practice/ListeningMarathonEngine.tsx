@@ -40,16 +40,23 @@ type LoadedSet = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
+  const savedInit = resume && persist ? loadMarathonProgress("listening", partType) : null;
+  const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [results, setResults] = useState<(ResultEntry | undefined)[]>(
-    () => new Array(sets.length).fill(undefined)
-  );
+  const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
+    const base = new Array(sets.length).fill(undefined);
+    savedInit?.results?.forEach((r) => {
+      if (!r) return;
+      const idx = sets.findIndex((s) => s.id === r.examSetId);
+      if (idx >= 0) base[idx] = r as any;
+    });
+    return base;
+  });
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
   const accCorrect = useMemo(
