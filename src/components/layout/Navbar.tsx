@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import ThemeToggle from "@/components/ThemeToggle";
 
-import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
+import { prefetchHandlers } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
 import NotificationBell from "@/components/layout/NotificationBell";
 import { FEATURES } from "@/config/features";
