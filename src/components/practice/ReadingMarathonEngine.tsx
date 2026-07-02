@@ -9,6 +9,7 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
 import { saveExamResult } from "@/lib/saveExamResult";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
