@@ -42,11 +42,11 @@ const SKILL_ORDER = ["speaking", "listening", "grammar_vocab", "grammar", "readi
 
 function skillRoute(skill: string | null | undefined, setId: string): string {
   const s = (skill || "").toLowerCase();
-  if (s === "reading") return `/reading?set=${setId}&jump=1`;
-  if (s === "listening") return `/listening?set=${setId}&jump=1`;
-  if (s === "grammar_vocab" || s === "grammar") return `/grammar?set=${setId}&jump=1`;
-  if (s === "writing") return `/writing?set=${setId}&jump=1`;
-  if (s === "speaking") return `/speaking?set=${setId}&jump=1`;
+  if (s === "reading") return `/reading?set=${setId}&jump=1&from=key`;
+  if (s === "listening") return `/listening?set=${setId}&jump=1&from=key`;
+  if (s === "grammar_vocab" || s === "grammar") return `/grammar?set=${setId}&jump=1&from=key`;
+  if (s === "writing") return `/writing?set=${setId}&jump=1&from=key`;
+  if (s === "speaking") return `/speaking?set=${setId}&jump=1&from=key`;
   return `/?set=${setId}`;
 }
 
@@ -397,7 +397,7 @@ export default function PredictionKeyView() {
                           key={p}
                           size="sm"
                           variant="outline"
-                          onClick={() => navigate(`/${sk.skill}?marathon=${p}&keyId=${selectedKeyId}`)}
+                          onClick={() => navigate(`/${sk.skill}?marathon=${p}&keyId=${selectedKeyId}&from=key`)}
                           className="gap-1.5"
                         >
                           <Sparkles className="w-3.5 h-3.5" /> Marathon {label}
