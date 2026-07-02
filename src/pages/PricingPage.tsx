@@ -65,7 +65,7 @@ const PREMIUM_PERKS = [
 type CompareRow = { label: string; free: string | boolean; pro: string | boolean; premium: string | boolean };
 const COMPARE_ROWS: CompareRow[] = [
   { label: "Kho đề Free", free: true, pro: true, premium: true },
-  { label: "Kho đề Pro", free: false, pro: true, premium: true },
+  { label: "Đề Key Dự Đoán (Update hằng ngày)", free: false, pro: false, premium: true },
   { label: "Kho đề Premium", free: false, pro: false, premium: true },
   { label: "Chấm AI Writing", free: "3 lượt / tháng", pro: "10 lượt / tháng", premium: "Không giới hạn" },
   { label: "Chấm AI Speaking", free: "3 lượt / tháng", pro: "10 lượt / tháng", premium: "Không giới hạn" },
