@@ -81,7 +81,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     (async () => {
       const allLoaded = await Promise.all(
         sets.map(async (set) => {
-          const questions = await fetchExamQuestions(set.id);
+          let questions = await fetchExamQuestions(set.id);
+          const wrongIds = wrongQuestionIdsBySet?.[set.id];
+          if (partType === "part1" && wrongIds?.length) {
+            const wset = new Set(wrongIds);
+            questions = questions.filter((q: any) => wset.has(q.id));
+          }
           const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
           let pageCount = 0;
           switch (partType) {
