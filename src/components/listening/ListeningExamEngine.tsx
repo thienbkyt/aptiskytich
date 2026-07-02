@@ -90,6 +90,7 @@ const ListeningExamEngine = ({
   allowReveal = false,
   enterAtLastQuestion = false,
   reviewScopeNote,
+  onMarathonFinish,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
