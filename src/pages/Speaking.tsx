@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -142,7 +142,9 @@ const Speaking = () => {
     }
   };
 
+  const navigate = useNavigate();
   const handleExit = () => {
+    if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
     setExam({ active: false, partType: "part1", testTitle: "", loadingExam: false });
   };
 
