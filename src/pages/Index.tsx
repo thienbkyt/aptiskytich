@@ -536,6 +536,40 @@ const Index = () => {
               Những điều làm nên khác biệt khi luyện thi cùng Kỳ Tích.
             </motion.p>
           </motion.div>
+
+          {/* Highlight: Đề Key Dự Đoán — Premium exclusive */}
+          <motion.div
+            variants={fadeUp} custom={0}
+            initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="max-w-5xl mx-auto mb-6"
+          >
+            <div className="relative rounded-2xl p-[2px] bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] shadow-lg">
+              <div className="rounded-2xl bg-white p-6 md:p-7 flex flex-col md:flex-row md:items-center gap-5">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center shrink-0 shadow-md">
+                  <Sparkles className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white shadow-sm">
+                      <Sparkles className="w-3 h-3" /> ĐỘC QUYỀN PREMIUM
+                    </span>
+                    <h3 className="font-heading font-extrabold text-lg md:text-xl" style={{ color: "#4D0D0D" }}>
+                      Đề Key Dự Đoán
+                    </h3>
+                  </div>
+                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                    Cập nhật hằng ngày bộ đề dự đoán theo topic khả năng ra thi, phân mức ưu tiên. Marathon từng part để cày đúng trọng tâm, tiết kiệm thời gian ôn.
+                  </p>
+                </div>
+                <Link to="/thi-thu?tab=key" className="shrink-0">
+                  <Button className="bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 font-semibold gap-2 shadow-md">
+                    <Sparkles className="w-4 h-4" /> Xem key hôm nay
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+
           <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
             {features.map((f, i) => (
               <motion.div
