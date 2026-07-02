@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { FileSpreadsheet, Sparkles, BookOpen, FolderOpen } from "lucide-react";
+import { FileSpreadsheet, Sparkles, BookOpen, FolderOpen, CalendarDays } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import ExcelImport from "./ExcelImport";
 import AiParser from "./AiParser";
 import MediaLibrary from "./MediaLibrary";
 import FullTestManager from "./FullTestManager";
+import KeyDateAssigner from "./KeyDateAssigner";
 
 const ImportCenter = () => {
   const [examType, setExamType] = useState<ExamType>("general");
@@ -117,7 +118,7 @@ const ImportCenter = () => {
           <FullTestManager examType={examType} refreshKey={refreshKey} onRefresh={() => setRefreshKey((k) => k + 1)} />
         ) : (
           <Tabs defaultValue="browse" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="browse" className="gap-1.5 text-xs sm:text-sm">
                 <BookOpen className="w-4 h-4" /> <span className="hidden sm:inline">Danh sách</span>
               </TabsTrigger>
@@ -129,6 +130,9 @@ const ImportCenter = () => {
               </TabsTrigger>
               <TabsTrigger value="media" className="gap-1.5 text-xs sm:text-sm">
                 <FolderOpen className="w-4 h-4" /> <span className="hidden sm:inline">Media</span>
+              </TabsTrigger>
+              <TabsTrigger value="keydate" className="gap-1.5 text-xs sm:text-sm">
+                <CalendarDays className="w-4 h-4" /> <span className="hidden sm:inline">Key ngày</span>
               </TabsTrigger>
             </TabsList>
 
@@ -161,6 +165,10 @@ const ImportCenter = () => {
 
             <TabsContent value="media">
               <MediaLibrary />
+            </TabsContent>
+
+            <TabsContent value="keydate">
+              <KeyDateAssigner />
             </TabsContent>
           </Tabs>
         )

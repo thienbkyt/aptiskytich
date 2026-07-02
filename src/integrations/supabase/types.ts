@@ -383,6 +383,7 @@ export type Database = {
           full_test_title: string | null
           id: string
           is_published: boolean
+          key_date: string | null
           part: string
           skill: string
           time_limit: number
@@ -399,6 +400,7 @@ export type Database = {
           full_test_title?: string | null
           id?: string
           is_published?: boolean
+          key_date?: string | null
           part: string
           skill: string
           time_limit?: number
@@ -415,6 +417,7 @@ export type Database = {
           full_test_title?: string | null
           id?: string
           is_published?: boolean
+          key_date?: string | null
           part?: string
           skill?: string
           time_limit?: number
