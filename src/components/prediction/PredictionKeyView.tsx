@@ -556,7 +556,7 @@ export default function PredictionKeyView() {
 
                           <ul className="divide-y divide-border/60">
                             {highPrimary.map((it) => (
-                              <ItemRowView key={it.id} it={it} history={history} />
+                              <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
                             ))}
                           </ul>
 
@@ -568,7 +568,7 @@ export default function PredictionKeyView() {
                               </summary>
                               <ul className="divide-y divide-border/60">
                                 {lowSecondary.map((it) => (
-                                  <ItemRowView key={it.id} it={it} history={history} />
+                                  <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
                                 ))}
                               </ul>
                             </details>
