@@ -18,6 +18,7 @@ import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
 import VisitLogger from "@/components/VisitLogger";
 import RequireAdmin from "@/components/auth/RequireAdmin";
+import useDeviceSession from "@/hooks/useDeviceSession";
 
 const Index = lazy(() => import("./pages/Index"));
 
@@ -71,6 +72,11 @@ const WithDict = ({ children }: { children: ReactNode }) => (
   <DictionaryProvider>{children}</DictionaryProvider>
 );
 
+const DeviceSessionGuard = () => {
+  useDeviceSession();
+  return null;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -122,6 +128,7 @@ const App = () => (
               <AICoachFab />
               <ReportFab />
               <VisitLogger />
+              <DeviceSessionGuard />
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
