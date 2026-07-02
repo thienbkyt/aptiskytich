@@ -403,28 +403,52 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     translateRateRef.current = now;
 
     setTranslatePopup({
-      x, y, source: text, translation: null, loading: true, error: null, visible: true,
+      x, y, source: text, translation: "", loading: true, error: null, visible: true,
     });
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "translate-text",
-        { body: { text } }
-      );
-      if (fnError) throw fnError;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const translation = (data as any)?.translation as string;
-      if (!translation) throw new Error("Empty translation");
-      sentenceCacheRef.current.set(key, translation);
-      persistSentenceCache(key, translation);
-      setTranslatePopup((prev) =>
-        prev ? { ...prev, translation, loading: false } : prev
-      );
-    } catch (e: any) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-text`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+        },
+        body: JSON.stringify({ text }),
+      });
+      if (!resp.ok || !resp.body) throw new Error("translate failed");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const l = line.trim();
+          if (!l.startsWith("data:")) continue;
+          try {
+            const j = JSON.parse(l.slice(5).trim());
+            if (j.error) throw new Error(j.error);
+            if (j.t) {
+              full += j.t;
+              setTranslatePopup((prev) => (prev ? { ...prev, translation: full, loading: false } : prev));
+            }
+          } catch { /* bỏ qua chunk lẻ */ }
+        }
+      }
+      if (!full.trim()) throw new Error("Empty translation");
+      sentenceCacheRef.current.set(key, full.trim());
+      persistSentenceCache(key, full.trim());
+      setTranslatePopup((prev) => (prev ? { ...prev, translation: full.trim(), loading: false } : prev));
+    } catch (e) {
       console.error("translate-text failed:", e);
-      setTranslatePopup((prev) =>
-        prev ? { ...prev, loading: false, error: "Không thể dịch. Thử lại sau." } : prev
-      );
+      setTranslatePopup((prev) => (prev ? { ...prev, loading: false, error: "Không thể dịch. Thử lại sau." } : prev));
     }
   }, [translateBtn, persistSentenceCache]);
 
@@ -583,7 +607,7 @@ const SentenceTranslatePopup: React.FC<{
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
               Tiếng Việt
             </p>
-            {data.loading && (
+            {data.loading && !data.translation && (
               <div className="flex items-center gap-2 py-2">
                 <Loader2 className="w-4 h-4 animate-spin text-primary" />
                 <span className="text-xs text-muted-foreground">Đang dịch…</span>
@@ -592,7 +616,7 @@ const SentenceTranslatePopup: React.FC<{
             {data.error && !data.loading && (
               <p className="text-sm text-destructive">{data.error}</p>
             )}
-            {data.translation && !data.loading && (
+            {data.translation && (
               <p className="text-sm text-foreground font-medium leading-relaxed">
                 {data.translation}
               </p>
