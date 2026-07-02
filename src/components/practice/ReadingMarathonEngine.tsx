@@ -17,6 +17,8 @@ interface Props {
   partType: ReadingPartType;
   skillLabel: string;
   onExit: () => void;
+  resume?: boolean;
+  persist?: boolean;
 }
 
 type Phase = "loading" | "exam" | "completed";
