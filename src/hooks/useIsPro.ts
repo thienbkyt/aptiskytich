@@ -72,7 +72,7 @@ export function useIsPro() {
 
   const isPro = tier === "pro" || tier === "premium";
   const isPremium = tier === "premium";
-  const loading = authLoading || (query.isPending && query.fetchStatus !== "idle");
+  const loading = authLoading || (!!userId && query.isPending && query.fetchStatus !== "idle");
 
   return { isPro, isPremium, tier, proUntil, plan, loading, refetch };
 }
