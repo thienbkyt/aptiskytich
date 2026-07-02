@@ -9,6 +9,7 @@ import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
 } from "@/lib/examTransformers";
 import { saveExamResult } from "@/lib/saveExamResult";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
   partType: ListeningPartType;
   skillLabel: string;
   onExit: () => void;
+  resume?: boolean;
+  persist?: boolean;
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -37,16 +40,23 @@ type LoadedSet = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
+  const savedInit = resume && persist ? loadMarathonProgress("listening", partType) : null;
+  const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [results, setResults] = useState<(ResultEntry | undefined)[]>(
-    () => new Array(sets.length).fill(undefined)
-  );
+  const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
+    const base = new Array(sets.length).fill(undefined);
+    savedInit?.results?.forEach((r) => {
+      if (!r) return;
+      const idx = sets.findIndex((s) => s.id === r.examSetId);
+      if (idx >= 0) base[idx] = r as any;
+    });
+    return base;
+  });
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
   const accCorrect = useMemo(
@@ -123,23 +133,19 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
     const qResults: QResult[] = Array.isArray(perQuestion) ? (perQuestion as QResult[]) : [];
-    setResults((prev) => {
-      const next = prev.slice();
-      next[currentIndex] = {
-        correct, total,
-        examSetId: set.id,
-        part: set.part,
-        qResults,
-      };
-      return next;
-    });
+    const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults };
+    const nextResults = results.slice();
+    nextResults[currentIndex] = entry;
+    const isLastSet = currentIndex >= sets.length - 1;
+    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    setResults(nextResults);
     setEnterAtLast(false);
-    if (currentIndex < sets.length - 1) {
-      setCurrentIndex((i) => i + 1);
-    } else {
-      setPhase("completed");
+    if (persist) {
+      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
     }
-  }, [currentIndex, sets]);
+    if (!isLastSet) setCurrentIndex(nextIndex);
+    else setPhase("completed");
+  }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
@@ -183,6 +189,13 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
         extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
         reviewSnapshot: snap,
       });
+      if (persist) {
+        const wrongSetIds = reviewable
+          .filter((r) => r.qResults.some((q) => !q.is_correct))
+          .map((r) => r.examSetId);
+        saveMarathonLast("listening", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+        clearMarathonProgress("listening", partType);
+      }
     })();
   }, [phase, savedOnce, accCorrect, accTotal]);
 
@@ -296,6 +309,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) 
               )}
               <Button
                 onClick={() => {
+                  if (persist) clearMarathonProgress("listening", partType);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);

@@ -32,6 +32,7 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
+import { loadMarathonProgress, loadMarathonLast, clearMarathonProgress } from "@/lib/marathonProgress";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -88,9 +89,10 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null }>({
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[] }>({
     active: false, partType: "part1", keyId: null, prio: null,
   });
+  const [progressTick, setProgressTick] = useState(0);
   const [keySetIds, setKeySetIds] = useState<Set<string> | null>(null);
   const [keyPrio, setKeyPrio] = useState<Map<string, string>>(new Map());
   const { user: authUser, loading: authLoading } = useAuth();
@@ -172,14 +174,18 @@ const Listening = () => {
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
 
-  const marathonSets = useMemo(
-    () => examSets.filter((s) =>
+  const marathonSets = useMemo(() => {
+    let base = examSets.filter((s) =>
       normalizePart(s.part) === marathon.partType
       && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
       && (!marathon.prio || keyPrio.get(s.id) === marathon.prio)
-    ),
-    [examSets, marathon.partType, marathon.keyId, marathon.prio, keySetIds, keyPrio]
-  );
+    );
+    if (marathon.retryWrongSetIds?.length) {
+      const ids = new Set(marathon.retryWrongSetIds);
+      base = base.filter((s) => ids.has(s.id));
+    }
+    return base;
+  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.retryWrongSetIds, keySetIds, keyPrio]);
 
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
@@ -288,7 +294,10 @@ const Listening = () => {
         sets={marathonSets}
         partType={marathon.partType}
         skillLabel={`Listening · Marathon ${partLabel}`}
+        resume={marathon.resume}
+        persist={!marathon.retryWrongSetIds}
         onExit={() => {
+          setProgressTick((t) => t + 1);
           if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
           setMarathon({ active: false, partType: marathon.partType });
         }}
@@ -421,6 +430,12 @@ const Listening = () => {
                       return rankT(rt) > rankT(acc) ? rt : acc;
                     }, "free" as "free" | "pro" | "premium");
                     const marathonLocked = isLocked({ access_tier: maxTier } as any);
+                    void progressTick;
+                    const savedProg = loadMarathonProgress("listening", activeTab);
+                    const lastRun = loadMarathonLast("listening", activeTab);
+                    const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
+                    const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
+                    const wrongCount = lastRun?.wrongSetIds?.length ?? 0;
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
@@ -434,18 +449,58 @@ const Listening = () => {
                         <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
                           Luyện tất cả đề {activePartInfo?.label}
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-4">
+                        <p className="text-sm text-muted-foreground mb-1">
                           Làm liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ
                         </p>
+                        {hasResume && (
+                          <p className="text-xs text-primary font-semibold mb-3">
+                            Đang làm dở: đã xong {doneCount}/{filteredSets.length} đề ({Math.round((doneCount / filteredSets.length) * 100)}%)
+                          </p>
+                        )}
+                        {!hasResume && lastRun && (
+                          <p className="text-xs text-muted-foreground mb-3">
+                            Lần trước: đúng {lastRun.correct}/{lastRun.total}
+                          </p>
+                        )}
                         <div className="flex-1" />
-                        <div className="flex justify-end">
-                          <Button
-                            size="sm"
-                            onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType }))}
-                            className="gap-1.5 font-semibold"
-                          >
-                            {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
-                          </Button>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {hasResume ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("listening", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ListeningPartType }); })}
+                                className="gap-1.5 font-semibold"
+                              >
+                                Làm lại từ đầu
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, resume: true }))}
+                                className="gap-1.5 font-semibold"
+                              >
+                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType }))}
+                              className="gap-1.5 font-semibold"
+                            >
+                              {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
+                            </Button>
+                          )}
+                          {wrongCount > 0 && (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, retryWrongSetIds: lastRun!.wrongSetIds }))}
+                              className="gap-1.5 font-semibold"
+                            >
+                              Làm lại đề có câu sai ({wrongCount})
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </motion.div>
