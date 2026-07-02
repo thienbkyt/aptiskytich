@@ -50,7 +50,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { speakWithTTS, speakAsync as speakAsyncTTS, stopTTS } from "@/lib/tts";
-import { createAndDownloadExcel, readExcelFile } from "@/lib/excelUtils";
+// excelUtils is loaded dynamically inside handlers to keep exceljs out of the initial bundle
 
 /* ─── TTS helpers (Google Cloud TTS via edge function) ─── */
 function speak(text: string, lang: "en" | "vi") {
