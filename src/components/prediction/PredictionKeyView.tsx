@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { normalizePart } from "@/hooks/useExamSets";
 import { format } from "date-fns";
@@ -257,11 +257,29 @@ export default function PredictionKeyView() {
     });
   }, [visibleItems]);
 
-  // Set default open skill to the first one with items
+  // Set default open skill to the first one with items (only once)
+  const didInitOpen = useRef(false);
   useEffect(() => {
-    if (openSkill) return;
-    if (groupedBySkillPart.length > 0) setOpenSkill(groupedBySkillPart[0].skill);
-  }, [groupedBySkillPart, openSkill]);
+    if (didInitOpen.current || groupedBySkillPart.length === 0) return;
+    setOpenSkill(groupedBySkillPart[0].skill);
+    didInitOpen.current = true;
+  }, [groupedBySkillPart]);
+
+  // Load question counts per exam set
+  const [qCount, setQCount] = useState<Map<string, number>>(new Map());
+  useEffect(() => {
+    if (items.length === 0) { setQCount(new Map()); return; }
+    let cancelled = false;
+    (async () => {
+      const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
+      const { data } = await supabase.from("exam_questions").select("exam_set_id").in("exam_set_id", ids);
+      if (cancelled) return;
+      const m = new Map<string, number>();
+      (data || []).forEach((r: any) => m.set(r.exam_set_id, (m.get(r.exam_set_id) || 0) + 1));
+      setQCount(m);
+    })();
+    return () => { cancelled = true; };
+  }, [items]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
@@ -538,7 +556,7 @@ export default function PredictionKeyView() {
 
                           <ul className="divide-y divide-border/60">
                             {highPrimary.map((it) => (
-                              <ItemRowView key={it.id} it={it} history={history} />
+                              <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
                             ))}
                           </ul>
 
@@ -550,7 +568,7 @@ export default function PredictionKeyView() {
                               </summary>
                               <ul className="divide-y divide-border/60">
                                 {lowSecondary.map((it) => (
-                                  <ItemRowView key={it.id} it={it} history={history} />
+                                  <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
                                 ))}
                               </ul>
                             </details>
@@ -572,12 +590,15 @@ export default function PredictionKeyView() {
 function ItemRowView({
   it,
   history,
+  qCount,
 }: {
   it: ItemRow;
   history: Map<string, { count: number; best: number }>;
+  qCount: Map<string, number>;
 }) {
   const h = history.get(it.exam_set_id);
   const done = !!h;
+  const n = qCount.get(it.exam_set_id) ?? 0;
   return (
     <li className="px-3 py-2.5 flex items-center gap-3">
       {done ? (
@@ -586,7 +607,9 @@ function ItemRowView({
         <Circle className="w-5 h-5 text-muted-foreground/50 shrink-0" />
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{it.title}</p>
+        <p className="text-sm font-medium text-foreground truncate">
+          {it.title} <span className="text-xs text-muted-foreground font-normal">· {n} câu</span>
+        </p>
         {done && (
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
             {h!.count} lần · cao nhất {h!.best}%
