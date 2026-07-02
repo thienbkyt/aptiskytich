@@ -19,6 +19,7 @@ interface Props {
   onExit: () => void;
   resume?: boolean;
   persist?: boolean;
+  wrongQuestionIdsBySet?: Record<string, string[]>;
 }
 
 type Phase = "loading" | "exam" | "completed";
