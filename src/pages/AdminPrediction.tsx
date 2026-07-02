@@ -247,6 +247,9 @@ const AdminPrediction = () => {
     setBulkRunning(false);
     setBulkText("");
     toast.success(`Đã thêm ${ok}, lỗi ${fail}`);
+  };
+
+  const updateItem = async (id: string, patch: { priority?: Priority; sort_order?: number }) => {
     const prev = items;
     setItems((cur) => cur.map((i) => (i.id === id ? { ...i, ...patch } : i)));
     const { error } = await supabase.from("prediction_items").update(patch).eq("id", id);
