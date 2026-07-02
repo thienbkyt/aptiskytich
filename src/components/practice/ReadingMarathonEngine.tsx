@@ -315,6 +315,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       showResultsOnSubmit={false}
       onExit={onExit}
       onComplete={handleComplete}
+      onMarathonFinish={() => setPhase("completed")}
       onPreviousPart={() => {
         if (currentIndex > 0) {
           setEnterAtLast(true);
