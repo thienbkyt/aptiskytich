@@ -54,6 +54,7 @@ const PRO_PERKS = [
 ];
 
 const PREMIUM_PERKS = [
+  "Đề Key Dự Đoán cập nhật hằng ngày (độc quyền Premium)",
   "TẤT CẢ quyền lợi của Pro",
   "Mở khóa kho đề Premium (cao cấp / mới nhất)",
   "Chấm AI Speaking & Writing — KHÔNG GIỚI HẠN",
@@ -63,6 +64,7 @@ const PREMIUM_PERKS = [
 
 type CompareRow = { label: string; free: string | boolean; pro: string | boolean; premium: string | boolean };
 const COMPARE_ROWS: CompareRow[] = [
+  { label: "Đề Key Dự Đoán (Update hằng ngày)", free: false, pro: false, premium: true },
   { label: "Kho đề Free", free: true, pro: true, premium: true },
   { label: "Kho đề Pro", free: false, pro: true, premium: true },
   { label: "Kho đề Premium", free: false, pro: false, premium: true },
