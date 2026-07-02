@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -244,7 +244,9 @@ const Listening = () => {
     saveTestResult({ correct, total, skill: "listening" });
   };
 
+  const navigate = useNavigate();
   const handleExit = () => {
+    if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
     setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
   };
 
@@ -275,7 +277,10 @@ const Listening = () => {
         sets={marathonSets}
         partType={marathon.partType}
         skillLabel={`Listening · Marathon ${partLabel}`}
-        onExit={() => setMarathon({ active: false, partType: marathon.partType })}
+        onExit={() => {
+          if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
+          setMarathon({ active: false, partType: marathon.partType });
+        }}
       />
     );
   }
