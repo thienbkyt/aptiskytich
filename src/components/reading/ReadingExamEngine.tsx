@@ -102,6 +102,7 @@ const ReadingExamEngine = ({
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
   pageBase, pageTotal, initialSection, onPageCount, allowReveal = false,
   reviewScopeNote,
+  onMarathonFinish,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
