@@ -1,4 +1,4 @@
-// Auto-update PWA: when a new SW is ready, activate it and reload the page.
+// Prompt-based PWA update: notify user, reload only when they click.
 import { toast } from "sonner";
 
 export function registerPWA() {
@@ -14,10 +14,16 @@ export function registerPWA() {
         immediate: true,
         onNeedRefresh() {
           try {
-            toast("Đang cập nhật phiên bản mới...", { duration: 2000 });
+            toast("Đã có bản cập nhật mới", {
+              duration: Infinity,
+              action: {
+                label: "Tải lại",
+                onClick: () => {
+                  updateSW(true);
+                },
+              },
+            });
           } catch {}
-          // Activate the new SW and reload to pick up the latest bundle
-          updateSW(true);
         },
         onRegisteredSW(_swUrl, registration) {
           // Periodically check for updates (every 30 minutes)
