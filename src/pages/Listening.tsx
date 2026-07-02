@@ -126,6 +126,22 @@ const Listening = () => {
     }
   }, [searchParams, examSets, loading]);
 
+  // Auto-start marathon via ?marathon=partN(&keyDate=YYYY-MM-DD)
+  const marathonAutoRef = useRef<string | null>(null);
+  useEffect(() => {
+    const mp = searchParams.get("marathon");
+    if (!mp) return;
+    const keyDate = searchParams.get("keyDate");
+    const token = `${mp}|${keyDate ?? ""}`;
+    if (marathonAutoRef.current === token) return;
+    marathonAutoRef.current = token;
+    setMarathon({ active: true, partType: mp as ListeningPartType, keyDate: keyDate || null });
+    const next = new URLSearchParams(searchParams);
+    next.delete("marathon");
+    next.delete("keyDate");
+    setSearchParams(next, { replace: true });
+  }, [searchParams]);
+
   const filteredSets = useMemo(() => {
     if (activeTab === "full") return [];
     return examSets
@@ -134,8 +150,8 @@ const Listening = () => {
   }, [activeTab, searchQuery, examSets]);
 
   const marathonSets = useMemo(
-    () => examSets.filter((s) => normalizePart(s.part) === marathon.partType),
-    [examSets, marathon.partType]
+    () => examSets.filter((s) => normalizePart(s.part) === marathon.partType && (marathon.keyDate ? s.key_date === marathon.keyDate : true)),
+    [examSets, marathon.partType, marathon.keyDate]
   );
 
 
