@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["favicon-32.png", "apple-touch-icon.png"],
       manifest: {
         name: "Aptis Kỳ Tích",
@@ -36,8 +36,9 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
+        clientsClaim: false,
+        skipWaiting: false,
+
         navigateFallbackDenylist: [/^\/~/],
         // Don't precache index.html — always fetch fresh from network
         globIgnores: ["**/index.html"],
