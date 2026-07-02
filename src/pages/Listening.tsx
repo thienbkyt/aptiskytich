@@ -294,7 +294,10 @@ const Listening = () => {
         sets={marathonSets}
         partType={marathon.partType}
         skillLabel={`Listening · Marathon ${partLabel}`}
+        resume={marathon.resume}
+        persist={!marathon.retryWrongSetIds}
         onExit={() => {
+          setProgressTick((t) => t + 1);
           if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
           setMarathon({ active: false, partType: marathon.partType });
         }}
