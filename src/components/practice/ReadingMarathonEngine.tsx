@@ -9,6 +9,7 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
 import { saveExamResult } from "@/lib/saveExamResult";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
   partType: ReadingPartType;
   skillLabel: string;
   onExit: () => void;
+  resume?: boolean;
+  persist?: boolean;
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -33,16 +36,23 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
+  const savedInit = resume && persist ? loadMarathonProgress("reading", partType) : null;
+  const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [results, setResults] = useState<(ResultEntry | undefined)[]>(
-    () => new Array(sets.length).fill(undefined)
-  );
+  const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
+    const base = new Array(sets.length).fill(undefined);
+    savedInit?.results?.forEach((r) => {
+      if (!r) return;
+      const idx = sets.findIndex((s) => s.id === r.examSetId);
+      if (idx >= 0) base[idx] = r as any;
+    });
+    return base;
+  });
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
 
   const accCorrect = useMemo(
@@ -86,33 +96,23 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
     let answers: any = [];
     try {
       const raw = qResults[0]?.user_answer;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        answers = parsed?.answers ?? [];
-      }
+      if (raw) { const parsed = JSON.parse(raw); answers = parsed?.answers ?? []; }
     } catch { /* noop */ }
-    setResults((prev) => {
-      const next = prev.slice();
-      next[currentIndex] = {
-        correct, total,
-        examSetId: set.id,
-        part: set.part,
-        qResults,
-        answers,
-      };
-      return next;
-    });
-    if (currentIndex < sets.length - 1) {
-      setEnterAtLast(false);
-      setCurrentIndex((i) => i + 1);
-    } else {
-      setPhase("completed");
-    }
-  }, [currentIndex, sets]);
+    const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults, answers } as any;
+    const nextResults = results.slice();
+    nextResults[currentIndex] = entry;
+    const isLastSet = currentIndex >= sets.length - 1;
+    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    setResults(nextResults);
+    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
+    if (!isLastSet) { setEnterAtLast(false); setCurrentIndex(nextIndex); }
+    else setPhase("completed");
+  }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
     setSavedOnce(true);
+    if (accTotal === 0) return;
     (async () => {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildReadingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
@@ -152,6 +152,11 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
         extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
         reviewSnapshot: snap,
       });
+      if (persist) {
+        const wrongSetIds = reviewable.filter((r) => r.correct < r.total).map((r) => r.examSetId);
+        saveMarathonLast("reading", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+        clearMarathonProgress("reading", partType);
+      }
     })();
   }, [phase, savedOnce, accCorrect, accTotal]);
 
@@ -241,7 +246,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
               <Trophy className="w-8 h-8 text-primary" />
             </div>
             <p className="text-base text-muted-foreground mb-2">
-              Bạn đã hoàn thành tất cả {sets.length} đề {partName}
+              Bạn đã làm {reviewable.length}/{sets.length} đề {partName}
             </p>
             <p className="text-4xl md:text-5xl font-heading font-extrabold text-foreground my-4">
               Đúng {accCorrect}/{accTotal} câu
@@ -255,6 +260,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
               )}
               <Button
                 onClick={() => {
+                  if (persist) clearMarathonProgress("reading", partType);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
@@ -309,6 +315,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       showResultsOnSubmit={false}
       onExit={onExit}
       onComplete={handleComplete}
+      onMarathonFinish={() => setPhase("completed")}
       onPreviousPart={() => {
         if (currentIndex > 0) {
           setEnterAtLast(true);

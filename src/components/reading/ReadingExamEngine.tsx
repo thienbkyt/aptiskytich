@@ -88,6 +88,7 @@ interface ReadingExamEngineProps {
   /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
   allowReveal?: boolean;
   reviewScopeNote?: string;
+  onMarathonFinish?: () => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -101,6 +102,7 @@ const ReadingExamEngine = ({
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
   pageBase, pageTotal, initialSection, onPageCount, allowReveal = false,
   reviewScopeNote,
+  onMarathonFinish,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
@@ -566,7 +568,7 @@ const ReadingExamEngine = ({
         skillLabel="Reading"
         partLabel={partLabel}
         onExit={onExit}
-        
+        onMarathonFinish={onMarathonFinish}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
