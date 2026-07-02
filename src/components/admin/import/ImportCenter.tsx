@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { FileSpreadsheet, Sparkles, BookOpen, FolderOpen } from "lucide-react";
+import { FileSpreadsheet, Sparkles, BookOpen, FolderOpen, CalendarDays } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import ExcelImport from "./ExcelImport";
 import AiParser from "./AiParser";
 import MediaLibrary from "./MediaLibrary";
 import FullTestManager from "./FullTestManager";
+import KeyDateAssigner from "./KeyDateAssigner";
 
 const ImportCenter = () => {
   const [examType, setExamType] = useState<ExamType>("general");
