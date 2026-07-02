@@ -19,6 +19,7 @@ interface Props {
   onExit: () => void;
   resume?: boolean;
   persist?: boolean;
+  wrongQuestionIdsBySet?: Record<string, string[]>;
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -40,7 +41,7 @@ type LoadedSet = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
+const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet }: Props) => {
   const savedInit = resume && persist ? loadMarathonProgress("listening", partType) : null;
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
@@ -80,7 +81,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     (async () => {
       const allLoaded = await Promise.all(
         sets.map(async (set) => {
-          const questions = await fetchExamQuestions(set.id);
+          let questions = await fetchExamQuestions(set.id);
+          const wrongIds = wrongQuestionIdsBySet?.[set.id];
+          if (partType === "part1" && wrongIds?.length) {
+            const wset = new Set(wrongIds);
+            questions = questions.filter((q: any) => wset.has(q.id));
+          }
           const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
           let pageCount = 0;
           switch (partType) {
@@ -193,7 +199,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         const wrongSetIds = reviewable
           .filter((r) => r.qResults.some((q) => !q.is_correct))
           .map((r) => r.examSetId);
-        saveMarathonLast("listening", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+        const wrongQBySet: Record<string, string[]> = {};
+        reviewable.forEach((r) => {
+          const wq = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
+          if (wq.length) wrongQBySet[r.examSetId] = wq;
+        });
+        saveMarathonLast("listening", partType, { correct: accCorrect, total: accTotal, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
         clearMarathonProgress("listening", partType);
       }
     })();

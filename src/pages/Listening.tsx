@@ -89,7 +89,7 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[] }>({
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]> }>({
     active: false, partType: "part1", keyId: null, prio: null,
   });
   const [progressTick, setProgressTick] = useState(0);
@@ -296,6 +296,7 @@ const Listening = () => {
         skillLabel={`Listening · Marathon ${partLabel}`}
         resume={marathon.resume}
         persist={!marathon.retryWrongSetIds}
+        wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
         onExit={() => {
           setProgressTick((t) => t + 1);
           if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
@@ -435,11 +436,19 @@ const Listening = () => {
                     const lastRun = loadMarathonLast("listening", activeTab);
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
                     const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
-                    const progWrongIds = (savedProg?.results ?? [])
-                      .filter((r: any) => r && Array.isArray(r.qResults) && r.qResults.some((q: any) => !q.is_correct))
-                      .map((r: any) => r.examSetId);
-                    const wrongSetIds = progWrongIds.length ? progWrongIds : (lastRun?.wrongSetIds ?? []);
-                    const wrongCount = wrongSetIds.length;
+                    const wrongQMap: Record<string, string[]> = {};
+                    (savedProg?.results ?? []).forEach((r: any) => {
+                      if (!r?.qResults) return;
+                      const wq = r.qResults.filter((q: any) => !q.is_correct).map((q: any) => q.exam_question_id);
+                      if (wq.length) wrongQMap[r.examSetId] = wq;
+                    });
+                    if (Object.keys(wrongQMap).length === 0 && lastRun?.wrongQuestionsBySet) {
+                      Object.assign(wrongQMap, lastRun.wrongQuestionsBySet);
+                    }
+                    const wrongSetIds = Object.keys(wrongQMap);
+                    const wrongQTotal = Object.values(wrongQMap).reduce((s, a) => s + a.length, 0);
+                    const isPart1 = activeTab === "part1";
+                    const wrongCount = isPart1 ? wrongQTotal : wrongSetIds.length;
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
@@ -499,10 +508,15 @@ const Listening = () => {
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, retryWrongSetIds: wrongSetIds }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
+                                active: true,
+                                partType: activeTab as ListeningPartType,
+                                retryWrongSetIds: wrongSetIds,
+                                wrongQuestionIdsBySet: isPart1 ? wrongQMap : undefined,
+                              }))}
                               className="gap-1.5 font-semibold"
                             >
-                              Làm lại đề có câu sai ({wrongCount})
+                              {isPart1 ? `Làm lại câu sai (${wrongQTotal} câu)` : `Làm lại đề có câu sai (${wrongSetIds.length})`}
                             </Button>
                           )}
                         </div>

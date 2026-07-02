@@ -10,6 +10,7 @@ export interface MarathonLast {
   correct: number;
   total: number;
   wrongSetIds: string[];
+  wrongQuestionsBySet?: Record<string, string[]>;
   updatedAt: number;
 }
 
