@@ -69,6 +69,7 @@ interface ListeningExamEngineProps {
   /** When true (and not reviewMode), open this part at the last question (used when navigating Back from next part). */
   enterAtLastQuestion?: boolean;
   reviewScopeNote?: string;
+  onMarathonFinish?: () => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -89,6 +90,7 @@ const ListeningExamEngine = ({
   allowReveal = false,
   enterAtLastQuestion = false,
   reviewScopeNote,
+  onMarathonFinish,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -502,7 +504,7 @@ const ListeningExamEngine = ({
         skillLabel="Listening"
         partLabel={partLabel}
         onExit={onExit}
-        
+        onMarathonFinish={onMarathonFinish}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">

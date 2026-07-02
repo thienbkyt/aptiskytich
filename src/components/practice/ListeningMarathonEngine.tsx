@@ -156,6 +156,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
     setSavedOnce(true);
+    if (accTotal === 0) return;
     (async () => {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
@@ -306,7 +307,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               <Trophy className="w-8 h-8 text-primary" />
             </div>
             <p className="text-base text-muted-foreground mb-2">
-              Bạn đã hoàn thành tất cả {sets.length} đề {partName}
+              Bạn đã làm {reviewable.length}/{sets.length} đề {partName}
             </p>
             <p className="text-4xl md:text-5xl font-heading font-extrabold text-foreground my-4">
               Đúng {accCorrect}/{accTotal} câu
@@ -387,6 +388,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
       skipIntro
       allowReveal
       reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
+      onMarathonFinish={() => setPhase("completed")}
       showResultsOnSubmit={false}
       onExit={onExit}
       onComplete={handleComplete}
