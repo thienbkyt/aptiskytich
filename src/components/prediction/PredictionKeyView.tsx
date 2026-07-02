@@ -590,12 +590,15 @@ export default function PredictionKeyView() {
 function ItemRowView({
   it,
   history,
+  qCount,
 }: {
   it: ItemRow;
   history: Map<string, { count: number; best: number }>;
+  qCount: Map<string, number>;
 }) {
   const h = history.get(it.exam_set_id);
   const done = !!h;
+  const n = qCount.get(it.exam_set_id) ?? 0;
   return (
     <li className="px-3 py-2.5 flex items-center gap-3">
       {done ? (
@@ -604,7 +607,9 @@ function ItemRowView({
         <Circle className="w-5 h-5 text-muted-foreground/50 shrink-0" />
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{it.title}</p>
+        <p className="text-sm font-medium text-foreground truncate">
+          {it.title} <span className="text-xs text-muted-foreground font-normal">· {n} câu</span>
+        </p>
         {done && (
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
             {h!.count} lần · cao nhất {h!.best}%
