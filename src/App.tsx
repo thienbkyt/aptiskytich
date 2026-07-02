@@ -53,6 +53,7 @@ const MarathonHistoryDetail = lazy(() => import("./pages/MarathonHistoryDetail")
 const FullPartHistoryDetail = lazy(() => import("./pages/FullPartHistoryDetail"));
 const ProgressPage = lazy(() => import("./pages/Progress"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
+const KeyDatesPage = lazy(() => import("./pages/KeyDatesPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
