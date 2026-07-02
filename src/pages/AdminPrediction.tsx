@@ -76,6 +76,8 @@ const AdminPrediction = () => {
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<ExamSetRow[]>([]);
   const [addingPriority, setAddingPriority] = useState<Priority>("medium");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   const dateStr = useMemo(() => ymd(date), [date]);
 
