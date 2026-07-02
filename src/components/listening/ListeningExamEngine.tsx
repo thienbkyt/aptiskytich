@@ -68,6 +68,7 @@ interface ListeningExamEngineProps {
   allowReveal?: boolean;
   /** When true (and not reviewMode), open this part at the last question (used when navigating Back from next part). */
   enterAtLastQuestion?: boolean;
+  reviewScopeNote?: string;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
