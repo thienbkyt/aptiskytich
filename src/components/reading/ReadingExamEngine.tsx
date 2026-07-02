@@ -87,6 +87,7 @@ interface ReadingExamEngineProps {
   onPageCount?: (n: number) => void;
   /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
   allowReveal?: boolean;
+  reviewScopeNote?: string;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
