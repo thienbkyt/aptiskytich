@@ -54,6 +54,7 @@ const PRO_PERKS = [
 ];
 
 const PREMIUM_PERKS = [
+  "Đề Key Dự Đoán cập nhật hằng ngày (độc quyền Premium)",
   "TẤT CẢ quyền lợi của Pro",
   "Mở khóa kho đề Premium (cao cấp / mới nhất)",
   "Chấm AI Speaking & Writing — KHÔNG GIỚI HẠN",
