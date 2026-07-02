@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => ({
 
         navigateFallbackDenylist: [/^\/~/],
         // Don't precache index.html — always fetch fresh from network
-        globIgnores: ["**/index.html"],
+        globIgnores: ["**/index.html", "**/exceljs-*.js", "**/recharts-*.js"],
         navigateFallback: null,
         runtimeCaching: [
           {
