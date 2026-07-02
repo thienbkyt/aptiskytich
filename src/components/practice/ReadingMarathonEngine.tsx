@@ -152,6 +152,11 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
         reviewSnapshot: snap,
       });
+      if (persist) {
+        const wrongSetIds = reviewable.filter((r) => r.correct < r.total).map((r) => r.examSetId);
+        saveMarathonLast("reading", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+        clearMarathonProgress("reading", partType);
+      }
     })();
   }, [phase, savedOnce, accCorrect, accTotal]);
 
