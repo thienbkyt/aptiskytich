@@ -60,6 +60,12 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   build: {
     target: "safari14",
+    // Vite's default preload helper eagerly registers every dynamic-import
+    // chunk (including exceljs) via a static side-effect import in the parent
+    // chunk. Disabling the polyfill/registration keeps heavy chunks like
+    // exceljs and recharts out of the initial page load — they only load when
+    // the actual dynamic import executes at runtime.
+    modulePreload: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
