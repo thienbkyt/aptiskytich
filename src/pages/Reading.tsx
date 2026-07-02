@@ -138,8 +138,8 @@ const Reading = () => {
   }, [activeTab, searchQuery, examSets]);
 
   const marathonSets = useMemo(
-    () => examSets.filter((s) => normalizePart(s.part) === marathon.partType),
-    [examSets, marathon.partType]
+    () => examSets.filter((s) => normalizePart(s.part) === marathon.partType && (marathon.keyDate ? s.key_date === marathon.keyDate : true)),
+    [examSets, marathon.partType, marathon.keyDate]
   );
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
