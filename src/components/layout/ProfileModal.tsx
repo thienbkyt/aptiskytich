@@ -260,6 +260,44 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
             </div>
           </div>
 
+          {/* Thiết bị đang đăng nhập */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <Label>Thiết bị đang đăng nhập</Label>
+            <p className="text-xs text-muted-foreground">Giới hạn 1 điện thoại, 1 máy tính bảng và 1 máy tính cùng lúc.</p>
+            {loadingDevices ? (
+              <p className="text-sm text-muted-foreground">Đang tải...</p>
+            ) : devices.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Chưa có thiết bị nào.</p>
+            ) : (
+              <div className="space-y-2">
+                {devices.map((d) => {
+                  const Icon = d.device_type === "mobile" ? Smartphone : d.device_type === "tablet" ? Tablet : Monitor;
+                  const isCurrent = d.device_id === myDeviceId;
+                  return (
+                    <div key={d.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-foreground" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {DEVICE_TYPE_LABEL[d.device_type]}
+                            {d.device_label ? ` · ${d.device_label}` : ""}
+                            {isCurrent && <span className="ml-2 text-[10px] font-bold text-primary">(Thiết bị này)</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Hoạt động {relTime(d.last_seen_at)}</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-destructive shrink-0" onClick={() => logoutDevice(d)}>
+                        Đăng xuất
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Contact admin */}
           <div className="border-t border-border pt-4 space-y-2">
             <Label>Liên hệ hỗ trợ</Label>
