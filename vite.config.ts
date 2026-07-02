@@ -68,6 +68,11 @@ export default defineConfig(({ mode }) => ({
     modulePreload: false,
     rollupOptions: {
       output: {
+        // Rollup hoists a lazy chunk's transitive imports up into its parent
+        // as static side-effect imports for perf. That's what drags exceljs
+        // (and any large lazy dep) into the initial entry chunk. Disable it so
+        // heavy chunks only load when their dynamic import actually runs.
+        hoistTransitiveImports: false,
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
           // Keep tiny shared utilities in a stable "utils" chunk so heavy vendor
