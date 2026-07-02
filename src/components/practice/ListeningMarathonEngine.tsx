@@ -309,6 +309,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               )}
               <Button
                 onClick={() => {
+                  if (persist) clearMarathonProgress("listening", partType);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
