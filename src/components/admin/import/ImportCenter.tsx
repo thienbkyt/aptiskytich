@@ -166,6 +166,10 @@ const ImportCenter = () => {
             <TabsContent value="media">
               <MediaLibrary />
             </TabsContent>
+
+            <TabsContent value="keydate">
+              <KeyDateAssigner />
+            </TabsContent>
           </Tabs>
         )
       ) : (
