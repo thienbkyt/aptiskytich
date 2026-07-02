@@ -56,13 +56,14 @@ export function useIsPro() {
   const query = useQuery({
     queryKey: ["userTier", userId],
     queryFn: () => fetchUserTier(userId),
-    enabled: !authLoading,
+    enabled: !authLoading && !!userId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  const data: TierPayload = query.data ?? { tier: "free", proUntil: null, plan: null };
+  const defaultPayload: TierPayload = { tier: "free", proUntil: null, plan: null };
+  const data: TierPayload = !userId ? defaultPayload : (query.data ?? defaultPayload);
   const { tier, proUntil, plan } = data;
 
   const refetch = useCallback(async () => {
@@ -71,7 +72,7 @@ export function useIsPro() {
 
   const isPro = tier === "pro" || tier === "premium";
   const isPremium = tier === "premium";
-  const loading = authLoading || (query.isPending && query.fetchStatus !== "idle");
+  const loading = authLoading || (!!userId && query.isPending && query.fetchStatus !== "idle");
 
   return { isPro, isPremium, tier, proUntil, plan, loading, refetch };
 }
