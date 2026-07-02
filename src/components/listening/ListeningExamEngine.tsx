@@ -68,6 +68,7 @@ interface ListeningExamEngineProps {
   allowReveal?: boolean;
   /** When true (and not reviewMode), open this part at the last question (used when navigating Back from next part). */
   enterAtLastQuestion?: boolean;
+  reviewScopeNote?: string;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -87,6 +88,7 @@ const ListeningExamEngine = ({
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
   allowReveal = false,
   enterAtLastQuestion = false,
+  reviewScopeNote,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -450,6 +452,7 @@ const ListeningExamEngine = ({
           sections={sections}
           isInstructionsPhase
           onProceedFromInstructions={() => setPhase("practice")}
+          reviewScopeNote={reviewScopeNote}
         />
       </div>
     );

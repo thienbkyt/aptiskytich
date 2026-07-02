@@ -39,12 +39,14 @@ interface BottomNavBarProps {
   onProceedFromInstructions?: () => void;
   /** Called when user confirms "Submit test" in the Exit submission flow */
   onSubmitTest?: () => void;
+  reviewScopeNote?: string;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
   sections = [], bookmarkedCount,
   isInstructionsPhase = false, onProceedFromInstructions, onSubmitTest,
+  reviewScopeNote,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -560,10 +562,13 @@ const BottomNavBar = ({
             <div className="p-6 pb-4">
               <h2 className="text-lg font-bold text-gray-900">Question Review</h2>
               <p className="text-sm text-gray-500 mt-1">Please review the following questions</p>
+              {reviewScopeNote && (
+                <p className="text-xs font-semibold text-[#24085a] mt-1">{reviewScopeNote}</p>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto px-6 space-y-3">
               {unansweredBySection.map(({ sIdx, title, questions }) => {
-                const skill = title.split(" ")[2] || title;
+                const skill = title;
                 const expanded = reviewExpanded.has(sIdx);
                 return (
                   <div key={sIdx} className="border border-gray-200 rounded-lg">

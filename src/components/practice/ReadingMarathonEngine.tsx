@@ -305,6 +305,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit }: Props) =>
       hideTimer
       skipIntro
       allowReveal
+      reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
       showResultsOnSubmit={false}
       onExit={onExit}
       onComplete={handleComplete}

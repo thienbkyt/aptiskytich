@@ -87,6 +87,7 @@ interface ReadingExamEngineProps {
   onPageCount?: (n: number) => void;
   /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
   allowReveal?: boolean;
+  reviewScopeNote?: string;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -99,6 +100,7 @@ const ReadingExamEngine = ({
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
   pageBase, pageTotal, initialSection, onPageCount, allowReveal = false,
+  reviewScopeNote,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
@@ -518,6 +520,7 @@ const ReadingExamEngine = ({
           sections={sections}
           isInstructionsPhase
           onProceedFromInstructions={() => setPhase("practice")}
+          reviewScopeNote={reviewScopeNote}
         />
       </div>
     );
