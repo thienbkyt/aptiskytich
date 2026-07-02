@@ -90,8 +90,8 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType }>({
-    active: false, partType: "part1",
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyDate?: string | null }>({
+    active: false, partType: "part1", keyDate: null,
   });
   const { user: authUser, loading: authLoading } = useAuth();
 
