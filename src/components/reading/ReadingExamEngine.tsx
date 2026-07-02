@@ -88,6 +88,7 @@ interface ReadingExamEngineProps {
   /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
   allowReveal?: boolean;
   reviewScopeNote?: string;
+  onMarathonFinish?: () => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
