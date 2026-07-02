@@ -383,6 +383,30 @@ export default function PredictionKeyView() {
           {grouped.map((sk) => (
             <div key={sk.skill}>
               <h3 className="text-base font-heading font-bold text-foreground mb-3">{sk.label}</h3>
+              {(sk.skill === "reading" || sk.skill === "listening") && (() => {
+                const parts = Array.from(new Set(
+                  sk.groups.flatMap((g) => g.items).map((it) => normalizePart(it.part || "")).filter(Boolean)
+                )).sort();
+                if (parts.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {parts.map((p) => {
+                      const label = p.replace(/^part(\d+)$/i, "Part $1");
+                      return (
+                        <Button
+                          key={p}
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate(`/${sk.skill}?marathon=${p}&keyId=${selectedKeyId}`)}
+                          className="gap-1.5"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" /> Marathon {label}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
               <div className="space-y-4">
                 {sk.groups.map((g) => (
                   <div key={g.priority}>
