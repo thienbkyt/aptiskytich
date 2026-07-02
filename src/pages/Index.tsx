@@ -208,7 +208,11 @@ const Index = () => {
                   src={writingResultAsset.url}
                   alt="Kết quả Writing 44/50 — Trình độ B2 chấm bởi AI Kỳ Tích"
                   className="block w-full h-auto rounded-b-[20px]"
+                  width={1236}
+                  height={672}
                   loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </div>
 
@@ -404,7 +408,7 @@ const Index = () => {
                           <span className="w-2.5 h-2.5 rounded-full bg-[#28C840]" />
                         </div>
                         {p.mock === "ai" && (
-                          <img src={heroAiFeedbackAsset.url} alt="AI chấm Writing — band B2" className="block w-full h-auto" loading="lazy" />
+                          <img src={heroAiFeedbackAsset.url} alt="AI chấm Writing — band B2" className="block w-full h-auto" width={616} height={537} loading="lazy" decoding="async" />
                         )}
                         {p.mock === "reading" && (
                           <div className="p-5 md:p-6 bg-white">
