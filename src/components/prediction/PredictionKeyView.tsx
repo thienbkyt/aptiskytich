@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { normalizePart } from "@/hooks/useExamSets";
 import { format } from "date-fns";
@@ -23,12 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { cn } from "@/lib/utils";
 
@@ -257,13 +251,8 @@ export default function PredictionKeyView() {
     });
   }, [visibleItems]);
 
-  // Set default open skill to the first one with items (only once)
-  const didInitOpen = useRef(false);
-  useEffect(() => {
-    if (didInitOpen.current || groupedBySkillPart.length === 0) return;
-    setOpenSkill(groupedBySkillPart[0].skill);
-    didInitOpen.current = true;
-  }, [groupedBySkillPart]);
+
+
 
   // Load question counts per exam set
   const [qCount, setQCount] = useState<Map<string, number>>(new Map());
@@ -480,108 +469,100 @@ export default function PredictionKeyView() {
           <p className="text-muted-foreground font-medium">Không có đề phù hợp bộ lọc</p>
         </div>
       ) : (
-        <Accordion
-          type="single"
-          collapsible
-          value={openSkill}
-          onValueChange={(v) => setOpenSkill(v || undefined)}
-          className="space-y-2"
-        >
+        <div className="space-y-2">
           {groupedBySkillPart.map((sk) => {
             const Icon = SKILL_ICON[sk.skill] || Sparkles;
+            const open = openSkill === sk.skill;
             return (
-              <AccordionItem
-                key={sk.skill}
-                value={sk.skill}
-                className="border border-border rounded-xl bg-card overflow-hidden"
-              >
-                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/40">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="font-heading font-bold text-foreground">{sk.label}</p>
-                    </div>
-                    <Badge variant="outline" className="text-[11px] mr-2">
-                      {sk.total} đề
-                    </Badge>
+              <div key={sk.skill} className="border border-border rounded-xl bg-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenSkill(open ? undefined : sk.skill)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4" />
                   </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 pt-0">
-                  <div className="space-y-4">
-                    {sk.parts.map((pg) => {
-                      const isRL = sk.skill === "reading" || sk.skill === "listening";
-                      const highCount = pg.items.filter((i) => i.priority === "high").length;
-                      const partLabel = pg.part.replace(/^part(\d+)$/i, "Part $1");
-                      const highPrimary = pg.items.filter((i) => i.priority === "high" || i.priority === "medium");
-                      const lowSecondary = pg.items.filter((i) => i.priority === "low" || i.priority === "backup");
-                      return (
-                        <div key={pg.part} className="rounded-lg border border-border/60">
-                          <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/60 bg-muted/30 flex-wrap">
-                            <p className="text-sm font-semibold text-foreground">
-                              {partLabel} <span className="text-muted-foreground font-normal">· {pg.items.length} đề</span>
-                            </p>
-                            {isRL && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {highCount > 0 && (
+                  <p className="flex-1 min-w-0 font-heading font-bold text-foreground">{sk.label}</p>
+                  <Badge variant="outline" className="text-[11px]">{sk.total} đề</Badge>
+                  <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform shrink-0", open && "rotate-180")} />
+                </button>
+                {open && (
+                  <div className="px-4 pb-4 pt-0">
+                    <div className="space-y-4">
+                      {sk.parts.map((pg) => {
+                        const isRL = sk.skill === "reading" || sk.skill === "listening";
+                        const highCount = pg.items.filter((i) => i.priority === "high").length;
+                        const partLabel = pg.part.replace(/^part(\d+)$/i, "Part $1");
+                        const highPrimary = pg.items.filter((i) => i.priority === "high" || i.priority === "medium");
+                        const lowSecondary = pg.items.filter((i) => i.priority === "low" || i.priority === "backup");
+                        return (
+                          <div key={pg.part} className="rounded-lg border border-border/60">
+                            <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/60 bg-muted/30 flex-wrap">
+                              <p className="text-sm font-semibold text-foreground">
+                                {partLabel} <span className="text-muted-foreground font-normal">· {pg.items.length} đề</span>
+                              </p>
+                              {isRL && (
+                                <div className="flex flex-wrap gap-1.5">
+                                  {highCount > 0 && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        navigate(
+                                          `/${sk.skill}?marathon=${pg.part}&keyId=${selectedKeyId}&prio=high&from=key`,
+                                        )
+                                      }
+                                      className="h-7 text-xs gap-1 border-red-500/40 text-red-700 dark:text-red-300 hover:bg-red-500/10"
+                                    >
+                                      <Sparkles className="w-3 h-3" /> Marathon Cao ({highCount})
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() =>
                                       navigate(
-                                        `/${sk.skill}?marathon=${pg.part}&keyId=${selectedKeyId}&prio=high&from=key`,
+                                        `/${sk.skill}?marathon=${pg.part}&keyId=${selectedKeyId}&from=key`,
                                       )
                                     }
-                                    className="h-7 text-xs gap-1 border-red-500/40 text-red-700 dark:text-red-300 hover:bg-red-500/10"
+                                    className="h-7 text-xs gap-1"
                                   >
-                                    <Sparkles className="w-3 h-3" /> Marathon Cao ({highCount})
+                                    <Sparkles className="w-3 h-3" /> Marathon cả part ({pg.items.length})
                                   </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    navigate(
-                                      `/${sk.skill}?marathon=${pg.part}&keyId=${selectedKeyId}&from=key`,
-                                    )
-                                  }
-                                  className="h-7 text-xs gap-1"
-                                >
-                                  <Sparkles className="w-3 h-3" /> Marathon cả part ({pg.items.length})
-                                </Button>
-                              </div>
+                                </div>
+                              )}
+                            </div>
+
+                            <ul className="divide-y divide-border/60">
+                              {highPrimary.map((it) => (
+                                <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
+                              ))}
+                            </ul>
+
+                            {lowSecondary.length > 0 && (
+                              <details className="group">
+                                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1.5 border-t border-border/60">
+                                  <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" />
+                                  Ít ưu tiên ({lowSecondary.length})
+                                </summary>
+                                <ul className="divide-y divide-border/60">
+                                  {lowSecondary.map((it) => (
+                                    <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
+                                  ))}
+                                </ul>
+                              </details>
                             )}
                           </div>
-
-                          <ul className="divide-y divide-border/60">
-                            {highPrimary.map((it) => (
-                              <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
-                            ))}
-                          </ul>
-
-                          {lowSecondary.length > 0 && (
-                            <details className="group">
-                              <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1.5 border-t border-border/60">
-                                <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" />
-                                Ít ưu tiên ({lowSecondary.length})
-                              </summary>
-                              <ul className="divide-y divide-border/60">
-                                {lowSecondary.map((it) => (
-                                  <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
-                                ))}
-                              </ul>
-                            </details>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </AccordionContent>
-              </AccordionItem>
+                )}
+              </div>
             );
           })}
-        </Accordion>
+        </div>
       )}
     </div>
   );
