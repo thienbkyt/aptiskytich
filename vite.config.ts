@@ -85,9 +85,6 @@ export default defineConfig(({ mode }) => ({
           )
             return "utils";
           if (id.includes("framer-motion")) return "framer-motion";
-          if (id.includes("/node_modules/recharts/") || /\/node_modules\/d3-[^/]+\//.test(id))
-            return "recharts";
-          if (id.includes("/node_modules/exceljs/")) return "exceljs";
           if (id.includes("@radix-ui")) return "radix-ui";
         },
       },
