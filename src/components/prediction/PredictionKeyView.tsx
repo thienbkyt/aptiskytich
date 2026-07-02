@@ -257,11 +257,29 @@ export default function PredictionKeyView() {
     });
   }, [visibleItems]);
 
-  // Set default open skill to the first one with items
+  // Set default open skill to the first one with items (only once)
+  const didInitOpen = useRef(false);
   useEffect(() => {
-    if (openSkill) return;
-    if (groupedBySkillPart.length > 0) setOpenSkill(groupedBySkillPart[0].skill);
-  }, [groupedBySkillPart, openSkill]);
+    if (didInitOpen.current || groupedBySkillPart.length === 0) return;
+    setOpenSkill(groupedBySkillPart[0].skill);
+    didInitOpen.current = true;
+  }, [groupedBySkillPart]);
+
+  // Load question counts per exam set
+  const [qCount, setQCount] = useState<Map<string, number>>(new Map());
+  useEffect(() => {
+    if (items.length === 0) { setQCount(new Map()); return; }
+    let cancelled = false;
+    (async () => {
+      const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
+      const { data } = await supabase.from("exam_questions").select("exam_set_id").in("exam_set_id", ids);
+      if (cancelled) return;
+      const m = new Map<string, number>();
+      (data || []).forEach((r: any) => m.set(r.exam_set_id, (m.get(r.exam_set_id) || 0) + 1));
+      setQCount(m);
+    })();
+    return () => { cancelled = true; };
+  }, [items]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
