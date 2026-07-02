@@ -305,77 +305,111 @@ export default function PredictionKeyView() {
     );
   }
 
+  const donePct = overview.total > 0 ? Math.round((overview.done / overview.total) * 100) : 0;
+  const DONUT_R = 22;
+  const DONUT_C = 2 * Math.PI * DONUT_R;
+
   return (
     <div className="space-y-5">
-      {/* Date picker */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-foreground inline-flex items-center gap-1.5">
-          <CalendarDays className="w-4 h-4 text-primary" /> Ngày:
-        </span>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <CalendarDays className="w-4 h-4" />
-              {selectedDate
-                ? `${format(selectedDate, "dd/MM/yyyy")}${
-                    keyByDate.get(ymd(selectedDate))?.title
-                      ? ` · ${keyByDate.get(ymd(selectedDate))!.title}`
-                      : ""
-                  }`
-                : "Chọn ngày"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-auto p-0 rounded-2xl border border-border shadow-xl bg-card"
-            align="start"
-            side="bottom"
-            sideOffset={8}
-          >
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              defaultMonth={selectedDate}
-              onSelect={(d) => {
-                if (!d) return;
-                const k = keyByDate.get(ymd(d));
-                if (k) setSelectedKeyId(k.id);
-              }}
-              disabled={(date) => !keyByDate.has(ymd(date))}
-              modifiers={{ hasKey: keyDates }}
-              modifiersClassNames={{
-                hasKey: "font-bold text-primary underline underline-offset-4 decoration-2 decoration-primary",
-              }}
-              className="p-3 pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* Overview */}
-      {isPremium && items.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Đã làm</p>
-              <p className="text-base font-bold text-foreground">
-                {overview.done}<span className="text-muted-foreground font-medium">/{overview.total}</span>
-              </p>
-            </div>
+      {/* Hero banner */}
+      <div className="rounded-[14px] border border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 flex flex-wrap items-center gap-4">
+        {/* Left */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-[46px] h-[46px] rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-md">
+            <Sparkles className="w-6 h-6" />
           </div>
-          <div className="rounded-xl border border-border bg-card p-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center">
-              <Sparkles className="w-5 h-5" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-[18px] font-medium text-foreground">Đề Key Dự Đoán</p>
+              <Badge className="bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white border-0 text-[10px] font-bold uppercase tracking-wide">
+                Premium
+              </Badge>
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Ưu tiên cao còn</p>
-              <p className="text-base font-bold text-foreground">{overview.highUndone}</p>
+            <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1 flex-wrap">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/70 border border-border hover:border-primary/50 hover:text-foreground transition-colors font-medium">
+                    <CalendarDays className="w-3 h-3" />
+                    {selectedDate
+                      ? `${format(selectedDate, "dd/MM/yyyy")}${
+                          keyByDate.get(ymd(selectedDate))?.title
+                            ? ` · ${keyByDate.get(ymd(selectedDate))!.title}`
+                            : ""
+                        }`
+                      : "Chọn ngày"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0 rounded-2xl border border-border shadow-xl bg-card"
+                  align="start"
+                  side="bottom"
+                  sideOffset={8}
+                >
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    defaultMonth={selectedDate}
+                    onSelect={(d) => {
+                      if (!d) return;
+                      const k = keyByDate.get(ymd(d));
+                      if (k) setSelectedKeyId(k.id);
+                    }}
+                    disabled={(date) => !keyByDate.has(ymd(date))}
+                    modifiers={{ hasKey: keyDates }}
+                    modifiersClassNames={{
+                      hasKey: "font-bold text-primary underline underline-offset-4 decoration-2 decoration-primary",
+                    }}
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <span>· cập nhật hằng ngày</span>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Right */}
+        {isPremium && items.length > 0 && (
+          <div className="flex items-center gap-4">
+            <div className="relative w-[62px] h-[62px] shrink-0">
+              <svg width="62" height="62" viewBox="0 0 62 62" className="-rotate-90">
+                <circle cx="31" cy="31" r={DONUT_R} fill="none" stroke="hsl(var(--border))" strokeWidth="6" />
+                <circle
+                  cx="31"
+                  cy="31"
+                  r={DONUT_R}
+                  fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={DONUT_C}
+                  strokeDashoffset={DONUT_C - (DONUT_C * donePct) / 100}
+                  className="transition-all"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-foreground">
+                {donePct}%
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs text-muted-foreground">
+                Đã làm <span className="font-bold text-foreground">{overview.done}/{overview.total}</span>
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setActivePriorities(["high"])}
+                className="h-8 text-xs gap-1 bg-primary hover:bg-brand-brown text-primary-foreground"
+              >
+                <Sparkles className="w-3.5 h-3.5" /> Cày ưu tiên cao
+              </Button>
+              {overview.highUndone > 0 && (
+                <p className="text-[10px] text-muted-foreground">Còn {overview.highUndone} đề ưu tiên cao</p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
 
       {/* Filters — skill */}
       {availableSkills.length > 0 && (
@@ -477,6 +511,13 @@ export default function PredictionKeyView() {
           {groupedBySkillPart.map((sk) => {
             const Icon = SKILL_ICON[sk.skill] || Sparkles;
             const open = openSkill === sk.skill;
+            const allItems = sk.parts.flatMap((p) => p.items);
+            const skTotal = allItems.length;
+            const skDone = allItems.filter((it) => history.has(it.exam_set_id)).length;
+            const skPct = skTotal > 0 ? Math.round((skDone / skTotal) * 100) : 0;
+            const cHigh = allItems.filter((i) => i.priority === "high").length;
+            const cMed = allItems.filter((i) => i.priority === "medium").length;
+            const cLow = allItems.filter((i) => i.priority === "low" || i.priority === "backup").length;
             return (
               <div key={sk.skill} className="border border-border rounded-xl bg-card overflow-hidden">
                 <button
@@ -487,10 +528,27 @@ export default function PredictionKeyView() {
                   <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                     <Icon className="w-4 h-4" />
                   </div>
-                  <p className="flex-1 min-w-0 font-heading font-bold text-foreground">{sk.label}</p>
-                  <Badge variant="outline" className="text-[11px]">{sk.total} đề</Badge>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-heading font-bold text-foreground">{sk.label}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden shrink-0">
+                        <div className="h-full bg-primary transition-all" style={{ width: `${skPct}%` }} />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground font-medium">{skDone}/{skTotal}</span>
+                      {cHigh > 0 && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-500/15 text-red-700 dark:text-red-300">Cao {cHigh}</span>
+                      )}
+                      {cMed > 0 && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Vừa {cMed}</span>
+                      )}
+                      {cLow > 0 && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Thấp {cLow}</span>
+                      )}
+                    </div>
+                  </div>
                   <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform shrink-0", open && "rotate-180")} />
                 </button>
+
                 {open && (
                   <div className="px-4 pb-4 pt-0">
                     <div className="space-y-4">
