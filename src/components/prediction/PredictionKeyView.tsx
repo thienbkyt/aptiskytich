@@ -511,6 +511,13 @@ export default function PredictionKeyView() {
           {groupedBySkillPart.map((sk) => {
             const Icon = SKILL_ICON[sk.skill] || Sparkles;
             const open = openSkill === sk.skill;
+            const allItems = sk.parts.flatMap((p) => p.items);
+            const skTotal = allItems.length;
+            const skDone = allItems.filter((it) => history.has(it.exam_set_id)).length;
+            const skPct = skTotal > 0 ? Math.round((skDone / skTotal) * 100) : 0;
+            const cHigh = allItems.filter((i) => i.priority === "high").length;
+            const cMed = allItems.filter((i) => i.priority === "medium").length;
+            const cLow = allItems.filter((i) => i.priority === "low" || i.priority === "backup").length;
             return (
               <div key={sk.skill} className="border border-border rounded-xl bg-card overflow-hidden">
                 <button
@@ -521,10 +528,27 @@ export default function PredictionKeyView() {
                   <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                     <Icon className="w-4 h-4" />
                   </div>
-                  <p className="flex-1 min-w-0 font-heading font-bold text-foreground">{sk.label}</p>
-                  <Badge variant="outline" className="text-[11px]">{sk.total} đề</Badge>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-heading font-bold text-foreground">{sk.label}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden shrink-0">
+                        <div className="h-full bg-primary transition-all" style={{ width: `${skPct}%` }} />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground font-medium">{skDone}/{skTotal}</span>
+                      {cHigh > 0 && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-500/15 text-red-700 dark:text-red-300">Cao {cHigh}</span>
+                      )}
+                      {cMed > 0 && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Vừa {cMed}</span>
+                      )}
+                      {cLow > 0 && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Thấp {cLow}</span>
+                      )}
+                    </div>
+                  </div>
                   <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform shrink-0", open && "rotate-180")} />
                 </button>
+
                 {open && (
                   <div className="px-4 pb-4 pt-0">
                     <div className="space-y-4">
