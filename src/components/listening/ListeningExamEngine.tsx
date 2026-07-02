@@ -373,6 +373,7 @@ const ListeningExamEngine = ({
     isLast: false,
     sections,
     onSubmitTest: !submitted ? handleSubmit : undefined,
+    reviewScopeNote,
   };
 
   const adminControls = !submitted && !reviewMode ? (
