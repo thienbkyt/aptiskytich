@@ -64,9 +64,19 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
+          // Keep tiny shared utilities in a stable "utils" chunk so heavy vendor
+          // chunks (recharts, exceljs) can't absorb them and drag themselves
+          // into the initial entry graph via a shared symbol like `clsx`.
+          if (
+            id.includes("/node_modules/clsx/") ||
+            id.includes("/node_modules/tailwind-merge/") ||
+            id.includes("/node_modules/class-variance-authority/")
+          )
+            return "utils";
           if (id.includes("framer-motion")) return "framer-motion";
-          if (id.includes("recharts") || id.includes("d3-")) return "recharts";
-          if (id.includes("exceljs")) return "exceljs";
+          if (id.includes("/node_modules/recharts/") || /\/node_modules\/d3-[^/]+\//.test(id))
+            return "recharts";
+          if (id.includes("/node_modules/exceljs/")) return "exceljs";
           if (id.includes("@radix-ui")) return "radix-ui";
         },
       },
