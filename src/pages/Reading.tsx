@@ -90,9 +90,10 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyDate?: string | null }>({
-    active: false, partType: "part1", keyDate: null,
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null }>({
+    active: false, partType: "part1", keyId: null,
   });
+  const [keySetIds, setKeySetIds] = useState<Set<string> | null>(null);
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
