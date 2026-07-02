@@ -66,6 +66,9 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [changingPwd, setChangingPwd] = useState(false);
+  const [devices, setDevices] = useState<DeviceRow[]>([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+  const myDeviceId = getDeviceId();
 
   const proStatusText = (() => {
     if (isPremium) return "Premium · Trọn đời";
@@ -89,6 +92,56 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
         setLoadingProfile(false);
       });
   }, [open, user]);
+
+  const loadDevices = async (uid: string) => {
+    setLoadingDevices(true);
+    const { data } = await supabase
+      .from("user_devices")
+      .select("id, device_id, device_type, device_label, last_seen_at")
+      .eq("user_id", uid)
+      .order("last_seen_at", { ascending: false });
+    setDevices((data as DeviceRow[] | null) ?? []);
+    setLoadingDevices(false);
+  };
+
+  useEffect(() => {
+    if (!open || !user) return;
+    loadDevices(user.id);
+    const channel = supabase
+      .channel(`profile-devices-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_devices", filter: `user_id=eq.${user.id}` },
+        () => loadDevices(user.id)
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [open, user]);
+
+  const logoutDevice = async (d: DeviceRow) => {
+    const isCurrent = d.device_id === myDeviceId;
+    const ok = window.confirm(
+      isCurrent
+        ? "Đăng xuất thiết bị này? Bạn sẽ bị đăng xuất ngay."
+        : "Đăng xuất thiết bị đã chọn?"
+    );
+    if (!ok) return;
+    const { error } = await supabase.from("user_devices").delete().eq("id", d.id);
+    if (error) {
+      toast.error("Không thể đăng xuất thiết bị. " + error.message);
+      return;
+    }
+    setDevices((prev) => prev.filter((x) => x.id !== d.id));
+    if (isCurrent) {
+      onOpenChange(false);
+      signOut();
+    } else {
+      toast.success("Đã đăng xuất thiết bị.");
+    }
+  };
+
 
   const saveName = async () => {
     if (!user) return;
