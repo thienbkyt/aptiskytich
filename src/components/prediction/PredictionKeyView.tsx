@@ -251,13 +251,8 @@ export default function PredictionKeyView() {
     });
   }, [visibleItems]);
 
-  // Set default open skill to the first one with items (only once)
-  const didInitOpen = useRef(false);
-  useEffect(() => {
-    if (didInitOpen.current || groupedBySkillPart.length === 0) return;
-    setOpenSkill(groupedBySkillPart[0].skill);
-    didInitOpen.current = true;
-  }, [groupedBySkillPart]);
+
+
 
   // Load question counts per exam set
   const [qCount, setQCount] = useState<Map<string, number>>(new Map());
