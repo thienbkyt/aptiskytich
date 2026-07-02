@@ -81,18 +81,10 @@ export function prefetchHandlers(path: string) {
 }
 
 /**
- * Idle prefetch — warm a set of likely-next routes when the browser is free.
- * Call once near app start. Safe to call multiple times (deduped internally).
+ * Idle prefetch is disabled — heavy routes (dashboard, admin) pull in large
+ * chunks (recharts, exceljs) that we don't want in the initial load path.
+ * Kept as a no-op so existing callers don't break.
  */
-export function prefetchOnIdle(paths: string[]): void {
-  if (typeof window === "undefined") return;
-  const run = () => paths.forEach((p) => prefetchRoute(p));
-  const ric = (window as unknown as {
-    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-  }).requestIdleCallback;
-  if (typeof ric === "function") {
-    ric(run, { timeout: 2500 });
-  } else {
-    window.setTimeout(run, 1200);
-  }
+export function prefetchOnIdle(_paths: string[]): void {
+  /* intentionally empty */
 }
