@@ -520,6 +520,7 @@ const ReadingExamEngine = ({
           sections={sections}
           isInstructionsPhase
           onProceedFromInstructions={() => setPhase("practice")}
+          reviewScopeNote={reviewScopeNote}
         />
       </div>
     );
