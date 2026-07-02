@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import ThemeToggle from "@/components/ThemeToggle";
 
-import { prefetchHandlers, prefetchOnIdle } from "@/lib/routePrefetch";
+import { prefetchHandlers } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
 import NotificationBell from "@/components/layout/NotificationBell";
 import { FEATURES } from "@/config/features";
@@ -57,11 +57,7 @@ const Navbar = () => {
     setMobileAdminOpen(false);
   }, [location.pathname]);
 
-  // Warm up the most likely "next" routes once the browser is idle — only for signed-in users.
-  useEffect(() => {
-    if (!user) return;
-    prefetchOnIdle(["/dashboard", "/vocabulary"]);
-  }, [user]);
+  // Idle prefetch disabled — heavy routes (dashboard/admin) only load on hover now.
 
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
