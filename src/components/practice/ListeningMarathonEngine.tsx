@@ -156,6 +156,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
     setSavedOnce(true);
+    if (accTotal === 0) return;
     (async () => {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
