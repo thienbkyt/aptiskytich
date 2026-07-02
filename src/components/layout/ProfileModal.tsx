@@ -4,13 +4,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogOut, Crown } from "lucide-react";
+import { LogOut, Crown, Smartphone, Tablet, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
 import { parseDateSafe } from "@/lib/safeDate";
+import { getDeviceId, type DeviceType } from "@/lib/deviceInfo";
+
+interface DeviceRow {
+  id: string;
+  device_id: string;
+  device_type: DeviceType;
+  device_label: string | null;
+  last_seen_at: string;
+}
+
+const DEVICE_TYPE_LABEL: Record<DeviceType, string> = {
+  mobile: "Điện thoại",
+  tablet: "Máy tính bảng",
+  desktop: "Máy tính",
+};
+
+function relTime(iso: string): string {
+  const d = parseDateSafe(iso);
+  if (!d) return "";
+  const diff = Math.max(0, Date.now() - d.getTime());
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return "vừa xong";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  const day = Math.floor(h / 24);
+  return `${day} ngày trước`;
+}
+
 
 interface Props {
   open: boolean;
@@ -36,6 +66,9 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [changingPwd, setChangingPwd] = useState(false);
+  const [devices, setDevices] = useState<DeviceRow[]>([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+  const myDeviceId = getDeviceId();
 
   const proStatusText = (() => {
     if (isPremium) return "Premium · Trọn đời";
@@ -59,6 +92,56 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
         setLoadingProfile(false);
       });
   }, [open, user]);
+
+  const loadDevices = async (uid: string) => {
+    setLoadingDevices(true);
+    const { data } = await supabase
+      .from("user_devices")
+      .select("id, device_id, device_type, device_label, last_seen_at")
+      .eq("user_id", uid)
+      .order("last_seen_at", { ascending: false });
+    setDevices((data as DeviceRow[] | null) ?? []);
+    setLoadingDevices(false);
+  };
+
+  useEffect(() => {
+    if (!open || !user) return;
+    loadDevices(user.id);
+    const channel = supabase
+      .channel(`profile-devices-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_devices", filter: `user_id=eq.${user.id}` },
+        () => loadDevices(user.id)
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [open, user]);
+
+  const logoutDevice = async (d: DeviceRow) => {
+    const isCurrent = d.device_id === myDeviceId;
+    const ok = window.confirm(
+      isCurrent
+        ? "Đăng xuất thiết bị này? Bạn sẽ bị đăng xuất ngay."
+        : "Đăng xuất thiết bị đã chọn?"
+    );
+    if (!ok) return;
+    const { error } = await supabase.from("user_devices").delete().eq("id", d.id);
+    if (error) {
+      toast.error("Không thể đăng xuất thiết bị. " + error.message);
+      return;
+    }
+    setDevices((prev) => prev.filter((x) => x.id !== d.id));
+    if (isCurrent) {
+      onOpenChange(false);
+      signOut();
+    } else {
+      toast.success("Đã đăng xuất thiết bị.");
+    }
+  };
+
 
   const saveName = async () => {
     if (!user) return;
@@ -175,6 +258,44 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
                 </Link>
               </Button>
             </div>
+          </div>
+
+          {/* Thiết bị đang đăng nhập */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <Label>Thiết bị đang đăng nhập</Label>
+            <p className="text-xs text-muted-foreground">Giới hạn 1 điện thoại, 1 máy tính bảng và 1 máy tính cùng lúc.</p>
+            {loadingDevices ? (
+              <p className="text-sm text-muted-foreground">Đang tải...</p>
+            ) : devices.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Chưa có thiết bị nào.</p>
+            ) : (
+              <div className="space-y-2">
+                {devices.map((d) => {
+                  const Icon = d.device_type === "mobile" ? Smartphone : d.device_type === "tablet" ? Tablet : Monitor;
+                  const isCurrent = d.device_id === myDeviceId;
+                  return (
+                    <div key={d.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-foreground" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {DEVICE_TYPE_LABEL[d.device_type]}
+                            {d.device_label ? ` · ${d.device_label}` : ""}
+                            {isCurrent && <span className="ml-2 text-[10px] font-bold text-primary">(Thiết bị này)</span>}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Hoạt động {relTime(d.last_seen_at)}</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-destructive shrink-0" onClick={() => logoutDevice(d)}>
+                        Đăng xuất
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Contact admin */}
