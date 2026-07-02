@@ -435,7 +435,11 @@ const Listening = () => {
                     const lastRun = loadMarathonLast("listening", activeTab);
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
                     const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
-                    const wrongCount = lastRun?.wrongSetIds?.length ?? 0;
+                    const progWrongIds = (savedProg?.results ?? [])
+                      .filter((r: any) => r && Array.isArray(r.qResults) && r.qResults.some((q: any) => !q.is_correct))
+                      .map((r: any) => r.examSetId);
+                    const wrongSetIds = progWrongIds.length ? progWrongIds : (lastRun?.wrongSetIds ?? []);
+                    const wrongCount = wrongSetIds.length;
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
