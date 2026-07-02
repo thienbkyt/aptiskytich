@@ -26,7 +26,7 @@ export const useSkillFullSets = (skill: string) => {
       // Full Test section, not to per-skill Full Part practice.
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier")
+        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier, question_count")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
@@ -37,7 +37,7 @@ export const useSkillFullSets = (skill: string) => {
 
       // Group by full_test_id
       // Full Part requires user to access ALL constituent parts → gate by MOST restrictive tier.
-      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[]; maxTier: "free" | "pro" | "premium" }>();
+      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string; qc: number }[]; maxTier: "free" | "pro" | "premium" }>();
       const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
       for (const row of data as any[]) {
         if (!row.full_test_id) continue;
@@ -53,41 +53,25 @@ export const useSkillFullSets = (skill: string) => {
         const g = grouped.get(row.full_test_id)!;
         g.parts.add(row.part);
         g.ids.push(row.id);
-        g.rows.push({ id: row.id, part: row.part });
+        g.rows.push({ id: row.id, part: row.part, qc: Number(row.question_count) || 0 });
         const rt = (row.access_tier === "free" || row.access_tier === "pro" || row.access_tier === "premium") ? row.access_tier : "pro";
         if (rankT(rt) > rankT(g.maxTier)) g.maxTier = rt;
       }
 
-      const computeOne = async (
-        ftId: string,
-        info: { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string }[]; maxTier: "free" | "pro" | "premium" }
-      ): Promise<SkillFullSetItem | null> => {
+      const result: SkillFullSetItem[] = [];
+      for (const [ftId, info] of grouped.entries()) {
         const partsArr = Array.from(info.parts).sort();
-        // Only include sets with 2+ parts
-        if (partsArr.length < 2) return null;
+        if (partsArr.length < 2) continue;
         let questionCount = 0;
         if (skill === "grammar_vocab") {
-          // Aptis Core: mỗi Vocab task tính 1 "câu" (25 grammar item + 5 vocab task = 30)
           const isVocab = (p: string) => /vocab/i.test(p);
           const vocabPartCount = partsArr.filter(isVocab).length;
-          const grammarIds = info.rows.filter((r) => !isVocab(r.part)).map((r) => r.id);
-          let grammarQ = 0;
-          if (grammarIds.length) {
-            const { count: gc } = await supabase
-              .from("exam_questions")
-              .select("id", { count: "exact", head: true })
-              .in("exam_set_id", grammarIds);
-            grammarQ = gc ?? 0;
-          }
+          const grammarQ = info.rows.filter((r) => !isVocab(r.part)).reduce((sum, r) => sum + r.qc, 0);
           questionCount = grammarQ + vocabPartCount;
         } else {
-          const { count } = await supabase
-            .from("exam_questions")
-            .select("id", { count: "exact", head: true })
-            .in("exam_set_id", info.ids);
-          questionCount = count ?? 0;
+          questionCount = info.rows.reduce((sum, r) => sum + r.qc, 0);
         }
-        return {
+        result.push({
           fullTestId: ftId,
           title: info.title,
           partCount: partsArr.length,
@@ -95,13 +79,8 @@ export const useSkillFullSets = (skill: string) => {
           examSetIds: info.ids,
           questionCount,
           access_tier: info.maxTier,
-        };
-      };
-
-      const settled = await Promise.all(
-        Array.from(grouped.entries()).map(([ftId, info]) => computeOne(ftId, info))
-      );
-      const result: SkillFullSetItem[] = settled.filter((x): x is SkillFullSetItem => x !== null);
+        });
+      }
 
       const numOf = (t: string) => {
         const m = t.match(/\d+/);
@@ -114,6 +93,7 @@ export const useSkillFullSets = (skill: string) => {
       });
 
       return result;
+
     },
   });
 
