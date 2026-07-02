@@ -88,13 +88,13 @@ export function ExamTierBadge({
   }
   if (t === "premium") {
     return (
-      <Badge variant="secondary" className={`text-[10px] font-semibold bg-gradient-to-r from-[#CC1C01]/15 to-[#FEAD5F]/30 text-[#CC1C01] dark:text-[#FEAD5F] border-0 inline-flex items-center gap-1 ${className ?? ""}`}>
+      <Badge variant="secondary" className={`text-[10px] font-bold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white border-0 shadow-sm inline-flex items-center gap-1 ${className ?? ""}`}>
         {locked ? <Lock className="w-3 h-3" /> : <Gem className="w-3 h-3" />} PREMIUM
       </Badge>
     );
   }
   return (
-    <Badge variant="secondary" className={`text-[10px] font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border-0 inline-flex items-center gap-1 ${className ?? ""}`}>
+    <Badge variant="secondary" className={`text-[10px] font-bold bg-amber-500 text-white border-0 shadow-sm inline-flex items-center gap-1 ${className ?? ""}`}>
       {locked ? <Lock className="w-3 h-3" /> : <Crown className="w-3 h-3" />} PRO
     </Badge>
   );
