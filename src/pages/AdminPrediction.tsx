@@ -410,6 +410,32 @@ const AdminPrediction = () => {
             </CardContent>
           </Card>
 
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Thêm hàng loạt</CardTitle>
+              <CardDescription>
+                Mỗi dòng: <code>skill | part | đề | priority</code> — priority ∈ cao / vừa / thấp / backup.
+                Ví dụ: <code>reading | Part 4 | Đề 09 | cao</code>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                rows={8}
+                placeholder={"reading | Part 4 | Đề 09 | cao\nlistening | Part 2 | Đề 03 | vừa"}
+                className="font-mono text-xs"
+              />
+              <div className="flex justify-end">
+                <Button onClick={bulkAdd} disabled={bulkRunning || !bulkText.trim()}>
+                  {bulkRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Thêm hàng loạt
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+
           <Card>
             <CardHeader>
               <CardTitle>Danh sách đề trong key ({items.length})</CardTitle>
