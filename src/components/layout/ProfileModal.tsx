@@ -4,13 +4,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LogOut, Crown } from "lucide-react";
+import { LogOut, Crown, Smartphone, Tablet, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
 import { parseDateSafe } from "@/lib/safeDate";
+import { getDeviceId, type DeviceType } from "@/lib/deviceInfo";
+
+interface DeviceRow {
+  id: string;
+  device_id: string;
+  device_type: DeviceType;
+  device_label: string | null;
+  last_seen_at: string;
+}
+
+const DEVICE_TYPE_LABEL: Record<DeviceType, string> = {
+  mobile: "Điện thoại",
+  tablet: "Máy tính bảng",
+  desktop: "Máy tính",
+};
+
+function relTime(iso: string): string {
+  const d = parseDateSafe(iso);
+  if (!d) return "";
+  const diff = Math.max(0, Date.now() - d.getTime());
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return "vừa xong";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} giờ trước`;
+  const day = Math.floor(h / 24);
+  return `${day} ngày trước`;
+}
+
 
 interface Props {
   open: boolean;
