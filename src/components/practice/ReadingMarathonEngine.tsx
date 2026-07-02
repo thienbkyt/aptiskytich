@@ -96,29 +96,18 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     let answers: any = [];
     try {
       const raw = qResults[0]?.user_answer;
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        answers = parsed?.answers ?? [];
-      }
+      if (raw) { const parsed = JSON.parse(raw); answers = parsed?.answers ?? []; }
     } catch { /* noop */ }
-    setResults((prev) => {
-      const next = prev.slice();
-      next[currentIndex] = {
-        correct, total,
-        examSetId: set.id,
-        part: set.part,
-        qResults,
-        answers,
-      };
-      return next;
-    });
-    if (currentIndex < sets.length - 1) {
-      setEnterAtLast(false);
-      setCurrentIndex((i) => i + 1);
-    } else {
-      setPhase("completed");
-    }
-  }, [currentIndex, sets]);
+    const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults, answers } as any;
+    const nextResults = results.slice();
+    nextResults[currentIndex] = entry;
+    const isLastSet = currentIndex >= sets.length - 1;
+    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    setResults(nextResults);
+    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
+    if (!isLastSet) { setEnterAtLast(false); setCurrentIndex(nextIndex); }
+    else setPhase("completed");
+  }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
