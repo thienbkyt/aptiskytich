@@ -246,7 +246,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
               <Trophy className="w-8 h-8 text-primary" />
             </div>
             <p className="text-base text-muted-foreground mb-2">
-              Bạn đã hoàn thành tất cả {sets.length} đề {partName}
+              Bạn đã làm {reviewable.length}/{sets.length} đề {partName}
             </p>
             <p className="text-4xl md:text-5xl font-heading font-extrabold text-foreground my-4">
               Đúng {accCorrect}/{accTotal} câu
@@ -260,6 +260,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
               )}
               <Button
                 onClick={() => {
+                  if (persist) clearMarathonProgress("reading", partType);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
