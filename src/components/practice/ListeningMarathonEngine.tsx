@@ -199,7 +199,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         const wrongSetIds = reviewable
           .filter((r) => r.qResults.some((q) => !q.is_correct))
           .map((r) => r.examSetId);
-        saveMarathonLast("listening", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+        const wrongQBySet: Record<string, string[]> = {};
+        reviewable.forEach((r) => {
+          const wq = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
+          if (wq.length) wrongQBySet[r.examSetId] = wq;
+        });
+        saveMarathonLast("listening", partType, { correct: accCorrect, total: accTotal, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
         clearMarathonProgress("listening", partType);
       }
     })();
