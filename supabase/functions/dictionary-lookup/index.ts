@@ -63,7 +63,7 @@ serve(async (req) => {
   "synonyms": ["synonym1", "synonym2"],
   "wordFamily": [{"word": "related word", "partOfSpeech": "noun/verb/adj/etc"}]
 }
-Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family members. Be accurate and concise.`;
+Provide exactly 1-2 meanings (most common first), exactly 1 example, up to 3 synonyms, up to 3 word family members. Keep every Vietnamese definition to one short phrase. Be fast and concise.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -79,7 +79,7 @@ Provide 1-3 meanings, 1-2 examples, up to 5 synonyms, and up to 5 word family me
             { role: "system", content: systemPrompt },
             { role: "user", content: clean },
           ],
-          max_tokens: 2048,
+          max_tokens: 800,
           response_format: { type: "json_object" },
         }),
       }
