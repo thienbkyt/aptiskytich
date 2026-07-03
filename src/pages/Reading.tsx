@@ -31,7 +31,6 @@ import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
-import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { loadMarathonProgress, loadMarathonLast, clearMarathonProgress } from "@/lib/marathonProgress";
 
@@ -407,8 +406,6 @@ const Reading = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
               </div>
-            ) : !authUser ? (
-              <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
             ) : (
               <FullPartSection
                 progress={progress}
@@ -437,8 +434,6 @@ const Reading = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
                 </div>
-              ) : !authUser ? (
-                <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                   {filteredSets.length > 0 && (() => {

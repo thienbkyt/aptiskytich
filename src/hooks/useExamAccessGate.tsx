@@ -3,6 +3,8 @@ import { Lock, Gem, Crown } from "lucide-react";
 import { useIsPro, tierRank, type UserTier } from "@/hooks/useIsPro";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useLoginGate } from "@/components/auth/LoginGate";
 
 interface MinimalSet {
   access_tier?: string | null;
@@ -20,6 +22,8 @@ function normalizeTier(t?: string | null): UserTier {
  */
 export function useExamAccessGate() {
   const { isPro, tier, loading } = useIsPro();
+  const { user } = useAuth();
+  const { openLogin } = useLoginGate();
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
 
@@ -38,6 +42,10 @@ export function useExamAccessGate() {
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void) => {
+      if (!user) {
+        openLogin(() => action());
+        return;
+      }
       // If tier is still loading, just let the action through; server enforces.
       if (loading) {
         action();
@@ -51,7 +59,7 @@ export function useExamAccessGate() {
       }
       action();
     },
-    [isLocked, loading],
+    [isLocked, loading, user, openLogin],
   );
 
   const LockModal = () => (
