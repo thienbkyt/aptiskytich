@@ -22,6 +22,8 @@ function normalizeTier(t?: string | null): UserTier {
  */
 export function useExamAccessGate() {
   const { isPro, tier, loading } = useIsPro();
+  const { user } = useAuth();
+  const { openLogin } = useLoginGate();
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
 
