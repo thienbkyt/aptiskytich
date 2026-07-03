@@ -14,6 +14,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders });
 
+  // Warm ping (cron): empty body → return 200 without auth/AI
+  const cl = req.headers.get("content-length");
+  if (req.method === "POST" && (cl === "0" || cl === null)) {
+    return new Response(JSON.stringify({ ok: true, warm: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const auth = await requireUser(req, corsHeaders);
   if (auth instanceof Response) return auth;
 
