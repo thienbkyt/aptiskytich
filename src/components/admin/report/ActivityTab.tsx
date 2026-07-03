@@ -55,11 +55,11 @@ const ActivityTab = () => {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
       const [p, t, s, v, pay, sub] = await Promise.all([
-        supabase.from("profiles").select("user_id, created_at"),
-        supabase.from("test_results").select("user_id, created_at"),
+        supabase.from("profiles").select("user_id, created_at").limit(100000),
+        supabase.from("test_results").select("user_id, created_at").limit(100000),
         supabase.from("learning_streaks").select("current_streak, last_activity_date"),
         supabase.from("site_visits").select("id", { count: "exact", head: true }).gte("created_at", startOfToday.toISOString()),
-        supabase.from("payments").select("user_id, plan_key, tier, amount_vnd, status, paid_at, created_at"),
+        supabase.from("payments").select("user_id, plan_key, tier, amount_vnd, status, paid_at, created_at").limit(100000),
         supabase.from("user_subscriptions").select("user_id, tier, pro_until"),
       ]);
       if (cancelled) return;
