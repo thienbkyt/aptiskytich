@@ -3,6 +3,8 @@ import { Lock, Gem, Crown } from "lucide-react";
 import { useIsPro, tierRank, type UserTier } from "@/hooks/useIsPro";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useLoginGate } from "@/components/auth/LoginGate";
 
 interface MinimalSet {
   access_tier?: string | null;
