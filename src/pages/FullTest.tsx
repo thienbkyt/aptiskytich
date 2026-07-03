@@ -13,7 +13,6 @@ import { useFullTests, type FullTestItem } from "@/hooks/useFullTests";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
-import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
