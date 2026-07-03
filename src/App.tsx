@@ -87,49 +87,51 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
-              <RouteProgressBar />
-              <Suspense fallback={<PageLoadingSkeleton />}>
-                <PageTransition>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
+              <LoginGateProvider>
+                <RouteProgressBar />
+                <Suspense fallback={<PageLoadingSkeleton />}>
+                  <PageTransition>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
 
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/course" element={FEATURES.course ? <Course /> : <Navigate to="/" replace />} />
-                    <Route path="/grammar" element={<WithDict><GrammarVocabulary /></WithDict>} />
-                    <Route path="/reading" element={<WithDict><Reading /></WithDict>} />
-                    <Route path="/listening" element={<WithDict><Listening /></WithDict>} />
-                    <Route path="/speaking" element={<WithDict><Speaking /></WithDict>} />
-                    <Route path="/writing" element={<WithDict><Writing /></WithDict>} />
-                    <Route path="/vocabulary" element={<SkillPractice />} />
-                    <Route path="/vocabulary/:id" element={<VocabStudy />} />
-                    <Route path="/vocab/:listId" element={<VocabListDetail />} />
-                    <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
-                    <Route path="/history" element={<History />} />
-                    <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
-                    <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
-                    <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
-                    <Route path="/history/:id" element={<HistoryDetail />} />
-                    <Route path="/progress" element={<ProgressPage />} />
-                    <Route path="/pricing" element={<PricingPage />} />
-                    
-                    <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
-                    <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
-                    <Route path="/admin/reports" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
-                    <Route path="/admin/report/pricing" element={<RequireAdmin><AdminReportPricing /></RequireAdmin>} />
-                    <Route path="/admin/students" element={<RequireAdmin><AdminStudents /></RequireAdmin>} />
-                    <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
-                    <Route path="/admin/pro" element={<RequireAdmin><AdminPro /></RequireAdmin>} />
-                    <Route path="/admin/prediction" element={<RequireAdmin><AdminPrediction /></RequireAdmin>} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </PageTransition>
-              </Suspense>
-              <AICoachFab />
-              <ReportFab />
-              <VisitLogger />
-              <DeviceSessionGuard />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/course" element={FEATURES.course ? <Course /> : <Navigate to="/" replace />} />
+                      <Route path="/grammar" element={<WithDict><GrammarVocabulary /></WithDict>} />
+                      <Route path="/reading" element={<WithDict><Reading /></WithDict>} />
+                      <Route path="/listening" element={<WithDict><Listening /></WithDict>} />
+                      <Route path="/speaking" element={<WithDict><Speaking /></WithDict>} />
+                      <Route path="/writing" element={<WithDict><Writing /></WithDict>} />
+                      <Route path="/vocabulary" element={<SkillPractice />} />
+                      <Route path="/vocabulary/:id" element={<VocabStudy />} />
+                      <Route path="/vocab/:listId" element={<VocabListDetail />} />
+                      <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
+                      <Route path="/history" element={<History />} />
+                      <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
+                      <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
+                      <Route path="/history/full-part/:sessionId" element={<WithDict><FullPartHistoryDetail /></WithDict>} />
+                      <Route path="/history/:id" element={<HistoryDetail />} />
+                      <Route path="/progress" element={<ProgressPage />} />
+                      <Route path="/pricing" element={<PricingPage />} />
+                      
+                      <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
+                      <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
+                      <Route path="/admin/reports" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
+                      <Route path="/admin/report/pricing" element={<RequireAdmin><AdminReportPricing /></RequireAdmin>} />
+                      <Route path="/admin/students" element={<RequireAdmin><AdminStudents /></RequireAdmin>} />
+                      <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
+                      <Route path="/admin/pro" element={<RequireAdmin><AdminPro /></RequireAdmin>} />
+                      <Route path="/admin/prediction" element={<RequireAdmin><AdminPrediction /></RequireAdmin>} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </PageTransition>
+                </Suspense>
+                <AICoachFab />
+                <ReportFab />
+                <VisitLogger />
+                <DeviceSessionGuard />
+              </LoginGateProvider>
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
