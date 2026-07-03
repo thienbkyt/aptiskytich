@@ -406,8 +406,6 @@ const Reading = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
               </div>
-            ) : !authUser ? (
-              <LoginToPracticePrompt message="Đăng nhập để luyện tập theo kỹ năng với giao diện giống đề thi thật 100%" />
             ) : (
               <FullPartSection
                 progress={progress}
