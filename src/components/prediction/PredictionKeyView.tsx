@@ -299,8 +299,8 @@ export default function PredictionKeyView() {
     return (
       <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
         <Sparkles className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-        <p className="text-muted-foreground font-medium mb-1">Chưa có Key Dự Đoán nào được công bố</p>
-        <p className="text-sm text-muted-foreground">Quay lại sau nhé — key sẽ được cập nhật hằng ngày.</p>
+        <p className="text-muted-foreground font-medium mb-1">Đăng nhập để xem toàn bộ đề Key dự đoán</p>
+        <p className="text-sm text-muted-foreground">Đề Key dự đoán được update hằng ngày</p>
       </div>
     );
   }
