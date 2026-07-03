@@ -144,19 +144,13 @@ const FullTest = () => {
           </div>
 
           {activeTab === "key" ? (
-            !authUser ? (
-              <LoginToPracticePrompt message="Đăng nhập để xem Key Dự Đoán cập nhật hằng ngày" />
-            ) : (
-              <PredictionKeyView />
-            )
+            <PredictionKeyView />
           ) : loading || authLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <TechSkeleton key={i} variant="card" className="h-52" />
               ))}
             </div>
-          ) : !authUser ? (
-            <LoginToPracticePrompt message="Đăng nhập để làm full bộ đề Aptis với giao diện giống đề thi thật 100%" />
           ) : tests.length === 0 ? (
             <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
               <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
