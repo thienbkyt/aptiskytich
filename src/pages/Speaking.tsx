@@ -26,7 +26,7 @@ import { useUserGradedProgress } from "@/hooks/useUserGradedProgress";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
-import LoginToPracticePrompt from "@/components/exam/LoginToPracticePrompt";
+
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 
 const TASKS = [
