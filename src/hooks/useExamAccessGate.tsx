@@ -42,6 +42,10 @@ export function useExamAccessGate() {
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void) => {
+      if (!user) {
+        openLogin(() => action());
+        return;
+      }
       // If tier is still loading, just let the action through; server enforces.
       if (loading) {
         action();
@@ -55,7 +59,7 @@ export function useExamAccessGate() {
       }
       action();
     },
-    [isLocked, loading],
+    [isLocked, loading, user, openLogin],
   );
 
   const LockModal = () => (
