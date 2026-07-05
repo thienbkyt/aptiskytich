@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useState } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
