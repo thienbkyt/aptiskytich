@@ -276,7 +276,7 @@ const Reading = () => {
 
   const navigate = useNavigate();
   const handleExit = () => {
-    if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
+    if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
     setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
   };
 
@@ -310,7 +310,7 @@ const Reading = () => {
         persist={!marathon.retryWrongSetIds}
         onExit={() => {
           setProgressTick((t) => t + 1);
-          if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
+          if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
           setMarathon({ active: false, partType: marathon.partType });
         }}
       />

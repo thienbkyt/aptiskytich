@@ -419,7 +419,7 @@ const Dashboard = () => {
                   asChild
                   className="shrink-0 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] hover:brightness-110 text-white font-bold gap-1.5"
                 >
-                  <Link to={isPremium ? "/thi-thu?tab=prediction" : "/pricing"}>
+                  <Link to={isPremium ? "/key-du-doan" : "/pricing"}>
                     {isPremium ? <>Xem ngay <ArrowRight className="w-4 h-4" /></> : <><Crown className="w-4 h-4" /> Nâng cấp Premium</>}
                   </Link>
                 </Button>

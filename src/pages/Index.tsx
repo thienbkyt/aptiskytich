@@ -561,7 +561,7 @@ const Index = () => {
                     Cập nhật hằng ngày bộ đề dự đoán theo topic khả năng ra thi, phân mức ưu tiên. Marathon từng part để cày đúng trọng tâm, tiết kiệm thời gian ôn.
                   </p>
                 </div>
-                <Link to="/thi-thu?tab=key" className="shrink-0">
+                <Link to="/key-du-doan" className="shrink-0">
                   <Button className="bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 font-semibold gap-2 shadow-md">
                     <Sparkles className="w-4 h-4" /> Xem key hôm nay
                   </Button>

@@ -144,7 +144,7 @@ const Speaking = () => {
 
   const navigate = useNavigate();
   const handleExit = () => {
-    if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
+    if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
     setExam({ active: false, partType: "part1", testTitle: "", loadingExam: false });
   };
 
