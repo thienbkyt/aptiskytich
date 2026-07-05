@@ -485,6 +485,20 @@ const Navbar = () => {
                 )}
               </AnimatePresence>
 
+              <Link
+                to="/key-du-doan"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive("/key-du-doan")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                Đề Key Dự Đoán
+              </Link>
+
+
+
 
               {isAdmin && (
                 <>
