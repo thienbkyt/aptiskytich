@@ -111,36 +111,12 @@ const FullTest = () => {
         {/* Test list */}
         <section className="section-container py-8 md:py-10">
           <div className="mb-6">
-            <div className="inline-flex items-center gap-1 p-1 bg-muted/60 dark:bg-muted/30 rounded-lg border border-border">
-              <button
-                onClick={() => setActiveTab("aptis")}
-                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
-                  activeTab === "aptis"
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Bộ đề thi Aptis
-              </button>
-              <button
-                onClick={() => setActiveTab("key")}
-                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
-                  activeTab === "key"
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Đề Key Dự Đoán (Update hằng ngày)
-              </button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-3">
+            <p className="text-sm text-muted-foreground">
               {loading ? "Đang tải..." : "​"}
             </p>
           </div>
 
-          {activeTab === "key" ? (
-            <PredictionKeyView />
-          ) : loading || authLoading ? (
+          {loading || authLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <TechSkeleton key={i} variant="card" className="h-52" />
@@ -150,14 +126,10 @@ const FullTest = () => {
             <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
               <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
               <p className="text-muted-foreground font-medium mb-1">
-                {activeTab === "aptis"
-                  ? "Chưa có đề thi Full Test nào được xuất bản"
-                  : "Đề Key Dự Đoán (Update hằng ngày) đang được cập nhật"}
+                Chưa có đề thi Full Test nào được xuất bản
               </p>
               <p className="text-sm text-muted-foreground">
-                {activeTab === "aptis"
-                  ? "Đề thi sẽ xuất hiện ở đây khi được import vào hệ thống."
-                  : "Các đề sẽ xuất hiện sớm."}
+                Đề thi sẽ xuất hiện ở đây khi được import vào hệ thống.
               </p>
             </div>
           ) : (
