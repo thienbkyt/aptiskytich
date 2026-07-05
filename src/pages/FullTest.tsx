@@ -16,7 +16,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
-import PredictionKeyView from "@/components/prediction/PredictionKeyView";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -26,22 +25,18 @@ const SKILL_BREAKDOWN = [
   { label: "Writing", time: "50 phút", icon: PenLine, color: "text-pink-500" },
 ];
 
-type TabKey = "aptis" | "key";
-
 const FullTest = () => {
   usePageMeta({
     title: "Thi thử Aptis online miễn phí — Aptis Kỳ Tích",
     description: "Làm bài thi thử Aptis General sát đề thật: Speaking, Listening, Grammar & Vocab, Reading, Writing. AI chấm tự động, có giải thích chi tiết.",
     path: "/thi-thu",
   });
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab: TabKey = searchParams.get("tab") === "prediction" || searchParams.get("tab") === "key" ? "key" : "aptis";
-  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
-  useEffect(() => {
-    const t = searchParams.get("tab");
-    if ((t === "prediction" || t === "key") && activeTab !== "key") setActiveTab("key");
-  }, [searchParams]);
-  const { tests, loading } = useFullTests(activeTab);
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  if (tabParam === "key" || tabParam === "prediction") {
+    return <Navigate to="/key-du-doan" replace />;
+  }
+  const { tests, loading } = useFullTests("aptis");
   const { user: authUser, loading: authLoading } = useAuth();
   const { bands } = useUserFullTestBands();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
