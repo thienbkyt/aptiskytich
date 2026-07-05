@@ -284,8 +284,8 @@ const Index = () => {
             {[
               { icon: ShieldCheck, title: "Bám sát format kỳ thi\u00A0\nAptis (British Council)", sub: "5 kỹ năng, đúng dạng bài & cách tính band", isNum: false },
 
-              { icon: Repeat, title: "1.000+", sub: "lượt luyện đã thực hiện", isNum: true },
-              { icon: Sparkles, title: "100+", sub: "bài Speaking–Writing đã được AI chấm", isNum: true },
+              { icon: Repeat, title: "5896+", sub: "lượt luyện đã thực hiện", isNum: true },
+              { icon: Sparkles, title: "2693+", sub: "bài Speaking–Writing đã được AI chấm", isNum: true },
             ].map((t, i) => (
               <div key={i} className="flex items-start gap-3 md:px-6 first:md:pl-0 last:md:pr-0">
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFE9DC] to-[#FFD6BC] flex items-center justify-center">
