@@ -48,6 +48,7 @@ const Listening = lazy(() => import("./pages/Listening"));
 const Reading = lazy(() => import("./pages/Reading"));
 const GrammarVocabulary = lazy(() => import("./pages/GrammarVocabulary"));
 const FullTest = lazy(() => import("./pages/FullTest"));
+const KeyPrediction = lazy(() => import("./pages/KeyPrediction"));
 const History = lazy(() => import("./pages/History"));
 const HistoryDetail = lazy(() => import("./pages/HistoryDetail"));
 const FullTestHistoryDetail = lazy(() => import("./pages/FullTestHistoryDetail"));
@@ -107,6 +108,7 @@ const App = () => (
                       <Route path="/vocabulary/:id" element={<VocabStudy />} />
                       <Route path="/vocab/:listId" element={<VocabListDetail />} />
                       <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
+                      <Route path="/key-du-doan" element={<WithDict><KeyPrediction /></WithDict>} />
                       <Route path="/history" element={<History />} />
                       <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
                       <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />

@@ -155,7 +155,7 @@ const Writing = () => {
 
   const navigate = useNavigate();
   const handleExit = () => {
-    if (searchParams.get("from") === "key") { navigate("/thi-thu?tab=key"); return; }
+    if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
     setExam({ active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false });
   };
 
