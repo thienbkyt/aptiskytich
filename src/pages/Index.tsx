@@ -29,7 +29,7 @@ const fadeUp = {
 };
 
 const stats = [
-  { value: "350+", label: "Đề thi Aptis" },
+  { value: "596+", label: "Đề thi Aptis" },
   { value: "Đề Key", label: "Update hằng ngày" },
   { value: "AI\u00A0", label: "Giải thích chi tiết từng câu" },
   { value: "Mô phỏng", label: "Giống bài thi thật 100%" },
@@ -43,7 +43,7 @@ const heroChips = [
 
 const features = [
   { icon: Target, title: "Mô phỏng giống đề thật 100%", desc: "Giao diện kéo thả, dropdown, timer y hệt bài thi Aptis." },
-  { icon: Layers, title: "Đầy đủ đề thật, cập nhật liên tục", desc: "350+ đề bám sát kỳ thi, bổ sung thường xuyên." },
+  { icon: Layers, title: "Đầy đủ đề thật, cập nhật liên tục", desc: "596+ đề bám sát kỳ thi, bổ sung thường xuyên." },
   { icon: Cpu, title: "AI chấm & chữa Speaking–Writing", desc: "Sát thực tế, trả kết quả & nhận xét ngay." },
   { icon: TrendingUp, title: "Nắm rõ band điểm", desc: "Biết chính xác band từng kỹ năng để ôn đúng chỗ yếu." },
   { icon: Lightbulb, title: "Giải thích chi tiết từng câu", desc: "Mỗi câu có đáp án + lý do, hiểu sâu không học vẹt." },
@@ -136,7 +136,7 @@ const Index = () => {
               >
                 Sắp thi Aptis mà chưa biết mình đang ở band nào?&nbsp;
                 <br />
-                Luyện với 350+ đề sát đề thật, AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp&nbsp;
+                Luyện với 596+ đề sát đề thật, AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp&nbsp;
               </motion.p>
 
               <motion.div
@@ -284,8 +284,8 @@ const Index = () => {
             {[
               { icon: ShieldCheck, title: "Bám sát format kỳ thi\u00A0\nAptis (British Council)", sub: "5 kỹ năng, đúng dạng bài & cách tính band", isNum: false },
 
-              { icon: Repeat, title: "1.000+", sub: "lượt luyện đã thực hiện", isNum: true },
-              { icon: Sparkles, title: "100+", sub: "bài Speaking–Writing đã được AI chấm", isNum: true },
+              { icon: Repeat, title: "5896+", sub: "lượt luyện đã thực hiện", isNum: true },
+              { icon: Sparkles, title: "2693+", sub: "bài Speaking–Writing đã được AI chấm", isNum: true },
             ].map((t, i) => (
               <div key={i} className="flex items-start gap-3 md:px-6 first:md:pl-0 last:md:pr-0">
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFE9DC] to-[#FFD6BC] flex items-center justify-center">
