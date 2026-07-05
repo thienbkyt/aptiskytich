@@ -136,7 +136,7 @@ const Index = () => {
               >
                 Sắp thi Aptis mà chưa biết mình đang ở band nào?&nbsp;
                 <br />
-                Luyện với 350+ đề sát đề thật, AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp&nbsp;
+                Luyện với 596+ đề sát đề thật, AI Kỳ Tích chấm Speaking & Writing và trả band điểm ngay sau khi nộp&nbsp;
               </motion.p>
 
               <motion.div
