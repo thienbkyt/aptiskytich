@@ -108,6 +108,7 @@ const App = () => (
                       <Route path="/vocabulary/:id" element={<VocabStudy />} />
                       <Route path="/vocab/:listId" element={<VocabListDetail />} />
                       <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
+                      <Route path="/key-du-doan" element={<WithDict><KeyPrediction /></WithDict>} />
                       <Route path="/history" element={<History />} />
                       <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />
                       <Route path="/history/marathon/:id" element={<WithDict><MarathonHistoryDetail /></WithDict>} />
