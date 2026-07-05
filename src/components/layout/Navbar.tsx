@@ -184,7 +184,7 @@ const Navbar = () => {
             }`}
           >
             <BookText className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
-            Học từ vựng bài thi Aptis
+            Học từ vựng
             {isActive("/vocabulary") && (
               <motion.div
                 layoutId="nav-active"
