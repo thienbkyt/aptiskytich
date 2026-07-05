@@ -43,7 +43,7 @@ const heroChips = [
 
 const features = [
   { icon: Target, title: "Mô phỏng giống đề thật 100%", desc: "Giao diện kéo thả, dropdown, timer y hệt bài thi Aptis." },
-  { icon: Layers, title: "Đầy đủ đề thật, cập nhật liên tục", desc: "350+ đề bám sát kỳ thi, bổ sung thường xuyên." },
+  { icon: Layers, title: "Đầy đủ đề thật, cập nhật liên tục", desc: "596+ đề bám sát kỳ thi, bổ sung thường xuyên." },
   { icon: Cpu, title: "AI chấm & chữa Speaking–Writing", desc: "Sát thực tế, trả kết quả & nhận xét ngay." },
   { icon: TrendingUp, title: "Nắm rõ band điểm", desc: "Biết chính xác band từng kỹ năng để ôn đúng chỗ yếu." },
   { icon: Lightbulb, title: "Giải thích chi tiết từng câu", desc: "Mỗi câu có đáp án + lý do, hiểu sâu không học vẹt." },
