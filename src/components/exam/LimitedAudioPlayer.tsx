@@ -132,7 +132,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
         setIsPlaying(true);
         setPlayCount((prev) => {
           const next = prev + 1;
-          playCountStore.set(storeKey(questionKey, src), next);
+          writeCount(storeKey(questionKey, src), next);
           return next;
         });
       } catch {
