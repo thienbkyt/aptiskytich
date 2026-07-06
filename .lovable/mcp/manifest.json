@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "aptis-ky-tich-mcp",
+      "version": "0.1.0",
+      "title": "Aptis Kỳ Tích MCP"
+    },
+    "tools": [
+      {
+        "name": "search_vocabulary",
+        "title": "Tra từ vựng Aptis",
+        "description": "Tìm một từ tiếng Anh trong bộ từ vựng Aptis Kỳ Tích. Trả về phiên âm, nghĩa tiếng Việt, ví dụ và họ từ.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "word": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Từ tiếng Anh cần tra (ví dụ: 'reliable')."
+            }
+          },
+          "required": [
+            "word"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_exam_sets",
+        "title": "Danh sách đề Aptis đã công bố",
+        "description": "Liệt kê các đề luyện thi Aptis đã được công bố (is_published = true) trên Aptis Kỳ Tích. Có thể lọc theo kỹ năng (reading, listening, writing, speaking, grammar) và part.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "skill": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "reading",
+                    "listening",
+                    "writing",
+                    "speaking",
+                    "grammar"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Lọc theo kỹ năng. Truyền null để lấy tất cả."
+            },
+            "part": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Lọc theo part (ví dụ '1'). Truyền null để lấy tất cả."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Số lượng đề tối đa trả về (1–50)."
+            }
+          },
+          "required": [
+            "skill",
+            "part",
+            "limit"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_exam_set",
+        "title": "Chi tiết đề Aptis",
+        "description": "Lấy chi tiết một đề Aptis đã công bố kèm danh sách câu hỏi. Chỉ trả kết quả cho đề is_published = true.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "exam_set_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID của exam_set (lấy từ list_exam_sets)."
+            }
+          },
+          "required": [
+            "exam_set_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
