@@ -313,21 +313,27 @@ const ReadingPart2Cohesion = ({
                   All sentences placed.
                 </p>
               )}
-              {unplaced.map((s) => (
-                <div
-                  key={s.text}
-                  draggable={!reveal}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", s.text);
-                    handleDragStart(s.text);
-                  }}
-                  onDragEnd={handleDragEnd}
-                  className="bg-background border border-border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2"
-                >
-                  <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>{s.text}</span>
-                </div>
-              ))}
+              {unplaced.map((s) => {
+                const isSelected = !reveal && selectedText === s.text;
+                return (
+                  <div
+                    key={s.text}
+                    draggable={!reveal}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", s.text);
+                      handleDragStart(s.text);
+                    }}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => handlePoolTap(s.text)}
+                    className={`bg-background border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2 transition-colors ${
+                      isSelected ? "border-primary ring-2 ring-primary" : "border-border"
+                    }`}
+                  >
+                    <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <span>{s.text}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </motion.div>
