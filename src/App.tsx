@@ -56,6 +56,7 @@ const MarathonHistoryDetail = lazy(() => import("./pages/MarathonHistoryDetail")
 const FullPartHistoryDetail = lazy(() => import("./pages/FullPartHistoryDetail"));
 const ProgressPage = lazy(() => import("./pages/Progress"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
+const Connect = lazy(() => import("./pages/Connect"));
 
 
 const queryClient = new QueryClient({
@@ -116,6 +117,7 @@ const App = () => (
                       <Route path="/history/:id" element={<HistoryDetail />} />
                       <Route path="/progress" element={<ProgressPage />} />
                       <Route path="/pricing" element={<PricingPage />} />
+                      <Route path="/connect" element={<Connect />} />
                       
                       <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
                       <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
