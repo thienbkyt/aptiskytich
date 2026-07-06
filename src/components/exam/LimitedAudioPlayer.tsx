@@ -83,7 +83,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
   // Sync playCount from persistent store when question/src changes.
   // Do NOT reset to 0 — remembered per question across navigation.
   useEffect(() => {
-    setPlayCount(playCountStore.get(storeKey(questionKey, src)) ?? 0);
+    setPlayCount(readCount(storeKey(questionKey, src)));
     setIsPlaying(false);
     setErrorMsg("");
     retryCountRef.current = 0;
