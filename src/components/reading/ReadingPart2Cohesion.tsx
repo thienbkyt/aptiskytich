@@ -48,6 +48,52 @@ const ReadingPart2Cohesion = ({
     else setCurrentSectionLocal(next);
   };
   const [dragging, setDragging] = useState<string | null>(null);
+  const [selectedText, setSelectedText] = useState<string | null>(null);
+
+  // Clear selection when switching section or when reveal
+  useEffect(() => { setSelectedText(null); }, [currentSection, reveal]);
+
+  const placeTextAt = (pos: number, text: string) => {
+    const next: Record<number, string> = { ...current };
+    for (const k of Object.keys(next)) {
+      if (next[Number(k)] === text) delete next[Number(k)];
+    }
+    next[pos] = text;
+    onPlacementsChange(currentSection, next);
+  };
+  const removeText = (text: string) => {
+    const next: Record<number, string> = { ...current };
+    for (const k of Object.keys(next)) {
+      if (next[Number(k)] === text) delete next[Number(k)];
+    }
+    onPlacementsChange(currentSection, next);
+  };
+
+  const handlePoolTap = (text: string) => {
+    if (reveal) return;
+    setSelectedText((prev) => (prev === text ? null : text));
+  };
+  const handleSlotTap = (pos: number) => {
+    if (reveal) return;
+    const isDoneForYou = currentSection === 0 && pos === 1;
+    if (isDoneForYou) return;
+    const placed = current[pos];
+    if (selectedText) {
+      // If tapping the same placed item, deselect (send back to pool)
+      if (placed && placed === selectedText) {
+        removeText(placed);
+        setSelectedText(null);
+        return;
+      }
+      placeTextAt(pos, selectedText);
+      setSelectedText(null);
+      return;
+    }
+    // No selection: tapping a placed slot picks it up
+    if (placed) {
+      setSelectedText(placed);
+    }
+  };
 
   const totalSections = question.sections.length;
   const section = question.sections[currentSection];
