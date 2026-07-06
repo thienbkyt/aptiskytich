@@ -185,7 +185,12 @@ const ReadingPart2Cohesion = ({
         </div>
       </div>
 
-      <p className="text-sm font-semibold text-foreground mb-4">{question.instruction}</p>
+      <p className="text-sm font-semibold text-foreground mb-1">{question.instruction}</p>
+      {!reveal && (
+        <p className="text-xs text-muted-foreground mb-4">
+          Chạm để chọn câu, rồi chạm ô để đặt (hoặc kéo thả trên máy tính).
+        </p>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
