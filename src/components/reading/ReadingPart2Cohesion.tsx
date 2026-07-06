@@ -48,6 +48,52 @@ const ReadingPart2Cohesion = ({
     else setCurrentSectionLocal(next);
   };
   const [dragging, setDragging] = useState<string | null>(null);
+  const [selectedText, setSelectedText] = useState<string | null>(null);
+
+  // Clear selection when switching section or when reveal
+  useEffect(() => { setSelectedText(null); }, [currentSection, reveal]);
+
+  const placeTextAt = (pos: number, text: string) => {
+    const next: Record<number, string> = { ...current };
+    for (const k of Object.keys(next)) {
+      if (next[Number(k)] === text) delete next[Number(k)];
+    }
+    next[pos] = text;
+    onPlacementsChange(currentSection, next);
+  };
+  const removeText = (text: string) => {
+    const next: Record<number, string> = { ...current };
+    for (const k of Object.keys(next)) {
+      if (next[Number(k)] === text) delete next[Number(k)];
+    }
+    onPlacementsChange(currentSection, next);
+  };
+
+  const handlePoolTap = (text: string) => {
+    if (reveal) return;
+    setSelectedText((prev) => (prev === text ? null : text));
+  };
+  const handleSlotTap = (pos: number) => {
+    if (reveal) return;
+    const isDoneForYou = currentSection === 0 && pos === 1;
+    if (isDoneForYou) return;
+    const placed = current[pos];
+    if (selectedText) {
+      // If tapping the same placed item, deselect (send back to pool)
+      if (placed && placed === selectedText) {
+        removeText(placed);
+        setSelectedText(null);
+        return;
+      }
+      placeTextAt(pos, selectedText);
+      setSelectedText(null);
+      return;
+    }
+    // No selection: tapping a placed slot picks it up
+    if (placed) {
+      setSelectedText(placed);
+    }
+  };
 
   const totalSections = question.sections.length;
   const section = question.sections[currentSection];
@@ -139,7 +185,12 @@ const ReadingPart2Cohesion = ({
         </div>
       </div>
 
-      <p className="text-sm font-semibold text-foreground mb-4">{question.instruction}</p>
+      <p className="text-sm font-semibold text-foreground mb-1">{question.instruction}</p>
+      {!reveal && (
+        <p className="text-xs text-muted-foreground mb-4">
+          Chạm để chọn câu, rồi chạm ô để đặt (hoặc kéo thả trên máy tính).
+        </p>
+      )}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -183,8 +234,11 @@ const ReadingPart2Cohesion = ({
                   key={pos}
                   onDragOver={allowDrop}
                   onDrop={(e) => handleDropOnSlot(pos, e)}
+                  onClick={() => handleSlotTap(pos)}
                   className={`min-h-[56px] border-2 border-dashed rounded-md px-4 py-3 text-sm flex items-center transition-colors ${slotCls} ${
                     placed ? "bg-background" : "bg-transparent"
+                  } ${!reveal ? "cursor-pointer" : ""} ${
+                    !reveal && placed && selectedText === placed ? "ring-2 ring-primary" : ""
                   }`}
                 >
                   {placed ? (
@@ -207,6 +261,7 @@ const ReadingPart2Cohesion = ({
               );
             })}
           </div>
+
 
           {/* Divider with arrow */}
           <div className="hidden md:flex items-center">
@@ -258,21 +313,27 @@ const ReadingPart2Cohesion = ({
                   All sentences placed.
                 </p>
               )}
-              {unplaced.map((s) => (
-                <div
-                  key={s.text}
-                  draggable={!reveal}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", s.text);
-                    handleDragStart(s.text);
-                  }}
-                  onDragEnd={handleDragEnd}
-                  className="bg-background border border-border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2"
-                >
-                  <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>{s.text}</span>
-                </div>
-              ))}
+              {unplaced.map((s) => {
+                const isSelected = !reveal && selectedText === s.text;
+                return (
+                  <div
+                    key={s.text}
+                    draggable={!reveal}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", s.text);
+                      handleDragStart(s.text);
+                    }}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => handlePoolTap(s.text)}
+                    className={`bg-background border rounded-md px-3 py-3 text-sm text-foreground cursor-grab active:cursor-grabbing flex items-start gap-2 transition-colors ${
+                      isSelected ? "border-primary ring-2 ring-primary" : "border-border"
+                    }`}
+                  >
+                    <GripVertical className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <span>{s.text}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </motion.div>
