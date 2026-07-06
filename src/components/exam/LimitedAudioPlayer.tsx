@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { CircleDot, CirclePlay } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
+import { safeSessionStorage } from "@/lib/safeStorage";
 
 interface LimitedAudioPlayerProps {
   src: string;
@@ -8,14 +9,41 @@ interface LimitedAudioPlayerProps {
   questionKey?: string | number;
 }
 
-// Module-level store: persists play counts across remounts within one session.
-// Keyed by `${questionKey}::${src}` (or just src when no key).
-// Reset via resetLimitedAudioPlays() when starting a new attempt.
+// Persistent across remounts within one tab session.
+// In-memory Map is a fast path; sessionStorage is the source of truth so
+// refreshing the page does not reset the play count. Closing the tab clears it.
+const SS_PREFIX = "limitedPlays:";
 const playCountStore = new Map<string, number>();
 const storeKey = (qk: string | number | undefined, src: string) =>
   `${qk ?? "_"}::${src}`;
 
+const readCount = (key: string): number => {
+  const mem = playCountStore.get(key);
+  if (typeof mem === "number") return mem;
+  const raw = safeSessionStorage.getItem(SS_PREFIX + key);
+  const n = raw ? parseInt(raw, 10) : 0;
+  const val = Number.isFinite(n) ? n : 0;
+  if (val) playCountStore.set(key, val);
+  return val;
+};
+
+const writeCount = (key: string, val: number) => {
+  playCountStore.set(key, val);
+  safeSessionStorage.setItem(SS_PREFIX + key, String(val));
+};
+
 export const resetLimitedAudioPlays = () => {
+  // Clear sessionStorage entries too so a new attempt truly starts fresh.
+  try {
+    const toRemove: string[] = [];
+    for (let i = 0; i < safeSessionStorage.length; i++) {
+      const k = safeSessionStorage.key(i);
+      if (k && k.startsWith(SS_PREFIX)) toRemove.push(k);
+    }
+    for (const k of toRemove) safeSessionStorage.removeItem(k);
+  } catch {
+    /* ignore */
+  }
   playCountStore.clear();
 };
 
@@ -23,7 +51,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
-    () => playCountStore.get(storeKey(questionKey, src)) ?? 0
+    () => readCount(storeKey(questionKey, src))
   );
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -55,7 +83,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
   // Sync playCount from persistent store when question/src changes.
   // Do NOT reset to 0 — remembered per question across navigation.
   useEffect(() => {
-    setPlayCount(playCountStore.get(storeKey(questionKey, src)) ?? 0);
+    setPlayCount(readCount(storeKey(questionKey, src)));
     setIsPlaying(false);
     setErrorMsg("");
     retryCountRef.current = 0;
@@ -104,7 +132,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
         setIsPlaying(true);
         setPlayCount((prev) => {
           const next = prev + 1;
-          playCountStore.set(storeKey(questionKey, src), next);
+          writeCount(storeKey(questionKey, src), next);
           return next;
         });
       } catch {
