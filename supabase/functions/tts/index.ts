@@ -40,9 +40,11 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // TTS is low-risk (cached audio, 1000-char cap) and called from screens
-  // that may render before the session is hydrated (e.g. speaking intro).
-  // Skip auth gate to avoid 401 → white screen; rely on input validation.
+  // Require authenticated user to prevent unauthenticated cost abuse of the
+  // paid Google TTS API. Unique-text requests bypass cache and are billed
+  // per character, so open access would let anyone drive up costs.
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
   logInvocation("tts").catch(() => {});
 
   try {
