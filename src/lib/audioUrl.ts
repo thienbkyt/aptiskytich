@@ -1,17 +1,22 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Resolves an audio_url value to a playable URL using PUBLIC URLs.
- * The `audio` bucket is public, so we never need to sign — signing would
- * require a SELECT policy on storage.objects which is not granted to
- * regular users, causing audio to break for non-admins.
+ * Resolves an audio_url value to a playable URL.
+ * The `audio` bucket is private → use signed URLs (TTL 1h) so only
+ * authenticated users with a valid session can fetch files.
  *
- * - Already a public storage URL → return as-is
  * - External http(s) URL → return as-is
- * - Storage file path → getPublicUrl
+ * - Storage file path → createSignedUrl (cached)
  */
-export function bustAudioUrlCache(_key?: string) {
-  // No-op kept for backward compatibility with callers (e.g. <audio onError>).
+const SIGN_TTL_SEC = 3600;
+const CACHE_TTL_MS = 55 * 60 * 1000; // refresh a bit before expiry
+
+type Entry = { url: string; expiresAt: number };
+const cache = new Map<string, Entry>();
+
+export function bustAudioUrlCache(key?: string) {
+  if (!key) { cache.clear(); return; }
+  cache.delete(key);
 }
 
 export async function resolveAudioUrl(audioUrl: string): Promise<string | null> {
@@ -21,6 +26,15 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
     return audioUrl;
   }
 
-  const { data } = supabase.storage.from("audio").getPublicUrl(audioUrl);
-  return data?.publicUrl ?? null;
+  const now = Date.now();
+  const cached = cache.get(audioUrl);
+  if (cached && cached.expiresAt > now) return cached.url;
+
+  const { data, error } = await supabase.storage
+    .from("audio")
+    .createSignedUrl(audioUrl, SIGN_TTL_SEC);
+  if (error || !data?.signedUrl) return null;
+
+  cache.set(audioUrl, { url: data.signedUrl, expiresAt: now + CACHE_TTL_MS });
+  return data.signedUrl;
 }
