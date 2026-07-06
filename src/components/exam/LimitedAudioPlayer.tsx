@@ -51,7 +51,7 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
-    () => playCountStore.get(storeKey(questionKey, src)) ?? 0
+    () => readCount(storeKey(questionKey, src))
   );
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
