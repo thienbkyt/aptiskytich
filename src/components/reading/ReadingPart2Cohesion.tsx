@@ -234,8 +234,11 @@ const ReadingPart2Cohesion = ({
                   key={pos}
                   onDragOver={allowDrop}
                   onDrop={(e) => handleDropOnSlot(pos, e)}
+                  onClick={() => handleSlotTap(pos)}
                   className={`min-h-[56px] border-2 border-dashed rounded-md px-4 py-3 text-sm flex items-center transition-colors ${slotCls} ${
                     placed ? "bg-background" : "bg-transparent"
+                  } ${!reveal ? "cursor-pointer" : ""} ${
+                    !reveal && placed && selectedText === placed ? "ring-2 ring-primary" : ""
                   }`}
                 >
                   {placed ? (
@@ -258,6 +261,7 @@ const ReadingPart2Cohesion = ({
               );
             })}
           </div>
+
 
           {/* Divider with arrow */}
           <div className="hidden md:flex items-center">
