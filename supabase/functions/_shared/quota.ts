@@ -28,7 +28,22 @@ export async function enforceDailyQuota(
     });
     if (error) {
       console.error("[quota] rpc error:", error);
-      return null; // fail-open
+      // fail-CLOSED: don't let RPC errors bypass quota enforcement
+      return new Response(
+        JSON.stringify({
+          error: "Hệ thống đang bận, vui lòng thử lại sau ít phút.",
+          quotaError: true,
+          action,
+        }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": "60",
+          },
+        },
+      );
     }
     const ok = (data as any)?.ok !== false;
     if (!ok) {
@@ -52,6 +67,21 @@ export async function enforceDailyQuota(
     return null;
   } catch (e) {
     console.error("[quota] failed:", e);
-    return null;
+    // fail-CLOSED: network/exception path also blocks
+    return new Response(
+      JSON.stringify({
+        error: "Hệ thống đang bận, vui lòng thử lại sau ít phút.",
+        quotaError: true,
+        action,
+      }),
+      {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "Retry-After": "60",
+        },
+      },
+    );
   }
 }
