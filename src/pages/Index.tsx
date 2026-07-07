@@ -640,7 +640,9 @@ const Index = () => {
         </div>
       </section>
 
+      <LatestBlogSection />
       <Footer />
+
       <InstallAppCard />
     </div>
   );
