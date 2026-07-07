@@ -120,8 +120,10 @@ const App = () => (
                       <Route path="/progress" element={<ProgressPage />} />
                       <Route path="/pricing" element={<PricingPage />} />
                       <Route path="/connect" element={<Connect />} />
-                      <Route path="/blog" element={<Blog />} />
-                      <Route path="/blog/:slug" element={<BlogPost />} />
+                      <Route path="/meo-thi-aptis" element={<Blog />} />
+                      <Route path="/meo-thi-aptis/:slug" element={<BlogPost />} />
+                      <Route path="/blog" element={<Navigate to="/meo-thi-aptis" replace />} />
+                      <Route path="/blog/:slug" element={<BlogSlugRedirect />} />
                       
                       <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
                       <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
