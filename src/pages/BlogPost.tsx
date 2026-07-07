@@ -326,7 +326,25 @@ const BlogPostPage = () => {
           .order("published_at", { ascending: false })
           .limit(3)
           .then(({ data: rel }) => {
-            if (alive) setRelated(((rel as unknown) as BlogPost[]) ?? []);
+            if (!alive) return;
+            const list = ((rel as unknown) as BlogPost[]) ?? [];
+            if (list.length >= 3) {
+              setRelated(list);
+              return;
+            }
+            const excludeIds = [p.id, ...list.map((r) => r.id)];
+            supabase
+              .from("blog_posts" as any)
+              .select("*")
+              .eq("status", "published")
+              .not("id", "in", `(${excludeIds.join(",")})`)
+              .order("published_at", { ascending: false })
+              .limit(3 - list.length)
+              .then(({ data: extra }) => {
+                if (!alive) return;
+                const more = ((extra as unknown) as BlogPost[]) ?? [];
+                setRelated([...list, ...more]);
+              });
           });
       });
     return () => {
@@ -334,9 +352,14 @@ const BlogPostPage = () => {
     };
   }, [slug]);
 
-  const headings = useMemo(
-    () => extractHeadings(post?.content ?? null),
+  const normalizedContent = useMemo(
+    () => normalizeMarkdown(post?.content ?? ""),
     [post?.content],
+  );
+
+  const headings = useMemo(
+    () => extractHeadings(normalizedContent || null),
+    [normalizedContent],
   );
 
   useEffect(() => {
