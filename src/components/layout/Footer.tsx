@@ -56,6 +56,11 @@ const Footer = () => (
               </Link>
             </li>
             <li>
+              <Link to="/blog" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                Blog Aptis <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </li>
+            <li>
               <Link to="/connect" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
                 Kết nối AI Assistant <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
