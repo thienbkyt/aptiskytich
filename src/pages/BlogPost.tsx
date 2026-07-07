@@ -717,7 +717,7 @@ const BlogPostPage = () => {
           </article>
 
           {/* Desktop TOC */}
-          {headings.length > 1 && (
+          {hasToc && (
             <aside className="hidden lg:block">
               <div className="sticky top-24">
                 <div className="rounded-xl border border-border bg-card p-5">
