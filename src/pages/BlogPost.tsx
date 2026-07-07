@@ -155,7 +155,7 @@ const useSignedCover = (path: string | null) => {
 
 const CategoryBadge = ({ category }: { category: BlogCategory }) => (
   <Link
-    to="/blog"
+    to={BLOG_BASE}
     className="inline-flex items-center px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider hover:bg-[#CC1C01]/20 transition-colors"
   >
     {CATEGORY_LABELS[category]}
@@ -166,7 +166,7 @@ const RelatedCard = ({ post }: { post: BlogPost }) => {
   const cover = useSignedCover(post.cover_image_url);
   return (
     <Link
-      to={`/blog/${post.slug}`}
+      to={`${BLOG_BASE}/${post.slug}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-[#CC1C01]/40 hover:shadow-lg transition-all"
     >
       <div className="aspect-[16/9] overflow-hidden bg-muted">
@@ -260,7 +260,7 @@ const NotFoundView = () => (
       </p>
       <div className="mt-6 flex items-center justify-center gap-3">
         <Button asChild className="bg-[#CC1C01] hover:bg-[#4D0D0D] text-white gap-2">
-          <Link to="/blog">
+          <Link to={BLOG_BASE}>
             <ArrowLeft className="w-4 h-4" /> Về trang Blog
           </Link>
         </Button>
@@ -592,13 +592,13 @@ const BlogPostPage = () => {
             </li>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <li>
-              <Link to="/blog" className="hover:text-[#CC1C01]">
+              <Link to={BLOG_BASE} className="hover:text-[#CC1C01]">
                 Blog
               </Link>
             </li>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <li>
-              <Link to="/blog" className="hover:text-[#CC1C01]">
+              <Link to={BLOG_BASE} className="hover:text-[#CC1C01]">
                 {CATEGORY_LABELS[post.category]}
               </Link>
             </li>
@@ -759,7 +759,7 @@ const BlogPostPage = () => {
             </div>
             <div className="mt-8 text-center">
               <Button asChild variant="outline" className="gap-2">
-                <Link to="/blog">
+                <Link to={BLOG_BASE}>
                   <ArrowLeft className="w-4 h-4" /> Xem tất cả bài viết
                 </Link>
               </Button>
