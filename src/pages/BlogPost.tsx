@@ -31,6 +31,50 @@ import BlogCTA from "@/components/blog/BlogCTA";
 import { toast } from "@/hooks/use-toast";
 
 const SITE = "https://aptiskytich.vn";
+const BLOG_BASE = "/meo-thi-aptis";
+const BLOG_LABEL = "Mẹo thi Aptis";
+
+/**
+ * Normalize legacy markdown stored with single-newline paragraph breaks so
+ * ReactMarkdown treats each line as its own block. Also converts stray
+ * setext underlines (`----` under a multi-line prose block) into <hr>.
+ */
+const normalizeMarkdown = (md: string): string => {
+  if (!md) return "";
+  const rawLines = md.replace(/\r\n/g, "\n").split("\n");
+  // Pass 1: convert dash/equal-only lines (setext underlines) to real <hr>
+  const pass1: string[] = [];
+  let inFence1 = false;
+  for (const line of rawLines) {
+    if (/^```/.test(line.trim())) {
+      inFence1 = !inFence1;
+      pass1.push(line);
+      continue;
+    }
+    if (!inFence1 && /^\s*(-{3,}|={3,})\s*$/.test(line)) {
+      pass1.push("", "---", "");
+      continue;
+    }
+    pass1.push(line);
+  }
+  // Pass 2: insert blank line between adjacent prose lines
+  const isBlock = (s: string) =>
+    /^\s*(#{1,6}\s|>\s|[-*+]\s|\d+\.\s|\||```|---\s*$)/.test(s);
+  const out: string[] = [];
+  let inFence2 = false;
+  for (let i = 0; i < pass1.length; i++) {
+    const cur = pass1[i];
+    out.push(cur);
+    if (/^```/.test(cur.trim())) inFence2 = !inFence2;
+    if (inFence2) continue;
+    const next = pass1[i + 1];
+    if (next === undefined) continue;
+    if (cur.trim() === "" || next.trim() === "") continue;
+    if (isBlock(cur) || isBlock(next)) continue;
+    out.push("");
+  }
+  return out.join("\n");
+};
 
 const formatDate = (iso: string | null) => {
   const d = parseDateSafe(iso);
@@ -111,7 +155,7 @@ const useSignedCover = (path: string | null) => {
 
 const CategoryBadge = ({ category }: { category: BlogCategory }) => (
   <Link
-    to="/blog"
+    to={BLOG_BASE}
     className="inline-flex items-center px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider hover:bg-[#CC1C01]/20 transition-colors"
   >
     {CATEGORY_LABELS[category]}
@@ -122,7 +166,7 @@ const RelatedCard = ({ post }: { post: BlogPost }) => {
   const cover = useSignedCover(post.cover_image_url);
   return (
     <Link
-      to={`/blog/${post.slug}`}
+      to={`${BLOG_BASE}/${post.slug}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-[#CC1C01]/40 hover:shadow-lg transition-all"
     >
       <div className="aspect-[16/9] overflow-hidden bg-muted">
@@ -216,7 +260,7 @@ const NotFoundView = () => (
       </p>
       <div className="mt-6 flex items-center justify-center gap-3">
         <Button asChild className="bg-[#CC1C01] hover:bg-[#4D0D0D] text-white gap-2">
-          <Link to="/blog">
+          <Link to={BLOG_BASE}>
             <ArrowLeft className="w-4 h-4" /> Về trang Blog
           </Link>
         </Button>
@@ -282,7 +326,25 @@ const BlogPostPage = () => {
           .order("published_at", { ascending: false })
           .limit(3)
           .then(({ data: rel }) => {
-            if (alive) setRelated(((rel as unknown) as BlogPost[]) ?? []);
+            if (!alive) return;
+            const list = ((rel as unknown) as BlogPost[]) ?? [];
+            if (list.length >= 3) {
+              setRelated(list);
+              return;
+            }
+            const excludeIds = [p.id, ...list.map((r) => r.id)];
+            supabase
+              .from("blog_posts" as any)
+              .select("*")
+              .eq("status", "published")
+              .not("id", "in", `(${excludeIds.join(",")})`)
+              .order("published_at", { ascending: false })
+              .limit(3 - list.length)
+              .then(({ data: extra }) => {
+                if (!alive) return;
+                const more = ((extra as unknown) as BlogPost[]) ?? [];
+                setRelated([...list, ...more]);
+              });
           });
       });
     return () => {
@@ -290,9 +352,14 @@ const BlogPostPage = () => {
     };
   }, [slug]);
 
-  const headings = useMemo(
-    () => extractHeadings(post?.content ?? null),
+  const normalizedContent = useMemo(
+    () => normalizeMarkdown(post?.content ?? ""),
     [post?.content],
+  );
+
+  const headings = useMemo(
+    () => extractHeadings(normalizedContent || null),
+    [normalizedContent],
   );
 
   useEffect(() => {
@@ -320,8 +387,8 @@ const BlogPostPage = () => {
     .filter(Boolean)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-  const earlyTitle = slugTitle ? `${slugTitle} | Aptis Kỳ Tích` : "Blog | Aptis Kỳ Tích";
-  const earlyUrl = `${SITE}/blog/${slug ?? ""}`;
+  const earlyTitle = slugTitle ? `${slugTitle} | Aptis Kỳ Tích` : `${BLOG_LABEL} | Aptis Kỳ Tích`;
+  const earlyUrl = `${SITE}${BLOG_BASE}/${slug ?? ""}`;
 
   if (post === undefined) {
     return (
@@ -346,27 +413,27 @@ const BlogPostPage = () => {
 
   if (post === null) return <NotFoundView />;
 
-  const url = `${SITE}/blog/${post.slug}`;
+  const url = `${SITE}${BLOG_BASE}/${post.slug}`;
   const seoTitle = post.seo_title || `${post.title} | Aptis Kỳ Tích`;
   const seoDescription = post.seo_description || post.excerpt || post.title;
   const publishedIso = post.published_at ?? post.created_at;
-  const contentBody = post.content ?? "";
+  const contentBody = normalizedContent;
   const midIndex = Math.floor(contentBody.length / 2);
   const splitAt = contentBody.indexOf("\n\n", midIndex);
   const firstHalf =
     splitAt > 0 ? contentBody.slice(0, splitAt) : contentBody;
   const secondHalf = splitAt > 0 ? contentBody.slice(splitAt) : "";
+  const hasToc = headings.length >= 2;
 
   // Assign IDs to H2s in order — use a mutable counter closure
   let h2Counter = 0;
   const headingIds = headings.map((h) => h.id);
+  const h2Class =
+    "scroll-mt-28 mt-10 mb-4 text-[24px] leading-snug font-heading font-bold text-foreground";
   const H2 = (props: any) => {
     const id = headingIds[h2Counter++] ?? undefined;
     return (
-      <h2
-        id={id}
-        className="scroll-mt-28 mt-10 mb-4 text-2xl md:text-3xl font-heading font-extrabold text-[#4D0D0D] dark:text-foreground"
-      >
+      <h2 id={id} className={h2Class}>
         {props.children}
       </h2>
     );
@@ -400,44 +467,43 @@ const BlogPostPage = () => {
   };
 
   const markdownComponents: any = {
-    h1: (p: any) => (
-      <h2 className="scroll-mt-28 mt-10 mb-4 text-2xl md:text-3xl font-heading font-extrabold text-[#4D0D0D] dark:text-foreground">
-        {p.children}
-      </h2>
-    ),
+    h1: (p: any) => <h2 className={h2Class}>{p.children}</h2>,
     h2: H2,
     h3: (p: any) => (
-      <h3 className="mt-8 mb-3 text-xl md:text-2xl font-heading font-bold text-foreground">
+      <h3 className="mt-8 mb-3 text-[20px] font-heading font-semibold text-foreground">
         {p.children}
       </h3>
     ),
     h4: (p: any) => (
-      <h4 className="mt-6 mb-2 text-lg font-heading font-bold text-foreground">
+      <h4 className="mt-6 mb-2 text-lg font-heading font-semibold text-foreground">
         {p.children}
       </h4>
     ),
     p: (p: any) => (
-      <p className="my-5 text-[17px] leading-[1.8] text-foreground/90">
+      <p className="mb-4 text-[17px] leading-[1.8] font-normal text-foreground">
         {p.children}
       </p>
+    ),
+    strong: (p: any) => (
+      <strong className="font-semibold text-[#CC1C01]">{p.children}</strong>
     ),
     a: (p: any) => (
       <a
         href={p.href}
         target={p.href?.startsWith("http") ? "_blank" : undefined}
         rel={p.href?.startsWith("http") ? "noopener noreferrer" : undefined}
-        className="text-[#CC1C01] font-semibold underline underline-offset-2 hover:text-[#4D0D0D]"
+        className="text-[#CC1C01] font-medium no-underline hover:underline underline-offset-2"
       >
         {p.children}
       </a>
     ),
     ul: (p: any) => (
-      <ul className="my-5 pl-6 list-disc space-y-2 text-[17px] leading-[1.8] text-foreground/90 marker:text-[#CC1C01]">
+      <ul className="mb-4 pl-6 list-disc space-y-2 text-[17px] leading-[1.8] font-normal text-foreground marker:text-muted-foreground">
         {p.children}
       </ul>
     ),
     ol: (p: any) => (
-      <ol className="my-5 pl-6 list-decimal space-y-2 text-[17px] leading-[1.8] text-foreground/90 marker:text-[#CC1C01] marker:font-bold">
+      <ol className="mb-4 pl-6 list-decimal space-y-2 text-[17px] leading-[1.8] font-normal text-foreground marker:text-muted-foreground">
         {p.children}
       </ol>
     ),
@@ -526,13 +592,13 @@ const BlogPostPage = () => {
             </li>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <li>
-              <Link to="/blog" className="hover:text-[#CC1C01]">
-                Blog
+              <Link to={BLOG_BASE} className="hover:text-[#CC1C01]">
+                {BLOG_LABEL}
               </Link>
             </li>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <li>
-              <Link to="/blog" className="hover:text-[#CC1C01]">
+              <Link to={BLOG_BASE} className="hover:text-[#CC1C01]">
                 {CATEGORY_LABELS[post.category]}
               </Link>
             </li>
@@ -582,10 +648,16 @@ const BlogPostPage = () => {
         )}
 
         {/* Body + TOC */}
-        <div className="max-w-[1100px] mx-auto px-4 mt-10 grid lg:grid-cols-[1fr_260px] gap-10">
-          <article className="min-w-0">
+        <div
+          className={
+            hasToc
+              ? "max-w-[1100px] mx-auto px-4 mt-10 grid lg:grid-cols-[minmax(0,1fr)_240px] gap-10"
+              : "max-w-[720px] mx-auto px-4 mt-10"
+          }
+        >
+          <article className="min-w-0 mx-auto w-full max-w-[720px]">
             {/* Mobile TOC */}
-            {headings.length > 1 && (
+            {hasToc && (
               <details className="lg:hidden mb-6 rounded-xl border border-border bg-card p-4">
                 <summary className="cursor-pointer font-semibold text-foreground inline-flex items-center gap-2">
                   <List className="w-4 h-4 text-[#CC1C01]" /> Mục lục ({headings.length})
@@ -645,7 +717,7 @@ const BlogPostPage = () => {
           </article>
 
           {/* Desktop TOC */}
-          {headings.length > 1 && (
+          {hasToc && (
             <aside className="hidden lg:block">
               <div className="sticky top-24">
                 <div className="rounded-xl border border-border bg-card p-5">
@@ -693,7 +765,7 @@ const BlogPostPage = () => {
             </div>
             <div className="mt-8 text-center">
               <Button asChild variant="outline" className="gap-2">
-                <Link to="/blog">
+                <Link to={BLOG_BASE}>
                   <ArrowLeft className="w-4 h-4" /> Xem tất cả bài viết
                 </Link>
               </Button>

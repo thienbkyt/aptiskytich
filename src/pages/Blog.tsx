@@ -70,7 +70,7 @@ const CategoryBadge = ({ category }: { category: BlogCategory }) => (
 
 const FeaturedCard = ({ post }: { post: BlogPost }) => (
   <Link
-    to={`/blog/${post.slug}`}
+    to={`/meo-thi-aptis/${post.slug}`}
     className="group grid md:grid-cols-2 gap-0 overflow-hidden rounded-2xl border border-[#CC1C01]/15 bg-card shadow-sm hover:shadow-xl hover:border-[#CC1C01]/40 transition-all"
   >
     <div className="relative aspect-[16/10] md:aspect-auto md:h-full overflow-hidden">
@@ -113,7 +113,7 @@ const FeaturedCard = ({ post }: { post: BlogPost }) => (
 
 const PostCard = ({ post }: { post: BlogPost }) => (
   <Link
-    to={`/blog/${post.slug}`}
+    to={`/meo-thi-aptis/${post.slug}`}
     className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-[#CC1C01]/40 hover:shadow-lg transition-all"
   >
     <div className="aspect-[16/9] overflow-hidden">

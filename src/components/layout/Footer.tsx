@@ -56,8 +56,8 @@ const Footer = () => (
               </Link>
             </li>
             <li>
-              <Link to="/blog" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
-                Blog Aptis <ArrowUpRight className="w-3.5 h-3.5" />
+              <Link to="/meo-thi-aptis" className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                Mẹo thi Aptis <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </li>
             <li>

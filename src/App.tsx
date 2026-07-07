@@ -1,6 +1,6 @@
 import { lazy, Suspense, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { FEATURES } from "@/config/features";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -82,6 +82,11 @@ const DeviceSessionGuard = () => {
   return null;
 };
 
+const BlogSlugRedirect = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/meo-thi-aptis/${slug ?? ""}`} replace />;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -120,8 +125,10 @@ const App = () => (
                       <Route path="/progress" element={<ProgressPage />} />
                       <Route path="/pricing" element={<PricingPage />} />
                       <Route path="/connect" element={<Connect />} />
-                      <Route path="/blog" element={<Blog />} />
-                      <Route path="/blog/:slug" element={<BlogPost />} />
+                      <Route path="/meo-thi-aptis" element={<Blog />} />
+                      <Route path="/meo-thi-aptis/:slug" element={<BlogPost />} />
+                      <Route path="/blog" element={<Navigate to="/meo-thi-aptis" replace />} />
+                      <Route path="/blog/:slug" element={<BlogSlugRedirect />} />
                       
                       <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
                       <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
