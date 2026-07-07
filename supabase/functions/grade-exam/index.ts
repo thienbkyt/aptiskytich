@@ -415,13 +415,20 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
             upgradeTips: it?.upgradeTips ?? "",
           }))
         : [];
-      // Hard-enforce: items without audio MUST be empty (don't trust model).
-      if (!isPart4) {
+      // Hard-enforce exact itemCount (= number of questions / sub-questions), in order.
+      if (isPart4) {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
-          return perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          return { ...src, questionText: questions[i] ?? "" };
+        });
+      } else {
+        perItemOut = Array.from({ length: itemCount }, (_, i) => {
+          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", questionText: questions[i] ?? "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          return { ...src, questionText: questions[i] ?? "" };
         });
       }
+
 
       const ca = parsed.criteriaAnalysis || {};
       return new Response(JSON.stringify({
