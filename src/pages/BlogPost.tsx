@@ -233,7 +233,7 @@ const ShareBar = ({ url, title }: { url: string; title: string }) => {
         aria-label="Chia sẻ lên Zalo"
         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#0068FF] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
       >
-        <span className="text-xs font-black">Z</span> Zalo
+        Zalo
       </button>
       <button
         onClick={copy}
