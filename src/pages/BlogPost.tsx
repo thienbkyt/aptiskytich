@@ -387,8 +387,8 @@ const BlogPostPage = () => {
     .filter(Boolean)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-  const earlyTitle = slugTitle ? `${slugTitle} | Aptis Kỳ Tích` : "Blog | Aptis Kỳ Tích";
-  const earlyUrl = `${SITE}/blog/${slug ?? ""}`;
+  const earlyTitle = slugTitle ? `${slugTitle} | Aptis Kỳ Tích` : `${BLOG_LABEL} | Aptis Kỳ Tích`;
+  const earlyUrl = `${SITE}${BLOG_BASE}/${slug ?? ""}`;
 
   if (post === undefined) {
     return (
@@ -413,16 +413,17 @@ const BlogPostPage = () => {
 
   if (post === null) return <NotFoundView />;
 
-  const url = `${SITE}/blog/${post.slug}`;
+  const url = `${SITE}${BLOG_BASE}/${post.slug}`;
   const seoTitle = post.seo_title || `${post.title} | Aptis Kỳ Tích`;
   const seoDescription = post.seo_description || post.excerpt || post.title;
   const publishedIso = post.published_at ?? post.created_at;
-  const contentBody = post.content ?? "";
+  const contentBody = normalizedContent;
   const midIndex = Math.floor(contentBody.length / 2);
   const splitAt = contentBody.indexOf("\n\n", midIndex);
   const firstHalf =
     splitAt > 0 ? contentBody.slice(0, splitAt) : contentBody;
   const secondHalf = splitAt > 0 ? contentBody.slice(splitAt) : "";
+  const hasToc = headings.length >= 2;
 
   // Assign IDs to H2s in order — use a mutable counter closure
   let h2Counter = 0;
