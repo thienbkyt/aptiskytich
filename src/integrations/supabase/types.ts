@@ -97,6 +97,60 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author_id: string | null
+          category: Database["public"]["Enums"]["blog_category"]
+          content: string | null
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          published_at: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: Database["public"]["Enums"]["blog_status"]
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["blog_category"]
+          content?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["blog_status"]
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["blog_category"]
+          content?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["blog_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cost_records: {
         Row: {
           amount: number
@@ -1838,11 +1892,18 @@ export type Database = {
         Args: { p_device_id: string; p_label: string; p_type: string }
         Returns: undefined
       }
+      slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
       user_tier: { Args: { p_uid: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
+      blog_category:
+        | "meo-lam-bai"
+        | "cau-truc-de-thi"
+        | "kinh-nghiem"
+        | "thong-bao"
+      blog_status: "draft" | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1971,6 +2032,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      blog_category: [
+        "meo-lam-bai",
+        "cau-truc-de-thi",
+        "kinh-nghiem",
+        "thong-bao",
+      ],
+      blog_status: ["draft", "published"],
     },
   },
 } as const
