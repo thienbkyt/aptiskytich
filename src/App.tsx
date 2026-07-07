@@ -58,6 +58,7 @@ const ProgressPage = lazy(() => import("./pages/Progress"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 
 const queryClient = new QueryClient({
@@ -120,6 +121,7 @@ const App = () => (
                       <Route path="/pricing" element={<PricingPage />} />
                       <Route path="/connect" element={<Connect />} />
                       <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:slug" element={<BlogPost />} />
                       
                       <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
                       <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
