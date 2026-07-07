@@ -593,7 +593,7 @@ const BlogPostPage = () => {
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <li>
               <Link to={BLOG_BASE} className="hover:text-[#CC1C01]">
-                Blog
+                {BLOG_LABEL}
               </Link>
             </li>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
