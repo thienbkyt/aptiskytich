@@ -428,13 +428,12 @@ const BlogPostPage = () => {
   // Assign IDs to H2s in order — use a mutable counter closure
   let h2Counter = 0;
   const headingIds = headings.map((h) => h.id);
+  const h2Class =
+    "scroll-mt-28 mt-10 mb-4 text-[24px] leading-snug font-heading font-bold text-foreground";
   const H2 = (props: any) => {
     const id = headingIds[h2Counter++] ?? undefined;
     return (
-      <h2
-        id={id}
-        className="scroll-mt-28 mt-10 mb-4 text-2xl md:text-3xl font-heading font-extrabold text-[#4D0D0D] dark:text-foreground"
-      >
+      <h2 id={id} className={h2Class}>
         {props.children}
       </h2>
     );
