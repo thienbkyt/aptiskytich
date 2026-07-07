@@ -31,6 +31,50 @@ import BlogCTA from "@/components/blog/BlogCTA";
 import { toast } from "@/hooks/use-toast";
 
 const SITE = "https://aptiskytich.vn";
+const BLOG_BASE = "/meo-thi-aptis";
+const BLOG_LABEL = "Mẹo thi Aptis";
+
+/**
+ * Normalize legacy markdown stored with single-newline paragraph breaks so
+ * ReactMarkdown treats each line as its own block. Also converts stray
+ * setext underlines (`----` under a multi-line prose block) into <hr>.
+ */
+const normalizeMarkdown = (md: string): string => {
+  if (!md) return "";
+  const rawLines = md.replace(/\r\n/g, "\n").split("\n");
+  // Pass 1: convert dash/equal-only lines (setext underlines) to real <hr>
+  const pass1: string[] = [];
+  let inFence1 = false;
+  for (const line of rawLines) {
+    if (/^```/.test(line.trim())) {
+      inFence1 = !inFence1;
+      pass1.push(line);
+      continue;
+    }
+    if (!inFence1 && /^\s*(-{3,}|={3,})\s*$/.test(line)) {
+      pass1.push("", "---", "");
+      continue;
+    }
+    pass1.push(line);
+  }
+  // Pass 2: insert blank line between adjacent prose lines
+  const isBlock = (s: string) =>
+    /^\s*(#{1,6}\s|>\s|[-*+]\s|\d+\.\s|\||```|---\s*$)/.test(s);
+  const out: string[] = [];
+  let inFence2 = false;
+  for (let i = 0; i < pass1.length; i++) {
+    const cur = pass1[i];
+    out.push(cur);
+    if (/^```/.test(cur.trim())) inFence2 = !inFence2;
+    if (inFence2) continue;
+    const next = pass1[i + 1];
+    if (next === undefined) continue;
+    if (cur.trim() === "" || next.trim() === "") continue;
+    if (isBlock(cur) || isBlock(next)) continue;
+    out.push("");
+  }
+  return out.join("\n");
+};
 
 const formatDate = (iso: string | null) => {
   const d = parseDateSafe(iso);
