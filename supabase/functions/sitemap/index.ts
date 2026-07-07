@@ -1,5 +1,5 @@
 // Public sitemap generator. No auth required.
-// Returns an XML sitemap listing the homepage, /blog, and every published blog post.
+// Returns an XML sitemap listing the homepage, /meo-thi-aptis, and every published blog post.
 // Run this function and paste the response body into public/sitemap.xml whenever
 // posts are added/removed so https://aptiskytich.vn/sitemap.xml stays fresh.
 
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     const urls: { loc: string; lastmod: string; priority: string; changefreq: string }[] = [
       { loc: `${SITE}/`, lastmod: now, priority: "1.0", changefreq: "weekly" },
-      { loc: `${SITE}/blog`, lastmod: now, priority: "0.9", changefreq: "daily" },
+      { loc: `${SITE}/meo-thi-aptis`, lastmod: now, priority: "0.9", changefreq: "daily" },
       { loc: `${SITE}/thi-thu`, lastmod: now, priority: "0.9", changefreq: "weekly" },
       { loc: `${SITE}/key-du-doan`, lastmod: now, priority: "0.8", changefreq: "weekly" },
       { loc: `${SITE}/vocabulary`, lastmod: now, priority: "0.7", changefreq: "weekly" },
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
 
     for (const p of posts ?? []) {
       urls.push({
-        loc: `${SITE}/blog/${p.slug}`,
+        loc: `${SITE}/meo-thi-aptis/${p.slug}`,
         lastmod: toW3C(p.updated_at ?? p.published_at),
         priority: "0.8",
         changefreq: "monthly",
