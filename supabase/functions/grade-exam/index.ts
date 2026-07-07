@@ -252,7 +252,7 @@ HOW TO APPLY:
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
 OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? "one entry per SUB-QUESTION. transcript = the segment of the monologue addressing THIS sub-question (or the whole monologue if inseparable). improvedVersion = upgraded English rewrite of THAT segment; for Part 4 you may put the full upgraded monologue in the FIRST item's improvedVersion and leave the rest empty. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis (cấu trúc phức tạp gợi ý, từ nối, paraphrase, ví dụ minh hoạ, đa dạng từ vựng)." : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
+- perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = upgraded English rewrite of THAT segment (you may put the full upgraded monologue in the FIRST item and leave the rest empty); upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
 - analysis: Vietnamese, 4-6 câu — phân tích tổng quan TRƯỚC khi cho band.
 - criteriaAnalysis: object với 5 trường tiếng Việt { tf, gra, vra, pro, fc }. MỖI tiêu chí 2-3 câu: VÌ SAO được band đó + cách CẢI THIỆN CỤ THỂ.
   • vra (Từ vựng): gợi ý từ TỰ NHIÊN, CHÍNH XÁC trong ngữ cảnh (không phải từ hiếm/kêu); tập trung sửa dùng sai + lặp từ (vd: "do a mistake → make a mistake", thay từ lặp bằng paraphrase tự nhiên).
@@ -415,13 +415,20 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
             upgradeTips: it?.upgradeTips ?? "",
           }))
         : [];
-      // Hard-enforce: items without audio MUST be empty (don't trust model).
-      if (!isPart4) {
+      // Hard-enforce exact itemCount (= number of questions / sub-questions), in order.
+      if (isPart4) {
         perItemOut = Array.from({ length: itemCount }, (_, i) => {
-          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
-          return perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          return { ...src, questionText: questions[i] ?? "" };
+        });
+      } else {
+        perItemOut = Array.from({ length: itemCount }, (_, i) => {
+          if (!spokenMask[i]) return { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "", questionText: questions[i] ?? "" };
+          const src = perItemOut[i] ?? { transcript: "", onTopic: false, improvedVersion: "", upgradeTips: "" };
+          return { ...src, questionText: questions[i] ?? "" };
         });
       }
+
 
       const ca = parsed.criteriaAnalysis || {};
       return new Response(JSON.stringify({
