@@ -82,6 +82,11 @@ const DeviceSessionGuard = () => {
   return null;
 };
 
+const BlogSlugRedirect = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/meo-thi-aptis/${slug ?? ""}`} replace />;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
