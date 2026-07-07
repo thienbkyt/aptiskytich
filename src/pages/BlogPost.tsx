@@ -313,9 +313,30 @@ const BlogPostPage = () => {
     return () => obs.disconnect();
   }, [headings, post?.id]);
 
+  // Derive a readable fallback title from the slug so crawlers and the
+  // initial paint have meaningful metadata before the post loads.
+  const slugTitle = (slug ?? "")
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+  const earlyTitle = slugTitle ? `${slugTitle} | Aptis Kỳ Tích` : "Blog | Aptis Kỳ Tích";
+  const earlyUrl = `${SITE}/blog/${slug ?? ""}`;
+
   if (post === undefined) {
     return (
       <div className="min-h-screen bg-[#FFF8F5] dark:bg-background">
+        <Helmet>
+          <title>{earlyTitle}</title>
+          <meta
+            name="description"
+            content="Bài viết luyện thi Aptis từ Aptis Kỳ Tích — mẹo làm bài, cấu trúc đề thi và kinh nghiệm đạt B1–C1."
+          />
+          <link rel="canonical" href={earlyUrl} />
+          <meta property="og:title" content={earlyTitle} />
+          <meta property="og:url" content={earlyUrl} />
+          <meta property="og:type" content="article" />
+        </Helmet>
         <Navbar />
         <PostSkeleton />
         <Footer />
