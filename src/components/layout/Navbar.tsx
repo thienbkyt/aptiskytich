@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
-  BookText, GraduationCap, Book, Headphones, Mic, PenLine,
+  BookText, GraduationCap, Book, Headphones, Mic, PenLine, Newspaper,
   BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, Sparkles, type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
@@ -20,6 +20,7 @@ import { FEATURES } from "@/config/features";
 /* ── Nav data ── */
 const allTopLinks: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap },
+  { label: "Blog", path: "/blog", icon: Newspaper },
 ];
 const topLinks = allTopLinks.filter((l) => l.path !== "/course" || FEATURES.course);
 
