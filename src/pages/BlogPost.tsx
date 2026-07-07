@@ -648,10 +648,16 @@ const BlogPostPage = () => {
         )}
 
         {/* Body + TOC */}
-        <div className="max-w-[1100px] mx-auto px-4 mt-10 grid lg:grid-cols-[1fr_260px] gap-10">
-          <article className="min-w-0">
+        <div
+          className={
+            hasToc
+              ? "max-w-[1100px] mx-auto px-4 mt-10 grid lg:grid-cols-[minmax(0,1fr)_240px] gap-10"
+              : "max-w-[720px] mx-auto px-4 mt-10"
+          }
+        >
+          <article className="min-w-0 mx-auto w-full max-w-[720px]">
             {/* Mobile TOC */}
-            {headings.length > 1 && (
+            {hasToc && (
               <details className="lg:hidden mb-6 rounded-xl border border-border bg-card p-4">
                 <summary className="cursor-pointer font-semibold text-foreground inline-flex items-center gap-2">
                   <List className="w-4 h-4 text-[#CC1C01]" /> Mục lục ({headings.length})
