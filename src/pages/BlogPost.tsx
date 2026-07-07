@@ -467,44 +467,43 @@ const BlogPostPage = () => {
   };
 
   const markdownComponents: any = {
-    h1: (p: any) => (
-      <h2 className="scroll-mt-28 mt-10 mb-4 text-2xl md:text-3xl font-heading font-extrabold text-[#4D0D0D] dark:text-foreground">
-        {p.children}
-      </h2>
-    ),
+    h1: (p: any) => <h2 className={h2Class}>{p.children}</h2>,
     h2: H2,
     h3: (p: any) => (
-      <h3 className="mt-8 mb-3 text-xl md:text-2xl font-heading font-bold text-foreground">
+      <h3 className="mt-8 mb-3 text-[20px] font-heading font-semibold text-foreground">
         {p.children}
       </h3>
     ),
     h4: (p: any) => (
-      <h4 className="mt-6 mb-2 text-lg font-heading font-bold text-foreground">
+      <h4 className="mt-6 mb-2 text-lg font-heading font-semibold text-foreground">
         {p.children}
       </h4>
     ),
     p: (p: any) => (
-      <p className="my-5 text-[17px] leading-[1.8] text-foreground/90">
+      <p className="mb-4 text-[17px] leading-[1.8] font-normal text-foreground">
         {p.children}
       </p>
+    ),
+    strong: (p: any) => (
+      <strong className="font-semibold text-[#CC1C01]">{p.children}</strong>
     ),
     a: (p: any) => (
       <a
         href={p.href}
         target={p.href?.startsWith("http") ? "_blank" : undefined}
         rel={p.href?.startsWith("http") ? "noopener noreferrer" : undefined}
-        className="text-[#CC1C01] font-semibold underline underline-offset-2 hover:text-[#4D0D0D]"
+        className="text-[#CC1C01] font-medium no-underline hover:underline underline-offset-2"
       >
         {p.children}
       </a>
     ),
     ul: (p: any) => (
-      <ul className="my-5 pl-6 list-disc space-y-2 text-[17px] leading-[1.8] text-foreground/90 marker:text-[#CC1C01]">
+      <ul className="mb-4 pl-6 list-disc space-y-2 text-[17px] leading-[1.8] font-normal text-foreground marker:text-muted-foreground">
         {p.children}
       </ul>
     ),
     ol: (p: any) => (
-      <ol className="my-5 pl-6 list-decimal space-y-2 text-[17px] leading-[1.8] text-foreground/90 marker:text-[#CC1C01] marker:font-bold">
+      <ol className="mb-4 pl-6 list-decimal space-y-2 text-[17px] leading-[1.8] font-normal text-foreground marker:text-muted-foreground">
         {p.children}
       </ol>
     ),
