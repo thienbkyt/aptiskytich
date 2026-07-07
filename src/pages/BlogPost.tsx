@@ -698,8 +698,8 @@ const BlogPostPage = () => {
 
               <div className="mt-8">
                 <BlogCTA
-                  title="Tham gia nhóm học tập & review đề thi Aptis trên Facebook"
-                  buttonLabel="Tham gia nhóm ngay →"
+                  title={"Tham gia nhóm học tập\u00a0& Review đề thi"}
+                  buttonLabel="Tham gia nhóm"
                   href="https://www.facebook.com/groups/1551779633112657"
                 />
               </div>
