@@ -679,16 +679,9 @@ const BlogPostPage = () => {
 
             <div className="mx-auto max-w-[720px]">
               <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {firstHalf}
+                {contentBody}
               </ReactMarkdown>
 
-              {secondHalf && <BlogCTA />}
-
-              {secondHalf && (
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                  {secondHalf}
-                </ReactMarkdown>
-              )}
 
               {(post.tags?.length ?? 0) > 0 && (
                 <div className="mt-10 flex flex-wrap gap-2">
