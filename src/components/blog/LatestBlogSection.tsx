@@ -47,7 +47,7 @@ const LatestPostCard = ({ post }: { post: BlogPost }) => {
   const cover = useSignedCover(post.cover_image_url);
   return (
     <Link
-      to={`/blog/${post.slug}`}
+      to={`/meo-thi-aptis/${post.slug}`}
       className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card hover:border-[#CC1C01]/40 hover:shadow-lg transition-all"
     >
       <div className="aspect-[16/9] overflow-hidden bg-muted">
@@ -121,7 +121,7 @@ const LatestBlogSection = () => {
             </p>
           </div>
           <Link
-            to="/blog"
+            to="/meo-thi-aptis"
             className="inline-flex items-center gap-2 text-[#CC1C01] font-semibold hover:text-[#4D0D0D] transition-colors"
           >
             Xem tất cả bài viết
