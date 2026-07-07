@@ -58,6 +58,7 @@ const ProgressPage = lazy(() => import("./pages/Progress"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 
 const queryClient = new QueryClient({
