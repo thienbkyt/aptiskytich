@@ -20,7 +20,7 @@ import { FEATURES } from "@/config/features";
 /* ── Nav data ── */
 const allTopLinks: { label: string; path: string; icon: LucideIcon }[] = [
   { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap },
-  { label: "Mẹo thi Aptis", path: "/meo-thi-aptis", icon: Newspaper },
+  { label: "Blog - Mẹo ôn Aptis", path: "/meo-thi-aptis", icon: Newspaper },
 ];
 const topLinks = allTopLinks.filter((l) => l.path !== "/course" || FEATURES.course);
 
