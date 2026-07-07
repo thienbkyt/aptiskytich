@@ -11,3 +11,5 @@ project_id = "bacoamhbatqpxatrrflz"
     verify_jwt = true
   [functions.payos-webhook]
     verify_jwt = false
+  [functions.sitemap]
+    verify_jwt = false
