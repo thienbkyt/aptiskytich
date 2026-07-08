@@ -146,6 +146,7 @@ const App = () => (
                 <AICoachFab />
                 <ReportFab />
                 <VisitLogger />
+                <PostLoginFBGroupModal />
                 <DeviceSessionGuard />
               </LoginGateProvider>
             </AuthProvider>
