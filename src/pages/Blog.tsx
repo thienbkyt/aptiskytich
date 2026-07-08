@@ -28,27 +28,14 @@ const readingTime = (content: string | null) => {
 const useSignedCover = (path: string | null) => {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
-    let alive = true;
-    if (!path) {
-      setUrl(null);
-      return;
-    }
-    if (path.startsWith("http")) {
-      setUrl(path);
-      return;
-    }
-    supabase.storage
-      .from("blog-images")
-      .createSignedUrl(path, 3600)
-      .then(({ data }) => {
-        if (alive) setUrl(data?.signedUrl ?? null);
-      });
-    return () => {
-      alive = false;
-    };
+    if (!path) { setUrl(null); return; }
+    if (path.startsWith("http")) { setUrl(path); return; }
+    const { data } = supabase.storage.from("blog-images").getPublicUrl(path);
+    setUrl(data?.publicUrl ?? null);
   }, [path]);
   return url;
 };
+
 
 const CoverImage = ({ path, alt, className }: { path: string | null; alt: string; className?: string }) => {
   const url = useSignedCover(path);
