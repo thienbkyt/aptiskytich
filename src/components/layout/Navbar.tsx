@@ -227,12 +227,12 @@ const Navbar = () => {
           <ThemeToggle />
           {isAdmin && (
             <div
-              className="relative"
+              className="relative inline-flex"
               onMouseEnter={handleAdminEnter}
               onMouseLeave={handleAdminLeave}
             >
               <button
-                className={`flex items-center gap-1 px-3.5 py-2 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
+                className={`inline-flex items-center gap-1 h-8 px-3 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
                   isAdminActive
                     ? "text-primary"
                     : "text-secondary-foreground"
@@ -242,6 +242,7 @@ const Navbar = () => {
                 Admin
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${adminHover ? "rotate-180" : ""}`} />
               </button>
+
 
               <AnimatePresence>
                 {adminHover && (
