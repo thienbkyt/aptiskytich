@@ -237,6 +237,15 @@ const BlogIndex = () => {
         </div>
       </section>
 
+      {/* CTA nhóm Facebook */}
+      <section className="max-w-[1200px] mx-auto px-4">
+        <BlogCTA
+          title="Tham gia nhóm học tập\u00a0& Review đề"
+          buttonLabel="Tham gia nhóm"
+          href="https://www.facebook.com/groups/1551779633112657"
+        />
+      </section>
+
       {/* Category filter */}
       <section className="bg-[#FFF8F5] dark:bg-background border-y border-[#CC1C01]/10">
         <div className="max-w-[1200px] mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-none">
