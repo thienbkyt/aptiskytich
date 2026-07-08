@@ -30,7 +30,6 @@ export const CATEGORY_OPTIONS: BlogCategory[] = [
   "meo-lam-bai",
   "cau-truc-de-thi",
   "kinh-nghiem",
-  "thong-bao",
 ];
 
 export function slugifyVi(input: string): string {
