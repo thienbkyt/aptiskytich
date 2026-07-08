@@ -225,7 +225,7 @@ const BlogIndex = () => {
             Blog Aptis Kỳ Tích
           </span>
           <h1 className="mt-4 text-4xl md:text-6xl font-heading font-extrabold tracking-tight text-[#4D0D0D] dark:text-foreground">
-            Blog luyện thi{" "}
+            Blog - Mẹo ôn{" "}
             <span className="bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] bg-clip-text text-transparent">
               Aptis
             </span>
