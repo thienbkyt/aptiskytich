@@ -156,7 +156,7 @@ const Navbar = () => {
           <Link
             to="/key-du-doan"
             {...prefetchHandlers("/key-du-doan")}
-            className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+            className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
               isActive("/key-du-doan")
                 ? "text-primary"
                 : "text-secondary-foreground hover:text-primary"
@@ -178,7 +178,7 @@ const Navbar = () => {
           <Link
             to="/vocabulary"
             {...prefetchHandlers("/vocabulary")}
-            className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+            className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
               isActive("/vocabulary")
                 ? "text-primary"
                 : "text-secondary-foreground hover:text-primary"
@@ -202,7 +202,7 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               {...prefetchHandlers(link.path)}
-              className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+              className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
                 isActive(link.path)
                   ? "text-primary"
                   : "text-secondary-foreground hover:text-primary"
