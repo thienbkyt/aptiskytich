@@ -175,27 +175,6 @@ const Navbar = () => {
             <span className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-0 rounded-full bg-primary/50 transition-all duration-300 group-hover:w-[calc(100%-1.5rem)]" />
           </Link>
 
-          {/* 3. Học từ vựng */}
-          <Link
-            to="/vocabulary"
-            {...prefetchHandlers("/vocabulary")}
-            className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
-              isActive("/vocabulary")
-                ? "text-primary"
-                : "text-secondary-foreground hover:text-primary"
-            }`}
-          >
-            <BookText className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
-            Học từ vựng
-            {isActive("/vocabulary") && (
-              <motion.div
-                layoutId="nav-active"
-                className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-primary"
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
-              />
-            )}
-            <span className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-0 rounded-full bg-primary/50 transition-all duration-300 group-hover:w-[calc(100%-1.5rem)]" />
-          </Link>
 
           {/* 4. Khóa học Aptis 7 ngày */}
           {topLinks.map((link) => (
