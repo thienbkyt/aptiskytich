@@ -77,23 +77,23 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur-md border-b border-primary/40 shadow-[0_1px_0_0_hsl(var(--primary)/0.6),0_8px_24px_-8px_hsl(var(--primary)/0.25)]">
-      <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
+      <div className="h-full max-w-[1440px] mx-auto px-4 lg:px-6 flex items-center gap-3">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0 mr-4 group">
+        <Link to="/" className="flex items-center gap-2 shrink-0 group">
           <img src={logoImg} alt="Aptis Kỳ Tích" width={40} height={40} className="h-10 w-10 px-0 pb-0 transition-transform group-hover:scale-105" decoding="async" />
-          <span className="font-heading font-bold text-base text-foreground tracking-tight">
+          <span className="font-heading font-bold text-base text-foreground tracking-tight whitespace-nowrap">
             Aptis <span className="gradient-text">Kỳ Tích</span>
           </span>
         </Link>
 
         {/* ── Desktop nav ── */}
-        <div className="hidden md:flex items-center flex-1 justify-center gap-2">
+        <div className="hidden md:flex items-center flex-1 min-w-0 justify-center gap-1 xl:gap-1.5">
           {/* 1. Thi thử Aptis - red CTA */}
           <Link to="/thi-thu" {...prefetchHandlers("/thi-thu")}>
             <Button
               size="sm"
               variant="glow"
-              className="rounded-full px-4 py-2 h-auto text-sm font-semibold gap-1.5"
+              className="rounded-full px-3 py-2 h-auto text-sm font-semibold gap-1.5 whitespace-nowrap"
             >
               <ClipboardCheck className="w-4 h-4" />
               Thi thử Aptis
@@ -108,7 +108,7 @@ const Navbar = () => {
             onFocus={handleSkillEnter}
           >
             <button
-              className={`group flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full border-[1.5px] border-[#CC1C01] text-[#CC1C01] bg-transparent hover:bg-[#CC1C01]/10 transition-all whitespace-nowrap`}
+              className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full border-[1.5px] border-[#CC1C01] text-[#CC1C01] bg-transparent hover:bg-[#CC1C01]/10 transition-all whitespace-nowrap`}
             >
               <BookOpen className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
               Luyện tập theo kỹ năng
@@ -156,7 +156,7 @@ const Navbar = () => {
           <Link
             to="/key-du-doan"
             {...prefetchHandlers("/key-du-doan")}
-            className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+            className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
               isActive("/key-du-doan")
                 ? "text-primary"
                 : "text-secondary-foreground hover:text-primary"
@@ -178,7 +178,7 @@ const Navbar = () => {
           <Link
             to="/vocabulary"
             {...prefetchHandlers("/vocabulary")}
-            className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+            className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
               isActive("/vocabulary")
                 ? "text-primary"
                 : "text-secondary-foreground hover:text-primary"
@@ -202,7 +202,7 @@ const Navbar = () => {
               key={link.path}
               to={link.path}
               {...prefetchHandlers(link.path)}
-              className={`group relative flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
+              className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
                 isActive(link.path)
                   ? "text-primary"
                   : "text-secondary-foreground hover:text-primary"
@@ -223,7 +223,7 @@ const Navbar = () => {
         </div>
 
         {/* ── Desktop right actions ── */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-1.5 shrink-0">
           <ThemeToggle />
           {isAdmin && (
             <div
