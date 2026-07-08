@@ -171,26 +171,38 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
   const SelectedIcon = selectedMeta?.icon;
 
   return (
-    <div ref={rootRef} className={isMobile ? "relative w-full" : "relative"}>
+    <div ref={rootRef} className={isMobile ? "relative w-full" : "relative inline-flex"}>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Thông báo"
         className={
           isMobile
             ? "w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted transition-colors text-left"
-            : "relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+            : "relative inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-muted transition-colors"
         }
       >
-        <span className="relative inline-flex">
-          <Bell className={isMobile ? "w-5 h-5 text-[#CC1C01]" : "w-4 h-4 text-foreground"} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#CC1C01] text-white text-[10px] font-bold flex items-center justify-center leading-none">
-              {badgeText}
-            </span>
-          )}
-        </span>
+        {isMobile ? (
+          <span className="relative inline-flex">
+            <Bell className="w-5 h-5 text-[#CC1C01]" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#CC1C01] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                {badgeText}
+              </span>
+            )}
+          </span>
+        ) : (
+          <>
+            <Bell className="w-4 h-4 text-foreground" />
+            {unreadCount > 0 && (
+              <span className="pointer-events-none absolute top-0 right-0 min-w-[15px] h-[15px] px-1 rounded-full bg-[#CC1C01] text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-background">
+                {badgeText}
+              </span>
+            )}
+          </>
+        )}
         {isMobile && <span className="text-sm font-medium">Thông báo</span>}
       </button>
+
 
       <AnimatePresence>
         {open && (
