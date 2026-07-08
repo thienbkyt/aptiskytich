@@ -240,7 +240,7 @@ const BlogIndex = () => {
       {/* CTA nhóm Facebook */}
       <section className="max-w-[1200px] mx-auto px-4">
         <BlogCTA
-          title={"Tham gia nhóm học tập\u00a0& Review đề"}
+          title={"Tham gia nhóm học tập\u00a0& Review đề để nhanh đạt mục tiêu nha."}
           buttonLabel="Tham gia nhóm"
           href="https://www.facebook.com/groups/1551779633112657"
         />
