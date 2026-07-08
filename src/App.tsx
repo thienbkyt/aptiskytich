@@ -17,6 +17,7 @@ import RouteProgressBar from "@/components/layout/RouteProgressBar";
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
 import VisitLogger from "@/components/VisitLogger";
+import PostLoginFBGroupModal from "@/components/PostLoginFBGroupModal";
 import RequireAdmin from "@/components/auth/RequireAdmin";
 import { LoginGateProvider } from "@/components/auth/LoginGate";
 import useDeviceSession from "@/hooks/useDeviceSession";
@@ -145,6 +146,7 @@ const App = () => (
                 <AICoachFab />
                 <ReportFab />
                 <VisitLogger />
+                <PostLoginFBGroupModal />
                 <DeviceSessionGuard />
               </LoginGateProvider>
             </AuthProvider>
