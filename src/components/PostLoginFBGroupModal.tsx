@@ -88,10 +88,6 @@ const PostLoginFBGroupModal = () => {
                 Để nhanh đạt mục tiêu Aptis cùng cộng đồng.
               </DialogDescription>
 
-              <p className="mt-2 text-center text-xs text-white/70">
-                Cùng hàng nghìn bạn đang ôn thi Aptis mỗi ngày
-              </p>
-
               <a
                 href={FB_GROUP_URL}
                 target="_blank"
