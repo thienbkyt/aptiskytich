@@ -1,6 +1,7 @@
 import { useState } from "react";
 import BlogList from "./BlogList";
 import BlogEditor from "./BlogEditor";
+import BulkCoverUpload from "./BulkCoverUpload";
 
 const BlogManager = () => {
   const [editingId, setEditingId] = useState<string | null | "new">(null);
@@ -14,7 +15,12 @@ const BlogManager = () => {
     );
   }
 
-  return <BlogList onCreate={() => setEditingId("new")} onEdit={(id) => setEditingId(id)} />;
+  return (
+    <div className="space-y-6">
+      <BulkCoverUpload />
+      <BlogList onCreate={() => setEditingId("new")} onEdit={(id) => setEditingId(id)} />
+    </div>
+  );
 };
 
 export default BlogManager;
