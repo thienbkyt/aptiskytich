@@ -162,6 +162,7 @@ const RelatedCard = ({ post }: { post: BlogPost }) => {
             src={cover}
             alt={post.title}
             loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
@@ -510,14 +511,15 @@ const BlogPostPage = () => {
         </code>
       ),
     pre: (p: any) => <pre className="my-5 overflow-x-auto">{p.children}</pre>,
-    img: (p: any) => (
-      <img
-        src={p.src}
-        alt={p.alt || ""}
-        loading="lazy"
-        className="my-6 rounded-xl w-full h-auto border border-border"
-      />
-    ),
+      img: (p: any) => (
+        <img
+          src={p.src}
+          alt={p.alt || ""}
+          loading="lazy"
+          decoding="async"
+          className="my-6 rounded-xl w-full h-auto border border-border"
+        />
+      ),
     table: (p: any) => (
       <div className="my-6 overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">{p.children}</table>
@@ -623,6 +625,8 @@ const BlogPostPage = () => {
                 <img
                   src={cover}
                   alt={post.title}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               ) : (
