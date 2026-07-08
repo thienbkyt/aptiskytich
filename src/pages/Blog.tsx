@@ -237,7 +237,7 @@ const BlogIndex = () => {
       </section>
 
       {/* Category filter */}
-      <section className="sticky top-16 z-30 bg-[#FFF8F5]/85 dark:bg-background/85 backdrop-blur border-y border-[#CC1C01]/10">
+      <section className="bg-[#FFF8F5] dark:bg-background border-y border-[#CC1C01]/10">
         <div className="max-w-[1200px] mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-none">
           {([{ key: "all" as Filter, label: "Tất cả" }] as { key: Filter; label: string }[])
             .concat(CATEGORY_OPTIONS.map((c) => ({ key: c, label: CATEGORY_LABELS[c] })))
