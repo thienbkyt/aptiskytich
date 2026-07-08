@@ -93,7 +93,7 @@ const Navbar = () => {
             <Button
               size="sm"
               variant="glow"
-              className="rounded-full px-4 py-2 h-auto text-sm font-semibold gap-1.5"
+              className="rounded-full px-3 py-2 h-auto text-sm font-semibold gap-1.5 whitespace-nowrap"
             >
               <ClipboardCheck className="w-4 h-4" />
               Thi thử Aptis
