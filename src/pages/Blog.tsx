@@ -46,7 +46,7 @@ const CoverImage = ({ path, alt, className }: { path: string | null; alt: string
       </div>
     );
   }
-  return <img src={url} alt={alt} loading="lazy" className={`object-cover ${className}`} />;
+  return <img src={url} alt={alt} loading="lazy" decoding="async" className={`object-cover ${className}`} />;
 };
 
 const CategoryBadge = ({ category }: { category: BlogCategory }) => (
