@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar, Clock, ArrowRight, FileText, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { parseDateSafe } from "@/lib/safeDate";
 import { BlogPost, BlogCategory, CATEGORY_LABELS, CATEGORY_OPTIONS } from "@/components/admin/blog/blogTypes";
+import BlogCTA from "@/components/blog/BlogCTA";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
 const POSTS_PER_PAGE = 9;
@@ -234,6 +235,15 @@ const BlogIndex = () => {
             Mẹo làm bài, cấu trúc đề thi và kinh nghiệm đạt B1–C1 từ Aptis Kỳ Tích.
           </p>
         </div>
+      </section>
+
+      {/* CTA nhóm Facebook */}
+      <section className="max-w-[1200px] mx-auto px-4">
+        <BlogCTA
+          title={"Tham gia nhóm học tập\u00a0& Review đề"}
+          buttonLabel="Tham gia nhóm"
+          href="https://www.facebook.com/groups/1551779633112657"
+        />
       </section>
 
       {/* Category filter */}
