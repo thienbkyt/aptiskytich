@@ -22,7 +22,7 @@ export interface BlogPost {
 export const CATEGORY_LABELS: Record<BlogCategory, string> = {
   "meo-lam-bai": "Mẹo làm bài",
   "cau-truc-de-thi": "Cấu trúc đề thi",
-  "kinh-nghiem": "Kinh nghiệm",
+  "kinh-nghiem": "Kinh nghiệm học tập",
   "thong-bao": "Thông báo",
 };
 
