@@ -1,26 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 const FB_GROUP_URL = "https://www.facebook.com/groups/1551779633112657";
+const FLAG_KEY = "kt_show_group_popup";
 
 const PostLoginFBGroupModal = () => {
   const [open, setOpen] = useState(false);
+  const shownRef = useRef(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        // Delay slightly to avoid clashing with other post-login UI
-        setTimeout(() => setOpen(true), 400);
+    if (shownRef.current) return;
+    if (typeof window === "undefined") return;
+    try {
+      if (sessionStorage.getItem(FLAG_KEY) === "1") {
+        sessionStorage.removeItem(FLAG_KEY);
+        shownRef.current = true;
+        const t = setTimeout(() => setOpen(true), 400);
+        return () => clearTimeout(t);
       }
-    });
-    return () => subscription.unsubscribe();
+    } catch {
+      // ignore storage errors
+    }
   }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-lg p-0 overflow-hidden border-0 bg-transparent shadow-none">
+      <DialogContent className="sm:max-w-lg p-0 overflow-hidden border-0 bg-transparent shadow-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
         <div className="rounded-2xl p-6 md:p-8 text-white shadow-lg bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F]">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 text-white text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" /> APTIS KỲ TÍCH
