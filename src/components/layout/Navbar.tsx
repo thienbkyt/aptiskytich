@@ -77,17 +77,17 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur-md border-b border-primary/40 shadow-[0_1px_0_0_hsl(var(--primary)/0.6),0_8px_24px_-8px_hsl(var(--primary)/0.25)]">
-      <div className="h-full max-w-[1200px] mx-auto px-4 flex items-center">
+      <div className="h-full max-w-[1440px] mx-auto px-4 lg:px-6 flex items-center gap-3">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0 mr-4 group">
+        <Link to="/" className="flex items-center gap-2 shrink-0 group">
           <img src={logoImg} alt="Aptis Kỳ Tích" width={40} height={40} className="h-10 w-10 px-0 pb-0 transition-transform group-hover:scale-105" decoding="async" />
-          <span className="font-heading font-bold text-base text-foreground tracking-tight">
+          <span className="font-heading font-bold text-base text-foreground tracking-tight whitespace-nowrap">
             Aptis <span className="gradient-text">Kỳ Tích</span>
           </span>
         </Link>
 
         {/* ── Desktop nav ── */}
-        <div className="hidden md:flex items-center flex-1 justify-center gap-2">
+        <div className="hidden md:flex items-center flex-1 min-w-0 justify-center gap-1 xl:gap-1.5">
           {/* 1. Thi thử Aptis - red CTA */}
           <Link to="/thi-thu" {...prefetchHandlers("/thi-thu")}>
             <Button
