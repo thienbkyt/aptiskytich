@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar, Clock, ArrowRight, FileText, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { parseDateSafe } from "@/lib/safeDate";
 import { BlogPost, BlogCategory, CATEGORY_LABELS, CATEGORY_OPTIONS } from "@/components/admin/blog/blogTypes";
+import BlogCTA from "@/components/blog/BlogCTA";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
 const POSTS_PER_PAGE = 9;
