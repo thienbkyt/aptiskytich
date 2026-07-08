@@ -334,10 +334,11 @@ const Navbar = () => {
               ) : isPremium ? (
                 <span
                   title="Bạn đang là thành viên Premium (trọn đời)"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-[0_0_12px_-2px_rgba(254,173,95,0.6)]"
+                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-[0_0_12px_-2px_rgba(254,173,95,0.6)]"
                 >
                   <Crown className="w-3.5 h-3.5" /> Premium
                 </span>
+
               ) : isPro ? (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")} title="Bạn đang là Pro — nâng cấp Premium để dùng trọn đời">
                   <Button
