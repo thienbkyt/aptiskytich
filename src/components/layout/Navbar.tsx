@@ -108,7 +108,7 @@ const Navbar = () => {
             onFocus={handleSkillEnter}
           >
             <button
-              className={`group flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-full border-[1.5px] border-[#CC1C01] text-[#CC1C01] bg-transparent hover:bg-[#CC1C01]/10 transition-all whitespace-nowrap`}
+              className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full border-[1.5px] border-[#CC1C01] text-[#CC1C01] bg-transparent hover:bg-[#CC1C01]/10 transition-all whitespace-nowrap`}
             >
               <BookOpen className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
               Luyện tập theo kỹ năng
