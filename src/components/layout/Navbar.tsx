@@ -223,7 +223,7 @@ const Navbar = () => {
         </div>
 
         {/* ── Desktop right actions ── */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-1.5 shrink-0">
           <ThemeToggle />
           {isAdmin && (
             <div
