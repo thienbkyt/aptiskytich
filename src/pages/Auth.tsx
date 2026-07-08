@@ -87,6 +87,7 @@ const Auth = () => {
       if (error.message.toLowerCase().includes("email not confirmed")) setNeedsConfirm(true);
       toast({ title: "Đăng nhập thất bại", description: viMsg, variant: "destructive" });
     } else {
+      try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
       navigate("/dashboard");
     }
   };
@@ -152,10 +153,12 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
+    try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin + "/dashboard",
     });
     if (result.error) {
+      try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
       setGoogleLoading(false);
       toast({ title: "Đăng nhập Google thất bại", description: translateError(result.error.message), variant: "destructive" });
       return;
