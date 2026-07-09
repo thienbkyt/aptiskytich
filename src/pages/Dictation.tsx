@@ -800,7 +800,7 @@ function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSav
       <div className="mt-6 flex flex-wrap gap-3 justify-end">
         {!checked ? (
           <Button onClick={handleCheck} disabled={!input.trim()}>
-            <Check className="w-4 h-4 mr-2" /> Kiểm tra
+            <Check className="w-4 h-4 mr-2" /> Hiện đáp án
           </Button>
         ) : (
           <Button variant="outline" onClick={() => { setChecked(false); }}>Sửa tiếp</Button>
