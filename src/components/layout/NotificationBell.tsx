@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, CheckCheck, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+
 
 type NotifType = "feature" | "content" | "general";
 
