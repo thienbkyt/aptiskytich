@@ -3,8 +3,25 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import { registerPWA } from "./lib/registerPWA";
+import { supabase } from "@/integrations/supabase/client";
 
 registerPWA();
+
+// Kick the bootstrap RPC as early as possible if a Supabase session already
+// lives in localStorage. This fires in parallel with the rest of the JS bundle
+// loading so React Query can consume the resolved promise instead of issuing a
+// second network round-trip after mount. Anon visitors skip this entirely,
+// keeping the landing page at 0 Supabase calls when signed out.
+try {
+  const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID;
+  const storageKey = projectId ? `sb-${projectId}-auth-token` : null;
+  if (storageKey && typeof localStorage !== "undefined" && localStorage.getItem(storageKey)) {
+    (window as any).__ktBootstrapPromise = (supabase as any).rpc("get_user_bootstrap");
+  }
+} catch {
+  /* ignore */
+}
+
 
 
 window.addEventListener("beforeinstallprompt", (e) => {

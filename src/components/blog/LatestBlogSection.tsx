@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, ArrowRight, FileText, BookOpen } from "lucide-react";
@@ -74,12 +74,37 @@ const LatestPostCard = ({ post }: { post: BlogPost }) => {
 
 const LatestBlogSection = () => {
   const [posts, setPosts] = useState<BlogPost[] | null>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (shouldLoad) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+    // Defer the Supabase call until the section is near the viewport.
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShouldLoad(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "400px 0px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [shouldLoad]);
+
+  useEffect(() => {
+    if (!shouldLoad) return;
     let alive = true;
     supabase
       .from("blog_posts" as any)
-      .select("*")
+      .select("id, title, slug, excerpt, cover_image_url, category, published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(3)
@@ -89,13 +114,15 @@ const LatestBlogSection = () => {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [shouldLoad]);
+
 
   if (posts && posts.length === 0) return null;
 
   return (
     <section className="py-16 md:py-20 bg-[#FFF8F5] dark:bg-background border-t border-[#CC1C01]/10">
-      <div className="max-w-[1200px] mx-auto px-4">
+      <div ref={sentinelRef} aria-hidden className="max-w-[1200px] mx-auto px-4">
+
         <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
           <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider">

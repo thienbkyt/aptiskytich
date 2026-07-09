@@ -2,9 +2,11 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Bell, Sparkles, BookOpen, Megaphone, ExternalLink, CheckCheck, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+
 
 type NotifType = "feature" | "content" | "general";
 
@@ -69,12 +71,14 @@ interface Props {
 
 const NotificationBell = ({ variant = "desktop" }: Props) => {
   const { user } = useAuth();
+  const { unread_notification_count, setUnread } = useUserBootstrap();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Notification | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -94,15 +98,14 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
       setReadIds(new Set(readsRes.data.map((r: any) => r.notification_id)));
     }
     setLoading(false);
+    setHasFetched(true);
   }, [user]);
 
+  // Only fetch the full list when the bell is opened. The badge count comes
+  // from the single bootstrap RPC, so the initial page load makes no extra call.
   useEffect(() => {
-    if (user) fetchData();
-  }, [user, fetchData]);
-
-  useEffect(() => {
-    if (open) fetchData();
-  }, [open, fetchData]);
+    if (open && user) fetchData();
+  }, [open, user, fetchData]);
 
   // Click outside / Escape
   useEffect(() => {
@@ -123,12 +126,15 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
 
   if (!user) return null;
 
-  const unreadCount = items.filter((n) => !readIds.has(n.id)).length;
+  const unreadFromList = items.filter((n) => !readIds.has(n.id)).length;
+  const unreadCount = hasFetched ? unreadFromList : unread_notification_count;
   const badgeText = unreadCount > 9 ? "9+" : String(unreadCount);
+
 
   const markRead = async (id: string) => {
     if (readIds.has(id)) return;
     setReadIds((prev) => new Set(prev).add(id));
+    setUnread((n) => n - 1);
     await supabase
       .from("notification_reads")
       .upsert(
@@ -145,11 +151,13 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
       unread.forEach((n) => next.add(n.id));
       return next;
     });
+    setUnread(0);
     await supabase.from("notification_reads").upsert(
       unread.map((n) => ({ user_id: user.id, notification_id: n.id })),
       { onConflict: "user_id,notification_id", ignoreDuplicates: true },
     );
   };
+
 
   const handleItemClick = (n: Notification) => {
     markRead(n.id);

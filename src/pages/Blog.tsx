@@ -20,11 +20,13 @@ const formatDate = (iso: string | null) => {
   return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-const readingTime = (content: string | null) => {
-  const words = (content ?? "").trim().split(/\s+/).filter(Boolean).length;
+const readingTime = (content: string | null | undefined) => {
+  if (!content) return null;
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
   const mins = Math.max(1, Math.round(words / 200));
   return `${mins} phút đọc`;
 };
+
 
 const useSignedCover = (path: string | null) => {
   const [url, setUrl] = useState<string | null>(null);
@@ -87,9 +89,12 @@ const FeaturedCard = ({ post }: { post: BlogPost }) => (
         <span className="inline-flex items-center gap-1.5">
           <Calendar className="w-4 h-4" /> {formatDate(post.published_at)}
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Clock className="w-4 h-4" /> {readingTime(post.content)}
-        </span>
+        {readingTime(post.content) && (
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="w-4 h-4" /> {readingTime(post.content)}
+          </span>
+        )}
+
       </div>
       <div className="mt-5 inline-flex items-center gap-2 text-[#CC1C01] font-semibold text-sm">
         Đọc bài viết
@@ -125,9 +130,12 @@ const PostCard = ({ post }: { post: BlogPost }) => (
         <span className="inline-flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5" /> {formatDate(post.published_at)}
         </span>
-        <span className="inline-flex items-center gap-1">
-          <Clock className="w-3.5 h-3.5" /> {readingTime(post.content)}
-        </span>
+        {readingTime(post.content) && (
+          <span className="inline-flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" /> {readingTime(post.content)}
+          </span>
+        )}
+
       </div>
     </div>
   </Link>
@@ -165,7 +173,7 @@ const BlogIndex = () => {
     setPosts(null);
     supabase
       .from("blog_posts" as any)
-      .select("*")
+      .select("id, title, slug, excerpt, cover_image_url, category, published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {
@@ -177,6 +185,7 @@ const BlogIndex = () => {
         setPosts((data ?? []) as unknown as BlogPost[]);
       });
   };
+
 
   useEffect(() => {
     load();

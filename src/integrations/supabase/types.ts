@@ -1857,6 +1857,7 @@ export type Database = {
           size_mb: number
         }[]
       }
+      get_user_bootstrap: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
