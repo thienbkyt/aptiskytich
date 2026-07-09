@@ -130,9 +130,12 @@ const PostCard = ({ post }: { post: BlogPost }) => (
         <span className="inline-flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5" /> {formatDate(post.published_at)}
         </span>
-        <span className="inline-flex items-center gap-1">
-          <Clock className="w-3.5 h-3.5" /> {readingTime(post.content)}
-        </span>
+        {readingTime(post.content) && (
+          <span className="inline-flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" /> {readingTime(post.content)}
+          </span>
+        )}
+
       </div>
     </div>
   </Link>
