@@ -37,9 +37,9 @@ import { loadMarathonProgress, loadMarathonLast, clearMarathonProgress } from "@
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
   { id: "part1" as const, label: "Part 1", subtitle: "Sentence comprehension" },
-  { id: "part2" as const, label: "Part 2", subtitle: "Text cohesion" },
-  { id: "part3" as const, label: "Part 3", subtitle: "Opinion matching" },
-  { id: "part4" as const, label: "Part 4", subtitle: "Long reading" },
+  { id: "part2" as const, label: "Part 2 + 3", subtitle: "Text cohesion" },
+  { id: "part3" as const, label: "Part 4", subtitle: "Opinion matching" },
+  { id: "part4" as const, label: "Part 5", subtitle: "Long reading" },
 ];
 
 const READING_TIME: Record<string, number> = {
