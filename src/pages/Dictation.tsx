@@ -406,7 +406,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
           {[
             { key: "full", label: "Nghe Full" },
             { key: "check", label: "Nghe Check" },
-            { key: "chep", label: "Nghe Chép" },
+            { key: "chep", label: "Nghe Chép Full Câu" },
           ].map((m) => (
             <button
               key={m.key}
