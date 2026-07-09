@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
   BookText, GraduationCap, Book, Headphones, Mic, PenLine, Newspaper,
-  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, Sparkles, type LucideIcon,
+  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, Sparkles, Ear, type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
