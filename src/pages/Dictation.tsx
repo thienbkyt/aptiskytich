@@ -319,7 +319,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-10"><p className="text-destructive">{error}</p></div>
+        <div className="max-w-3xl mx-auto px-4 pt-24 pb-10"><p className="text-destructive">{error}</p></div>
       </div>
     );
   }
@@ -327,7 +327,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-10"><p className="text-muted-foreground">Đang tải…</p></div>
+        <div className="max-w-3xl mx-auto px-4 pt-24 pb-10"><p className="text-muted-foreground">Đang tải…</p></div>
       </div>
     );
   }
@@ -335,7 +335,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-10">
+        <div className="max-w-3xl mx-auto px-4 pt-24 pb-10">
           <p className="text-muted-foreground">Bộ này chưa có câu nào.</p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/nghe-chep")}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
