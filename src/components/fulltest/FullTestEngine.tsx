@@ -23,7 +23,7 @@ import GrammarExamEngine from "@/components/grammar/GrammarExamEngine";
 import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
-import { normalizePart } from "@/hooks/useExamSets";
+import { normalizePart, readingPartLabel } from "@/hooks/useExamSets";
 import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
 import {
   gradeSpeakingPartV2,
