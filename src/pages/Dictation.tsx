@@ -243,11 +243,13 @@ function DictationListView() {
 /* ==================== Practice page ==================== */
 function DictationPracticeView({ setId }: { setId: string }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [setInfo, setSetInfo] = useState<DictationSet | null>(null);
   const [sentences, setSentences] = useState<Sentence[] | null>(null);
   const [idx, setIdx] = useState(0);
   const [mode, setMode] = useState<Mode>("full");
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
 
   usePageMeta({
     title: `${setInfo?.title || "Nghe chép chính tả"} — Aptis Kỳ Tích`,
@@ -268,6 +270,20 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return () => { stopTTS(); };
   }, [setId]);
 
+  // Load user's completed (best_accuracy=100) sentences for this set
+  useEffect(() => {
+    if (!user?.id) { setCompleted(new Set()); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("dictation_progress")
+        .select("sentence_id")
+        .eq("user_id", user.id)
+        .eq("set_id", setId)
+        .eq("best_accuracy", 100);
+      setCompleted(new Set((data || []).map((r: any) => r.sentence_id)));
+    })();
+  }, [user?.id, setId]);
+
   const current = sentences && sentences[idx];
   const total = sentences?.length || 0;
 
@@ -284,6 +300,20 @@ function DictationPracticeView({ setId }: { setId: string }) {
 
   const goPrev = () => { if (idx > 0) setIdx(idx - 1); };
   const goNext = () => { if (idx + 1 < total) setIdx(idx + 1); };
+
+  const handleSave = async (sentenceId: string, accuracy: number) => {
+    const best = await saveDictationProgress(user?.id, setId, sentenceId, accuracy);
+    if (best === 100) {
+      setCompleted((prev) => {
+        if (prev.has(sentenceId)) return prev;
+        const next = new Set(prev);
+        next.add(sentenceId);
+        return next;
+      });
+    }
+  };
+
+
 
   if (error) {
     return (
