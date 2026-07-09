@@ -452,6 +452,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
             key={current.id}
             sentence={current}
             playAudio={playAudio}
+            stopAudio={stopAudio}
             onPrev={goPrev}
             onNext={goNext}
             hasPrev={idx > 0}
