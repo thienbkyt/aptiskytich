@@ -348,7 +348,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-3xl mx-auto px-4 pt-24 pb-8">
         <button
           onClick={() => navigate("/nghe-chep")}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
