@@ -111,7 +111,7 @@ const GrammarVocabulary = () => {
                 Luyện ngữ pháp và từ vựng thường gặp trong bài thi Aptis. Mỗi đề gồm 25 câu ngữ pháp + 25 câu từ vựng, đúng cấu trúc Aptis.
               </p>
               <Button asChild variant="outline" className="mt-4 rounded-full border-primary text-primary hover:bg-primary/10 hover:text-primary h-9 px-4 text-sm font-medium">
-                <Link to="/meo-thi-aptis/meo-hoc-grammar-aptis">💡 Xem mẹo làm bài Grammar & Vocabulary</Link>
+                <Link to="/meo-thi-aptis/meo-hoc-grammar-aptis">💡 Xem ngay - Mẹo làm bài Grammar & Vocabulary</Link>
               </Button>
             </div>
           </div>
