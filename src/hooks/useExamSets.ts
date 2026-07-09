@@ -40,6 +40,20 @@ export const normalizePart = (part: string): string => {
 };
 
 /**
+ * Display label for Reading parts matching the real Aptis exam.
+ * Maps internal part1..part4 → "Part 1", "Part 2 + 3", "Part 4", "Part 5".
+ */
+export const readingPartLabel = (part: string): string => {
+  const map: Record<string, string> = {
+    part1: "Part 1",
+    part2: "Part 2 + 3",
+    part3: "Part 4",
+    part4: "Part 5",
+  };
+  return map[normalizePart(part)] ?? part;
+};
+
+/**
  * Fetches published exam_sets for a given skill
  */
 export const useExamSets = (skill: string) => {
