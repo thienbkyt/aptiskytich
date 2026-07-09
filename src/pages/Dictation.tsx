@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb, CheckCircle2, Repeat } from "lucide-react";
+import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb, CheckCircle2, Repeat, Headphones } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { speakAsync, speakWithTTS, stopTTS } from "@/lib/tts";
 import { Pause } from "lucide-react";
@@ -203,18 +203,27 @@ function DictationListView() {
     })();
   }, [user?.id]);
 
+  const levelMeta = (lvl: number | null) => {
+    if (lvl === 1) return { label: "Cơ bản", badge: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
+    if (lvl === 2) return { label: "Trung bình", badge: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500" };
+    if (lvl === 3) return { label: "Nâng cao", badge: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500" };
+    if (lvl != null) return { label: "Chuyên sâu", badge: "bg-rose-100 text-rose-700 border-rose-200", dot: "bg-rose-500" };
+    return { label: "Khác", badge: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground" };
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50/60 via-background to-background">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 pt-24 pb-10">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Ear className="w-5 h-5 text-primary" />
+      <main className="max-w-5xl mx-auto px-4 pt-24 pb-14">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-[hsl(var(--brand-brown,0_0%_30%))] flex items-center justify-center shadow-sm">
+            <Ear className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold">Nghe chép chính tả</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Nghe chép chính tả</h1>
         </div>
-        <p className="text-muted-foreground mb-8">
-          Ba chế độ luyện: Nghe Full (nghe kèm transcript), Nghe Check (điền từ khoá), Nghe Chép (chép nguyên câu).
+        <p className="text-muted-foreground mb-10 max-w-2xl">
+          2 chế độ: <span className="font-medium text-foreground">Nghe Check</span> (điền từ khoá) và{" "}
+          <span className="font-medium text-foreground">Nghe Chép</span> (chép nguyên câu).
         </p>
 
         {error && <p className="text-destructive">{error}</p>}
@@ -223,43 +232,69 @@ function DictationListView() {
         ) : sets.length === 0 ? (
           <p className="text-muted-foreground">Chưa có bộ luyện nào.</p>
         ) : (
-          <div className="space-y-8">
-            {groupedSets.map((group) => (
-              <section key={group.label}>
-                <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
-                  <span className="w-2 h-8 rounded-full bg-primary inline-block" />
-                  {group.label}
-                </h2>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {group.sets.map((s) => {
-                    const total = s.sentence_count ?? 0;
-                    const done = doneBySet[s.id] ?? 0;
-                    const allDone = user && total > 0 && done >= total;
-                    return (
-                      <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
-                        <Card className="p-5 h-full hover:border-primary transition-colors">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <h3 className="font-semibold text-lg group-hover:text-primary transition-colors flex items-center gap-2">
-                                {s.title}
-                                {allDone && <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />}
-                              </h3>
-                              <p className="text-sm text-muted-foreground mt-1">{total} câu</p>
-                              {user && total > 0 && (
-                                <p className="text-xs font-medium text-primary mt-2">
-                                  Đã xong {done}/{total} câu
-                                </p>
-                              )}
+          <div className="space-y-10">
+            {groupedSets.map((group) => {
+              const meta = levelMeta(group.level);
+              return (
+                <section key={group.label}>
+                  <div className="flex items-center gap-3 mb-5">
+                    <span className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border", meta.badge)}>
+                      <span className={cn("w-2 h-2 rounded-full", meta.dot)} />
+                      {group.label}
+                    </span>
+                    <span className="text-sm text-muted-foreground">{meta.label}</span>
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground">{group.sets.length} bộ</span>
+                  </div>
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    {group.sets.map((s) => {
+                      const total = s.sentence_count ?? 0;
+                      const done = doneBySet[s.id] ?? 0;
+                      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                      const allDone = user && total > 0 && done >= total;
+                      return (
+                        <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
+                          <Card className="p-5 h-full bg-card rounded-2xl border border-border/70 shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg group-hover:border-primary/60">
+                            <div className="flex items-start gap-4">
+                              <div className={cn(
+                                "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+                                allDone ? "bg-emerald-100 text-emerald-600" : "bg-primary/10 text-primary group-hover:bg-primary/15"
+                              )}>
+                                {allDone ? <CheckCircle2 className="w-5 h-5" /> : <Headphones className="w-5 h-5" />}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h3 className="font-semibold text-base md:text-lg leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                                  {s.title}
+                                </h3>
+                                <p className="text-sm text-muted-foreground mt-1">{total} câu</p>
+                              </div>
+                              <ChevronRight className="w-5 h-5 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
                             </div>
-                            <ChevronRight className="w-5 h-5 text-muted-foreground mt-1 shrink-0" />
-                          </div>
-                        </Card>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+                            {user && total > 0 && (
+                              <div className="mt-4">
+                                <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full transition-all duration-500",
+                                      allDone ? "bg-emerald-500" : "bg-gradient-to-r from-primary to-[#FEAD5F]"
+                                    )}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between mt-1.5 text-xs">
+                                  <span className="text-muted-foreground">{done}/{total} câu</span>
+                                  <span className={cn("font-semibold", allDone ? "text-emerald-600" : "text-primary")}>{pct}%</span>
+                                </div>
+                              </div>
+                            )}
+                          </Card>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </main>
