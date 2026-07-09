@@ -865,15 +865,29 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
         })}
       </div>
 
-      {checked && !allCorrect && (
-        <div className="mt-6 rounded-md border border-border bg-muted/40 p-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án</p>
-          <p className="text-base">{sentence.text}</p>
-        </div>
-      )}
-      {checked && allCorrect && (
-        <p className="mt-6 text-sm font-medium text-green-600">✓ Đúng hết!</p>
-      )}
+      {checked && (() => {
+        const hidden = [...hiddenSet];
+        const ok = hidden.filter((i) => isCorrect(i)).length;
+        const total = hidden.length;
+        const pct = total ? Math.round((ok / total) * 100) : 0;
+        return (
+          <div className="mt-6 space-y-3">
+            <div className={cn(
+              "text-sm font-semibold",
+              pct === 100 ? "text-green-600" : "text-primary"
+            )}>
+              {pct === 100 ? `✓ Đúng hết! ${ok}/${total} từ · 100%` : `Đúng ${ok}/${total} từ · ${pct}%`}
+            </div>
+            {!allCorrect && (
+              <div className="rounded-md border border-border bg-muted/40 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án</p>
+                <p className="text-base">{sentence.text}</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
 
       <div className="mt-6 flex flex-wrap gap-3 justify-end">
         {!checked ? (
