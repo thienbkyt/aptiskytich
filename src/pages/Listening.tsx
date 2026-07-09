@@ -352,7 +352,7 @@ const Listening = () => {
                 Luyện nghe theo format bài thi Aptis Listening. Làm quen với các dạng câu hỏi và luyện tập với audio giống bài thi thật. Mỗi đoạn audio chỉ được nghe tối đa 2 lần.
               </p>
               <Button asChild variant="outline" className="mt-4 rounded-full border-primary text-primary hover:bg-primary/10 hover:text-primary h-9 px-4 text-sm font-medium">
-                <Link to="/meo-thi-aptis/meo-hoc-listening-aptis">💡 Xem mẹo làm bài Listening</Link>
+                <Link to="/meo-thi-aptis/meo-hoc-listening-aptis">💡 Xem ngay - Mẹo làm bài Listening</Link>
               </Button>
             </div>
           </div>
