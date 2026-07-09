@@ -686,15 +686,17 @@ function usePlayback(
 
 
 /* ==================== Mode: Nghe Check ==================== */
-function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
+function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
-  playAudio: () => void;
+  playAudio: (onEnded?: () => void) => void;
+  stopAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
   onSave: (accuracy: number) => void;
 }) {
+  const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
   const [ratio, setRatio] = useState<30 | 50 | 100>(100);
   const [checked, setChecked] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
