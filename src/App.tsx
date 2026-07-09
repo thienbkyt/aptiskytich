@@ -39,6 +39,7 @@ const AdminStudents = lazy(() => import("./pages/AdminStudents"));
 const AdminNotifications = lazy(() => import("./pages/AdminNotifications"));
 const AdminPro = lazy(() => import("./pages/AdminPro"));
 const AdminPrediction = lazy(() => import("./pages/AdminPrediction"));
+const AdminDictation = lazy(() => import("./pages/AdminDictation"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SkillPractice = lazy(() => import("./pages/SkillPractice"));
 const VocabStudy = lazy(() => import("./pages/VocabStudy"));
@@ -142,6 +143,7 @@ const App = () => (
                       <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
                       <Route path="/admin/pro" element={<RequireAdmin><AdminPro /></RequireAdmin>} />
                       <Route path="/admin/prediction" element={<RequireAdmin><AdminPrediction /></RequireAdmin>} />
+                      <Route path="/admin/nghe-chep" element={<RequireAdmin><AdminDictation /></RequireAdmin>} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </PageTransition>
