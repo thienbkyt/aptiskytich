@@ -492,7 +492,6 @@ function DictationPracticeView({ setId }: { setId: string }) {
         {/* Mode selector */}
         <div className="inline-flex rounded-lg border border-border bg-muted p-1 mb-4">
           {[
-            { key: "full", label: "Nghe Full" },
             { key: "check", label: "Nghe Check" },
             { key: "chep", label: "Nghe Chép Full Câu" },
           ].map((m) => (
