@@ -511,10 +511,21 @@ function DictationPracticeView({ setId }: { setId: string }) {
           ))}
         </div>
 
+        {/* Audio settings: speed + repeat */}
+        <AudioSettingsBar
+          speed={speed}
+          setSpeed={setSpeed}
+          repeatCount={repeatCount}
+          setRepeatCount={setRepeatCount}
+          repeatGap={repeatGap}
+          setRepeatGap={setRepeatGap}
+        />
+
         {/* progress bar */}
         <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mb-6">
           <div className="h-full bg-primary transition-all" style={{ width: `${((idx + 1) / total) * 100}%` }} />
         </div>
+
 
         {mode === "full" && current && (
           <FullMode
