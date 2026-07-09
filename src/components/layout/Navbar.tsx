@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
   BookText, GraduationCap, Book, Headphones, Mic, PenLine, Newspaper,
-  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, Sparkles, type LucideIcon,
+  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, Sparkles, Ear, type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
@@ -32,6 +32,7 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
   { label: "Reading", path: "/reading", icon: BookOpen, desc: "Luyện đọc theo đề Aptis" },
   { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Ngữ pháp và từ vựng" },
   { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Kho từ vựng & flashcard" },
+  { label: "Nghe chép chính tả", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe & chép lại câu" },
 ];
 
 const Navbar = () => {

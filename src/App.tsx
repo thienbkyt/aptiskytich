@@ -60,6 +60,7 @@ const PricingPage = lazy(() => import("./pages/PricingPage"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Dictation = lazy(() => import("./pages/Dictation"));
 
 
 const queryClient = new QueryClient({
@@ -116,6 +117,8 @@ const App = () => (
                       <Route path="/vocabulary" element={<SkillPractice />} />
                       <Route path="/vocabulary/:id" element={<VocabStudy />} />
                       <Route path="/vocab/:listId" element={<VocabListDetail />} />
+                      <Route path="/nghe-chep" element={<Dictation />} />
+                      <Route path="/nghe-chep/:setId" element={<Dictation />} />
                       <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
                       <Route path="/key-du-doan" element={<WithDict><KeyPrediction /></WithDict>} />
                       <Route path="/history" element={<History />} />
