@@ -257,7 +257,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             <ReviewAnswerPanel
               questions={questions}
               qResults={qResults}
-              title={`Đáp án & Giải thích — ${current.part || skillLabel}`}
+              title={`Đáp án & Giải thích — ${displayPart || skillLabel}`}
             />
           </div>
         )}
