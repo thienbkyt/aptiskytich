@@ -682,13 +682,14 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSa
 }
 
 /* ==================== Mode: Nghe Chép (existing) ==================== */
-function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
+function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
   playAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
+  onSave: (accuracy: number) => void;
 }) {
   const [input, setInput] = useState("");
   const [checked, setChecked] = useState(false);
@@ -703,7 +704,13 @@ function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sentence.id]);
 
-  const handleCheck = () => { if (input.trim()) setChecked(true); };
+  const handleCheck = () => {
+    if (!input.trim()) return;
+    setChecked(true);
+    const parts = diffChars(sentence.text, input);
+    onSave(accuracyPct(parts));
+  };
+
   const acc = diff ? accuracyPct(diff) : 0;
   const perfect = checked && acc === 100;
 
