@@ -294,7 +294,11 @@ const HistoryDetail = () => {
               <div className="glass-card p-6 md:p-8 mb-6">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <Badge variant="secondary">{SKILL_LABELS[skill] || skill}</Badge>
-                  {setInfo?.part && <Badge variant="outline">{setInfo.part}</Badge>}
+                  {setInfo?.part && (
+                    <Badge variant="outline">
+                      {setInfo.skill === "reading" ? readingPartLabel(setInfo.part) : setInfo.part}
+                    </Badge>
+                  )}
                 </div>
                 <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-4">
                   {setInfo?.title || "Đề mẫu"}
