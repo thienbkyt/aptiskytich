@@ -490,37 +490,55 @@ function DictationPracticeView({ setId }: { setId: string }) {
 }
 
 /* ==================== Mode: Nghe Full ==================== */
-function FullMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
+function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext }: {
   sentence: Sentence;
-  playAudio: () => void;
+  playAudio: (onEnded?: () => void) => void;
+  stopAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
 }) {
   const [autoplay, setAutoplay] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const didAutoplayRef = useRef(false);
 
+  const play = () => {
+    setIsPlaying(true);
+    playAudio(() => setIsPlaying(false));
+  };
+  const stop = () => {
+    stopAudio();
+    setIsPlaying(false);
+  };
+  const toggle = () => (isPlaying ? stop() : play());
+
+  // Autoplay once per sentence (component remounts on sentence change via key).
   useEffect(() => {
-    if (!autoplay) return;
-    const t = setTimeout(playAudio, 250);
+    if (!autoplay || didAutoplayRef.current) return;
+    didAutoplayRef.current = true;
+    const t = setTimeout(play, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sentence.id, autoplay]);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => () => stopAudio(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Card className="p-6 sm:p-8">
       <div className="flex flex-col items-center gap-4">
         <button
           type="button"
-          onClick={playAudio}
+          onClick={toggle}
           className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-          aria-label="Phát câu"
+          aria-label={isPlaying ? "Dừng" : "Phát câu"}
         >
-          <Play className="w-8 h-8 ml-1" />
+          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
         </button>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={playAudio}>
-            <Volume2 className="w-4 h-4 mr-2" /> Phát lại
+          <Button variant="ghost" size="sm" onClick={toggle}>
+            <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
           </Button>
           <label className="text-sm flex items-center gap-2 text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
