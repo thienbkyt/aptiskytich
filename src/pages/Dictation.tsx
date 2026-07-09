@@ -872,9 +872,10 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
 }
 
 /* ==================== Mode: Nghe Chép (existing) ==================== */
-function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
+function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
-  playAudio: () => void;
+  playAudio: (onEnded?: () => void) => void;
+  stopAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
@@ -883,16 +884,9 @@ function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSav
 }) {
   const [input, setInput] = useState("");
   const [checked, setChecked] = useState(false);
+  const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
 
   const diff = useMemo(() => (checked ? diffChars(sentence.text, input) : null), [checked, sentence.text, input]);
-
-  useEffect(() => {
-    setInput("");
-    setChecked(false);
-    const t = setTimeout(playAudio, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sentence.id]);
 
   const handleCheck = () => {
     if (!input.trim()) return;
@@ -909,16 +903,17 @@ function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSav
       <div className="flex flex-col items-center gap-4">
         <button
           type="button"
-          onClick={playAudio}
+          onClick={toggle}
           className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-          aria-label="Phát câu"
+          aria-label={isPlaying ? "Dừng" : "Phát câu"}
         >
-          <Play className="w-8 h-8 ml-1" />
+          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
         </button>
-        <Button variant="ghost" size="sm" onClick={playAudio}>
-          <Volume2 className="w-4 h-4 mr-2" /> Phát lại
+        <Button variant="ghost" size="sm" onClick={toggle}>
+          <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
         </Button>
       </div>
+
 
       <div className="mt-8">
         <label className="text-sm font-medium mb-2 block">Gõ lại câu bạn nghe được:</label>
