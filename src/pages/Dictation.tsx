@@ -63,47 +63,40 @@ type Sentence = {
 
 type Mode = "check" | "chep";
 
-/* --------- Char-level diff --------- */
-type DiffPart = { ch: string; ok: boolean };
-function diffChars(expected: string, got: string): DiffPart[] {
-  const norm = (s: string) => s.replace(/\s+/g, " ").trim();
-  const a = norm(expected);
-  const b = norm(got);
-  const al = a.toLowerCase();
-  const bl = b.toLowerCase();
-  const m = al.length;
-  const n = bl.length;
+/* --------- Word-level diff (case & punctuation insensitive) --------- */
+type WordDiffPart = { word: string; ok: boolean };
+function normalizeWordCore(w: string) {
+  return w.toLowerCase().replace(/[^a-z0-9']/gi, "");
+}
+function diffWords(expected: string, got: string): WordDiffPart[] {
+  const expRaw = expected.split(/\s+/).filter(Boolean);
+  const gotRaw = got.split(/\s+/).filter(Boolean);
+  const a = expRaw.map(normalizeWordCore);
+  const b = gotRaw.map(normalizeWordCore);
+  const m = a.length, n = b.length;
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      dp[i][j] = al[i - 1] === bl[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+      dp[i][j] = a[i - 1] && a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1] + 1
+        : Math.max(dp[i - 1][j], dp[i][j - 1]);
     }
   }
-  const out: DiffPart[] = [];
+  const matched = new Array<boolean>(m).fill(false);
   let i = m, j = n;
-  const matchedExpected = new Array<boolean>(m).fill(false);
   while (i > 0 && j > 0) {
-    if (al[i - 1] === bl[j - 1]) {
-      matchedExpected[i - 1] = true;
-      i--; j--;
-    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-      i--;
-    } else {
-      j--;
-    }
+    if (a[i - 1] && a[i - 1] === b[j - 1]) { matched[i - 1] = true; i--; j--; }
+    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else j--;
   }
-  for (let k = 0; k < a.length; k++) {
-    out.push({ ch: a[k], ok: matchedExpected[k] });
-  }
-  return out;
+  return expRaw.map((w, k) => ({ word: w, ok: matched[k] }));
+}
+function wordAccuracyPct(parts: WordDiffPart[]) {
+  if (!parts.length) return 0;
+  const ok = parts.filter((p) => p.ok).length;
+  return Math.round((ok / parts.length) * 100);
 }
 
-function accuracyPct(parts: DiffPart[]) {
-  if (!parts.length) return 0;
-  const ok = parts.filter((p) => p.ok && p.ch.trim() !== "").length;
-  const total = parts.filter((p) => p.ch.trim() !== "").length || 1;
-  return Math.round((ok / total) * 100);
-}
 
 /* --------- Word tokenization for "Nghe Check" --------- */
 type Token = { raw: string; core: string; isWord: boolean };
@@ -769,17 +762,13 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
 
   const handleCheck = () => {
     setChecked(true);
-    // Accuracy = share of hidden words the user typed correctly, excluding revealed ones.
+    // Accuracy = share of hidden slots filled with the correct word (revealed slots count as correct).
     const hidden = [...hiddenSet];
-    const scored = hidden.filter((i) => !revealed.has(i));
-    if (scored.length === 0) {
-      // No scoreable slots (e.g. all revealed) — treat as 0 to be conservative.
-      onSave(0);
-      return;
-    }
-    const ok = scored.filter((i) => isCorrect(i)).length;
-    onSave(Math.round((ok / scored.length) * 100));
+    if (hidden.length === 0) { onSave(0); return; }
+    const ok = hidden.filter((i) => isCorrect(i)).length;
+    onSave(Math.round((ok / hidden.length) * 100));
   };
+
 
 
   const handleReveal = () => {
@@ -876,15 +865,29 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
         })}
       </div>
 
-      {checked && !allCorrect && (
-        <div className="mt-6 rounded-md border border-border bg-muted/40 p-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án</p>
-          <p className="text-base">{sentence.text}</p>
-        </div>
-      )}
-      {checked && allCorrect && (
-        <p className="mt-6 text-sm font-medium text-green-600">✓ Đúng hết!</p>
-      )}
+      {checked && (() => {
+        const hidden = [...hiddenSet];
+        const ok = hidden.filter((i) => isCorrect(i)).length;
+        const total = hidden.length;
+        const pct = total ? Math.round((ok / total) * 100) : 0;
+        return (
+          <div className="mt-6 space-y-3">
+            <div className={cn(
+              "text-sm font-semibold",
+              pct === 100 ? "text-green-600" : "text-primary"
+            )}>
+              {pct === 100 ? `✓ Đúng hết! ${ok}/${total} từ · 100%` : `Đúng ${ok}/${total} từ · ${pct}%`}
+            </div>
+            {!allCorrect && (
+              <div className="rounded-md border border-border bg-muted/40 p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án</p>
+                <p className="text-base">{sentence.text}</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
 
       <div className="mt-6 flex flex-wrap gap-3 justify-end">
         {!checked ? (
@@ -921,16 +924,18 @@ function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
   const [checked, setChecked] = useState(false);
   const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
 
-  const diff = useMemo(() => (checked ? diffChars(sentence.text, input) : null), [checked, sentence.text, input]);
+  const diff = useMemo(() => (checked ? diffWords(sentence.text, input) : null), [checked, sentence.text, input]);
 
   const handleCheck = () => {
     if (!input.trim()) return;
     setChecked(true);
-    const parts = diffChars(sentence.text, input);
-    onSave(accuracyPct(parts));
+    const parts = diffWords(sentence.text, input);
+    onSave(wordAccuracyPct(parts));
   };
 
-  const acc = diff ? accuracyPct(diff) : 0;
+  const acc = diff ? wordAccuracyPct(diff) : 0;
+  const okCount = diff ? diff.filter((p) => p.ok).length : 0;
+  const totalWords = diff ? diff.length : 0;
   const perfect = checked && acc === 100;
 
   return (
@@ -969,15 +974,15 @@ function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
         <div className="mt-6 space-y-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              So sánh (đỏ = sai/thiếu)
+              So sánh theo từ (đỏ = sai/thiếu)
             </p>
-            <p className="text-lg leading-relaxed font-mono">
+            <p className="text-lg leading-relaxed flex flex-wrap gap-x-1.5 gap-y-1">
               {diff.map((p, i) => (
                 <span
                   key={i}
                   className={p.ok ? "text-foreground" : "text-destructive font-semibold underline decoration-destructive/60"}
                 >
-                  {p.ch}
+                  {p.word}
                 </span>
               ))}
             </p>
@@ -987,7 +992,7 @@ function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
             <p className="text-lg leading-relaxed">{sentence.text}</p>
           </div>
           <div className={`text-sm font-medium ${perfect ? "text-green-600" : "text-primary"}`}>
-            {perfect ? "✓ Chính xác 100%!" : `Chính xác: ${acc}%`}
+            {perfect ? `✓ Chính xác 100%! (${okCount}/${totalWords} từ)` : `Đúng ${okCount}/${totalWords} từ · ${acc}%`}
           </div>
         </div>
       )}
@@ -1004,6 +1009,7 @@ function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
 
       <NavButtons onPrev={onPrev} onNext={onNext} hasPrev={hasPrev} hasNext={hasNext} />
     </Card>
+
   );
 }
 
