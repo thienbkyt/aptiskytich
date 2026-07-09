@@ -4,11 +4,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb } from "lucide-react";
+import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb, CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { speakWithTTS, stopTTS } from "@/lib/tts";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+
+/** Best-effort upsert of best_accuracy = max(existing, new) for signed-in users. */
+async function saveDictationProgress(
+  userId: string | undefined,
+  setId: string,
+  sentenceId: string,
+  accuracy: number,
+): Promise<number | null> {
+  if (!userId) return null;
+  try {
+    const acc = Math.max(0, Math.min(100, Math.round(accuracy)));
+    const { data: existing } = await supabase
+      .from("dictation_progress")
+      .select("best_accuracy")
+      .eq("user_id", userId)
+      .eq("sentence_id", sentenceId)
+      .maybeSingle();
+    const best = Math.max(existing?.best_accuracy ?? 0, acc);
+    if (existing && best === existing.best_accuracy) return best;
+    await supabase
+      .from("dictation_progress")
+      .upsert(
+        { user_id: userId, set_id: setId, sentence_id: sentenceId, best_accuracy: best },
+        { onConflict: "user_id,sentence_id" },
+      );
+    return best;
+  } catch {
+    return null;
+  }
+}
+
 
 type DictationSet = {
   id: string;
