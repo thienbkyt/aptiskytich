@@ -187,6 +187,65 @@ export type Database = {
         }
         Relationships: []
       }
+      dictation_sentences: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          id: string
+          set_id: string
+          sort: number
+          text: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          set_id: string
+          sort?: number
+          text: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          id?: string
+          set_id?: string
+          sort?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dictation_sentences_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "dictation_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dictation_sets: {
+        Row: {
+          created_at: string
+          id: string
+          level: number
+          sort: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: number
+          sort?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: number
+          sort?: number
+          title?: string
+        }
+        Relationships: []
+      }
       dictionary_cache: {
         Row: {
           created_at: string
