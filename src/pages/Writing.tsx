@@ -253,6 +253,9 @@ const Writing = () => {
                 Luyện viết theo format bài thi Aptis Writing. Hoàn thành các task viết với thời gian giống bài thi thật.{"\n"}
                 AI chấm bài và nhận band điểm Writing ngay sau khi làm bài.{"\n\n"}
               </div>
+              <Button asChild variant="outline" className="mt-4 rounded-full border-primary text-primary hover:bg-primary/10 hover:text-primary h-9 px-4 text-sm font-medium">
+                <Link to="/meo-thi-aptis/meo-hoc-writing-aptis">💡 Xem mẹo làm bài Writing</Link>
+              </Button>
             </div>
           </div>
         </section>
