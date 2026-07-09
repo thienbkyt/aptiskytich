@@ -121,7 +121,8 @@ const LatestBlogSection = () => {
 
   return (
     <section className="py-16 md:py-20 bg-[#FFF8F5] dark:bg-background border-t border-[#CC1C01]/10">
-      <div className="max-w-[1200px] mx-auto px-4">
+      <div ref={sentinelRef} aria-hidden className="max-w-[1200px] mx-auto px-4">
+
         <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
           <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#CC1C01]/10 text-[#CC1C01] text-xs font-bold uppercase tracking-wider">
