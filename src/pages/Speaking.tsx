@@ -303,7 +303,7 @@ const Speaking = () => {
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                           <span className="flex items-center gap-1.5">🎤 Ghi âm</span>
-                          <span className="flex items-center gap-1.5">⏱️ Có thời gian chuẩn bị</span>
+                          <span className="flex items-center gap-1.5">⏱️ AI chấm và sửa bài</span>
                         </div>
                         <div className="flex-1" />
                         <div className="flex justify-end">
