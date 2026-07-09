@@ -651,18 +651,11 @@ function AudioSettingsBar({
   );
 }
 
-/* ==================== Mode: Nghe Full ==================== */
-
-function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext }: {
-  sentence: Sentence;
-  playAudio: (onEnded?: () => void) => void;
-  stopAudio: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-  hasPrev: boolean;
-  hasNext: boolean;
-}) {
-  const [autoplay, setAutoplay] = useState(true);
+/* ==================== Shared play/stop hook ==================== */
+function usePlayback(
+  playAudio: (onEnded?: () => void) => void,
+  stopAudio: () => void,
+) {
   const [isPlaying, setIsPlaying] = useState(false);
   const didAutoplayRef = useRef(false);
 
@@ -678,7 +671,7 @@ function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
 
   // Autoplay once per sentence (component remounts on sentence change via key).
   useEffect(() => {
-    if (!autoplay || didAutoplayRef.current) return;
+    if (didAutoplayRef.current) return;
     didAutoplayRef.current = true;
     const t = setTimeout(play, 250);
     return () => clearTimeout(t);
@@ -688,37 +681,9 @@ function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
   // Cleanup on unmount
   useEffect(() => () => stopAudio(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return (
-    <Card className="p-6 sm:p-8">
-      <div className="flex flex-col items-center gap-4">
-        <button
-          type="button"
-          onClick={toggle}
-          className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-          aria-label={isPlaying ? "Dừng" : "Phát câu"}
-        >
-          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
-        </button>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={toggle}>
-            <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
-          </Button>
-          <label className="text-sm flex items-center gap-2 text-muted-foreground cursor-pointer">
-            <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
-            Tự động phát
-          </label>
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Transcript</p>
-        <p className="text-lg leading-relaxed">{sentence.text}</p>
-      </div>
-
-      <NavButtons onPrev={onPrev} onNext={onNext} hasPrev={hasPrev} hasNext={hasNext} />
-    </Card>
-  );
+  return { isPlaying, toggle };
 }
+
 
 /* ==================== Mode: Nghe Check ==================== */
 function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
