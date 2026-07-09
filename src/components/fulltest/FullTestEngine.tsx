@@ -876,7 +876,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         <ReadingExamEngine
           key={`reading-${engineKey}`}
           partType={partType}
-          testTitle={`${testTitle} – Reading ${currentPart.part}`}
+          testTitle={`${testTitle} – Reading ${readingPartLabel(currentPart.part)}`}
           timeLimit={SKILL_TIMES.reading}
           skipIntro={currentPartIndex > 0}
           fullFlow
