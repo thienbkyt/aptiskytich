@@ -157,6 +157,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const questions = pageData?.questions || [];
 
   const skillLabel = SKILL_LABELS[current.skill] || current.skill.toUpperCase();
+  const displayPart = current.skill === "reading" ? readingPartLabel(current.part) : current.part;
 
   // Top sticky pager bar — neutral background with navy text so it doesn't compete
   // with the engine's navy header underneath.
