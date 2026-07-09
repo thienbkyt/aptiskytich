@@ -71,12 +71,14 @@ interface Props {
 
 const NotificationBell = ({ variant = "desktop" }: Props) => {
   const { user } = useAuth();
+  const { unread_notification_count, setUnread } = useUserBootstrap();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Notification | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -96,15 +98,14 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
       setReadIds(new Set(readsRes.data.map((r: any) => r.notification_id)));
     }
     setLoading(false);
+    setHasFetched(true);
   }, [user]);
 
+  // Only fetch the full list when the bell is opened. The badge count comes
+  // from the single bootstrap RPC, so the initial page load makes no extra call.
   useEffect(() => {
-    if (user) fetchData();
-  }, [user, fetchData]);
-
-  useEffect(() => {
-    if (open) fetchData();
-  }, [open, fetchData]);
+    if (open && user) fetchData();
+  }, [open, user, fetchData]);
 
   // Click outside / Escape
   useEffect(() => {
@@ -125,8 +126,10 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
 
   if (!user) return null;
 
-  const unreadCount = items.filter((n) => !readIds.has(n.id)).length;
+  const unreadFromList = items.filter((n) => !readIds.has(n.id)).length;
+  const unreadCount = hasFetched ? unreadFromList : unread_notification_count;
   const badgeText = unreadCount > 9 ? "9+" : String(unreadCount);
+
 
   const markRead = async (id: string) => {
     if (readIds.has(id)) return;
