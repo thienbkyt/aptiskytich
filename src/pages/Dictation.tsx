@@ -314,8 +314,28 @@ function DictationPracticeView({ setId }: { setId: string }) {
   const total = sentences?.length || 0;
 
   const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const chainTokenRef = useRef(0);
+  const pendingResolveRef = useRef<(() => void) | null>(null);
+
+  // Persisted playback settings
+  const [speed, setSpeed] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("dict:speed") || "1");
+    return Number.isFinite(v) && v >= 0.7 && v <= 1.4 ? v : 1;
+  });
+  const [repeatCount, setRepeatCount] = useState<number>(() => {
+    const v = parseInt(localStorage.getItem("dict:repeatCount") || "3", 10);
+    return [2, 3, 4, 5].includes(v) ? v : 3;
+  });
+  const [repeatGap, setRepeatGap] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("dict:repeatGap") || "1");
+    return [0.5, 1, 1.5, 2].includes(v) ? v : 1;
+  });
+  useEffect(() => { localStorage.setItem("dict:speed", String(speed)); }, [speed]);
+  useEffect(() => { localStorage.setItem("dict:repeatCount", String(repeatCount)); }, [repeatCount]);
+  useEffect(() => { localStorage.setItem("dict:repeatGap", String(repeatGap)); }, [repeatGap]);
 
   const stopAudio = () => {
+    chainTokenRef.current++;
     stopTTS();
     const a = audioElRef.current;
     if (a) {
@@ -324,22 +344,69 @@ function DictationPracticeView({ setId }: { setId: string }) {
       a.onerror = null;
       audioElRef.current = null;
     }
+    const r = pendingResolveRef.current;
+    pendingResolveRef.current = null;
+    r?.();
   };
 
-  const playAudio = (onEnded?: () => void) => {
+  const speakBrowser = (text: string, rate: number, token: number): Promise<void> =>
+    new Promise((resolve) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return resolve();
+      if (token !== chainTokenRef.current) return resolve();
+      try { window.speechSynthesis.cancel(); } catch { /* noop */ }
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      u.rate = rate;
+      let done = false;
+      const finish = () => { if (done) return; done = true; pendingResolveRef.current = null; resolve(); };
+      u.onend = finish;
+      u.onerror = finish;
+      pendingResolveRef.current = finish;
+      try { window.speechSynthesis.speak(u); } catch { finish(); }
+    });
+
+  const playOnce = (rate: number, token: number): Promise<void> =>
+    new Promise((resolve) => {
+      if (!current || token !== chainTokenRef.current) return resolve();
+      const settle = () => { pendingResolveRef.current = null; resolve(); };
+      if (current.audio_url) {
+        const a = new Audio(current.audio_url);
+        a.playbackRate = rate;
+        audioElRef.current = a;
+        a.onended = () => { audioElRef.current = null; settle(); };
+        a.onerror = () => {
+          audioElRef.current = null;
+          speakBrowser(current.text, rate, token).then(settle);
+        };
+        pendingResolveRef.current = settle;
+        a.play().catch(() => {
+          audioElRef.current = null;
+          speakBrowser(current.text, rate, token).then(settle);
+        });
+      } else {
+        speakBrowser(current.text, rate, token).then(settle);
+      }
+    });
+
+  const playAudio = async (onEnded?: () => void) => {
     if (!current) return;
     stopAudio();
-    if (current.audio_url) {
-      const a = new Audio(current.audio_url);
-      audioElRef.current = a;
-      a.onended = () => { audioElRef.current = null; onEnded?.(); };
-      a.play().catch(() => {
-        audioElRef.current = null;
-        speakAsync(current.text, "en").then(() => onEnded?.());
-      });
-    } else {
-      speakAsync(current.text, "en").then(() => onEnded?.());
+    const token = ++chainTokenRef.current;
+    const count = repeatCount;
+    const gapMs = Math.round(repeatGap * 1000);
+    for (let i = 0; i < count; i++) {
+      if (token !== chainTokenRef.current) return;
+      await playOnce(speed, token);
+      if (token !== chainTokenRef.current) return;
+      if (i < count - 1) {
+        await new Promise<void>((r) => {
+          const t = setTimeout(() => { pendingResolveRef.current = null; r(); }, gapMs);
+          pendingResolveRef.current = () => { clearTimeout(t); r(); };
+        });
+        if (token !== chainTokenRef.current) return;
+      }
     }
+    if (token === chainTokenRef.current) onEnded?.();
   };
 
   const goPrev = () => { if (idx > 0) setIdx(idx - 1); };
