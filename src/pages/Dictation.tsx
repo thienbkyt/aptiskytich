@@ -162,6 +162,7 @@ function DictationListView() {
       .sort((a, b) => (a.level ?? Number.MAX_VALUE) - (b.level ?? Number.MAX_VALUE))
       .map((g) => ({ ...g, sets: [...g.sets].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) }));
   }, [sets]);
+  const [doneBySet, setDoneBySet] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
