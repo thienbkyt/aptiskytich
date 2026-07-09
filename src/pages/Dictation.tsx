@@ -899,7 +899,7 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
             variant="outline"
             onClick={() => { setChecked(false); }}
           >
-            <Eye className="w-4 h-4 mr-2" /> Sửa tiếp
+            <EyeOff className="w-4 h-4 mr-2" /> Ẩn&nbsp;đáp án
           </Button>
         )}
       </div>
