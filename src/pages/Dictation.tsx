@@ -569,7 +569,100 @@ function DictationPracticeView({ setId }: { setId: string }) {
   );
 }
 
+/* ==================== Audio settings bar ==================== */
+function AudioSettingsBar({
+  speed, setSpeed, repeatCount, setRepeatCount, repeatGap, setRepeatGap,
+}: {
+  speed: number;
+  setSpeed: (v: number) => void;
+  repeatCount: number;
+  setRepeatCount: (v: number) => void;
+  repeatGap: number;
+  setRepeatGap: (v: number) => void;
+}) {
+  const speeds = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4];
+  const [open, setOpen] = useState(false);
+  const [draftCount, setDraftCount] = useState(repeatCount);
+  const [draftGap, setDraftGap] = useState(repeatGap);
+  useEffect(() => { if (open) { setDraftCount(repeatCount); setDraftGap(repeatGap); } }, [open, repeatCount, repeatGap]);
+
+  const apply = () => {
+    setRepeatCount(draftCount);
+    setRepeatGap(draftGap);
+    setOpen(false);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-muted-foreground">Tốc độ</label>
+        <Select value={String(speed)} onValueChange={(v) => setSpeed(parseFloat(v))}>
+          <SelectTrigger className="w-[92px] h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {speeds.map((s) => (
+              <SelectItem key={s} value={String(s)}>{s.toFixed(1)}x</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9 gap-2">
+            <Repeat className="w-4 h-4" />
+            Lặp {repeatCount}× · nghỉ {repeatGap}s
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72" align="start">
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Số lần phát lại</p>
+              <div className="inline-flex rounded-md border border-border p-0.5">
+                {[2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setDraftCount(n)}
+                    className={cn(
+                      "px-3 py-1 text-sm font-medium rounded",
+                      draftCount === n ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {n} lần
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Thời gian nghỉ</p>
+              <div className="inline-flex flex-wrap gap-1 rounded-md border border-border p-0.5">
+                {[0.5, 1, 1.5, 2].map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setDraftGap(g)}
+                    className={cn(
+                      "px-3 py-1 text-sm font-medium rounded",
+                      draftGap === g ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {g}s
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button size="sm" onClick={apply}>Áp dụng</Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 /* ==================== Mode: Nghe Full ==================== */
+
 function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext }: {
   sentence: Sentence;
   playAudio: (onEnded?: () => void) => void;
