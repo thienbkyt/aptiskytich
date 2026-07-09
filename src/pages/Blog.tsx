@@ -20,11 +20,13 @@ const formatDate = (iso: string | null) => {
   return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
 
-const readingTime = (content: string | null) => {
-  const words = (content ?? "").trim().split(/\s+/).filter(Boolean).length;
+const readingTime = (content: string | null | undefined) => {
+  if (!content) return null;
+  const words = content.trim().split(/\s+/).filter(Boolean).length;
   const mins = Math.max(1, Math.round(words / 200));
   return `${mins} phút đọc`;
 };
+
 
 const useSignedCover = (path: string | null) => {
   const [url, setUrl] = useState<string | null>(null);
