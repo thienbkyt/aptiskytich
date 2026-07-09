@@ -144,7 +144,24 @@ function DictationListView() {
   });
   const { user } = useAuth();
   const [sets, setSets] = useState<DictationSet[] | null>(null);
-  const [doneBySet, setDoneBySet] = useState<Record<string, number>>({});
+  const groupedSets = useMemo(() => {
+    if (!sets) return [];
+    const groups = new Map<string, { label: string; level: number | null; sets: DictationSet[] }>();
+    sets.forEach((s) => {
+      const key = s.level != null ? `level-${s.level}` : "uncategorized";
+      if (!groups.has(key)) {
+        groups.set(key, {
+          label: s.level != null ? `Level ${s.level}` : "Chưa phân loại",
+          level: s.level ?? null,
+          sets: [],
+        });
+      }
+      groups.get(key)!.sets.push(s);
+    });
+    return Array.from(groups.values())
+      .sort((a, b) => (a.level ?? Number.MAX_VALUE) - (b.level ?? Number.MAX_VALUE))
+      .map((g) => ({ ...g, sets: [...g.sets].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) }));
+  }, [sets]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
