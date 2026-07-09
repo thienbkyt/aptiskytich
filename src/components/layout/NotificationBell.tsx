@@ -134,6 +134,7 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
   const markRead = async (id: string) => {
     if (readIds.has(id)) return;
     setReadIds((prev) => new Set(prev).add(id));
+    setUnread((n) => n - 1);
     await supabase
       .from("notification_reads")
       .upsert(
@@ -150,11 +151,13 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
       unread.forEach((n) => next.add(n.id));
       return next;
     });
+    setUnread(0);
     await supabase.from("notification_reads").upsert(
       unread.map((n) => ({ user_id: user.id, notification_id: n.id })),
       { onConflict: "user_id,notification_id", ignoreDuplicates: true },
     );
   };
+
 
   const handleItemClick = (n: Notification) => {
     markRead(n.id);
