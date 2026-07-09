@@ -313,14 +313,32 @@ function DictationPracticeView({ setId }: { setId: string }) {
   const current = sentences && sentences[idx];
   const total = sentences?.length || 0;
 
-  const playAudio = () => {
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopAudio = () => {
+    stopTTS();
+    const a = audioElRef.current;
+    if (a) {
+      try { a.pause(); } catch { /* noop */ }
+      a.onended = null;
+      a.onerror = null;
+      audioElRef.current = null;
+    }
+  };
+
+  const playAudio = (onEnded?: () => void) => {
     if (!current) return;
+    stopAudio();
     if (current.audio_url) {
       const a = new Audio(current.audio_url);
-      stopTTS();
-      a.play().catch(() => speakWithTTS(current.text, "en"));
+      audioElRef.current = a;
+      a.onended = () => { audioElRef.current = null; onEnded?.(); };
+      a.play().catch(() => {
+        audioElRef.current = null;
+        speakAsync(current.text, "en").then(() => onEnded?.());
+      });
     } else {
-      speakWithTTS(current.text, "en");
+      speakAsync(current.text, "en").then(() => onEnded?.());
     }
   };
 
