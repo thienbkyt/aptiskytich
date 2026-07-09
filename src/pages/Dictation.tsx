@@ -63,47 +63,40 @@ type Sentence = {
 
 type Mode = "check" | "chep";
 
-/* --------- Char-level diff --------- */
-type DiffPart = { ch: string; ok: boolean };
-function diffChars(expected: string, got: string): DiffPart[] {
-  const norm = (s: string) => s.replace(/\s+/g, " ").trim();
-  const a = norm(expected);
-  const b = norm(got);
-  const al = a.toLowerCase();
-  const bl = b.toLowerCase();
-  const m = al.length;
-  const n = bl.length;
+/* --------- Word-level diff (case & punctuation insensitive) --------- */
+type WordDiffPart = { word: string; ok: boolean };
+function normalizeWordCore(w: string) {
+  return w.toLowerCase().replace(/[^a-z0-9']/gi, "");
+}
+function diffWords(expected: string, got: string): WordDiffPart[] {
+  const expRaw = expected.split(/\s+/).filter(Boolean);
+  const gotRaw = got.split(/\s+/).filter(Boolean);
+  const a = expRaw.map(normalizeWordCore);
+  const b = gotRaw.map(normalizeWordCore);
+  const m = a.length, n = b.length;
   const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      dp[i][j] = al[i - 1] === bl[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+      dp[i][j] = a[i - 1] && a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1] + 1
+        : Math.max(dp[i - 1][j], dp[i][j - 1]);
     }
   }
-  const out: DiffPart[] = [];
+  const matched = new Array<boolean>(m).fill(false);
   let i = m, j = n;
-  const matchedExpected = new Array<boolean>(m).fill(false);
   while (i > 0 && j > 0) {
-    if (al[i - 1] === bl[j - 1]) {
-      matchedExpected[i - 1] = true;
-      i--; j--;
-    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-      i--;
-    } else {
-      j--;
-    }
+    if (a[i - 1] && a[i - 1] === b[j - 1]) { matched[i - 1] = true; i--; j--; }
+    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else j--;
   }
-  for (let k = 0; k < a.length; k++) {
-    out.push({ ch: a[k], ok: matchedExpected[k] });
-  }
-  return out;
+  return expRaw.map((w, k) => ({ word: w, ok: matched[k] }));
+}
+function wordAccuracyPct(parts: WordDiffPart[]) {
+  if (!parts.length) return 0;
+  const ok = parts.filter((p) => p.ok).length;
+  return Math.round((ok / parts.length) * 100);
 }
 
-function accuracyPct(parts: DiffPart[]) {
-  if (!parts.length) return 0;
-  const ok = parts.filter((p) => p.ok && p.ch.trim() !== "").length;
-  const total = parts.filter((p) => p.ch.trim() !== "").length || 1;
-  return Math.round((ok / total) * 100);
-}
 
 /* --------- Word tokenization for "Nghe Check" --------- */
 type Token = { raw: string; core: string; isWord: boolean };
