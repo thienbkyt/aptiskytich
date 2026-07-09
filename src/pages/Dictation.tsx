@@ -61,7 +61,7 @@ type Sentence = {
   sort: number | null;
 };
 
-type Mode = "full" | "check" | "chep";
+type Mode = "check" | "chep";
 
 /* --------- Char-level diff --------- */
 type DiffPart = { ch: string; ok: boolean };
