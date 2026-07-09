@@ -39,6 +39,7 @@ const AdminStudents = lazy(() => import("./pages/AdminStudents"));
 const AdminNotifications = lazy(() => import("./pages/AdminNotifications"));
 const AdminPro = lazy(() => import("./pages/AdminPro"));
 const AdminPrediction = lazy(() => import("./pages/AdminPrediction"));
+const AdminDictation = lazy(() => import("./pages/AdminDictation"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SkillPractice = lazy(() => import("./pages/SkillPractice"));
 const VocabStudy = lazy(() => import("./pages/VocabStudy"));
