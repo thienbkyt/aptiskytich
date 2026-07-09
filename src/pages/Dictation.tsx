@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb, CheckCircle2, Repeat, Headphones } from "lucide-react";
+import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, EyeOff, Lightbulb, CheckCircle2, Repeat, Headphones } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { speakAsync, speakWithTTS, stopTTS } from "@/lib/tts";
 import { Pause } from "lucide-react";
@@ -899,7 +899,7 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
             variant="outline"
             onClick={() => { setChecked(false); }}
           >
-            <Eye className="w-4 h-4 mr-2" /> Sửa tiếp
+            <EyeOff className="w-4 h-4 mr-2" /> Ẩn&nbsp;đáp án
           </Button>
         )}
       </div>
