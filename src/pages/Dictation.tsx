@@ -526,23 +526,12 @@ function DictationPracticeView({ setId }: { setId: string }) {
         </div>
 
 
-        {mode === "full" && current && (
-          <FullMode
-            key={current.id}
-            sentence={current}
-            playAudio={playAudio}
-            stopAudio={stopAudio}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={idx > 0}
-            hasNext={idx + 1 < total}
-          />
-        )}
         {mode === "check" && current && (
           <CheckMode
             key={current.id}
             sentence={current}
             playAudio={playAudio}
+            stopAudio={stopAudio}
             onPrev={goPrev}
             onNext={goNext}
             hasPrev={idx > 0}
@@ -555,6 +544,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
             key={current.id}
             sentence={current}
             playAudio={playAudio}
+            stopAudio={stopAudio}
             onPrev={goPrev}
             onNext={goNext}
             hasPrev={idx > 0}
@@ -562,6 +552,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
             onSave={(acc) => handleSave(current.id, acc)}
           />
         )}
+
 
       </main>
     </div>
