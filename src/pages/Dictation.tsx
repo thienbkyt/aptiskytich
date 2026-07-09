@@ -142,7 +142,9 @@ function DictationListView() {
     title: "Nghe chép chính tả — Aptis Kỳ Tích",
     description: "Luyện nghe và chép lại câu tiếng Anh theo từng bộ, kiểm tra chính xác từng ký tự.",
   });
+  const { user } = useAuth();
   const [sets, setSets] = useState<DictationSet[] | null>(null);
+  const [doneBySet, setDoneBySet] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -163,8 +165,22 @@ function DictationListView() {
         (sents || []).forEach((r: any) => { counts[r.set_id] = (counts[r.set_id] || 0) + 1; });
       }
       setSets((setsData || []).map((s) => ({ ...s, sentence_count: counts[s.id] || 0 })));
+
+      if (user?.id && ids.length) {
+        const { data: progress } = await supabase
+          .from("dictation_progress")
+          .select("set_id")
+          .eq("user_id", user.id)
+          .eq("best_accuracy", 100)
+          .in("set_id", ids);
+        const done: Record<string, number> = {};
+        (progress || []).forEach((r: any) => { done[r.set_id] = (done[r.set_id] || 0) + 1; });
+        setDoneBySet(done);
+      } else {
+        setDoneBySet({});
+      }
     })();
-  }, []);
+  }, [user?.id]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,27 +203,39 @@ function DictationListView() {
           <p className="text-muted-foreground">Chưa có bộ luyện nào.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {sets.map((s) => (
-              <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
-                <Card className="p-5 h-full hover:border-primary transition-colors">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                        {s.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {s.sentence_count ?? 0} câu
-                        {s.level != null && ` · Level ${s.level}`}
-                      </p>
+            {sets.map((s) => {
+              const total = s.sentence_count ?? 0;
+              const done = doneBySet[s.id] ?? 0;
+              const allDone = user && total > 0 && done >= total;
+              return (
+                <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
+                  <Card className="p-5 h-full hover:border-primary transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors flex items-center gap-2">
+                          {s.title}
+                          {allDone && <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {total} câu
+                          {s.level != null && ` · Level ${s.level}`}
+                        </p>
+                        {user && total > 0 && (
+                          <p className="text-xs font-medium text-primary mt-2">
+                            Đã xong {done}/{total} câu
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground mt-1 shrink-0" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground mt-1" />
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>
+
     </div>
   );
 }
