@@ -275,7 +275,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
   const [setInfo, setSetInfo] = useState<DictationSet | null>(null);
   const [sentences, setSentences] = useState<Sentence[] | null>(null);
   const [idx, setIdx] = useState(0);
-  const [mode, setMode] = useState<Mode>("full");
+  const [mode, setMode] = useState<Mode>("check");
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
 
