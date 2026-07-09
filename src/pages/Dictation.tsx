@@ -357,10 +357,23 @@ function DictationPracticeView({ setId }: { setId: string }) {
         </button>
 
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold">{setInfo.title}</h1>
-          <span className="text-sm font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
-            Câu {idx + 1}/{total}
-          </span>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            {setInfo.title}
+            {user && total > 0 && completed.size >= total && (
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            )}
+          </h1>
+          <div className="flex items-center gap-2">
+            {current && completed.has(current.id) && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Đã đạt 100%
+              </span>
+            )}
+            <span className="text-sm font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
+              Câu {idx + 1}/{total}
+              {user && total > 0 && ` · ${completed.size}/${total} ✓`}
+            </span>
+          </div>
         </div>
 
         {/* Mode selector */}
@@ -410,6 +423,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
             onNext={goNext}
             hasPrev={idx > 0}
             hasNext={idx + 1 < total}
+            onSave={(acc) => handleSave(current.id, acc)}
           />
         )}
         {mode === "chep" && current && (
@@ -421,8 +435,10 @@ function DictationPracticeView({ setId }: { setId: string }) {
             onNext={goNext}
             hasPrev={idx > 0}
             hasNext={idx + 1 < total}
+            onSave={(acc) => handleSave(current.id, acc)}
           />
         )}
+
       </main>
     </div>
   );
