@@ -495,13 +495,14 @@ function FullMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
 }
 
 /* ==================== Mode: Nghe Check ==================== */
-function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
+function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
   playAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
+  onSave: (accuracy: number) => void;
 }) {
   const [ratio, setRatio] = useState<30 | 50 | 100>(50);
   const [checked, setChecked] = useState(false);
@@ -520,18 +521,15 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
     const wordCount = wordIdxList.length;
     const howMany = Math.round((wordCount * ratio) / 100);
     const picked = seededPickIndices(wordCount, howMany, `${sentence.id}:${ratio}`);
-    // Map from position in wordIdxList → token index
     return new Set([...picked].map((k) => wordIdxList[k]));
   }, [wordIdxList, ratio, sentence.id]);
 
-  // Reset local state when sentence or ratio changes
   useEffect(() => {
     setChecked(false);
     setAnswers({});
     setRevealed(new Set());
   }, [sentence.id, ratio]);
 
-  // Autoplay once per sentence
   useEffect(() => {
     const t = setTimeout(playAudio, 250);
     return () => clearTimeout(t);
@@ -544,7 +542,20 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
     return exp !== "" && exp === got;
   };
 
-  const handleCheck = () => setChecked(true);
+  const handleCheck = () => {
+    setChecked(true);
+    // Accuracy = share of hidden words the user typed correctly, excluding revealed ones.
+    const hidden = [...hiddenSet];
+    const scored = hidden.filter((i) => !revealed.has(i));
+    if (scored.length === 0) {
+      // No scoreable slots (e.g. all revealed) — treat as 0 to be conservative.
+      onSave(0);
+      return;
+    }
+    const ok = scored.filter((i) => isCorrect(i)).length;
+    onSave(Math.round((ok / scored.length) * 100));
+  };
+
 
   const handleReveal = () => {
     // Reveal one hidden, still-empty & not-yet-revealed word
