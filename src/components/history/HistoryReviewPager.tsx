@@ -227,7 +227,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         examSetId={current.examSetId}
         attemptCreatedAt={current.attemptCreatedAt}
         testTitle={current.testTitle}
-        partLabel={current.part || "Speaking"}
+        partLabel={displayPart || "Speaking"}
         testResultId={current.testResultId}
         onExit={onExit}
         questionIndex={qIdx}
