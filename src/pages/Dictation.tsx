@@ -185,7 +185,7 @@ function DictationListView() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-10">
+      <main className="max-w-4xl mx-auto px-4 pt-24 pb-10">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Ear className="w-5 h-5 text-primary" />
