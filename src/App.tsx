@@ -60,6 +60,7 @@ const PricingPage = lazy(() => import("./pages/PricingPage"));
 const Connect = lazy(() => import("./pages/Connect"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Dictation = lazy(() => import("./pages/Dictation"));
 
 
 const queryClient = new QueryClient({
