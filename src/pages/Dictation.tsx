@@ -602,7 +602,7 @@ function AudioSettingsBar({
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-9 gap-2">
             <Repeat className="w-4 h-4" />
-            Lặp {repeatCount}{"\u00a0"}· Nghỉ {repeatGap}s
+            Lặp {repeatCount}x{"\u00a0"}· Nghỉ {repeatGap}s
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-72" align="start">
