@@ -914,16 +914,18 @@ function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
   const [checked, setChecked] = useState(false);
   const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
 
-  const diff = useMemo(() => (checked ? diffChars(sentence.text, input) : null), [checked, sentence.text, input]);
+  const diff = useMemo(() => (checked ? diffWords(sentence.text, input) : null), [checked, sentence.text, input]);
 
   const handleCheck = () => {
     if (!input.trim()) return;
     setChecked(true);
-    const parts = diffChars(sentence.text, input);
-    onSave(accuracyPct(parts));
+    const parts = diffWords(sentence.text, input);
+    onSave(wordAccuracyPct(parts));
   };
 
-  const acc = diff ? accuracyPct(diff) : 0;
+  const acc = diff ? wordAccuracyPct(diff) : 0;
+  const okCount = diff ? diff.filter((p) => p.ok).length : 0;
+  const totalWords = diff ? diff.length : 0;
   const perfect = checked && acc === 100;
 
   return (
@@ -962,15 +964,15 @@ function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
         <div className="mt-6 space-y-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              So sánh (đỏ = sai/thiếu)
+              So sánh theo từ (đỏ = sai/thiếu)
             </p>
-            <p className="text-lg leading-relaxed font-mono">
+            <p className="text-lg leading-relaxed flex flex-wrap gap-x-1.5 gap-y-1">
               {diff.map((p, i) => (
                 <span
                   key={i}
                   className={p.ok ? "text-foreground" : "text-destructive font-semibold underline decoration-destructive/60"}
                 >
-                  {p.ch}
+                  {p.word}
                 </span>
               ))}
             </p>
@@ -980,19 +982,11 @@ function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
             <p className="text-lg leading-relaxed">{sentence.text}</p>
           </div>
           <div className={`text-sm font-medium ${perfect ? "text-green-600" : "text-primary"}`}>
-            {perfect ? "✓ Chính xác 100%!" : `Chính xác: ${acc}%`}
+            {perfect ? `✓ Chính xác 100%! (${okCount}/${totalWords} từ)` : `Đúng ${okCount}/${totalWords} từ · ${acc}%`}
           </div>
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-3 justify-end">
-        {!checked ? (
-          <Button onClick={handleCheck} disabled={!input.trim()}>
-            <Check className="w-4 h-4 mr-2" /> Hiện đáp án
-          </Button>
-        ) : (
-          <Button variant="outline" onClick={() => { setChecked(false); }}>Sửa tiếp</Button>
-        )}
       </div>
 
       <NavButtons onPrev={onPrev} onNext={onNext} hasPrev={hasPrev} hasNext={hasNext} />
