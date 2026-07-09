@@ -723,11 +723,8 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
     setRevealed(new Set());
   }, [sentence.id, ratio]);
 
-  useEffect(() => {
-    const t = setTimeout(playAudio, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sentence.id]);
+
+
 
   const isCorrect = (tokenIdx: number) => {
     const exp = normalizeWord(tokens[tokenIdx].core);
