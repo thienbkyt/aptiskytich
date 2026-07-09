@@ -4,10 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb, CheckCircle2, Repeat } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { speakAsync, speakWithTTS, stopTTS } from "@/lib/tts";
 import { Pause } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -314,8 +316,28 @@ function DictationPracticeView({ setId }: { setId: string }) {
   const total = sentences?.length || 0;
 
   const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const chainTokenRef = useRef(0);
+  const pendingResolveRef = useRef<(() => void) | null>(null);
+
+  // Persisted playback settings
+  const [speed, setSpeed] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("dict:speed") || "1");
+    return Number.isFinite(v) && v >= 0.7 && v <= 1.4 ? v : 1;
+  });
+  const [repeatCount, setRepeatCount] = useState<number>(() => {
+    const v = parseInt(localStorage.getItem("dict:repeatCount") || "3", 10);
+    return [2, 3, 4, 5].includes(v) ? v : 3;
+  });
+  const [repeatGap, setRepeatGap] = useState<number>(() => {
+    const v = parseFloat(localStorage.getItem("dict:repeatGap") || "1");
+    return [0.5, 1, 1.5, 2].includes(v) ? v : 1;
+  });
+  useEffect(() => { localStorage.setItem("dict:speed", String(speed)); }, [speed]);
+  useEffect(() => { localStorage.setItem("dict:repeatCount", String(repeatCount)); }, [repeatCount]);
+  useEffect(() => { localStorage.setItem("dict:repeatGap", String(repeatGap)); }, [repeatGap]);
 
   const stopAudio = () => {
+    chainTokenRef.current++;
     stopTTS();
     const a = audioElRef.current;
     if (a) {
@@ -324,22 +346,69 @@ function DictationPracticeView({ setId }: { setId: string }) {
       a.onerror = null;
       audioElRef.current = null;
     }
+    const r = pendingResolveRef.current;
+    pendingResolveRef.current = null;
+    r?.();
   };
 
-  const playAudio = (onEnded?: () => void) => {
+  const speakBrowser = (text: string, rate: number, token: number): Promise<void> =>
+    new Promise((resolve) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return resolve();
+      if (token !== chainTokenRef.current) return resolve();
+      try { window.speechSynthesis.cancel(); } catch { /* noop */ }
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      u.rate = rate;
+      let done = false;
+      const finish = () => { if (done) return; done = true; pendingResolveRef.current = null; resolve(); };
+      u.onend = finish;
+      u.onerror = finish;
+      pendingResolveRef.current = finish;
+      try { window.speechSynthesis.speak(u); } catch { finish(); }
+    });
+
+  const playOnce = (rate: number, token: number): Promise<void> =>
+    new Promise((resolve) => {
+      if (!current || token !== chainTokenRef.current) return resolve();
+      const settle = () => { pendingResolveRef.current = null; resolve(); };
+      if (current.audio_url) {
+        const a = new Audio(current.audio_url);
+        a.playbackRate = rate;
+        audioElRef.current = a;
+        a.onended = () => { audioElRef.current = null; settle(); };
+        a.onerror = () => {
+          audioElRef.current = null;
+          speakBrowser(current.text, rate, token).then(settle);
+        };
+        pendingResolveRef.current = settle;
+        a.play().catch(() => {
+          audioElRef.current = null;
+          speakBrowser(current.text, rate, token).then(settle);
+        });
+      } else {
+        speakBrowser(current.text, rate, token).then(settle);
+      }
+    });
+
+  const playAudio = async (onEnded?: () => void) => {
     if (!current) return;
     stopAudio();
-    if (current.audio_url) {
-      const a = new Audio(current.audio_url);
-      audioElRef.current = a;
-      a.onended = () => { audioElRef.current = null; onEnded?.(); };
-      a.play().catch(() => {
-        audioElRef.current = null;
-        speakAsync(current.text, "en").then(() => onEnded?.());
-      });
-    } else {
-      speakAsync(current.text, "en").then(() => onEnded?.());
+    const token = ++chainTokenRef.current;
+    const count = repeatCount;
+    const gapMs = Math.round(repeatGap * 1000);
+    for (let i = 0; i < count; i++) {
+      if (token !== chainTokenRef.current) return;
+      await playOnce(speed, token);
+      if (token !== chainTokenRef.current) return;
+      if (i < count - 1) {
+        await new Promise<void>((r) => {
+          const t = setTimeout(() => { pendingResolveRef.current = null; r(); }, gapMs);
+          pendingResolveRef.current = () => { clearTimeout(t); r(); };
+        });
+        if (token !== chainTokenRef.current) return;
+      }
     }
+    if (token === chainTokenRef.current) onEnded?.();
   };
 
   const goPrev = () => { if (idx > 0) setIdx(idx - 1); };
@@ -442,10 +511,21 @@ function DictationPracticeView({ setId }: { setId: string }) {
           ))}
         </div>
 
+        {/* Audio settings: speed + repeat */}
+        <AudioSettingsBar
+          speed={speed}
+          setSpeed={setSpeed}
+          repeatCount={repeatCount}
+          setRepeatCount={setRepeatCount}
+          repeatGap={repeatGap}
+          setRepeatGap={setRepeatGap}
+        />
+
         {/* progress bar */}
         <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mb-6">
           <div className="h-full bg-primary transition-all" style={{ width: `${((idx + 1) / total) * 100}%` }} />
         </div>
+
 
         {mode === "full" && current && (
           <FullMode
@@ -489,7 +569,100 @@ function DictationPracticeView({ setId }: { setId: string }) {
   );
 }
 
+/* ==================== Audio settings bar ==================== */
+function AudioSettingsBar({
+  speed, setSpeed, repeatCount, setRepeatCount, repeatGap, setRepeatGap,
+}: {
+  speed: number;
+  setSpeed: (v: number) => void;
+  repeatCount: number;
+  setRepeatCount: (v: number) => void;
+  repeatGap: number;
+  setRepeatGap: (v: number) => void;
+}) {
+  const speeds = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4];
+  const [open, setOpen] = useState(false);
+  const [draftCount, setDraftCount] = useState(repeatCount);
+  const [draftGap, setDraftGap] = useState(repeatGap);
+  useEffect(() => { if (open) { setDraftCount(repeatCount); setDraftGap(repeatGap); } }, [open, repeatCount, repeatGap]);
+
+  const apply = () => {
+    setRepeatCount(draftCount);
+    setRepeatGap(draftGap);
+    setOpen(false);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 mb-4">
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-muted-foreground">Tốc độ</label>
+        <Select value={String(speed)} onValueChange={(v) => setSpeed(parseFloat(v))}>
+          <SelectTrigger className="w-[92px] h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {speeds.map((s) => (
+              <SelectItem key={s} value={String(s)}>{s.toFixed(1)}x</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9 gap-2">
+            <Repeat className="w-4 h-4" />
+            Lặp {repeatCount}× · nghỉ {repeatGap}s
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72" align="start">
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Số lần phát lại</p>
+              <div className="inline-flex rounded-md border border-border p-0.5">
+                {[2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setDraftCount(n)}
+                    className={cn(
+                      "px-3 py-1 text-sm font-medium rounded",
+                      draftCount === n ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {n} lần
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Thời gian nghỉ</p>
+              <div className="inline-flex flex-wrap gap-1 rounded-md border border-border p-0.5">
+                {[0.5, 1, 1.5, 2].map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setDraftGap(g)}
+                    className={cn(
+                      "px-3 py-1 text-sm font-medium rounded",
+                      draftGap === g ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {g}s
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button size="sm" onClick={apply}>Áp dụng</Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 /* ==================== Mode: Nghe Full ==================== */
+
 function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext }: {
   sentence: Sentence;
   playAudio: (onEnded?: () => void) => void;
