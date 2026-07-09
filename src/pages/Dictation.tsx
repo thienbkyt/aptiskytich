@@ -61,7 +61,7 @@ type Sentence = {
   sort: number | null;
 };
 
-type Mode = "full" | "check" | "chep";
+type Mode = "check" | "chep";
 
 /* --------- Char-level diff --------- */
 type DiffPart = { ch: string; ok: boolean };
@@ -275,7 +275,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
   const [setInfo, setSetInfo] = useState<DictationSet | null>(null);
   const [sentences, setSentences] = useState<Sentence[] | null>(null);
   const [idx, setIdx] = useState(0);
-  const [mode, setMode] = useState<Mode>("full");
+  const [mode, setMode] = useState<Mode>("check");
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
 
@@ -492,7 +492,6 @@ function DictationPracticeView({ setId }: { setId: string }) {
         {/* Mode selector */}
         <div className="inline-flex rounded-lg border border-border bg-muted p-1 mb-4">
           {[
-            { key: "full", label: "Nghe Full" },
             { key: "check", label: "Nghe Check" },
             { key: "chep", label: "Nghe Chép Full Câu" },
           ].map((m) => (
@@ -527,23 +526,12 @@ function DictationPracticeView({ setId }: { setId: string }) {
         </div>
 
 
-        {mode === "full" && current && (
-          <FullMode
-            key={current.id}
-            sentence={current}
-            playAudio={playAudio}
-            stopAudio={stopAudio}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={idx > 0}
-            hasNext={idx + 1 < total}
-          />
-        )}
         {mode === "check" && current && (
           <CheckMode
             key={current.id}
             sentence={current}
             playAudio={playAudio}
+            stopAudio={stopAudio}
             onPrev={goPrev}
             onNext={goNext}
             hasPrev={idx > 0}
@@ -556,6 +544,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
             key={current.id}
             sentence={current}
             playAudio={playAudio}
+            stopAudio={stopAudio}
             onPrev={goPrev}
             onNext={goNext}
             hasPrev={idx > 0}
@@ -563,6 +552,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
             onSave={(acc) => handleSave(current.id, acc)}
           />
         )}
+
 
       </main>
     </div>
@@ -661,18 +651,11 @@ function AudioSettingsBar({
   );
 }
 
-/* ==================== Mode: Nghe Full ==================== */
-
-function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext }: {
-  sentence: Sentence;
-  playAudio: (onEnded?: () => void) => void;
-  stopAudio: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-  hasPrev: boolean;
-  hasNext: boolean;
-}) {
-  const [autoplay, setAutoplay] = useState(true);
+/* ==================== Shared play/stop hook ==================== */
+function usePlayback(
+  playAudio: (onEnded?: () => void) => void,
+  stopAudio: () => void,
+) {
   const [isPlaying, setIsPlaying] = useState(false);
   const didAutoplayRef = useRef(false);
 
@@ -688,7 +671,7 @@ function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
 
   // Autoplay once per sentence (component remounts on sentence change via key).
   useEffect(() => {
-    if (!autoplay || didAutoplayRef.current) return;
+    if (didAutoplayRef.current) return;
     didAutoplayRef.current = true;
     const t = setTimeout(play, 250);
     return () => clearTimeout(t);
@@ -698,48 +681,22 @@ function FullMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, has
   // Cleanup on unmount
   useEffect(() => () => stopAudio(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return (
-    <Card className="p-6 sm:p-8">
-      <div className="flex flex-col items-center gap-4">
-        <button
-          type="button"
-          onClick={toggle}
-          className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-          aria-label={isPlaying ? "Dừng" : "Phát câu"}
-        >
-          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
-        </button>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={toggle}>
-            <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
-          </Button>
-          <label className="text-sm flex items-center gap-2 text-muted-foreground cursor-pointer">
-            <input type="checkbox" checked={autoplay} onChange={(e) => setAutoplay(e.target.checked)} />
-            Tự động phát
-          </label>
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Transcript</p>
-        <p className="text-lg leading-relaxed">{sentence.text}</p>
-      </div>
-
-      <NavButtons onPrev={onPrev} onNext={onNext} hasPrev={hasPrev} hasNext={hasNext} />
-    </Card>
-  );
+  return { isPlaying, toggle };
 }
 
+
 /* ==================== Mode: Nghe Check ==================== */
-function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
+function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
-  playAudio: () => void;
+  playAudio: (onEnded?: () => void) => void;
+  stopAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
   onSave: (accuracy: number) => void;
 }) {
+  const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
   const [ratio, setRatio] = useState<30 | 50 | 100>(100);
   const [checked, setChecked] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -766,11 +723,8 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSa
     setRevealed(new Set());
   }, [sentence.id, ratio]);
 
-  useEffect(() => {
-    const t = setTimeout(playAudio, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sentence.id]);
+
+
 
   const isCorrect = (tokenIdx: number) => {
     const exp = normalizeWord(tokens[tokenIdx].core);
@@ -817,14 +771,14 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSa
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={playAudio}
+            onClick={toggle}
             className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-            aria-label="Phát câu"
+            aria-label={isPlaying ? "Dừng" : "Phát câu"}
           >
-            <Play className="w-5 h-5 ml-0.5" />
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </button>
-          <Button variant="ghost" size="sm" onClick={playAudio}>
-            <Volume2 className="w-4 h-4 mr-2" /> Phát lại
+          <Button variant="ghost" size="sm" onClick={toggle}>
+            <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
           </Button>
         </div>
 
@@ -918,9 +872,10 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSa
 }
 
 /* ==================== Mode: Nghe Chép (existing) ==================== */
-function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
+function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
-  playAudio: () => void;
+  playAudio: (onEnded?: () => void) => void;
+  stopAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
@@ -929,16 +884,9 @@ function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSav
 }) {
   const [input, setInput] = useState("");
   const [checked, setChecked] = useState(false);
+  const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
 
   const diff = useMemo(() => (checked ? diffChars(sentence.text, input) : null), [checked, sentence.text, input]);
-
-  useEffect(() => {
-    setInput("");
-    setChecked(false);
-    const t = setTimeout(playAudio, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sentence.id]);
 
   const handleCheck = () => {
     if (!input.trim()) return;
@@ -955,16 +903,17 @@ function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSav
       <div className="flex flex-col items-center gap-4">
         <button
           type="button"
-          onClick={playAudio}
+          onClick={toggle}
           className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-          aria-label="Phát câu"
+          aria-label={isPlaying ? "Dừng" : "Phát câu"}
         >
-          <Play className="w-8 h-8 ml-1" />
+          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
         </button>
-        <Button variant="ghost" size="sm" onClick={playAudio}>
-          <Volume2 className="w-4 h-4 mr-2" /> Phát lại
+        <Button variant="ghost" size="sm" onClick={toggle}>
+          <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
         </Button>
       </div>
+
 
       <div className="mt-8">
         <label className="text-sm font-medium mb-2 block">Gõ lại câu bạn nghe được:</label>
