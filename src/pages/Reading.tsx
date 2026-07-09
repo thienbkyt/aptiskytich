@@ -368,6 +368,9 @@ const Reading = () => {
               <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl">
                 Luyện đọc hiểu theo format bài thi Aptis Reading. Làm quen với các dạng câu hỏi và nâng cao kỹ năng đọc nhanh.
               </p>
+              <Button asChild variant="outline" className="mt-4 rounded-full border-primary text-primary hover:bg-primary/10 hover:text-primary h-9 px-4 text-sm font-medium">
+                <Link to="/meo-thi-aptis/meo-hoc-reading-aptis">💡 Xem mẹo làm bài Reading</Link>
+              </Button>
             </div>
           </div>
         </section>

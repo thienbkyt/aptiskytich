@@ -219,6 +219,9 @@ const Speaking = () => {
                 Luyện nói qua các đề thi với format Aptis Speaking. Ghi âm câu trả lời với thời gian chuẩn bị và trả lời giống bài thi thật.{"\u00a0"}
                 AI chấm bài và nhận band điểm Speaking ngay sau khi làm bài.
               </p>
+              <Button asChild variant="outline" className="mt-4 rounded-full border-primary text-primary hover:bg-primary/10 hover:text-primary h-9 px-4 text-sm font-medium">
+                <Link to="/meo-thi-aptis/meo-hoc-speaking-aptis">💡 Xem mẹo làm bài Speaking</Link>
+              </Button>
             </div>
           </div>
         </section>
