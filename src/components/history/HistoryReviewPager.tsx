@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { readingPartLabel } from "@/hooks/useExamSets";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
 
