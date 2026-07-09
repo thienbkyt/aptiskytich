@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { readingPartLabel } from "@/hooks/useExamSets";
 import { useAuth } from "@/hooks/useAuth";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 import { toTimeSafe } from "@/lib/safeDate";
