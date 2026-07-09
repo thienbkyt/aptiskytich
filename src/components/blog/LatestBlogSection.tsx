@@ -74,12 +74,37 @@ const LatestPostCard = ({ post }: { post: BlogPost }) => {
 
 const LatestBlogSection = () => {
   const [posts, setPosts] = useState<BlogPost[] | null>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (shouldLoad) return;
+    const node = sentinelRef.current;
+    if (!node) return;
+    // Defer the Supabase call until the section is near the viewport.
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setShouldLoad(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "400px 0px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [shouldLoad]);
+
+  useEffect(() => {
+    if (!shouldLoad) return;
     let alive = true;
     supabase
       .from("blog_posts" as any)
-      .select("*")
+      .select("id, title, slug, excerpt, cover_image_url, category, published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .limit(3)
@@ -89,7 +114,8 @@ const LatestBlogSection = () => {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [shouldLoad]);
+
 
   if (posts && posts.length === 0) return null;
 
