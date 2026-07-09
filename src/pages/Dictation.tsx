@@ -771,14 +771,14 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={playAudio}
+            onClick={toggle}
             className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-            aria-label="Phát câu"
+            aria-label={isPlaying ? "Dừng" : "Phát câu"}
           >
-            <Play className="w-5 h-5 ml-0.5" />
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </button>
-          <Button variant="ghost" size="sm" onClick={playAudio}>
-            <Volume2 className="w-4 h-4 mr-2" /> Phát lại
+          <Button variant="ghost" size="sm" onClick={toggle}>
+            <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
           </Button>
         </div>
 
