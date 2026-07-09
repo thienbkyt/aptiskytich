@@ -762,17 +762,13 @@ function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, ha
 
   const handleCheck = () => {
     setChecked(true);
-    // Accuracy = share of hidden words the user typed correctly, excluding revealed ones.
+    // Accuracy = share of hidden slots filled with the correct word (revealed slots count as correct).
     const hidden = [...hiddenSet];
-    const scored = hidden.filter((i) => !revealed.has(i));
-    if (scored.length === 0) {
-      // No scoreable slots (e.g. all revealed) — treat as 0 to be conservative.
-      onSave(0);
-      return;
-    }
-    const ok = scored.filter((i) => isCorrect(i)).length;
-    onSave(Math.round((ok / scored.length) * 100));
+    if (hidden.length === 0) { onSave(0); return; }
+    const ok = hidden.filter((i) => isCorrect(i)).length;
+    onSave(Math.round((ok / hidden.length) * 100));
   };
+
 
 
   const handleReveal = () => {
