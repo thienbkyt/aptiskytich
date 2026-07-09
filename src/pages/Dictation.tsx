@@ -185,7 +185,7 @@ function DictationListView() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-10">
+      <main className="max-w-4xl mx-auto px-4 pt-24 pb-10">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Ear className="w-5 h-5 text-primary" />
@@ -319,7 +319,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-10"><p className="text-destructive">{error}</p></div>
+        <div className="max-w-3xl mx-auto px-4 pt-24 pb-10"><p className="text-destructive">{error}</p></div>
       </div>
     );
   }
@@ -327,7 +327,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-10"><p className="text-muted-foreground">Đang tải…</p></div>
+        <div className="max-w-3xl mx-auto px-4 pt-24 pb-10"><p className="text-muted-foreground">Đang tải…</p></div>
       </div>
     );
   }
@@ -335,7 +335,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-3xl mx-auto px-4 py-10">
+        <div className="max-w-3xl mx-auto px-4 pt-24 pb-10">
           <p className="text-muted-foreground">Bộ này chưa có câu nào.</p>
           <Button variant="outline" className="mt-4" onClick={() => navigate("/nghe-chep")}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
@@ -348,7 +348,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-3xl mx-auto px-4 pt-24 pb-8">
         <button
           onClick={() => navigate("/nghe-chep")}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
