@@ -187,6 +187,48 @@ export type Database = {
         }
         Relationships: []
       }
+      dictation_progress: {
+        Row: {
+          best_accuracy: number
+          id: string
+          sentence_id: string
+          set_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          best_accuracy?: number
+          id?: string
+          sentence_id: string
+          set_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          best_accuracy?: number
+          id?: string
+          sentence_id?: string
+          set_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dictation_progress_sentence_id_fkey"
+            columns: ["sentence_id"]
+            isOneToOne: false
+            referencedRelation: "dictation_sentences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dictation_progress_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "dictation_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dictation_sentences: {
         Row: {
           audio_url: string | null

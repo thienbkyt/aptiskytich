@@ -4,11 +4,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb } from "lucide-react";
+import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, Lightbulb, CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { speakWithTTS, stopTTS } from "@/lib/tts";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+
+/** Best-effort upsert of best_accuracy = max(existing, new) for signed-in users. */
+async function saveDictationProgress(
+  userId: string | undefined,
+  setId: string,
+  sentenceId: string,
+  accuracy: number,
+): Promise<number | null> {
+  if (!userId) return null;
+  try {
+    const acc = Math.max(0, Math.min(100, Math.round(accuracy)));
+    const { data: existing } = await supabase
+      .from("dictation_progress")
+      .select("best_accuracy")
+      .eq("user_id", userId)
+      .eq("sentence_id", sentenceId)
+      .maybeSingle();
+    const best = Math.max(existing?.best_accuracy ?? 0, acc);
+    if (existing && best === existing.best_accuracy) return best;
+    await supabase
+      .from("dictation_progress")
+      .upsert(
+        { user_id: userId, set_id: setId, sentence_id: sentenceId, best_accuracy: best },
+        { onConflict: "user_id,sentence_id" },
+      );
+    return best;
+  } catch {
+    return null;
+  }
+}
+
 
 type DictationSet = {
   id: string;
@@ -110,7 +142,9 @@ function DictationListView() {
     title: "Nghe chép chính tả — Aptis Kỳ Tích",
     description: "Luyện nghe và chép lại câu tiếng Anh theo từng bộ, kiểm tra chính xác từng ký tự.",
   });
+  const { user } = useAuth();
   const [sets, setSets] = useState<DictationSet[] | null>(null);
+  const [doneBySet, setDoneBySet] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -131,8 +165,22 @@ function DictationListView() {
         (sents || []).forEach((r: any) => { counts[r.set_id] = (counts[r.set_id] || 0) + 1; });
       }
       setSets((setsData || []).map((s) => ({ ...s, sentence_count: counts[s.id] || 0 })));
+
+      if (user?.id && ids.length) {
+        const { data: progress } = await supabase
+          .from("dictation_progress")
+          .select("set_id")
+          .eq("user_id", user.id)
+          .eq("best_accuracy", 100)
+          .in("set_id", ids);
+        const done: Record<string, number> = {};
+        (progress || []).forEach((r: any) => { done[r.set_id] = (done[r.set_id] || 0) + 1; });
+        setDoneBySet(done);
+      } else {
+        setDoneBySet({});
+      }
     })();
-  }, []);
+  }, [user?.id]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,27 +203,39 @@ function DictationListView() {
           <p className="text-muted-foreground">Chưa có bộ luyện nào.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {sets.map((s) => (
-              <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
-                <Card className="p-5 h-full hover:border-primary transition-colors">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                        {s.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {s.sentence_count ?? 0} câu
-                        {s.level != null && ` · Level ${s.level}`}
-                      </p>
+            {sets.map((s) => {
+              const total = s.sentence_count ?? 0;
+              const done = doneBySet[s.id] ?? 0;
+              const allDone = user && total > 0 && done >= total;
+              return (
+                <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
+                  <Card className="p-5 h-full hover:border-primary transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors flex items-center gap-2">
+                          {s.title}
+                          {allDone && <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {total} câu
+                          {s.level != null && ` · Level ${s.level}`}
+                        </p>
+                        {user && total > 0 && (
+                          <p className="text-xs font-medium text-primary mt-2">
+                            Đã xong {done}/{total} câu
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground mt-1 shrink-0" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground mt-1" />
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>
+
     </div>
   );
 }
@@ -183,11 +243,13 @@ function DictationListView() {
 /* ==================== Practice page ==================== */
 function DictationPracticeView({ setId }: { setId: string }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [setInfo, setSetInfo] = useState<DictationSet | null>(null);
   const [sentences, setSentences] = useState<Sentence[] | null>(null);
   const [idx, setIdx] = useState(0);
   const [mode, setMode] = useState<Mode>("full");
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
 
   usePageMeta({
     title: `${setInfo?.title || "Nghe chép chính tả"} — Aptis Kỳ Tích`,
@@ -208,6 +270,20 @@ function DictationPracticeView({ setId }: { setId: string }) {
     return () => { stopTTS(); };
   }, [setId]);
 
+  // Load user's completed (best_accuracy=100) sentences for this set
+  useEffect(() => {
+    if (!user?.id) { setCompleted(new Set()); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("dictation_progress")
+        .select("sentence_id")
+        .eq("user_id", user.id)
+        .eq("set_id", setId)
+        .eq("best_accuracy", 100);
+      setCompleted(new Set((data || []).map((r: any) => r.sentence_id)));
+    })();
+  }, [user?.id, setId]);
+
   const current = sentences && sentences[idx];
   const total = sentences?.length || 0;
 
@@ -224,6 +300,20 @@ function DictationPracticeView({ setId }: { setId: string }) {
 
   const goPrev = () => { if (idx > 0) setIdx(idx - 1); };
   const goNext = () => { if (idx + 1 < total) setIdx(idx + 1); };
+
+  const handleSave = async (sentenceId: string, accuracy: number) => {
+    const best = await saveDictationProgress(user?.id, setId, sentenceId, accuracy);
+    if (best === 100) {
+      setCompleted((prev) => {
+        if (prev.has(sentenceId)) return prev;
+        const next = new Set(prev);
+        next.add(sentenceId);
+        return next;
+      });
+    }
+  };
+
+
 
   if (error) {
     return (
@@ -267,10 +357,23 @@ function DictationPracticeView({ setId }: { setId: string }) {
         </button>
 
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold">{setInfo.title}</h1>
-          <span className="text-sm font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
-            Câu {idx + 1}/{total}
-          </span>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            {setInfo.title}
+            {user && total > 0 && completed.size >= total && (
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            )}
+          </h1>
+          <div className="flex items-center gap-2">
+            {current && completed.has(current.id) && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Đã đạt 100%
+              </span>
+            )}
+            <span className="text-sm font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
+              Câu {idx + 1}/{total}
+              {user && total > 0 && ` · ${completed.size}/${total} ✓`}
+            </span>
+          </div>
         </div>
 
         {/* Mode selector */}
@@ -320,6 +423,7 @@ function DictationPracticeView({ setId }: { setId: string }) {
             onNext={goNext}
             hasPrev={idx > 0}
             hasNext={idx + 1 < total}
+            onSave={(acc) => handleSave(current.id, acc)}
           />
         )}
         {mode === "chep" && current && (
@@ -331,8 +435,10 @@ function DictationPracticeView({ setId }: { setId: string }) {
             onNext={goNext}
             hasPrev={idx > 0}
             hasNext={idx + 1 < total}
+            onSave={(acc) => handleSave(current.id, acc)}
           />
         )}
+
       </main>
     </div>
   );
@@ -389,13 +495,14 @@ function FullMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
 }
 
 /* ==================== Mode: Nghe Check ==================== */
-function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
+function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
   playAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
+  onSave: (accuracy: number) => void;
 }) {
   const [ratio, setRatio] = useState<30 | 50 | 100>(50);
   const [checked, setChecked] = useState(false);
@@ -414,18 +521,15 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
     const wordCount = wordIdxList.length;
     const howMany = Math.round((wordCount * ratio) / 100);
     const picked = seededPickIndices(wordCount, howMany, `${sentence.id}:${ratio}`);
-    // Map from position in wordIdxList → token index
     return new Set([...picked].map((k) => wordIdxList[k]));
   }, [wordIdxList, ratio, sentence.id]);
 
-  // Reset local state when sentence or ratio changes
   useEffect(() => {
     setChecked(false);
     setAnswers({});
     setRevealed(new Set());
   }, [sentence.id, ratio]);
 
-  // Autoplay once per sentence
   useEffect(() => {
     const t = setTimeout(playAudio, 250);
     return () => clearTimeout(t);
@@ -438,7 +542,20 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
     return exp !== "" && exp === got;
   };
 
-  const handleCheck = () => setChecked(true);
+  const handleCheck = () => {
+    setChecked(true);
+    // Accuracy = share of hidden words the user typed correctly, excluding revealed ones.
+    const hidden = [...hiddenSet];
+    const scored = hidden.filter((i) => !revealed.has(i));
+    if (scored.length === 0) {
+      // No scoreable slots (e.g. all revealed) — treat as 0 to be conservative.
+      onSave(0);
+      return;
+    }
+    const ok = scored.filter((i) => isCorrect(i)).length;
+    onSave(Math.round((ok / scored.length) * 100));
+  };
+
 
   const handleReveal = () => {
     // Reveal one hidden, still-empty & not-yet-revealed word
@@ -565,13 +682,14 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
 }
 
 /* ==================== Mode: Nghe Chép (existing) ==================== */
-function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
+function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
   sentence: Sentence;
   playAudio: () => void;
   onPrev: () => void;
   onNext: () => void;
   hasPrev: boolean;
   hasNext: boolean;
+  onSave: (accuracy: number) => void;
 }) {
   const [input, setInput] = useState("");
   const [checked, setChecked] = useState(false);
@@ -586,7 +704,13 @@ function ChepMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sentence.id]);
 
-  const handleCheck = () => { if (input.trim()) setChecked(true); };
+  const handleCheck = () => {
+    if (!input.trim()) return;
+    setChecked(true);
+    const parts = diffChars(sentence.text, input);
+    onSave(accuracyPct(parts));
+  };
+
   const acc = diff ? accuracyPct(diff) : 0;
   const perfect = checked && acc === 100;
 
