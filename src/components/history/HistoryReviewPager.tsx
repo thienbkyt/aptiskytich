@@ -179,7 +179,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             </span>
             <span>·</span>
             <span className="text-[#24085a] font-semibold">{skillLabel}</span>
-            {current.part ? <span className="ml-1 text-muted-foreground">{current.part}</span> : null}
+            {displayPart ? <span className="ml-1 text-muted-foreground">{displayPart}</span> : null}
             {partPageCount > 1 && (
               <span className="ml-2 text-muted-foreground">
                 · Câu <span className="font-semibold text-foreground">{qIdx + 1}/{partPageCount}</span>
