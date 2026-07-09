@@ -165,7 +165,7 @@ const BlogIndex = () => {
     setPosts(null);
     supabase
       .from("blog_posts" as any)
-      .select("*")
+      .select("id, title, slug, excerpt, cover_image_url, category, published_at")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {
@@ -177,6 +177,7 @@ const BlogIndex = () => {
         setPosts((data ?? []) as unknown as BlogPost[]);
       });
   };
+
 
   useEffect(() => {
     load();
