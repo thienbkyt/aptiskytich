@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { readingPartLabel } from "@/hooks/useExamSets";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
 
@@ -156,6 +157,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const questions = pageData?.questions || [];
 
   const skillLabel = SKILL_LABELS[current.skill] || current.skill.toUpperCase();
+  const displayPart = current.skill === "reading" ? readingPartLabel(current.part) : current.part;
 
   // Top sticky pager bar — neutral background with navy text so it doesn't compete
   // with the engine's navy header underneath.
@@ -177,7 +179,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             </span>
             <span>·</span>
             <span className="text-[#24085a] font-semibold">{skillLabel}</span>
-            {current.part ? <span className="ml-1 text-muted-foreground">{current.part}</span> : null}
+            {displayPart ? <span className="ml-1 text-muted-foreground">{displayPart}</span> : null}
             {partPageCount > 1 && (
               <span className="ml-2 text-muted-foreground">
                 · Câu <span className="font-semibold text-foreground">{qIdx + 1}/{partPageCount}</span>
@@ -225,7 +227,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         examSetId={current.examSetId}
         attemptCreatedAt={current.attemptCreatedAt}
         testTitle={current.testTitle}
-        partLabel={current.part || "Speaking"}
+        partLabel={displayPart || "Speaking"}
         testResultId={current.testResultId}
         onExit={onExit}
         questionIndex={qIdx}
@@ -255,7 +257,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             <ReviewAnswerPanel
               questions={questions}
               qResults={qResults}
-              title={`Đáp án & Giải thích — ${current.part || skillLabel}`}
+              title={`Đáp án & Giải thích — ${displayPart || skillLabel}`}
             />
           </div>
         )}

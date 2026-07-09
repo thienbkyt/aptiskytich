@@ -355,9 +355,9 @@ const ReadingExamEngine = ({
   };
 
   const partLabel = partType === "part1" ? "Part 1 – Gap Fill"
-    : partType === "part2" ? "Part 2 – Text Cohesion"
-    : partType === "part3" ? "Part 3 – Opinion Matching"
-    : "Part 4 – Long Reading";
+    : partType === "part2" ? "Part 2 + 3 – Text Cohesion"
+    : partType === "part3" ? "Part 4 – Opinion Matching"
+    : "Part 5 – Long Reading";
 
   const sections = [
     {

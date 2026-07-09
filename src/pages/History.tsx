@@ -14,6 +14,7 @@ import {
 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { readingPartLabel } from "@/hooks/useExamSets";
 import { useAuth } from "@/hooks/useAuth";
 import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 import { getSkillBand } from "@/data/questions";
@@ -558,7 +559,13 @@ const History = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {r.part ? <Badge variant="outline" className="text-[11px]">{r.part}</Badge> : <span className="text-muted-foreground">—</span>}
+                          {r.part ? (
+                            <Badge variant="outline" className="text-[11px]">
+                              {r.skill === "reading" ? readingPartLabel(r.part) : r.part}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-foreground">{r.displayScore}</TableCell>
                         <TableCell className="text-right">

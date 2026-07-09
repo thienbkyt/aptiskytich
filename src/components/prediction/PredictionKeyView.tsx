@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { normalizePart } from "@/hooks/useExamSets";
+import { normalizePart, readingPartLabel } from "@/hooks/useExamSets";
 import { format } from "date-fns";
 import {
   ArrowRight,
@@ -555,7 +555,9 @@ export default function PredictionKeyView() {
                       {sk.parts.map((pg) => {
                         const isRL = sk.skill === "reading" || sk.skill === "listening";
                         const highCount = pg.items.filter((i) => i.priority === "high").length;
-                        const partLabel = pg.part.replace(/^part(\d+)$/i, "Part $1");
+                        const partLabel = sk.skill === "reading"
+                          ? readingPartLabel(pg.part)
+                          : pg.part.replace(/^part(\d+)$/i, "Part $1");
                         const highPrimary = pg.items.filter((i) => i.priority === "high" || i.priority === "medium");
                         const lowSecondary = pg.items.filter((i) => i.priority === "low" || i.priority === "backup");
                         return (

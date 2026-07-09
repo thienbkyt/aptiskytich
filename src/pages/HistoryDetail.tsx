@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { readingPartLabel } from "@/hooks/useExamSets";
 import { useAuth } from "@/hooks/useAuth";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 import { toTimeSafe } from "@/lib/safeDate";
@@ -293,7 +294,11 @@ const HistoryDetail = () => {
               <div className="glass-card p-6 md:p-8 mb-6">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <Badge variant="secondary">{SKILL_LABELS[skill] || skill}</Badge>
-                  {setInfo?.part && <Badge variant="outline">{setInfo.part}</Badge>}
+                  {setInfo?.part && (
+                    <Badge variant="outline">
+                      {setInfo.skill === "reading" ? readingPartLabel(setInfo.part) : setInfo.part}
+                    </Badge>
+                  )}
                 </div>
                 <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-4">
                   {setInfo?.title || "Đề mẫu"}

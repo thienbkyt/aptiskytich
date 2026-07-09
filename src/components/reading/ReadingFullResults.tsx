@@ -35,9 +35,9 @@ interface Props {
 
 const partLabel = (pt: ReadingPartType) => ({
   part1: "Part 1 – Gap Fill",
-  part2: "Part 2 – Text Cohesion",
-  part3: "Part 3 – Opinion Matching",
-  part4: "Part 4 – Long Reading",
+  part2: "Part 2 + 3 – Text Cohesion",
+  part3: "Part 4 – Opinion Matching",
+  part4: "Part 5 – Long Reading",
 }[pt]);
 
 const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
