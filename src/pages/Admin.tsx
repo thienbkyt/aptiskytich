@@ -64,6 +64,13 @@ const Admin = () => {
                 Key Dự Đoán
               </Link>
               <Link
+                to="/admin/nghe-chep"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                <ListMusic className="w-4 h-4" />
+                Nghe chép chính tả
+              </Link>
+              <Link
                 to="/admin/reports"
                 className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
