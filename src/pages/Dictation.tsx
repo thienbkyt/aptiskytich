@@ -144,6 +144,24 @@ function DictationListView() {
   });
   const { user } = useAuth();
   const [sets, setSets] = useState<DictationSet[] | null>(null);
+  const groupedSets = useMemo(() => {
+    if (!sets) return [];
+    const groups = new Map<string, { label: string; level: number | null; sets: DictationSet[] }>();
+    sets.forEach((s) => {
+      const key = s.level != null ? `level-${s.level}` : "uncategorized";
+      if (!groups.has(key)) {
+        groups.set(key, {
+          label: s.level != null ? `Level ${s.level}` : "Chưa phân loại",
+          level: s.level ?? null,
+          sets: [],
+        });
+      }
+      groups.get(key)!.sets.push(s);
+    });
+    return Array.from(groups.values())
+      .sort((a, b) => (a.level ?? Number.MAX_VALUE) - (b.level ?? Number.MAX_VALUE))
+      .map((g) => ({ ...g, sets: [...g.sets].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) }));
+  }, [sets]);
   const [doneBySet, setDoneBySet] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -202,36 +220,43 @@ function DictationListView() {
         ) : sets.length === 0 ? (
           <p className="text-muted-foreground">Chưa có bộ luyện nào.</p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {sets.map((s) => {
-              const total = s.sentence_count ?? 0;
-              const done = doneBySet[s.id] ?? 0;
-              const allDone = user && total > 0 && done >= total;
-              return (
-                <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
-                  <Card className="p-5 h-full hover:border-primary transition-colors">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors flex items-center gap-2">
-                          {s.title}
-                          {allDone && <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {total} câu
-                          {s.level != null && ` · Level ${s.level}`}
-                        </p>
-                        {user && total > 0 && (
-                          <p className="text-xs font-medium text-primary mt-2">
-                            Đã xong {done}/{total} câu
-                          </p>
-                        )}
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground mt-1 shrink-0" />
-                    </div>
-                  </Card>
-                </Link>
-              );
-            })}
+          <div className="space-y-8">
+            {groupedSets.map((group) => (
+              <section key={group.label}>
+                <h2 className="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+                  <span className="w-2 h-8 rounded-full bg-primary inline-block" />
+                  {group.label}
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {group.sets.map((s) => {
+                    const total = s.sentence_count ?? 0;
+                    const done = doneBySet[s.id] ?? 0;
+                    const allDone = user && total > 0 && done >= total;
+                    return (
+                      <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
+                        <Card className="p-5 h-full hover:border-primary transition-colors">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-lg group-hover:text-primary transition-colors flex items-center gap-2">
+                                {s.title}
+                                {allDone && <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />}
+                              </h3>
+                              <p className="text-sm text-muted-foreground mt-1">{total} câu</p>
+                              {user && total > 0 && (
+                                <p className="text-xs font-medium text-primary mt-2">
+                                  Đã xong {done}/{total} câu
+                                </p>
+                              )}
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-muted-foreground mt-1 shrink-0" />
+                          </div>
+                        </Card>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </main>
