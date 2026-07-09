@@ -222,7 +222,7 @@ function DictationListView() {
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Nghe chép chính tả</h1>
         </div>
         <p className="text-muted-foreground mb-10 max-w-2xl">
-          2 chế độ: <span className="font-medium text-foreground">Nghe Check</span> (điền từ khoá) và{" "}
+          2 chế độ: <span className="font-medium text-foreground">Nghe Check</span> (chép từng từ) và{" "}
           <span className="font-medium text-foreground">Nghe Chép</span> (chép nguyên câu).
         </p>
 
