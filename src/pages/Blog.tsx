@@ -89,9 +89,12 @@ const FeaturedCard = ({ post }: { post: BlogPost }) => (
         <span className="inline-flex items-center gap-1.5">
           <Calendar className="w-4 h-4" /> {formatDate(post.published_at)}
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Clock className="w-4 h-4" /> {readingTime(post.content)}
-        </span>
+        {readingTime(post.content) && (
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="w-4 h-4" /> {readingTime(post.content)}
+          </span>
+        )}
+
       </div>
       <div className="mt-5 inline-flex items-center gap-2 text-[#CC1C01] font-semibold text-sm">
         Đọc bài viết
