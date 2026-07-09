@@ -567,7 +567,7 @@ function CheckMode({ sentence, playAudio, onPrev, onNext, hasPrev, hasNext, onSa
   hasNext: boolean;
   onSave: (accuracy: number) => void;
 }) {
-  const [ratio, setRatio] = useState<30 | 50 | 100>(50);
+  const [ratio, setRatio] = useState<30 | 50 | 100>(100);
   const [checked, setChecked] = useState(false);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
