@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
+import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 
 type QResult = { exam_question_id: string; user_answer: string | null; is_correct: boolean };
 type PerSetEntry = {
@@ -146,18 +147,21 @@ const MarathonHistoryDetail = () => {
           </div>
         </div>
       </div>
-      <HistoryReviewRenderer
-        key={reviewIndex}
-        examSetId={r.examSetId}
-        skill={skill}
-        part={r.part}
-        testTitle={`Đề ${page.ri + 1}`}
-        qResults={r.qResults || []}
-        onExit={() => navigate("/history")}
-        pageBase={page.priorPages}
-        pageTotal={pages.length}
-        initialSection={page.section}
-      />
+      <ReviewErrorBoundary label="Không xem lại được trang marathon này">
+        <HistoryReviewRenderer
+          key={reviewIndex}
+          examSetId={r.examSetId}
+          skill={skill}
+          part={r.part}
+          testTitle={`Đề ${page.ri + 1}`}
+          qResults={r.qResults || []}
+          onExit={() => navigate("/history")}
+          pageBase={page.priorPages}
+          pageTotal={pages.length}
+          initialSection={page.section}
+        />
+      </ReviewErrorBoundary>
+
     </div>
   );
 };

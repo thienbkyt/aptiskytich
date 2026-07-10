@@ -7,6 +7,7 @@ import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
 
 import ReviewAnswerPanel, { type ReviewQuestion } from "@/components/history/ReviewAnswerPanel";
+import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
 
 
@@ -269,8 +270,11 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
     <div className="min-h-screen bg-background">
       {pagerBar}
       <div key={fadeKey} className="animate-in fade-in duration-200">
-        {body}
+        <ReviewErrorBoundary label="Phần này của bài xem lại gặp lỗi hiển thị">
+          {body}
+        </ReviewErrorBoundary>
       </div>
+
     </div>
   );
 };

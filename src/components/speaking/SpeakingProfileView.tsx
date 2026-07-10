@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { SpeakingPartResultV2, SpeakingCriteriaAnalysisV2 } from "./speakingGradingV2";
+import { safeText } from "@/lib/safeText";
 
 const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; vi: string }> = [
   { key: "tf", vi: "Nội dung" },
@@ -27,25 +28,11 @@ function bandToNumber(b: string | number | null | undefined): number | null {
   return Number.isFinite(n) ? Math.max(0, Math.min(5, n)) : null;
 }
 
-/**
- * Coerce any value into a safe display string. Some legacy rows in
- * speaking_skill_results stored text fields as objects (e.g.
- * `{ questionText: "..." }`) which crash React with error #31 when
- * rendered directly. Never render an object.
- */
+/** @deprecated use `safeText` from "@/lib/safeText". Kept as thin wrapper. */
 function toDisplayString(v: unknown): string {
-  if (v == null) return "";
-  if (typeof v === "string") return v;
-  if (typeof v === "number" || typeof v === "boolean") return String(v);
-  if (typeof v === "object") {
-    const o = v as Record<string, unknown>;
-    const cand = o.questionText ?? o.question_text ?? o.text ?? o.value ?? o.content;
-    if (typeof cand === "string") return cand;
-    if (cand != null && typeof cand !== "object") return String(cand);
-    return "";
-  }
-  return "";
+  return safeText(v);
 }
+
 
 interface SpeakingProfileViewProps {
   bands: SpeakingPartResultV2["bands"];
@@ -137,7 +124,7 @@ const SpeakingProfileView = ({
             {hasCriteriaAnalysis ? (
               <ul className="space-y-2.5">
                 {rows.map((r) => {
-                  const txt = (criteriaAnalysis as any)?.[r.key] as string | undefined;
+                  const txt = safeText((criteriaAnalysis as any)?.[r.key]);
                   if (!txt) return null;
                   return (
                     <li key={r.key} className="text-sm text-foreground leading-relaxed">
@@ -150,8 +137,9 @@ const SpeakingProfileView = ({
                 })}
               </ul>
             ) : (
-              <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{analysis}</p>
+              <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{safeText(analysis)}</p>
             )}
+
           </div>
         )}
       </div>

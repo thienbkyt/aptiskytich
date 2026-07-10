@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
+import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 
 const SKILL_LABELS: Record<string, string> = {
   speaking: "Speaking",
@@ -103,12 +104,15 @@ const FullPartHistoryDetail = () => {
   }
 
   return (
-    <HistoryReviewPager
-      pages={pages}
-      userId={user.id}
-      onExit={() => navigate("/history")}
-    />
+    <ReviewErrorBoundary label="Không xem lại được lượt luyện full-part này">
+      <HistoryReviewPager
+        pages={pages}
+        userId={user.id}
+        onExit={() => navigate("/history")}
+      />
+    </ReviewErrorBoundary>
   );
+
 };
 
 export default FullPartHistoryDetail;

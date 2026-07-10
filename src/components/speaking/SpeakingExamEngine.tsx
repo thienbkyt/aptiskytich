@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import { supabase } from "@/integrations/supabase/client";
+import { safeText } from "@/lib/safeText";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
@@ -275,8 +276,12 @@ const SpeakingExamEngine = ({
         // Merge questionText back into per-item results for display.
         const mergedPerItem = (result.perItem || []).map((it, i) => ({
           ...it,
-          questionText: it.questionText || promptsList[i] || `Question ${i + 1}`,
+          questionText: safeText(it.questionText) || safeText(promptsList[i]) || `Question ${i + 1}`,
+          transcript: safeText((it as any).transcript),
+          improvedVersion: safeText((it as any).improvedVersion),
+          upgradeTips: safeText((it as any).upgradeTips),
         }));
+
         const finalResult: SpeakingPartResultV2 = { ...result, perItem: mergedPerItem };
         setV2Result(finalResult);
 
