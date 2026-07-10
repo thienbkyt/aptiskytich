@@ -140,7 +140,7 @@ const Navbar = () => {
               }`}
             >
               <BookOpen className="w-4 h-4" />
-              Luyện tập
+              Luyện tập từng kỹ năng
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${skillOpen ? "rotate-180" : ""}`} />
             </button>
 
