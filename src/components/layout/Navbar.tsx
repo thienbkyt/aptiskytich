@@ -25,6 +25,9 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
   { label: "Listening", path: "/listening", icon: Headphones, desc: "Luyện nghe theo đề Aptis" },
   { label: "Reading", path: "/reading", icon: BookOpen, desc: "Luyện đọc theo đề Aptis" },
   { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Ngữ pháp và từ vựng" },
+];
+
+const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
   { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Kho từ vựng & flashcard" },
   { label: "Nghe chép chính tả", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe & chép lại câu" },
 ];
