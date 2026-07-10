@@ -565,7 +565,7 @@ const Index = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white shadow-sm">
-                      <Sparkles className="w-3 h-3" /> ĐỘC QUYỀN PREMIUM
+                      <Sparkles className="w-3 h-3" /> PREMIUM
                     </span>
                     <h3 className="font-heading font-extrabold text-lg md:text-xl" style={{ color: "#4D0D0D" }}>
                       Đề Key Dự Đoán
