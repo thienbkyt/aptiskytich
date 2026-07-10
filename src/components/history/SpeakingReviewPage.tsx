@@ -285,12 +285,28 @@ const SpeakingReviewPage = ({
 
   if (v2Part) {
     const rawItems: any[] = Array.isArray(v2Part.items) ? v2Part.items : [];
+    // Defensive coercion: some legacy rows stored text fields as objects
+    // (e.g. `{ questionText: "..." }`), which crashes React with error #31
+    // when rendered directly. Always resolve to a plain string.
+    const toStr = (v: unknown): string => {
+      if (v == null) return "";
+      if (typeof v === "string") return v;
+      if (typeof v === "number" || typeof v === "boolean") return String(v);
+      if (typeof v === "object") {
+        const o = v as Record<string, unknown>;
+        const cand = o.questionText ?? o.question_text ?? o.text ?? o.value ?? o.content;
+        if (typeof cand === "string") return cand;
+        if (cand != null && typeof cand !== "object") return String(cand);
+        return "";
+      }
+      return "";
+    };
     const items = rawItems.map((it, i) => ({
-      questionText: it?.questionText,
-      transcript: it?.transcript,
+      questionText: toStr(it?.questionText),
+      transcript: toStr(it?.transcript),
       onTopic: typeof it?.onTopic === "boolean" ? it.onTopic : undefined,
-      improvedVersion: it?.improvedVersion,
-      upgradeTips: it?.upgradeTips,
+      improvedVersion: toStr(it?.improvedVersion),
+      upgradeTips: toStr(it?.upgradeTips),
       audioUrl: recordings[partType === "part4" ? 0 : i] ?? null,
     }));
     return (
