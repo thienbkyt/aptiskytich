@@ -122,8 +122,10 @@ const Index = () => {
                 className="font-heading font-extrabold leading-[1.08] mb-7 text-[34px] md:text-[46px] lg:text-[54px]"
                 style={{ color: "#4D0D0D" }}
               >
-                Luyện thi Aptis giống thật 100%,
-                <br className="hidden md:block" />
+                Luyện thi Aptis&nbsp;
+                <br />
+                giống thật 100%
+                <br />
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] via-[#E85A1F] to-[#FEAD5F] animate-gradient-shift">
                   AI chấm điểm ngay
                 </span>
