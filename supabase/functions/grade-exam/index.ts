@@ -148,6 +148,19 @@ serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // Normalize `questions` to a flat string[]. Callers sometimes pass
+      // `{ questionText: "..." }` objects; storing objects into
+      // speaking_skill_results.parts[].items[].questionText crashes the React
+      // review UI (error #31). Coerce to plain strings here.
+      const questionStrings: string[] = (questions as any[]).map((q) => {
+        if (typeof q === "string") return q;
+        if (q && typeof q === "object") {
+          return String(q.questionText ?? q.question_text ?? q.text ?? "");
+        }
+        return q == null ? "" : String(q);
+      });
+      (questions as any).length = 0;
+      (questions as any).push(...questionStrings);
       if (!audios.length) {
         return new Response(JSON.stringify({ error: "No audios provided" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
