@@ -3,8 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
-  BookText, GraduationCap, Book, Headphones, Mic, PenLine, Newspaper,
-  BookOpen, ClipboardCheck, FileSpreadsheet, BarChart3, Users, Crown, Sparkles, Ear, type LucideIcon,
+  BookOpen, ClipboardCheck, Sparkles, GraduationCap, Newspaper, Crown,
+  Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
+  type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,13 +19,6 @@ import NotificationBell from "@/components/layout/NotificationBell";
 import { FEATURES } from "@/config/features";
 
 /* ── Nav data ── */
-const allTopLinks: { label: string; path: string; icon: LucideIcon }[] = [
-  { label: "Khóa học Aptis 7 ngày", path: "/course", icon: GraduationCap },
-  { label: "Blog - Mẹo", path: "/meo-thi-aptis", icon: Newspaper },
-];
-const topLinks = allTopLinks.filter((l) => l.path !== "/course" || FEATURES.course);
-
-
 const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
   { label: "Speaking", path: "/speaking", icon: Mic, desc: "Luyện nói theo đề Aptis" },
   { label: "Writing", path: "/writing", icon: PenLine, desc: "Luyện viết theo đề Aptis" },
@@ -35,14 +29,31 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
   { label: "Nghe chép chính tả", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe & chép lại câu" },
 ];
 
+const resourceLinks: { label: string; path: string; icon: LucideIcon; hidden?: boolean }[] = [
+  { label: "Khóa học 7 ngày", path: "/course", icon: GraduationCap, hidden: !FEATURES.course },
+  { label: "Đề Key Dự Đoán", path: "/key-du-doan", icon: Sparkles },
+  { label: "Blog - Mẹo", path: "/meo-thi-aptis", icon: Newspaper },
+];
+
+const adminLinks = [
+  { label: "Import Center", path: "/admin", desc: "Quản lý đề thi & dữ liệu", icon: FileSpreadsheet },
+  { label: "Người dùng", path: "/admin/students", desc: "Xem lịch sử người dùng", icon: Users },
+  { label: "Quản lý Pro", path: "/admin/pro", desc: "Gói Pro, công tắc Free, tính năng", icon: Crown },
+  { label: "Report", path: "/admin/report", desc: "Thống kê & báo cáo", icon: BarChart3 },
+];
+
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [skillHover, setSkillHover] = useState(false);
-  const [adminHover, setAdminHover] = useState(false);
+  const [skillOpen, setSkillOpen] = useState(false);
+  const [resourceOpen, setResourceOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
+  const [mobileResourceOpen, setMobileResourceOpen] = useState(false);
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resourceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
@@ -51,58 +62,73 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
+  const isResourceActive = resourceLinks.some((l) => !l.hidden && isActive(l.path));
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
     setMobileSkillOpen(false);
+    setMobileResourceOpen(false);
     setMobileAdminOpen(false);
   }, [location.pathname]);
 
-  // Idle prefetch disabled — heavy routes (dashboard/admin) only load on hover now.
+  // Smooth sticky header: subtle background change on scroll
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
-    setSkillHover(true);
+    setSkillOpen(true);
+    setResourceOpen(false);
+    setAdminOpen(false);
   };
   const handleSkillLeave = () => {
-    hoverTimeout.current = setTimeout(() => setSkillHover(false), 150);
+    hoverTimeout.current = setTimeout(() => setSkillOpen(false), 150);
+  };
+  const handleResourceEnter = () => {
+    if (resourceTimeout.current) clearTimeout(resourceTimeout.current);
+    setResourceOpen(true);
+    setSkillOpen(false);
+    setAdminOpen(false);
+  };
+  const handleResourceLeave = () => {
+    resourceTimeout.current = setTimeout(() => setResourceOpen(false), 150);
   };
   const handleAdminEnter = () => {
     if (adminHoverTimeout.current) clearTimeout(adminHoverTimeout.current);
-    setAdminHover(true);
+    setAdminOpen(true);
+    setSkillOpen(false);
+    setResourceOpen(false);
   };
   const handleAdminLeave = () => {
-    adminHoverTimeout.current = setTimeout(() => setAdminHover(false), 150);
+    adminHoverTimeout.current = setTimeout(() => setAdminOpen(false), 150);
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/90 backdrop-blur-md border-b border-primary/40 shadow-[0_1px_0_0_hsl(var(--primary)/0.6),0_8px_24px_-8px_hsl(var(--primary)/0.25)]">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300 ${
+        scrolled
+          ? "bg-background/95 backdrop-blur-md border-b border-primary/30 shadow-[0_4px_20px_-8px_hsl(var(--primary)/0.18)]"
+          : "bg-background/80 backdrop-blur-sm border-b border-primary/20"
+      }`}
+    >
       <div className="h-full max-w-[1440px] mx-auto px-4 lg:px-6 flex items-center gap-3">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 group">
-          <img src={logoImg} alt="Aptis Kỳ Tích" width={40} height={40} className="h-10 w-10 px-0 pb-0 transition-transform group-hover:scale-105" decoding="async" />
+          <img src={logoImg} alt="Aptis Kỳ Tích" width={40} height={40} className="h-10 w-10 px-0 pb-0 transition-transform duration-200 group-hover:scale-105" decoding="async" />
           <span className="font-heading font-bold text-base text-foreground tracking-tight whitespace-nowrap">
             Aptis <span className="gradient-text">Kỳ Tích</span>
           </span>
         </Link>
 
         {/* ── Desktop nav ── */}
-        <div className="hidden md:flex items-center flex-1 min-w-0 justify-center gap-1 xl:gap-1.5">
-          {/* 1. Thi thử Aptis - red CTA */}
-          <Link to="/thi-thu" {...prefetchHandlers("/thi-thu")}>
-            <Button
-              size="sm"
-              variant="glow"
-              className="rounded-full px-3 py-2 h-auto text-sm font-semibold gap-1.5 whitespace-nowrap"
-            >
-              <ClipboardCheck className="w-4 h-4" />
-              Thi thử Aptis
-            </Button>
-          </Link>
-
-          {/* 2. Luyện tập theo kỹ năng dropdown */}
+        <div className="hidden md:flex items-center flex-1 min-w-0 justify-start gap-1 ml-6">
+          {/* Luyện tập dropdown */}
           <div
             className="relative"
             onMouseEnter={handleSkillEnter}
@@ -110,128 +136,122 @@ const Navbar = () => {
             onFocus={handleSkillEnter}
           >
             <button
-              className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full border-[1.5px] border-[#CC1C01] text-[#CC1C01] bg-transparent hover:bg-[#CC1C01]/10 transition-all whitespace-nowrap`}
+              className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+                isSkillActive || skillOpen
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground hover:bg-muted"
+              }`}
             >
-              <BookOpen className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
-              Luyện tập theo kỹ năng
-              <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${skillHover ? "rotate-180" : ""}`} />
+              <BookOpen className="w-4 h-4" />
+              Luyện tập
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${skillOpen ? "rotate-180" : ""}`} />
             </button>
 
-
             <AnimatePresence>
-              {skillHover && (
+              {skillOpen && (
                 <motion.div
-                  initial={{ opacity: 0, y: 6 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
+                  exit={{ opacity: 0, y: 8 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50"
+                  className="absolute top-full left-0 pt-2 z-50"
                 >
-                  <div className="w-72 bg-popover border border-border rounded-xl shadow-lg p-1.5">
-                    {skillLinks.slice(0, 5).map((link) => (
+                  <div className="w-64 bg-popover border border-border rounded-xl shadow-lg p-2">
+                    {skillLinks.map((link) => (
                       <Link
                         key={link.path}
                         to={link.path}
                         {...prefetchHandlers(link.path)}
                         className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                           isActive(link.path)
-                            ? "bg-primary/5 text-primary"
-                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted"
                         }`}
                       >
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                           <link.icon className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold leading-tight">{link.label}</p>
+                          <p className="text-sm font-semibold leading-tight">{link.label}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">{link.desc}</p>
                         </div>
                       </Link>
                     ))}
-                    <div className="px-3 py-2">
-                      <div className="border-t border-border/70" />
-                    </div>
-                    <p className="px-3 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Công cụ ôn tập
-                    </p>
-                    {skillLinks.slice(5).map((link) => (
-                      <Link
-                        key={link.path}
-                        to={link.path}
-                        {...prefetchHandlers(link.path)}
-                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          isActive(link.path)
-                            ? "bg-muted/80 text-foreground"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
-                          <link.icon className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-[13px] font-medium leading-tight">{link.label}</p>
-                          <p className="text-[11px] text-muted-foreground/80 mt-0.5">{link.desc}</p>
-                        </div>
-                      </Link>
-                    ))}
-
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* 2b. Đề Key Dự Đoán */}
-          <Link
-            to="/key-du-doan"
-            {...prefetchHandlers("/key-du-doan")}
-            className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
-              isActive("/key-du-doan")
-                ? "text-primary"
-                : "text-secondary-foreground hover:text-primary"
-            }`}
+          {/* Tài nguyên dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={handleResourceEnter}
+            onMouseLeave={handleResourceLeave}
+            onFocus={handleResourceEnter}
           >
-            <Sparkles className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
-            Đề Key Dự Đoán
-            {isActive("/key-du-doan") && (
-              <motion.div
-                layoutId="nav-active"
-                className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-primary"
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
-              />
-            )}
-            <span className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-0 rounded-full bg-primary/50 transition-all duration-300 group-hover:w-[calc(100%-1.5rem)]" />
-          </Link>
-
-
-          {/* 4. Khóa học Aptis 7 ngày */}
-          {topLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              {...prefetchHandlers(link.path)}
-              className={`group relative flex items-center gap-1.5 px-2.5 py-2 text-sm font-bold rounded-md transition-all whitespace-nowrap hover:bg-primary/5 ${
-                isActive(link.path)
-                  ? "text-primary"
-                  : "text-secondary-foreground hover:text-primary"
+            <button
+              className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+                isResourceActive || resourceOpen
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground hover:bg-muted"
               }`}
             >
-              <link.icon className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3" />
-              {link.label}
-              {isActive(link.path) && (
+              <Sparkles className="w-4 h-4" />
+              Tài nguyên
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${resourceOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+              {resourceOpen && (
                 <motion.div
-                  layoutId="nav-active"
-                  className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                />
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 pt-2 z-50"
+                >
+                  <div className="w-56 bg-popover border border-border rounded-xl shadow-lg p-2">
+                    {resourceLinks.filter((l) => !l.hidden).map((link) => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        {...prefetchHandlers(link.path)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive(link.path)
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <link.icon className="w-4 h-4 text-primary" />
+                        </div>
+                        <span className="text-sm font-semibold">{link.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
               )}
-              <span className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] w-0 rounded-full bg-primary/50 transition-all duration-300 group-hover:w-[calc(100%-1.5rem)]" />
-            </Link>
-          ))}
+            </AnimatePresence>
+          </div>
+
+          {/* Thi thử as plain nav link */}
+          <Link
+            to="/thi-thu"
+            {...prefetchHandlers("/thi-thu")}
+            className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+              isActive("/thi-thu")
+                ? "bg-primary/10 text-primary"
+                : "text-foreground hover:bg-muted"
+            }`}
+          >
+            <ClipboardCheck className="w-4 h-4" />
+            Thi thử
+          </Link>
         </div>
 
         {/* ── Desktop right actions ── */}
-        <div className="hidden md:flex items-center gap-1.5 shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           <ThemeToggle />
           {isAdmin && (
             <div
@@ -240,92 +260,46 @@ const Navbar = () => {
               onMouseLeave={handleAdminLeave}
             >
               <button
-                className={`inline-flex items-center gap-1 h-8 px-3 text-sm font-bold rounded-md transition-colors whitespace-nowrap ${
-                  isAdminActive
-                    ? "text-primary"
-                    : "text-secondary-foreground"
+                className={`inline-flex items-center gap-1 h-8 px-3 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+                  isAdminActive || adminOpen
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground hover:bg-muted"
                 }`}
               >
                 <Shield className="w-4 h-4" />
                 Admin
-                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${adminHover ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${adminOpen ? "rotate-180" : ""}`} />
               </button>
 
-
               <AnimatePresence>
-                {adminHover && (
+                {adminOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 6 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
+                    exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.15 }}
                     className="absolute top-full right-0 pt-2 z-50"
                   >
-                    <div className="w-56 bg-popover border border-border rounded-xl shadow-lg p-1.5">
-                      <Link
-                        to="/admin"
-                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          isActive("/admin")
-                            ? "bg-primary/5 text-primary"
-                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <FileSpreadsheet className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-tight">Import Center</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Quản lý đề thi & dữ liệu</p>
-                        </div>
-                      </Link>
-                      <Link
-                        to="/admin/students"
-                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          isActive("/admin/students")
-                            ? "bg-primary/5 text-primary"
-                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <Users className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-tight">Người dùng</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Xem lịch sử người dùng</p>
-                        </div>
-                      </Link>
-                      <Link
-                        to="/admin/pro"
-                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          isActive("/admin/pro")
-                            ? "bg-primary/5 text-primary"
-                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <Crown className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-tight">Quản lý Pro</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Gói Pro, công tắc Free, tính năng</p>
-                        </div>
-                      </Link>
-                      <Link
-                        to="/admin/report"
-                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          isActive("/admin/report")
-                            ? "bg-primary/5 text-primary"
-                            : "text-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <BarChart3 className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-tight">Report</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Thống kê & báo cáo</p>
-                        </div>
-                      </Link>
+                    <div className="w-56 bg-popover border border-border rounded-xl shadow-lg p-2">
+                      {adminLinks.map((link) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                            isActive(link.path)
+                              ? "bg-primary/10 text-primary"
+                              : "text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <link.icon className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold leading-tight">{link.label}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{link.desc}</p>
+                          </div>
+                        </Link>
+                      ))}
                     </div>
                   </motion.div>
                 )}
@@ -337,21 +311,20 @@ const Navbar = () => {
               {tierLoading ? (
                 <span
                   aria-hidden
-                  className="inline-block h-8 w-24 rounded-full bg-muted/40 animate-pulse"
+                  className="inline-block h-8 w-20 rounded-full bg-muted/50 animate-pulse"
                 />
               ) : isPremium ? (
                 <span
                   title="Bạn đang là thành viên Premium (trọn đời)"
-                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] text-white text-[11px] font-extrabold shadow-[0_0_12px_-2px_rgba(254,173,95,0.6)]"
+                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold"
                 >
                   <Crown className="w-3.5 h-3.5" /> Premium
                 </span>
-
               ) : isPro ? (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")} title="Bạn đang là Pro — nâng cấp Premium để dùng trọn đời">
                   <Button
                     size="sm"
-                    className="rounded-full h-8 px-3 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] bg-[length:200%_100%] text-white hover:brightness-110 hover:bg-[position:100%_0] transition-all border-0 shadow-[0_0_14px_-3px_rgba(254,173,95,0.7)]"
+                    className="rounded-full h-8 px-3 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0"
                   >
                     <Crown className="w-3.5 h-3.5" /> Lên Premium
                   </Button>
@@ -360,7 +333,7 @@ const Navbar = () => {
                 <Link to="/pricing" {...prefetchHandlers("/pricing")}>
                   <Button
                     size="sm"
-                    className="rounded-full h-8 px-3.5 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] via-[#FEAD5F] to-[#CC1C01] bg-[length:200%_100%] text-white hover:brightness-110 hover:bg-[position:100%_0] transition-all border-0 shadow-[0_0_14px_-3px_rgba(254,173,95,0.7)]"
+                    className="rounded-full h-8 px-3.5 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0"
                   >
                     <Crown className="w-3.5 h-3.5" /> Nâng cấp
                   </Button>
@@ -386,12 +359,19 @@ const Navbar = () => {
               </button>
             </>
           ) : (
-            <Link to="/auth" {...prefetchHandlers("/auth")}>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-8 px-3">
-                <LogIn className="w-4 h-4" />
-                Đăng nhập
-              </Button>
-            </Link>
+            <>
+              <Link to="/auth" {...prefetchHandlers("/auth")}>
+                <Button variant="outline" size="sm" className="gap-1.5 h-8 px-3 text-sm font-semibold border-primary text-primary hover:bg-primary/10">
+                  <LogIn className="w-4 h-4" />
+                  Đăng nhập
+                </Button>
+              </Link>
+              <Link to="/auth?tab=signup" {...prefetchHandlers("/auth")}>
+                <Button size="sm" variant="glow" className="rounded-full h-8 px-4 text-sm font-semibold gap-1.5">
+                  Đăng ký
+                </Button>
+              </Link>
+            </>
           )}
         </div>
 
@@ -418,55 +398,30 @@ const Navbar = () => {
             transition={{ duration: 0.2 }}
             className="md:hidden bg-background border-b border-border overflow-hidden"
           >
-            <div className="px-4 py-3 space-y-0.5 max-h-[calc(100vh-4rem)] overflow-y-auto">
-              {/* Top links */}
-              {topLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive(link.path)
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <link.icon className="w-4 h-4" />
-                  {link.label}
-                </Link>
-              ))}
-
-              <div className="my-1 mx-4 border-t border-border" />
-
-              {/* Thi thử CTA */}
-              <Link
-                to="/thi-thu"
-                className="block px-2 pt-1"
-              >
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] text-sm font-semibold gap-2">
+            <div className="px-4 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
+              {/* Main CTA */}
+              <Link to="/thi-thu" className="block px-2 pt-1 pb-2">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] text-sm font-semibold gap-2 h-11">
                   <ClipboardCheck className="w-4 h-4" />
-                  Thi thử Aptis
+                  Thi thử miễn phí
                 </Button>
               </Link>
 
-              <div className="my-1 mx-4 border-t border-border" />
+              <div className="my-2 mx-4 border-t border-border" />
 
-              {/* Skill accordion */}
+              {/* Luyện tập accordion */}
               <button
                 onClick={() => setMobileSkillOpen(!mobileSkillOpen)}
-                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-bold text-[#CC1C01] transition-colors ${
-                  isSkillActive
-                    ? "bg-primary/10"
-                    : "hover:bg-primary/5"
+                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  isSkillActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                 }`}
-
               >
                 <span className="flex items-center gap-3">
-                  <BookOpen className="w-4 h-4" />
-                  Luyện tập theo kỹ năng
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  Luyện tập
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileSkillOpen ? "rotate-180" : ""}`} />
               </button>
-
               <AnimatePresence>
                 {mobileSkillOpen && (
                   <motion.div
@@ -483,7 +438,7 @@ const Navbar = () => {
                           to={link.path}
                           className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
                             isActive(link.path)
-                              ? "bg-primary/10 text-primary font-medium"
+                              ? "bg-primary/10 text-primary font-semibold"
                               : "text-muted-foreground hover:text-foreground hover:bg-muted"
                           }`}
                         >
@@ -496,39 +451,63 @@ const Navbar = () => {
                 )}
               </AnimatePresence>
 
-              <Link
-                to="/key-du-doan"
-                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/key-du-doan")
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              {/* Tài nguyên accordion */}
+              <button
+                onClick={() => setMobileResourceOpen(!mobileResourceOpen)}
+                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  isResourceActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                 }`}
               >
-                <Sparkles className="w-4 h-4" />
-                Đề Key Dự Đoán
-              </Link>
-
-
-
+                <span className="flex items-center gap-3">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Tài nguyên
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileResourceOpen ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {mobileResourceOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pl-6 space-y-0.5">
+                      {resourceLinks.filter((l) => !l.hidden).map((link) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                            isActive(link.path)
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <link.icon className="w-4 h-4" />
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {isAdmin && (
                 <>
-                  <div className="my-1 mx-4 border-t border-border" />
+                  <div className="my-2 mx-4 border-t border-border" />
                   <button
                     onClick={() => setMobileAdminOpen(!mobileAdminOpen)}
-                    className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isAdminActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                      isAdminActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                     }`}
                   >
                     <span className="flex items-center gap-3">
-                      <Shield className="w-4 h-4" />
+                      <Shield className="w-4 h-4 text-primary" />
                       Admin
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileAdminOpen ? "rotate-180" : ""}`} />
                   </button>
-
                   <AnimatePresence>
                     {mobileAdminOpen && (
                       <motion.div
@@ -539,50 +518,20 @@ const Navbar = () => {
                         className="overflow-hidden"
                       >
                         <div className="pl-6 space-y-0.5">
-                          <Link
-                            to="/admin"
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
-                              isActive("/admin")
-                                ? "bg-primary/10 text-primary font-medium"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            }`}
-                          >
-                            <FileSpreadsheet className="w-4 h-4" />
-                            Import Center
-                          </Link>
-                          <Link
-                            to="/admin/students"
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
-                              isActive("/admin/students")
-                                ? "bg-primary/10 text-primary font-medium"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            }`}
-                          >
-                            <Users className="w-4 h-4" />
-                            Người dùng
-                          </Link>
-                          <Link
-                            to="/admin/pro"
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
-                              isActive("/admin/pro")
-                                ? "bg-primary/10 text-primary font-medium"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            }`}
-                          >
-                            <Crown className="w-4 h-4" />
-                            Quản lý Pro
-                          </Link>
-                          <Link
-                            to="/admin/report"
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
-                              isActive("/admin/report")
-                                ? "bg-primary/10 text-primary font-medium"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                            }`}
-                          >
-                            <BarChart3 className="w-4 h-4" />
-                            Report
-                          </Link>
+                          {adminLinks.map((link) => (
+                            <Link
+                              key={link.path}
+                              to={link.path}
+                              className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                                isActive(link.path)
+                                  ? "bg-primary/10 text-primary font-semibold"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                              }`}
+                            >
+                              <link.icon className="w-4 h-4" />
+                              {link.label}
+                            </Link>
+                          ))}
                         </div>
                       </motion.div>
                     )}
@@ -590,7 +539,7 @@ const Navbar = () => {
                 </>
               )}
 
-              <div className="my-1 mx-4 border-t border-border" />
+              <div className="my-2 mx-4 border-t border-border" />
 
               <div className="px-2 pt-1 space-y-2">
                 {user ? (
@@ -609,8 +558,14 @@ const Navbar = () => {
                       <span className="text-sm font-medium truncate">{user.email}</span>
                     </button>
                     <NotificationBell variant="mobile" />
+                    <Link to="/dashboard">
+                      <Button variant="outline" className="w-full justify-center gap-2 text-sm">
+                        <Flame className="w-4 h-4 text-primary" />
+                        Dashboard
+                      </Button>
+                    </Link>
                     {isPro ? (
-                      <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#CC1C01]/10 to-[#FEAD5F]/10 border border-[#CC1C01]/30 text-[#CC1C01] text-xs font-extrabold">
+                      <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-extrabold">
                         <Crown className="w-3.5 h-3.5" /> Bạn đang là thành viên Pro
                       </div>
                     ) : (
@@ -620,20 +575,21 @@ const Navbar = () => {
                         </Button>
                       </Link>
                     )}
-                    <Link to="/dashboard">
-                      <Button variant="outline" className="w-full justify-center gap-2 text-sm">
-                        <Flame className="w-4 h-4 text-primary" />
-                        Dashboard
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth">
+                      <Button variant="outline" className="w-full justify-center gap-2 text-sm font-semibold border-primary text-primary hover:bg-primary/10">
+                        <LogIn className="w-4 h-4" />
+                        Đăng nhập
+                      </Button>
+                    </Link>
+                    <Link to="/auth?tab=signup">
+                      <Button className="w-full justify-center gap-2 text-sm font-bold bg-primary text-primary-foreground hover:bg-primary/90">
+                        Đăng ký miễn phí
                       </Button>
                     </Link>
                   </>
-                ) : (
-                  <Link to="/auth">
-                    <Button variant="outline" className="w-full justify-center gap-2 text-sm">
-                      <LogIn className="w-4 h-4" />
-                      Đăng nhập
-                    </Button>
-                  </Link>
                 )}
               </div>
             </div>
