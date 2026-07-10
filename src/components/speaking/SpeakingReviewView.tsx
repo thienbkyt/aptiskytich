@@ -9,6 +9,7 @@ import type {
   SpeakingPart4Data,
 } from "@/data/speakingQuestions";
 import type { SpeakingGradingResult } from "./speakingGrading";
+import { safeText } from "@/lib/safeText";
 
 const PART_NUMBERS: Record<SpeakingPartType, number> = {
   part1: 1, part2: 2, part3: 3, part4: 4,
@@ -202,18 +203,19 @@ const SpeakingReviewView = ({
                     AI Kỳ Tích chấm dựa trên: trả lời đúng & đủ ý đề · ngữ pháp · từ vựng · phát âm · độ trôi chảy.
                   </p>
                 </div>
-                {(g as any).analysis && (
+                {safeText((g as any).analysis) && (
                   <div className="rounded-lg border border-amber-300/40 bg-amber-50 px-3 py-2">
                     <p className="text-[11px] font-semibold text-amber-800 mb-0.5">🔎 Vì sao điểm này</p>
-                    <p className="text-xs text-foreground whitespace-pre-wrap leading-snug">{(g as any).analysis}</p>
+                    <p className="text-xs text-foreground whitespace-pre-wrap leading-snug">{safeText((g as any).analysis)}</p>
                   </div>
                 )}
-                {g.transcript && (
+                {safeText(g.transcript) && (
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Transcript</p>
-                    <p className="text-xs text-foreground whitespace-pre-wrap">{g.transcript}</p>
+                    <p className="text-xs text-foreground whitespace-pre-wrap">{safeText(g.transcript)}</p>
                   </div>
                 )}
+
                 {g.grammarErrors?.length > 0 && (
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Lỗi ngữ pháp</p>
