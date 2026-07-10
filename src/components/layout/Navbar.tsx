@@ -29,12 +29,6 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
   { label: "Nghe chép chính tả", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe & chép lại câu" },
 ];
 
-const resourceLinks: { label: string; path: string; icon: LucideIcon; hidden?: boolean }[] = [
-  { label: "Khóa học 7 ngày", path: "/course", icon: GraduationCap, hidden: !FEATURES.course },
-  { label: "Đề Key Dự Đoán", path: "/key-du-doan", icon: Sparkles },
-  { label: "Blog - Mẹo", path: "/meo-thi-aptis", icon: Newspaper },
-];
-
 const adminLinks = [
   { label: "Import Center", path: "/admin", desc: "Quản lý đề thi & dữ liệu", icon: FileSpreadsheet },
   { label: "Người dùng", path: "/admin/students", desc: "Xem lịch sử người dùng", icon: Users },
@@ -45,15 +39,12 @@ const adminLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillOpen, setSkillOpen] = useState(false);
-  const [resourceOpen, setResourceOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
-  const [mobileResourceOpen, setMobileResourceOpen] = useState(false);
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resourceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
@@ -62,14 +53,14 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = skillLinks.some((l) => isActive(l.path));
-  const isResourceActive = resourceLinks.some((l) => !l.hidden && isActive(l.path));
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
+  const isKeyActive = isActive("/key-du-doan");
+  const isBlogActive = isActive("/meo-thi-aptis");
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
     setMobileSkillOpen(false);
-    setMobileResourceOpen(false);
     setMobileAdminOpen(false);
   }, [location.pathname]);
 
@@ -84,30 +75,22 @@ const Navbar = () => {
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
     setSkillOpen(true);
-    setResourceOpen(false);
     setAdminOpen(false);
   };
   const handleSkillLeave = () => {
     hoverTimeout.current = setTimeout(() => setSkillOpen(false), 150);
   };
-  const handleResourceEnter = () => {
-    if (resourceTimeout.current) clearTimeout(resourceTimeout.current);
-    setResourceOpen(true);
-    setSkillOpen(false);
-    setAdminOpen(false);
-  };
-  const handleResourceLeave = () => {
-    resourceTimeout.current = setTimeout(() => setResourceOpen(false), 150);
-  };
   const handleAdminEnter = () => {
     if (adminHoverTimeout.current) clearTimeout(adminHoverTimeout.current);
     setAdminOpen(true);
     setSkillOpen(false);
-    setResourceOpen(false);
   };
   const handleAdminLeave = () => {
     adminHoverTimeout.current = setTimeout(() => setAdminOpen(false), 150);
   };
+
+  const ctaBaseClass =
+    "flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-full transition-transform duration-200 whitespace-nowrap shadow-[0_4px_14px_rgba(204,28,1,0.35)] hover:scale-105";
 
   return (
     <nav
@@ -127,7 +110,21 @@ const Navbar = () => {
         </Link>
 
         {/* ── Desktop nav ── */}
-        <div className="hidden md:flex items-center flex-1 min-w-0 justify-start gap-1 ml-6">
+        <div className="hidden md:flex items-center flex-1 min-w-0 justify-start gap-1 ml-4 lg:ml-6">
+          {/* Thi thử — main CTA */}
+          <Link
+            to="/thi-thu"
+            {...prefetchHandlers("/thi-thu")}
+            className={`${ctaBaseClass} ${
+              isActive("/thi-thu")
+                ? "bg-gradient-to-r from-[#B01801] to-[#E58A3F] text-white ring-2 ring-white/60"
+                : "bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:shadow-[0_6px_18px_rgba(204,28,1,0.45)]"
+            }`}
+          >
+            <ClipboardCheck className="w-4 h-4" />
+            Thi thử
+          </Link>
+
           {/* Luyện tập dropdown */}
           <div
             className="relative"
@@ -183,70 +180,32 @@ const Navbar = () => {
             </AnimatePresence>
           </div>
 
-          {/* Tài nguyên dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={handleResourceEnter}
-            onMouseLeave={handleResourceLeave}
-            onFocus={handleResourceEnter}
-          >
-            <button
-              className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
-                isResourceActive || resourceOpen
-                  ? "bg-primary/10 text-primary"
-                  : "text-foreground hover:bg-muted"
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              Tài nguyên
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${resourceOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            <AnimatePresence>
-              {resourceOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 pt-2 z-50"
-                >
-                  <div className="w-56 bg-popover border border-border rounded-xl shadow-lg p-2">
-                    {resourceLinks.filter((l) => !l.hidden).map((link) => (
-                      <Link
-                        key={link.path}
-                        to={link.path}
-                        {...prefetchHandlers(link.path)}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                          isActive(link.path)
-                            ? "bg-primary/10 text-primary"
-                            : "text-foreground hover:bg-muted"
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <link.icon className="w-4 h-4 text-primary" />
-                        </div>
-                        <span className="text-sm font-semibold">{link.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Thi thử as plain nav link */}
+          {/* Đề Key Dự Đoán — top-level */}
           <Link
-            to="/thi-thu"
-            {...prefetchHandlers("/thi-thu")}
+            to="/key-du-doan"
+            {...prefetchHandlers("/key-du-doan")}
             className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
-              isActive("/thi-thu")
+              isKeyActive
                 ? "bg-primary/10 text-primary"
                 : "text-foreground hover:bg-muted"
             }`}
           >
-            <ClipboardCheck className="w-4 h-4" />
-            Thi thử
+            <Sparkles className="w-4 h-4" />
+            Đề Key Dự Đoán
+          </Link>
+
+          {/* Blog - Mẹo — top-level */}
+          <Link
+            to="/meo-thi-aptis"
+            {...prefetchHandlers("/meo-thi-aptis")}
+            className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+              isBlogActive
+                ? "bg-primary/10 text-primary"
+                : "text-foreground hover:bg-muted"
+            }`}
+          >
+            <Newspaper className="w-4 h-4" />
+            Blog - Mẹo
           </Link>
         </div>
 
@@ -401,7 +360,7 @@ const Navbar = () => {
             <div className="px-4 py-4 space-y-1 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {/* Main CTA */}
               <Link to="/thi-thu" className="block px-2 pt-1 pb-2">
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 rounded-[10px] text-sm font-semibold gap-2 h-11">
+                <Button className="w-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 rounded-[10px] text-sm font-bold gap-2 h-11 shadow-[0_4px_14px_rgba(204,28,1,0.35)]">
                   <ClipboardCheck className="w-4 h-4" />
                   Thi thử miễn phí
                 </Button>
@@ -451,47 +410,27 @@ const Navbar = () => {
                 )}
               </AnimatePresence>
 
-              {/* Tài nguyên accordion */}
-              <button
-                onClick={() => setMobileResourceOpen(!mobileResourceOpen)}
-                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                  isResourceActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+              {/* Đề Key Dự Đoán — top-level */}
+              <Link
+                to="/key-du-doan"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  isKeyActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                 }`}
               >
-                <span className="flex items-center gap-3">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  Tài nguyên
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileResourceOpen ? "rotate-180" : ""}`} />
-              </button>
-              <AnimatePresence>
-                {mobileResourceOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pl-6 space-y-0.5">
-                      {resourceLinks.filter((l) => !l.hidden).map((link) => (
-                        <Link
-                          key={link.path}
-                          to={link.path}
-                          className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
-                            isActive(link.path)
-                              ? "bg-primary/10 text-primary font-semibold"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          <link.icon className="w-4 h-4" />
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <Sparkles className="w-4 h-4 text-primary" />
+                Đề Key Dự Đoán
+              </Link>
+
+              {/* Blog - Mẹo — top-level */}
+              <Link
+                to="/meo-thi-aptis"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  isBlogActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                }`}
+              >
+                <Newspaper className="w-4 h-4 text-primary" />
+                Blog - Mẹo
+              </Link>
 
               {isAdmin && (
                 <>
