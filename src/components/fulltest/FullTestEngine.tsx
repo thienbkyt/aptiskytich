@@ -35,6 +35,7 @@ import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGradin
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
+import { safeText } from "@/lib/safeText";
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -706,7 +707,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         try {
           for (const entry of orderedEntries) {
             const partType = entry.sub.partType as "part1" | "part2" | "part3" | "part4";
-            const questions = entry.sub.items.map((it) => ({ questionText: it.spec.questionText }));
+            const questions = entry.sub.items.map((it) => safeText(it.spec.questionText));
             const blobs = entry.sub.items.map((it) => it.blob ?? null);
             try {
               const r = await gradeSpeakingPartV2(partType, questions, blobs);
@@ -714,9 +715,13 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                 ...r,
                 perItem: (r.perItem || []).map((it, i) => ({
                   ...it,
-                  questionText: it.questionText || questions[i]?.questionText || `Question ${i + 1}`,
+                  questionText: safeText(it.questionText) || questions[i] || `Question ${i + 1}`,
+                  transcript: safeText((it as any).transcript),
+                  improvedVersion: safeText((it as any).improvedVersion),
+                  upgradeTips: safeText((it as any).upgradeTips),
                 })),
               };
+
               v2ByPart[partType] = merged;
               v2EntriesPayload[partType] = {
                 bands: merged.bands,
