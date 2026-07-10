@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { readingPartLabel } from "@/hooks/useExamSets";
 import { useAuth } from "@/hooks/useAuth";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
+import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import { toTimeSafe } from "@/lib/safeDate";
 
 interface ResultRow {
@@ -257,20 +258,23 @@ const HistoryDetail = () => {
   // Review mode: render via HistoryReviewPager (single or multi-part).
   if (reviewing && result && reviewPages.length > 0) {
     return (
-      <HistoryReviewPager
-        pages={reviewPages}
-        initialPageIdx={reviewInitialIdx}
-        userId={user.id}
-        onExit={() => {
-          if (startReview) {
-            navigate("/history", { replace: true });
-          } else {
-            setReviewing(false);
-          }
-        }}
-      />
+      <ReviewErrorBoundary label="Không xem lại được lượt làm này">
+        <HistoryReviewPager
+          pages={reviewPages}
+          initialPageIdx={reviewInitialIdx}
+          userId={user.id}
+          onExit={() => {
+            if (startReview) {
+              navigate("/history", { replace: true });
+            } else {
+              setReviewing(false);
+            }
+          }}
+        />
+      </ReviewErrorBoundary>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
