@@ -25,6 +25,9 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
   { label: "Listening", path: "/listening", icon: Headphones, desc: "Luyện nghe theo đề Aptis" },
   { label: "Reading", path: "/reading", icon: BookOpen, desc: "Luyện đọc theo đề Aptis" },
   { label: "Grammar & Vocabulary", path: "/grammar", icon: Book, desc: "Ngữ pháp và từ vựng" },
+];
+
+const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
   { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Kho từ vựng & flashcard" },
   { label: "Nghe chép chính tả", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe & chép lại câu" },
 ];
@@ -52,7 +55,7 @@ const Navbar = () => {
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
-  const isSkillActive = skillLinks.some((l) => isActive(l.path));
+  const isSkillActive = [...skillLinks, ...toolLinks].some((l) => isActive(l.path));
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
   const isKeyActive = isActive("/key-du-doan");
   const isBlogActive = isActive("/meo-thi-aptis");
@@ -154,7 +157,36 @@ const Navbar = () => {
                   className="absolute top-full left-0 pt-2 z-50"
                 >
                   <div className="w-64 bg-popover border border-border rounded-xl shadow-lg p-2">
+                    {/* 5 kỹ năng chính */}
                     {skillLinks.map((link) => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        {...prefetchHandlers(link.path)}
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive(link.path)
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <link.icon className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold leading-tight">{link.label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{link.desc}</p>
+                        </div>
+                      </Link>
+                    ))}
+
+                    {/* Divider + label */}
+                    <div className="border-t border-border my-2" />
+                    <p className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Công cụ ôn tập
+                    </p>
+
+                    {/* Công cụ ôn tập */}
+                    {toolLinks.map((link) => (
                       <Link
                         key={link.path}
                         to={link.path}
@@ -377,7 +409,7 @@ const Navbar = () => {
               >
                 <span className="flex items-center gap-3">
                   <BookOpen className="w-4 h-4 text-primary" />
-                  Luyện tập
+                  Luyện tập từng kỹ năng
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileSkillOpen ? "rotate-180" : ""}`} />
               </button>
@@ -391,7 +423,30 @@ const Navbar = () => {
                     className="overflow-hidden"
                   >
                     <div className="pl-6 space-y-0.5">
+                      {/* 5 kỹ năng chính */}
                       {skillLinks.map((link) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                            isActive(link.path)
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <link.icon className="w-4 h-4" />
+                          {link.label}
+                        </Link>
+                      ))}
+
+                      {/* Divider + label */}
+                      <div className="border-t border-border my-2 mx-4" />
+                      <p className="px-4 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Công cụ ôn tập
+                      </p>
+
+                      {/* Công cụ ôn tập */}
+                      {toolLinks.map((link) => (
                         <Link
                           key={link.path}
                           to={link.path}
