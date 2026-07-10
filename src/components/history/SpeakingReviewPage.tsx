@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ExamHeader from "@/components/exam/ExamHeader";
 import SpeakingReviewView from "@/components/speaking/SpeakingReviewView";
 import SpeakingProfileView from "@/components/speaking/SpeakingProfileView";
+import { safeText } from "@/lib/safeText";
 import { fetchExamQuestions, normalizePart } from "@/hooks/useExamSets";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
