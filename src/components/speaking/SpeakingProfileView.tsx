@@ -124,7 +124,7 @@ const SpeakingProfileView = ({
             {hasCriteriaAnalysis ? (
               <ul className="space-y-2.5">
                 {rows.map((r) => {
-                  const txt = (criteriaAnalysis as any)?.[r.key] as string | undefined;
+                  const txt = safeText((criteriaAnalysis as any)?.[r.key]);
                   if (!txt) return null;
                   return (
                     <li key={r.key} className="text-sm text-foreground leading-relaxed">
@@ -137,8 +137,9 @@ const SpeakingProfileView = ({
                 })}
               </ul>
             ) : (
-              <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{analysis}</p>
+              <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{safeText(analysis)}</p>
             )}
+
           </div>
         )}
       </div>
