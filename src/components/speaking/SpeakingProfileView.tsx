@@ -157,15 +157,20 @@ const SpeakingProfileView = ({
       </div>
 
       <div className="space-y-4">
-        {items.map((it, idx) => (
+        {items.map((it, idx) => {
+          const qt = toDisplayString(it.questionText);
+          const tr = toDisplayString(it.transcript);
+          const iv = toDisplayString(it.improvedVersion);
+          const ut = toDisplayString(it.upgradeTips);
+          return (
           <div key={idx} className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                   Câu {idx + 1}
                 </p>
-                {it.questionText && (
-                  <p className="text-sm text-foreground mt-1 leading-relaxed">{it.questionText}</p>
+                {qt && (
+                  <p className="text-sm text-foreground mt-1 leading-relaxed">{qt}</p>
                 )}
               </div>
               {typeof it.onTopic === "boolean" && (
@@ -193,18 +198,18 @@ const SpeakingProfileView = ({
               <audio controls src={it.audioUrl} className="w-full h-9" preload="metadata" />
             )}
 
-            {it.transcript && (
+            {tr && (
               <div className="p-3 rounded-lg bg-muted/40 border border-border/60">
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Transcript</p>
                 <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                  {it.transcript}
+                  {tr}
                 </p>
               </div>
             )}
 
-            {(it.improvedVersion || it.upgradeTips) && (
+            {(iv || ut) && (
               <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-3">
-                {it.improvedVersion && (
+                {iv && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       <PenLine className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
@@ -213,11 +218,11 @@ const SpeakingProfileView = ({
                       </p>
                     </div>
                     <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                      {it.improvedVersion}
+                      {iv}
                     </p>
                   </div>
                 )}
-                {it.upgradeTips && (
+                {ut && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       <Target className="w-3.5 h-3.5 text-primary" />
@@ -226,15 +231,17 @@ const SpeakingProfileView = ({
                       </p>
                     </div>
                     <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                      {it.upgradeTips}
+                      {ut}
                     </p>
                   </div>
                 )}
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
+
     </div>
   );
 };
