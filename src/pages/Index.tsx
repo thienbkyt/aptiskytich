@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, Flame, BookOpen,
   Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
-  GripVertical, Timer, ShieldCheck, Repeat, GraduationCap, Briefcase, Search,
+  GripVertical, Timer, ShieldCheck, GraduationCap,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
