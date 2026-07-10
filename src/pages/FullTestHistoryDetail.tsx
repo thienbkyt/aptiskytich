@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getLevel, getLevelColor } from "@/data/questions";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
+import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 
@@ -222,14 +223,17 @@ const FullTestHistoryDetail = () => {
       allPages.findIndex((p) => p.skill === (reviewSkillStart || reviewRow.skill)),
     );
     return (
-      <HistoryReviewPager
-        pages={allPages}
-        initialPageIdx={initialIdx}
-        userId={user.id}
-        onExit={() => { setReviewRow(null); setReviewSkillStart(null); }}
-      />
+      <ReviewErrorBoundary label="Không xem lại được bài Full Test này">
+        <HistoryReviewPager
+          pages={allPages}
+          initialPageIdx={initialIdx}
+          userId={user.id}
+          onExit={() => { setReviewRow(null); setReviewSkillStart(null); }}
+        />
+      </ReviewErrorBoundary>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
