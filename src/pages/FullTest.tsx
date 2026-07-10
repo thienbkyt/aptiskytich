@@ -82,10 +82,10 @@ const FullTest = () => {
                 </Badge>
               </div>
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
-                Làm bài thi Aptis
+                Làm bài thi thử Aptis
               </h1>
               <p className="text-base text-muted-foreground leading-relaxed max-w-2xl mb-6 whitespace-pre-line md:text-lg font-medium">
-                Làm đề Aptis với mô phỏng{"\u00a0"}format{"\u00a0"}giống thi thật 100%.
+                Mô phỏng{"\u00a0"}giống thi thật 100%.
                 {"\n"}Tổng thời gian 162 phút.{"\u00a0"}Thứ tự của các phần thi trong bài thi:
               </p>
 
