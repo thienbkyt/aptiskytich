@@ -7,6 +7,7 @@ import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
 
 import ReviewAnswerPanel, { type ReviewQuestion } from "@/components/history/ReviewAnswerPanel";
+import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
 
 
