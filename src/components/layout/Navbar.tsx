@@ -55,7 +55,7 @@ const Navbar = () => {
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
-  const isSkillActive = skillLinks.some((l) => isActive(l.path));
+  const isSkillActive = [...skillLinks, ...toolLinks].some((l) => isActive(l.path));
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
   const isKeyActive = isActive("/key-du-doan");
   const isBlogActive = isActive("/meo-thi-aptis");
