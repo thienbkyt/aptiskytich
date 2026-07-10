@@ -409,7 +409,7 @@ const Navbar = () => {
               >
                 <span className="flex items-center gap-3">
                   <BookOpen className="w-4 h-4 text-primary" />
-                  Luyện tập
+                  Luyện tập từng kỹ năng
                 </span>
                 <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileSkillOpen ? "rotate-180" : ""}`} />
               </button>
@@ -423,7 +423,30 @@ const Navbar = () => {
                     className="overflow-hidden"
                   >
                     <div className="pl-6 space-y-0.5">
+                      {/* 5 kỹ năng chính */}
                       {skillLinks.map((link) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                            isActive(link.path)
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <link.icon className="w-4 h-4" />
+                          {link.label}
+                        </Link>
+                      ))}
+
+                      {/* Divider + label */}
+                      <div className="border-t border-border my-2 mx-4" />
+                      <p className="px-4 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Công cụ ôn tập
+                      </p>
+
+                      {/* Công cụ ôn tập */}
+                      {toolLinks.map((link) => (
                         <Link
                           key={link.path}
                           to={link.path}
