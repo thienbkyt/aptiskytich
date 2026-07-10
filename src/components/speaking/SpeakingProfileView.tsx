@@ -27,6 +27,26 @@ function bandToNumber(b: string | number | null | undefined): number | null {
   return Number.isFinite(n) ? Math.max(0, Math.min(5, n)) : null;
 }
 
+/**
+ * Coerce any value into a safe display string. Some legacy rows in
+ * speaking_skill_results stored text fields as objects (e.g.
+ * `{ questionText: "..." }`) which crash React with error #31 when
+ * rendered directly. Never render an object.
+ */
+function toDisplayString(v: unknown): string {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    const cand = o.questionText ?? o.question_text ?? o.text ?? o.value ?? o.content;
+    if (typeof cand === "string") return cand;
+    if (cand != null && typeof cand !== "object") return String(cand);
+    return "";
+  }
+  return "";
+}
+
 interface SpeakingProfileViewProps {
   bands: SpeakingPartResultV2["bands"];
   items: Array<{
