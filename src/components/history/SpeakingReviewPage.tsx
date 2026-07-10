@@ -287,28 +287,16 @@ const SpeakingReviewPage = ({
     const rawItems: any[] = Array.isArray(v2Part.items) ? v2Part.items : [];
     // Defensive coercion: some legacy rows stored text fields as objects
     // (e.g. `{ questionText: "..." }`), which crashes React with error #31
-    // when rendered directly. Always resolve to a plain string.
-    const toStr = (v: unknown): string => {
-      if (v == null) return "";
-      if (typeof v === "string") return v;
-      if (typeof v === "number" || typeof v === "boolean") return String(v);
-      if (typeof v === "object") {
-        const o = v as Record<string, unknown>;
-        const cand = o.questionText ?? o.question_text ?? o.text ?? o.value ?? o.content;
-        if (typeof cand === "string") return cand;
-        if (cand != null && typeof cand !== "object") return String(cand);
-        return "";
-      }
-      return "";
-    };
+    // when rendered directly. Always resolve to a plain string via safeText.
     const items = rawItems.map((it, i) => ({
-      questionText: toStr(it?.questionText),
-      transcript: toStr(it?.transcript),
+      questionText: safeText(it?.questionText),
+      transcript: safeText(it?.transcript),
       onTopic: typeof it?.onTopic === "boolean" ? it.onTopic : undefined,
-      improvedVersion: toStr(it?.improvedVersion),
-      upgradeTips: toStr(it?.upgradeTips),
+      improvedVersion: safeText(it?.improvedVersion),
+      upgradeTips: safeText(it?.upgradeTips),
       audioUrl: recordings[partType === "part4" ? 0 : i] ?? null,
     }));
+
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
         {skillHeader}
