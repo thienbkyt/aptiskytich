@@ -243,21 +243,22 @@ const SpeakingReviewView = ({
                     </ul>
                   </div>
                 )}
-                {g.feedback && (
+                {safeText(g.feedback) && (
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground mb-0.5">Nhận xét</p>
-                    <p className="text-xs text-foreground whitespace-pre-wrap">{g.feedback}</p>
+                    <p className="text-xs text-foreground whitespace-pre-wrap">{safeText(g.feedback)}</p>
                   </div>
                 )}
               </div>
 
 
-              {g.improvedVersion && (
+              {safeText(g.improvedVersion) && (
                 <div className="bg-success/5 border border-success/20 rounded-xl p-4">
                   <p className="text-xs font-semibold text-success mb-1">💡 Phiên bản AI Kỳ Tích gợi ý cho bạn</p>
-                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{g.improvedVersion}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{safeText(g.improvedVersion)}</p>
                 </div>
               )}
+
             </>
           )}
         </div>
