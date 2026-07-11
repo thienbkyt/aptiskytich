@@ -363,7 +363,7 @@ export default function PredictionKeyView() {
                   />
                 </PopoverContent>
               </Popover>
-              <span>· cập nhật hằng ngày</span>
+              <span>Chọn ngày để xem Key theo ngày</span>
             </div>
           </div>
         </div>
