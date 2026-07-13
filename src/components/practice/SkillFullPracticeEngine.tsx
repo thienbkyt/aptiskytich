@@ -30,6 +30,7 @@ import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import ReadingFullResults, { type ReadingFullPartResult } from "@/components/reading/ReadingFullResults";
 import ListeningFullResults, { type ListeningFullPartResult } from "@/components/listening/ListeningFullResults";
 import WritingFullResults from "@/components/writing/WritingFullResults";
+import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
 import { toast } from "sonner";
