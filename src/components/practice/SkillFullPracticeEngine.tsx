@@ -519,6 +519,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         total: perQuestion.length,
         perQuestion,
         reviewSnapshot: snap,
+        fullTestSessionId: fullPartSessionRef.current,
         extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
