@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search } from "lucide-react";
+import { Plus, BookOpen, Trash2, Eye, EyeOff, Pencil, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { parseDateSafe } from "@/lib/safeDate";
+import { NEW_TAG_DAYS, isNewSet } from "@/hooks/useExamSets";
 
 type AccessTier = "free" | "pro" | "premium";
 
@@ -106,6 +107,31 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
     if (!error) setSets((s) => s.map((x) => x.id === set.id ? { ...x, is_published: !x.is_published } : x));
   };
 
+  const toggleNewTag = async (set: ExamSetRow) => {
+    const hasTag = isNewSet(set as any);
+    const next = hasTag ? null : new Date(Date.now() + NEW_TAG_DAYS * 86400000).toISOString();
+    const { error } = await supabase.from("exam_sets").update({ new_until: next } as any).eq("id", set.id);
+    if (error) {
+      toast({ title: "Lỗi cập nhật", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => x.id === set.id ? ({ ...x, new_until: next } as any) : x));
+    toast({ title: hasTag ? "Đã bỏ nhãn MỚI" : "Đã gắn nhãn MỚI" });
+  };
+
+  const handleClearAllNew = async () => {
+    const tagged = sets.filter((s) => isNewSet(s as any));
+    if (tagged.length === 0) return;
+    const ids = tagged.map((s) => s.id);
+    const { error } = await supabase.from("exam_sets").update({ new_until: null } as any).in("id", ids);
+    if (error) {
+      toast({ title: "Lỗi cập nhật", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => ids.includes(x.id) ? ({ ...x, new_until: null } as any) : x));
+    toast({ title: `Đã bỏ nhãn MỚI cho ${tagged.length} đề` });
+  };
+
   const setAccessTier = async (set: ExamSetRow, next: AccessTier) => {
     const current = ((set as any).access_tier ?? "pro") as AccessTier;
     if (current === next) return;
@@ -150,6 +176,11 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
           {sets.some((s) => !s.is_published) && (
             <Button variant="outline" onClick={handlePublishAll} className="gap-2">
               <Eye className="w-4 h-4" /> Xuất bản tất cả
+            </Button>
+          )}
+          {sets.some((s) => isNewSet(s as any)) && (
+            <Button variant="outline" onClick={handleClearAllNew} className="gap-2">
+              <Sparkles className="w-4 h-4" /> Bỏ nhãn MỚI toàn bộ
             </Button>
           )}
           <Button onClick={onCreateNew} className="gap-2">
@@ -211,6 +242,9 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                   <Badge variant={set.is_published ? "default" : "secondary"} className="text-xs">
                     {set.is_published ? "Đã xuất bản" : "Nháp"}
                   </Badge>
+                  {isNewSet(set as any) && (
+                    <Badge className="text-[10px] font-semibold border-0 bg-emerald-500 text-white hover:bg-emerald-500">MỚI</Badge>
+                  )}
                   {(() => {
                     const t = (((set as any).access_tier ?? "pro") as AccessTier);
                     return (
@@ -239,6 +273,14 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                     <SelectItem value="premium">Premium</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button
+                  variant="ghost" size="icon"
+                  onClick={(e) => { e.stopPropagation(); toggleNewTag(set); }}
+                  title={isNewSet(set as any) ? "Bỏ nhãn MỚI" : "Gắn nhãn MỚI"}
+                  className={isNewSet(set as any) ? "text-emerald-600" : ""}
+                >
+                  <Sparkles className="w-4 h-4" />
+                </Button>
                 <Button
                   variant="ghost" size="icon"
                   onClick={(e) => { e.stopPropagation(); togglePublish(set); }}

@@ -15,7 +15,7 @@ import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { SpeakingPartType } from "@/data/speakingQuestions";
 import { toast } from "sonner";
-import { useExamSets, fetchExamQuestions, normalizePart, type ExamSetRow } from "@/hooks/useExamSets";
+import { useExamSets, fetchExamQuestions, normalizePart, isNewSet, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
@@ -299,6 +299,9 @@ const Speaking = () => {
                         <div className="flex items-center gap-2 mb-3">
                           <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
                           <ExamTierBadge tier={set.access_tier} locked={locked} />
+                          {isNewSet(set) && (
+                            <Badge className="w-fit text-[11px] font-semibold bg-emerald-500 text-white border-0 hover:bg-emerald-500">MỚI</Badge>
+                          )}
                         </div>
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
