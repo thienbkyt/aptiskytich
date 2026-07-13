@@ -967,7 +967,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         return;
       }
 
-      // Last part → grade all sequentially using latest submission per part index
+      // Last part → grade all sequentially using v2 analytic rubric
       setWritingPhase("grading");
       setWritingGradedCount(0);
       const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
@@ -977,46 +977,75 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         .map((i) => writingSubmissionsByPartRef.current[i])
         .filter(Boolean) as Array<{ partType: string; text: string; questions: string[]; partId?: string; testResultId?: string | null }>;
       writingPartsRef.current = orderedSubmissions;
+
       const results: WritingGradingResult[] = [];
+      const rawParts: { task1?: number; task2?: number; task3?: number; task4?: number } = {};
+      const partsPayload: Record<string, any> = {};
+      let anyForcedComplexity = false;
       let failedParts = 0;
+
       for (let i = 0; i < orderedSubmissions.length; i++) {
         const p = orderedSubmissions[i];
-        const res = await gradeExam({
-          type: "writing",
-          text: p.text,
-          questions: p.questions,
-          partType: p.partType,
-          testResultId: p.testResultId ?? null,
-          examSetId: p.partId ?? null,
-          partLabel: WRITING_PART_LABELS[p.partType] ?? p.partType,
-        });
-        if (res) {
-          results.push(res as WritingGradingResult);
-        } else {
+        const origIdx = orderedIndices[i];
+        const answers = writingAnswersByPartRef.current[origIdx] || {
+          shortAnswers: [], textAnswer: "", part3Answers: [], informalAnswer: "", formalAnswer: "",
+        };
+        const partsInput: any = {};
+        if (p.partType === "task1") partsInput.shortAnswers = answers.shortAnswers;
+        else if (p.partType === "task3") partsInput.threeAnswers = answers.part3Answers;
+        else if (p.partType === "task4") {
+          partsInput.informalText = answers.informalAnswer;
+          partsInput.formalText = answers.formalAnswer;
+        }
+        try {
+          const v2 = await gradeWritingPartV2(p.partType as any, p.questions, p.text, partsInput);
+          rawParts[p.partType as keyof typeof rawParts] = v2.rawPart;
+          if (v2.forcedComplexity) anyForcedComplexity = true;
+          partsPayload[p.partType] = {
+            bands: v2.bands, rawPart: v2.rawPart, perItem: v2.perItem,
+            analysis: v2.analysis, criteriaAnalysis: v2.criteriaAnalysis,
+            feedback: v2.feedback, improvedVersion: v2.improvedVersion,
+            grammarErrors: v2.grammarErrors, spellingErrors: v2.spellingErrors,
+          };
+          // Display-friendly WritingGradingResult (kept for existing WritingFullResults UI)
+          const disp: WritingGradingResult = {
+            partType: p.partType,
+            maxPoints: 30,
+            addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0,
+            coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+            grammarErrors: v2.grammarErrors as any,
+            spellingErrors: v2.spellingErrors as any,
+            partScore: v2.rawPart,
+            feedback: v2.feedback || "",
+            improvedVersion: v2.improvedVersion,
+          };
+          results.push(disp);
+          // Bake AI into snapshot
+          try {
+            if (p.testResultId) {
+              const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+              await mergeSnapshotAI(p.testResultId, {
+                0: {
+                  partScore: v2.rawPart,
+                  maxPoints: 30,
+                  grammarErrors: v2.grammarErrors || [],
+                  spellingErrors: v2.spellingErrors || [],
+                  feedback: v2.feedback || null,
+                },
+              }, {
+                score: v2.rawPart,
+                total: 30,
+                scaled50: Math.round((v2.rawPart / 30) * 50),
+              });
+            }
+          } catch (e) { console.warn("[SkillFullPractice v2] bake AI failed", e); }
+        } catch (e) {
+          console.warn(`[SkillFullPractice v2] gradeWritingPartV2 ${p.partType} failed`, e);
           failedParts += 1;
         }
-        // Bake this part's AI into its snapshot.
-        try {
-          if (p.testResultId && res && (res as any).partScore !== undefined) {
-            const w = res as WritingGradingResult;
-            const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-            await mergeSnapshotAI(p.testResultId, {
-              0: {
-                partScore: w.partScore,
-                maxPoints: w.maxPoints,
-                grammarErrors: w.grammarErrors || [],
-                spellingErrors: w.spellingErrors || [],
-                feedback: w.feedback || null,
-              },
-            }, {
-              score: w.partScore,
-              total: w.maxPoints,
-              scaled50: w.maxPoints > 0 ? Math.round((w.partScore / w.maxPoints) * 50) : null,
-            });
-          }
-        } catch (e) { console.warn("[SkillFullPractice] writing bake AI failed", e); }
         setWritingGradedCount(i + 1);
       }
+
       if (failedParts > 0) {
         toast.error(
           failedParts === 1
@@ -1024,11 +1053,48 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             : `${failedParts} phần chưa chấm được, vui lòng thử lại.`,
         );
       }
-      const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
+
+      // Finalize → scale50 + CEFR
+      let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
+      try {
+        const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
+        scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
+      } catch (e) {
+        console.warn("[SkillFullPractice v2] finalizeWriting failed", e);
+      }
+
+      // Save aggregate writing_skill_results (linked to last part's test_result)
+      const lastPartIdx = orderedIndices[orderedIndices.length - 1];
+      const lastSub = writingSubmissionsByPartRef.current[lastPartIdx];
+      try {
+        await saveWritingSkillResult({
+          testResultId: (lastSub as any)?.testResultId ?? null,
+          examSetId: (lastSub as any)?.partId ?? null,
+          fullTestSessionId: fullPartSessionRef.current,
+          parts: partsPayload,
+          rawTotal, scale50, cefr, greyZone, flagReview,
+        });
+      } catch (e) {
+        console.warn("[SkillFullPractice v2] saveWritingSkillResult failed", e);
+      }
+
+      // Update the LAST test_results row so History reflects scale50/50/cefr.
+      try {
+        const trid = (lastSub as any)?.testResultId;
+        if (trid) {
+          await supabase.from("test_results").update({
+            score: scale50, total: 50, level: cefr,
+            correct_answers: scale50,
+          } as any).eq("id", trid);
+        }
+      } catch (e) { console.warn("[SkillFullPractice v2] update test_results failed", e); }
+
       setWritingResults(results);
-      setWritingScore50(Math.round(total100 / 2));
+      setWritingScore50(scale50);
+      setScores({ correct: scale50, total: 50 });
       setWritingPhase("results");
     };
+
 
     return (
       <>{adminOverlay}
