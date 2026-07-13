@@ -463,7 +463,530 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
     // END SPEAKING V2 BRANCH
     // ============================================================
 
+    // ============================================================
+    // WRITING FINALIZE (analytic rubric)
+    // raw_total = raw_P1*0.5 + raw_P2 + raw_P3 + raw_P4*1.5   (max 120)
+    // scale50   = round(raw_total / 120 * 50)
+    // CUTS      = { C:46, B2:40, B1:33, A2:23, A1:12, A0:0 }
+    // Grey zone: within 2 pts below a cut → bump if coreGV band >= that band
+    // Appropriacy cap: forcedComplexity && cefr === 'C' → cefr=B2, scale50<=45
+    // ============================================================
+    if ((type as string) === "writing_finalize") {
+      const rp = (body as any).rawParts || {};
+      const p1 = Number(rp.task1 ?? 0);
+      const p2 = Number(rp.task2 ?? 0);
+      const p3 = Number(rp.task3 ?? 0);
+      const p4 = Number(rp.task4 ?? 0);
+      const raw_total = p1 * 0.5 + p2 + p3 + p4 * 1.5;
+      const scale50Base = Math.round((raw_total / 120) * 50);
+      let scale50 = Math.max(0, Math.min(50, scale50Base));
+      const CUTS: Array<{ band: string; cut: number }> = [
+        { band: "C", cut: 46 },
+        { band: "B2", cut: 40 },
+        { band: "B1", cut: 33 },
+        { band: "A2", cut: 23 },
+        { band: "A1", cut: 12 },
+        { band: "A0", cut: 0 },
+      ];
+      const order = ["A0", "A1", "A2", "B1", "B2", "C"];
+      const rankOf = (b: string) => order.indexOf(b);
+      let baseBand = "A0";
+      for (const c of CUTS) {
+        if (scale50 >= c.cut) { baseBand = c.band; break; }
+      }
+      const coreGV = (body as any).coreGV as string | null | undefined;
+      const GREY_WIDTH = 2;
+      let greyZone = false;
+      let bumpedTo: string | null = null;
+      for (const c of CUTS) {
+        if (scale50 >= c.cut - GREY_WIDTH && scale50 < c.cut) {
+          greyZone = true;
+          if (coreGV != null && rankOf(String(coreGV)) >= rankOf(c.band)) {
+            bumpedTo = c.band;
+          }
+          break;
+        }
+      }
+      let cefr = bumpedTo ?? baseBand;
+      let flagReview = greyZone;
+
+      // Appropriacy cap
+      const forcedComplexity = !!(body as any).forcedComplexity;
+      if (forcedComplexity && cefr === "C") {
+        cefr = "B2";
+        scale50 = Math.min(scale50, 45);
+        flagReview = true;
+      }
+
+      return new Response(JSON.stringify({
+        rawTotal: Math.round(raw_total * 100) / 100,
+        raw_total: Math.round(raw_total * 100) / 100,
+        scale50,
+        cefr,
+        greyZone,
+        flagReview,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ============================================================
+    // WRITING V2 BRANCH (analytic rubric per part)
+    // ============================================================
+    if ((type as string) === "writing_v2") {
+      const pt: string = String((body as any).partType || "");
+      const qs: string[] = Array.isArray(questions) ? questions.map((q) => String(q ?? "")) : [];
+      const studentText: string = String((body as any).text ?? "");
+      const partsIn = (body as any).parts || {};
+
+      if (!["task1", "task2", "task3", "task4"].includes(pt)) {
+        return new Response(JSON.stringify({ error: "Invalid writing partType" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (studentText.length > 12_000) {
+        return new Response(JSON.stringify({ error: "Text too large" }), {
+          status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Tier gate
+      if (userId) {
+        try {
+          const { data: access } = await supabaseClient.rpc("check_feature_access", {
+            p_key: "ai_grading_writing", p_scope: null,
+          });
+          const a = (access ?? {}) as any;
+          if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
+            const userTier = (a.tier as string) ?? "free";
+            const need = userTier === "pro" ? "premium" : "pro";
+            return new Response(JSON.stringify({
+              error: a.reason === "disabled" ? "disabled" : "quota_exceeded",
+              upgrade: true, need, tier: userTier,
+              freeQuota: a.free_quota ?? 0, proQuota: a.pro_quota ?? null,
+              used: a.used ?? 0, remaining: a.remaining ?? 0,
+            }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+        } catch (e) {
+          console.warn("[grade-exam writing_v2] feature access check failed:", (e as any)?.message || e);
+        }
+      }
+
+      // Word counter (whitespace tokens)
+      const wc = (s: string) => (String(s || "").trim().match(/\S+/g) || []).length;
+      const capFromRatio = (words: number, minReq: number, maxReq: number): { cap: number; flagOver: boolean } => {
+        const r = minReq > 0 ? words / minReq : 1;
+        let cap = 5;
+        if (r < 0.5) cap = 2;
+        else if (r < 0.7) cap = 3;
+        else if (r < 1.0) cap = 4;
+        let flagOver = false;
+        if (words > maxReq * 1.3) { cap = Math.min(cap, 4); flagOver = true; }
+        if (words > maxReq * 1.6) { cap = Math.min(cap, 3); flagOver = true; }
+        return { cap, flagOver };
+      };
+
+      const bandNum = (v: any) => {
+        const n = Math.round(Number(v ?? 0));
+        return Math.max(0, Math.min(5, isNaN(n) ? 0 : n));
+      };
+
+      // Build task-specific prompt
+      const REGISTER_GUIDANCE = `
+FEEDBACK REGISTER (đúng giọng theo part):
+- Part 1: KHÔNG gợi ý nâng cấp — chỉ nhận xét đúng/sai và chính tả.
+- Part 2 & 3: giữ giọng informal, thân mật. Part 3 gợi ý kiểu "you should…", KHÔNG dùng "I strongly recommend".
+- Part 4 email formal: có thể gợi ý cấu trúc, cụm formal.
+FEEDBACK ORDER (bắt buộc): Task fulfilment → Grammar/chính tả → Vocabulary. Không ép cấu trúc phức tạp cho Part thấp.`;
+
+      const SHARED_RUBRIC = `
+BAND ANCHORS (0-5, chấm nguyên):
+5 = C: tự nhiên, chính xác, phong phú, mạch lạc rõ.
+4 = B2: nhìn chung chính xác, phát triển tốt, đôi chỗ sơ suất.
+3 = B1: đủ ý cơ bản, còn lỗi rõ nhưng vẫn hiểu, mạch lạc trung bình.
+2 = A2: câu đơn giản, nhiều lỗi ảnh hưởng, thiếu phát triển.
+1 = A1: rất hạn chế, lỗi lớn, khó theo.
+0: không đáp ứng / rời rạc / lạc đề hoàn toàn.
+
+CRITERIA (mỗi tiêu chí một band 0-5):
+- TF (Task Fulfilment): đáp đúng yêu cầu, đủ ý, đúng chủ đề. LẠC ĐỀ → TF = 0.
+- GRA (Grammar & Accuracy): đúng thời/cấu trúc/chia động từ, đa dạng câu.
+- VRA (Vocabulary): dùng từ đúng, đa dạng, tự nhiên, phù hợp ngữ cảnh.
+- CC (Coherence & Cohesion): mạch lạc, dùng từ nối hợp lý, ý liên kết.
+- REG (Register & Tone): đúng tông (informal/formal) theo yêu cầu.
+${REGISTER_GUIDANCE}
+
+FORCED COMPLEXITY DETECTION:
+Đặt forcedComplexity = true khi học viên cố ý nhồi cấu trúc/từ vựng "đao to búa lớn" không phù hợp part hay chủ đề (ví dụ Part 1 mà dùng "notwithstanding, in light of the aforementioned…"). Nếu không thì false.
+
+RETURN VIA TOOL CALL. Mọi lỗi liệt kê ĐẦY ĐỦ, mỗi lỗi 1 dòng {original, corrected, explanation (tiếng Việt ngắn)}.`;
+
+      let systemPromptV2 = "";
+      let userText = "";
+      // Word-count reqs per part
+      // P2: 20-30 · P3: 30-40/câu · P4: informal 40-50, formal 120-150 · P1: none
+
+      if (pt === "task1") {
+        systemPromptV2 = `You are an expert Aptis Writing Part 1 grader (5 short answers, 1-5 từ mỗi câu). NO word-count cap.
+Chấm mỗi câu là "correct" khi VỪA đúng nội dung yêu cầu VỪA đúng chính tả/ngữ pháp. Trả về:
+- items: mảng 5 phần tử { correct: boolean, reason: string (tiếng Việt, ngắn) }
+- grammarErrors, spellingErrors: liệt kê đầy đủ (không bắt buộc questionIndex).
+- feedback: tiếng Việt theo thứ tự Task → Grammar/chính tả → Vocabulary. KHÔNG gợi ý nâng cấp.
+- improvedVersion: bản đúng cho 5 câu (mỗi dòng một câu).
+- forcedComplexity: boolean.
+${SHARED_RUBRIC}`;
+        userText = `partType: task1
+Prompts:
+${qs.map((q, i) => `${i + 1}. ${q}`).join("\n")}
+
+Student's 5 short answers (mỗi câu 1 dòng, đúng thứ tự):
+${(partsIn.shortAnswers || []).map((a: string, i: number) => `${i + 1}. ${a ?? ""}`).join("\n")}`;
+      } else if (pt === "task2") {
+        systemPromptV2 = `You are an expert Aptis Writing Part 2 grader (Social Media Response, 20-30 words).
+Trả về:
+- bands: { tf, gra, vra, cc, reg } (band 0-5) — CHỈ chấm TF theo NỘI DUNG (chưa áp word-count).
+- criteriaAnalysis: giải thích ngắn (VN) cho từng tiêu chí.
+- grammarErrors, spellingErrors (liệt kê đầy đủ).
+- feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giữ giọng informal).
+- improvedVersion: bản viết lại tự nhiên, cùng ý.
+- forcedComplexity: boolean.
+${SHARED_RUBRIC}`;
+        userText = `partType: task2
+Prompt:
+${qs.join("\n")}
+
+Student's response:
+${studentText}`;
+      } else if (pt === "task3") {
+        systemPromptV2 = `You are an expert Aptis Writing Part 3 grader (3 câu trả lời, 30-40 words/câu, informal).
+Trả về:
+- items: mảng 3 phần tử { tfContent: band 0-5 (nội dung, chưa áp word-count), reason: VN ngắn }.
+- bands: { tf: (sẽ được tính ở app), gra, vra, cc, reg } — chấm gra/vra/cc/reg cho CẢ part 1 lần.
+- criteriaAnalysis (VN).
+- grammarErrors, spellingErrors: mỗi lỗi có questionIndex (0..2).
+- feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giọng informal, dùng "you should…").
+- improvedVersion: gộp 3 câu đã sửa.
+- forcedComplexity: boolean.
+${SHARED_RUBRIC}`;
+        userText = `partType: task3
+Questions:
+${qs.map((q, i) => `${i + 1}. ${q}`).join("\n")}
+
+Student's 3 answers (đúng thứ tự):
+${(partsIn.threeAnswers || []).map((a: string, i: number) => `${i + 1}. ${a ?? ""}`).join("\n\n")}`;
+      } else {
+        systemPromptV2 = `You are an expert Aptis Writing Part 4 grader (2 emails).
+Email 1: INFORMAL, 40-50 words. Email 2: FORMAL, 120-150 words. Both PHẢI bám SCENARIO chung.
+
+Trả về:
+- emails: mảng 2 phần tử theo thứ tự [informal, formal], mỗi phần tử:
+  { bands: { tf, gra, vra, cc, reg } (0-5) — TF theo NỘI DUNG (chưa áp word-count), criteriaAnalysis: {tf,gra,vra,cc,reg}, reason: VN ngắn }.
+- grammarErrors, spellingErrors: mỗi lỗi có emailIndex (0 informal, 1 formal).
+- feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; chỉ email FORMAL mới gợi ý cấu trúc trang trọng).
+- improvedVersion: bản viết lại 2 email (đánh dấu rõ "Informal:" và "Formal:").
+- forcedComplexity: boolean.
+
+SCENARIO RULE: nếu email trả lời sai scenario → TF của email đó = 0.
+${SHARED_RUBRIC}`;
+        userText = `partType: task4
+Prompts:
+${qs.join("\n\n")}
+
+Informal email:
+${partsIn.informalText ?? ""}
+
+Formal email:
+${partsIn.formalText ?? ""}`;
+      }
+
+      // Build tool schema per part
+      const bandProp = { type: "integer", minimum: 0, maximum: 5 };
+      const errItem = {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          original: { type: "string" },
+          corrected: { type: "string" },
+          explanation: { type: "string" },
+          questionIndex: { type: "integer" },
+          emailIndex: { type: "integer" },
+        },
+        required: ["original", "corrected"],
+      };
+      const bandsObj = {
+        type: "object",
+        additionalProperties: false,
+        properties: { tf: bandProp, gra: bandProp, vra: bandProp, cc: bandProp, reg: bandProp },
+        required: ["tf", "gra", "vra", "cc", "reg"],
+      };
+      const criteriaAnalysis = {
+        type: "object",
+        additionalProperties: false,
+        properties: { tf: { type: "string" }, gra: { type: "string" }, vra: { type: "string" }, cc: { type: "string" }, reg: { type: "string" } },
+        required: ["tf", "gra", "vra", "cc", "reg"],
+      };
+
+      let toolParams: any;
+      if (pt === "task1") {
+        toolParams = {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            items: {
+              type: "array", minItems: 5, maxItems: 5,
+              items: { type: "object", additionalProperties: false, properties: { correct: { type: "boolean" }, reason: { type: "string" } }, required: ["correct", "reason"] },
+            },
+            grammarErrors: { type: "array", items: errItem },
+            spellingErrors: { type: "array", items: errItem },
+            feedback: { type: "string" },
+            improvedVersion: { type: "string" },
+            forcedComplexity: { type: "boolean" },
+          },
+          required: ["items", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "forcedComplexity"],
+        };
+      } else if (pt === "task3") {
+        toolParams = {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            items: {
+              type: "array", minItems: 3, maxItems: 3,
+              items: { type: "object", additionalProperties: false, properties: { tfContent: bandProp, reason: { type: "string" } }, required: ["tfContent", "reason"] },
+            },
+            bands: bandsObj,
+            criteriaAnalysis,
+            grammarErrors: { type: "array", items: errItem },
+            spellingErrors: { type: "array", items: errItem },
+            feedback: { type: "string" },
+            improvedVersion: { type: "string" },
+            forcedComplexity: { type: "boolean" },
+          },
+          required: ["items", "bands", "criteriaAnalysis", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "forcedComplexity"],
+        };
+      } else if (pt === "task4") {
+        const emailObj = {
+          type: "object", additionalProperties: false,
+          properties: { bands: bandsObj, criteriaAnalysis, reason: { type: "string" } },
+          required: ["bands", "criteriaAnalysis", "reason"],
+        };
+        toolParams = {
+          type: "object", additionalProperties: false,
+          properties: {
+            emails: { type: "array", minItems: 2, maxItems: 2, items: emailObj },
+            grammarErrors: { type: "array", items: errItem },
+            spellingErrors: { type: "array", items: errItem },
+            feedback: { type: "string" },
+            improvedVersion: { type: "string" },
+            forcedComplexity: { type: "boolean" },
+          },
+          required: ["emails", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "forcedComplexity"],
+        };
+      } else {
+        // task2
+        toolParams = {
+          type: "object", additionalProperties: false,
+          properties: {
+            bands: bandsObj,
+            criteriaAnalysis,
+            grammarErrors: { type: "array", items: errItem },
+            spellingErrors: { type: "array", items: errItem },
+            feedback: { type: "string" },
+            improvedVersion: { type: "string" },
+            forcedComplexity: { type: "boolean" },
+          },
+          required: ["bands", "criteriaAnalysis", "grammarErrors", "spellingErrors", "feedback", "improvedVersion", "forcedComplexity"],
+        };
+      }
+
+      const toolV2 = {
+        type: "function",
+        function: {
+          name: "submit_writing_grading_v2",
+          description: "Submit analytic Aptis Writing grading (v2). Do NOT compute final score.",
+          parameters: toolParams,
+        },
+      };
+
+      const model = "google/gemini-2.5-flash";
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPromptV2 },
+            { role: "user", content: [{ type: "text", text: userText }] },
+          ],
+          tools: [toolV2],
+          tool_choice: { type: "function", function: { name: "submit_writing_grading_v2" } },
+        }),
+      });
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => "");
+        console.error("[grade-exam writing_v2] gateway error", resp.status, errText.slice(0, 500));
+        return new Response(JSON.stringify({ error: `AI gateway error: ${resp.status}`, notGraded: true }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const rawData = await resp.json();
+      logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_v2", partType: pt } }).catch(() => {});
+
+      const tc = rawData.choices?.[0]?.message?.tool_calls?.[0];
+      if (!tc?.function?.arguments) {
+        console.error("[grade-exam writing_v2] no tool call:", JSON.stringify(rawData).slice(0, 500));
+        return new Response(JSON.stringify({ error: "AI did not return structured grading", notGraded: true }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const parsed = JSON.parse(tc.function.arguments);
+      const grammarErrors = Array.isArray(parsed.grammarErrors) ? parsed.grammarErrors : [];
+      const spellingErrors = Array.isArray(parsed.spellingErrors) ? parsed.spellingErrors : [];
+      const forcedComplexity = !!parsed.forcedComplexity;
+      const feedback: string = String(parsed.feedback ?? "");
+      const improvedVersion: string = String(parsed.improvedVersion ?? "");
+
+      let bands: any = { tf: 0, gra: 0, vra: 0, cc: 0, reg: 0 };
+      let criteriaAnalysis: any = { tf: "", gra: "", vra: "", cc: "", reg: "" };
+      let rawPart = 0;
+      let perItem: any[] = [];
+      let analysis = "";
+
+      if (pt === "task1") {
+        const items: any[] = Array.isArray(parsed.items) ? parsed.items.slice(0, 5) : [];
+        while (items.length < 5) items.push({ correct: false, reason: "" });
+        const correctCount = items.filter((it) => !!it.correct).length; // 0..5 → band
+        bands = { tf: correctCount, gra: 0, vra: 0, cc: 0, reg: 0 }; // Part 1 chỉ dùng TF-aggregate
+        rawPart = correctCount * 6; // 0..30
+        perItem = items.map((it, i) => ({
+          questionText: qs[i] ?? "",
+          userAnswer: (partsIn.shortAnswers || [])[i] ?? "",
+          tfContent: it.correct ? 5 : 0,
+          tfTask: it.correct ? 5 : 0,
+        }));
+        analysis = items.map((it, i) => `Câu ${i + 1}: ${it.reason || (it.correct ? "OK" : "Sai")}`).join("\n");
+      } else if (pt === "task2") {
+        const b = parsed.bands || {};
+        const tfContent = bandNum(b.tf);
+        const words = wc(studentText);
+        const { cap, flagOver } = capFromRatio(words, 20, 30);
+        const tfTask = Math.min(tfContent, cap);
+        bands = { tf: tfTask, gra: bandNum(b.gra), vra: bandNum(b.vra), cc: bandNum(b.cc), reg: bandNum(b.reg) };
+        rawPart = bands.tf * 2 + bands.gra + bands.vra + bands.cc + bands.reg; // 0..30
+        criteriaAnalysis = parsed.criteriaAnalysis || criteriaAnalysis;
+        perItem = [{
+          questionText: qs.join("\n"),
+          userAnswer: studentText,
+          wordCount: words, minReq: 20, maxReq: 30,
+          tfCap: cap, tfContent, tfTask, flagOver,
+        }];
+        analysis = `Words: ${words}/20-30. TF nội dung ${tfContent} → sau word-cap = ${tfTask}.`;
+      } else if (pt === "task3") {
+        const b = parsed.bands || {};
+        const items: any[] = Array.isArray(parsed.items) ? parsed.items.slice(0, 3) : [];
+        while (items.length < 3) items.push({ tfContent: 0, reason: "" });
+        const answers: string[] = (partsIn.threeAnswers || []).slice(0, 3);
+        while (answers.length < 3) answers.push("");
+        const perTF: number[] = items.map((it, i) => {
+          const words = wc(answers[i] || "");
+          const { cap, flagOver } = capFromRatio(words, 30, 40);
+          const tfContent = bandNum(it.tfContent);
+          const tfTask = Math.min(tfContent, cap);
+          perItem.push({
+            questionText: qs[i] ?? "",
+            userAnswer: answers[i] ?? "",
+            wordCount: words, minReq: 30, maxReq: 40,
+            tfCap: cap, tfContent, tfTask, flagOver,
+          });
+          return tfTask;
+        });
+        const tfAvg = Math.round((perTF.reduce((s, n) => s + n, 0) / 3) * 100) / 100; // keep 2dp
+        bands = { tf: tfAvg, gra: bandNum(b.gra), vra: bandNum(b.vra), cc: bandNum(b.cc), reg: bandNum(b.reg) };
+        rawPart = tfAvg * 2 + bands.gra + bands.vra + bands.cc + bands.reg;
+        criteriaAnalysis = parsed.criteriaAnalysis || criteriaAnalysis;
+        analysis = perItem.map((p: any, i: number) => `Câu ${i + 1}: ${p.wordCount} từ, TF ${p.tfContent}→${p.tfTask}`).join("\n");
+      } else {
+        // task4
+        const emails: any[] = Array.isArray(parsed.emails) ? parsed.emails.slice(0, 2) : [];
+        while (emails.length < 2) emails.push({ bands: { tf: 0, gra: 0, vra: 0, cc: 0, reg: 0 }, criteriaAnalysis: {} });
+        const informalText = String(partsIn.informalText ?? "");
+        const formalText = String(partsIn.formalText ?? "");
+        const infoWc = wc(informalText);
+        const formalWc = wc(formalText);
+        const infoCap = capFromRatio(infoWc, 40, 50);
+        const formalCap = capFromRatio(formalWc, 120, 150);
+        const emailReqs = [
+          { minReq: 40, maxReq: 50, words: infoWc, capInfo: infoCap, text: informalText, label: "Informal" },
+          { minReq: 120, maxReq: 150, words: formalWc, capInfo: formalCap, text: formalText, label: "Formal" },
+        ];
+        const rawPerEmail: number[] = [];
+        emails.forEach((em: any, i: number) => {
+          const b = em.bands || {};
+          const tfContent = bandNum(b.tf);
+          const tfTask = Math.min(tfContent, emailReqs[i].capInfo.cap);
+          const gra = bandNum(b.gra), vra = bandNum(b.vra), cc = bandNum(b.cc), reg = bandNum(b.reg);
+          const rawE = tfTask * 2 + gra + vra + cc + reg; // 0..30
+          rawPerEmail.push(rawE);
+          perItem.push({
+            questionText: `${emailReqs[i].label} email`,
+            userAnswer: emailReqs[i].text,
+            wordCount: emailReqs[i].words,
+            minReq: emailReqs[i].minReq,
+            maxReq: emailReqs[i].maxReq,
+            tfCap: emailReqs[i].capInfo.cap,
+            tfContent, tfTask, flagOver: emailReqs[i].capInfo.flagOver,
+            bands: { tf: tfTask, gra, vra, cc, reg },
+            criteriaAnalysis: em.criteriaAnalysis || {},
+          });
+        });
+        // rawPart = informal*0.4 + formal*0.6  (then finalize multiplies by 1.5)
+        rawPart = Math.round((rawPerEmail[0] * 0.4 + rawPerEmail[1] * 0.6) * 100) / 100;
+        // Bubble aggregate bands (weighted like raw) for UI
+        const wBand = (k: string) => {
+          const a = perItem[0]?.bands?.[k] ?? 0;
+          const b = perItem[1]?.bands?.[k] ?? 0;
+          return Math.round((a * 0.4 + b * 0.6) * 100) / 100;
+        };
+        bands = { tf: wBand("tf"), gra: wBand("gra"), vra: wBand("vra"), cc: wBand("cc"), reg: wBand("reg") };
+        analysis = `Informal ${infoWc}/40-50 · Formal ${formalWc}/120-150. Raw informal=${rawPerEmail[0]}, formal=${rawPerEmail[1]}, weighted=${rawPart}.`;
+      }
+
+      const payload = {
+        bands,
+        rawPart,
+        raw_part: rawPart,
+        perItem,
+        analysis,
+        criteriaAnalysis,
+        grammarErrors,
+        spellingErrors,
+        feedback,
+        improvedVersion,
+        forcedComplexity,
+      };
+
+      // Log usage once
+      if (userId) {
+        try {
+          await serviceClient.from("feature_usage").insert({
+            user_id: userId, feature_key: "ai_grading_writing", scope: null, ref_id: null,
+          });
+        } catch (e) {
+          console.warn("[grade-exam writing_v2] feature_usage insert failed:", (e as any)?.message || e);
+        }
+      }
+
+      return new Response(JSON.stringify(payload), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // ============================================================
+    // END WRITING V2 BRANCH
+    // ============================================================
+
     if (type !== "speaking" && type !== "writing") {
+
       return new Response(JSON.stringify({ error: "Invalid type" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
