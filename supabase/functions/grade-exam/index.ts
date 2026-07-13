@@ -213,8 +213,9 @@ serve(async (req) => {
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Tier gate — reuse ai_grading_speaking quota
-      if (userId) {
+      // Tier gate — reuse ai_grading_speaking quota. Skip for internal worker
+      // retries (quota already consumed on the initial submission).
+      if (userId && !isInternal) {
         try {
           const { data: access } = await supabaseClient.rpc("check_feature_access", {
             p_key: "ai_grading_speaking", p_scope: null,
