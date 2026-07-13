@@ -714,7 +714,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             const questions = entry.sub.items.map((it) => safeText(it.spec.questionText));
             const blobs = entry.sub.items.map((it) => it.blob ?? null);
             try {
-              const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs);
+              const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs, {
+                sessionId: sessionIdRef.current,
+                fullTestSessionId: sessionIdRef.current,
+              });
 
               const merged: SpeakingPartResultV2 = {
                 ...r,
@@ -966,9 +969,45 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partsInput.formalText = raw.formalAnswer;
         }
 
+        // Pre-create a placeholder test_results row so the safety-net queue can
+        // link a failed grade back to this attempt (worker writes the score to it).
+        let preTestResultId: string | null = null;
+        try {
+          const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
+          const placeholderSnap = buildSnap({
+            skill: "writing",
+            part: e.partType,
+            testTitle: e.partLabel ?? null,
+            score: 0, total: 30, scaled50: 0, band: "",
+            items: [{
+              questionText: (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType),
+              userAnswer: e.text || (e.perQuestion?.[0]?.user_answer ?? ""),
+              isCorrect: false,
+              ai: null,
+            }],
+            raw: { partType: e.partType, text: e.text, questions: e.questions, ai: null, notGraded: true },
+          });
+          preTestResultId = await saveExamResult({
+            examSetId: e.partId ?? null,
+            skill: "writing",
+            correct: 0,
+            total: 30,
+            perQuestion: e.perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: placeholderSnap,
+          });
+        } catch (err) {
+          console.warn("[FullTest v2] pre-create test_results failed", err);
+        }
+
         let v2: Awaited<ReturnType<typeof gradeWritingPartV2>> | null = null;
         try {
-          v2 = await gradeWritingPartV2(e.partType as any, e.questions, e.text, partsInput);
+          v2 = await gradeWritingPartV2(e.partType as any, e.questions, e.text, partsInput, {
+            testResultId: preTestResultId,
+            examSetId: e.partId ?? null,
+            fullTestSessionId: sessionIdRef.current,
+          });
         } catch (err) {
           console.warn(`[FullTest v2] gradeWritingPartV2 ${e.partType} failed`, err);
         }
@@ -1013,21 +1052,35 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           }],
           raw: { partType: e.partType, text: e.text, questions: e.questions, ai: v2 },
         });
-        const testResultId = await saveExamResult({
-          examSetId: e.partId ?? null,
-          skill: "writing",
-          correct: partScoreRounded,
-          total: partMaxRounded,
-          perQuestion: e.perQuestion,
-          fullTestSessionId: sessionIdRef.current,
-          fullTestId: testId,
-          reviewSnapshot: writingSnap,
-        });
+        // Update the pre-created placeholder with the real graded snapshot,
+        // instead of creating a second test_results row.
+        let testResultId: string | null = preTestResultId;
+        if (preTestResultId) {
+          try {
+            await supabase.from("test_results").update({
+              score: partScoreRounded,
+              total: partMaxRounded,
+              correct_answers: partScoreRounded,
+              review_snapshot: writingSnap as any,
+            } as any).eq("id", preTestResultId);
+          } catch (err) { console.warn("[FullTest v2] update pre-test_results failed", err); }
+        } else {
+          testResultId = await saveExamResult({
+            examSetId: e.partId ?? null,
+            skill: "writing",
+            correct: partScoreRounded,
+            total: partMaxRounded,
+            perQuestion: e.perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: writingSnap,
+          });
+        }
         lastTestResultId = testResultId;
         lastExamSetId = e.partId ?? null;
 
-        if (user) {
-          await (supabase as any).from("writing_question_gradings").insert([{
+        if (user && testResultId) {
+          await (supabase as any).from("writing_question_gradings").upsert([{
             user_id: user.id,
             test_result_id: testResultId,
             exam_set_id: e.partId,
@@ -1038,7 +1091,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             grammar_errors: (v2.grammarErrors || []) as any,
             spelling_errors: (v2.spellingErrors || []) as any,
             feedback: v2.feedback || "",
-          }]);
+          }], { onConflict: "test_result_id,part,item_index" });
         }
 
         setWritingGradedCount(i + 1);

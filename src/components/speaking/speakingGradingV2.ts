@@ -63,7 +63,7 @@ export async function gradeSpeakingPartV2(
   partType: string,
   questions: Array<{ questionText?: string; question_text?: string; [k: string]: any }>,
   audioBlobs: Array<Blob | null | undefined>,
-  opts?: { sessionId?: string; testResultId?: string | null }
+  opts?: { sessionId?: string; testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null }
 ): Promise<SpeakingPartResultV2> {
   const audios: string[] = [];
   for (const b of audioBlobs) {
@@ -134,6 +134,8 @@ export async function gradeSpeakingPartV2(
       skill: "speaking",
       partType,
       testResultId: opts?.testResultId ?? null,
+      examSetId: opts?.examSetId ?? null,
+      fullTestSessionId: opts?.fullTestSessionId ?? null,
       payload: enqueuePayload,
       lastError: (error as any)?.message || (data as any)?.error || "unknown",
     });
@@ -224,14 +226,17 @@ export async function saveSpeakingSkillResult(
       feedback: args.feedback ?? null,
     };
 
+    const onConflict = args.fullTestSessionId
+      ? "user_id,full_test_session_id"
+      : "user_id,test_result_id";
     const { data, error } = await (supabase as any)
       .from("speaking_skill_results")
-      .insert(payload)
+      .upsert(payload, { onConflict })
       .select("id")
       .maybeSingle();
 
     if (error) {
-      console.warn("[saveSpeakingSkillResult] insert failed:", error);
+      console.warn("[saveSpeakingSkillResult] upsert failed:", error);
       return { id: null, error };
     }
     return { id: data?.id ?? null, error: null };

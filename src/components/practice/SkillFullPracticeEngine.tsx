@@ -545,7 +545,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
           const blobs = sub.items.map((it) => it.blob ?? null);
           speakingV2PromisesByPartRef.current[currentPartIndex] =
-            gradeSpeakingPartV2(sub.partType, questions, blobs);
+            gradeSpeakingPartV2(sub.partType, questions, blobs, {
+              sessionId: fullPartSessionRef.current,
+              fullTestSessionId: fullPartSessionRef.current,
+              testResultId: speakingTestResultIdByPartRef.current[currentPartIndex] ?? null,
+            });
         }
       } catch (e) {
         console.warn("[SkillFullPractice V2] background kick failed", e);
@@ -605,7 +609,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         // Reuse background promise if available; else fire fresh.
         let pending = speakingV2PromisesByPartRef.current[originalIdx];
         if (!pending) {
-          pending = gradeSpeakingPartV2(sub.partType, questions, blobs);
+          pending = gradeSpeakingPartV2(sub.partType, questions, blobs, {
+            sessionId: fullPartSessionRef.current,
+            fullTestSessionId: fullPartSessionRef.current,
+            testResultId: speakingTestResultIdByPartRef.current[originalIdx] ?? null,
+          });
           speakingV2PromisesByPartRef.current[originalIdx] = pending;
         }
         try {
@@ -998,7 +1006,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           partsInput.formalText = answers.formalAnswer;
         }
         try {
-          const v2 = await gradeWritingPartV2(p.partType as any, p.questions, p.text, partsInput);
+          const v2 = await gradeWritingPartV2(p.partType as any, p.questions, p.text, partsInput, {
+            testResultId: (p as any).testResultId ?? null,
+            examSetId: p.partId ?? null,
+            fullTestSessionId: fullPartSessionRef.current,
+          });
           rawParts[p.partType as keyof typeof rawParts] = v2.rawPart;
           if (v2.forcedComplexity) anyForcedComplexity = true;
           partsPayload[p.partType] = {

@@ -272,7 +272,11 @@ const SpeakingExamEngine = ({
     setV2Error(null);
     (async () => {
       try {
-        const result = await gradeSpeakingPartV2(partType, questions, blobs);
+        const result = await gradeSpeakingPartV2(partType, questions, blobs, {
+          testResultId: testResultIdRef.current ?? null,
+          examSetId: examSetId ?? null,
+          fullTestSessionId: fullTestSessionId ?? null,
+        });
         // Merge questionText back into per-item results for display.
         const mergedPerItem = (result.perItem || []).map((it, i) => ({
           ...it,

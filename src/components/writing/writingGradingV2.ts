@@ -66,7 +66,8 @@ export async function gradeWritingPartV2(
     shortAnswers?: string[];
     // For task3 three answers
     threeAnswers?: string[];
-  }
+  },
+  opts?: { testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null }
 ): Promise<WritingPartResultV2> {
   const gradePayload = {
     type: "writing_v2",
@@ -83,6 +84,9 @@ export async function gradeWritingPartV2(
     await enqueueGradingFallback({
       skill: "writing",
       partType,
+      testResultId: opts?.testResultId ?? null,
+      examSetId: opts?.examSetId ?? null,
+      fullTestSessionId: opts?.fullTestSessionId ?? null,
       payload: gradePayload,
       lastError: (error as any)?.message || (data as any)?.error || "unknown",
     });
@@ -168,25 +172,30 @@ export async function saveWritingSkillResult(
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { id: null, error: null };
+    const row = {
+      user_id: user.id,
+      test_result_id: args.testResultId ?? null,
+      exam_set_id: args.examSetId ?? null,
+      full_test_session_id: args.fullTestSessionId ?? null,
+      parts: args.parts,
+      raw_total: args.rawTotal,
+      scale50: args.scale50,
+      cefr: args.cefr,
+      grey_zone: args.greyZone,
+      flag_review: args.flagReview,
+      feedback: args.feedback ?? null,
+    };
+    // Upsert to survive re-grades: prefer session id, fall back to test_result_id.
+    const onConflict = args.fullTestSessionId
+      ? "user_id,full_test_session_id"
+      : "user_id,test_result_id";
     const { data, error } = await (supabase as any)
       .from("writing_skill_results")
-      .insert({
-        user_id: user.id,
-        test_result_id: args.testResultId ?? null,
-        exam_set_id: args.examSetId ?? null,
-        full_test_session_id: args.fullTestSessionId ?? null,
-        parts: args.parts,
-        raw_total: args.rawTotal,
-        scale50: args.scale50,
-        cefr: args.cefr,
-        grey_zone: args.greyZone,
-        flag_review: args.flagReview,
-        feedback: args.feedback ?? null,
-      })
+      .upsert(row, { onConflict })
       .select("id")
       .maybeSingle();
     if (error) {
-      console.warn("[saveWritingSkillResult] insert failed:", error);
+      console.warn("[saveWritingSkillResult] upsert failed:", error);
       return { id: null, error };
     }
     return { id: data?.id ?? null, error: null };
