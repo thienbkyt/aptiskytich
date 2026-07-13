@@ -1929,6 +1929,72 @@ export type Database = {
           },
         ]
       }
+      writing_skill_results: {
+        Row: {
+          cefr: string
+          created_at: string
+          exam_set_id: string | null
+          feedback: string | null
+          flag_review: boolean
+          full_test_session_id: string | null
+          grey_zone: boolean
+          id: string
+          parts: Json
+          raw_total: number
+          scale50: number
+          test_result_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cefr?: string
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean
+          full_test_session_id?: string | null
+          grey_zone?: boolean
+          id?: string
+          parts?: Json
+          raw_total?: number
+          scale50?: number
+          test_result_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cefr?: string
+          created_at?: string
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean
+          full_test_session_id?: string | null
+          grey_zone?: boolean
+          id?: string
+          parts?: Json
+          raw_total?: number
+          scale50?: number
+          test_result_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "writing_skill_results_exam_set_id_fkey"
+            columns: ["exam_set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "writing_skill_results_test_result_id_fkey"
+            columns: ["test_result_id"]
+            isOneToOne: false
+            referencedRelation: "test_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
