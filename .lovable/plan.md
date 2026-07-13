@@ -1,96 +1,75 @@
-## Vấn đề (gốc rễ)
 
-Trong `src/lib/examTransformers.ts`, hàm `toGrammarQuestions` ghi đè `id` của câu hỏi thành `i + 1` (số thứ tự). Khi `GrammarExamEngine.handleSubmit` lưu `perQuestion`, nó dùng `(q as any).id` — tức `"1"`, `"2"`, ... — đưa vào cột `exam_question_id` (UUID) của bảng `exam_question_results`.
+# Phase 1b — Chấm bài hoàn toàn bất đồng bộ
 
-Kết quả: insert per-question fail. Kiểm tra DB xác nhận 21 `test_results` skill grammar_vocab nhưng **0 row** trong `exam_question_results` skill grammar/grammar_vocab. Vì vậy ở History:
-- không có `qResults` → không hiển thị đáp án user
-- `ansMap[(q as any).id]` luôn miss → không có đáp án đúng/sai highlight
-- "mất thông tin bài làm"
+Mục tiêu: sau khi học viên bấm Nộp, mọi thứ chạy nền qua `grading_jobs`. Đóng tab, mất mạng, refresh → không bao giờ mất bài, không bao giờ 0 điểm oan.
 
-Reading/Listening hoạt động vì transformer giữ nguyên UUID (`r.id`) khi map answers.
+Chia làm 3 lượt nhỏ để giảm rủi ro. Mỗi lượt đều build & test được độc lập.
 
-## Phạm vi sửa
+---
 
-3 file, chỉ frontend. Không đụng schema/edge function/AI grading. Dữ liệu grammar lịch sử cũ vẫn rỗng (chấp nhận — không có gì để khôi phục), từ giờ trở đi mọi lần làm bài sẽ lưu đúng và review chính xác.
+## Lượt 1b-A — Upload audio Speaking lên storage + worker đọc từ storage
 
-### 1. `src/lib/examTransformers.ts` — `toGrammarQuestions`
+**Mục tiêu:** Payload trong `grading_jobs` không còn chứa audio base64 (nặng, dễ vỡ jsonb, tốn băng thông upload/download).
 
-Vẫn set `id: i + 1` cho UI, nhưng nhồi UUID thật vào `extra_data._eqId`:
+Thay đổi:
 
-```ts
-extra_data: { ...(r.extra_data || {}), _eqId: r.id }
-```
+1. Bucket `speaking-recordings` (đã có, private) — thêm RLS: user chỉ đọc/ghi file của chính mình theo prefix `<user_id>/…`.
+2. `src/lib/speakingUpload.ts` (mới): `uploadSpeakingBlob(blob, sessionId, part, idx)` → trả về `path`.
+3. `src/components/speaking/speakingGradingV2.ts` (`gradeSpeakingPartV2`) — thêm chế độ enqueue:
+   - Upload từng blob → thu path[]
+   - Gọi `grade-exam` như hiện tại nhưng nếu fail → enqueue `grading_jobs` với payload `{ type: "speaking_v2", partType, questions, audioPaths }` (không phải base64).
+4. `process-grading-jobs` (worker): khi payload có `audioPaths`, dùng service-role tải file từ bucket → convert base64 → thay vào payload `audios` → gọi `grade-exam`.
 
-### 2. `src/components/grammar/GrammarExamEngine.tsx` — `handleSubmit`
+Không đổi UX. Chỉ đổi kênh dữ liệu cho audio.
 
-Thay `exam_question_id: (q as any).id` bằng `_eqId` nếu có, fallback về `id` string:
+---
 
-```ts
-const eqId = (q.extra_data as any)?._eqId ?? String((q as any).id);
-return { exam_question_id: eqId, user_answer: userAnswer, is_correct: ok };
-```
+## Lượt 1b-B — Chuyển submit sang enqueue-only + UI polling
 
-`user_answer` giữ logic hiện tại:
-- `fill-in-blank` → text user nhập (`fillAnswers[i]`)
-- mọi loại MCQ/`vocab_matching` (synonym, gap_fill, definition_matching, collocation) → `String(answers[i])` (chỉ số option)
+**Mục tiêu:** Client không đợi `grade-exam` nữa. Nộp = tạo job → hiển thị "Đang chấm…" → poll job.status → khi `done` mới render kết quả.
 
-Logic này đã đủ vì engine nhóm các câu vocab_matching nhưng vẫn lưu **từng câu** (mỗi index trong `currentGroup.indices` là một `Question` riêng với `answers[idx]` riêng).
+Thay đổi:
 
-### 3. `src/components/history/HistoryReviewRenderer.tsx` — nhánh `skill === "grammar"`
+1. `src/hooks/useGradingJob.ts` (mới): tạo job, poll `grading_jobs` mỗi 3s (dùng Realtime nếu có; fallback setInterval), trả về `{ status, rawResponse, error }`.
+2. `SkillFullPracticeEngine.tsx` + `FullTestEngine.tsx` (writing & speaking path):
+   - Bỏ chờ `gradeXxxPartV2` trả về; thay bằng tạo N job (1 mỗi part) rồi chuyển sang màn "Đang chấm 3/4 part…".
+   - Khi tất cả job `done`, lấy `raw_response` của từng job → chạy y hệt logic hiện tại (upsert `*_question_gradings`, finalize `*_skill_results`, update `test_results`).
+3. Màn kết quả có nút **"Chấm lại"** khi 1 part `failed` — set job về `pending`, `attempts=0` (chỉ owner).
 
-Build `ansMap` theo `_eqId` thay vì `id` cục bộ:
+**Không** finalize server-side ở lượt này để giảm rủi ro — server chỉ trả `raw_response`, client vẫn là nơi ráp kết quả cuối. Điều đó có nghĩa: nếu học viên đóng tab trước khi tất cả part xong, các bản ghi phần đã xong vẫn có (worker đã chấm), nhưng skill_result cuối cùng sẽ được ráp lần tiếp theo họ mở lại History → tự động finalize.
 
-```ts
-const grammarAnsMap: Record<string, string | null> = {};
-qResults.forEach((r) => { grammarAnsMap[r.exam_question_id] = r.user_answer; });
+---
 
-const questions = toGrammarQuestions(rows);
-const initialAnswers: (number | null)[] = [];
-const initialFill: string[] = [];
-questions.forEach((q) => {
-  const eqId = (q.extra_data as any)?._eqId as string | undefined;
-  const raw = eqId ? grammarAnsMap[eqId] : null;
-  if (q.question_type === "fill-in-blank") {
-    initialAnswers.push(null);
-    initialFill.push(typeof raw === "string" ? raw : "");
-  } else {
-    // raw có thể là "2" hoặc JSON {answer: 2} (defensive)
-    let n: number = NaN;
-    if (raw != null) {
-      const trimmed = raw.trim();
-      if (/^\d+$/.test(trimmed)) n = parseInt(trimmed, 10);
-      else {
-        try {
-          const p = JSON.parse(trimmed);
-          if (typeof p === "number") n = p;
-          else if (p && typeof p.answer === "number") n = p.answer;
-        } catch { /* not json */ }
-      }
-    }
-    initialAnswers.push(Number.isFinite(n) ? n : null);
-    initialFill.push("");
-  }
-});
-```
+## Lượt 1b-C — Finalize server-side (worker tự ráp khi đủ 4 part)
 
-Pass vào `GrammarExamEngine` như cũ với `reviewMode initialAnswers initialFill showResultsOnSubmit={false} initialGroup onGroupCount`. Engine đã có sẵn:
-- `submitted = true` khi `reviewMode` → render highlight đúng/sai
-- dropdown `value={userAns}` cho vocab_matching, MCQ buttons highlight emerald cho correct, destructive cho user-wrong
-- Hiển thị `✓ {correct option}` bên cạnh khi sai
-- Block explanation cuối câu (cần `qIsCorrect`/`qIsWrong`, đã dựa trên `isAnswered` + `isCorrect`)
+**Mục tiêu:** Không cần học viên mở lại History để `test_results` được cập nhật.
 
-## Kiểm thử
+Thay đổi:
 
-1. Làm 1 attempt skill Grammar Full (đủ Sentence Gap Fill + Collocation Matching + Synonym + Definition + MCQ + fill-in-blank).
-2. Vào History → "Xem lại chi tiết":
-   - Mỗi dropdown vocab_matching hiện lựa chọn của user, viền xanh/đỏ đúng/sai.
-   - Câu sai có "✓ <đáp án đúng>" hiện kế bên dropdown.
-   - MCQ: option user chọn (nếu sai) đỏ + X, option đúng xanh + ✓.
-   - Fill-in-blank: input đóng băng giá trị user, dưới hiện "Đáp án đúng: ...".
-   - Explanation hiện cho mọi câu đã trả lời.
-3. SQL check: `select count(*) from exam_question_results where skill = 'grammar_vocab'` > 0 sau lần làm mới.
+1. Trong `process-grading-jobs`, sau khi mark job `done`, kiểm tra: cùng `test_result_id` + skill có đủ 4 part `done` chưa. Nếu đủ:
+   - Upsert `*_question_gradings` (partial unique index đã có → an toàn với retry).
+   - Gọi `grade-exam` (`writing_finalize` / `speaking_finalize`) với `rawParts`.
+   - Upsert `*_skill_results` (unique theo `full_test_session_id` đã có).
+   - Update `test_results.score / total / level`.
+2. Client `useGradingJob` không còn cần tự ráp; chỉ đọc `*_skill_results` khi thấy job cuối `done`.
+3. Bỏ hoàn toàn code ráp client trong `SkillFullPracticeEngine` / `FullTestEngine` (cleanup).
 
-## Out of scope
+---
 
-- Lịch sử grammar cũ (trước fix) vẫn không có per-question — không tái tạo được.
-- Không đụng AI grading speaking/writing, không đổi schema.
+## Ngoài phạm vi 1b (giữ cho Phase 2/3 sau)
+
+- Admin dashboard "Sức khoẻ chấm bài" (fail rate, danh sách failed, retry hàng loạt).
+- Auto-alert email admin khi fail>10%/24h hoặc pending>30 phút.
+- End-to-end test 5 bài + tắt mạng test.
+
+---
+
+## Kỹ thuật ngắn gọn
+
+- **Bucket path:** `speaking-recordings/<user_id>/<session_id>/<partType>/<idx>.webm` — khớp với `<user_id>/…` để RLS đơn giản.
+- **Worker fetch audio:** `admin.storage.from("speaking-recordings").download(path)` → arrayBuffer → base64.
+- **Realtime polling:** kênh `postgres_changes` trên `grading_jobs` filter `user_id=eq.<uid>`; fallback `setInterval(3000)` nếu không kết nối được.
+- **Idempotency:** mọi upsert dựa vào unique index đã tạo ở migration trước. Retry không nhân đôi điểm.
+- **Rollback:** mỗi lượt là 1 migration + 1 flag `VITE_GRADING_ASYNC` (mặc định false ở 1b-A, bật true ở 1b-B). Có thể tắt nhanh nếu vỡ.
+
+Cho tôi biết duyệt lượt nào trước (đề xuất **1b-A** để giảm ngay áp lực payload jsonb) hay chỉnh scope.
