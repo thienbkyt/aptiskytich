@@ -966,9 +966,45 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partsInput.formalText = raw.formalAnswer;
         }
 
+        // Pre-create a placeholder test_results row so the safety-net queue can
+        // link a failed grade back to this attempt (worker writes the score to it).
+        let preTestResultId: string | null = null;
+        try {
+          const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
+          const placeholderSnap = buildSnap({
+            skill: "writing",
+            part: e.partType,
+            testTitle: e.partLabel ?? null,
+            score: 0, total: 30, scaled50: 0, band: "",
+            items: [{
+              questionText: (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType),
+              userAnswer: e.text || (e.perQuestion?.[0]?.user_answer ?? ""),
+              isCorrect: false,
+              ai: null,
+            }],
+            raw: { partType: e.partType, text: e.text, questions: e.questions, ai: null, notGraded: true },
+          });
+          preTestResultId = await saveExamResult({
+            examSetId: e.partId ?? null,
+            skill: "writing",
+            correct: 0,
+            total: 30,
+            perQuestion: e.perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: placeholderSnap,
+          });
+        } catch (err) {
+          console.warn("[FullTest v2] pre-create test_results failed", err);
+        }
+
         let v2: Awaited<ReturnType<typeof gradeWritingPartV2>> | null = null;
         try {
-          v2 = await gradeWritingPartV2(e.partType as any, e.questions, e.text, partsInput);
+          v2 = await gradeWritingPartV2(e.partType as any, e.questions, e.text, partsInput, {
+            testResultId: preTestResultId,
+            examSetId: e.partId ?? null,
+            fullTestSessionId: sessionIdRef.current,
+          });
         } catch (err) {
           console.warn(`[FullTest v2] gradeWritingPartV2 ${e.partType} failed`, err);
         }
