@@ -15,6 +15,7 @@ import {
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { parseDateSafe } from "@/lib/safeDate";
+import { NEW_TAG_DAYS, isNewSet } from "@/hooks/useExamSets";
 
 type AccessTier = "free" | "pro" | "premium";
 
