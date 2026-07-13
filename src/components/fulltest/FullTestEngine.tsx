@@ -1049,21 +1049,35 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           }],
           raw: { partType: e.partType, text: e.text, questions: e.questions, ai: v2 },
         });
-        const testResultId = await saveExamResult({
-          examSetId: e.partId ?? null,
-          skill: "writing",
-          correct: partScoreRounded,
-          total: partMaxRounded,
-          perQuestion: e.perQuestion,
-          fullTestSessionId: sessionIdRef.current,
-          fullTestId: testId,
-          reviewSnapshot: writingSnap,
-        });
+        // Update the pre-created placeholder with the real graded snapshot,
+        // instead of creating a second test_results row.
+        let testResultId: string | null = preTestResultId;
+        if (preTestResultId) {
+          try {
+            await supabase.from("test_results").update({
+              score: partScoreRounded,
+              total: partMaxRounded,
+              correct_answers: partScoreRounded,
+              review_snapshot: writingSnap as any,
+            } as any).eq("id", preTestResultId);
+          } catch (err) { console.warn("[FullTest v2] update pre-test_results failed", err); }
+        } else {
+          testResultId = await saveExamResult({
+            examSetId: e.partId ?? null,
+            skill: "writing",
+            correct: partScoreRounded,
+            total: partMaxRounded,
+            perQuestion: e.perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: writingSnap,
+          });
+        }
         lastTestResultId = testResultId;
         lastExamSetId = e.partId ?? null;
 
-        if (user) {
-          await (supabase as any).from("writing_question_gradings").insert([{
+        if (user && testResultId) {
+          await (supabase as any).from("writing_question_gradings").upsert([{
             user_id: user.id,
             test_result_id: testResultId,
             exam_set_id: e.partId,
@@ -1074,7 +1088,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             grammar_errors: (v2.grammarErrors || []) as any,
             spelling_errors: (v2.spellingErrors || []) as any,
             feedback: v2.feedback || "",
-          }]);
+          }], { onConflict: "test_result_id,part,item_index" });
         }
 
         setWritingGradedCount(i + 1);
