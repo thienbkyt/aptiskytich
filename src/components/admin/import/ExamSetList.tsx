@@ -178,6 +178,11 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
               <Eye className="w-4 h-4" /> Xuất bản tất cả
             </Button>
           )}
+          {sets.some((s) => isNewSet(s as any)) && (
+            <Button variant="outline" onClick={handleClearAllNew} className="gap-2">
+              <Sparkles className="w-4 h-4" /> Bỏ nhãn MỚI toàn bộ
+            </Button>
+          )}
           <Button onClick={onCreateNew} className="gap-2">
             <Plus className="w-4 h-4" /> Thêm đề thi mới
           </Button>
