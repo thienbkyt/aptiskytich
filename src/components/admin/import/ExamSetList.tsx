@@ -107,6 +107,31 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
     if (!error) setSets((s) => s.map((x) => x.id === set.id ? { ...x, is_published: !x.is_published } : x));
   };
 
+  const toggleNewTag = async (set: ExamSetRow) => {
+    const hasTag = isNewSet(set as any);
+    const next = hasTag ? null : new Date(Date.now() + NEW_TAG_DAYS * 86400000).toISOString();
+    const { error } = await supabase.from("exam_sets").update({ new_until: next } as any).eq("id", set.id);
+    if (error) {
+      toast({ title: "Lỗi cập nhật", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => x.id === set.id ? ({ ...x, new_until: next } as any) : x));
+    toast({ title: hasTag ? "Đã bỏ nhãn MỚI" : "Đã gắn nhãn MỚI" });
+  };
+
+  const handleClearAllNew = async () => {
+    const tagged = sets.filter((s) => isNewSet(s as any));
+    if (tagged.length === 0) return;
+    const ids = tagged.map((s) => s.id);
+    const { error } = await supabase.from("exam_sets").update({ new_until: null } as any).in("id", ids);
+    if (error) {
+      toast({ title: "Lỗi cập nhật", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSets((s) => s.map((x) => ids.includes(x.id) ? ({ ...x, new_until: null } as any) : x));
+    toast({ title: `Đã bỏ nhãn MỚI cho ${tagged.length} đề` });
+  };
+
   const setAccessTier = async (set: ExamSetRow, next: AccessTier) => {
     const current = ((set as any).access_tier ?? "pro") as AccessTier;
     if (current === next) return;
