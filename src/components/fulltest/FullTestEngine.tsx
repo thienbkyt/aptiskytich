@@ -1053,35 +1053,44 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       }
 
       // Finalize → scale50 + CEFR + grey_zone + flag_review (+ appropriacy cap)
+      // ONLY when all 4 writing parts graded. Partial attempts must not
+      // produce an official CEFR — raw_total/120*50 would collapse to A1.
+      const { hasAllFourWritingParts } = await import("@/components/writing/writingGradingV2");
+      const allFour = hasAllFourWritingParts(rawParts) && failedParts === 0;
       let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
-      try {
-        const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
-        scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
-      } catch (err) {
-        console.warn("[FullTest v2] finalizeWriting failed", err);
-      }
-
-      // Save aggregate writing_skill_results
-      try {
-        await saveWritingSkillResult({
-          testResultId: lastTestResultId,
-          examSetId: lastExamSetId,
-          fullTestSessionId: sessionIdRef.current,
-          parts: partsPayload,
-          rawTotal, scale50, cefr, greyZone, flagReview,
-        });
-      } catch (err) {
-        console.warn("[FullTest v2] saveWritingSkillResult failed", err);
-      }
-
-      // Patch last test_results row → score=scale50, total=50, level=cefr
-      try {
-        if (lastTestResultId) {
-          await supabase.from("test_results").update({
-            score: scale50, total: 50, level: cefr, correct_answers: scale50,
-          } as any).eq("id", lastTestResultId);
+      if (allFour) {
+        try {
+          const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
+          scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
+        } catch (err) {
+          console.warn("[FullTest v2] finalizeWriting failed", err);
         }
-      } catch (err) { console.warn("[FullTest v2] update test_results failed", err); }
+
+        // Save aggregate writing_skill_results
+        try {
+          await saveWritingSkillResult({
+            testResultId: lastTestResultId,
+            examSetId: lastExamSetId,
+            fullTestSessionId: sessionIdRef.current,
+            parts: partsPayload,
+            rawTotal, scale50, cefr, greyZone, flagReview,
+          });
+        } catch (err) {
+          console.warn("[FullTest v2] saveWritingSkillResult failed", err);
+        }
+
+        // Patch last test_results row → score=scale50, total=50, level=cefr
+        try {
+          if (lastTestResultId) {
+            await supabase.from("test_results").update({
+              score: scale50, total: 50, level: cefr, correct_answers: scale50,
+            } as any).eq("id", lastTestResultId);
+          }
+        } catch (err) { console.warn("[FullTest v2] update test_results failed", err); }
+      } else {
+        console.info("[FullTest v2] Incomplete writing attempt — skipping scale50/CEFR finalize.");
+      }
+
 
       setScores((prev) => ({
         ...prev,
