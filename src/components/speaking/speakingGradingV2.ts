@@ -63,7 +63,7 @@ export async function gradeSpeakingPartV2(
   partType: string,
   questions: Array<{ questionText?: string; question_text?: string; [k: string]: any }>,
   audioBlobs: Array<Blob | null | undefined>,
-  opts?: { sessionId?: string; testResultId?: string | null }
+  opts?: { sessionId?: string; testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null }
 ): Promise<SpeakingPartResultV2> {
   const audios: string[] = [];
   for (const b of audioBlobs) {
