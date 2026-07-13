@@ -237,6 +237,9 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                   <Badge variant={set.is_published ? "default" : "secondary"} className="text-xs">
                     {set.is_published ? "Đã xuất bản" : "Nháp"}
                   </Badge>
+                  {isNewSet(set as any) && (
+                    <Badge className="text-[10px] font-semibold border-0 bg-emerald-500 text-white hover:bg-emerald-500">MỚI</Badge>
+                  )}
                   {(() => {
                     const t = (((set as any).access_tier ?? "pro") as AccessTier);
                     return (
