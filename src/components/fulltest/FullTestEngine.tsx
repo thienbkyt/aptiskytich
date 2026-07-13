@@ -714,7 +714,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             const questions = entry.sub.items.map((it) => safeText(it.spec.questionText));
             const blobs = entry.sub.items.map((it) => it.blob ?? null);
             try {
-              const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs);
+              const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs, {
+                sessionId: sessionIdRef.current,
+                fullTestSessionId: sessionIdRef.current,
+              });
 
               const merged: SpeakingPartResultV2 = {
                 ...r,
