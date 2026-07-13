@@ -14,7 +14,57 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+/**
+ * Speaking jobs may store `audioPaths` (bucket paths) instead of `audios`
+ * (base64) to keep jsonb payloads small. Resolve paths to base64 before
+ * calling grade-exam. Missing/failed downloads become empty strings so
+ * grade-exam still runs and grades whatever is available.
+ */
+async function hydrateAudioPaths(payload: any): Promise<any> {
+  if (!payload || payload.type !== "speaking_v2") return payload;
+  const paths: Array<string | null | undefined> = Array.isArray(payload.audioPaths)
+    ? payload.audioPaths
+    : null;
+  if (!paths) return payload;
+
+  const audios: string[] = [];
+  for (const p of paths) {
+    if (!p || typeof p !== "string") {
+      audios.push("");
+      continue;
+    }
+    try {
+      const { data, error } = await admin.storage
+        .from("speaking-recordings")
+        .download(p);
+      if (error || !data) {
+        console.warn("[worker] audio download failed:", p, error?.message);
+        audios.push("");
+        continue;
+      }
+      const buf = new Uint8Array(await data.arrayBuffer());
+      audios.push(bytesToBase64(buf));
+    } catch (e: any) {
+      console.warn("[worker] audio download threw:", p, e?.message);
+      audios.push("");
+    }
+  }
+
+  const { audioPaths, ...rest } = payload;
+  return { ...rest, audios };
+}
+
 async function invokeGradeExam(payload: any, userId: string): Promise<{ ok: boolean; status: number; body: any }> {
+  const hydrated = await hydrateAudioPaths(payload);
   const res = await fetch(`${SUPABASE_URL}/functions/v1/grade-exam`, {
     method: "POST",
     headers: {
@@ -23,7 +73,7 @@ async function invokeGradeExam(payload: any, userId: string): Promise<{ ok: bool
       "x-internal-key": SERVICE_ROLE,
       "x-internal-user-id": userId,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(hydrated),
   });
   let body: any = null;
   try { body = await res.json(); } catch { body = null; }
