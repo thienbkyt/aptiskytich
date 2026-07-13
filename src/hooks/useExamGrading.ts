@@ -112,7 +112,20 @@ export function useExamGrading() {
       // Save to database
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        if (params.type === "writing") {
+        // Only speaking legacy remains here — writing V2 has its own path.
+        const s = result as GradingResult;
+        await supabase.from("exam_gradings").insert({
+          user_id: user.id,
+          skill: params.type,
+          part_type: params.partType,
+          overall_level: s.overallLevel,
+          criteria: s.criteria as any,
+          mistakes: s.mistakes as any,
+          suggestions: s.suggestions as any,
+          transcript: s.transcript || "",
+          student_text: params.text || "",
+        });
+      }
           const w = result as WritingGradingResult;
           const mistakes = [
             ...(w.grammarErrors || []).map((e) => ({ ...e, kind: "grammar" })),
