@@ -539,6 +539,7 @@ export type Database = {
           id: string
           is_published: boolean
           key_date: string | null
+          new_until: string | null
           part: string
           question_count: number
           skill: string
@@ -557,6 +558,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           key_date?: string | null
+          new_until?: string | null
           part: string
           question_count?: number
           skill: string
@@ -575,6 +577,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           key_date?: string | null
+          new_until?: string | null
           part?: string
           question_count?: number
           skill?: string
