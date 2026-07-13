@@ -50,6 +50,14 @@ export function useExamGrading() {
     examSetId?: string | null;
     partLabel?: string;
   }): Promise<AnyGradingResult | null> => {
+    // Writing legacy path has been retired — writing V2 (writingGradingV2.ts)
+    // is now the only supported writing grading route. It has its own
+    // safety-net enqueue on failure.
+    if (params.type === "writing") {
+      toast.error("Chấm Writing đã chuyển sang phiên bản mới — vui lòng làm lại từ trang đề.");
+      return null;
+    }
+
     setIsGrading(true);
     setGrading(null);
     setQuotaExceeded(null);
