@@ -97,17 +97,29 @@ export async function gradeSpeakingPartV2(
   }
 
 
+  const gradePayload = {
+    type: "speaking_v2",
+    partType,
+    questions,
+    audios,
+  };
+
   const { data, error } = await supabase.functions.invoke("grade-exam", {
-    body: {
-      type: "speaking_v2",
-      partType,
-      questions,
-      audios,
-    },
+    body: gradePayload,
   });
 
-  if (error) throw error;
-  if (!data) throw new Error("Empty response from grade-exam (speaking_v2)");
+  if (error || !data || (data as any).error) {
+    // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
+    await enqueueGradingFallback({
+      skill: "speaking",
+      partType,
+      payload: gradePayload,
+      lastError: (error as any)?.message || (data as any)?.error || "unknown",
+    });
+    if (error) throw error;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    throw new Error("Empty response from grade-exam (speaking_v2)");
+  }
 
   return {
     bands: data.bands ?? { tf: "", gra: "", vra: "", pro: "", fc: "" },
