@@ -66,7 +66,8 @@ export async function gradeWritingPartV2(
     shortAnswers?: string[];
     // For task3 three answers
     threeAnswers?: string[];
-  }
+  },
+  opts?: { testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null }
 ): Promise<WritingPartResultV2> {
   const gradePayload = {
     type: "writing_v2",
@@ -83,6 +84,9 @@ export async function gradeWritingPartV2(
     await enqueueGradingFallback({
       skill: "writing",
       partType,
+      testResultId: opts?.testResultId ?? null,
+      examSetId: opts?.examSetId ?? null,
+      fullTestSessionId: opts?.fullTestSessionId ?? null,
       payload: gradePayload,
       lastError: (error as any)?.message || (data as any)?.error || "unknown",
     });
