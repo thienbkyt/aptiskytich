@@ -941,63 +941,78 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       setWritingTotalToGrade(orderedEntries.length);
       setWritingGradedCount(0);
 
-      // Grade each part sequentially, and persist ONE test_results row per part
-      // carrying that part's AI score (mirrors how objective skills store per-part rows).
+      // Grade each part sequentially with v2 analytic rubric. One test_results row
+      // per part carries that part's AI raw score; the LAST row is patched to
+      // scale50/50/CEFR after finalize so summary + history reflect the rubric.
       const { data: { user } } = await supabase.auth.getUser();
-      let totalScore = 0;
-      let totalMax = 0;
+      const rawParts: { task1?: number; task2?: number; task3?: number; task4?: number } = {};
+      const partsPayload: Record<string, any> = {};
+      let anyForcedComplexity = false;
       let failedParts = 0;
+      let lastTestResultId: string | null = null;
+      let lastExamSetId: string | null = null;
+
       for (let i = 0; i < orderedEntries.length; i++) {
         const e = orderedEntries[i];
-        const res = (await gradeExam({
-          type: "writing",
-          text: e.text,
-          questions: e.questions,
-          partType: e.partType,
-        })) as WritingGradingResult | null;
+        const origIdx = orderedIndices[i];
+        const raw = writingRawAnswersByPartRef.current[origIdx] || {
+          shortAnswers: [], textAnswer: "", part3Answers: [], informalAnswer: "", formalAnswer: "",
+        };
+        const partsInput: any = {};
+        if (e.partType === "task1") partsInput.shortAnswers = raw.shortAnswers;
+        else if (e.partType === "task3") partsInput.threeAnswers = raw.part3Answers;
+        else if (e.partType === "task4") {
+          partsInput.informalText = raw.informalAnswer;
+          partsInput.formalText = raw.formalAnswer;
+        }
 
-        // If grading failed (gateway/timeout): do NOT silently bake a 0 into totals.
-        // Skip this part from totals and surface a clear "not graded" flag to the user.
-        if (!res) {
+        let v2: Awaited<ReturnType<typeof gradeWritingPartV2>> | null = null;
+        try {
+          v2 = await gradeWritingPartV2(e.partType as any, e.questions, e.text, partsInput);
+        } catch (err) {
+          console.warn(`[FullTest v2] gradeWritingPartV2 ${e.partType} failed`, err);
+        }
+        if (!v2) {
           failedParts += 1;
           setWritingGradedCount(i + 1);
           continue;
         }
+        rawParts[e.partType as keyof typeof rawParts] = v2.rawPart;
+        if (v2.forcedComplexity) anyForcedComplexity = true;
+        partsPayload[e.partType] = {
+          bands: v2.bands, rawPart: v2.rawPart, perItem: v2.perItem,
+          analysis: v2.analysis, criteriaAnalysis: v2.criteriaAnalysis,
+          feedback: v2.feedback, improvedVersion: v2.improvedVersion,
+          grammarErrors: v2.grammarErrors, spellingErrors: v2.spellingErrors,
+        };
 
-        const partScore = res.partScore || 0;
-        const partMax = res.maxPoints || 0;
-        totalScore += partScore;
-        totalMax += partMax;
-
-        const partScoreRounded = Math.round(partScore);
-        const partMaxRounded = Math.max(Math.round(partMax), 1);
+        const partScoreRounded = Math.round(v2.rawPart);
+        const partMaxRounded = 30;
 
         const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
-        const { computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
         const userText = e.text || (e.perQuestion?.[0]?.user_answer ?? "");
         const promptText = (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType);
-        const { scaled50, band } = computeScaleAndBand("writing", partScoreRounded, partMaxRounded);
+        const scaled50 = Math.round((v2.rawPart / 30) * 50);
         const writingSnap = buildReviewSnapshot({
           skill: "writing",
           part: e.partType,
           testTitle: e.partLabel ?? null,
           score: partScoreRounded, total: partMaxRounded,
-          scaled50, band,
+          scaled50, band: "",
           items: [{
             questionText: promptText,
             userAnswer: userText,
             isCorrect: false,
-            ai: res ? {
-              partScore: res.partScore,
-              maxPoints: res.maxPoints,
-              grammarErrors: res.grammarErrors,
-              spellingErrors: res.spellingErrors,
-              feedback: res.feedback,
-            } : null,
+            ai: {
+              partScore: v2.rawPart,
+              maxPoints: 30,
+              grammarErrors: v2.grammarErrors,
+              spellingErrors: v2.spellingErrors,
+              feedback: v2.feedback,
+            },
           }],
-          raw: { partType: e.partType, text: e.text, questions: e.questions, ai: res || null },
+          raw: { partType: e.partType, text: e.text, questions: e.questions, ai: v2 },
         });
-        // 1 row per part with that part's AI score
         const testResultId = await saveExamResult({
           examSetId: e.partId ?? null,
           skill: "writing",
@@ -1008,19 +1023,21 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           fullTestId: testId,
           reviewSnapshot: writingSnap,
         });
+        lastTestResultId = testResultId;
+        lastExamSetId = e.partId ?? null;
 
-        if (res && user) {
+        if (user) {
           await (supabase as any).from("writing_question_gradings").insert([{
             user_id: user.id,
             test_result_id: testResultId,
             exam_set_id: e.partId,
             part: e.partLabel,
             item_index: 0,
-            max_points: res.maxPoints || 0,
-            part_score: res.partScore || 0,
-            grammar_errors: (res.grammarErrors || []) as any,
-            spelling_errors: (res.spellingErrors || []) as any,
-            feedback: res.feedback || "",
+            max_points: 30,
+            part_score: v2.rawPart,
+            grammar_errors: (v2.grammarErrors || []) as any,
+            spelling_errors: (v2.spellingErrors || []) as any,
+            feedback: v2.feedback || "",
           }]);
         }
 
@@ -1035,15 +1052,44 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         );
       }
 
-      const totalRounded = Math.round(totalScore);
-      const maxRounded = Math.max(Math.round(totalMax), 1);
+      // Finalize → scale50 + CEFR + grey_zone + flag_review (+ appropriacy cap)
+      let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
+      try {
+        const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
+        scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
+      } catch (err) {
+        console.warn("[FullTest v2] finalizeWriting failed", err);
+      }
+
+      // Save aggregate writing_skill_results
+      try {
+        await saveWritingSkillResult({
+          testResultId: lastTestResultId,
+          examSetId: lastExamSetId,
+          fullTestSessionId: sessionIdRef.current,
+          parts: partsPayload,
+          rawTotal, scale50, cefr, greyZone, flagReview,
+        });
+      } catch (err) {
+        console.warn("[FullTest v2] saveWritingSkillResult failed", err);
+      }
+
+      // Patch last test_results row → score=scale50, total=50, level=cefr
+      try {
+        if (lastTestResultId) {
+          await supabase.from("test_results").update({
+            score: scale50, total: 50, level: cefr, correct_answers: scale50,
+          } as any).eq("id", lastTestResultId);
+        }
+      } catch (err) { console.warn("[FullTest v2] update test_results failed", err); }
 
       setScores((prev) => ({
         ...prev,
-        writing: { correct: totalRounded, total: maxRounded },
+        writing: { correct: scale50, total: 50 },
       }));
       setPhase("completed");
     };
+
 
     const handleWritingPartComplete = (
       perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>,
