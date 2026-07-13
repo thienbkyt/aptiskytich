@@ -70,7 +70,7 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
       setLoading(true);
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("*")
+        .select("*, new_until")
         .eq("exam_type", examType)
         .eq("skill", skill)
         .order("created_at", { ascending: false });
