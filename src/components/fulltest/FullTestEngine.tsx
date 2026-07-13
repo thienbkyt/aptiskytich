@@ -1084,7 +1084,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             user_id: user.id,
             test_result_id: testResultId,
             exam_set_id: e.partId,
-            part: e.partLabel,
+            part: e.partType,
             item_index: 0,
             max_points: 30,
             part_score: v2.rawPart,
