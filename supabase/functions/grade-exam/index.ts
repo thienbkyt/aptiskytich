@@ -567,8 +567,8 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         });
       }
 
-      // Tier gate
-      if (userId) {
+      // Tier gate — skip on internal worker retries.
+      if (userId && !isInternal) {
         try {
           const { data: access } = await supabaseClient.rpc("check_feature_access", {
             p_key: "ai_grading_writing", p_scope: null,
