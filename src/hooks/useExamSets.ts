@@ -12,8 +12,13 @@ export interface ExamSetRow {
   is_published: boolean;
   created_at: string;
   access_tier?: "free" | "pro" | "premium";
-  
+  new_until?: string | null;
 }
+
+export const NEW_TAG_DAYS = 10;
+export const isNewSet = (r: { new_until?: string | null }) =>
+  !!r.new_until && new Date(r.new_until).getTime() > Date.now();
+
 
 export interface ExamQuestionRow {
   id: string;
