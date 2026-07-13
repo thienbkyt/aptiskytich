@@ -270,6 +270,14 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                 </Select>
                 <Button
                   variant="ghost" size="icon"
+                  onClick={(e) => { e.stopPropagation(); toggleNewTag(set); }}
+                  title={isNewSet(set as any) ? "Bỏ nhãn MỚI" : "Gắn nhãn MỚI"}
+                  className={isNewSet(set as any) ? "text-emerald-600" : ""}
+                >
+                  <Sparkles className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost" size="icon"
                   onClick={(e) => { e.stopPropagation(); togglePublish(set); }}
                   title={set.is_published ? "Ẩn" : "Xuất bản"}
                 >
