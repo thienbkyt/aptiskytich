@@ -14,12 +14,22 @@ export async function enqueueGradingFallback(args: {
   skill: "speaking" | "writing";
   partType: string;
   testResultId?: string | null;
+  examSetId?: string | null;
+  fullTestSessionId?: string | null;
   payload: Record<string, any>;
   lastError?: string;
 }): Promise<{ id: string | null }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { id: null };
+
+    const enrichedPayload = {
+      ...args.payload,
+      _meta: {
+        examSetId: args.examSetId ?? null,
+        fullTestSessionId: args.fullTestSessionId ?? null,
+      },
+    };
 
     const { data, error } = await (supabase as any)
       .from("grading_jobs")
@@ -31,7 +41,7 @@ export async function enqueueGradingFallback(args: {
         status: "pending",
         attempts: 0,
         max_attempts: 3,
-        payload: args.payload,
+        payload: enrichedPayload,
         last_error: args.lastError ?? null,
       })
       .select("id")
