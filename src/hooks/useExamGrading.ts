@@ -50,6 +50,14 @@ export function useExamGrading() {
     examSetId?: string | null;
     partLabel?: string;
   }): Promise<AnyGradingResult | null> => {
+    // Writing legacy path has been retired — writing V2 (writingGradingV2.ts)
+    // is now the only supported writing grading route. It has its own
+    // safety-net enqueue on failure.
+    if (params.type === "writing") {
+      toast.error("Chấm Writing đã chuyển sang phiên bản mới — vui lòng làm lại từ trang đề.");
+      return null;
+    }
+
     setIsGrading(true);
     setGrading(null);
     setQuotaExceeded(null);
@@ -104,64 +112,19 @@ export function useExamGrading() {
       // Save to database
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        if (params.type === "writing") {
-          const w = result as WritingGradingResult;
-          const mistakes = [
-            ...(w.grammarErrors || []).map((e) => ({ ...e, kind: "grammar" })),
-            ...(w.spellingErrors || []).map((e) => ({ ...e, kind: "spelling" })),
-          ];
-          await supabase.from("exam_gradings").insert({
-            user_id: user.id,
-            skill: params.type,
-            part_type: params.partType,
-            overall_level: `${Number((w.partScore / 2).toFixed(1))}/${w.maxPoints / 2}`,
-            criteria: {
-              addressPercent: w.addressPercent,
-              bonusPercent: w.bonusPercent,
-              wordPenaltyPercent: w.wordPenaltyPercent,
-              coherencePenaltyPercent: w.coherencePenaltyPercent,
-              openingClosingPenalty: w.openingClosingPenalty,
-              partScore: w.partScore,
-              maxPoints: w.maxPoints,
-            } as any,
-            mistakes: mistakes as any,
-            suggestions: [w.feedback] as any,
-            transcript: "",
-            student_text: params.text || "",
-          });
-          // Link this grading to the specific attempt so history review can find it without time-window heuristics.
-          if (params.testResultId) {
-            try {
-              await (supabase as any).from("writing_question_gradings").insert([{
-                user_id: user.id,
-                test_result_id: params.testResultId,
-                exam_set_id: params.examSetId ?? null,
-                part: params.partLabel ?? params.partType,
-                item_index: 0,
-                max_points: w.maxPoints || 0,
-                part_score: w.partScore || 0,
-                grammar_errors: (w.grammarErrors || []) as any,
-                spelling_errors: (w.spellingErrors || []) as any,
-                feedback: w.feedback || "",
-              }]);
-            } catch (writeErr: any) {
-              console.warn("[useExamGrading] writing_question_gradings insert failed:", writeErr?.message || writeErr);
-            }
-          }
-        } else {
-          const s = result as GradingResult;
-          await supabase.from("exam_gradings").insert({
-            user_id: user.id,
-            skill: params.type,
-            part_type: params.partType,
-            overall_level: s.overallLevel,
-            criteria: s.criteria as any,
-            mistakes: s.mistakes as any,
-            suggestions: s.suggestions as any,
-            transcript: s.transcript || "",
-            student_text: params.text || "",
-          });
-        }
+        // Only speaking legacy remains here — writing V2 has its own path.
+        const s = result as GradingResult;
+        await supabase.from("exam_gradings").insert({
+          user_id: user.id,
+          skill: params.type,
+          part_type: params.partType,
+          overall_level: s.overallLevel,
+          criteria: s.criteria as any,
+          mistakes: s.mistakes as any,
+          suggestions: s.suggestions as any,
+          transcript: s.transcript || "",
+          student_text: params.text || "",
+        });
       }
 
       return result;

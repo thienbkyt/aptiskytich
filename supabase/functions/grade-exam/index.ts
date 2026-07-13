@@ -37,30 +37,48 @@ serve(async (req) => {
 
   try {
     // --- Authentication ---
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Internal bypass: process-grading-jobs worker calls with service-role
+    // key + x-internal-user-id header (background retry path). Do NOT expose
+    // this bypass to end-users — it only works when x-internal-key matches
+    // the service role key, which is server-side only.
+    const internalKey = req.headers.get("x-internal-key") || "";
+    const internalUserId = req.headers.get("x-internal-user-id") || "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const isInternal =
+      internalKey.length > 0 &&
+      serviceRoleKey.length > 0 &&
+      internalKey === serviceRoleKey &&
+      /^[0-9a-f-]{36}$/i.test(internalUserId);
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    let userId = "";
+    if (isInternal) {
+      userId = internalUserId;
+    } else {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: claimsError } =
-      await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claims?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const supabaseClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claims, error: claimsError } =
+        await supabaseClient.auth.getClaims(token);
+      if (claimsError || !claims?.claims) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = String((claims.claims as any).sub || "");
     }
-    const userId = String((claims.claims as any).sub || "");
 
     // Service-role client for cache + quota writes (bypasses RLS).
     const serviceClient = createClient(
