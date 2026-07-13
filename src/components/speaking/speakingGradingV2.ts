@@ -236,7 +236,7 @@ export async function saveSpeakingSkillResult(
       .maybeSingle();
 
     if (error) {
-      console.warn("[saveSpeakingSkillResult] insert failed:", error);
+      console.warn("[saveSpeakingSkillResult] upsert failed:", error);
       return { id: null, error };
     }
     return { id: data?.id ?? null, error: null };
