@@ -112,10 +112,29 @@ export async function gradeSpeakingPartV2(
 
   if (error || !data || (data as any).error) {
     // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
+    // Upload audio blobs to storage so the queue payload stays small (no base64
+    // in jsonb) and the worker can re-download when it retries.
+    let audioPaths: Array<string | null> = [];
+    try {
+      audioPaths = await uploadSpeakingBlobs(
+        audioBlobs,
+        opts?.sessionId || opts?.testResultId || "adhoc",
+        partType
+      );
+    } catch (e) {
+      console.warn("[gradeSpeakingPartV2] audio upload for queue failed:", e);
+    }
+    const enqueuePayload = {
+      type: "speaking_v2",
+      partType,
+      questions,
+      audioPaths, // worker resolves these -> base64 -> passes as `audios`
+    };
     await enqueueGradingFallback({
       skill: "speaking",
       partType,
-      payload: gradePayload,
+      testResultId: opts?.testResultId ?? null,
+      payload: enqueuePayload,
       lastError: (error as any)?.message || (data as any)?.error || "unknown",
     });
     if (error) throw error;
