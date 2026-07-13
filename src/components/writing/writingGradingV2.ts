@@ -94,11 +94,29 @@ export async function gradeWritingPartV2(
   };
 }
 
+/**
+ * True only when ALL four writing parts have a graded rawPart (>= 0 number).
+ * scale50 / CEFR / writing_skill_results MUST NOT be computed unless this holds:
+ * finalize divides by 120 (max across the 4 parts), so a single-part attempt
+ * would collapse to A0/A1 which is not a valid CEFR verdict.
+ */
+export function hasAllFourWritingParts(
+  rawParts: { task1?: number; task2?: number; task3?: number; task4?: number }
+): boolean {
+  const keys: Array<keyof typeof rawParts> = ["task1", "task2", "task3", "task4"];
+  return keys.every((k) => typeof rawParts[k] === "number" && !Number.isNaN(rawParts[k] as number));
+}
+
 export async function finalizeWriting(
   rawParts: { task1?: number; task2?: number; task3?: number; task4?: number },
   coreGV: string | null = null,
   forcedComplexity: boolean = false
 ): Promise<WritingFinalizeResultV2> {
+  if (!hasAllFourWritingParts(rawParts)) {
+    throw new Error(
+      "finalizeWriting requires all 4 writing parts (task1..task4); refusing to compute scale50/CEFR from an incomplete attempt."
+    );
+  }
   const { data, error } = await supabase.functions.invoke("grade-exam", {
     body: {
       type: "writing_finalize",

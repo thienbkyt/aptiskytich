@@ -1054,40 +1054,49 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         );
       }
 
-      // Finalize → scale50 + CEFR
+      // Finalize → scale50 + CEFR — ONLY when all 4 writing parts graded.
+      // Single-part or partial attempts must NOT produce an official CEFR
+      // (raw_total / 120 * 50 collapses to A1 for a lone perfect part).
+      const { hasAllFourWritingParts } = await import("@/components/writing/writingGradingV2");
+      const allFour = hasAllFourWritingParts(rawParts) && failedParts === 0;
       let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
-      try {
-        const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
-        scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
-      } catch (e) {
-        console.warn("[SkillFullPractice v2] finalizeWriting failed", e);
-      }
-
-      // Save aggregate writing_skill_results (linked to last part's test_result)
-      const lastPartIdx = orderedIndices[orderedIndices.length - 1];
-      const lastSub = writingSubmissionsByPartRef.current[lastPartIdx];
-      try {
-        await saveWritingSkillResult({
-          testResultId: (lastSub as any)?.testResultId ?? null,
-          examSetId: (lastSub as any)?.partId ?? null,
-          fullTestSessionId: fullPartSessionRef.current,
-          parts: partsPayload,
-          rawTotal, scale50, cefr, greyZone, flagReview,
-        });
-      } catch (e) {
-        console.warn("[SkillFullPractice v2] saveWritingSkillResult failed", e);
-      }
-
-      // Update the LAST test_results row so History reflects scale50/50/cefr.
-      try {
-        const trid = (lastSub as any)?.testResultId;
-        if (trid) {
-          await supabase.from("test_results").update({
-            score: scale50, total: 50, level: cefr,
-            correct_answers: scale50,
-          } as any).eq("id", trid);
+      if (allFour) {
+        try {
+          const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
+          scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
+        } catch (e) {
+          console.warn("[SkillFullPractice v2] finalizeWriting failed", e);
         }
-      } catch (e) { console.warn("[SkillFullPractice v2] update test_results failed", e); }
+
+        // Save aggregate writing_skill_results (linked to last part's test_result)
+        const lastPartIdx = orderedIndices[orderedIndices.length - 1];
+        const lastSub = writingSubmissionsByPartRef.current[lastPartIdx];
+        try {
+          await saveWritingSkillResult({
+            testResultId: (lastSub as any)?.testResultId ?? null,
+            examSetId: (lastSub as any)?.partId ?? null,
+            fullTestSessionId: fullPartSessionRef.current,
+            parts: partsPayload,
+            rawTotal, scale50, cefr, greyZone, flagReview,
+          });
+        } catch (e) {
+          console.warn("[SkillFullPractice v2] saveWritingSkillResult failed", e);
+        }
+
+        // Update the LAST test_results row so History reflects scale50/50/cefr.
+        try {
+          const trid = (lastSub as any)?.testResultId;
+          if (trid) {
+            await supabase.from("test_results").update({
+              score: scale50, total: 50, level: cefr,
+              correct_answers: scale50,
+            } as any).eq("id", trid);
+          }
+        } catch (e) { console.warn("[SkillFullPractice v2] update test_results failed", e); }
+      } else {
+        console.info("[SkillFullPractice v2] Incomplete writing attempt — skipping scale50/CEFR finalize.");
+      }
+
 
       setWritingResults(results);
       setWritingScore50(scale50);
