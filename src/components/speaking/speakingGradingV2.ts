@@ -134,6 +134,8 @@ export async function gradeSpeakingPartV2(
       skill: "speaking",
       partType,
       testResultId: opts?.testResultId ?? null,
+      examSetId: opts?.examSetId ?? null,
+      fullTestSessionId: opts?.fullTestSessionId ?? null,
       payload: enqueuePayload,
       lastError: (error as any)?.message || (data as any)?.error || "unknown",
     });
