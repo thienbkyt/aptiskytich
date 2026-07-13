@@ -67,7 +67,7 @@ export const useExamSets = (skill: string) => {
     queryFn: async (): Promise<ExamSetRow[]> => {
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier")
+        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until")
         .eq("skill", skill)
         .eq("is_published", true)
         .order("created_at", { ascending: true });
@@ -79,6 +79,13 @@ export const useExamSets = (skill: string) => {
         return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
       };
       rows.sort((a, b) => {
+        const aNew = isNewSet(a);
+        const bNew = isNewSet(b);
+        if (aNew && !bNew) return -1;
+        if (!aNew && bNew) return 1;
+        if (aNew && bNew) {
+          return new Date(b.new_until!).getTime() - new Date(a.new_until!).getTime();
+        }
         const na = numOf(a.title), nb = numOf(b.title);
         if (na !== nb) return na - nb;
         return a.title.localeCompare(b.title);
