@@ -609,7 +609,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         // Reuse background promise if available; else fire fresh.
         let pending = speakingV2PromisesByPartRef.current[originalIdx];
         if (!pending) {
-          pending = gradeSpeakingPartV2(sub.partType, questions, blobs);
+          pending = gradeSpeakingPartV2(sub.partType, questions, blobs, {
+            sessionId: fullPartSessionRef.current,
+            fullTestSessionId: fullPartSessionRef.current,
+            testResultId: speakingTestResultIdByPartRef.current[originalIdx] ?? null,
+          });
           speakingV2PromisesByPartRef.current[originalIdx] = pending;
         }
         try {
