@@ -62,7 +62,8 @@ async function blobToBase64Raw(blob: Blob): Promise<string> {
 export async function gradeSpeakingPartV2(
   partType: string,
   questions: Array<{ questionText?: string; question_text?: string; [k: string]: any }>,
-  audioBlobs: Array<Blob | null | undefined>
+  audioBlobs: Array<Blob | null | undefined>,
+  opts?: { sessionId?: string; testResultId?: string | null }
 ): Promise<SpeakingPartResultV2> {
   const audios: string[] = [];
   for (const b of audioBlobs) {
