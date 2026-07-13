@@ -68,17 +68,28 @@ export async function gradeWritingPartV2(
     threeAnswers?: string[];
   }
 ): Promise<WritingPartResultV2> {
+  const gradePayload = {
+    type: "writing_v2",
+    partType,
+    questions,
+    text,
+    parts,
+  };
   const { data, error } = await supabase.functions.invoke("grade-exam", {
-    body: {
-      type: "writing_v2",
-      partType,
-      questions,
-      text,
-      parts,
-    },
+    body: gradePayload,
   });
-  if (error) throw error;
-  if (!data) throw new Error("Empty response from grade-exam (writing_v2)");
+  if (error || !data || (data as any).error) {
+    // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
+    await enqueueGradingFallback({
+      skill: "writing",
+      partType,
+      payload: gradePayload,
+      lastError: (error as any)?.message || (data as any)?.error || "unknown",
+    });
+    if (error) throw error;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    throw new Error("Empty response from grade-exam (writing_v2)");
+  }
 
   return {
     partType,
