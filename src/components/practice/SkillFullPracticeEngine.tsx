@@ -998,7 +998,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           partsInput.formalText = answers.formalAnswer;
         }
         try {
-          const v2 = await gradeWritingPartV2(p.partType as any, p.questions, p.text, partsInput);
+          const v2 = await gradeWritingPartV2(p.partType as any, p.questions, p.text, partsInput, {
+            testResultId: (p as any).testResultId ?? null,
+            examSetId: p.partId ?? null,
+            fullTestSessionId: fullPartSessionRef.current,
+          });
           rawParts[p.partType as keyof typeof rawParts] = v2.rawPart;
           if (v2.forcedComplexity) anyForcedComplexity = true;
           partsPayload[p.partType] = {
