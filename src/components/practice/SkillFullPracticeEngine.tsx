@@ -961,6 +961,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         total: perQuestion?.length || 0,
         perQuestion,
         reviewSnapshot: snap,
+        fullTestSessionId: fullPartSessionRef.current,
         extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
       });
       const existing = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
