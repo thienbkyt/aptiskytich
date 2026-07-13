@@ -743,6 +743,68 @@ export type Database = {
         }
         Relationships: []
       }
+      grading_jobs: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          max_attempts: number
+          part: string | null
+          payload: Json
+          raw_response: Json | null
+          skill: string
+          status: string
+          test_result_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          part?: string | null
+          payload?: Json
+          raw_response?: Json | null
+          skill: string
+          status?: string
+          test_result_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          part?: string | null
+          payload?: Json
+          raw_response?: Json | null
+          skill?: string
+          status?: string
+          test_result_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grading_jobs_test_result_id_fkey"
+            columns: ["test_result_id"]
+            isOneToOne: false
+            referencedRelation: "test_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_streaks: {
         Row: {
           created_at: string
@@ -2003,6 +2065,32 @@ export type Database = {
       check_feature_access: {
         Args: { p_key: string; p_scope?: string }
         Returns: Json
+      }
+      claim_grading_jobs: {
+        Args: { _limit?: number; _reclaim_after?: string }
+        Returns: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          max_attempts: number
+          part: string | null
+          payload: Json
+          raw_response: Json | null
+          skill: string
+          status: string
+          test_result_id: string | null
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "grading_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       consume_ai_quota: {
         Args: { _action: string; _limit: number; _user_id: string }
