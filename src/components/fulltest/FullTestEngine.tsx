@@ -717,6 +717,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs, {
                 sessionId: sessionIdRef.current,
                 fullTestSessionId: sessionIdRef.current,
+                testResultId,
+                examSetId: entry.partId ?? null,
               });
 
               const merged: SpeakingPartResultV2 = {
@@ -1084,7 +1086,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             user_id: user.id,
             test_result_id: testResultId,
             exam_set_id: e.partId,
-            part: e.partLabel,
+            part: e.partType,
             item_index: 0,
             max_points: 30,
             part_score: v2.rawPart,

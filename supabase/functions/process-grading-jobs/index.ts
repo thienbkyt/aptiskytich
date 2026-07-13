@@ -2,9 +2,12 @@
 // then persists the AI verdict into *_question_gradings + test_results, and
 // (when all 4 parts of a session are done) upserts *_skill_results.
 //
-// The client-side safety-net enqueues here on failure — the worker is the
-// single place that guarantees results reach the DB, independent of whether
-// the student comes back to the page.
+// Persistence uses CANONICAL part keys shared with the client:
+//   writing: task1..task4
+//   speaking: part1..part4
+// Any legacy long labels ("Part 1 – Short Answers", ...) were normalized by
+// the accompanying migration, so ON CONFLICT (test_result_id, part, item_index)
+// is unambiguous.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -89,29 +92,22 @@ function isPermanentFailure(status: number, body: any): boolean {
 
 // ─── result persistence ─────────────────────────────────────────────────────
 
-const WRITING_PART_LABELS: Record<string, string> = {
-  task1: "Part 1",
-  task2: "Part 2",
-  task3: "Part 3",
-  task4: "Part 4",
-};
-
-async function persistWritingPart(job: any, body: any) {
-  const partType: string = job.part || body.partType;
-  const partLabel = WRITING_PART_LABELS[partType] || partType;
+async function persistWritingPart(job: any, body: any): Promise<{ rawPart: number }> {
+  const partType: string = String(job.part || body.partType);
   const rawPart = Number(body.rawPart ?? body.raw_part ?? 0);
   const meta = job.payload?._meta || {};
 
   if (!job.test_result_id) {
-    console.warn("[worker] writing job missing test_result_id, cannot persist rows:", job.id);
-    return { rawPart };
+    // Nothing to link back to → cannot persist deterministically. Treat as
+    // hard failure so the job doesn't get marked done silently.
+    throw new Error("writing job missing test_result_id");
   }
 
-  await admin.from("writing_question_gradings").upsert([{
+  const { error: upErr } = await admin.from("writing_question_gradings").upsert([{
     user_id: job.user_id,
     test_result_id: job.test_result_id,
     exam_set_id: meta.examSetId ?? null,
-    part: partLabel,
+    part: partType,
     item_index: 0,
     max_points: 30,
     part_score: rawPart,
@@ -119,29 +115,28 @@ async function persistWritingPart(job: any, body: any) {
     spelling_errors: (body.spellingErrors || []) as any,
     feedback: body.feedback || "",
   }], { onConflict: "test_result_id,part,item_index" });
+  if (upErr) throw new Error(`writing_question_gradings upsert failed: ${upErr.message}`);
 
-  // Update per-part test_results row with raw score (out of 30).
-  await admin.from("test_results").update({
+  const { error: trErr } = await admin.from("test_results").update({
     score: Math.round(rawPart),
     total: 30,
     correct_answers: Math.round(rawPart),
   } as any).eq("id", job.test_result_id);
+  if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
 
   return { rawPart };
 }
 
-async function persistSpeakingPart(job: any, body: any) {
-  const partType: string = job.part || body.partType;
+async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: number }> {
+  const partType: string = String(job.part || body.partType);
   const rawPart = Number(body.rawPart ?? body.raw_part ?? 0);
   const meta = job.payload?._meta || {};
   const perItem: any[] = Array.isArray(body.perItem) ? body.perItem : [];
 
   if (!job.test_result_id) {
-    console.warn("[worker] speaking job missing test_result_id, cannot persist rows:", job.id);
-    return { rawPart };
+    throw new Error("speaking job missing test_result_id");
   }
 
-  // Distribute rawPart across items (or store aggregate at index 0).
   const rows = perItem.length > 0
     ? perItem.map((it, i) => ({
         user_id: job.user_id,
@@ -171,15 +166,17 @@ async function persistSpeakingPart(job: any, body: any) {
         feedback: body.feedback || body.analysis || "",
       }];
 
-  await admin.from("speaking_question_gradings").upsert(rows, {
+  const { error: upErr } = await admin.from("speaking_question_gradings").upsert(rows, {
     onConflict: "test_result_id,part,item_index",
   });
+  if (upErr) throw new Error(`speaking_question_gradings upsert failed: ${upErr.message}`);
 
-  await admin.from("test_results").update({
+  const { error: trErr } = await admin.from("test_results").update({
     score: Math.round(rawPart),
     total: 30,
     correct_answers: Math.round(rawPart),
   } as any).eq("id", job.test_result_id);
+  if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
 
   return { rawPart };
 }
@@ -191,21 +188,27 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
   const sessionId: string | null = meta.fullTestSessionId ?? null;
   if (!sessionId || !job.test_result_id) return;
 
-  // Collect all test_results in the same session for this user.
+  // test_results has no top-level `skill` column — the skill lives in the
+  // `skill_scores` JSONB. Also match tolerantly on legacy rows where the
+  // session id is only present in skill_scores.fullPartSession/fullTestSession.
   const { data: rows, error } = await admin
     .from("test_results")
-    .select("id, score, total, skill, exam_set_id")
+    .select("id, score, total, skill_scores, exam_set_id, full_test_session_id")
     .eq("user_id", job.user_id)
-    .eq("full_test_session_id", sessionId);
+    .or(
+      `full_test_session_id.eq.${sessionId},skill_scores->>fullPartSession.eq.${sessionId},skill_scores->>fullTestSession.eq.${sessionId}`,
+    );
   if (error || !rows) return;
 
-  const partRows = rows.filter((r: any) => r.skill === skill);
+  const partRows = rows.filter((r: any) => {
+    const sk = r?.skill_scores?.skill;
+    return sk === skill;
+  });
 
   const partKeys = skill === "writing"
     ? ["task1", "task2", "task3", "task4"]
     : ["part1", "part2", "part3", "part4"];
 
-  // Look up per-part scores from *_question_gradings for all trids in session.
   const trids = partRows.map((r: any) => r.id);
   if (trids.length < 4) return;
 
@@ -218,22 +221,38 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
 
   if (!gradings || gradings.length < 4) return;
 
-  // Map back to task1/part1 keys.
+  // Canonical part keys — client + worker both write them post-migration.
   const rawParts: Record<string, number> = {};
   for (const g of gradings as any[]) {
-    if (skill === "writing") {
-      // stored as "Part 1"/"Part 2" — reverse-lookup.
-      const entry = Object.entries(WRITING_PART_LABELS).find(([, v]) => v === g.part);
-      if (entry) rawParts[entry[0]] = Number(g.part_score || 0);
-    } else {
-      rawParts[g.part] = Number(g.part_score || 0);
-    }
+    if (partKeys.includes(g.part)) rawParts[g.part] = Number(g.part_score || 0);
   }
   if (!partKeys.every((k) => typeof rawParts[k] === "number")) return;
 
-  // Call finalize.
+  // ── Aggregate finalize inputs across the whole session ──
+  // forcedComplexity: true if ANY graded job in the session flagged it.
+  let forcedComplexity = false;
+  try {
+    const { data: sessionJobs } = await admin
+      .from("grading_jobs")
+      .select("raw_response")
+      .eq("user_id", job.user_id)
+      .in("test_result_id", trids);
+    for (const j of (sessionJobs || []) as any[]) {
+      if (j?.raw_response?.forcedComplexity) { forcedComplexity = true; break; }
+    }
+  } catch (e) {
+    console.warn("[worker] forcedComplexity aggregate failed:", (e as any)?.message || e);
+  }
+
+  // coreGV: grammar_vocab % from the same session (score/total), else null.
+  let coreGV: number | null = null;
+  try {
+    const gv = rows.find((r: any) => r?.skill_scores?.skill === "grammar_vocab");
+    if (gv && gv.total > 0) coreGV = Math.round((gv.score / gv.total) * 100) / 100;
+  } catch { /* noop */ }
+
   const finalizeType = skill === "writing" ? "writing_finalize" : "speaking_finalize";
-  const finalizePayload: any = { type: finalizeType, rawParts };
+  const finalizePayload: any = { type: finalizeType, rawParts, coreGV, forcedComplexity };
   if (skill === "speaking") finalizePayload.skill = "speaking";
   const { body: finBody, ok: finOk } = await invokeGradeExam(finalizePayload, job.user_id);
   if (!finOk || !finBody) return;
@@ -248,7 +267,7 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
   const partsPayload: Record<string, any> = {};
   for (const k of partKeys) partsPayload[k] = { rawPart: rawParts[k] };
 
-  await admin.from(skillTable).upsert({
+  const { error: srErr } = await admin.from(skillTable).upsert({
     user_id: job.user_id,
     test_result_id: job.test_result_id,
     exam_set_id: meta.examSetId ?? null,
@@ -260,6 +279,7 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
     grey_zone: greyZone,
     flag_review: flagReview,
   }, { onConflict: "user_id,full_test_session_id" });
+  if (srErr) throw new Error(`${skillTable} upsert failed: ${srErr.message}`);
 
   // Patch the last test_results row with scale50/cefr so history/summary reflect it.
   await admin.from("test_results").update({
@@ -277,6 +297,9 @@ async function persistJobResult(job: any, body: any) {
   } else {
     await persistSpeakingPart(job, body);
   }
+  // Finalize is best-effort — if it errors, we still consider the per-part
+  // persist successful (skill_results row will be filled in when the last
+  // part's job runs / retries).
   try {
     await tryFinalizeSession(job, skill);
   } catch (e: any) {
@@ -309,19 +332,32 @@ Deno.serve(async (req) => {
         const { ok, status, body } = await invokeGradeExam(payload, job.user_id);
 
         if (ok && body && !body.error) {
-          // Persist to writing/speaking tables and try to finalize.
+          // Persist BEFORE marking done. If persist throws, the job goes back
+          // to pending (or failed on last attempt) with last_error set — never
+          // marked done silently, so students cannot end up with 0 scores.
           try {
             await persistJobResult(job, body);
-          } catch (e: any) {
-            console.error("[worker] persist error (still marking done):", e?.message || e);
+            await admin.from("grading_jobs").update({
+              status: "done",
+              finished_at: new Date().toISOString(),
+              raw_response: body,
+              last_error: null,
+            }).eq("id", job.id);
+            results.push({ id: job.id, status: "done" });
+          } catch (persistErr: any) {
+            const errMsg = `persist: ${persistErr?.message || String(persistErr)}`;
+            console.error("[worker] persist error:", errMsg);
+            const isFinal = (job.attempts || 0) >= (job.max_attempts || 3);
+            await admin.from("grading_jobs").update({
+              status: isFinal ? "failed" : "pending",
+              claimed_at: null,
+              last_error: errMsg,
+              // Keep raw_response so operators can inspect / retry persist manually.
+              raw_response: body,
+              finished_at: isFinal ? new Date().toISOString() : null,
+            }).eq("id", job.id);
+            results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
           }
-          await admin.from("grading_jobs").update({
-            status: "done",
-            finished_at: new Date().toISOString(),
-            raw_response: body,
-            last_error: null,
-          }).eq("id", job.id);
-          results.push({ id: job.id, status: "done" });
         } else {
           const errMsg = (body && body.error) ? String(body.error) : `HTTP ${status}`;
           const permanent = isPermanentFailure(status, body);

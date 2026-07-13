@@ -213,8 +213,9 @@ serve(async (req) => {
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Tier gate — reuse ai_grading_speaking quota
-      if (userId) {
+      // Tier gate — reuse ai_grading_speaking quota. Skip for internal worker
+      // retries (quota already consumed on the initial submission).
+      if (userId && !isInternal) {
         try {
           const { data: access } = await supabaseClient.rpc("check_feature_access", {
             p_key: "ai_grading_speaking", p_scope: null,
@@ -566,8 +567,8 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         });
       }
 
-      // Tier gate
-      if (userId) {
+      // Tier gate — skip on internal worker retries.
+      if (userId && !isInternal) {
         try {
           const { data: access } = await supabaseClient.rpc("check_feature_access", {
             p_key: "ai_grading_writing", p_scope: null,
@@ -1064,15 +1065,20 @@ ${partsIn.formalText ?? ""}`;
         console.warn("[grade-exam] cache lookup failed:", (e as any)?.message || e);
       }
 
-      // Daily quota: 10 graded submissions per user
-      const quota = await enforceDailyQuota(userId, "grade-exam", 10, corsHeaders);
-      if (quota) return quota;
+      // Daily quota: 10 graded submissions per user. Skip on internal retries —
+      // quota was already consumed on the initial student submission; retrying
+      // must not burn additional daily allowance.
+      if (!isInternal) {
+        const quota = await enforceDailyQuota(userId, "grade-exam", 10, corsHeaders);
+        if (quota) return quota;
+      }
     }
 
     // --- Tier-based gate (ai_grading_writing | ai_grading_speaking) ---
-    // premium → unlimited; pro → cap = pro_quota/month; free → cap = free_quota/month
+    // premium → unlimited; pro → cap = pro_quota/month; free → cap = free_quota/month.
+    // Skip on internal retries.
     const featureKey = type === "writing" ? "ai_grading_writing" : "ai_grading_speaking";
-    if (userId) {
+    if (userId && !isInternal) {
       try {
         const { data: access } = await supabaseClient.rpc("check_feature_access", {
           p_key: featureKey,

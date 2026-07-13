@@ -254,6 +254,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           correct, total,
           perQuestion,
           reviewSnapshot: snap,
+          fullTestSessionId: fullPartSessionRef.current,
           extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
         });
       })();
@@ -518,6 +519,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         total: perQuestion.length,
         perQuestion,
         reviewSnapshot: snap,
+        fullTestSessionId: fullPartSessionRef.current,
         extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
@@ -959,6 +961,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         total: perQuestion?.length || 0,
         perQuestion,
         reviewSnapshot: snap,
+        fullTestSessionId: fullPartSessionRef.current,
         extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
       });
       const existing = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
