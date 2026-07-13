@@ -193,7 +193,7 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
   // session id is only present in skill_scores.fullPartSession/fullTestSession.
   const { data: rows, error } = await admin
     .from("test_results")
-    .select("id, score, total, skill_scores, exam_set_id, full_test_session_id")
+    .select("id, score, total, level, skill_scores, exam_set_id, full_test_session_id")
     .eq("user_id", job.user_id)
     .or(
       `full_test_session_id.eq.${sessionId},skill_scores->>fullPartSession.eq.${sessionId},skill_scores->>fullTestSession.eq.${sessionId}`,
