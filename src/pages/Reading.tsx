@@ -537,6 +537,9 @@ const Reading = () => {
                         <div className="flex items-center gap-2 mb-3">
                           <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activePartInfo?.label}</Badge>
                           <ExamTierBadge tier={set.access_tier} locked={locked} />
+                          {isNewSet(set) && (
+                            <Badge className="w-fit text-[11px] font-semibold bg-emerald-500 text-white border-0 hover:bg-emerald-500">MỚI</Badge>
+                          )}
                         </div>
                         <h3 className="text-xl font-heading font-bold text-foreground mb-3">{set.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
