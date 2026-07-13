@@ -116,6 +116,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   // Writing grading state for Full Test (graded at the very end after writing's last part)
   const writingSubmissionsByPartRef = useRef<Record<number, { partType: string; text: string; questions: string[]; partId: string | null; partLabel: string; perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }> }>>({});
+  const writingRawAnswersByPartRef = useRef<Record<number, {
+    shortAnswers: string[]; textAnswer: string; part3Answers: string[]; informalAnswer: string; formalAnswer: string;
+  }>>({});
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
