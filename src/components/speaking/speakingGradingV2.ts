@@ -226,9 +226,12 @@ export async function saveSpeakingSkillResult(
       feedback: args.feedback ?? null,
     };
 
+    const onConflict = args.fullTestSessionId
+      ? "user_id,full_test_session_id"
+      : "user_id,test_result_id";
     const { data, error } = await (supabase as any)
       .from("speaking_skill_results")
-      .insert(payload)
+      .upsert(payload, { onConflict })
       .select("id")
       .maybeSingle();
 
