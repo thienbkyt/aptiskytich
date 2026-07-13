@@ -31,6 +31,7 @@ import {
   saveSpeakingSkillResult,
   type SpeakingPartResultV2,
 } from "@/components/speaking/speakingGradingV2";
+import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
 import { toast } from "sonner";
