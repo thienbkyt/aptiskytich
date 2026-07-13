@@ -244,12 +244,10 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
     console.warn("[worker] forcedComplexity aggregate failed:", (e as any)?.message || e);
   }
 
-  // coreGV: grammar_vocab % from the same session (score/total), else null.
-  let coreGV: number | null = null;
-  try {
-    const gv = rows.find((r: any) => r?.skill_scores?.skill === "grammar_vocab");
-    if (gv && gv.total > 0) coreGV = Math.round((gv.score / gv.total) * 100) / 100;
-  } catch { /* noop */ }
+  // coreGV: grammar_vocab CEFR band from the same session (string like "A2"/"B1"/"B2"/"C"), else null.
+  let coreGV: string | null = null;
+  const gv = rows.find((r: any) => r?.skill_scores?.skill === "grammar_vocab");
+  if (gv?.level) coreGV = String(gv.level).toUpperCase();
 
   const finalizeType = skill === "writing" ? "writing_finalize" : "speaking_finalize";
   const finalizePayload: any = { type: finalizeType, rawParts, coreGV, forcedComplexity };
