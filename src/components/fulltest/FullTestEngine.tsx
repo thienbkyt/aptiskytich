@@ -1138,6 +1138,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onExit={handleExit}
           onPartAnswers={handleWritingPartAnswers}
           onComplete={handleWritingPartComplete}
+          onAnswersChange={(a) => { writingRawAnswersByPartRef.current[currentPartIndex] = a; }}
           onPrevious={canGoBackPart ? handleAdminBackPart : undefined}
           {...writingProps}
         />
