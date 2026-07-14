@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Loader2, Mail, CheckCircle, XCircle, AlertTriangle, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -9,149 +9,67 @@ import {
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { parseDateSafe } from "@/lib/safeDate";
-
-type EmailRow = { status: string; created_at: string; template_name: string | null };
-type SpeakingRow = { test_result_id: string | null; created_at: string };
-type WritingRow = { test_result_id: string | null; created_at: string };
-
-const RANGE_OPTIONS = [
-  { value: "today", label: "Hôm nay" },
-  { value: "7", label: "7 ngày" },
-  { value: "30", label: "30 ngày" },
-  { value: "90", label: "90 ngày" },
-  { value: "all", label: "Tất cả" },
-  { value: "custom", label: "Tùy chọn (từ - đến)" },
-];
+import { RANGE_OPTIONS, resolveBounds, periodLabel, dayLabel } from "./rangeHelpers";
 
 const COLOR_PRIMARY = "#CC1C01";
 const COLOR_ACCENT = "#FEAD5F";
 const COLOR_SUCCESS = "#10b981";
 
-const fmtDay = (d: Date) =>
-  `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
-
-const dayKey = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+interface OpsPayload {
+  email_sent: number;
+  email_failed: number;
+  email_dlq: number;
+  speaking_count: number;
+  writing_count: number;
+  email_daily: { day: string; sent: number; failed: number }[];
+}
 
 const OpsTab = () => {
-  const [range, setRange] = useState<string>("30");
-  const [customFrom, setCustomFrom] = useState<string>("");
-  const [customTo, setCustomTo] = useState<string>("");
+  const [range, setRange] = useState("30");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [loading, setLoading] = useState(true);
-  const [emails, setEmails] = useState<EmailRow[]>([]);
-  const [speaking, setSpeaking] = useState<SpeakingRow[]>([]);
-  const [writing, setWriting] = useState<WritingRow[]>([]);
+  const [data, setData] = useState<OpsPayload | null>(null);
 
-  const now = useMemo(() => new Date(), []);
-  const days = range === "all" || range === "custom" ? null : Number(range);
-  const bounds = useMemo<{ gte: string | null; lte: string | null }>(() => {
-    if (range === "custom") {
-      if (customFrom && customTo) {
-        return {
-          gte: new Date(`${customFrom}T00:00:00`).toISOString(),
-          lte: new Date(`${customTo}T23:59:59.999`).toISOString(),
-        };
-      }
-      return { gte: null, lte: null };
-    }
-    if (range === "all") return { gte: null, lte: null };
-    if (range === "today") {
-      const s = new Date(now); s.setHours(0, 0, 0, 0);
-      return { gte: s.toISOString(), lte: new Date().toISOString() };
-    }
-    const d = new Date(now);
-    d.setDate(d.getDate() - Number(range));
-    return { gte: d.toISOString(), lte: null };
-  }, [range, customFrom, customTo, now]);
+  const bounds = useMemo(
+    () => resolveBounds(range, customFrom, customTo),
+    [range, customFrom, customTo],
+  );
+  const label = periodLabel(range, customFrom, customTo, bounds.windowDays);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const eq = supabase.from("email_send_log").select("status, created_at, template_name");
-      const sq = supabase.from("speaking_question_gradings").select("test_result_id, created_at");
-      const wq = supabase.from("writing_question_gradings").select("test_result_id, created_at");
-
-      if (bounds.gte) {
-        eq.gte("created_at", bounds.gte);
-        sq.gte("created_at", bounds.gte);
-        wq.gte("created_at", bounds.gte);
-      }
-      if (bounds.lte) {
-        eq.lte("created_at", bounds.lte);
-        sq.lte("created_at", bounds.lte);
-        wq.lte("created_at", bounds.lte);
-      }
-
-      const [e, s, w] = await Promise.all([eq, sq, wq]);
-      if (cancelled) return;
-      setEmails((e.data as EmailRow[]) || []);
-      setSpeaking((s.data as SpeakingRow[]) || []);
-      setWriting((w.data as WritingRow[]) || []);
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data: res } = await supabase.rpc("admin_ops_summary", {
+      p_from: bounds.gte,
+      p_to: bounds.lte,
+    });
+    setData((res as any) ?? null);
+    setLoading(false);
   }, [bounds.gte, bounds.lte]);
 
-  const sent = useMemo(() => emails.filter((r) => r.status === "sent").length, [emails]);
-  const failed = useMemo(() => emails.filter((r) => r.status === "failed").length, [emails]);
-  const dlq = useMemo(() => emails.filter((r) => r.status === "dlq").length, [emails]);
+  useEffect(() => { load(); }, [load]);
+
+  const sent = data?.email_sent ?? 0;
+  const failed = data?.email_failed ?? 0;
+  const dlq = data?.email_dlq ?? 0;
   const successRate = useMemo(() => {
     const total = sent + failed + dlq;
     return total === 0 ? 0 : (sent / total) * 100;
   }, [sent, failed, dlq]);
 
-  const speakingCount = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of speaking) if (r.test_result_id) set.add(r.test_result_id);
-    return set.size;
-  }, [speaking]);
-
-  const writingCount = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of writing) if (r.test_result_id) set.add(r.test_result_id);
-    return set.size;
-  }, [writing]);
-
+  const speakingCount = data?.speaking_count ?? 0;
+  const writingCount = data?.writing_count ?? 0;
   const totalAiCount = speakingCount + writingCount;
 
-  const emailDaily = useMemo(() => {
-    const arr: { day: string; label: string; sent: number; failed: number }[] = [];
-    if (range === "custom" && customFrom && customTo) {
-      const start = new Date(`${customFrom}T00:00:00`);
-      const end = new Date(`${customTo}T00:00:00`);
-      const cur = new Date(start);
-      while (cur <= end) {
-        arr.push({ day: dayKey(cur), label: fmtDay(cur), sent: 0, failed: 0 });
-        cur.setDate(cur.getDate() + 1);
-      }
-    } else {
-      const span = days ?? 90;
-      for (let i = span - 1; i >= 0; i--) {
-        const d = new Date(now);
-        d.setHours(0, 0, 0, 0);
-        d.setDate(d.getDate() - i);
-        arr.push({ day: dayKey(d), label: fmtDay(d), sent: 0, failed: 0 });
-      }
-    }
-    const map = new Map(arr.map((x, i) => [x.day, i]));
-    for (const r of emails) {
-      const d = parseDateSafe(r.created_at);
-      if (!d) continue;
-      const k = dayKey(d);
-      const idx = map.get(k);
-      if (idx == null) continue;
-      if (r.status === "sent") arr[idx].sent += 1;
-      else if (r.status === "failed" || r.status === "dlq") arr[idx].failed += 1;
-    }
-    return arr;
-  }, [emails, days, now, range, customFrom, customTo]);
+  const emailDaily = useMemo(
+    () => (data?.email_daily || []).map((r) => ({ ...r, label: dayLabel(r.day) })),
+    [data],
+  );
 
-  const hasEmailData = emails.length > 0;
-  const hasAiData = speaking.length > 0 || writing.length > 0;
+  const hasEmailData = sent + failed + dlq > 0;
+  const hasAiData = totalAiCount > 0;
 
-  if (loading) {
+  if (loading || !data) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -159,18 +77,8 @@ const OpsTab = () => {
     );
   }
 
-  const periodLabel =
-    range === "custom"
-      ? customFrom && customTo
-        ? `${customFrom} → ${customTo}`
-        : "Tùy chọn"
-      : days == null
-      ? "Tất cả"
-      : `${days} ngày qua`;
-
   return (
     <div className="space-y-6">
-      {/* Filter */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm text-muted-foreground">Khoảng thời gian:</span>
         <Select value={range} onValueChange={setRange}>
@@ -190,11 +98,10 @@ const OpsTab = () => {
         )}
       </div>
 
-      {/* Email health cards */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Mail className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-heading font-bold">Email ({periodLabel})</h3>
+          <h3 className="text-lg font-heading font-bold">Email ({label})</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="p-5">
@@ -230,7 +137,6 @@ const OpsTab = () => {
         </div>
       </div>
 
-      {/* Email daily chart */}
       <Card className="p-6">
         <h3 className="text-lg font-heading font-bold mb-4">Email theo ngày</h3>
         <div className="w-full h-[280px]">
@@ -251,11 +157,10 @@ const OpsTab = () => {
         </div>
       </Card>
 
-      {/* AI grading cards */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Bot className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-heading font-bold">Chấm AI ({periodLabel})</h3>
+          <h3 className="text-lg font-heading font-bold">Chấm AI ({label})</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="p-5">

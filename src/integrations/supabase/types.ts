@@ -2062,6 +2062,53 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_activity_daily: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          day: string
+          learners: number
+          new_users: number
+          revenue: number
+        }[]
+      }
+      admin_activity_summary: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      admin_content_quality: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      admin_cost_available_years: {
+        Args: never
+        Returns: {
+          year: number
+        }[]
+      }
+      admin_cost_by_month: {
+        Args: { p_year: number }
+        Returns: {
+          cost: number
+          month: number
+          service: string
+        }[]
+      }
+      admin_cost_summary: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      admin_ops_summary: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      admin_outcomes: { Args: { p_from: string; p_to: string }; Returns: Json }
+      admin_streak_distribution: {
+        Args: never
+        Returns: {
+          bucket: string
+          count: number
+        }[]
+      }
       check_feature_access: {
         Args: { p_key: string; p_scope?: string }
         Returns: Json
