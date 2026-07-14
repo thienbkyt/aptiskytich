@@ -2097,6 +2097,10 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
+      admin_ops_summary: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
       admin_outcomes: { Args: { p_from: string; p_to: string }; Returns: Json }
       admin_streak_distribution: {
         Args: never
