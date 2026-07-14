@@ -9,19 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { parseDateSafe } from "@/lib/safeDate";
-
-type UsageEvent = {
-  id: string;
-  service: string;
-  event_type: string;
-  model: string | null;
-  units: number;
-  unit_type: string;
-  estimated_cost_vnd: number;
-  source_function: string | null;
-  created_at: string;
-};
+import { RANGE_OPTIONS, resolveBounds } from "./rangeHelpers";
 
 const SERVICE_LABEL: Record<string, string> = {
   lovable_ai: "Lovable AI (Gemini)",
@@ -40,97 +28,57 @@ const SERVICE_COLORS: Record<string, string> = {
   gemini_direct: "#0F0F10",
 };
 
-const RANGES = [
-  { value: "today", label: "Hôm nay" },
-  { value: "7", label: "7 ngày" },
-  { value: "30", label: "30 ngày" },
-  { value: "90", label: "90 ngày" },
-  { value: "all", label: "Tất cả" },
-  { value: "custom", label: "Tùy chọn (từ - đến)" },
-] as const;
-
 const fmtVND = (n: number) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(n);
 
 const VN_MONTHS = Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`);
 
+interface CostSummary {
+  total_cost: number;
+  invocations: number;
+  prev_total_cost: number;
+  has_prev: boolean;
+  by_service: { service: string; cost: number; units: number; unit_types: string; invocations: number }[];
+  by_model: { model: string; service: string; cost: number; invocations: number }[];
+  daily: { day: string; service: string; cost: number }[];
+}
+
 export default function AutoCostTab() {
   const { toast } = useToast();
   const today = new Date();
-  const [events, setEvents] = useState<UsageEvent[]>([]);
-  const [prevEvents, setPrevEvents] = useState<UsageEvent[]>([]);
+  const [summary, setSummary] = useState<CostSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [snapshotting, setSnapshotting] = useState(false);
-  const [range, setRange] = useState<string>("30");
-  const [customFrom, setCustomFrom] = useState<string>("");
-  const [customTo, setCustomTo] = useState<string>("");
-  const [selectedYear, setSelectedYear] = useState(today.getUTCFullYear());
-  const [allEvents, setAllEvents] = useState<UsageEvent[]>([]);
+  const [range, setRange] = useState("30");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const [monthData, setMonthData] = useState<{ month: number; service: string; cost: number }[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([today.getFullYear()]);
 
-  // Resolve range -> {gte, lte, prevGte, prevLte}
-  const rangeBounds = useMemo(() => {
-    let gte: Date | null = null;
-    let lte: Date | null = null;
-    if (range === "custom") {
-      if (customFrom && customTo) {
-        gte = new Date(`${customFrom}T00:00:00`);
-        lte = new Date(`${customTo}T23:59:59.999`);
-      }
-    } else if (range === "today") {
-      const s = new Date(); s.setHours(0, 0, 0, 0);
-      gte = s;
-      lte = new Date();
-    } else if (range !== "all") {
-      const days = Number(range);
-      lte = new Date();
-      gte = new Date(Date.now() - days * 86400_000);
-    }
-    let prevGte: Date | null = null;
-    let prevLte: Date | null = null;
-    if (gte && lte) {
-      const spanMs = lte.getTime() - gte.getTime();
-      prevLte = new Date(gte.getTime() - 1);
-      prevGte = new Date(prevLte.getTime() - spanMs);
-    }
-    return { gte, lte, prevGte, prevLte };
-  }, [range, customFrom, customTo]);
+  const bounds = useMemo(
+    () => resolveBounds(range, customFrom, customTo),
+    [range, customFrom, customTo],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { gte, lte, prevGte, prevLte } = rangeBounds;
-
-    let q = supabase.from("usage_events").select("*").order("created_at", { ascending: false }).limit(20000);
-    if (gte) q = q.gte("created_at", gte.toISOString());
-    if (lte) q = q.lte("created_at", lte.toISOString());
-    const { data, error } = await q;
-    if (error) {
-      toast({ title: "Lỗi tải usage", description: error.message, variant: "destructive" });
-      setEvents([]);
-    } else {
-      setEvents((data || []) as UsageEvent[]);
-    }
-
-    if (prevGte && prevLte) {
-      const { data: prev } = await supabase
-        .from("usage_events").select("*")
-        .gte("created_at", prevGte.toISOString())
-        .lte("created_at", prevLte.toISOString())
-        .limit(20000);
-      setPrevEvents((prev || []) as UsageEvent[]);
-    } else {
-      setPrevEvents([]);
-    }
-
-    // For yearly chart, load all events of selected year
-    const yStart = new Date(Date.UTC(selectedYear, 0, 1)).toISOString();
-    const yEnd = new Date(Date.UTC(selectedYear + 1, 0, 1)).toISOString();
-    const { data: yearData } = await supabase
-      .from("usage_events").select("service,estimated_cost_vnd,created_at")
-      .gte("created_at", yStart).lt("created_at", yEnd).limit(50000);
-    setAllEvents((yearData || []) as UsageEvent[]);
-
+    const [sumRes, yrRes, mnRes] = await Promise.all([
+      supabase.rpc("admin_cost_summary", { p_from: bounds.gte, p_to: bounds.lte }),
+      supabase.rpc("admin_cost_available_years"),
+      supabase.rpc("admin_cost_by_month", { p_year: selectedYear }),
+    ]);
+    setSummary((sumRes.data as any) ?? null);
+    const years = ((yrRes.data as any[]) ?? []).map((r) => Number(r.year)).filter(Boolean);
+    if (years.length === 0) years.push(today.getFullYear());
+    setAvailableYears(years);
+    setMonthData(((mnRes.data as any[]) ?? []).map((r) => ({
+      month: Number(r.month),
+      service: String(r.service),
+      cost: Number(r.cost) || 0,
+    })));
     setLoading(false);
-  }, [rangeBounds, selectedYear, toast]);
+  }, [bounds.gte, bounds.lte, selectedYear, today]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -149,77 +97,44 @@ export default function AutoCostTab() {
     }
   };
 
-  const total = useMemo(
-    () => events.reduce((s, e) => s + Number(e.estimated_cost_vnd), 0),
-    [events]
-  );
-  const prevTotal = useMemo(
-    () => prevEvents.reduce((s, e) => s + Number(e.estimated_cost_vnd), 0),
-    [prevEvents]
-  );
-  const hasCompare = rangeBounds.prevGte !== null;
+  const total = summary?.total_cost || 0;
+  const prevTotal = summary?.prev_total_cost || 0;
+  const hasCompare = !!summary?.has_prev;
   const diffPct = useMemo(() => {
     if (!hasCompare) return 0;
     if (prevTotal === 0) return total > 0 ? 100 : 0;
     return ((total - prevTotal) / prevTotal) * 100;
   }, [total, prevTotal, hasCompare]);
 
-  const breakdown = useMemo(() => {
-    const map = new Map<string, { cost: number; units: number; unitTypes: Set<string> }>();
-    for (const e of events) {
-      const cur = map.get(e.service) || { cost: 0, units: 0, unitTypes: new Set() };
-      cur.cost += Number(e.estimated_cost_vnd);
-      cur.units += Number(e.units);
-      cur.unitTypes.add(e.unit_type);
-      map.set(e.service, cur);
-    }
-    return Array.from(map.entries())
-      .map(([service, v]) => ({ service, ...v, unitTypes: Array.from(v.unitTypes).join(", ") }))
-      .sort((a, b) => b.cost - a.cost);
-  }, [events]);
-
-  // By-day breakdown
+  // By-day aggregation across all services
   const dailyServices = useMemo(
     () => ["lovable_ai", "supabase_db", "google_tts", "supabase_storage", "edge_function"],
-    []
+    [],
   );
   const byDay = useMemo(() => {
     const map = new Map<string, Record<string, number>>();
-    for (const e of events) {
-      const day = e.created_at.slice(0, 10);
-      const row = map.get(day) || {};
-      row[e.service] = (row[e.service] || 0) + Number(e.estimated_cost_vnd);
-      row.__total = (row.__total || 0) + Number(e.estimated_cost_vnd);
-      map.set(day, row);
+    for (const r of summary?.daily || []) {
+      const row = map.get(r.day) || {};
+      row[r.service] = (row[r.service] || 0) + Number(r.cost);
+      row.__total = (row.__total || 0) + Number(r.cost);
+      map.set(r.day, row);
     }
     return Array.from(map.entries())
       .filter(([, r]) => (r.__total || 0) > 0)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([day, r]) => ({ day, ...r }));
-  }, [events]);
+  }, [summary]);
 
   const yearChart = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
       const row: Record<string, string | number> = { month: VN_MONTHS[i] };
-      allEvents.forEach(e => {
-        const ed = parseDateSafe(e.created_at);
-        if (!ed) return;
-        if (ed.getUTCFullYear() !== selectedYear || ed.getUTCMonth() !== i) return;
-        row[e.service] = (Number(row[e.service] || 0)) + Number(e.estimated_cost_vnd);
+      Object.keys(SERVICE_LABEL).forEach((s) => (row[s] = 0));
+      monthData.filter((m) => m.month === i + 1).forEach((m) => {
+        row[m.service] = (Number(row[m.service] || 0)) + m.cost;
       });
-      Object.keys(SERVICE_LABEL).forEach(s => { if (!(s in row)) row[s] = 0; });
       return row;
     });
-  }, [allEvents, selectedYear]);
-
-  const availableYears = useMemo(() => {
-    const set = new Set<number>([today.getUTCFullYear()]);
-    events.forEach(e => {
-      const d = parseDateSafe(e.created_at);
-      if (d) set.add(d.getUTCFullYear());
-    });
-    return Array.from(set).sort((a, b) => b - a);
-  }, [events]);
+  }, [monthData]);
 
   const fmtDay = (d: string) => {
     const [y, m, dd] = d.split("-");
@@ -234,7 +149,7 @@ export default function AutoCostTab() {
           <Select value={range} onValueChange={setRange}>
             <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {RANGES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+              {RANGE_OPTIONS.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
             </SelectContent>
           </Select>
           {range === "custom" && (
@@ -283,14 +198,13 @@ export default function AutoCostTab() {
         )}
       </div>
 
-      {/* By-day */}
       <h3 className="text-sm font-heading font-bold text-foreground mb-2">Chi phí theo ngày</h3>
       <div className="rounded-xl border border-border overflow-hidden mb-6">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Ngày</TableHead>
-              {dailyServices.map(s => (
+              {dailyServices.map((s) => (
                 <TableHead key={s} className="text-right">{SERVICE_LABEL[s]}</TableHead>
               ))}
               <TableHead className="text-right">Tổng</TableHead>
@@ -308,7 +222,7 @@ export default function AutoCostTab() {
             ) : byDay.map((r: any) => (
               <TableRow key={r.day}>
                 <TableCell className="font-medium">{fmtDay(r.day)}</TableCell>
-                {dailyServices.map(s => (
+                {dailyServices.map((s) => (
                   <TableCell key={s} className="text-right font-mono text-sm">
                     {r[s] ? fmtVND(Math.round(r[s])) : "—"}
                   </TableCell>
@@ -320,7 +234,6 @@ export default function AutoCostTab() {
         </Table>
       </div>
 
-      {/* Total by service */}
       <h3 className="text-sm font-heading font-bold text-foreground mb-2">Tổng theo dịch vụ</h3>
       <div className="rounded-xl border border-border overflow-hidden mb-6">
         <Table>
@@ -337,11 +250,11 @@ export default function AutoCostTab() {
               <TableRow><TableCell colSpan={4} className="text-center py-8">
                 <Loader2 className="w-5 h-5 animate-spin inline" />
               </TableCell></TableRow>
-            ) : breakdown.length === 0 ? (
+            ) : (summary?.by_service.length ?? 0) === 0 ? (
               <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                 Chưa có usage trong khoảng này
               </TableCell></TableRow>
-            ) : breakdown.map(b => (
+            ) : summary!.by_service.map((b) => (
               <TableRow key={b.service}>
                 <TableCell>
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-semibold"
@@ -351,7 +264,7 @@ export default function AutoCostTab() {
                   </span>
                 </TableCell>
                 <TableCell className="text-right font-mono text-sm">{Math.round(b.units).toLocaleString("vi-VN")}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{b.unitTypes}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{b.unit_types}</TableCell>
                 <TableCell className="text-right font-semibold">{fmtVND(b.cost)}</TableCell>
               </TableRow>
             ))}
@@ -361,10 +274,10 @@ export default function AutoCostTab() {
 
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-heading font-bold text-foreground">Biểu đồ năm theo dịch vụ</h3>
-        <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(Number(v))}>
+        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
           <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {availableYears.map(y => <SelectItem key={y} value={String(y)}>Năm {y}</SelectItem>)}
+            {availableYears.map((y) => <SelectItem key={y} value={String(y)}>Năm {y}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -379,7 +292,7 @@ export default function AutoCostTab() {
             <Tooltip formatter={(v: number) => fmtVND(v)}
               contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
             <Legend wrapperStyle={{ fontSize: 12 }} formatter={(v) => SERVICE_LABEL[v] || v} />
-            {Object.keys(SERVICE_LABEL).map(s => (
+            {Object.keys(SERVICE_LABEL).map((s) => (
               <Bar key={s} dataKey={s} stackId="a" fill={SERVICE_COLORS[s] || "#94a3b8"} />
             ))}
           </BarChart>

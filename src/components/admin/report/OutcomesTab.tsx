@@ -10,10 +10,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   LineChart, Line, Cell,
 } from "recharts";
-import { toScaledScore, getSkillBand } from "@/data/questions";
+import { RANGE_OPTIONS, resolveBounds } from "./rangeHelpers";
 
 type SkillKey = "reading" | "listening" | "grammar" | "speaking" | "writing";
-type Attempt = { user_id: string; skill: SkillKey; scaled: number; created_at: string };
 
 const SKILL_LABEL: Record<SkillKey, string> = {
   reading: "Reading",
@@ -24,7 +23,6 @@ const SKILL_LABEL: Record<SkillKey, string> = {
 };
 const SKILL_ORDER: SkillKey[] = ["reading", "listening", "grammar", "speaking", "writing"];
 const BAND_ORDER = ["A0", "A1", "A2", "B1", "B2", "C"] as const;
-const BAND_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
 const BAND_COLORS: Record<string, string> = {
   A0: "#94a3b8",
   A1: "#cbd5e1",
@@ -34,214 +32,79 @@ const BAND_COLORS: Record<string, string> = {
   C: "#4D0D0D",
 };
 
-const RANGES = [
-  { value: "today", label: "Hôm nay" },
-  { value: "7", label: "7 ngày" },
-  { value: "30", label: "30 ngày" },
-  { value: "90", label: "90 ngày" },
-  { value: "all", label: "Tất cả" },
-  { value: "custom", label: "Tùy chọn (từ - đến)" },
-] as const;
-
-const bandable = (s: SkillKey): s is "reading" | "listening" | "speaking" | "writing" =>
-  s === "reading" || s === "listening" || s === "speaking" || s === "writing";
+interface OutcomesPayload {
+  avg_by_skill: { skill: SkillKey; avg_scaled: number; n: number }[];
+  band_dist: { skill: SkillKey; band: string; n: number }[];
+  improvement: { total: number; improved: number } | null;
+  timeline: { day: string; avg: number }[];
+  total_attempts: number;
+}
 
 export default function OutcomesTab() {
-  const [range, setRange] = useState<string>("30");
-  const [customFrom, setCustomFrom] = useState<string>("");
-  const [customTo, setCustomTo] = useState<string>("");
+  const [range, setRange] = useState("30");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [loading, setLoading] = useState(true);
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [data, setData] = useState<OutcomesPayload | null>(null);
+
+  const bounds = useMemo(
+    () => resolveBounds(range, customFrom, customTo),
+    [range, customFrom, customTo],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
-    let gte: string | null = null;
-    let lte: string | null = null;
-    if (range === "custom") {
-      if (customFrom && customTo) {
-        gte = new Date(`${customFrom}T00:00:00`).toISOString();
-        lte = new Date(`${customTo}T23:59:59.999`).toISOString();
-      }
-    } else if (range === "today") {
-      const s = new Date(); s.setHours(0, 0, 0, 0);
-      gte = s.toISOString();
-      lte = new Date().toISOString();
-    } else if (range !== "all") {
-      gte = new Date(Date.now() - Number(range) * 86400_000).toISOString();
-    }
-
-    const trQ = supabase
-      .from("test_results")
-      .select("user_id, skill_scores, created_at");
-    const wQ = supabase
-      .from("writing_question_gradings")
-      .select("user_id, test_result_id, part_score, max_points, created_at");
-    const sQ = supabase
-      .from("speaking_question_gradings")
-      .select("user_id, test_result_id, part_score, max_points, created_at");
-
-    if (gte) {
-      trQ.gte("created_at", gte);
-      wQ.gte("created_at", gte);
-      sQ.gte("created_at", gte);
-    }
-    if (lte) {
-      trQ.lte("created_at", lte);
-      wQ.lte("created_at", lte);
-      sQ.lte("created_at", lte);
-    }
-
-    const [trRes, wRes, sRes] = await Promise.all([trQ, wQ, sQ]);
-
-    const out: Attempt[] = [];
-
-    (trRes.data || []).forEach((r: any) => {
-      const ss = r.skill_scores;
-      if (!ss || typeof ss !== "object") return;
-      const sk = ss.skill;
-      const total = Number(ss.total) || 0;
-      const correct = Number(ss.correct) || 0;
-      if (total <= 0) return;
-      let skill: SkillKey | null = null;
-      if (sk === "reading") skill = "reading";
-      else if (sk === "listening") skill = "listening";
-      else if (sk === "grammar_vocab" || sk === "grammar") skill = "grammar";
-      if (!skill || !r.user_id || !r.created_at) return;
-      out.push({
-        user_id: r.user_id,
-        skill,
-        scaled: toScaledScore(correct, total),
-        created_at: r.created_at,
-      });
+    const { data: res } = await supabase.rpc("admin_outcomes", {
+      p_from: bounds.gte,
+      p_to: bounds.lte,
     });
-
-    const groupByTRId = (
-      rows: any[],
-      skill: SkillKey
-    ): Attempt[] => {
-      const m = new Map<string, { user_id: string; ps: number; mp: number; ts: string }>();
-      rows.forEach((r) => {
-        const key = r.test_result_id || `${r.user_id}-${r.created_at}`;
-        if (!r.user_id) return;
-        const cur = m.get(key);
-        const ps = Number(r.part_score) || 0;
-        const mp = Number(r.max_points) || 0;
-        if (cur) {
-          cur.ps += ps;
-          cur.mp += mp;
-          if (r.created_at > cur.ts) cur.ts = r.created_at;
-        } else {
-          m.set(key, { user_id: r.user_id, ps, mp, ts: r.created_at });
-        }
-      });
-      const list: Attempt[] = [];
-      m.forEach((v) => {
-        if (v.mp > 0) {
-          list.push({
-            user_id: v.user_id,
-            skill,
-            scaled: toScaledScore(v.ps, v.mp),
-            created_at: v.ts,
-          });
-        }
-      });
-      return list;
-    };
-
-    out.push(...groupByTRId(wRes.data || [], "writing"));
-    out.push(...groupByTRId(sRes.data || [], "speaking"));
-
-    setAttempts(out);
+    setData((res as any) ?? null);
     setLoading(false);
-  }, [range, customFrom, customTo]);
+  }, [bounds.gte, bounds.lte]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  // 1. % học viên lên band
-  const bandImprovement = useMemo(() => {
-    // group by user+skill (bandable only)
-    const map = new Map<string, Attempt[]>();
-    attempts.forEach((a) => {
-      if (!bandable(a.skill)) return;
-      const k = `${a.user_id}__${a.skill}`;
-      const arr = map.get(k) || [];
-      arr.push(a);
-      map.set(k, arr);
-    });
-    const usersWithEligible = new Set<string>();
-    const usersImproved = new Set<string>();
-    map.forEach((arr, k) => {
-      if (arr.length < 2) return;
-      const user = k.split("__")[0];
-      const skill = k.split("__")[1] as SkillKey;
-      if (!bandable(skill)) return;
-      usersWithEligible.add(user);
-      const sorted = [...arr].sort((a, b) => a.created_at.localeCompare(b.created_at));
-      const first = sorted[0];
-      const last = sorted[sorted.length - 1];
-      const b1 = getSkillBand(first.scaled, skill);
-      const b2 = getSkillBand(last.scaled, skill);
-      if ((BAND_RANK[b2] ?? 0) > (BAND_RANK[b1] ?? 0)) usersImproved.add(user);
-    });
-    const total = usersWithEligible.size;
-    const improved = usersImproved.size;
-    const pct = total > 0 ? Math.round((improved / total) * 100) : 0;
-    return { total, improved, pct };
-  }, [attempts]);
-
-  // 2. Avg scaled per skill
   const avgBySkill = useMemo(() => {
-    const data = SKILL_ORDER.map((sk) => {
-      const list = attempts.filter((a) => a.skill === sk);
-      const avg = list.length > 0
-        ? list.reduce((s, a) => s + a.scaled, 0) / list.length
-        : 0;
-      return { skill: SKILL_LABEL[sk], avg: Math.round(avg * 10) / 10, count: list.length };
+    const map = new Map<string, number>();
+    const cntMap = new Map<string, number>();
+    (data?.avg_by_skill || []).forEach((r) => {
+      map.set(r.skill, r.avg_scaled);
+      cntMap.set(r.skill, r.n);
     });
-    const withData = data.filter((d) => d.count > 0);
-    const min = withData.length > 0
-      ? Math.min(...withData.map((d) => d.avg))
-      : null;
-    return data.map((d) => ({ ...d, isLowest: min !== null && d.count > 0 && d.avg === min }));
-  }, [attempts]);
+    const arr = SKILL_ORDER.map((sk) => ({
+      skill: SKILL_LABEL[sk],
+      avg: map.get(sk) ?? 0,
+      count: cntMap.get(sk) ?? 0,
+    }));
+    const withData = arr.filter((d) => d.count > 0);
+    const min = withData.length ? Math.min(...withData.map((d) => d.avg)) : null;
+    return arr.map((d) => ({ ...d, isLowest: min !== null && d.count > 0 && d.avg === min }));
+  }, [data]);
 
-  // 3. Band distribution per skill (latest attempt per user-skill)
   const bandDistribution = useMemo(() => {
     const skills: SkillKey[] = ["reading", "listening", "speaking", "writing"];
     return skills.map((sk) => {
-      const byUser = new Map<string, Attempt>();
-      attempts.filter((a) => a.skill === sk).forEach((a) => {
-        const cur = byUser.get(a.user_id);
-        if (!cur || a.created_at > cur.created_at) byUser.set(a.user_id, a);
-      });
       const row: Record<string, string | number> = { skill: SKILL_LABEL[sk] };
       BAND_ORDER.forEach((b) => (row[b] = 0));
-      byUser.forEach((a) => {
-        const b = getSkillBand(a.scaled, sk as any);
-        row[b] = (row[b] as number) + 1;
+      (data?.band_dist || []).filter((x) => x.skill === sk).forEach((x) => {
+        row[x.band] = (row[x.band] as number) + x.n;
       });
       return row;
     });
-  }, [attempts]);
+  }, [data]);
 
-  // 4. Avg scaled over time (per day)
-  const timeline = useMemo(() => {
-    const byDay = new Map<string, { sum: number; n: number }>();
-    attempts.forEach((a) => {
-      const day = a.created_at.slice(0, 10);
-      const cur = byDay.get(day) || { sum: 0, n: 0 };
-      cur.sum += a.scaled;
-      cur.n += 1;
-      byDay.set(day, cur);
-    });
-    return Array.from(byDay.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([day, v]) => ({ day, avg: Math.round((v.sum / v.n) * 10) / 10 }));
-  }, [attempts]);
+  const timeline = useMemo(
+    () => (data?.timeline || []).map((r) => ({ day: r.day, avg: r.avg })),
+    [data],
+  );
 
-  const isEmpty = !loading && attempts.length === 0;
+  const improvementPct = data?.improvement
+    ? (data.improvement.total > 0
+        ? Math.round((data.improvement.improved / data.improvement.total) * 100)
+        : 0)
+    : 0;
+
+  const isEmpty = !loading && (data?.total_attempts ?? 0) === 0;
 
   return (
     <div className="space-y-8">
@@ -249,11 +112,9 @@ export default function OutcomesTab() {
         <h2 className="text-lg font-heading font-bold text-foreground">Kết quả học tập</h2>
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={range} onValueChange={setRange}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {RANGES.map((r) => (
+              {RANGE_OPTIONS.map((r) => (
                 <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
               ))}
             </SelectContent>
@@ -276,20 +137,16 @@ export default function OutcomesTab() {
         <Card className="p-12 text-center text-muted-foreground">Chưa đủ dữ liệu</Card>
       ) : (
         <>
-          {/* North-star */}
           <Card className="p-6">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">
               % học viên lên band (so lượt đầu vs lượt gần nhất)
             </p>
-            <p className="text-4xl font-heading font-extrabold text-primary">
-              {bandImprovement.pct}%
-            </p>
+            <p className="text-4xl font-heading font-extrabold text-primary">{improvementPct}%</p>
             <p className="text-sm text-muted-foreground mt-1">
-              {bandImprovement.improved}/{bandImprovement.total} học viên có ≥2 lượt cùng kỹ năng
+              {data?.improvement?.improved ?? 0}/{data?.improvement?.total ?? 0} học viên có ≥2 lượt cùng kỹ năng
             </p>
           </Card>
 
-          {/* Avg by skill */}
           <Card className="p-6">
             <h3 className="text-base font-heading font-bold text-foreground mb-4">
               Điểm trung bình theo kỹ năng (0–50)
@@ -300,13 +157,7 @@ export default function OutcomesTab() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="skill" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis domain={[0, 50]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
                   <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
                     {avgBySkill.map((d, i) => (
                       <Cell key={i} fill={d.isLowest ? "#CC1C01" : "#FEAD5F"} />
@@ -317,7 +168,6 @@ export default function OutcomesTab() {
             </div>
           </Card>
 
-          {/* Band distribution */}
           <Card className="p-6">
             <h3 className="text-base font-heading font-bold text-foreground mb-4">
               Phân bố band theo kỹ năng (lượt gần nhất / học viên)
@@ -328,13 +178,7 @@ export default function OutcomesTab() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="skill" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis allowDecimals={false} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   {BAND_ORDER.map((b) => (
                     <Bar key={b} dataKey={b} stackId="bands" fill={BAND_COLORS[b]} />
@@ -344,7 +188,6 @@ export default function OutcomesTab() {
             </div>
           </Card>
 
-          {/* Timeline */}
           <Card className="p-6">
             <h3 className="text-base font-heading font-bold text-foreground mb-4">
               Điểm trung bình theo thời gian (mọi kỹ năng)
@@ -355,13 +198,7 @@ export default function OutcomesTab() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis domain={[0, 50]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                  />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
                   <Line type="monotone" dataKey="avg" stroke="#CC1C01" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
