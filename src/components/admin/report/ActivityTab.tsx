@@ -100,8 +100,8 @@ const ActivityTab = () => {
     ? (summary.paying_count / summary.total_users) * 100
     : 0;
 
-  const consistentPct = summary && summary.total_users > 0
-    ? (summary.consistent_users / summary.total_users) * 100
+  const consistentPeriodPct = summary && summary.active_users_period > 0
+    ? (summary.consistent_users_period / summary.active_users_period) * 100
     : 0;
 
   const fmtVND = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
