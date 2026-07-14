@@ -20,13 +20,18 @@ const COLOR_ACCENT = "#FEAD5F";
 
 interface Summary {
   total_users: number;
+  total_users_at_end: number;
   new_users: number;
   new_users_prev: number;
   dau: number;
   wau: number;
   mau: number;
   visits_today: number;
+  visits_period: number;
   consistent_users: number;
+  active_users_period: number;
+  consistent_users_period: number;
+  consistent_threshold_days: number;
   revenue_period: number;
   revenue_all_time: number;
   paying_count: number;
@@ -95,8 +100,8 @@ const ActivityTab = () => {
     ? (summary.paying_count / summary.total_users) * 100
     : 0;
 
-  const consistentPct = summary && summary.total_users > 0
-    ? (summary.consistent_users / summary.total_users) * 100
+  const consistentPeriodPct = summary && summary.active_users_period > 0
+    ? (summary.consistent_users_period / summary.active_users_period) * 100
     : 0;
 
   const fmtVND = (n: number) => `${n.toLocaleString("vi-VN")} đ`;
@@ -135,19 +140,19 @@ const ActivityTab = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
-            <Eye className="w-4 h-4" /> Truy cập hôm nay
+            <Eye className="w-4 h-4" /> Truy cập ({label})
           </div>
           <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_PRIMARY }}>
-            {summary.visits_today.toLocaleString("vi-VN")}
+            {summary.visits_period.toLocaleString("vi-VN")}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Số phiên truy cập web trong hôm nay</p>
+          <p className="text-xs text-muted-foreground mt-1">Hôm nay: {summary.visits_today.toLocaleString("vi-VN")}</p>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
-            <Users className="w-4 h-4" /> Tổng user
+            <Users className="w-4 h-4" /> Tổng user ({label})
           </div>
-          <p className="text-3xl font-heading font-extrabold text-foreground">{summary.total_users.toLocaleString("vi-VN")}</p>
-          <p className="text-xs text-muted-foreground mt-1">Toàn bộ người đã đăng ký</p>
+          <p className="text-3xl font-heading font-extrabold text-foreground">{summary.total_users_at_end.toLocaleString("vi-VN")}</p>
+          <p className="text-xs text-muted-foreground mt-1">+{summary.new_users.toLocaleString("vi-VN")} user mới trong kỳ</p>
         </Card>
 
         <Card className="p-5">
@@ -176,12 +181,14 @@ const ActivityTab = () => {
 
         <Card className="p-5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
-            <Flame className="w-4 h-4" /> Học đều (streak ≥ 7)
+            <Flame className="w-4 h-4" /> Học viên chăm ({label})
           </div>
           <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_ACCENT }}>
-            {summary.consistent_users.toLocaleString("vi-VN")}
+            {summary.consistent_users_period.toLocaleString("vi-VN")}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">{consistentPct.toFixed(1)}% trên tổng user</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Học ≥ {summary.consistent_threshold_days} ngày khác nhau · {consistentPeriodPct.toFixed(1)}% trên {summary.active_users_period.toLocaleString("vi-VN")} user hoạt động
+          </p>
         </Card>
       </div>
 
