@@ -20,13 +20,18 @@ const COLOR_ACCENT = "#FEAD5F";
 
 interface Summary {
   total_users: number;
+  total_users_at_end: number;
   new_users: number;
   new_users_prev: number;
   dau: number;
   wau: number;
   mau: number;
   visits_today: number;
+  visits_period: number;
   consistent_users: number;
+  active_users_period: number;
+  consistent_users_period: number;
+  consistent_threshold_days: number;
   revenue_period: number;
   revenue_all_time: number;
   paying_count: number;
