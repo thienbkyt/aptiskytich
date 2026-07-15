@@ -63,7 +63,17 @@ export const useAudioRecording = ({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setIsRequestingMic(false);
-      const mediaRecorder = new MediaRecorder(stream);
+      const pickMime = () => {
+        const c = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+        return c.find((t) => {
+          try { return MediaRecorder.isTypeSupported(t); } catch { return false; }
+        }) || "";
+      };
+      const mime = pickMime();
+      const mediaRecorder = new MediaRecorder(stream, {
+        ...(mime ? { mimeType: mime } : {}),
+        audioBitsPerSecond: 24000,
+      });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -72,7 +82,7 @@ export const useAudioRecording = ({
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: mime || "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         onComplete(url);
