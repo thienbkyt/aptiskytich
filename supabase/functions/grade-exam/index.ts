@@ -640,7 +640,23 @@ ${REGISTER_GUIDANCE}
 FORCED COMPLEXITY DETECTION:
 Đặt forcedComplexity = true khi học viên cố ý nhồi cấu trúc/từ vựng "đao to búa lớn" không phù hợp part hay chủ đề (ví dụ Part 1 mà dùng "notwithstanding, in light of the aforementioned…"). Nếu không thì false.
 
-RETURN VIA TOOL CALL. Mọi lỗi liệt kê ĐẦY ĐỦ, mỗi lỗi 1 dòng {original, corrected, explanation (tiếng Việt ngắn)}.`;
+ERROR DETECTION (grammarErrors phải bao gồm ĐẦY ĐỦ các loại):
+- Lỗi NGỮ PHÁP: sai thì, chia động từ, hòa hợp chủ-vị, giới từ, mạo từ, cấu trúc câu.
+- Lỗi DIỄN ĐẠT: câu tối nghĩa, câu Việt-Anh, câu lủng củng, dịch word-by-word.
+- Lỗi LOGIC: mâu thuẫn, thiếu liên kết ý, kết luận không theo tiền đề.
+- Lỗi DÙNG TỪ SAI CHỖ / SAI NGHĨA (wrong word / collocation): dùng từ không đúng ngữ cảnh, sai collocation, sai sắc thái.
+Mỗi lỗi 1 mục {original, corrected, explanation}. explanation (tiếng Việt) PHẢI nói RÕ loại lỗi ở đầu, ví dụ: "Lỗi diễn đạt: …", "Lỗi dùng từ sai nghĩa: …", "Lỗi logic: …", "Lỗi ngữ pháp: …". Lỗi chính tả thuần túy để ở spellingErrors.
+
+FEEDBACK FORMAT (BẮT BUỘC, 100% TIẾNG VIỆT, KHÔNG trộn Anh-Việt trừ tên riêng):
+Chia feedback thành các mục, MỖI mục bắt đầu bằng nhãn in đậm trên DÒNG RIÊNG (đúng chuỗi ký tự Markdown), theo thứ tự và chỉ dùng các nhãn sau (bỏ mục không áp dụng cho part):
+**Hoàn thành nhiệm vụ**
+**Ngữ pháp & chính tả**
+**Từ vựng**
+**Mạch lạc**
+**Gợi ý nâng cao**
+Sau mỗi nhãn xuống dòng rồi viết nội dung 1–3 câu tiếng Việt tự nhiên. Part 1 KHÔNG dùng mục **Gợi ý nâng cao**.
+
+RETURN VIA TOOL CALL. Mọi lỗi liệt kê ĐẦY ĐỦ, mỗi lỗi 1 dòng {original, corrected, explanation (tiếng Việt)}.`;
 
       let systemPromptV2 = "";
       let userText = "";
