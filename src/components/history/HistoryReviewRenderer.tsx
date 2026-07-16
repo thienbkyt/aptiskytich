@@ -113,19 +113,43 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
         rows.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) ||
         rows[0]; // single-part attempts may not echo part label
       if (cancelled) return;
-      if (!match) { setWritingGrading(null); return; }
+      if (match) {
+        setWritingGrading({
+          partType: part,
+          partScore: match.part_score || 0,
+          maxPoints: match.max_points || 0,
+          addressPercent: 0,
+          bonusPercent: 0,
+          wordPenaltyPercent: 0,
+          coherencePenaltyPercent: 0,
+          openingClosingPenalty: 0,
+          grammarErrors: (match.grammar_errors as any) || [],
+          spellingErrors: (match.spelling_errors as any) || [],
+          feedback: match.feedback || "",
+        });
+        return;
+      }
+      // Fallback: read AI from the attempt's review_snapshot.
+      const { data: tr } = await supabase
+        .from("test_results")
+        .select("review_snapshot")
+        .eq("id", testResultId)
+        .maybeSingle();
+      const ai = (tr as any)?.review_snapshot?.items?.[0]?.ai;
+      if (cancelled) return;
+      if (!ai) { setWritingGrading(null); return; }
       setWritingGrading({
         partType: part,
-        partScore: match.part_score || 0,
-        maxPoints: match.max_points || 0,
+        partScore: ai.partScore || 0,
+        maxPoints: ai.maxPoints || 0,
         addressPercent: 0,
         bonusPercent: 0,
         wordPenaltyPercent: 0,
         coherencePenaltyPercent: 0,
         openingClosingPenalty: 0,
-        grammarErrors: (match.grammar_errors as any) || [],
-        spellingErrors: (match.spelling_errors as any) || [],
-        feedback: match.feedback || "",
+        grammarErrors: ai.grammarErrors || [],
+        spellingErrors: ai.spellingErrors || [],
+        feedback: ai.feedback || "",
       });
     })();
     return () => { cancelled = true; };
