@@ -93,7 +93,7 @@ const WritingFullResults = ({ results, score50, cefr, onExit, parts = [] }: Writ
             );
           })}
           <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 mt-2 leading-relaxed">
-            Điểm /50 tính theo trọng số: Part 1 ×0.5, Part 2–3 ×1, Part 4 ×1.5 — không phải cộng thẳng 4 part.
+            {"\n"}
           </p>
         </div>
 
