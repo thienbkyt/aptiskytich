@@ -736,7 +736,7 @@ ${partsIn.formalText ?? ""}`;
         properties: { tf: bandProp, gra: bandProp, vra: bandProp, cc: bandProp, reg: bandProp },
         required: ["tf", "gra", "vra", "cc", "reg"],
       };
-      const criteriaAnalysis = {
+      const criteriaAnalysisSchema = {
         type: "object",
         additionalProperties: false,
         properties: { tf: { type: "string" }, gra: { type: "string" }, vra: { type: "string" }, cc: { type: "string" }, reg: { type: "string" } },
