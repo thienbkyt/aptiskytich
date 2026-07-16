@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
-import { getSkillBand, getLevelColor } from "@/data/questions";
+import { getLevelColor } from "@/data/questions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye } from "lucide-react";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
@@ -33,6 +33,7 @@ export interface WritingFullReviewPart {
 interface WritingFullResultsProps {
   results: WritingGradingResult[];
   score50: number;
+  cefr?: string;
   onExit: () => void;
   submissions?: Submission[];
   parts?: WritingFullReviewPart[];
@@ -43,11 +44,11 @@ const partLabel = (pt: string) => {
   return m[pt] || pt;
 };
 
-const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFullResultsProps) => {
+const WritingFullResults = ({ results, score50, cefr, onExit, parts = [] }: WritingFullResultsProps) => {
   const [view, setView] = useState<"summary" | "review">("summary");
   const [reviewIdx, setReviewIdx] = useState(0);
   const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
-  const band = getSkillBand(score50, "writing");
+  const band = cefr && cefr.length > 0 ? cefr : "—";
   const bandColor = getLevelColor(band);
 
   useEffect(() => {
@@ -82,17 +83,18 @@ const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFul
         <div className="bg-card border border-border rounded-2xl p-6 text-left space-y-3">
           <h3 className="text-base font-heading font-bold text-foreground mb-3">Chi tiết bài làm</h3>
           {results.map((r, i) => {
-            const halfScore = Number((r.partScore / 2).toFixed(1));
-            const halfMax = r.maxPoints / 2;
             return (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span className="text-foreground font-medium">{partLabel(r.partType)}</span>
                 <span className="text-muted-foreground">
-                  Điểm: <span className="font-semibold text-foreground">{halfScore}/{halfMax}</span>
+                  Điểm: <span className="font-semibold text-foreground">{r.partScore}/{r.maxPoints}</span>
                 </span>
               </div>
             );
           })}
+          <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 mt-2 leading-relaxed">
+            Điểm /50 tính theo trọng số: Part 1 ×0.5, Part 2–3 ×1, Part 4 ×1.5 — không phải cộng thẳng 4 part.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

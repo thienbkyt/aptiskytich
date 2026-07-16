@@ -111,6 +111,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingResults, setWritingResults] = useState<WritingGradingResult[]>([]);
   const [writingScore50, setWritingScore50] = useState(0);
+  const [writingCefr, setWritingCefr] = useState<string>("");
   const { gradeExam } = useExamGrading();
 
   // Speaking full-practice grading state
@@ -882,6 +883,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         <WritingFullResults
           results={writingResults}
           score50={writingScore50}
+          cefr={writingCefr}
           onExit={onExit}
           submissions={writingPartsRef.current}
           parts={reviewParts}
@@ -1115,6 +1117,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
       setWritingResults(results);
       setWritingScore50(scale50);
+      setWritingCefr(allFour ? cefr : "");
       setScores({ correct: scale50, total: 50 });
       setWritingPhase("results");
     };
