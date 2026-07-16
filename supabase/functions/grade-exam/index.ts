@@ -669,7 +669,7 @@ Trả về:
 - criteriaAnalysis: giải thích ngắn (VN) cho từng tiêu chí.
 - grammarErrors, spellingErrors (liệt kê đầy đủ).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giữ giọng informal).
-- improvedVersion: bản viết lại tự nhiên, cùng ý.
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (đúng 20-30 từ của Part 2, đủ ý, đúng register informal). Nếu bài học viên quá ngắn hoặc thiếu ý → PHÁT TRIỂN thêm ý theo đúng hướng học viên đang viết để đủ số từ và đủ task. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
 - forcedComplexity: boolean.
 ${SHARED_RUBRIC}`;
         userText = `partType: task2
