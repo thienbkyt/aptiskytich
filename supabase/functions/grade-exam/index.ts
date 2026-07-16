@@ -720,7 +720,7 @@ Trả về:
   { bands: { tf, gra, vra, cc, reg } (0-5) — TF theo NỘI DUNG (chưa áp word-count), criteriaAnalysis: {tf,gra,vra,cc,reg}, reason: VN ngắn }.
 - grammarErrors, spellingErrors: mỗi lỗi có emailIndex (0 informal, 1 formal).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; chỉ email FORMAL mới gợi ý cấu trúc trang trọng).
-- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH cho CẢ 2 email, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới, bám SCENARIO). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (Informal 40–50 từ, Formal 120–150 từ; đủ ý, đúng register). Nếu bài học viên quá ngắn hoặc thiếu ý → PHÁT TRIỂN thêm ý theo đúng hướng học viên đang viết để đủ số từ và đủ task. Đánh dấu rõ hai phần bằng "Informal:" và "Formal:". Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH cho CẢ 2 email, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới, bám SCENARIO). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề. RÀNG BUỘC SỐ TỪ NGHIÊM NGẶT: Informal 40–50 từ; Formal 120–150 từ (TUYỆT ĐỐI không vượt 155 từ, không dưới 120, KHÔNG lan man thừa ý — cắt bỏ chi tiết không cần thiết để về khung). ĐẾM số từ trước khi trả về; nếu ngoài khung, chỉnh lại. Đúng register cho từng email. Nếu bài học viên quá ngắn hoặc thiếu ý → phát triển thêm theo đúng hướng học viên đang viết cho đủ khung. Đánh dấu rõ hai phần bằng "Informal:" và "Formal:". Đây là bản tham khảo DUY NHẤT cho học viên.
 - forcedComplexity: boolean.
 
 SCENARIO RULE: nếu email trả lời sai scenario → TF của email đó = 0.
