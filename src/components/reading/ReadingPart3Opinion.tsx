@@ -118,7 +118,7 @@ const ReadingPart3Opinion = ({
                       {p.t}
                     </mark>
                   ) : (
-                    <span key={"i">{p.t}</span>
+                    <span key={i}>{p.t}</span>
                   ),
                 )}
               </span>
