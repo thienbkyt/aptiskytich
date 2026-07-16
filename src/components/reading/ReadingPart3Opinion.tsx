@@ -80,12 +80,14 @@ const ReadingPart3Opinion = ({
         {question.people.map((person, pi) => {
           // Collect evidence sentences in this person's block (from AI), then render
           // the block text with each occurrence wrapped in a highlight.
-          const evidences: string[] = [];
+          const evidences: Array<{ num: number; sentence: string }> = [];
           if (reveal && reviewData?.part3Evidence) {
-            Object.values(reviewData.part3Evidence).forEach((ev) => {
+            Object.entries(reviewData.part3Evidence).forEach(([qi, ev]) => {
               if (!ev?.sentence || !ev?.person) return;
               if (personLetterToIndex(ev.person) === pi && person.text.includes(ev.sentence)) {
-                if (!evidences.includes(ev.sentence)) evidences.push(ev.sentence);
+                if (!evidences.some((e) => e.sentence === ev.sentence)) {
+                  evidences.push({ num: Number(qi) + 1, sentence: ev.sentence });
+                }
               }
             });
           }
@@ -94,15 +96,15 @@ const ReadingPart3Opinion = ({
               return <span className="whitespace-pre-line">{person.text}</span>;
             }
             // Split iteratively on each evidence sentence
-            const parts: Array<{ t: string; hl: boolean }> = [{ t: person.text, hl: false }];
-            evidences.forEach((ev) => {
-              const next: Array<{ t: string; hl: boolean }> = [];
+            const parts: Array<{ t: string; hl: boolean; num?: number }> = [{ t: person.text, hl: false }];
+            evidences.forEach(({ num, sentence }) => {
+              const next: Array<{ t: string; hl: boolean; num?: number }> = [];
               parts.forEach((p) => {
                 if (p.hl) { next.push(p); return; }
-                const segs = p.t.split(ev);
+                const segs = p.t.split(sentence);
                 segs.forEach((s, i) => {
                   if (s) next.push({ t: s, hl: false });
-                  if (i < segs.length - 1) next.push({ t: ev, hl: true });
+                  if (i < segs.length - 1) next.push({ t: sentence, hl: true, num });
                 });
               });
               parts.splice(0, parts.length, ...next);
@@ -112,6 +114,7 @@ const ReadingPart3Opinion = ({
                 {parts.map((p, i) =>
                   p.hl ? (
                     <mark key={i} className="bg-yellow-200 dark:bg-yellow-500/40 text-foreground rounded px-0.5">
+                      <span className="font-bold mr-1">{p.num}.</span>
                       {p.t}
                     </mark>
                   ) : (
