@@ -1,0 +1,1 @@
+UPDATE grading_jobs SET status='pending', claimed_at=NULL, finished_at=NULL, attempts=0, last_error=NULL WHERE status='failed';
