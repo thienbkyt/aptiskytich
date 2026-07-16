@@ -132,7 +132,7 @@ export const APTIS_BAND_MIN: Record<
 > = {
   listening: { A1: 8, A2: 16, B1: 24, B2: 34, C: 42 },
   reading:   { A1: 8, A2: 16, B1: 26, B2: 38, C: 46 },
-  writing:   { A1: 6, A2: 18, B1: 26, B2: 40, C: 48 },
+  writing:   { A1: 12, A2: 23, B1: 33, B2: 40, C: 46 },
   speaking:  { A1: 4, A2: 16, B1: 26, B2: 41, C: 48 },
 };
 
