@@ -686,7 +686,7 @@ Trả về:
 - criteriaAnalysis (VN).
 - grammarErrors, spellingErrors: mỗi lỗi có questionIndex (0..2).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giọng informal, dùng "you should…").
-- improvedVersion: gộp 3 câu đã sửa.
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (mỗi câu đủ 30–40 từ, đủ ý, đúng register informal); gộp 3 câu thành một bản, đánh số rõ 1., 2., 3. Nếu bài học viên quá ngắn hoặc thiếu ý → PHÁT TRIỂN thêm ý theo đúng hướng học viên đang viết để đủ số từ và đủ task. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
 - forcedComplexity: boolean.
 ${SHARED_RUBRIC}`;
         userText = `partType: task3
