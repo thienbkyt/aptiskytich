@@ -39,46 +39,84 @@ const ReadingPart1Sentence = ({
 }: Props) => {
   const reveal = submitted || !!revealAnswers;
 
-  const renderPassage = () => {
-    const parts = question.passage.split(/\{(\d+)\}/g);
-    return (
-      <div className="text-base text-foreground leading-[2.2] whitespace-pre-line">
-        {parts.map((part, i) => {
-          if (i % 2 === 1) {
-            const gapIndex = parseInt(part);
-            const gap = question.gaps[gapIndex];
-            if (!gap) return null;
-            const selectedValue = answers[gapIndex];
-            const isCorrect = reveal && selectedValue === gap.correct;
-            const isWrong = reveal && selectedValue !== null && selectedValue !== gap.correct;
+  const usedGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
+    .map(m => Number(m[1]))
+    .filter(idx => question.gaps[idx]);
+  const exampleGapIdx = usedGapIdx[0];
 
-            return (
-              <select
-                key={`gap-${gapIndex}`}
-                data-question-index={gapIndex}
-                value={selectedValue !== null && selectedValue !== undefined ? selectedValue : ""}
-                onChange={(e) => onAnswer(gapIndex, parseInt(e.target.value))}
-                disabled={reveal}
-                className={`inline-block mx-1 px-3 py-1 text-sm border rounded bg-background appearance-auto cursor-pointer min-w-[120px]
-                  ${reveal
-                    ? isCorrect
-                      ? "border-success bg-success/10 text-success"
-                      : isWrong
-                        ? "border-destructive bg-destructive/10 text-destructive"
-                        : "border-border"
-                    : selectedValue !== null && selectedValue !== undefined
-                      ? "border-primary text-foreground"
-                      : "border-border text-muted-foreground"
-                  }`}
-              >
-                <option value="" disabled>{selectedValue !== null && selectedValue !== undefined ? "" : "──"}</option>
-                {gap.options.map((opt, oi) => (
-                  <option key={oi} value={oi}>{opt}</option>
-                ))}
-              </select>
-            );
+  const renderInline = (text: string, keyPrefix: string) => {
+    const parts = text.split(/\{(\d+)\}/g);
+    return parts.map((part, i) => {
+      if (i % 2 === 1) {
+        const gapIndex = parseInt(part);
+        const gap = question.gaps[gapIndex];
+        if (!gap) return null;
+
+        // Example gap — locked, shows correct answer, not scored
+        if (gapIndex === exampleGapIdx) {
+          return (
+            <span
+              key={`${keyPrefix}-ex-${gapIndex}`}
+              className="inline-block mx-1 px-3 py-1 text-sm border border-border rounded bg-muted text-muted-foreground min-w-[120px] text-center select-none cursor-not-allowed"
+              aria-label="Example (given)"
+            >
+              {gap.options[gap.correct]}
+            </span>
+          );
+        }
+
+        const selectedValue = answers[gapIndex];
+        const isCorrect = reveal && selectedValue === gap.correct;
+        const isWrong = reveal && selectedValue !== null && selectedValue !== undefined && selectedValue !== gap.correct;
+
+        return (
+          <select
+            key={`${keyPrefix}-gap-${gapIndex}`}
+            data-question-index={gapIndex}
+            value={selectedValue !== null && selectedValue !== undefined ? selectedValue : ""}
+            onChange={(e) => onAnswer(gapIndex, parseInt(e.target.value))}
+            disabled={reveal}
+            className={`inline-block mx-1 px-3 py-1 text-sm border rounded bg-background appearance-auto cursor-pointer min-w-[120px]
+              ${reveal
+                ? isCorrect
+                  ? "border-success bg-success/10 text-success"
+                  : isWrong
+                    ? "border-destructive bg-destructive/10 text-destructive"
+                    : "border-border"
+                : selectedValue !== null && selectedValue !== undefined
+                  ? "border-primary text-foreground"
+                  : "border-border text-muted-foreground"
+              }`}
+          >
+            <option value="" disabled>{selectedValue !== null && selectedValue !== undefined ? "" : "──"}</option>
+            {gap.options.map((opt, oi) => (
+              <option key={oi} value={oi}>{opt}</option>
+            ))}
+          </select>
+        );
+      }
+      return <Fragment key={`${keyPrefix}-t-${i}`}>{part}</Fragment>;
+    });
+  };
+
+  const renderPassage = () => {
+    // Split passage into lines first (preserve blank lines / paragraphs), then
+    // within each line split into sentences by ., !, ? (keeping the punctuation).
+    const lines = question.passage.split(/\n/);
+    return (
+      <div className="text-base text-foreground leading-[2.2]">
+        {lines.map((line, li) => {
+          if (line.trim() === "") {
+            return <div key={`ln-${li}`} className="h-3" />;
           }
-          return <Fragment key={i}>{part}</Fragment>;
+          const sentences = line.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [line];
+          return (
+            <div key={`ln-${li}`}>
+              {sentences.map((s, si) => (
+                <div key={`ln-${li}-s-${si}`}>{renderInline(s, `${li}-${si}`)}</div>
+              ))}
+            </div>
+          );
         })}
       </div>
     );
@@ -123,10 +161,12 @@ const ReadingPart1Sentence = ({
             </div>
             <div className="space-y-3">
               {(() => {
-                const usedGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
+                const allGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
                   .map(m => Number(m[1]))
                   .filter(idx => question.gaps[idx]);
-                return usedGapIdx.map((gi, displayIdx) => {
+                // Skip the first gap — it's the "done for you" example.
+                const scoredGapIdx = allGapIdx.slice(1);
+                return scoredGapIdx.map((gi, displayIdx) => {
                   const g = question.gaps[gi];
                   const userVal = answers[gi];
                   const userText = userVal !== null && userVal !== undefined ? g.options[userVal] : "—";
