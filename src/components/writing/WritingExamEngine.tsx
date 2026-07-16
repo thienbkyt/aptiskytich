@@ -552,7 +552,7 @@ const WritingExamEngine = ({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base font-heading font-bold text-foreground">Nhận xét của AI Kỳ Tích</h3>
                   <span className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
-                    {Number((effectiveGrading.partScore / 2).toFixed(1))}/{effectiveGrading.maxPoints / 2}
+                    {effectiveGrading.partScore}/{effectiveGrading.maxPoints}
                   </span>
                 </div>
                 {effectiveGrading.feedback && (
