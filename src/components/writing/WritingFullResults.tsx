@@ -33,6 +33,7 @@ export interface WritingFullReviewPart {
 interface WritingFullResultsProps {
   results: WritingGradingResult[];
   score50: number;
+  cefr?: string;
   onExit: () => void;
   submissions?: Submission[];
   parts?: WritingFullReviewPart[];
@@ -43,11 +44,11 @@ const partLabel = (pt: string) => {
   return m[pt] || pt;
 };
 
-const WritingFullResults = ({ results, score50, onExit, parts = [] }: WritingFullResultsProps) => {
+const WritingFullResults = ({ results, score50, cefr, onExit, parts = [] }: WritingFullResultsProps) => {
   const [view, setView] = useState<"summary" | "review">("summary");
   const [reviewIdx, setReviewIdx] = useState(0);
   const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
-  const band = getSkillBand(score50, "writing");
+  const band = cefr && cefr.length > 0 ? cefr : "—";
   const bandColor = getLevelColor(band);
 
   useEffect(() => {
