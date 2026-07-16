@@ -161,10 +161,12 @@ const ReadingPart1Sentence = ({
             </div>
             <div className="space-y-3">
               {(() => {
-                const usedGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
+                const allGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
                   .map(m => Number(m[1]))
                   .filter(idx => question.gaps[idx]);
-                return usedGapIdx.map((gi, displayIdx) => {
+                // Skip the first gap — it's the "done for you" example.
+                const scoredGapIdx = allGapIdx.slice(1);
+                return scoredGapIdx.map((gi, displayIdx) => {
                   const g = question.gaps[gi];
                   const userVal = answers[gi];
                   const userText = userVal !== null && userVal !== undefined ? g.options[userVal] : "—";
