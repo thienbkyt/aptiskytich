@@ -28,7 +28,7 @@ const WritingPart1Short = ({
   submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
 }: Props) => {
-  const showSample = submitted || !!revealAnswers;
+  const showSample = !!revealAnswers && !submitted;
   return (
     <div className={`flex flex-col ${reviewMode ? "" : "min-h-[70vh] pb-20"}`}>
       <div className="flex items-start justify-between mb-6">

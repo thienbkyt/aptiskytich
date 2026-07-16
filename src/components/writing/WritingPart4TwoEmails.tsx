@@ -30,7 +30,7 @@ const WritingPart4TwoEmails = ({
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
 }: Props) => {
-  const showSample = submitted || !!revealAnswers;
+  const showSample = !!revealAnswers && !submitted;
   const [informalSample, formalSample] = (() => {
     const full = data.formalEmail.sampleAnswer || "";
     if (data.informalEmail.sampleAnswer) return [data.informalEmail.sampleAnswer, full];
