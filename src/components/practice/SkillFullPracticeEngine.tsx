@@ -1116,6 +1116,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
       setWritingResults(results);
       setWritingScore50(scale50);
+      setWritingCefr(allFour ? cefr : "");
       setScores({ correct: scale50, total: 50 });
       setWritingPhase("results");
     };
