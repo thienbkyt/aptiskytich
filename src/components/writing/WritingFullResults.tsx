@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
-import { getSkillBand, getLevelColor } from "@/data/questions";
+import { getLevelColor } from "@/data/questions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye } from "lucide-react";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
