@@ -83,17 +83,18 @@ const WritingFullResults = ({ results, score50, cefr, onExit, parts = [] }: Writ
         <div className="bg-card border border-border rounded-2xl p-6 text-left space-y-3">
           <h3 className="text-base font-heading font-bold text-foreground mb-3">Chi tiết bài làm</h3>
           {results.map((r, i) => {
-            const halfScore = Number((r.partScore / 2).toFixed(1));
-            const halfMax = r.maxPoints / 2;
             return (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span className="text-foreground font-medium">{partLabel(r.partType)}</span>
                 <span className="text-muted-foreground">
-                  Điểm: <span className="font-semibold text-foreground">{halfScore}/{halfMax}</span>
+                  Điểm: <span className="font-semibold text-foreground">{r.partScore}/{r.maxPoints}</span>
                 </span>
               </div>
             );
           })}
+          <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 mt-2 leading-relaxed">
+            Điểm /50 tính theo trọng số: Part 1 ×0.5, Part 2–3 ×1, Part 4 ×1.5 — không phải cộng thẳng 4 part.
+          </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
