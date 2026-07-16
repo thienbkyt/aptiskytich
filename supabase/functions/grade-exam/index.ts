@@ -51,6 +51,10 @@ serve(async (req) => {
       /^[0-9a-f-]{36}$/i.test(internalUserId);
 
     let userId = "";
+    let supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
     if (isInternal) {
       userId = internalUserId;
     } else {
@@ -62,7 +66,7 @@ serve(async (req) => {
         });
       }
 
-      const supabaseClient = createClient(
+      supabaseClient = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_ANON_KEY")!,
         { global: { headers: { Authorization: authHeader } } }
@@ -736,7 +740,7 @@ ${partsIn.formalText ?? ""}`;
         properties: { tf: bandProp, gra: bandProp, vra: bandProp, cc: bandProp, reg: bandProp },
         required: ["tf", "gra", "vra", "cc", "reg"],
       };
-      const criteriaAnalysis = {
+      const criteriaAnalysisSchema = {
         type: "object",
         additionalProperties: false,
         properties: { tf: { type: "string" }, gra: { type: "string" }, vra: { type: "string" }, cc: { type: "string" }, reg: { type: "string" } },
@@ -771,7 +775,7 @@ ${partsIn.formalText ?? ""}`;
               items: { type: "object", additionalProperties: false, properties: { tfContent: bandProp, reason: { type: "string" } }, required: ["tfContent", "reason"] },
             },
             bands: bandsObj,
-            criteriaAnalysis,
+            criteriaAnalysis: criteriaAnalysisSchema,
             grammarErrors: { type: "array", items: errItem },
             spellingErrors: { type: "array", items: errItem },
             feedback: { type: "string" },
@@ -783,7 +787,7 @@ ${partsIn.formalText ?? ""}`;
       } else if (pt === "task4") {
         const emailObj = {
           type: "object", additionalProperties: false,
-          properties: { bands: bandsObj, criteriaAnalysis, reason: { type: "string" } },
+          properties: { bands: bandsObj, criteriaAnalysis: criteriaAnalysisSchema, reason: { type: "string" } },
           required: ["bands", "criteriaAnalysis", "reason"],
         };
         toolParams = {
@@ -804,7 +808,7 @@ ${partsIn.formalText ?? ""}`;
           type: "object", additionalProperties: false,
           properties: {
             bands: bandsObj,
-            criteriaAnalysis,
+            criteriaAnalysis: criteriaAnalysisSchema,
             grammarErrors: { type: "array", items: errItem },
             spellingErrors: { type: "array", items: errItem },
             feedback: { type: "string" },
@@ -977,7 +981,7 @@ ${partsIn.formalText ?? ""}`;
         raw_part: rawPart,
         perItem,
         analysis,
-        criteriaAnalysis,
+        criteriaAnalysis: criteriaAnalysisSchema,
         grammarErrors,
         spellingErrors,
         feedback,
