@@ -555,9 +555,54 @@ const WritingExamEngine = ({
                     {effectiveGrading.partScore}/{effectiveGrading.maxPoints}
                   </span>
                 </div>
-                {effectiveGrading.feedback && (
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{effectiveGrading.feedback}</p>
-                )}
+                {effectiveGrading.feedback && (() => {
+                  const raw = String(effectiveGrading.feedback);
+                  const SECTIONS: { label: string; icon: string; cls: string }[] = [
+                    { label: "Hoàn thành nhiệm vụ", icon: "🎯", cls: "bg-blue-500/5 border-blue-500/20" },
+                    { label: "Ngữ pháp & chính tả", icon: "📝", cls: "bg-rose-500/5 border-rose-500/20" },
+                    { label: "Từ vựng", icon: "📚", cls: "bg-emerald-500/5 border-emerald-500/20" },
+                    { label: "Mạch lạc", icon: "🔗", cls: "bg-violet-500/5 border-violet-500/20" },
+                    { label: "Gợi ý nâng cao", icon: "🚀", cls: "bg-amber-500/5 border-amber-500/20" },
+                  ];
+                  // Match "**Label**" (with optional trailing colon) anywhere; split into segments.
+                  const pattern = new RegExp(`\\*\\*\\s*(${SECTIONS.map(s => s.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*\\*\\*[\\s:：]*`, "gi");
+                  const matches = Array.from(raw.matchAll(pattern));
+                  if (matches.length === 0) {
+                    // Fallback: render **bold** markers so any labels the model produced still pop.
+                    const parts = raw.split(/(\*\*[^*]+\*\*)/g);
+                    return (
+                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {parts.map((p, i) => {
+                          const m = p.match(/^\*\*([^*]+)\*\*$/);
+                          return m ? <strong key={i} className="text-foreground font-semibold">{m[1]}</strong> : <span key={i}>{p}</span>;
+                        })}
+                      </p>
+                    );
+                  }
+                  const chunks: { label: string; content: string }[] = [];
+                  for (let i = 0; i < matches.length; i++) {
+                    const m = matches[i];
+                    const start = (m.index ?? 0) + m[0].length;
+                    const end = i + 1 < matches.length ? (matches[i + 1].index ?? raw.length) : raw.length;
+                    chunks.push({ label: m[1], content: raw.slice(start, end).trim() });
+                  }
+                  return (
+                    <div className="space-y-3">
+                      {chunks.map((c, idx) => {
+                        const meta = SECTIONS.find(s => s.label.toLowerCase() === c.label.toLowerCase()) ?? SECTIONS[0];
+                        return (
+                          <div key={idx} className={`rounded-xl border p-4 ${meta.cls}`}>
+                            <p className="text-sm font-heading font-bold text-foreground mb-1.5 flex items-center gap-2">
+                              <span aria-hidden>{meta.icon}</span>
+                              <span>{meta.label}</span>
+                            </p>
+                            <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-6">
