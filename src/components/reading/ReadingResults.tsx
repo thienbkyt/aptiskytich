@@ -131,39 +131,69 @@ const StatusIcon = ({ ok }: { ok: boolean }) =>
   );
 
 const Part1Review = ({ q, answers }: { q: ReadingSentenceQuestion; answers: (number | null)[] }) => {
-  // Render passage with gaps inline
-  const parts = q.passage.split(/(\{\d+\})/g);
+  const usedGapIdx = [...q.passage.matchAll(/\{(\d+)\}/g)]
+    .map((m) => Number(m[1]))
+    .filter((idx) => q.gaps[idx]);
+  const exampleGapIdx = usedGapIdx[0];
+
+  // Split passage into sentences (keep ending punctuation with each sentence)
+  const sentences = q.passage.split(/(?<=[.!?])\s+/).filter((s) => s.length > 0);
+
+  const renderGap = (gi: number, key: string) => {
+    const gap = q.gaps[gi];
+    if (!gap) return null;
+    const correctText = gap.options[gap.correct];
+
+    if (gi === exampleGapIdx) {
+      return (
+        <span
+          key={key}
+          className="px-2 py-0.5 rounded font-medium border bg-muted text-muted-foreground border-border/50"
+        >
+          {correctText}
+          <span className="ml-1 text-[10px] opacity-70">(cho sẵn)</span>
+        </span>
+      );
+    }
+
+    const userIdx = answers[gi];
+    const ok = userIdx === gap.correct;
+    const userText = userIdx != null ? gap.options[userIdx] : "(trống)";
+
+    return (
+      <span key={key} className="inline-flex flex-wrap items-center gap-1 align-baseline">
+        <span
+          className={`px-2 py-0.5 rounded font-medium border ${
+            ok
+              ? "bg-success/10 text-success border-success/30"
+              : "bg-destructive/10 text-destructive border-destructive/30 line-through"
+          }`}
+        >
+          {userText}
+        </span>
+        {!ok && (
+          <span className="px-2 py-0.5 rounded font-medium border bg-success/10 text-success border-success/30">
+            → {correctText}
+          </span>
+        )}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground italic">{q.instruction}</p>
-      <div className="text-sm text-foreground leading-7 whitespace-pre-wrap">
-        {parts.map((seg, i) => {
-          const m = seg.match(/^\{(\d+)\}$/);
-          if (!m) return <span key={i}>{seg}</span>;
-          const gi = parseInt(m[1], 10);
-          const gap = q.gaps[gi];
-          if (!gap) return null;
-          const userIdx = answers[gi];
-          const ok = userIdx === gap.correct;
-          const userText = userIdx != null ? gap.options[userIdx] : "(trống)";
-          const correctText = gap.options[gap.correct];
+      <div className="space-y-3">
+        {sentences.map((sentence, sIdx) => {
+          const parts = sentence.split(/(\{\d+\})/g);
           return (
-            <span key={i} className="inline-flex flex-wrap items-center gap-1 align-baseline">
-              <span
-                className={`px-2 py-0.5 rounded font-medium border ${
-                  ok
-                    ? "bg-success/10 text-success border-success/30"
-                    : "bg-destructive/10 text-destructive border-destructive/30 line-through"
-                }`}
-              >
-                {userText}
-              </span>
-              {!ok && (
-                <span className="px-2 py-0.5 rounded font-medium border bg-success/10 text-success border-success/30">
-                  → {correctText}
-                </span>
-              )}
-            </span>
+            <div key={sIdx} className="text-sm text-foreground leading-7">
+              {parts.map((seg, i) => {
+                const m = seg.match(/^\{(\d+)\}$/);
+                if (!m) return <span key={`${sIdx}-${i}`}>{seg}</span>;
+                return renderGap(parseInt(m[1], 10), `${sIdx}-${i}`);
+              })}
+            </div>
           );
         })}
       </div>
