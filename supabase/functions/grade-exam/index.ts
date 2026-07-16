@@ -783,7 +783,7 @@ ${partsIn.formalText ?? ""}`;
       } else if (pt === "task4") {
         const emailObj = {
           type: "object", additionalProperties: false,
-          properties: { bands: bandsObj, criteriaAnalysis, reason: { type: "string" } },
+          properties: { bands: bandsObj, criteriaAnalysis: criteriaAnalysisSchema, reason: { type: "string" } },
           required: ["bands", "criteriaAnalysis", "reason"],
         };
         toolParams = {
