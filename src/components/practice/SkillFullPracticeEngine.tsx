@@ -883,6 +883,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         <WritingFullResults
           results={writingResults}
           score50={writingScore50}
+          cefr={writingCefr}
           onExit={onExit}
           submissions={writingPartsRef.current}
           parts={reviewParts}
