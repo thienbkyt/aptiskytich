@@ -574,8 +574,11 @@ const GrammarExamEngine = ({
                         triggerCls = "border-amber-400 bg-amber-50 text-amber-700";
 
 
-                      // Split sentence at the first ____ run for gap_fill
-                      const gapMatch = isGapFill
+                      // Inline gap-fill layout: for gap_fill items AND for
+                      // collocation items whose question_text contains a ___ blank.
+                      const itemHasGap = /_{3,}/.test(item.question_text || "");
+                      const useInlineGap = isGapFill || (isCollocation && itemHasGap);
+                      const gapMatch = useInlineGap
                         ? item.question_text.match(/^([\s\S]*?)_{3,}([\s\S]*)$/)
                         : null;
                       const beforeGap = gapMatch ? gapMatch[1].trim() : item.question_text;
@@ -583,7 +586,7 @@ const GrammarExamEngine = ({
 
                       return (
                         <div key={idx} className="flex items-center gap-3">
-                          {isGapFill ? (
+                          {useInlineGap ? (
                             <div className="flex-1 flex items-center gap-2 flex-wrap">
                               <span className="text-sm text-gray-900">{beforeGap}</span>
                               <div className="w-56">
