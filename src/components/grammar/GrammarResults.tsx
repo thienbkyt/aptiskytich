@@ -141,9 +141,6 @@ const GrammarResults = ({
                         </span>
                       </p>
                     )}
-                    <p className="text-muted-foreground mt-2 text-xs">
-                      💡 {q.explanation}
-                    </p>
                   </div>
                 </div>
               </div>
