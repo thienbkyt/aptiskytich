@@ -24,6 +24,7 @@ export interface SkillMeta {
 interface Props {
   pages: ReviewPage[];
   statuses: Record<number, PageStatus>;
+  skillMeta?: Record<string, SkillMeta>;
   currentPage: number;
   currentQ: number;
   onlyWrong: boolean;
@@ -31,6 +32,7 @@ interface Props {
   onJump: (pageIdx: number, qIdx: number) => void;
   onClose?: () => void;
 }
+
 
 const SKILL_LABELS: Record<string, string> = {
   grammar: "Grammar & Vocabulary",
