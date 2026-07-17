@@ -104,15 +104,19 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       (eqrRes.data || []).forEach((r: any) => {
         (eqrByTr[r.test_result_id] ||= []).push(!!r.is_correct);
       });
-      const wsrByTr: Record<string, any> = {};
-      const wsrCefrByTr: Record<string, string | null> = {};
+      // Writing/Speaking skill_results have ONE row per session whose test_result_id
+      // points at the LAST part only. But that row's `parts` JSON contains ALL parts
+      // (task1..task4 / part1..part4). Merge all fetched rows into a single parts map
+      // per skill so every part page can look up its own rawPart by key.
+      const wsrPartsMerged: Record<string, any> = {};
+      let wsrCefrAny: string | null = null;
       (wsrRes.data || []).forEach((r: any) => {
-        wsrByTr[r.test_result_id] = r.parts || {};
-        wsrCefrByTr[r.test_result_id] = typeof r.cefr === "string" && r.cefr ? r.cefr : null;
+        Object.assign(wsrPartsMerged, r.parts || {});
+        if (!wsrCefrAny && typeof r.cefr === "string" && r.cefr) wsrCefrAny = r.cefr;
       });
-      const ssrByTr: Record<string, any> = {};
+      const ssrPartsMerged: Record<string, any> = {};
       (ssrRes.data || []).forEach((r: any) => {
-        ssrByTr[r.test_result_id] = r.parts || {};
+        Object.assign(ssrPartsMerged, r.parts || {});
       });
       const extractPartNum = (s: string | undefined): number | null => {
         if (!s) return null;
@@ -132,14 +136,14 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           items = [];
           const num = extractPartNum(p.part);
           if (num) {
-            const parts =
-              p.skill === "writing" ? wsrByTr[p.testResultId] : ssrByTr[p.testResultId];
+            const parts = p.skill === "writing" ? wsrPartsMerged : ssrPartsMerged;
             const key = p.skill === "writing" ? `task${num}` : `part${num}`;
             const raw = parts?.[key]?.rawPart;
             if (typeof raw === "number" && !Number.isNaN(raw)) {
               aiRaw = Math.min(30, Math.round(raw));
             }
           }
+
         } else if (Array.isArray(snap?.items) && snap.items.length > 0) {
           items = snap.items.map((it: any) => ({
             isCorrect: typeof it?.isCorrect === "boolean" ? it.isCorrect : null,
@@ -191,10 +195,8 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             meta[sk] = { score50: toScaledScore(correct, total) };
           }
         } else if (sk === "writing") {
-          const cefr = idxs
-            .map((i) => wsrCefrByTr[pages[i].testResultId])
-            .find(Boolean);
-          if (cefr) meta[sk] = { band: cefr };
+          if (wsrCefrAny) meta[sk] = { band: wsrCefrAny };
+
         } else if (sk === "speaking") {
           const cefr = idxs.map((i) => map[i]?.band).find(Boolean) || null;
           if (cefr) meta[sk] = { band: cefr };
