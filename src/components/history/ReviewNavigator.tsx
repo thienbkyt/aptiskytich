@@ -177,10 +177,10 @@ const ReviewNavigator = ({
                                 "bg-muted/60 text-foreground border-border hover:bg-muted";
                             } else if (it.isCorrect === true) {
                               cls =
-                                "bg-emerald-100 text-emerald-700 border-emerald-400 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/50";
+                                "bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600 dark:bg-emerald-600 dark:border-emerald-500";
                             } else if (it.isCorrect === false) {
                               cls =
-                                "bg-rose-100 text-red-700 border-red-400 hover:bg-rose-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/50";
+                                "bg-red-500 text-white border-red-600 hover:bg-red-600 dark:bg-red-600 dark:border-red-500";
                             }
                             return (
                               <button
