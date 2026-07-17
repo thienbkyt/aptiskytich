@@ -465,12 +465,14 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           <ReviewNavigator
             pages={pages}
             statuses={statuses}
+            skillMeta={skillMeta}
             currentPage={pageIdx}
             currentQ={qIdx}
             onlyWrong={onlyWrong}
             onToggleOnlyWrong={() => setOnlyWrong((v) => !v)}
             onJump={handleJump}
           />
+
         </div>
       </div>
 
