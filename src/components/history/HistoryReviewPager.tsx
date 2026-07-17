@@ -105,8 +105,10 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         (eqrByTr[r.test_result_id] ||= []).push(!!r.is_correct);
       });
       const wsrByTr: Record<string, any> = {};
+      const wsrCefrByTr: Record<string, string | null> = {};
       (wsrRes.data || []).forEach((r: any) => {
         wsrByTr[r.test_result_id] = r.parts || {};
+        wsrCefrByTr[r.test_result_id] = typeof r.cefr === "string" && r.cefr ? r.cefr : null;
       });
       const ssrByTr: Record<string, any> = {};
       (ssrRes.data || []).forEach((r: any) => {
@@ -149,7 +151,58 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         map[i] = { items, band, isAI, aiRaw };
       });
       setStatuses(map);
+
+      // Per-skill band / converted score for the navigator skill headers.
+      const groups: Record<string, number[]> = {};
+      const order: string[] = [];
+      pages.forEach((p, i) => {
+        if (!groups[p.skill]) {
+          groups[p.skill] = [];
+          order.push(p.skill);
+        }
+        groups[p.skill].push(i);
+      });
+      const meta: Record<string, SkillMeta> = {};
+      order.forEach((sk) => {
+        const idxs = groups[sk];
+        if (sk === "listening" || sk === "reading") {
+          let correct = 0;
+          let total = 0;
+          idxs.forEach((i) => {
+            const st = map[i];
+            if (!st || st.isAI) return;
+            total += st.items.length;
+            correct += st.items.filter((it) => it.isCorrect === true).length;
+          });
+          if (total > 0) {
+            const scale50 = toScaledScore(correct, total);
+            meta[sk] = { band: getSkillBand(scale50, sk as any) };
+          }
+        } else if (sk === "grammar") {
+          let correct = 0;
+          let total = 0;
+          idxs.forEach((i) => {
+            const st = map[i];
+            if (!st || st.isAI) return;
+            total += st.items.length;
+            correct += st.items.filter((it) => it.isCorrect === true).length;
+          });
+          if (total > 0) {
+            meta[sk] = { score50: toScaledScore(correct, total) };
+          }
+        } else if (sk === "writing") {
+          const cefr = idxs
+            .map((i) => wsrCefrByTr[pages[i].testResultId])
+            .find(Boolean);
+          if (cefr) meta[sk] = { band: cefr };
+        } else if (sk === "speaking") {
+          const cefr = idxs.map((i) => map[i]?.band).find(Boolean) || null;
+          if (cefr) meta[sk] = { band: cefr };
+        }
+      });
+      setSkillMeta(meta);
     })();
+
     return () => {
       cancelled = true;
     };
