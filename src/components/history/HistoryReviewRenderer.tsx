@@ -87,7 +87,9 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     let n = 1;
     if (skill === "listening") {
       if (pt === "part1") n = toListeningPart1(rows).length;
-      else if (pt === "part4") n = toListeningPart4(rows).length;
+      else if (pt === "part2") { const c = toListeningPart2(rows); n = c[0]?.persons?.length || 1; }
+      else if (pt === "part3") { const c = toListeningPart3(rows); n = c[0]?.statements?.length || 1; }
+      else if (pt === "part4") { const c = toListeningPart4(rows); n = c.reduce((s, x) => s + (x.questions?.length || 0), 0) || c.length; }
     } else if (skill === "reading") {
       if (pt === "part2") {
         const p2 = toReadingPart2(rows) as any;
