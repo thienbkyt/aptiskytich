@@ -371,7 +371,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           </ReviewErrorBoundary>
         </div>
         {/* Desktop right dock */}
-        <div className="hidden lg:block w-72 shrink-0 sticky top-[49px] self-start h-[calc(100vh-49px)]">
+        <div className="hidden lg:block w-[340px] shrink-0 sticky top-[49px] self-start h-[calc(100vh-49px)]">
           <ReviewNavigator
             pages={pages}
             statuses={statuses}
