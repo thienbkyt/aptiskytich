@@ -121,9 +121,22 @@ const ReviewNavigator = ({
                   const partLabel =
                     sk === "reading" ? readingPartLabel(p.part) : p.part || "—";
                   const showEmpty = items.length === 0;
+                  let scoreSuffix: string | null = null;
+                  if (st?.isAI) {
+                    if (typeof st.aiRaw === "number") scoreSuffix = `(${st.aiRaw}/30)`;
+                  } else if (items.length > 0) {
+                    const correct = items.reduce((n, it) => n + (it.isCorrect === true ? 1 : 0), 0);
+                    scoreSuffix = `(${correct}/${items.length})`;
+                  }
                   return (
                     <div key={pi}>
-                      <div className="text-[11px] text-muted-foreground mb-1">{partLabel}</div>
+                      <div className="text-[11px] text-muted-foreground mb-1">
+                        {partLabel}
+                        {scoreSuffix ? (
+                          <span className="ml-1 text-secondary-foreground/60">{scoreSuffix}</span>
+                        ) : null}
+                      </div>
+
                       <div className="flex flex-wrap gap-1">
                         {showEmpty ? (
                           <button
