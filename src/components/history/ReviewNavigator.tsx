@@ -97,7 +97,7 @@ const ReviewNavigator = ({
           <span className="font-semibold text-emerald-700 dark:text-emerald-400">{totalCorrect} đúng</span>
           <span className="mx-1.5 text-muted-foreground">/</span>
           <span className="font-semibold text-red-700 dark:text-red-400">{totalWrong} sai</span>
-          <span className="ml-1 text-muted-foreground">(tự chấm)</span>
+          <span className="ml-1 text-muted-foreground">(Điểm số)</span>
         </div>
         <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer select-none">
           <input
