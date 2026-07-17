@@ -36,11 +36,10 @@ const refFromSession = (sid: string) => {
   return (hex.slice(0, 10) || sid.slice(-10)).toUpperCase();
 };
 
-const PracticeScoreReport = ({ scores, sessionId }: Props) => {
+const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scores, sessionId }, ref) => {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const sheetRef = useRef<HTMLDivElement>(null);
-  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
