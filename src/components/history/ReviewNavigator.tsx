@@ -145,7 +145,7 @@ const ReviewNavigator = ({
                             className={cn(
                               "min-w-[32px] h-8 px-2 rounded text-xs font-medium border transition-all",
                               "bg-muted/60 text-foreground border-border hover:bg-muted",
-                              currentPage === pi && "ring-2 ring-primary ring-offset-1",
+                              currentPage === pi && "ring-2 ring-[#24085a] ring-offset-1",
                             )}
                           >
                             Mở
@@ -162,10 +162,10 @@ const ReviewNavigator = ({
                                 "bg-muted/60 text-foreground border-border hover:bg-muted";
                             } else if (it.isCorrect === true) {
                               cls =
-                                "bg-green-100 text-green-700 border-green-200 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/60";
+                                "bg-emerald-100 text-emerald-700 border-emerald-400 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/50";
                             } else if (it.isCorrect === false) {
                               cls =
-                                "bg-red-100 text-red-700 border-red-200 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800/60";
+                                "bg-rose-100 text-red-700 border-red-400 hover:bg-rose-200 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/50";
                             }
                             return (
                               <button
@@ -175,7 +175,7 @@ const ReviewNavigator = ({
                                 className={cn(
                                   "w-8 h-8 rounded text-xs font-medium border transition-all",
                                   cls,
-                                  isCurrent && "ring-2 ring-primary ring-offset-1",
+                                  isCurrent && "ring-2 ring-[#24085a] ring-offset-1",
                                   dim && "opacity-30",
                                 )}
                                 title={`${SKILL_LABELS[sk] || sk} · ${partLabel} · Câu ${qi + 1}`}
