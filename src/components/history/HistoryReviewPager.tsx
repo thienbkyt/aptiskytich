@@ -3,12 +3,13 @@ import { ArrowLeft, ArrowRight, ListChecks, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { readingPartLabel } from "@/hooks/useExamSets";
+import { getSkillBand, toScaledScore } from "@/data/questions";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
 
 import ReviewAnswerPanel, { type ReviewQuestion } from "@/components/history/ReviewAnswerPanel";
 import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
-import ReviewNavigator, { type PageStatus } from "@/components/history/ReviewNavigator";
+import ReviewNavigator, { type PageStatus, type SkillMeta } from "@/components/history/ReviewNavigator";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
 
 
