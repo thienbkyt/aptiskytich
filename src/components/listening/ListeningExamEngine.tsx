@@ -508,11 +508,10 @@ const ListeningExamEngine = ({
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
-        {(() => null)()}
         {partType === "part1" && part1Questions && (
           <ListeningPart1Word
             questions={part1Questions}
-            currentIndex={Math.min(Math.max(currentIndex, 0), Math.max(0, totalQuestions - 1))}
+            currentIndex={safeIndex}
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
