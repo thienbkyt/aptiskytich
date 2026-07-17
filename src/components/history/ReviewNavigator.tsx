@@ -45,6 +45,7 @@ const SKILL_LABELS: Record<string, string> = {
 const ReviewNavigator = ({
   pages,
   statuses,
+  skillMeta = {},
   currentPage,
   currentQ,
   onlyWrong,
@@ -52,6 +53,7 @@ const ReviewNavigator = ({
   onJump,
   onClose,
 }: Props) => {
+
   // Group pages by skill, preserving pager order.
   const groups: Record<string, number[]> = {};
   const order: string[] = [];
