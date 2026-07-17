@@ -511,6 +511,16 @@ const GrammarExamEngine = ({
                   ? "Select a word from each drop-down list on the right that is most often used with each word on the left."
                   : "Select a word from each drop-down list on the right that has the same or very similar meaning to each word on the left.";
                 const separator = isDefinition ? "is to" : isCollocation ? "+" : "=";
+                // For collocation groups: some items are sentences with ___ blanks
+                // (render inline like gap-fill), others are single words (keep the
+                // word + "+" + dropdown layout). Decide per-item; hide the example
+                // row when the group is sentence-style.
+                const hasGapRe = /_{3,}/;
+                const collocationGroupIsSentence =
+                  isCollocation &&
+                  currentGroup.indices.some((idx) => hasGapRe.test(questions[idx]?.question_text || ""));
+                const showExampleRow =
+                  gType === "synonym" || (isCollocation && !collocationGroupIsSentence);
                 return (
                 <div className="bg-white rounded-xl p-6 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
@@ -522,8 +532,8 @@ const GrammarExamEngine = ({
                     {instruction}
                   </p>
 
-                  {/* Example row (muted, non-interactive) — only for synonym and collocation */}
-                  {(gType === "synonym" || gType === "collocation") && (
+                  {/* Example row (muted, non-interactive) — only for synonym and word-pair collocation */}
+                  {showExampleRow && (
                     <>
                       <div className="flex items-center gap-3 mb-2 opacity-60">
                         <div className="w-24 text-xs text-gray-500">Example</div>
