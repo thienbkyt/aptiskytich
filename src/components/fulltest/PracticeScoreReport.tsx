@@ -152,18 +152,34 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="mx-auto max-w-3xl bg-white text-neutral-900 shadow-xl rounded-md"
+        className="relative mx-auto max-w-3xl bg-white text-neutral-900 shadow-xl rounded-md overflow-hidden"
         style={{ padding: "40px 44px", fontFamily: "Inter, system-ui, sans-serif" }}
       >
+        {/* Watermark */}
+        <img
+          src={logoAsset.url}
+          alt=""
+          aria-hidden
+          className="pointer-events-none select-none absolute left-1/2 top-1/2"
+          style={{
+            width: 460,
+            height: 460,
+            transform: "translate(-50%, -50%)",
+            opacity: 0.06,
+            zIndex: 0,
+          }}
+        />
+
+        {/* Content wrapper above watermark */}
+        <div className="relative" style={{ zIndex: 1 }}>
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div
-              className="w-12 h-12 rounded-md flex items-center justify-center font-bold text-white text-2xl"
-              style={{ backgroundColor: BRAND_RED }}
-            >
-              A
-            </div>
+            <img
+              src={logoAsset.url}
+              alt="Aptis Kỳ Tích"
+              className="w-14 h-14 object-contain"
+            />
             <div>
               <div className="font-bold tracking-wide" style={{ color: BRAND_BROWN }}>APTIS KỲ TÍCH</div>
               <div className="text-xs text-neutral-500">aptiskytich.vn</div>
