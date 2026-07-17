@@ -457,9 +457,13 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           )}
         </div>
 
-        {/* Aptis score table */}
+        {/* Aptis practice score report */}
         <div className="max-w-3xl mx-auto">
-          <FullTestScoreTable scores={scores} />
+          <PracticeScoreReport
+            ref={reportRef}
+            scores={scores}
+            sessionId={sessionIdRef.current}
+          />
         </div>
 
 
@@ -470,6 +474,13 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             className="gap-2"
           >
             <Eye className="w-4 h-4" /> Xem lại từng câu
+          </Button>
+          <Button
+            onClick={() => reportRef.current?.download()}
+            variant="outline"
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" /> Tải phiếu điểm (PNG)
           </Button>
           <Button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             Quay lại danh sách đề
