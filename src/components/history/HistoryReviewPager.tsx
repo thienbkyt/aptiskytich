@@ -76,11 +76,19 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
     let cancelled = false;
     (async () => {
       const trIds = Array.from(new Set(pages.map((p) => p.testResultId)));
-      const [snapRes, eqrRes] = await Promise.all([
+      const [snapRes, eqrRes, wsrRes, ssrRes] = await Promise.all([
         supabase.from("test_results").select("id,review_snapshot").in("id", trIds),
         supabase
           .from("exam_question_results")
           .select("test_result_id,is_correct")
+          .in("test_result_id", trIds),
+        supabase
+          .from("writing_skill_results")
+          .select("test_result_id,parts")
+          .in("test_result_id", trIds),
+        supabase
+          .from("speaking_skill_results")
+          .select("test_result_id,parts")
           .in("test_result_id", trIds),
       ]);
       if (cancelled) return;
@@ -92,6 +100,19 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       (eqrRes.data || []).forEach((r: any) => {
         (eqrByTr[r.test_result_id] ||= []).push(!!r.is_correct);
       });
+      const wsrByTr: Record<string, any> = {};
+      (wsrRes.data || []).forEach((r: any) => {
+        wsrByTr[r.test_result_id] = r.parts || {};
+      });
+      const ssrByTr: Record<string, any> = {};
+      (ssrRes.data || []).forEach((r: any) => {
+        ssrByTr[r.test_result_id] = r.parts || {};
+      });
+      const extractPartNum = (s: string | undefined): number | null => {
+        if (!s) return null;
+        const m = s.match(/(\d+)/);
+        return m ? Number(m[1]) : null;
+      };
       const map: Record<number, PageStatus> = {};
       pages.forEach((p, i) => {
         const isAI = p.skill === "speaking" || p.skill === "writing";
@@ -99,9 +120,20 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         const band =
           typeof snap?.band === "string" && snap.band ? (snap.band as string) : null;
         let items: PageStatus["items"] = [];
+        let aiRaw: number | null = null;
         if (isAI) {
           // AI-graded parts: navigator shows a single neutral "open" entry per page.
           items = [];
+          const num = extractPartNum(p.part);
+          if (num) {
+            const parts =
+              p.skill === "writing" ? wsrByTr[p.testResultId] : ssrByTr[p.testResultId];
+            const key = p.skill === "writing" ? `task${num}` : `part${num}`;
+            const raw = parts?.[key]?.rawPart;
+            if (typeof raw === "number" && !Number.isNaN(raw)) {
+              aiRaw = Math.min(30, Math.round(raw));
+            }
+          }
         } else if (Array.isArray(snap?.items) && snap.items.length > 0) {
           items = snap.items.map((it: any) => ({
             isCorrect: typeof it?.isCorrect === "boolean" ? it.isCorrect : null,
@@ -110,7 +142,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           const rows = eqrByTr[p.testResultId] || [];
           items = rows.map((v) => ({ isCorrect: v }));
         }
-        map[i] = { items, band, isAI };
+        map[i] = { items, band, isAI, aiRaw };
       });
       setStatuses(map);
     })();
@@ -118,6 +150,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       cancelled = true;
     };
   }, [pages]);
+
 
   useEffect(() => {
     if (!current) return;
