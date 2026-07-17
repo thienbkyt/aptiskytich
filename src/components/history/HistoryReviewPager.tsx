@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, ListChecks, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { readingPartLabel } from "@/hooks/useExamSets";
@@ -8,6 +8,7 @@ import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
 
 import ReviewAnswerPanel, { type ReviewQuestion } from "@/components/history/ReviewAnswerPanel";
 import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
+import ReviewNavigator, { type PageStatus } from "@/components/history/ReviewNavigator";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
 
 
@@ -54,6 +55,9 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const [dataByPage, setDataByPage] = useState<Record<string, PageData>>({});
   const [loadingPage, setLoadingPage] = useState(false);
   const [fadeKey, setFadeKey] = useState(0);
+  const [statuses, setStatuses] = useState<Record<number, PageStatus>>({});
+  const [onlyWrong, setOnlyWrong] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const current = pages[pageIdx];
 
@@ -64,6 +68,56 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       document.body.classList.remove("history-review-mode");
     };
   }, []);
+
+  // Bulk-fetch page statuses (correctness per question) — snapshot-first, then
+  // fall back to exam_question_results.is_correct. Only status data, no heavy content.
+  useEffect(() => {
+    if (!pages.length) return;
+    let cancelled = false;
+    (async () => {
+      const trIds = Array.from(new Set(pages.map((p) => p.testResultId)));
+      const [snapRes, eqrRes] = await Promise.all([
+        supabase.from("test_results").select("id,review_snapshot").in("id", trIds),
+        supabase
+          .from("exam_question_results")
+          .select("test_result_id,is_correct")
+          .in("test_result_id", trIds),
+      ]);
+      if (cancelled) return;
+      const snapByTr: Record<string, any> = {};
+      (snapRes.data || []).forEach((r: any) => {
+        snapByTr[r.id] = r.review_snapshot;
+      });
+      const eqrByTr: Record<string, boolean[]> = {};
+      (eqrRes.data || []).forEach((r: any) => {
+        (eqrByTr[r.test_result_id] ||= []).push(!!r.is_correct);
+      });
+      const map: Record<number, PageStatus> = {};
+      pages.forEach((p, i) => {
+        const isAI = p.skill === "speaking" || p.skill === "writing";
+        const snap = snapByTr[p.testResultId];
+        const band =
+          typeof snap?.band === "string" && snap.band ? (snap.band as string) : null;
+        let items: PageStatus["items"] = [];
+        if (isAI) {
+          // AI-graded parts: navigator shows a single neutral "open" entry per page.
+          items = [];
+        } else if (Array.isArray(snap?.items) && snap.items.length > 0) {
+          items = snap.items.map((it: any) => ({
+            isCorrect: typeof it?.isCorrect === "boolean" ? it.isCorrect : null,
+          }));
+        } else {
+          const rows = eqrByTr[p.testResultId] || [];
+          items = rows.map((v) => ({ isCorrect: v }));
+        }
+        map[i] = { items, band, isAI };
+      });
+      setStatuses(map);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pages]);
 
   useEffect(() => {
     if (!current) return;
@@ -119,7 +173,39 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const atFirst = isFirst && qIdx === 0;
   const atLast = isLast && qIdx >= partPageCount - 1;
 
+  // Ordered list of wrong-answer positions across all pages.
+  const wrongList = useMemo(() => {
+    const out: Array<{ pageIdx: number; qIdx: number }> = [];
+    Object.entries(statuses).forEach(([pi, st]) => {
+      if (!st || st.isAI) return;
+      st.items.forEach((it, qi) => {
+        if (it.isCorrect === false) out.push({ pageIdx: Number(pi), qIdx: qi });
+      });
+    });
+    out.sort((a, b) => a.pageIdx - b.pageIdx || a.qIdx - b.qIdx);
+    return out;
+  }, [statuses]);
+
+  const noWrongAvailable = onlyWrong && wrongList.length === 0;
+
+  const handleJump = (pi: number, qi: number) => {
+    setPageIdx(pi);
+    setQIdx(qi);
+    setDrawerOpen(false);
+  };
+
   const handleNext = () => {
+    if (onlyWrong && wrongList.length > 0) {
+      const nxt = wrongList.find(
+        (w) => w.pageIdx > pageIdx || (w.pageIdx === pageIdx && w.qIdx > qIdx),
+      );
+      if (nxt) {
+        handleJump(nxt.pageIdx, nxt.qIdx);
+      } else {
+        onExit();
+      }
+      return;
+    }
     if (qIdx < partPageCount - 1) {
       setQIdx((i) => i + 1);
     } else if (pageIdx < pages.length - 1) {
@@ -130,6 +216,14 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
     }
   };
   const handlePrev = () => {
+    if (onlyWrong && wrongList.length > 0) {
+      const rev = [...wrongList].reverse();
+      const prv = rev.find(
+        (w) => w.pageIdx < pageIdx || (w.pageIdx === pageIdx && w.qIdx < qIdx),
+      );
+      if (prv) handleJump(prv.pageIdx, prv.qIdx);
+      return;
+    }
     if (qIdx > 0) {
       setQIdx((i) => i - 1);
     } else if (pageIdx > 0) {
@@ -194,7 +288,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
               size="sm"
               variant="outline"
               onClick={handlePrev}
-              disabled={atFirst}
+              disabled={atFirst || noWrongAvailable}
               className="gap-1"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -203,6 +297,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             <Button
               size="sm"
               onClick={handleNext}
+              disabled={noWrongAvailable}
               className="gap-1 bg-[#24085a] text-white hover:bg-[#24085a]/90"
             >
               <span className="hidden sm:inline">{atLast ? "Hoàn tất" : "Sau"}</span>
@@ -269,12 +364,54 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   return (
     <div className="min-h-screen bg-background">
       {pagerBar}
-      <div key={fadeKey} className="animate-in fade-in duration-200">
-        <ReviewErrorBoundary label="Phần này của bài xem lại gặp lỗi hiển thị">
-          {body}
-        </ReviewErrorBoundary>
+      <div className="lg:flex lg:items-stretch">
+        <div key={fadeKey} className="flex-1 min-w-0 animate-in fade-in duration-200">
+          <ReviewErrorBoundary label="Phần này của bài xem lại gặp lỗi hiển thị">
+            {body}
+          </ReviewErrorBoundary>
+        </div>
+        {/* Desktop right dock */}
+        <div className="hidden lg:block w-72 shrink-0 sticky top-[49px] self-start h-[calc(100vh-49px)]">
+          <ReviewNavigator
+            pages={pages}
+            statuses={statuses}
+            currentPage={pageIdx}
+            currentQ={qIdx}
+            onlyWrong={onlyWrong}
+            onToggleOnlyWrong={() => setOnlyWrong((v) => !v)}
+            onJump={handleJump}
+          />
+        </div>
       </div>
 
+      {/* Mobile FAB + drawer */}
+      <button
+        type="button"
+        onClick={() => setDrawerOpen(true)}
+        className="lg:hidden fixed bottom-4 right-4 z-40 flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-[#24085a] text-white shadow-lg text-xs font-semibold"
+      >
+        <ListChecks className="w-4 h-4" /> Mục lục
+      </button>
+      {drawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div
+            className="flex-1 bg-black/50"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <div className="w-80 max-w-[85vw] h-full bg-card shadow-xl">
+            <ReviewNavigator
+              pages={pages}
+              statuses={statuses}
+              currentPage={pageIdx}
+              currentQ={qIdx}
+              onlyWrong={onlyWrong}
+              onToggleOnlyWrong={() => setOnlyWrong((v) => !v)}
+              onJump={handleJump}
+              onClose={() => setDrawerOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
