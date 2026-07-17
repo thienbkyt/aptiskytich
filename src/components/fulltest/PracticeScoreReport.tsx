@@ -112,9 +112,25 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
     { label: "Overall\nCEFR grade", band: overallBand, color: BRAND_NAVY },
   ];
 
+  // Load handwriting font once
+  useEffect(() => {
+    const id = "gf-great-vibes";
+    if (!document.getElementById(id)) {
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap";
+      document.head.appendChild(link);
+    }
+  }, []);
+
   const handleDownload = async () => {
     if (!sheetRef.current) return;
     try {
+      // ensure fonts are ready so signature renders correctly in html2canvas
+      if ((document as any).fonts?.ready) {
+        try { await (document as any).fonts.ready; } catch {}
+      }
       const canvas = await html2canvas(sheetRef.current, {
         backgroundColor: "#ffffff",
         scale: 2,
