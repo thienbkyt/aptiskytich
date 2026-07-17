@@ -309,20 +309,10 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
           Phiếu điểm mô phỏng cho mục đích luyện tập, không phải chứng chỉ chính thức của British Council.
         </p>
       </div>
-
-      {/* Download button */}
-      <div className="text-center mt-6">
-        <Button
-          onClick={handleDownload}
-          disabled={downloading}
-          variant="outline"
-          className="gap-2"
-        >
-          <Download className="w-4 h-4" /> {downloading ? "Đang tạo ảnh..." : "Tải phiếu điểm (PNG)"}
-        </Button>
-      </div>
     </div>
   );
-};
+});
+
+PracticeScoreReport.displayName = "PracticeScoreReport";
 
 export default PracticeScoreReport;
