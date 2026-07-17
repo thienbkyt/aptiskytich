@@ -352,4 +352,6 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
   );
 });
 
+PracticeScoreReport.displayName = "PracticeScoreReport";
+
 export default PracticeScoreReport;
