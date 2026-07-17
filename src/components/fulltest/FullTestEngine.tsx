@@ -126,7 +126,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   useExitWarning(phase !== "loading" && phase !== "completed" && phase !== "finalizing-writing");
   const { gradeExam } = useExamGrading();
 
-
+  // Disable dictionary lookup & sentence translation while in Full Test
+  useEffect(() => {
+    document.body.classList.add("full-test-active");
+    return () => document.body.classList.remove("full-test-active");
+  }, []);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
