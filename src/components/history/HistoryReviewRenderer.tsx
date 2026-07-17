@@ -105,54 +105,42 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     if (!testResultId) { setWritingGrading(null); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("writing_question_gradings")
+      const mm = (part || "").match(/(\d)/); const num = mm ? parseInt(mm[1], 10) : 1;
+      const taskKey = `task${num}`;
+      const { data: wqg } = await supabase.from("writing_question_gradings")
         .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback")
-        .eq("user_id", userId)
-        .eq("test_result_id", testResultId);
-      const rows = (data || []) as any[];
+        .eq("user_id", userId).eq("test_result_id", testResultId);
+      const gr = (wqg || []) as any[];
       const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
-      const match =
-        rows.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) ||
-        rows[0]; // single-part attempts may not echo part label
+      const match = gr.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) || gr[0];
+      const { data: trRow } = await supabase.from("test_results").select("full_test_session_id").eq("id", testResultId).maybeSingle();
+      const sessionId = (trRow as any)?.full_test_session_id ?? null;
+      let q = supabase.from("writing_skill_results").select("parts,created_at").eq("user_id", userId);
+      q = sessionId ? q.eq("full_test_session_id", sessionId) : q.eq("test_result_id", testResultId);
+      const { data: wsr } = await q.order("created_at", { ascending: false }).limit(1);
+      const wsrPart = (wsr as any[])?.[0]?.parts?.[taskKey] ?? null;
       if (cancelled) return;
+      if (!match && !wsrPart) { setWritingGrading(null); return; }
+      const improvedVersion = wsrPart?.improvedVersion || undefined;
+      const upgradeTips = wsrPart?.upgradeTips || undefined;
       if (match) {
         setWritingGrading({
-          partType: part,
-          partScore: match.part_score || 0,
-          maxPoints: match.max_points || 0,
-          addressPercent: 0,
-          bonusPercent: 0,
-          wordPenaltyPercent: 0,
-          coherencePenaltyPercent: 0,
-          openingClosingPenalty: 0,
-          grammarErrors: (match.grammar_errors as any) || [],
-          spellingErrors: (match.spelling_errors as any) || [],
-          feedback: match.feedback || "",
-        });
-        return;
+          partType: part, partScore: match.part_score || 0, maxPoints: match.max_points || 0,
+          addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+          grammarErrors: (match.grammar_errors as any) || (wsrPart?.grammarErrors as any) || [],
+          spellingErrors: (match.spelling_errors as any) || (wsrPart?.spellingErrors as any) || [],
+          feedback: match.feedback || wsrPart?.feedback || "",
+          improvedVersion, upgradeTips,
+        } as any);
+      } else {
+        const raw = Number(wsrPart.rawPart);
+        setWritingGrading({
+          partType: part, partScore: Number.isFinite(raw) ? Math.min(30, Math.round(raw)) : 0, maxPoints: 30,
+          addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+          grammarErrors: (wsrPart.grammarErrors as any) || [], spellingErrors: (wsrPart.spellingErrors as any) || [],
+          feedback: wsrPart.feedback || "", improvedVersion, upgradeTips,
+        } as any);
       }
-      // Fallback: read AI from the attempt's review_snapshot.
-      const { data: tr } = await supabase
-        .from("test_results")
-        .select("review_snapshot")
-        .eq("id", testResultId)
-        .maybeSingle();
-      const ai = (tr as any)?.review_snapshot?.items?.[0]?.ai;
-      if (cancelled) return;
-      if (!ai) { setWritingGrading(null); return; }
-      setWritingGrading({
-        partType: part,
-        partScore: ai.partScore || 0,
-        maxPoints: ai.maxPoints || 0,
-        addressPercent: 0,
-        bonusPercent: 0,
-        wordPenaltyPercent: 0,
-        coherencePenaltyPercent: 0,
-        openingClosingPenalty: 0,
-        grammarErrors: ai.grammarErrors || [],
-        spellingErrors: ai.spellingErrors || [],
-        feedback: ai.feedback || "",
-      });
     })();
     return () => { cancelled = true; };
   }, [skill, userId, testResultId, part]);
