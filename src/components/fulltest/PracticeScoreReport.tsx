@@ -259,15 +259,15 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
             <div>
               <div className="font-semibold mb-2" style={{ color: BRAND_NAVY }}>CEFR skill profile</div>
               <div className="text-xs text-neutral-600 mb-1">CEFR grade</div>
-              <div className="flex">
+              <div className="flex pt-5">
                 {/* Y-axis */}
-                <div className="flex flex-col justify-between text-xs text-neutral-700 pr-2" style={{ height: 180 }}>
+                <div className="flex flex-col justify-between text-xs text-neutral-700 pr-2" style={{ height: 200 }}>
                   {Y_LEVELS.map((lvl) => (
                     <div key={lvl} className="leading-none">{lvl}</div>
                   ))}
                 </div>
                 {/* Bars */}
-                <div className="flex-1 relative" style={{ height: 180 }}>
+                <div className="flex-1 relative" style={{ height: 200 }}>
                   {/* gridlines */}
                   <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                     {Y_LEVELS.map((lvl) => (
@@ -281,16 +281,19 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                         <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
                           {b.band ? (
                             <>
-                              <div className="text-[10px] font-semibold mb-0.5" style={{ color: b.color }}>
+                              <div
+                                className="text-[10px] font-semibold"
+                                style={{ color: b.color, marginBottom: 6 }}
+                              >
                                 {showBand(b.band)}
                               </div>
                               <div
                                 className="w-full rounded-t"
-                                style={{ height: `${h}%`, backgroundColor: b.color, minHeight: 4 }}
+                                style={{ height: `${h * 0.88}%`, backgroundColor: b.color, minHeight: 4 }}
                               />
                             </>
                           ) : (
-                            <div className="text-[10px] text-neutral-400 mb-0.5">—</div>
+                            <div className="text-[10px] text-neutral-400" style={{ marginBottom: 6 }}>—</div>
                           )}
                         </div>
                       );
@@ -311,12 +314,18 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
         </div>
 
         {/* Footer */}
-        <div className="grid grid-cols-3 gap-6 items-end mt-10">
+        <div className="grid grid-cols-2 gap-6 items-end mt-10">
           <div>
-            <div className="h-8 border-b border-neutral-400" />
+            <div
+              className="text-3xl leading-none pb-1"
+              style={{ fontFamily: '"Great Vibes", "Dancing Script", cursive', color: BRAND_BROWN }}
+            >
+              Aptis Kỳ Tích
+            </div>
+            <div className="border-b border-neutral-400" />
             <div className="text-xs text-neutral-500 mt-1">Signed</div>
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-end">
             <div
               className="rounded-full flex flex-col items-center justify-center text-[10px] font-bold text-center leading-tight"
               style={{
@@ -332,20 +341,15 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
               <div className="mt-1 text-[9px]">{testDate}</div>
             </div>
           </div>
-          <div>
-            <div className="h-8 border-b border-neutral-400" />
-            <div className="text-xs text-neutral-500 mt-1">Centre stamp and date</div>
-          </div>
         </div>
 
         <p className="text-[10px] text-neutral-400 text-center mt-6 italic">
           Phiếu điểm mô phỏng cho mục đích luyện tập, không phải chứng chỉ chính thức của British Council.
         </p>
+        </div>
       </div>
     </div>
   );
 });
-
-PracticeScoreReport.displayName = "PracticeScoreReport";
 
 export default PracticeScoreReport;
