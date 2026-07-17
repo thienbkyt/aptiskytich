@@ -244,6 +244,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
   /* ─── Double-click: let browser select word, then lookup ─── */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      if (document.body.classList.contains("full-test-active")) return;
       if (popupRef.current?.contains(e.target as Node)) return;
       const target = e.target as HTMLElement;
       if (isInteractive(target)) return;
@@ -318,6 +319,10 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     const onMouseUp = (e: MouseEvent) => {
+      if (document.body.classList.contains("full-test-active")) {
+        setTranslateBtn(null);
+        return;
+      }
       const target = e.target as HTMLElement;
       if (!target) return;
       if (target.closest(".sentence-translate-btn")) return;
