@@ -254,33 +254,24 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
   // ─── LISTENING ───────────────────────────────────────────
   if (skill === "listening") {
     const pt = partType as ListeningPartType;
-    const props: any = {
-      partType: pt, testTitle, timeLimit: 2100,
-      onExit, reviewMode: true,
-      pageBase, pageTotal, initialQuestion: initialSection,
-      examSetId,
-    };
+    const props: any = { partType: pt, testTitle, timeLimit: 2100, onExit, reviewMode: true, pageBase, pageTotal, examSetId };
     if (pt === "part1") {
-      const qs = toListeningPart1(rows);
-      props.part1Questions = qs;
-      // rows[i].id ↔ position i; map answers in row order
-      props.initialAnswers = rows.map((r) => {
-        const raw = ansMap[r.id];
-        const n = raw != null ? parseInt(raw, 10) : NaN;
-        return Number.isFinite(n) ? n : null;
-      });
+      props.part1Questions = toListeningPart1(rows);
+      props.initialAnswers = rows.map((r) => { const raw = ansMap[r.id]; const nn = raw != null ? parseInt(raw, 10) : NaN; return Number.isFinite(nn) ? nn : null; });
+      props.initialQuestion = initialSection ?? 0;
     } else {
-      // Parts 2/3/4: one row per clip, each user_answer = JSON {partType, answer}
       const fnMap: any = { part2: toListeningPart2, part3: toListeningPart3, part4: toListeningPart4 };
       const propKey = pt === "part2" ? "part2Questions" : pt === "part3" ? "part3Questions" : "part4Questions";
-      props[propKey] = fnMap[pt](rows);
-      props.initialAnswers = qResults.map((r) => {
-        if (!r.user_answer) return null;
-        try {
-          const p = JSON.parse(r.user_answer);
-          return p?.answer ?? null;
-        } catch { return null; }
-      });
+      const clips = fnMap[pt](rows);
+      props[propKey] = clips;
+      props.initialAnswers = qResults.map((r) => { if (!r.user_answer) return null; try { const p = JSON.parse(r.user_answer); return p?.answer ?? null; } catch { return null; } });
+      const sub = initialSection ?? 0;
+      let clipIdx = 0;
+      if (pt === "part4") {
+        let acc = 0; clipIdx = Math.max(0, clips.length - 1);
+        for (let ci = 0; ci < clips.length; ci++) { const size = clips[ci]?.questions?.length ?? 1; if (sub < acc + size) { clipIdx = ci; break; } acc += size; }
+      }
+      props.initialQuestion = clipIdx;
     }
     return <ListeningExamEngine {...props} />;
   }
