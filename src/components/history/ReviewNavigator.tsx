@@ -14,6 +14,12 @@ export interface PageStatus {
   aiRaw?: number | null;
 }
 
+export interface SkillMeta {
+  band?: string | null;
+  score50?: number | null;
+}
+
+
 
 interface Props {
   pages: ReviewPage[];
