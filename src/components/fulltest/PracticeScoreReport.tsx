@@ -113,7 +113,6 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
 
   const handleDownload = async () => {
     if (!sheetRef.current) return;
-    setDownloading(true);
     try {
       const canvas = await html2canvas(sheetRef.current, {
         backgroundColor: "#ffffff",
@@ -126,10 +125,10 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
       link.click();
     } catch (e) {
       console.warn("[PracticeScoreReport] download failed", e);
-    } finally {
-      setDownloading(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({ download: handleDownload }), [refNumber]);
 
   return (
     <div className="w-full">
