@@ -574,7 +574,7 @@ const ListeningExamEngine = ({
         {partType === "part4" && part4Questions && (
           <ListeningPart4Monologue
             questions={part4Questions}
-            currentIndex={currentIndex}
+            currentIndex={safeIndex}
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
