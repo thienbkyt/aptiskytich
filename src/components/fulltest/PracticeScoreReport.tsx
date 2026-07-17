@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Download } from "lucide-react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getSkillBand, toScaledScore } from "@/data/questions";
@@ -12,6 +10,10 @@ type Scores = Record<SkillKey, { correct: number; total: number }>;
 interface Props {
   scores: Scores;
   sessionId: string;
+}
+
+export interface PracticeScoreReportHandle {
+  download: () => Promise<void>;
 }
 
 const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
