@@ -94,7 +94,7 @@ const ReviewNavigator = ({
             onChange={onToggleOnlyWrong}
             className="rounded border-border"
           />
-          Chỉ câu sai
+          Chỉ hiện câu sai
         </label>
       </div>
 
