@@ -494,6 +494,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             <ReviewNavigator
               pages={pages}
               statuses={statuses}
+              skillMeta={skillMeta}
               currentPage={pageIdx}
               currentQ={qIdx}
               onlyWrong={onlyWrong}
@@ -501,6 +502,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
               onJump={handleJump}
               onClose={() => setDrawerOpen(false)}
             />
+
           </div>
         </div>
       )}
