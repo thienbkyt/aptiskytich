@@ -87,7 +87,9 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     let n = 1;
     if (skill === "listening") {
       if (pt === "part1") n = toListeningPart1(rows).length;
-      else if (pt === "part4") n = toListeningPart4(rows).length;
+      else if (pt === "part2") { const c = toListeningPart2(rows); n = c[0]?.persons?.length || 1; }
+      else if (pt === "part3") { const c = toListeningPart3(rows); n = c[0]?.statements?.length || 1; }
+      else if (pt === "part4") { const c = toListeningPart4(rows); n = c.reduce((s, x) => s + (x.questions?.length || 0), 0) || c.length; }
     } else if (skill === "reading") {
       if (pt === "part2") {
         const p2 = toReadingPart2(rows) as any;
@@ -103,54 +105,42 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     if (!testResultId) { setWritingGrading(null); return; }
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("writing_question_gradings")
+      const mm = (part || "").match(/(\d)/); const num = mm ? parseInt(mm[1], 10) : 1;
+      const taskKey = `task${num}`;
+      const { data: wqg } = await supabase.from("writing_question_gradings")
         .select("part,max_points,part_score,grammar_errors,spelling_errors,feedback")
-        .eq("user_id", userId)
-        .eq("test_result_id", testResultId);
-      const rows = (data || []) as any[];
+        .eq("user_id", userId).eq("test_result_id", testResultId);
+      const gr = (wqg || []) as any[];
       const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
-      const match =
-        rows.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) ||
-        rows[0]; // single-part attempts may not echo part label
+      const match = gr.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) || gr[0];
+      const { data: trRow } = await supabase.from("test_results").select("full_test_session_id").eq("id", testResultId).maybeSingle();
+      const sessionId = (trRow as any)?.full_test_session_id ?? null;
+      let q = supabase.from("writing_skill_results").select("parts,created_at").eq("user_id", userId);
+      q = sessionId ? q.eq("full_test_session_id", sessionId) : q.eq("test_result_id", testResultId);
+      const { data: wsr } = await q.order("created_at", { ascending: false }).limit(1);
+      const wsrPart = (wsr as any[])?.[0]?.parts?.[taskKey] ?? null;
       if (cancelled) return;
+      if (!match && !wsrPart) { setWritingGrading(null); return; }
+      const improvedVersion = wsrPart?.improvedVersion || undefined;
+      const upgradeTips = wsrPart?.upgradeTips || undefined;
       if (match) {
         setWritingGrading({
-          partType: part,
-          partScore: match.part_score || 0,
-          maxPoints: match.max_points || 0,
-          addressPercent: 0,
-          bonusPercent: 0,
-          wordPenaltyPercent: 0,
-          coherencePenaltyPercent: 0,
-          openingClosingPenalty: 0,
-          grammarErrors: (match.grammar_errors as any) || [],
-          spellingErrors: (match.spelling_errors as any) || [],
-          feedback: match.feedback || "",
-        });
-        return;
+          partType: part, partScore: match.part_score || 0, maxPoints: match.max_points || 0,
+          addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+          grammarErrors: (match.grammar_errors as any) || (wsrPart?.grammarErrors as any) || [],
+          spellingErrors: (match.spelling_errors as any) || (wsrPart?.spellingErrors as any) || [],
+          feedback: match.feedback || wsrPart?.feedback || "",
+          improvedVersion, upgradeTips,
+        } as any);
+      } else {
+        const raw = Number(wsrPart.rawPart);
+        setWritingGrading({
+          partType: part, partScore: Number.isFinite(raw) ? Math.min(30, Math.round(raw)) : 0, maxPoints: 30,
+          addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+          grammarErrors: (wsrPart.grammarErrors as any) || [], spellingErrors: (wsrPart.spellingErrors as any) || [],
+          feedback: wsrPart.feedback || "", improvedVersion, upgradeTips,
+        } as any);
       }
-      // Fallback: read AI from the attempt's review_snapshot.
-      const { data: tr } = await supabase
-        .from("test_results")
-        .select("review_snapshot")
-        .eq("id", testResultId)
-        .maybeSingle();
-      const ai = (tr as any)?.review_snapshot?.items?.[0]?.ai;
-      if (cancelled) return;
-      if (!ai) { setWritingGrading(null); return; }
-      setWritingGrading({
-        partType: part,
-        partScore: ai.partScore || 0,
-        maxPoints: ai.maxPoints || 0,
-        addressPercent: 0,
-        bonusPercent: 0,
-        wordPenaltyPercent: 0,
-        coherencePenaltyPercent: 0,
-        openingClosingPenalty: 0,
-        grammarErrors: ai.grammarErrors || [],
-        spellingErrors: ai.spellingErrors || [],
-        feedback: ai.feedback || "",
-      });
     })();
     return () => { cancelled = true; };
   }, [skill, userId, testResultId, part]);
@@ -252,33 +242,24 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
   // ─── LISTENING ───────────────────────────────────────────
   if (skill === "listening") {
     const pt = partType as ListeningPartType;
-    const props: any = {
-      partType: pt, testTitle, timeLimit: 2100,
-      onExit, reviewMode: true,
-      pageBase, pageTotal, initialQuestion: initialSection,
-      examSetId,
-    };
+    const props: any = { partType: pt, testTitle, timeLimit: 2100, onExit, reviewMode: true, pageBase, pageTotal, examSetId };
     if (pt === "part1") {
-      const qs = toListeningPart1(rows);
-      props.part1Questions = qs;
-      // rows[i].id ↔ position i; map answers in row order
-      props.initialAnswers = rows.map((r) => {
-        const raw = ansMap[r.id];
-        const n = raw != null ? parseInt(raw, 10) : NaN;
-        return Number.isFinite(n) ? n : null;
-      });
+      props.part1Questions = toListeningPart1(rows);
+      props.initialAnswers = rows.map((r) => { const raw = ansMap[r.id]; const nn = raw != null ? parseInt(raw, 10) : NaN; return Number.isFinite(nn) ? nn : null; });
+      props.initialQuestion = initialSection ?? 0;
     } else {
-      // Parts 2/3/4: one row per clip, each user_answer = JSON {partType, answer}
       const fnMap: any = { part2: toListeningPart2, part3: toListeningPart3, part4: toListeningPart4 };
       const propKey = pt === "part2" ? "part2Questions" : pt === "part3" ? "part3Questions" : "part4Questions";
-      props[propKey] = fnMap[pt](rows);
-      props.initialAnswers = qResults.map((r) => {
-        if (!r.user_answer) return null;
-        try {
-          const p = JSON.parse(r.user_answer);
-          return p?.answer ?? null;
-        } catch { return null; }
-      });
+      const clips = fnMap[pt](rows);
+      props[propKey] = clips;
+      props.initialAnswers = qResults.map((r) => { if (!r.user_answer) return null; try { const p = JSON.parse(r.user_answer); return p?.answer ?? null; } catch { return null; } });
+      const sub = initialSection ?? 0;
+      let clipIdx = 0;
+      if (pt === "part4") {
+        let acc = 0; clipIdx = Math.max(0, clips.length - 1);
+        for (let ci = 0; ci < clips.length; ci++) { const size = clips[ci]?.questions?.length ?? 1; if (sub < acc + size) { clipIdx = ci; break; } acc += size; }
+      }
+      props.initialQuestion = clipIdx;
     }
     return <ListeningExamEngine {...props} />;
   }

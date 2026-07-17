@@ -485,6 +485,8 @@ const ListeningExamEngine = ({
     );
   }
 
+  const safeIndex = Math.min(Math.max(currentIndex, 0), Math.max(0, totalQuestions - 1));
+
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
@@ -511,7 +513,7 @@ const ListeningExamEngine = ({
         {partType === "part1" && part1Questions && (
           <ListeningPart1Word
             questions={part1Questions}
-            currentIndex={currentIndex}
+            currentIndex={safeIndex}
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
@@ -532,7 +534,7 @@ const ListeningExamEngine = ({
         {partType === "part2" && part2Questions && (
           <ListeningPart2Match
             questions={part2Questions}
-            currentIndex={currentIndex}
+            currentIndex={safeIndex}
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
@@ -553,7 +555,7 @@ const ListeningExamEngine = ({
         {partType === "part3" && part3Questions && (
           <ListeningPart3Conversation
             questions={part3Questions}
-            currentIndex={currentIndex}
+            currentIndex={safeIndex}
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
@@ -574,7 +576,7 @@ const ListeningExamEngine = ({
         {partType === "part4" && part4Questions && (
           <ListeningPart4Monologue
             questions={part4Questions}
-            currentIndex={currentIndex}
+            currentIndex={safeIndex}
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
