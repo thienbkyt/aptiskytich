@@ -57,8 +57,10 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
   const [loadingPage, setLoadingPage] = useState(false);
   const [fadeKey, setFadeKey] = useState(0);
   const [statuses, setStatuses] = useState<Record<number, PageStatus>>({});
+  const [skillMeta, setSkillMeta] = useState<Record<string, SkillMeta>>({});
   const [onlyWrong, setOnlyWrong] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
 
   const current = pages[pageIdx];
 
