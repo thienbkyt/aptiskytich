@@ -195,10 +195,8 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
             meta[sk] = { score50: toScaledScore(correct, total) };
           }
         } else if (sk === "writing") {
-          const cefr = idxs
-            .map((i) => wsrCefrByTr[pages[i].testResultId])
-            .find(Boolean);
-          if (cefr) meta[sk] = { band: cefr };
+          if (wsrCefrAny) meta[sk] = { band: wsrCefrAny };
+
         } else if (sk === "speaking") {
           const cefr = idxs.map((i) => map[i]?.band).find(Boolean) || null;
           if (cefr) meta[sk] = { band: cefr };
