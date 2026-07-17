@@ -253,7 +253,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           onPageCount={setPartPageCount}
         />
         {/* Answer key + explanation panel — hidden for listening/reading (engine shows answers inline). */}
-        {questions.length > 0 && current.skill !== "writing" && current.skill !== "listening" && current.skill !== "reading" && (
+        {questions.length > 0 && current.skill !== "writing" && current.skill !== "listening" && current.skill !== "reading" && current.skill !== "grammar" && (
           <div className="max-w-3xl mx-auto px-4 pb-24">
             <ReviewAnswerPanel
               questions={questions}
