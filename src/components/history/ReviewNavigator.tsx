@@ -113,16 +113,21 @@ const ReviewNavigator = ({
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {order.map((sk) => {
           const idxs = groups[sk];
-          const firstAI = statuses[idxs[0]]?.isAI;
-          const band = idxs.map((i) => statuses[i]?.band).find(Boolean) || null;
+          const meta = skillMeta[sk];
+          const fallbackBand = idxs.map((i) => statuses[i]?.band).find(Boolean) || null;
           return (
             <div key={sk}>
               <div className="text-xs font-semibold text-[#24085a] dark:text-primary mb-2 flex items-center gap-1.5">
                 <span>{SKILL_LABELS[sk] || sk}</span>
-                {firstAI && band ? (
-                  <span className="text-muted-foreground font-normal">· {band}</span>
+                {meta?.band ? (
+                  <span className="text-muted-foreground font-normal">· {meta.band}</span>
+                ) : meta?.score50 != null ? (
+                  <span className="text-muted-foreground font-normal">· {meta.score50}/50</span>
+                ) : fallbackBand ? (
+                  <span className="text-muted-foreground font-normal">· {fallbackBand}</span>
                 ) : null}
               </div>
+
               <div className="space-y-2.5">
                 {idxs.map((pi) => {
                   const p = pages[pi];
