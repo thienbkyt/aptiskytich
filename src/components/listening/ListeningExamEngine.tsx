@@ -553,7 +553,7 @@ const ListeningExamEngine = ({
         {partType === "part3" && part3Questions && (
           <ListeningPart3Conversation
             questions={part3Questions}
-            currentIndex={currentIndex}
+            currentIndex={safeIndex}
             answers={answers}
             timeLeft={timeLeft}
             totalTime={timeLimit}
