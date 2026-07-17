@@ -128,7 +128,7 @@ const ReviewNavigator = ({
                             type="button"
                             onClick={() => onJump(pi, 0)}
                             className={cn(
-                              "min-w-[28px] h-7 px-2 rounded text-[11px] font-medium border transition-all",
+                              "min-w-[32px] h-8 px-2 rounded text-xs font-medium border transition-all",
                               "bg-muted/60 text-foreground border-border hover:bg-muted",
                               currentPage === pi && "ring-2 ring-primary ring-offset-1",
                             )}
@@ -158,7 +158,7 @@ const ReviewNavigator = ({
                                 type="button"
                                 onClick={() => onJump(pi, qi)}
                                 className={cn(
-                                  "w-7 h-7 rounded text-[11px] font-medium border transition-all",
+                                  "w-8 h-8 rounded text-xs font-medium border transition-all",
                                   cls,
                                   isCurrent && "ring-2 ring-primary ring-offset-1",
                                   dim && "opacity-30",
