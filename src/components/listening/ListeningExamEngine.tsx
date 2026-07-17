@@ -485,6 +485,8 @@ const ListeningExamEngine = ({
     );
   }
 
+  const safeIndex = Math.min(Math.max(currentIndex, 0), Math.max(0, totalQuestions - 1));
+
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {adminControls}
