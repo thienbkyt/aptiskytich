@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy, Download } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,7 @@ import {
 } from "@/components/speaking/speakingGradingV2";
 import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
-import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
+import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 import { safeText } from "@/lib/safeText";
@@ -108,6 +108,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const sessionIdRef = useRef<string>(
     safeRandomId("full_test_session")
   );
+  const reportRef = useRef<PracticeScoreReportHandle>(null);
 
   // Background grading state for Speaking in Full Test
   const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
@@ -457,9 +458,13 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           )}
         </div>
 
-        {/* Aptis score table */}
+        {/* Aptis practice score report */}
         <div className="max-w-3xl mx-auto">
-          <FullTestScoreTable scores={scores} />
+          <PracticeScoreReport
+            ref={reportRef}
+            scores={scores}
+            sessionId={sessionIdRef.current}
+          />
         </div>
 
 
@@ -470,6 +475,13 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             className="gap-2"
           >
             <Eye className="w-4 h-4" /> Xem lại từng câu
+          </Button>
+          <Button
+            onClick={() => reportRef.current?.download()}
+            variant="outline"
+            className="gap-2"
+          >
+            <Download className="w-4 h-4" /> Tải phiếu điểm (PNG)
           </Button>
           <Button onClick={onExit} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             Quay lại danh sách đề
