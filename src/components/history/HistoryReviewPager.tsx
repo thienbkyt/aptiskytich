@@ -87,8 +87,9 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           .in("test_result_id", trIds),
         supabase
           .from("writing_skill_results")
-          .select("test_result_id,parts")
+          .select("test_result_id,parts,cefr")
           .in("test_result_id", trIds),
+
         supabase
           .from("speaking_skill_results")
           .select("test_result_id,parts")
