@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, Eye } from "lucide-react";
+import { ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Question } from "@/data/questions";
 
@@ -75,79 +75,6 @@ const GrammarResults = ({
           </Button>
         </div>
       </motion.div>
-
-      {/* Detailed review */}
-      <div className="space-y-4">
-        {questions.map((q, i) => {
-          const isFill = q.question_type === "fill-in-blank";
-          let userCorrect: boolean;
-          let userAnswer: string;
-
-          if (isFill) {
-            const correctText = q.options[q.correct_answer]?.toLowerCase().trim();
-            userCorrect = fillAnswers[i]?.toLowerCase().trim() === correctText;
-            userAnswer = fillAnswers[i] || "(không trả lời)";
-          } else {
-            userCorrect = answers[i] === q.correct_answer;
-            userAnswer =
-              answers[i] !== null
-                ? q.options[answers[i]!]
-                : "(không trả lời)";
-          }
-
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03 }}
-              className={`bg-card border rounded-xl p-5 ${
-                userCorrect ? "border-success/30" : "border-destructive/30"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  {userCorrect ? (
-                    <CheckCircle2 className="w-5 h-5 text-success" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-destructive" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground mb-2">
-                    <span className="text-muted-foreground">Câu {i + 1}:</span>{" "}
-                    {q.question_text}
-                  </p>
-                  <div className="text-sm space-y-1">
-                    <p>
-                      <span className="text-muted-foreground">Bạn chọn:</span>{" "}
-                      <span
-                        className={
-                          userCorrect
-                            ? "text-success font-medium"
-                            : "text-destructive font-medium"
-                        }
-                      >
-                        {userAnswer}
-                      </span>
-                    </p>
-                    {!userCorrect && (
-                      <p>
-                        <span className="text-muted-foreground">
-                          Đáp án đúng:
-                        </span>{" "}
-                        <span className="text-success font-medium">
-                          {q.options[q.correct_answer]}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
     </div>
   );
 };
