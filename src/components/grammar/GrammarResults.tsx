@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CheckCircle2, XCircle, ArrowLeft, RotateCcw, Eye } from "lucide-react";
+import { ArrowLeft, RotateCcw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Question } from "@/data/questions";
 
