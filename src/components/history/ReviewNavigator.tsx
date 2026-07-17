@@ -11,7 +11,9 @@ export interface PageStatus {
   items: NavItemStatus[];
   band?: string | null;
   isAI: boolean;
+  aiRaw?: number | null;
 }
+
 
 interface Props {
   pages: ReviewPage[];
