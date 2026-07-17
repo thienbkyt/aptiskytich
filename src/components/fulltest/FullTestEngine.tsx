@@ -108,6 +108,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const sessionIdRef = useRef<string>(
     safeRandomId("full_test_session")
   );
+  const reportRef = useRef<PracticeScoreReportHandle>(null);
 
   // Background grading state for Speaking in Full Test
   const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
