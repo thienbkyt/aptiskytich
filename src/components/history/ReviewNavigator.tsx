@@ -84,9 +84,9 @@ const ReviewNavigator = ({
 
       <div className="p-3 border-b border-border space-y-2">
         <div className="text-xs">
-          <span className="font-semibold text-green-600 dark:text-green-400">{totalCorrect} đúng</span>
+          <span className="font-semibold text-emerald-700 dark:text-emerald-400">{totalCorrect} đúng</span>
           <span className="mx-1.5 text-muted-foreground">/</span>
-          <span className="font-semibold text-red-600 dark:text-red-400">{totalWrong} sai</span>
+          <span className="font-semibold text-red-700 dark:text-red-400">{totalWrong} sai</span>
           <span className="ml-1 text-muted-foreground">(tự chấm)</span>
         </div>
         <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer select-none">
