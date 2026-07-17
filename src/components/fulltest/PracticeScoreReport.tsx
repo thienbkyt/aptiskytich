@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getSkillBand, toScaledScore } from "@/data/questions";
+import logoAsset from "@/assets/aptis-kytich-logo.png.asset.json";
 
 type SkillKey = "speaking" | "listening" | "grammar" | "reading" | "writing";
 type Scores = Record<SkillKey, { correct: number; total: number }>;
