@@ -441,27 +441,54 @@ const AdminReports = () => {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <Badge variant={isResolved ? "secondary" : "outline"} className={isResolved ? "" : "border-destructive text-destructive"}>
-                          {isResolved ? "Đã xử lý" : "Chưa xử lý"}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant={isResolved ? "outline" : "default"}
-                          className="gap-1.5"
-                          disabled={updatingId === r.id}
-                          onClick={() => handleToggleStatus(r.id, r.status)}
-                        >
-                          {updatingId === r.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : isResolved ? (
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          ) : (
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          )}
-                          {isResolved ? "Mở lại" : "Đánh dấu đã xử lý"}
-                        </Button>
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                        {isResolved ? (
+                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-300">
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                            Đã xử lý
+                          </Badge>
+                        ) : (
+                          <>
+                            <Badge variant="outline" className="border-destructive text-destructive">
+                              Chưa xử lý
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              disabled={resolvingId === r.id}
+                              onClick={() => handleResolveAndNotify(r.id)}
+                            >
+                              {resolvingId === r.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <MailCheck className="w-3.5 h-3.5" />
+                              )}
+                              ✅ Đã fix & báo người dùng
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5"
+                              disabled={updatingId === r.id}
+                              onClick={() => handleToggleStatus(r.id, r.status)}
+                            >
+                              {updatingId === r.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                              Đánh dấu đã xử lý
+                            </Button>
+                          </>
+                        )}
                       </div>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
+          </div>
                     </div>
                   </Card>
                 );
