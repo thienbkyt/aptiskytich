@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText, ExternalLink, Pencil } from "lucide-react";
+import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText, ExternalLink, Pencil, MailCheck } from "lucide-react";
+import { toast as sonnerToast } from "sonner";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
