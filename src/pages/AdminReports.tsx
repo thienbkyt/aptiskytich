@@ -102,6 +102,7 @@ const AdminReports = () => {
   const [statusFilter, setStatusFilter] = useState("new");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   // Map exam_question_id -> { setId, setTitle }
   const [questionSetMap, setQuestionSetMap] = useState<
