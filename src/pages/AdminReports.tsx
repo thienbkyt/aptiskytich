@@ -489,12 +489,6 @@ const AdminReports = () => {
               })
             )}
           </div>
-                    </div>
-                  </Card>
-                );
-              })
-            )}
-          </div>
         </div>
       </div>
       <Footer />
