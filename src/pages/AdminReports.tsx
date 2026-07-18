@@ -216,6 +216,19 @@ const AdminReports = () => {
     loadReports();
   };
 
+  const handleResolveAndNotify = async (id: string) => {
+    if (!window.confirm("Gửi thông báo + email cảm ơn cho những người đã báo lỗi câu này?")) return;
+    setResolvingId(id);
+    const { data, error } = await supabase.rpc("resolve_question_report", { p_report_id: id });
+    setResolvingId(null);
+    if (error) {
+      sonnerToast.error("Không gửi được: " + error.message);
+      return;
+    }
+    sonnerToast.success(`Đã đánh dấu đã fix và gửi thông báo + email cho ${data ?? 0} người dùng`);
+    loadReports();
+  };
+
   const filteredReports = useMemo(() => reports, [reports]);
 
   if (authLoading || !user || !isAdmin) {
