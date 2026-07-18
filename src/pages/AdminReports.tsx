@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText, ExternalLink, Pencil } from "lucide-react";
+import { Shield, CheckCircle2, RotateCcw, Loader2, AlertTriangle, FileText, ExternalLink, Pencil, MailCheck } from "lucide-react";
+import { toast as sonnerToast } from "sonner";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -101,6 +102,7 @@ const AdminReports = () => {
   const [statusFilter, setStatusFilter] = useState("new");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   // Map exam_question_id -> { setId, setTitle }
   const [questionSetMap, setQuestionSetMap] = useState<
@@ -211,6 +213,19 @@ const AdminReports = () => {
       return;
     }
     toast({ title: nextStatus === "resolved" ? "Đã đánh dấu đã xử lý" : "Đã mở lại báo lỗi" });
+    loadReports();
+  };
+
+  const handleResolveAndNotify = async (id: string) => {
+    if (!window.confirm("Gửi thông báo + email cảm ơn cho những người đã báo lỗi câu này?")) return;
+    setResolvingId(id);
+    const { data, error } = await supabase.rpc("resolve_question_report", { p_report_id: id });
+    setResolvingId(null);
+    if (error) {
+      sonnerToast.error("Không gửi được: " + error.message);
+      return;
+    }
+    sonnerToast.success(`Đã đánh dấu đã fix và gửi thông báo + email cho ${data ?? 0} người dùng`);
     loadReports();
   };
 
@@ -426,26 +441,47 @@ const AdminReports = () => {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <Badge variant={isResolved ? "secondary" : "outline"} className={isResolved ? "" : "border-destructive text-destructive"}>
-                          {isResolved ? "Đã xử lý" : "Chưa xử lý"}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant={isResolved ? "outline" : "default"}
-                          className="gap-1.5"
-                          disabled={updatingId === r.id}
-                          onClick={() => handleToggleStatus(r.id, r.status)}
-                        >
-                          {updatingId === r.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : isResolved ? (
-                            <RotateCcw className="w-3.5 h-3.5" />
-                          ) : (
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          )}
-                          {isResolved ? "Mở lại" : "Đánh dấu đã xử lý"}
-                        </Button>
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                        {isResolved ? (
+                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-300">
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                            Đã xử lý
+                          </Badge>
+                        ) : (
+                          <>
+                            <Badge variant="outline" className="border-destructive text-destructive">
+                              Chưa xử lý
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              disabled={resolvingId === r.id}
+                              onClick={() => handleResolveAndNotify(r.id)}
+                            >
+                              {resolvingId === r.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <MailCheck className="w-3.5 h-3.5" />
+                              )}
+                              ✅ Đã fix & báo người dùng
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5"
+                              disabled={updatingId === r.id}
+                              onClick={() => handleToggleStatus(r.id, r.status)}
+                            >
+                              {updatingId === r.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                              )}
+                              Đánh dấu đã xử lý
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </Card>

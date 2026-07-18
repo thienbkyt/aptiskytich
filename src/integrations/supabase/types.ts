@@ -893,6 +893,7 @@ export type Database = {
           id: string
           is_active: boolean
           link_url: string | null
+          target_user_id: string | null
           title: string
           type: string
           updated_at: string
@@ -904,6 +905,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           link_url?: string | null
+          target_user_id?: string | null
           title: string
           type?: string
           updated_at?: string
@@ -915,6 +917,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           link_url?: string | null
+          target_user_id?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -2197,6 +2200,10 @@ export type Database = {
       register_device: {
         Args: { p_device_id: string; p_label: string; p_type: string }
         Returns: undefined
+      }
+      resolve_question_report: {
+        Args: { p_report_id: string }
+        Returns: number
       }
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
