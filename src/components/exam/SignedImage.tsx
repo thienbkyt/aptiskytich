@@ -7,30 +7,36 @@ interface SignedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "sr
 
 /**
  * <img> wrapper that resolves Supabase Storage paths to signed URLs,
- * falls back to the raw src if signing fails, and re-signs once on <img onError>
+ * retries on transient signing failures, and re-signs once on <img onError>
  * (covers signed-URL expiry during long sessions).
  */
 const SignedImage = ({ src, alt = "", onError, ...rest }: SignedImageProps) => {
   const [resolved, setResolved] = useState<string>("");
   const retryRef = useRef(0);
+  const isHttp = /^https?:\/\//.test(src);
 
   const load = useCallback(async (force = false) => {
     if (!src) return;
     if (force) bustImageUrlCache(src);
     const url = await resolveImageUrl(src);
-    setResolved(url || src);
-  }, [src]);
+    setResolved(url || (isHttp ? src : ""));
+  }, [src, isHttp]);
 
   useEffect(() => {
     retryRef.current = 0;
     setResolved("");
     let cancelled = false;
     (async () => {
-      const url = await resolveImageUrl(src);
-      if (!cancelled) setResolved(url || src);
+      for (let i = 0; i < 4 && !cancelled; i++) {
+        const url = await resolveImageUrl(src);
+        if (cancelled) return;
+        if (url) { setResolved(url); return; }
+        if (isHttp) { setResolved(src); return; }
+        await new Promise((r) => setTimeout(r, 1000));
+      }
     })();
     return () => { cancelled = true; };
-  }, [src]);
+  }, [src, isHttp]);
 
   const handleError = useCallback(async (e: React.SyntheticEvent<HTMLImageElement>) => {
     if (retryRef.current < 2) {

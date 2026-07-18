@@ -30,11 +30,16 @@ export async function resolveImageUrl(imageUrl: string): Promise<string | null> 
   const cached = cache.get(imageUrl);
   if (cached && cached.expiresAt > now) return cached.url;
 
-  const { data, error } = await supabase.storage
-    .from("exam-images")
-    .createSignedUrl(imageUrl, SIGN_TTL_SEC);
-  if (error || !data?.signedUrl) return null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await supabase.storage
+      .from("exam-images")
+      .createSignedUrl(imageUrl, SIGN_TTL_SEC);
+    if (!error && data?.signedUrl) {
+      cache.set(imageUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
+      return data.signedUrl;
+    }
+    await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+  }
 
-  cache.set(imageUrl, { url: data.signedUrl, expiresAt: now + CACHE_TTL_MS });
-  return data.signedUrl;
+  return null;
 }
