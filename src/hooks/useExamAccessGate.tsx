@@ -22,8 +22,9 @@ function normalizeTier(t?: string | null): UserTier {
  */
 export function useExamAccessGate() {
   const { isPro, tier, loading } = useIsPro();
-  const { user } = useAuth();
-  const { openLogin } = useLoginGate();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
 
@@ -42,8 +43,12 @@ export function useExamAccessGate() {
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void) => {
+      // Don't decide while auth session is still restoring — avoid bouncing
+      // an already-logged-in user to /auth on first paint.
+      if (authLoading) return;
       if (!user) {
-        openLogin(() => action());
+        const back = `${location.pathname}${location.search}`;
+        navigate(`/auth?redirect=${encodeURIComponent(back)}`);
         return;
       }
       // If tier is still loading, just let the action through; server enforces.
@@ -59,7 +64,7 @@ export function useExamAccessGate() {
       }
       action();
     },
-    [isLocked, loading, user, openLogin],
+    [isLocked, loading, user, authLoading, navigate, location.pathname, location.search],
   );
 
   const LockModal = () => (
