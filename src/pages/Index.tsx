@@ -37,9 +37,9 @@ const stats = [
 ];
 
 const heroChips = [
-  { icon: Target, label: "Mô phỏng 100% đề thật" },
-  { icon: Cpu, label: "AI chấm Speaking–Writing" },
-  { icon: TrendingUp, label: "Có band điểm ngay" },
+  { icon: Target, label: "Mô phỏng 100% đề thật." },
+  { icon: Cpu, label: "AI chấm Speaking–Writing." },
+  { icon: TrendingUp, label: "Có band điểm ngay." },
 ];
 
 const features = [
