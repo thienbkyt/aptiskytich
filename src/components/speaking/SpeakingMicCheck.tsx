@@ -9,6 +9,8 @@ const SpeakingMicCheck = () => {
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleCheck = async () => {
+    // Unlock audio playback on mobile — must run synchronously in a user gesture.
+    unlockAudio();
     setStatus("checking");
     const result = await checkMicrophoneAccess();
     if (result.ok) {
