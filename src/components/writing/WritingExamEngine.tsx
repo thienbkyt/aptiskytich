@@ -14,6 +14,8 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
+import { gradeWritingPartV2 } from "@/components/writing/writingGradingV2";
+import { toast } from "sonner";
 import type {
   WritingPart1Data,
   WritingPart2Data,
