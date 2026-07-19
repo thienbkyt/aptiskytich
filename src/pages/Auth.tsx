@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,12 +59,21 @@ const Auth = () => {
   const [forgotSentTo, setForgotSentTo] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Sanitize redirect target: only allow same-origin relative paths.
+  const redirectTarget = useMemo(() => {
+    const raw = searchParams.get("redirect");
+    if (!raw) return "/dashboard";
+    if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+    return raw;
+  }, [searchParams]);
+
   useEffect(() => {
-    if (user) navigate("/dashboard");
-  }, [user, navigate]);
+    if (user) navigate(redirectTarget, { replace: true });
+  }, [user, navigate, redirectTarget]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -88,7 +97,7 @@ const Auth = () => {
       toast({ title: "Đăng nhập thất bại", description: viMsg, variant: "destructive" });
     } else {
       try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
-      navigate("/dashboard");
+      navigate(redirectTarget, { replace: true });
     }
   };
 
@@ -154,7 +163,7 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
-    const result = await signInWithGoogle(window.location.origin + "/dashboard");
+    const result = await signInWithGoogle(window.location.origin + redirectTarget);
     if ((result as any).redirected) return;
     if ((result as any).error) {
       try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
@@ -163,7 +172,7 @@ const Auth = () => {
       return;
     }
     setGoogleLoading(false);
-    navigate("/dashboard");
+    navigate(redirectTarget, { replace: true });
   };
 
   const subtitle =
