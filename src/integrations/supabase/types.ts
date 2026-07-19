@@ -1191,6 +1191,7 @@ export type Database = {
         Row: {
           created_at: string
           device_info: string | null
+          device_type: string | null
           exam_question_id: string | null
           exam_set_id: string | null
           id: string
@@ -1208,6 +1209,7 @@ export type Database = {
         Insert: {
           created_at?: string
           device_info?: string | null
+          device_type?: string | null
           exam_question_id?: string | null
           exam_set_id?: string | null
           id?: string
@@ -1225,6 +1227,7 @@ export type Database = {
         Update: {
           created_at?: string
           device_info?: string | null
+          device_type?: string | null
           exam_question_id?: string | null
           exam_set_id?: string | null
           id?: string
