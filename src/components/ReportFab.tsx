@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
+import { getDeviceType } from "@/lib/deviceInfo";
 
 function inferSectionFromPath(path: string): string {
   const p = (path || "").toLowerCase();
