@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
-import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
+import { playBeep } from "@/lib/beep";
+import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
 
 interface SpeakingPromptScreenProps {
   partNumber: number;
@@ -12,31 +13,13 @@ interface SpeakingPromptScreenProps {
   onExit?: () => void;
 }
 
-/** Play a short beep using Web Audio API */
-function playBeep(): Promise<void> {
-  return new Promise((resolve) => {
-    try {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      gain.gain.value = 0.5;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.4);
-      osc.onended = () => { ctx.close(); resolve(); };
-    } catch {
-      resolve();
-    }
-  });
-}
-
 /** Speak text using Google Cloud TTS (from src/lib/tts.ts) */
 function speakAsync(text: string): Promise<void> {
   return ttsSpeakAsync(text, "en");
 }
+
+const withTimeout = <T,>(p: Promise<T>, ms: number) =>
+  Promise.race([p, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
 
 // Module-level guard: if the same intro text was already spoken in the last 60s
 // (e.g. parent re-rendered and remounted this screen because a tier/auth hook
@@ -57,11 +40,15 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
     const recentlySpoken = Date.now() - last < SPOKEN_TTL_MS;
 
     const run = async () => {
-      if (!recentlySpoken) {
-        SPOKEN_AT.set(key, Date.now());
-        await speakAsync(instructions);
-        await playBeep();
-        await new Promise((r) => setTimeout(r, 1000));
+      try {
+        if (!recentlySpoken) {
+          SPOKEN_AT.set(key, Date.now());
+          await withTimeout(speakAsync(instructions), 15000);
+          await withTimeout(playBeep(), 1000);
+          await new Promise((r) => setTimeout(r, 800));
+        }
+      } catch {
+        /* Always advance, even if mobile audio is blocked. */
       }
       onNext();
     };

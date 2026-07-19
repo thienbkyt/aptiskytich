@@ -8,6 +8,7 @@ import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
+import { playBeep } from "@/lib/beep";
 import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -84,32 +85,13 @@ interface SpeakingExamEngineProps {
 
 type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-question" | "prep" | "recording" | "grading" | "done";
 
-/** Play a short beep using Web Audio API */
-function playBeep(): Promise<void> {
-  return new Promise((resolve) => {
-    let done = false;
-    const finish = () => { if (!done) { done = true; resolve(); } };
-    setTimeout(finish, 700); // safety latch: proceed even if onended never fires (iOS)
-    try {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      gain.gain.value = 0.5;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.4);
-      osc.onended = () => { try { ctx.close(); } catch {} finish(); };
-    } catch { finish(); }
-  });
-}
-
 /** Speak text using Google Cloud TTS (from src/lib/tts.ts) */
 function speakAsync(text: string): Promise<void> {
   return ttsSpeakAsync(text, "en");
 }
+
+const withTimeout = <T,>(p: Promise<T>, ms: number) =>
+  Promise.race([p, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
 
 const PART_PROMPTS: Record<SpeakingPartType, string> = {
   part1: "Part One - In this part, I am going to ask you three short questions about yourself and your interests. You will have 30 seconds to reply to each question.\n\nBegin speaking when you hear this sound.",
@@ -376,7 +358,7 @@ const SpeakingExamEngine = ({
     })();
 
     if (questionText) {
-      await speakAsync(questionText);
+      await withTimeout(speakAsync(questionText), 15000);
     }
     if (token !== flowTokenRef.current) {
       console.warn("[Speaking] flow aborted - stale token after speakAsync");
@@ -385,7 +367,7 @@ const SpeakingExamEngine = ({
 
     const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
-    await playBeep();
+    await withTimeout(playBeep(), 1000);
     if (token !== flowTokenRef.current) {
       console.warn("[Speaking] flow aborted - stale token after playBeep");
       return;
@@ -411,7 +393,7 @@ const SpeakingExamEngine = ({
           if (timerRef.current) clearInterval(timerRef.current);
           timerRef.current = null;
           // Beep right before recording starts (prep just ended)
-          playBeep().then(() => {
+          withTimeout(playBeep(), 1000).then(() => {
             startRecording();
           });
           return 0;
