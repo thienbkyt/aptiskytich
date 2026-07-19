@@ -307,8 +307,36 @@ async function persistJobResult(job: any, body: any) {
 
 // ─── main handler ───────────────────────────────────────────────────────────
 
+function parseJwtClaims(token: string): Record<string, unknown> | null {
+  const parts = token.split(".");
+  if (parts.length < 2) return null;
+  try {
+    const payload = parts[1]
+      .replaceAll("-", "+")
+      .replaceAll("_", "/")
+      .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
+    return JSON.parse(atob(payload)) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // Only the internal scheduler (service_role JWT) may claim + run grading jobs.
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const claims = parseJwtClaims(authHeader.slice("Bearer ".length).trim());
+  if (claims?.role !== "service_role") {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const { data: jobs, error } = await admin.rpc("claim_grading_jobs", {

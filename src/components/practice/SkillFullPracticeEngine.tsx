@@ -1104,12 +1104,12 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         try {
           const trid = (lastSub as any)?.testResultId;
           if (trid) {
-            await supabase.from("test_results").update({
-              score: scale50, total: 50, level: cefr,
-              correct_answers: scale50,
-            } as any).eq("id", trid);
+            await supabase.rpc("finalize_skill_test_result", {
+              p_test_result_id: trid,
+              p_score: scale50, p_total: 50, p_level: cefr, p_correct_answers: scale50,
+            } as any);
           }
-        } catch (e) { console.warn("[SkillFullPractice v2] update test_results failed", e); }
+        } catch (e) { console.warn("[SkillFullPractice v2] finalize test_results failed", e); }
       } else {
         console.info("[SkillFullPractice v2] Incomplete writing attempt — skipping scale50/CEFR finalize.");
       }

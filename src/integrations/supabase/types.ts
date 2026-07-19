@@ -2160,6 +2160,17 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      finalize_skill_test_result: {
+        Args: {
+          p_correct_answers?: number
+          p_level?: string
+          p_review_snapshot?: Json
+          p_score?: number
+          p_test_result_id: string
+          p_total?: number
+        }
+        Returns: undefined
+      }
       get_db_size_mb: { Args: never; Returns: number }
       get_storage_size_mb: {
         Args: never
