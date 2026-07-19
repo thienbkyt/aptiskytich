@@ -97,7 +97,7 @@ const Auth = () => {
       toast({ title: "Đăng nhập thất bại", description: viMsg, variant: "destructive" });
     } else {
       try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
-      navigate("/dashboard");
+      navigate(redirectTarget, { replace: true });
     }
   };
 
