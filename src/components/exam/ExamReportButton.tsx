@@ -3,6 +3,7 @@ import { Flag, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getDeviceType } from "@/lib/deviceInfo";
 
 type Category = "content" | "functional";
 type ContentReason = "wrong_answer" | "audio" | "image" | "content" | "other";
@@ -90,6 +91,7 @@ export default function ExamReportButton({
         report_category: category,
         page_url: getPageUrl(),
         device_info: getDeviceInfo(),
+        device_type: getDeviceType(),
       });
       if (error) throw error;
       toast.success("Đã gửi báo lỗi, cảm ơn bạn");

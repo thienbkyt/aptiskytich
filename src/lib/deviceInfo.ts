@@ -53,3 +53,28 @@ export function getDeviceLabel(): string {
 
   return `${os} · ${browser}`;
 }
+
+export function deviceTypeFromUA(ua: string | null | undefined): DeviceType | null {
+  if (!ua) return null;
+  const s = ua.toLowerCase();
+  if (/ipad|tablet/.test(s) || (/android/.test(s) && !/mobile/.test(s))) return "tablet";
+  if (/iphone|ipod|android.*mobile|windows phone|iemobile|blackberry|mobile safari/.test(s)) return "mobile";
+  return "desktop";
+}
+
+export function deviceLabelFromUA(ua: string | null | undefined): string {
+  if (!ua) return "";
+  let os = "Khác";
+  if (/windows/i.test(ua)) os = "Windows";
+  else if (/android/i.test(ua)) os = "Android";
+  else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+  else if (/mac os x|macintosh/i.test(ua)) os = "macOS";
+  else if (/linux/i.test(ua)) os = "Linux";
+  let browser = "Trình duyệt";
+  if (/edg\//i.test(ua)) browser = "Edge";
+  else if (/opr\/|opera/i.test(ua)) browser = "Opera";
+  else if (/chrome\//i.test(ua) && !/edg\//i.test(ua)) browser = "Chrome";
+  else if (/firefox\//i.test(ua)) browser = "Firefox";
+  else if (/safari\//i.test(ua) && !/chrome\//i.test(ua)) browser = "Safari";
+  return `${os} · ${browser}`;
+}

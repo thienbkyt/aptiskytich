@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
+import { getDeviceType } from "@/lib/deviceInfo";
 
 function inferSectionFromPath(path: string): string {
   const p = (path || "").toLowerCase();
@@ -89,6 +90,7 @@ export default function ReportFab() {
         report_category: "functional",
         page_url: getPageUrl(),
         device_info: getDeviceInfo(),
+        device_type: getDeviceType(),
         section: inferSectionFromPath(location.pathname),
       });
       if (error) throw error;
