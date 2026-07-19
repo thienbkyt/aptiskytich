@@ -163,7 +163,7 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
-    const result = await signInWithGoogle(window.location.origin + "/dashboard");
+    const result = await signInWithGoogle(window.location.origin + redirectTarget);
     if ((result as any).redirected) return;
     if ((result as any).error) {
       try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
@@ -172,7 +172,7 @@ const Auth = () => {
       return;
     }
     setGoogleLoading(false);
-    navigate("/dashboard");
+    navigate(redirectTarget, { replace: true });
   };
 
   const subtitle =
