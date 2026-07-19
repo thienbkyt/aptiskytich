@@ -410,10 +410,21 @@ const AdminReports = () => {
                               Trang: <code className="text-foreground bg-muted rounded px-1 break-all">{r.page_url}</code>
                             </span>
                           )}
-                          {isFunctional && r.device_info && (
-                            <span className="break-all">
-                              Thiết bị: <span className="text-foreground">{r.device_info}</span>
-                            </span>
+                          {(() => {
+                            const dt = (r.device_type as DeviceType | null) ?? deviceTypeFromUA(r.device_info);
+                            const dtLabel = dt ? DEVICE_LABELS[dt] ?? "Không rõ" : "Không rõ";
+                            const extra = deviceLabelFromUA(r.device_info);
+                            return (
+                              <span>
+                                Thiết bị: <span className="text-foreground">{dtLabel}{extra ? ` · ${extra}` : ""}</span>
+                              </span>
+                            );
+                          })()}
+                          {r.device_info && (
+                            <details className="text-xs">
+                              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Chi tiết kỹ thuật</summary>
+                              <span className="break-all text-foreground">{r.device_info}</span>
+                            </details>
                           )}
                           <div className="flex flex-wrap gap-x-4 gap-y-1">
                             {!isFunctional && r.exam_question_id && (
