@@ -14,7 +14,7 @@ project_id = "bacoamhbatqpxatrrflz"
   [functions.sitemap]
     verify_jwt = false
   [functions.process-grading-jobs]
-    verify_jwt = false
+    verify_jwt = true
   [functions.cleanup-old-recordings]
-    verify_jwt = false
+    verify_jwt = true
 
