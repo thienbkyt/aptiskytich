@@ -197,7 +197,7 @@ const Index = () => {
                     <span className="w-3 h-3 rounded-full bg-[#28C840]" />
                   </div>
                   <div className="flex-1 flex justify-center">
-                    <div className="px-3 py-1 rounded-md bg-white border border-[#F0E0D0] text-[11px] text-[#8B6B5C] font-medium">
+                    <div className="px-3 py-1 rounded-md bg-white border border-[#F0E0D0] text-[11px] text-[#6B4A3B] font-medium">
                       aptiskytich.vn
                     </div>
                   </div>
@@ -225,7 +225,7 @@ const Index = () => {
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-[11px] text-[#8B6B5C] font-medium">AI chấm Writing</div>
+                  <div className="text-[11px] text-[#6B4A3B] font-medium">AI chấm Writing</div>
                   <div className="text-sm font-bold" style={{ color: "#4D0D0D" }}>Band B2</div>
                 </div>
               </div>
@@ -239,7 +239,7 @@ const Index = () => {
                   <Flame className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-[11px] text-[#8B6B5C] font-medium">Streak</div>
+                  <div className="text-[11px] text-[#6B4A3B] font-medium">Streak</div>
                   <div className="text-sm font-bold" style={{ color: "#4D0D0D" }}>18 ngày</div>
                 </div>
               </div>
@@ -265,7 +265,7 @@ const Index = () => {
                 <div className="text-2xl md:text-3xl font-heading font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">
                   {s.value}
                 </div>
-                <div className="text-sm mt-1.5" style={{ color: "#8B6B5C" }}>{s.label}</div>
+                <div className="text-sm mt-1.5" style={{ color: "#6B4A3B" }}>{s.label}</div>
               </div>
             ))}
           </motion.div>
@@ -295,7 +295,7 @@ const Index = () => {
                   </div>
                   <div className="min-w-0">
                     <div className="font-heading font-bold text-sm md:text-[15px] leading-tight" style={{ color: "#4D0D0D" }}>{t.title}</div>
-                    <div className="text-xs mt-0.5" style={{ color: "#8B6B5C" }}>{t.sub}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "#6B4A3B" }}>{t.sub}</div>
                   </div>
                 </div>
               ))}
@@ -342,7 +342,7 @@ const Index = () => {
                   {p.badge}
                 </h3>
                 <p className="text-sm leading-relaxed mb-4" style={{ color: "#6b4a4a" }}>{p.goal}</p>
-                <div className="inline-flex items-center gap-1.5 text-xs font-semibold mb-6" style={{ color: "#8B6B5C" }}>
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold mb-6" style={{ color: "#6B4A3B" }}>
                   <Timer className="w-3.5 h-3.5 text-primary" /> {p.time}
                 </div>
                 <div className="mt-auto">
@@ -370,7 +370,7 @@ const Index = () => {
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
               Trải nghiệm luyện thi cùng{"\u00A0"}<span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Kỳ Tích</span>
             </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#8B6B5C" }}>
+            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#6B4A3B" }}>
               Mọi công cụ bạn cần để luyện Aptis hiệu quả, ngay trên một nền tảng.
             </motion.p>
           </motion.div>
@@ -457,7 +457,7 @@ const Index = () => {
                           <div className="p-5 md:p-6 bg-white">
                             <div className="flex items-center justify-between mb-5">
                               <div>
-                                <div className="text-xs font-semibold text-[#8B6B5C] mb-0.5">Tiến độ tuần này</div>
+                                <div className="text-xs font-semibold text-[#6B4A3B] mb-0.5">Tiến độ tuần này</div>
                                 <div className="text-2xl font-extrabold" style={{ color: "#4D0D0D" }}>B1+ → B2</div>
                               </div>
                               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-xs font-bold">
@@ -476,7 +476,7 @@ const Index = () => {
                                 { k: "Writing", v: "B2" },
                               ].map((s) => (
                                 <div key={s.k} className="text-center py-2 rounded-lg bg-[#FFF7F0] border border-[#F2E2D4]">
-                                  <div className="text-[10px] text-[#8B6B5C] font-medium">{s.k}</div>
+                                  <div className="text-[10px] text-[#6B4A3B] font-medium">{s.k}</div>
                                   <div className="text-sm font-bold text-primary">{s.v}</div>
                                 </div>
                               ))}
@@ -504,7 +504,7 @@ const Index = () => {
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
               5 kỹ năng trong <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">đề Aptis</span>
             </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#8B6B5C" }}>
+            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#6B4A3B" }}>
               Hiểu rõ thời lượng từng phần để luyện đúng trọng tâm.
             </motion.p>
           </motion.div>
@@ -546,7 +546,7 @@ const Index = () => {
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
               Vì sao chọn <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Aptis Kỳ Tích</span>
             </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#8B6B5C" }}>
+            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#6B4A3B" }}>
               Những điều làm nên khác biệt khi luyện thi cùng Kỳ Tích.
             </motion.p>
           </motion.div>
