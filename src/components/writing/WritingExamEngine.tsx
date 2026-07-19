@@ -242,15 +242,36 @@ const WritingExamEngine = ({
 
     const { text, questions } = getTextAndQuestions();
 
-    const result = await gradeExam({
-      type: "writing",
-      text,
-      questions,
-      partType,
-      testResultId: (trid as string | null) ?? null,
-      examSetId: examSetId ?? null,
-      partLabel: PART_LABELS[partType],
-    });
+    const partsArg =
+      partType === "task1" ? { shortAnswers }
+      : partType === "task3" ? { threeAnswers: part3Answers }
+      : partType === "task4" ? { informalText: informalAnswer, formalText: formalAnswer }
+      : undefined;
+
+    let result: WritingGradingResult | null = null;
+    setV2Loading(true);
+    try {
+      const v2 = await gradeWritingPartV2(partType, questions, text, partsArg, {
+        testResultId: (trid as string | null) ?? null,
+        examSetId: examSetId ?? null,
+      });
+      result = {
+        partType,
+        partScore: Math.round(Number(v2.rawPart) || 0),
+        maxPoints: 30,
+        addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0,
+        coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+        grammarErrors: (v2.grammarErrors as any) || [],
+        spellingErrors: (v2.spellingErrors as any) || [],
+        feedback: v2.feedback || v2.analysis || "",
+        improvedVersion: v2.improvedVersion || "",
+      };
+      setV2Grading(result);
+    } catch (e: any) {
+      toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
+    } finally {
+      setV2Loading(false);
+    }
 
     // Bake AI grading into the saved review_snapshot so History review is self-sufficient.
     try {
