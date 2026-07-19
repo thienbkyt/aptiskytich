@@ -31,7 +31,14 @@ type ReportRow = {
   report_category: string | null;
   page_url: string | null;
   device_info: string | null;
+  device_type: string | null;
   section: string | null;
+};
+
+const DEVICE_LABELS: Record<string, string> = {
+  mobile: "📱 Điện thoại",
+  tablet: "📱 Máy tính bảng (iPad)",
+  desktop: "💻 Máy tính",
 };
 
 type ReporterInfo = { email: string; display_name: string | null };
