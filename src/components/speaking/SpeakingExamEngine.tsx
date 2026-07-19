@@ -87,6 +87,9 @@ type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-questi
 /** Play a short beep using Web Audio API */
 function playBeep(): Promise<void> {
   return new Promise((resolve) => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    setTimeout(finish, 700); // safety latch: proceed even if onended never fires (iOS)
     try {
       const ctx = new AudioContext();
       const osc = ctx.createOscillator();
@@ -98,8 +101,8 @@ function playBeep(): Promise<void> {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.4);
-      osc.onended = () => { ctx.close(); resolve(); };
-    } catch { resolve(); }
+      osc.onended = () => { try { ctx.close(); } catch {} finish(); };
+    } catch { finish(); }
   });
 }
 
