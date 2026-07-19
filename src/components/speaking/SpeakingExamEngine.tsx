@@ -435,7 +435,7 @@ const SpeakingExamEngine = ({
         ? "Trình duyệt đã chặn quyền micro. Hãy cho phép micro trong cài đặt trình duyệt rồi bấm Thử lại."
         : name === "NotFoundError" || name === "OverconstrainedError"
         ? "Không tìm thấy micro. Hãy cắm/chọn lại thiết bị micro rồi bấm Thử lại."
-        : "Không truy cập được micro. Hãy kiểm tra thiết bị rồi bấm Thử lại.";
+        : "Không truy cập được micro. Nếu bạn đang mở link trong ứng dụng Facebook/Zalo, hãy mở bằng Safari hoặc Chrome rồi cho phép quyền micro.";
       setMicError(msg);
       return;
     }
