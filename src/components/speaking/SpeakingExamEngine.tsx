@@ -378,14 +378,23 @@ const SpeakingExamEngine = ({
     if (questionText) {
       await speakAsync(questionText);
     }
-    if (token !== flowTokenRef.current) return;
+    if (token !== flowTokenRef.current) {
+      console.warn("[Speaking] flow aborted - stale token after speakAsync");
+      return;
+    }
 
     const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
     await playBeep();
-    if (token !== flowTokenRef.current) return;
+    if (token !== flowTokenRef.current) {
+      console.warn("[Speaking] flow aborted - stale token after playBeep");
+      return;
+    }
     await new Promise(r => setTimeout(r, 500));
-    if (token !== flowTokenRef.current) return;
+    if (token !== flowTokenRef.current) {
+      console.warn("[Speaking] flow aborted - stale token after pre-recording delay");
+      return;
+    }
 
     // Now start prep or recording
     if (prepTime <= 0) {
