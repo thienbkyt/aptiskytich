@@ -87,6 +87,9 @@ type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-questi
 /** Play a short beep using Web Audio API */
 function playBeep(): Promise<void> {
   return new Promise((resolve) => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    setTimeout(finish, 700); // safety latch: proceed even if onended never fires (iOS)
     try {
       const ctx = new AudioContext();
       const osc = ctx.createOscillator();
@@ -98,8 +101,8 @@ function playBeep(): Promise<void> {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.4);
-      osc.onended = () => { ctx.close(); resolve(); };
-    } catch { resolve(); }
+      osc.onended = () => { try { ctx.close(); } catch {} finish(); };
+    } catch { finish(); }
   });
 }
 
@@ -375,14 +378,23 @@ const SpeakingExamEngine = ({
     if (questionText) {
       await speakAsync(questionText);
     }
-    if (token !== flowTokenRef.current) return;
+    if (token !== flowTokenRef.current) {
+      console.warn("[Speaking] flow aborted - stale token after speakAsync");
+      return;
+    }
 
     const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
     await playBeep();
-    if (token !== flowTokenRef.current) return;
+    if (token !== flowTokenRef.current) {
+      console.warn("[Speaking] flow aborted - stale token after playBeep");
+      return;
+    }
     await new Promise(r => setTimeout(r, 500));
-    if (token !== flowTokenRef.current) return;
+    if (token !== flowTokenRef.current) {
+      console.warn("[Speaking] flow aborted - stale token after pre-recording delay");
+      return;
+    }
 
     // Now start prep or recording
     if (prepTime <= 0) {
@@ -432,7 +444,7 @@ const SpeakingExamEngine = ({
         ? "Trình duyệt đã chặn quyền micro. Hãy cho phép micro trong cài đặt trình duyệt rồi bấm Thử lại."
         : name === "NotFoundError" || name === "OverconstrainedError"
         ? "Không tìm thấy micro. Hãy cắm/chọn lại thiết bị micro rồi bấm Thử lại."
-        : "Không truy cập được micro. Hãy kiểm tra thiết bị rồi bấm Thử lại.";
+        : "Không truy cập được micro. Nếu bạn đang mở link trong ứng dụng Facebook/Zalo, hãy mở bằng Safari hoặc Chrome rồi cho phép quyền micro.";
       setMicError(msg);
       return;
     }
