@@ -15,7 +15,9 @@ export function registerPWA() {
         onNeedRefresh() {
           try {
             toast("Đã có bản cập nhật mới", {
+              id: "pwa-update",
               duration: Infinity,
+              closeButton: true,
               action: {
                 label: "Tải lại",
                 onClick: () => {
