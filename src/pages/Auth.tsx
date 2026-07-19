@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { signInWithGoogle } from "@/lib/lovableOAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import ParticlesBackground from "@/components/ui/particles-background";
@@ -154,16 +154,14 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/dashboard",
-    });
-    if (result.error) {
+    const result = await signInWithGoogle(window.location.origin + "/dashboard");
+    if ((result as any).redirected) return;
+    if ((result as any).error) {
       try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
       setGoogleLoading(false);
-      toast({ title: "Đăng nhập Google thất bại", description: translateError(result.error.message), variant: "destructive" });
+      toast({ title: "Đăng nhập Google thất bại", description: translateError((result as any).error.message), variant: "destructive" });
       return;
     }
-    if (result.redirected) return;
     setGoogleLoading(false);
     navigate("/dashboard");
   };

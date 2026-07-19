@@ -53,7 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       handleSession(s);
     });
 
-    supabase.auth.getSession().then(({ data: { session: s } }) => handleSession(s));
+    (async () => {
+      const { completeOAuthRedirect } = await import("@/lib/lovableOAuth");
+      await completeOAuthRedirect();
+      const { data: { session: s } } = await supabase.auth.getSession();
+      handleSession(s);
+    })();
 
     return () => subscription.unsubscribe();
   }, []);
