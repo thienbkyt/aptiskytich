@@ -1154,11 +1154,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         // Patch last test_results row → score=scale50, total=50, level=cefr
         try {
           if (lastTestResultId) {
-            await supabase.from("test_results").update({
-              score: scale50, total: 50, level: cefr, correct_answers: scale50,
-            } as any).eq("id", lastTestResultId);
+            await supabase.rpc("finalize_skill_test_result", {
+              p_test_result_id: lastTestResultId,
+              p_score: scale50, p_total: 50, p_level: cefr, p_correct_answers: scale50,
+            } as any);
           }
-        } catch (err) { console.warn("[FullTest v2] update test_results failed", err); }
+        } catch (err) { console.warn("[FullTest v2] finalize test_results failed", err); }
       } else {
         console.info("[FullTest v2] Incomplete writing attempt — skipping scale50/CEFR finalize.");
       }
