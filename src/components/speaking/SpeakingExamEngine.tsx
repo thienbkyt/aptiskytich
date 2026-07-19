@@ -1003,7 +1003,7 @@ const SpeakingExamEngine = ({
             <p className="text-sm font-bold text-gray-900 mb-4">Assessment Description</p>
             <SpeakingMicCheck />
             <button
-              onClick={() => setPhase("instructions")}
+              onClick={() => { unlockAudio(); setPhase("instructions"); }}
               className="mt-6 bg-[#24085a] hover:bg-[#1a0640] text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Start Assessment
