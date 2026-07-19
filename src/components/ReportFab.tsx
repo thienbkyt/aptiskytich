@@ -90,6 +90,7 @@ export default function ReportFab() {
         report_category: "functional",
         page_url: getPageUrl(),
         device_info: getDeviceInfo(),
+        device_type: getDeviceType(),
         section: inferSectionFromPath(location.pathname),
       });
       if (error) throw error;
