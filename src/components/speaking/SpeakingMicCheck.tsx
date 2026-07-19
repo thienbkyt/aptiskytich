@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Mic, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { checkMicrophoneAccess } from "@/hooks/useAudioRecording";
+import { unlockAudio } from "@/lib/tts";
 
 const SpeakingMicCheck = () => {
   const [status, setStatus] = useState<"idle" | "checking" | "ok" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleCheck = async () => {
+    // Unlock audio playback on mobile — must run synchronously in a user gesture.
+    unlockAudio();
     setStatus("checking");
     const result = await checkMicrophoneAccess();
     if (result.ok) {

@@ -416,7 +416,7 @@ const Reading = () => {
                 skillName="Reading"
                 sets={fullSets}
                 loading={fullLoading}
-                onStart={handleStartFullPractice}
+                onStart={(set) => guard(set as any, () => handleStartFullPractice(set))}
                 isLocked={isLocked}
                 onLockedClick={(set) => guard(set, () => {})}
               />

@@ -8,7 +8,7 @@ import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
-import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
@@ -978,7 +978,7 @@ const SpeakingExamEngine = ({
             <SpeakingMicCheck />
           </div>
           <button
-            onClick={() => setPhase("instructions")}
+            onClick={() => { unlockAudio(); setPhase("instructions"); }}
             className="bg-[#2D1B69] text-white text-sm rounded-md px-6 py-2.5 hover:bg-[#1f1149] transition-colors"
           >
             Start Assessment
@@ -1003,7 +1003,7 @@ const SpeakingExamEngine = ({
             <p className="text-sm font-bold text-gray-900 mb-4">Assessment Description</p>
             <SpeakingMicCheck />
             <button
-              onClick={() => setPhase("instructions")}
+              onClick={() => { unlockAudio(); setPhase("instructions"); }}
               className="mt-6 bg-[#24085a] hover:bg-[#1a0640] text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Start Assessment
@@ -1034,7 +1034,7 @@ const SpeakingExamEngine = ({
         </div>
         <BottomNavBar
           onPrevious={() => setPhase("start")}
-          onNext={() => setPhase("prompt")}
+          onNext={() => { unlockAudio(); setPhase("prompt"); }}
           isFirst={false}
           isLast={false}
         />

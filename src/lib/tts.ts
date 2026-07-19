@@ -5,11 +5,44 @@ type Lang = "en" | "vi";
 // In-memory URL cache to avoid re-invoking the function for the same text
 const urlCache = new Map<string, string>();
 
+// Shared audio element unlocked by a real user gesture (iOS/Android require
+// the very first play() to originate from a synchronous user gesture — any
+// `await` before `new Audio().play()` loses that gesture and gets blocked).
+let sharedAudio: HTMLAudioElement | null = null;
+let sharedAudioUnlocked = false;
+
 // Track currently playing audio so a new speak() call cancels the previous one
 let currentAudio: HTMLAudioElement | null = null;
 // Monotonically increasing token — every new speak invocation gets a new one.
 // Any older callbacks compare against this and bail out if they're stale.
 let playToken = 0;
+
+/**
+ * MUST be called from a real user gesture (onClick) before the first TTS
+ * playback on mobile. Primes a shared <audio> element so subsequent
+ * asynchronous play() calls are allowed.
+ */
+export function unlockAudio() {
+  try {
+    if (!sharedAudio) sharedAudio = new Audio();
+    sharedAudio.muted = true;
+    // Tiny silent MP3 data URI — enough for Safari/Chrome mobile to mark the
+    // element as user-activated.
+    sharedAudio.src =
+      "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA";
+    const p = sharedAudio.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => {
+        try {
+          sharedAudio!.pause();
+          sharedAudio!.currentTime = 0;
+          sharedAudio!.muted = false;
+          sharedAudioUnlocked = true;
+        } catch { /* noop */ }
+      }).catch(() => { /* user hasn't clicked yet, ignore */ });
+    }
+  } catch { /* noop */ }
+}
 
 function cacheKey(text: string, lang: Lang) {
   return `${lang}::${text.trim().toLowerCase()}`;
@@ -38,6 +71,7 @@ function pickMaleVoice(lang: Lang): SpeechSynthesisVoice | null {
 }
 
 function browserFallback(text: string, lang: Lang, token: number): Promise<void> {
+  console.warn("[tts] fallback sang giọng máy");
   return new Promise((resolve) => {
     if (!("speechSynthesis" in window)) {
       resolve();
@@ -94,8 +128,12 @@ function stopCurrent() {
       currentAudio.onended = null;
       currentAudio.onerror = null;
       currentAudio.pause();
-      currentAudio.src = "";
-      currentAudio.load();
+      // Don't clear src on the shared element — that can invalidate the
+      // gesture unlock on some browsers. Just detach handlers.
+      if (currentAudio !== sharedAudio) {
+        currentAudio.src = "";
+        currentAudio.load();
+      }
     } catch {
       /* noop */
     }
@@ -108,6 +146,11 @@ function stopCurrent() {
       /* noop */
     }
   }
+}
+
+function ensureShared(): HTMLAudioElement {
+  if (!sharedAudio) sharedAudio = new Audio();
+  return sharedAudio;
 }
 
 /**
@@ -127,7 +170,9 @@ export async function speakWithTTS(text: string, lang: Lang): Promise<void> {
       await browserFallback(trimmed, lang, token);
       return;
     }
-    const audio = new Audio(url);
+    const audio = ensureShared();
+    audio.muted = false;
+    audio.src = url;
     currentAudio = audio;
     audio.play().catch(() => {
       if (token !== playToken) return;
@@ -169,7 +214,9 @@ export function speakAsync(text: string, lang: Lang): Promise<void> {
         return;
       }
 
-      const audio = new Audio(url);
+      const audio = ensureShared();
+      audio.muted = false;
+      audio.src = url;
       currentAudio = audio;
 
       audio.onended = () => {
@@ -199,4 +246,9 @@ export function speakAsync(text: string, lang: Lang): Promise<void> {
 /** Stop any TTS currently playing */
 export function stopTTS() {
   stopCurrent();
+}
+
+/** For diagnostics/tests. */
+export function isAudioUnlocked() {
+  return sharedAudioUnlocked;
 }
