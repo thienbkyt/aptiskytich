@@ -91,6 +91,7 @@ export default function ExamReportButton({
         report_category: category,
         page_url: getPageUrl(),
         device_info: getDeviceInfo(),
+        device_type: getDeviceType(),
       });
       if (error) throw error;
       toast.success("Đã gửi báo lỗi, cảm ơn bạn");
