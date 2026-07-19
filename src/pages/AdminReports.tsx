@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { deviceTypeFromUA, deviceLabelFromUA, type DeviceType } from "@/lib/deviceInfo";
 
 type ReportRow = {
   id: string;
