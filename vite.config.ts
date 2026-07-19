@@ -45,18 +45,6 @@ export default defineConfig(({ mode }) => ({
         // Don't precache index.html — always fetch fresh from network
         globIgnores: ["**/index.html", "**/exceljs-*.js", "**/recharts-*.js"],
         navigateFallback: null,
-        runtimeCaching: [
-          {
-            // Navigations / HTML documents: NetworkFirst so users get newest index.html
-            urlPattern: ({ request }) => request.mode === "navigate" || request.destination === "document",
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "html-cache",
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 },
-            },
-          },
-        ],
       },
     }),
   ].filter(Boolean),
