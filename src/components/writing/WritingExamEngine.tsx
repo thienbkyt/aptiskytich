@@ -128,7 +128,9 @@ const WritingExamEngine = ({
   useEffect(() => { setRevealed(false); }, [partType]);
 
   const { grading, isGrading, gradeExam, quotaExceeded } = useExamGrading();
-  const effectiveGrading = (gradingResult ?? grading) as WritingGradingResult | null;
+  const [v2Grading, setV2Grading] = useState<WritingGradingResult | null>(null);
+  const [v2Loading, setV2Loading] = useState(false);
+  const effectiveGrading = (gradingResult ?? v2Grading ?? grading) as WritingGradingResult | null;
 
   // Ensure exam-mode dark overrides apply during intro phase too
   // (intro screen renders no ExamHeader, so the body class wouldn't be set).
