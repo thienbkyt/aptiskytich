@@ -437,11 +437,11 @@ const WritingExamEngine = ({
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
           <WritingResults
-            isGrading={isGrading}
-            grading={grading as import("@/hooks/useExamGrading").WritingGradingResult | null}
+            isGrading={v2Loading || isGrading}
+            grading={(v2Grading ?? grading) as import("@/hooks/useExamGrading").WritingGradingResult | null}
             onExit={onExit}
             submission={submission}
-            onReview={!isGrading && grading ? () => setIsReviewing(true) : undefined}
+            onReview={!v2Loading && !isGrading && (v2Grading ?? grading) ? () => setIsReviewing(true) : undefined}
             quotaExceeded={quotaExceeded}
           />
         </div>
