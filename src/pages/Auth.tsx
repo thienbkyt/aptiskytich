@@ -59,12 +59,21 @@ const Auth = () => {
   const [forgotSentTo, setForgotSentTo] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Sanitize redirect target: only allow same-origin relative paths.
+  const redirectTarget = useMemo(() => {
+    const raw = searchParams.get("redirect");
+    if (!raw) return "/dashboard";
+    if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+    return raw;
+  }, [searchParams]);
+
   useEffect(() => {
-    if (user) navigate("/dashboard");
-  }, [user, navigate]);
+    if (user) navigate(redirectTarget, { replace: true });
+  }, [user, navigate, redirectTarget]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
