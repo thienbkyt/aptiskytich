@@ -358,7 +358,11 @@ const SpeakingExamEngine = ({
     })();
 
     if (questionText) {
-      await withTimeout(speakAsync(questionText), 15000);
+      try {
+        await withTimeout(speakAsync(questionText), 15000);
+      } catch {
+        /* Continue even if mobile audio is blocked. */
+      }
     }
     if (token !== flowTokenRef.current) {
       console.warn("[Speaking] flow aborted - stale token after speakAsync");
@@ -367,7 +371,11 @@ const SpeakingExamEngine = ({
 
     const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
-    await withTimeout(playBeep(), 1000);
+    try {
+      await withTimeout(playBeep(), 1000);
+    } catch {
+      /* Continue even if mobile audio is blocked. */
+    }
     if (token !== flowTokenRef.current) {
       console.warn("[Speaking] flow aborted - stale token after playBeep");
       return;
@@ -393,9 +401,11 @@ const SpeakingExamEngine = ({
           if (timerRef.current) clearInterval(timerRef.current);
           timerRef.current = null;
           // Beep right before recording starts (prep just ended)
-          withTimeout(playBeep(), 1000).then(() => {
-            startRecording();
-          });
+          withTimeout(playBeep(), 1000)
+            .catch(() => undefined)
+            .then(() => {
+              startRecording();
+            });
           return 0;
         }
         return prev - 1;
