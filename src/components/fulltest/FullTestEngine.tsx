@@ -1075,13 +1075,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         let testResultId: string | null = preTestResultId;
         if (preTestResultId) {
           try {
-            await supabase.from("test_results").update({
-              score: partScoreRounded,
-              total: partMaxRounded,
-              correct_answers: partScoreRounded,
-              review_snapshot: writingSnap as any,
-            } as any).eq("id", preTestResultId);
-          } catch (err) { console.warn("[FullTest v2] update pre-test_results failed", err); }
+            await supabase.rpc("finalize_skill_test_result", {
+              p_test_result_id: preTestResultId,
+              p_score: partScoreRounded,
+              p_total: partMaxRounded,
+              p_correct_answers: partScoreRounded,
+              p_review_snapshot: writingSnap as any,
+            } as any);
+          } catch (err) { console.warn("[FullTest v2] finalize pre-test_results failed", err); }
         } else {
           testResultId = await saveExamResult({
             examSetId: e.partId ?? null,
