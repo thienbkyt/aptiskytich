@@ -14,6 +14,8 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
+import { gradeWritingPartV2 } from "@/components/writing/writingGradingV2";
+import { toast } from "sonner";
 import type {
   WritingPart1Data,
   WritingPart2Data,
@@ -126,7 +128,9 @@ const WritingExamEngine = ({
   useEffect(() => { setRevealed(false); }, [partType]);
 
   const { grading, isGrading, gradeExam, quotaExceeded } = useExamGrading();
-  const effectiveGrading = (gradingResult ?? grading) as WritingGradingResult | null;
+  const [v2Grading, setV2Grading] = useState<WritingGradingResult | null>(null);
+  const [v2Loading, setV2Loading] = useState(false);
+  const effectiveGrading = (gradingResult ?? v2Grading ?? grading) as WritingGradingResult | null;
 
   // Ensure exam-mode dark overrides apply during intro phase too
   // (intro screen renders no ExamHeader, so the body class wouldn't be set).
@@ -238,15 +242,36 @@ const WritingExamEngine = ({
 
     const { text, questions } = getTextAndQuestions();
 
-    const result = await gradeExam({
-      type: "writing",
-      text,
-      questions,
-      partType,
-      testResultId: (trid as string | null) ?? null,
-      examSetId: examSetId ?? null,
-      partLabel: PART_LABELS[partType],
-    });
+    const partsArg =
+      partType === "task1" ? { shortAnswers }
+      : partType === "task3" ? { threeAnswers: part3Answers }
+      : partType === "task4" ? { informalText: informalAnswer, formalText: formalAnswer }
+      : undefined;
+
+    let result: WritingGradingResult | null = null;
+    setV2Loading(true);
+    try {
+      const v2 = await gradeWritingPartV2(partType, questions, text, partsArg, {
+        testResultId: (trid as string | null) ?? null,
+        examSetId: examSetId ?? null,
+      });
+      result = {
+        partType,
+        partScore: Math.round(Number(v2.rawPart) || 0),
+        maxPoints: 30,
+        addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0,
+        coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+        grammarErrors: (v2.grammarErrors as any) || [],
+        spellingErrors: (v2.spellingErrors as any) || [],
+        feedback: v2.feedback || v2.analysis || "",
+        improvedVersion: v2.improvedVersion || "",
+      };
+      setV2Grading(result);
+    } catch (e: any) {
+      toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
+    } finally {
+      setV2Loading(false);
+    }
 
     // Bake AI grading into the saved review_snapshot so History review is self-sufficient.
     try {
@@ -412,11 +437,11 @@ const WritingExamEngine = ({
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
           <WritingResults
-            isGrading={isGrading}
-            grading={grading as import("@/hooks/useExamGrading").WritingGradingResult | null}
+            isGrading={v2Loading || isGrading}
+            grading={(v2Grading ?? grading) as import("@/hooks/useExamGrading").WritingGradingResult | null}
             onExit={onExit}
             submission={submission}
-            onReview={!isGrading && grading ? () => setIsReviewing(true) : undefined}
+            onReview={!v2Loading && !isGrading && (v2Grading ?? grading) ? () => setIsReviewing(true) : undefined}
             quotaExceeded={quotaExceeded}
           />
         </div>
