@@ -8,7 +8,7 @@ import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
-import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
