@@ -6,7 +6,7 @@ import { Loader2, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { lovable } from "@/integrations/lovable";
+import { signInWithGoogle } from "@/lib/lovableOAuth";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Ctx {
@@ -69,15 +69,16 @@ export function LoginGateProvider({ children }: { children: ReactNode }) {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.href,
-    });
-    if (result.error) {
+    const result = await signInWithGoogle(window.location.href);
+    if ((result as any).redirected) return;
+    if ((result as any).error) {
       try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
       setGoogleLoading(false);
       toast.error("Đăng nhập Google thất bại.");
+      return;
     }
-    // If redirected, browser leaves the page. If tokens returned inline, useEffect above fires.
+    setGoogleLoading(false);
+    // Session set inline; useEffect above will fire the afterLogin callback.
   };
 
   return (
