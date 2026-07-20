@@ -115,7 +115,7 @@ function TechSkeletonStat() {
 function DashboardSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="pt-24 pb-20">
+      <div className="pt-[144px] md:pt-24 pb-20">
         <div className="section-container space-y-6">
           {/* Hero */}
           <TechSkeleton variant="hero" className="w-full" />
@@ -143,7 +143,7 @@ function DashboardSkeleton() {
 
 function HistorySkeleton() {
   return (
-    <div className="min-h-screen bg-background pt-24 pb-16">
+    <div className="min-h-screen bg-background pt-[144px] md:pt-24 pb-16">
       <div className="section-container space-y-6">
         <div className="flex items-center gap-3 mb-2">
           <TechSkeleton variant="circle" className="h-10 w-10" />
@@ -164,7 +164,7 @@ function HistorySkeleton() {
 function VocabStudySkeleton() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-[112px] md:pt-16">
         {/* Header */}
         <div className="relative overflow-hidden border-b border-border bg-card p-4">
           <div className="section-container flex items-center gap-4">
@@ -193,7 +193,7 @@ function VocabStudySkeleton() {
 function SkillVocabSkeleton() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-[112px] md:pt-16">
         {/* Header */}
         <div className="relative overflow-hidden border-b border-border py-10 md:py-14">
           <div className="section-container flex flex-col md:flex-row items-center gap-6">

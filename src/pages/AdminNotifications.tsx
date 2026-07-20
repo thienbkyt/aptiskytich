@@ -159,7 +159,7 @@ const AdminNotifications = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-24 pb-20">
+      <div className="pt-[144px] md:pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="flex items-center gap-3 mb-8">
             <Bell className="w-6 h-6 text-[#CC1C01]" />

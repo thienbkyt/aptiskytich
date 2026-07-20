@@ -794,7 +794,7 @@ const VocabListDetail = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-16 pb-28">
+      <main className="flex-1 pt-[112px] md:pt-16 pb-28">
         {/* Header */}
         <div className="border-b border-border bg-primary/5 dark:bg-primary/10">
           <div className="section-container py-5 flex items-center gap-4">

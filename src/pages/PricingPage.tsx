@@ -170,7 +170,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-24 pb-20">
+      <main className="pt-[144px] md:pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Hero */}
           <div className="text-center max-w-2xl mx-auto mb-10">
