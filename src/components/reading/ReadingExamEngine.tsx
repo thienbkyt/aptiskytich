@@ -118,6 +118,10 @@ const ReadingExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  useEffect(() => {
+    document.body.classList.add("exam-active");
+    return () => document.body.classList.remove("exam-active");
+  }, []);
   useExitWarning(hasStarted && !submitted && !reviewMode);
 
   // Reveal-on-demand for practice mode (per page key).
