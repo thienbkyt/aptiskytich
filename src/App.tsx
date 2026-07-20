@@ -174,7 +174,9 @@ const App = () => (
                 <VisitLogger />
                 <PostLoginFBGroupModal />
                 <DeviceSessionGuard />
+                <PostLoginMobileNotice />
               </LoginGateProvider>
+              </MobileNoticeProvider>
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>

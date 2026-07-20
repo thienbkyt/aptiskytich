@@ -5,6 +5,7 @@ import { useIsPro, tierRank, type UserTier } from "@/hooks/useIsPro";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useMobileNotice } from "@/components/common/MobileNoticeGate";
 
 interface MinimalSet {
   access_tier?: string | null;
@@ -25,15 +26,13 @@ export function useExamAccessGate() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { openMobileNotice } = useMobileNotice();
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
 
   const isLocked = useCallback(
     (set: MinimalSet | null | undefined) => {
       if (!set) return false;
-      // Fail-open while tier is still loading — don't show a lock for a paying
-      // user just because the RPC hasn't resolved yet. Server (grade-exam) is
-      // the source of truth.
       if (loading) return false;
       const req = normalizeTier(set.access_tier);
       return tierRank(tier) < tierRank(req);
@@ -43,17 +42,14 @@ export function useExamAccessGate() {
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void) => {
-      // Don't decide while auth session is still restoring — avoid bouncing
-      // an already-logged-in user to /auth on first paint.
       if (authLoading) return;
       if (!user) {
         const back = `${location.pathname}${location.search}`;
         navigate(`/auth?redirect=${encodeURIComponent(back)}`);
         return;
       }
-      // If tier is still loading, just let the action through; server enforces.
       if (loading) {
-        action();
+        openMobileNotice(() => action());
         return;
       }
       if (isLocked(set)) {
@@ -62,9 +58,9 @@ export function useExamAccessGate() {
         setOpen(true);
         return;
       }
-      action();
+      openMobileNotice(() => action());
     },
-    [isLocked, loading, user, authLoading, navigate, location.pathname, location.search],
+    [isLocked, loading, user, authLoading, navigate, location.pathname, location.search, openMobileNotice],
   );
 
   const LockModal = () => (
