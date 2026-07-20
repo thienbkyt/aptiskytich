@@ -97,13 +97,13 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 md:h-16 transition-all duration-300 ${
         scrolled
           ? "bg-background/95 backdrop-blur-md border-b border-primary/30 shadow-[0_4px_20px_-8px_hsl(var(--primary)/0.18)]"
           : "bg-background/80 backdrop-blur-sm border-b border-primary/20"
       }`}
     >
-      <div className="h-full max-w-[1440px] mx-auto px-4 lg:px-6 flex items-center gap-3">
+      <div className="h-16 md:h-full max-w-[1440px] mx-auto px-4 lg:px-6 flex items-center gap-3">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0 group">
           <img src={logoImg} alt="Aptis Kỳ Tích" width={40} height={40} className="h-10 w-10 px-0 pb-0 transition-transform duration-200 group-hover:scale-105" decoding="async" />
