@@ -53,7 +53,7 @@ export default function SupportChatFab() {
             <span className="w-7 h-7 rounded-full bg-[#0068FF] text-white flex items-center justify-center text-[10px] font-extrabold">
               Zalo
             </span>
-            Chat Zalo
+            Zalo
           </a>
           <a
             href={FB_URL}
@@ -64,7 +64,7 @@ export default function SupportChatFab() {
             <span className="w-7 h-7 rounded-full bg-[#1877F2] text-white flex items-center justify-center">
               <Facebook className="w-4 h-4" />
             </span>
-            Nhắn Facebook
+            Facebook
           </a>
         </div>
       )}
