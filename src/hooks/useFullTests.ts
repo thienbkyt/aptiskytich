@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { compareExamItems } from "@/lib/sortExamSets";
 
 export interface FullTestItem {
   fullTestId: string;
@@ -8,8 +9,10 @@ export interface FullTestItem {
   skillCount: number;
   isReady: boolean; // has all 5 skills
   category: "aptis" | "key" | null;
-  /** 'free' if ANY constituent published exam_set is free, else 'pro'. */
+  /** Most restrictive tier among constituent exam_sets (matches useSkillFullSets). */
   access_tier?: "free" | "pro" | "premium";
+  /** True if at least one constituent exam_set is currently within its new_until window. */
+  isNew?: boolean;
 }
 
 export type FullTestCategory = "aptis" | "key";
@@ -48,27 +51,30 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
       const setIds = Array.from(new Set((members || []).map((m) => m.exam_set_id)));
       const { data: sets } = await supabase
         .from("exam_sets")
-        .select("id, skill, is_published, access_tier")
+        .select("id, skill, is_published, access_tier, new_until")
         .in("id", setIds.length ? setIds : ["00000000-0000-0000-0000-000000000000"]);
 
-      const setSkillMap = new Map<string, { skill: string; published: boolean; tier: string }>();
+      const setSkillMap = new Map<string, { skill: string; published: boolean; tier: string; newUntil: string | null }>();
       for (const s of (sets || []) as any[]) {
-        setSkillMap.set(s.id, { skill: s.skill, published: s.is_published, tier: s.access_tier ?? "pro" });
+        setSkillMap.set(s.id, { skill: s.skill, published: s.is_published, tier: s.access_tier ?? "pro", newUntil: s.new_until ?? null });
       }
 
       const requiredSkills = ["speaking", "listening", "grammar_vocab", "reading", "writing"];
       const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
+      const now = Date.now();
       const result: FullTestItem[] = [];
       for (const ft of ftRows) {
         const memberIds = (members || []).filter((m) => m.full_test_id === ft.id).map((m) => m.exam_set_id);
         const skillsSet = new Set<string>();
-        let minTier: "free" | "pro" | "premium" = "premium";
+        let maxTier: "free" | "pro" | "premium" = "free";
+        let isNew = false;
         for (const sid of memberIds) {
           const info = setSkillMap.get(sid);
           if (info && info.published) {
             skillsSet.add(info.skill);
             const t = (info.tier === "free" || info.tier === "pro" || info.tier === "premium") ? info.tier : "pro";
-            if (rankT(t) < rankT(minTier)) minTier = t;
+            if (rankT(t) > rankT(maxTier)) maxTier = t;
+            if (info.newUntil && new Date(info.newUntil).getTime() > now) isNew = true;
           }
         }
         const skillArr = Array.from(skillsSet);
@@ -81,9 +87,14 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
           skillCount: skillArr.length,
           isReady,
           category: (ft.category as "aptis" | "key") ?? null,
-          access_tier: minTier,
+          access_tier: maxTier,
+          isNew,
         });
       }
+
+      result.sort((a, b) =>
+        compareExamItems({ title: a.title, access_tier: a.access_tier, isNew: a.isNew }, { title: b.title, access_tier: b.access_tier, isNew: b.isNew }),
+      );
 
       setTests(result);
       setLoading(false);
