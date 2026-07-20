@@ -344,7 +344,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-24 pb-20">
+      <div className="pt-[144px] md:pt-24 pb-20">
         <div className="section-container space-y-6">
 
           {/* HERO */}

@@ -303,7 +303,7 @@ const SkillPractice = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-[112px] md:pt-16">
         {/* ── Header ── */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 border-b border-border">
           <ParticlesBackground className="opacity-60" count={28} />

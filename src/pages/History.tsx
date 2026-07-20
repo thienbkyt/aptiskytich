@@ -374,7 +374,7 @@ const History = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-24 pb-16">
+      <main className="flex-1 pt-[144px] md:pt-24 pb-16">
         <div className="section-container">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">

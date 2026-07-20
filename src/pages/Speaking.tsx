@@ -173,7 +173,7 @@ const Speaking = () => {
       return (
         <div className="min-h-screen flex flex-col bg-background">
           <Navbar />
-          <main className="flex-1 pt-24 pb-20 flex items-center justify-center">
+          <main className="flex-1 pt-[144px] md:pt-24 pb-20 flex items-center justify-center">
             <div className="space-y-4 text-center">
               <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
               <TechSkeleton variant="text" className="w-32 mx-auto" />
@@ -199,7 +199,7 @@ const Speaking = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-[112px] md:pt-16">
         <section className="relative overflow-hidden border-b border-border bg-card">
           <ParticlesBackground className="opacity-60" count={28} />
           <GradientOrb tone="orange" size={420} className="-top-32 -right-24" />

@@ -210,7 +210,7 @@ const FullTestHistoryDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 pb-20 section-container"><TechSkeleton variant="card" className="h-64 w-full" /></div>
+        <div className="pt-[144px] md:pt-24 pb-20 section-container"><TechSkeleton variant="card" className="h-64 w-full" /></div>
       </div>
     );
   }
@@ -238,7 +238,7 @@ const FullTestHistoryDetail = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <main className="flex-1 pt-24 pb-16">
+      <main className="flex-1 pt-[144px] md:pt-24 pb-16">
         <div className="section-container max-w-4xl">
           <Link to="/history?skill=fulltest" className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-4">
             <ArrowLeft className="w-4 h-4" /> Quay lại lịch sử

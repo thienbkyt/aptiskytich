@@ -567,7 +567,7 @@ const BlogPostPage = () => {
 
       <Navbar />
 
-      <main className="pt-24 md:pt-28 pb-16">
+      <main className="pt-[144px] md:pt-24 md:pt-28 pb-16">
         {/* Breadcrumb */}
         <nav
           aria-label="Breadcrumb"

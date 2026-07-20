@@ -94,7 +94,7 @@ const GrammarVocabulary = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-[112px] md:pt-16">
         <section className="relative overflow-hidden border-b border-border bg-card">
           <ParticlesBackground className="opacity-60" count={28} />
           <GradientOrb tone="violet" size={420} className="-top-32 -right-24" />

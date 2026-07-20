@@ -97,7 +97,7 @@ const AdminPro = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-24 pb-20">
+      <div className="pt-[144px] md:pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl space-y-8">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
