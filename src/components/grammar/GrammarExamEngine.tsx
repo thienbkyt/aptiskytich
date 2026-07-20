@@ -21,6 +21,7 @@ import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
+import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 interface GrammarExamEngineProps {
   questions: Question[];
@@ -298,6 +299,7 @@ const GrammarExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        <RotateDeviceOverlay />
         {!reviewMode && !submitted && (
           <AdminExamControls
             label="Grammar · Hướng dẫn"
@@ -330,6 +332,7 @@ const GrammarExamEngine = ({
   if (phase === "grammar_intro") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        <RotateDeviceOverlay />
         {!reviewMode && !submitted && (
           <AdminExamControls
             label="Grammar · Bắt đầu"
@@ -377,6 +380,7 @@ const GrammarExamEngine = ({
     };
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <RotateDeviceOverlay />
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
           <GrammarResults
@@ -420,6 +424,7 @@ const GrammarExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <RotateDeviceOverlay />
       {phase === "practice" && !submitted && (
         <AdminExamControls
           label={`Grammar · Câu ${currentGroupIdx + 1}/${groups.length}`}

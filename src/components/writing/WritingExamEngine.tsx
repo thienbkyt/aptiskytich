@@ -17,6 +17,7 @@ import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGradin
 import { gradeWritingPartV2 } from "@/components/writing/writingGradingV2";
 import { toast } from "sonner";
 import type {
+import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
   WritingPart1Data,
   WritingPart2Data,
   WritingPart3Data,
@@ -347,6 +348,7 @@ const WritingExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white pl-20 pt-10 font-sans text-black">
+        <RotateDeviceOverlay />
         {adminControls}
         {hasStarted && (
           <div className="pr-10 pb-3">
@@ -379,6 +381,7 @@ const WritingExamEngine = ({
   if (phase === "writing_intro") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
         {hasStarted && (
@@ -434,6 +437,7 @@ const WritingExamEngine = ({
     })();
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <RotateDeviceOverlay />
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
           <WritingResults
@@ -453,6 +457,7 @@ const WritingExamEngine = ({
   return (
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
 
+      <RotateDeviceOverlay />
       {adminControls}
       {phase === "practice" && !submitted && !reviewMode && (
         <>

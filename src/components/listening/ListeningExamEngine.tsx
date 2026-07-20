@@ -22,6 +22,7 @@ import type {
 import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
 import type { ListeningHighlightData } from "@/lib/listeningReview";
 import { useExitWarning } from "@/hooks/useExitWarning";
+import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -407,6 +408,7 @@ const ListeningExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
@@ -428,6 +430,7 @@ const ListeningExamEngine = ({
   if (phase === "listening_intro") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         <div className="flex-1 bg-white pl-[80px] pr-[80px] pt-[40px] font-sans text-black">
@@ -464,6 +467,7 @@ const ListeningExamEngine = ({
   if (phase === "review" && showResultsOnSubmit && resultStats && !isReviewing) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <RotateDeviceOverlay />
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
           <ListeningResults
@@ -489,6 +493,7 @@ const ListeningExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <RotateDeviceOverlay />
       {adminControls}
       {!submitted && !reviewMode && (
         <ExamReportButton
