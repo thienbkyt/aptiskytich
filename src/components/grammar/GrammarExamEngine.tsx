@@ -82,6 +82,10 @@ const GrammarExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(false);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  useEffect(() => {
+    document.body.classList.add("exam-active");
+    return () => document.body.classList.remove("exam-active");
+  }, []);
   useExitWarning(hasStarted && !submitted && !reviewMode);
   // Reveal-on-demand for practice mode (keyed by group index).
   const [revealedGroups, setRevealedGroups] = useState<Set<number>>(new Set());

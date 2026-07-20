@@ -1,7 +1,5 @@
 import { MessageCircle, Facebook } from "lucide-react";
-
-const ZALO_URL = "https://zalo.me/0867833227";
-const FB_URL = "https://www.facebook.com/Aptiskytich";
+import { ZALO_URL, FB_URL } from "@/config/contact";
 
 interface Props {
   className?: string;

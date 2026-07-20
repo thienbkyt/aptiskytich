@@ -16,6 +16,7 @@ import RouteProgressBar from "@/components/layout/RouteProgressBar";
 
 import AICoachFab from "@/components/ai-coach/AICoachFab";
 import ReportFab from "@/components/ReportFab";
+import SupportChatFab from "@/components/support/SupportChatFab";
 import VisitLogger from "@/components/VisitLogger";
 import PostLoginFBGroupModal from "@/components/PostLoginFBGroupModal";
 import RequireAdmin from "@/components/auth/RequireAdmin";
@@ -171,6 +172,7 @@ const App = () => (
                 </Suspense>
                 <AICoachFab />
                 <ReportFab />
+                <SupportChatFab />
                 <VisitLogger />
                 <PostLoginFBGroupModal />
                 <DeviceSessionGuard />

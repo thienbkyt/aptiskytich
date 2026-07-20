@@ -206,6 +206,11 @@ const SpeakingExamEngine = ({
 
   // Image resolution is handled by <SignedImage /> directly.
 
+  useEffect(() => {
+    document.body.classList.add("exam-active");
+    return () => document.body.classList.remove("exam-active");
+  }, []);
+
   // Initialize recordings array
   useEffect(() => {
     const total = getTotalQuestions();

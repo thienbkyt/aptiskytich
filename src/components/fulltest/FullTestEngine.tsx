@@ -130,7 +130,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // Disable dictionary lookup & sentence translation while in Full Test
   useEffect(() => {
     document.body.classList.add("full-test-active");
-    return () => document.body.classList.remove("full-test-active");
+    document.body.classList.add("exam-active");
+    return () => {
+      document.body.classList.remove("full-test-active");
+      document.body.classList.remove("exam-active");
+    };
   }, []);
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];

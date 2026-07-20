@@ -103,6 +103,10 @@ const ListeningExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    document.body.classList.add("exam-active");
+    return () => document.body.classList.remove("exam-active");
+  }, []);
   // Reset reveal whenever partType changes (engine instance reused in full-flow).
   useEffect(() => { setRevealedIdx(new Set()); }, [partType]);
   const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedIdx.has(currentIndex);
