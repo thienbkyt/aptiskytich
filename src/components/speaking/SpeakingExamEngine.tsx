@@ -44,6 +44,7 @@ import {
 } from "./speakingGradingV2";
 
 import SpeakingProfileView from "./SpeakingProfileView";
+import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
@@ -950,6 +951,7 @@ const SpeakingExamEngine = ({
   if (phase === "start") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
+        <RotateDeviceOverlay />
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">
           <p className="text-sm text-gray-500 mb-2">Aptis General Practice Test</p>
@@ -985,6 +987,7 @@ const SpeakingExamEngine = ({
   if (phase === "mic-check") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <RotateDeviceOverlay />
         <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
           <div className="bg-white rounded-xl shadow-sm max-w-xl w-full p-8">
@@ -1011,6 +1014,7 @@ const SpeakingExamEngine = ({
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <RotateDeviceOverlay />
         <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
           <div className="bg-white rounded-xl shadow-sm max-w-3xl w-full p-8 md:p-12">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Aptis General Speaking Test Instructions</h2>
@@ -1067,6 +1071,7 @@ const SpeakingExamEngine = ({
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        <RotateDeviceOverlay />
         <SpeakingHeader partLabel="Speaking" partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 px-4 py-8">
           <div className="max-w-3xl mx-auto space-y-6">
@@ -1139,6 +1144,7 @@ const SpeakingExamEngine = ({
 
   return (
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <RotateDeviceOverlay />
       {micError && (
         <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center px-4">
           <div role="alertdialog" aria-modal="true" className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
