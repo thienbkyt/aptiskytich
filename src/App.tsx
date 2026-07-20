@@ -20,7 +20,11 @@ import VisitLogger from "@/components/VisitLogger";
 import PostLoginFBGroupModal from "@/components/PostLoginFBGroupModal";
 import RequireAdmin from "@/components/auth/RequireAdmin";
 import { LoginGateProvider } from "@/components/auth/LoginGate";
+import { MobileNoticeProvider, useMobileNotice } from "@/components/common/MobileNoticeGate";
 import useDeviceSession from "@/hooks/useDeviceSession";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useRef } from "react";
+import { getDeviceType } from "@/lib/deviceInfo";
 
 const Index = lazy(() => import("./pages/Index"));
 
@@ -85,6 +89,22 @@ const DeviceSessionGuard = () => {
   return null;
 };
 
+const PostLoginMobileNotice = () => {
+  const { user } = useAuth();
+  const { openMobileNotice } = useMobileNotice();
+  const prev = useRef<boolean>(!!user);
+  useEffect(() => {
+    const wasLoggedIn = prev.current;
+    const isLoggedIn = !!user;
+    prev.current = isLoggedIn;
+    if (!wasLoggedIn && isLoggedIn) {
+      const d = getDeviceType();
+      if (d === "mobile" || d === "tablet") openMobileNotice();
+    }
+  }, [user, openMobileNotice]);
+  return null;
+};
+
 const BlogSlugRedirect = () => {
   const { slug } = useParams();
   return <Navigate to={`/meo-thi-aptis/${slug ?? ""}`} replace />;
@@ -99,6 +119,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
+              <MobileNoticeProvider>
               <LoginGateProvider>
                 <RouteProgressBar />
                 <Suspense fallback={<PageLoadingSkeleton />}>
