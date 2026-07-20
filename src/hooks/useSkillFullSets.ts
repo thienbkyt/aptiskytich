@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { compareExamItems } from "@/lib/sortExamSets";
 
 export interface SkillFullSetItem {
   fullTestId: string;
@@ -10,6 +11,8 @@ export interface SkillFullSetItem {
   questionCount: number;
   /** Lowest tier of constituent exam_sets (most accessible). */
   access_tier?: "free" | "pro" | "premium";
+  /** True if at least one constituent exam_set is currently within its new_until window. */
+  isNew?: boolean;
 }
 
 
@@ -26,7 +29,7 @@ export const useSkillFullSets = (skill: string) => {
       // Full Test section, not to per-skill Full Part practice.
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier, question_count")
+        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier, question_count, new_until")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
@@ -37,8 +40,9 @@ export const useSkillFullSets = (skill: string) => {
 
       // Group by full_test_id
       // Full Part requires user to access ALL constituent parts → gate by MOST restrictive tier.
-      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string; qc: number }[]; maxTier: "free" | "pro" | "premium" }>();
+      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string; qc: number }[]; maxTier: "free" | "pro" | "premium"; isNew: boolean }>();
       const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
+      const now = Date.now();
       for (const row of data as any[]) {
         if (!row.full_test_id) continue;
         if (!grouped.has(row.full_test_id)) {
@@ -48,6 +52,7 @@ export const useSkillFullSets = (skill: string) => {
             ids: [],
             rows: [],
             maxTier: "free",
+            isNew: false,
           });
         }
         const g = grouped.get(row.full_test_id)!;
@@ -56,6 +61,7 @@ export const useSkillFullSets = (skill: string) => {
         g.rows.push({ id: row.id, part: row.part, qc: Number(row.question_count) || 0 });
         const rt = (row.access_tier === "free" || row.access_tier === "pro" || row.access_tier === "premium") ? row.access_tier : "pro";
         if (rankT(rt) > rankT(g.maxTier)) g.maxTier = rt;
+        if (row.new_until && new Date(row.new_until).getTime() > now) g.isNew = true;
       }
 
       const result: SkillFullSetItem[] = [];
@@ -79,18 +85,13 @@ export const useSkillFullSets = (skill: string) => {
           examSetIds: info.ids,
           questionCount,
           access_tier: info.maxTier,
+          isNew: info.isNew,
         });
       }
 
-      const numOf = (t: string) => {
-        const m = t.match(/\d+/);
-        return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
-      };
-      result.sort((a, b) => {
-        const na = numOf(a.title), nb = numOf(b.title);
-        if (na !== nb) return na - nb;
-        return a.title.localeCompare(b.title);
-      });
+      result.sort((a, b) =>
+        compareExamItems({ title: a.title, access_tier: a.access_tier, isNew: a.isNew }, { title: b.title, access_tier: b.access_tier, isNew: b.isNew }),
+      );
 
       return result;
 

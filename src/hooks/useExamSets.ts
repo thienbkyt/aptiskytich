@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { compareExamItems } from "@/lib/sortExamSets";
 
 export interface ExamSetRow {
   id: string;
@@ -74,22 +75,12 @@ export const useExamSets = (skill: string) => {
 
       if (error || !data) return [];
       const rows = data as unknown as ExamSetRow[];
-      const numOf = (t: string) => {
-        const m = t.match(/\d+/);
-        return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
-      };
-      rows.sort((a, b) => {
-        const aNew = isNewSet(a);
-        const bNew = isNewSet(b);
-        if (aNew && !bNew) return -1;
-        if (!aNew && bNew) return 1;
-        if (aNew && bNew) {
-          return new Date(b.new_until!).getTime() - new Date(a.new_until!).getTime();
-        }
-        const na = numOf(a.title), nb = numOf(b.title);
-        if (na !== nb) return na - nb;
-        return a.title.localeCompare(b.title);
-      });
+      rows.sort((a, b) =>
+        compareExamItems(
+          { title: a.title, access_tier: a.access_tier, isNew: isNewSet(a) },
+          { title: b.title, access_tier: b.access_tier, isNew: isNewSet(b) },
+        ),
+      );
       return rows;
     },
   });
