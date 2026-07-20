@@ -344,6 +344,7 @@ export type Database = {
           auth_email_ttl_minutes: number
           batch_size: number
           id: number
+          payment_emails_since: string | null
           retry_after_until: string | null
           send_delay_ms: number
           transactional_email_ttl_minutes: number
@@ -353,6 +354,7 @@ export type Database = {
           auth_email_ttl_minutes?: number
           batch_size?: number
           id?: number
+          payment_emails_since?: string | null
           retry_after_until?: string | null
           send_delay_ms?: number
           transactional_email_ttl_minutes?: number
@@ -362,6 +364,7 @@ export type Database = {
           auth_email_ttl_minutes?: number
           batch_size?: number
           id?: number
+          payment_emails_since?: string | null
           retry_after_until?: string | null
           send_delay_ms?: number
           transactional_email_ttl_minutes?: number
@@ -2219,6 +2222,7 @@ export type Database = {
         Args: { p_report_id: string }
         Returns: number
       }
+      send_subscription_reminder_emails: { Args: never; Returns: number }
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
       user_tier: { Args: { p_uid: string }; Returns: string }
