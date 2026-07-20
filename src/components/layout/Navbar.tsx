@@ -379,6 +379,39 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* ── Mobile: secondary nav row (2 primary entry points) ── */}
+      <div className="md:hidden grid grid-cols-2 gap-2 px-4 py-2 bg-background border-b border-border">
+        <Link
+          to="/thi-thu"
+          {...prefetchHandlers("/thi-thu")}
+          className={`min-h-[40px] flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold transition-colors ${
+            isActive("/thi-thu")
+              ? "bg-[#B01801] text-white"
+              : "bg-[#CC1C01] text-white hover:brightness-110"
+          }`}
+        >
+          <ClipboardCheck className="w-4 h-4" />
+          Thi thử
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            setMobileOpen(true);
+            setMobileSkillOpen(true);
+          }}
+          className={`min-h-[40px] flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold border transition-colors ${
+            isSkillActive
+              ? "bg-[#CC1C01]/10 border-[#CC1C01] text-[#CC1C01]"
+              : "border-[#CC1C01] text-[#CC1C01] hover:bg-[#CC1C01]/10"
+          }`}
+          aria-label="Mở menu luyện tập từng kỹ năng"
+        >
+          <BookOpen className="w-4 h-4" />
+          Luyện tập
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
       {/* ── Mobile menu ── */}
       <AnimatePresence>
         {mobileOpen && (
