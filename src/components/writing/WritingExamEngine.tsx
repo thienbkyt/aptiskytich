@@ -467,6 +467,31 @@ const WritingExamEngine = ({
     );
   }
 
+  const missingData =
+    (partType === "task1" && !part1Data?.questions?.length) ||
+    (partType === "task2" && !part2Data) ||
+    (partType === "task3" && !part3Data?.questions?.length) ||
+    (partType === "task4" && !part4Data);
+  if (phase === "practice" && !reviewMode && missingData) {
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <RotateDeviceOverlay />
+        <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-base text-foreground max-w-md">
+            Đề này chưa có dữ liệu câu hỏi. Vui lòng chọn đề khác hoặc báo lỗi cho admin.
+          </p>
+          <button
+            onClick={onExit}
+            className="bg-[#CC1C01] text-white rounded px-5 py-2.5 hover:opacity-90 transition"
+          >
+            Thoát
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const isLast = isLastPart ?? true;
   return (
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
