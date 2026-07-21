@@ -67,33 +67,50 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
+  // One navigator chip == one "màn hình câu hỏi" of a set.
+  // Reading Part 2 (Cohesion) paginates its two sections; every other part is a single page.
+  const pagesPerSet = partType === "part2" ? 2 : 1;
+
+  const isAnsweredVal = (v: any): boolean => {
+    if (v == null) return false;
+    if (typeof v === "number") return v >= 0;
+    if (typeof v === "string") return v !== "";
+    if (Array.isArray(v)) return v.length > 0;
+    if (typeof v === "object") return Object.keys(v).length > 0;
+    return !!v;
+  };
+
   const currentAnswered = useMemo(() => {
-    const count = (sets[currentIndex] as any)?.question_count ?? 0;
-    const out: boolean[] = new Array(count).fill(false);
+    const out: boolean[] = new Array(pagesPerSet).fill(false);
     try {
       const key = partType === "part1" ? "p1" : partType === "part2" ? "p2" : partType === "part3" ? "p3" : "p4";
       const bag = currentAnswers?.[key];
-      const isAnswered = (v: any): boolean => {
-        if (v == null) return false;
-        if (typeof v === "number") return v >= 0;
-        if (typeof v === "string") return v !== "";
-        if (Array.isArray(v)) return v.length > 0;
-        if (typeof v === "object") return Object.keys(v).length > 0;
-        return !!v;
-      };
-      if (Array.isArray(bag)) {
-        for (let i = 0; i < Math.min(count, bag.length); i++) {
-          if (isAnswered(bag[i])) out[i] = true;
+      if (partType === "part2") {
+        // p2 is an array of Record<number,string> keyed by section.
+        if (Array.isArray(bag)) {
+          for (let i = 0; i < pagesPerSet; i++) out[i] = isAnsweredVal(bag[i]);
         }
-      } else if (bag && typeof bag === "object") {
-        // e.g. placements keyed by index
-        for (let i = 0; i < count; i++) {
-          if (isAnswered(bag[i]) || isAnswered(bag[String(i)])) out[i] = true;
-        }
+      } else {
+        const anyAns = Array.isArray(bag)
+          ? bag.some(isAnsweredVal)
+          : (bag && typeof bag === "object" ? Object.values(bag).some(isAnsweredVal) : false);
+        out[0] = !!anyAns;
       }
     } catch { /* noop */ }
     return out;
-  }, [currentAnswers, currentIndex, sets, partType]);
+  }, [currentAnswers, partType, pagesPerSet]);
+
+  // Collapse engine's per-question locked array into chip-sized (pagesPerSet) form.
+  const chipLocked = useMemo(() => {
+    const out: boolean[] = new Array(pagesPerSet).fill(false);
+    if (!currentLocked || currentLocked.length === 0) return out;
+    if (partType === "part2") {
+      for (let i = 0; i < pagesPerSet; i++) out[i] = !!currentLocked[i];
+    } else {
+      out[0] = currentLocked.length > 0 && currentLocked.every(Boolean);
+    }
+    return out;
+  }, [currentLocked, partType, pagesPerSet]);
 
 
   const accCorrect = useMemo(
