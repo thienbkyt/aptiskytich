@@ -74,7 +74,7 @@ const ReadingPart4Long = ({
   });
 
   const handleSelect = (paragraphArrayIdx: number, headingIdx: number) => {
-    if (reveal) return;
+    if (revealFor(paragraphArrayIdx)) return;
     onAnswer(paragraphArrayIdx, headingIdx);
     setOpenDropdown(null);
   };
