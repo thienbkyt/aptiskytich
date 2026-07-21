@@ -520,7 +520,7 @@ const Reading = () => {
                               }))}
                               className="gap-1.5 font-semibold"
                             >
-                              Làm lại đề có câu sai ({wrongCount})
+                              Làm lại câu sai ({wrongCount})
                             </Button>
                           )}
                         </div>
