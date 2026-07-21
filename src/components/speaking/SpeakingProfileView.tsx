@@ -182,7 +182,11 @@ const SpeakingProfileView = ({
               )}
             </div>
 
-            {it.audioUrl && (
+            {it.audioUrl === "__EXPIRED__" ? (
+              <p className="text-xs text-gray-500 italic leading-relaxed">
+                Bản ghi âm đã hết hạn lưu trữ (7 ngày). Điểm, nhận xét và transcript vẫn được giữ đầy đủ.
+              </p>
+            ) : it.audioUrl && (
               <audio controls src={it.audioUrl} className="w-full h-9" preload="metadata" />
             )}
 
