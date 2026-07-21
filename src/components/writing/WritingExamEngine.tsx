@@ -170,9 +170,14 @@ const WritingExamEngine = ({
 
   const getTextAndQuestions = (): { text: string; questions: string[] } => {
     if (partType === "task1" && part1Data) {
+      const qs = part1Data.questions || [];
       return {
-        text: shortAnswers.map((a, i) => `Q${i + 1}: ${part1Data.questions[i].text}\nA: ${a}`).join("\n\n"),
-        questions: part1Data.questions.map(q => q.text),
+        text: shortAnswers
+          .map((a, i) => ({ a, t: qs[i]?.text ?? "" }))
+          .filter((x) => x.t)
+          .map((x, i) => `Q${i + 1}: ${x.t}\nA: ${x.a}`)
+          .join("\n\n"),
+        questions: qs.map((q) => q?.text ?? "").filter(Boolean),
       };
     }
     if (partType === "task2" && part2Data) {
@@ -182,9 +187,14 @@ const WritingExamEngine = ({
       };
     }
     if (partType === "task3" && part3Data) {
+      const qs = part3Data.questions || [];
       return {
-        text: part3Answers.map((a, i) => `Q${i + 1}: ${part3Data.questions[i].text}\nA: ${a}`).join("\n\n"),
-        questions: part3Data.questions.map(q => q.text),
+        text: part3Answers
+          .map((a, i) => ({ a, t: qs[i]?.text ?? "" }))
+          .filter((x) => x.t)
+          .map((x, i) => `Q${i + 1}: ${x.t}\nA: ${x.a}`)
+          .join("\n\n"),
+        questions: qs.map((q) => q?.text ?? "").filter(Boolean),
       };
     }
     if (partType === "task4" && part4Data) {
