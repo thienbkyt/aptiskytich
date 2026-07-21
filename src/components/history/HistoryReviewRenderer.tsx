@@ -34,9 +34,17 @@ interface Props {
   pageTotal?: number;
   initialSection?: number;
   onPageCount?: (n: number) => void;
+  /** Optional override for the review timer (defaults to skill-standard). */
+  timeLimit?: number;
+  /** Marathon review: hide countdown timer in the underlying engine. */
+  hideTimer?: boolean;
+  /** Marathon review: hide the bottom navigation bar. */
+  hideBottomNav?: boolean;
+  /** Marathon review: suppress the "← Quay lại kết quả" header button. */
+  hideBackToResults?: boolean;
 }
 
-const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection, onPageCount }: Props) => {
+const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection, onPageCount, timeLimit, hideTimer, hideBottomNav, hideBackToResults }: Props) => {
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(null);
   const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
 
@@ -228,9 +236,10 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       else if (pt === "part4") init.p4 = saved.answers;
     }
     const props: any = {
-      partType: pt, testTitle, timeLimit: 1800,
+      partType: pt, testTitle, timeLimit: timeLimit ?? 1800,
       onExit, reviewMode: true, initialAnswers: init,
       pageBase, pageTotal, initialSection, examSetId,
+      hideTimer, hideBottomNav, hideBackToResults,
     };
     if (pt === "part1") props.part1Question = toReadingPart1(rows);
     if (pt === "part2") props.part2Question = toReadingPart2(rows);

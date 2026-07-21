@@ -186,7 +186,6 @@ const MarathonNavigator = ({
                     "w-[26px] h-[26px] rounded text-[11px] font-semibold transition-colors",
                     cls,
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
-                    !isDone && !isCurrent && "opacity-45",
                     "cursor-pointer",
                   )}
                   title={`Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}

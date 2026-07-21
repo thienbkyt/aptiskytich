@@ -98,6 +98,10 @@ interface ReadingExamEngineProps {
   hideBottomNav?: boolean;
   /** Marathon: notifies parent of per-question locked flags for current part. */
   onLockedChange?: (locked: boolean[]) => void;
+  /** Marathon review: hide the "← Quay lại kết quả" header button and keep Thoát confirm. */
+  hideBackToResults?: boolean;
+  /** Notifies parent whenever the active section index changes (Part 2). */
+  onSectionChange?: (i: number) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -116,6 +120,8 @@ const ReadingExamEngine = ({
   marathonLock = false,
   hideBottomNav = false,
   onLockedChange,
+  hideBackToResults = false,
+  onSectionChange,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
@@ -212,6 +218,12 @@ const ReadingExamEngine = ({
   useEffect(() => {
     if (initialSection != null) setCurrentIndex(initialSection);
   }, [initialSection]);
+
+  // Notify parent whenever the active section changes.
+  useEffect(() => {
+    onSectionChange?.(currentIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
 
   // Marathon: emit lockedIndices for the current part.
   const currentLockedSet = partType === "part1" ? lockedP1
@@ -644,7 +656,7 @@ const ReadingExamEngine = ({
         partLabel={partLabel}
         onExit={onExit}
         onMarathonFinish={onMarathonFinish}
-        onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
+        onBackToResults={!hideBackToResults && isReviewing ? () => setIsReviewing(false) : undefined}
       />
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
