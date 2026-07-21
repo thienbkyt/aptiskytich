@@ -22,7 +22,7 @@ const TimerDisplay = ({ timeLeft: timeLeftProp, totalTime: totalTimeProp }: Time
 
   return (
     <div className="exam-timer-display text-right">
-      <div className="font-heading text-2xl font-extrabold text-foreground tracking-wider leading-none">
+      <div className="font-heading text-2xl font-extrabold text-foreground tracking-wider leading-none tabular-nums inline-block min-w-[9ch]">
         {formatTime(timeLeft)}
       </div>
       <div className="text-[11px] text-muted-foreground mt-0.5">Time remaining</div>
