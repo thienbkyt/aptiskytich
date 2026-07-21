@@ -338,7 +338,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     }
   }
 
-  const qCounts = sets.map((_, i) => results[i]?.total);
+  // Chips per set = section count (pagesPerSet). Matches user's "1..60" expectation for Part 2+3.
+  const qCounts = sets.map(() => pagesPerSet);
 
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
