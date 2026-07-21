@@ -325,7 +325,11 @@ const Listening = () => {
         <div className="min-h-screen flex flex-col bg-background">
           <Navbar />
           <main className="flex-1 pt-[144px] md:pt-24 pb-20 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              <Button variant="outline" size="sm" className="mt-6" onClick={handleExit}>Thoát</Button>
+            </div>
+
           </main>
         </div>
       );
