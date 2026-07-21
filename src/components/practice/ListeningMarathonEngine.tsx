@@ -60,6 +60,10 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     return base;
   });
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+  const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
+  const [jumpQ, setJumpQ] = useState<number | null>(null);
+  const isRetryMode = !!wrongQuestionIdsBySet;
+
 
   const accCorrect = useMemo(
     () => results.reduce((sum, r) => sum + (r?.correct ?? 0), 0),
