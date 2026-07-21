@@ -345,15 +345,17 @@ const ReadingPart2Cohesion = ({
         </motion.div>
       </AnimatePresence>
 
-      <BottomNavBar
-        onPrevious={!isFirst ? goPrevSection : onPrevious}
-        onNext={!isLast ? goNextSection : (!submitted ? onSubmit : undefined)}
-        onSubmit={undefined}
-        isFirst={false}
-        isLast={false}
-        sections={sections}
-        onSubmitTest={onSubmitTest}
-      />
+      {!hideBottomNav && (
+        <BottomNavBar
+          onPrevious={!isFirst ? goPrevSection : onPrevious}
+          onNext={!isLast ? goNextSection : (!submitted ? onSubmit : undefined)}
+          onSubmit={undefined}
+          isFirst={false}
+          isLast={false}
+          sections={sections}
+          onSubmitTest={onSubmitTest}
+        />
+      )}
     </div>
   );
 };
