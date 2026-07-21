@@ -71,6 +71,8 @@ interface ListeningExamEngineProps {
   enterAtLastQuestion?: boolean;
   reviewScopeNote?: string;
   onMarathonFinish?: () => void;
+  /** Marathon: bump to force submit the current in-progress set. */
+  submitSignal?: number;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
