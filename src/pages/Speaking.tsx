@@ -122,17 +122,31 @@ const Speaking = () => {
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as SpeakingPartType;
     setExam({ active: true, partType, testTitle: set.title, loadingExam: true, skipIntro: opts?.skipIntro ?? false, ...( { examSetId: set.id } as any) });
-    const questions = await fetchExamQuestions(set.id);
-    const sourceQuestionIds = questions.map((q: any) => q.id);
-    let engineData: any = { sourceQuestionIds };
-    switch (partType) {
-      case "part1": engineData.part1Data = toSpeakingPart1(questions); break;
-      case "part2": engineData.part2Data = toSpeakingPart2(questions); break;
-      case "part3": engineData.part3Data = toSpeakingPart3(questions); break;
-      case "part4": engineData.part4Data = toSpeakingPart4(questions); break;
+    try {
+      const questions = await fetchExamQuestions(set.id);
+      if (!questions || questions.length === 0) {
+        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+        setExam({ active: false, partType: "part1", testTitle: "", loadingExam: false });
+        return;
+      }
+      const sourceQuestionIds = questions.map((q: any) => q.id);
+      let engineData: any = { sourceQuestionIds };
+      switch (partType) {
+        case "part1": engineData.part1Data = toSpeakingPart1(questions); break;
+        case "part2": engineData.part2Data = toSpeakingPart2(questions); break;
+        case "part3": engineData.part3Data = toSpeakingPart3(questions); break;
+        case "part4": engineData.part4Data = toSpeakingPart4(questions); break;
+      }
+      setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
+    } catch (e) {
+      console.error("[Speaking.handleStartFromDB] failed", e);
+      toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      setExam({ active: false, partType: "part1", testTitle: "", loadingExam: false });
+    } finally {
+      setExam((prev) => (prev.loadingExam ? { ...prev, loadingExam: false } : prev));
     }
-    setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };
+
 
   const handleRandomPractice = () => {
     if (examSets.length > 0) {
