@@ -121,11 +121,11 @@ const WritingExamEngine = ({
   }, [partType]);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
-    initialAnswers?.shortAnswers ?? new Array(part1Data?.questions.length || 5).fill("")
+    initialAnswers?.shortAnswers ?? new Array(part1Data?.questions?.length ?? 0).fill("")
   );
   const [textAnswer, setTextAnswer] = useState(initialAnswers?.textAnswer ?? "");
   const [part3Answers, setPart3Answers] = useState<string[]>(
-    initialAnswers?.part3Answers ?? new Array(part3Data?.questions.length || 3).fill("")
+    initialAnswers?.part3Answers ?? new Array(part3Data?.questions?.length ?? 0).fill("")
   );
   const [informalAnswer, setInformalAnswer] = useState(initialAnswers?.informalAnswer ?? "");
   const [formalAnswer, setFormalAnswer] = useState(initialAnswers?.formalAnswer ?? "");
