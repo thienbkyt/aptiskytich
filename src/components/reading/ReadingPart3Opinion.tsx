@@ -29,6 +29,10 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideTimer?: boolean;
+  /** Marathon: per-statement locked/graded set. */
+  lockedIndices?: Set<number>;
+  /** Marathon: hide the BottomNavBar. */
+  hideBottomNav?: boolean;
 }
 
 const ReadingPart3Opinion = ({
@@ -37,8 +41,11 @@ const ReadingPart3Opinion = ({
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
   pageNumber, pageTotal, hideTimer = false,
+  lockedIndices, hideBottomNav = false,
 }: Props) => {
-  const reveal = submitted || !!revealAnswers;
+  const globallyRevealed = submitted || !!revealAnswers;
+  const revealFor = (si: number) => globallyRevealed || (lockedIndices?.has(si) ?? false);
+  const reveal = globallyRevealed || (lockedIndices && lockedIndices.size > 0);
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
@@ -137,8 +144,9 @@ const ReadingPart3Opinion = ({
       <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
         {question.statements.map((stmt, si) => {
           const selected = answers[si];
-          const isCorrect = reveal && selected === stmt.correctPerson;
-          const isWrong = reveal && selected !== null && selected !== stmt.correctPerson;
+          const revealHere = revealFor(si);
+          const isCorrect = revealHere && selected === stmt.correctPerson;
+          const isWrong = revealHere && selected !== null && selected !== stmt.correctPerson;
 
           return (
             <div key={si} data-question-index={si} className="flex items-center gap-3 flex-wrap">
@@ -151,13 +159,13 @@ const ReadingPart3Opinion = ({
                 <select
                   value={selected !== null && selected !== undefined ? selected : ""}
                   onChange={(e) => {
-                    if (reveal) return;
+                    if (revealHere) return;
                     const val = e.target.value;
                     if (val !== "") onAnswer(si, Number(val));
                   }}
-                  disabled={reveal}
+                  disabled={revealHere}
                   className={`appearance-none rounded-lg border-2 px-3 py-2 pr-8 text-sm font-medium min-w-[140px] bg-white transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
-                    reveal
+                    revealHere
                       ? isCorrect
                         ? "border-green-500 bg-green-50 text-green-700"
                         : isWrong
@@ -176,8 +184,8 @@ const ReadingPart3Opinion = ({
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-muted-foreground" />
               </div>
 
-              {reveal && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />}
-              {reveal && selected !== stmt.correctPerson && (
+              {revealHere && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />}
+              {revealHere && selected !== stmt.correctPerson && (
                 <div className="flex items-center gap-1 shrink-0">
                   <XCircle className="w-5 h-5 text-red-500" />
                   <span className="text-xs text-green-600 font-medium">
@@ -201,16 +209,18 @@ const ReadingPart3Opinion = ({
         </motion.div>
       )}
 
-      <BottomNavBar
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onSubmit={onSubmit}
-        isFirst={isFirst}
-        isLast={isLast}
-        submitLabel="Submit"
-        sections={sections}
-        onSubmitTest={onSubmitTest}
-      />
+      {!hideBottomNav && (
+        <BottomNavBar
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSubmit={onSubmit}
+          isFirst={isFirst}
+          isLast={isLast}
+          submitLabel="Submit"
+          sections={sections}
+          onSubmitTest={onSubmitTest}
+        />
+      )}
     </div>
   );
 };

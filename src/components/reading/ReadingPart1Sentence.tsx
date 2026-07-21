@@ -27,6 +27,10 @@ interface Props {
   hideTimer?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  /** Marathon: per-gap locked/graded set. When set, each gap in it is treated as revealed and locked. */
+  lockedIndices?: Set<number>;
+  /** Marathon: hide the BottomNavBar. */
+  hideBottomNav?: boolean;
 }
 
 const ReadingPart1Sentence = ({
@@ -36,8 +40,11 @@ const ReadingPart1Sentence = ({
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
   pageNumber, pageTotal,
+  lockedIndices, hideBottomNav = false,
 }: Props) => {
-  const reveal = submitted || !!revealAnswers;
+  const globallyRevealed = submitted || !!revealAnswers;
+  const revealFor = (gi: number) => globallyRevealed || (lockedIndices?.has(gi) ?? false);
+  const anyRevealed = globallyRevealed || (lockedIndices && lockedIndices.size > 0);
 
   const usedGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
     .map(m => Number(m[1]))
@@ -66,6 +73,7 @@ const ReadingPart1Sentence = ({
         }
 
         const selectedValue = answers[gapIndex];
+        const reveal = revealFor(gapIndex);
         const isCorrect = reveal && selectedValue === gap.correct;
         const isWrong = reveal && selectedValue !== null && selectedValue !== undefined && selectedValue !== gap.correct;
 
@@ -149,7 +157,7 @@ const ReadingPart1Sentence = ({
         <p className="text-base font-bold text-foreground mb-8">{question.instruction}</p>
         {renderPassage()}
 
-        {reveal && (
+        {anyRevealed && (
           <div className="mt-10 border-t border-border pt-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-foreground">Đáp án &amp; dịch nghĩa</p>
@@ -165,7 +173,7 @@ const ReadingPart1Sentence = ({
                   .map(m => Number(m[1]))
                   .filter(idx => question.gaps[idx]);
                 // Skip the first gap — it's the "done for you" example.
-                const scoredGapIdx = allGapIdx.slice(1);
+                const scoredGapIdx = allGapIdx.slice(1).filter((gi) => revealFor(gi));
                 return scoredGapIdx.map((gi, displayIdx) => {
                   const g = question.gaps[gi];
                   const userVal = answers[gi];
@@ -215,16 +223,18 @@ const ReadingPart1Sentence = ({
         )}
       </div>
 
-      <BottomNavBar
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onSubmit={onSubmit}
-        isFirst={isFirst}
-        isLast={isLast}
-        submitLabel="Submit"
-        sections={sections}
-        onSubmitTest={onSubmitTest}
-      />
+      {!hideBottomNav && (
+        <BottomNavBar
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSubmit={onSubmit}
+          isFirst={isFirst}
+          isLast={isLast}
+          submitLabel="Submit"
+          sections={sections}
+          onSubmitTest={onSubmitTest}
+        />
+      )}
     </div>
   );
 };

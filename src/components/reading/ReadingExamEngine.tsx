@@ -92,6 +92,12 @@ interface ReadingExamEngineProps {
   onMarathonFinish?: () => void;
   /** Marathon: bump to force submit the current in-progress set. */
   submitSignal?: number;
+  /** Marathon: auto-lock/grade each question upon answering (per-question mode). */
+  marathonLock?: boolean;
+  /** Marathon: hide the BottomNavBar (navigation happens via the marathon sidebar). */
+  hideBottomNav?: boolean;
+  /** Marathon: notifies parent of per-question locked flags for current part. */
+  onLockedChange?: (locked: boolean[]) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -107,9 +113,16 @@ const ReadingExamEngine = ({
   reviewScopeNote,
   onMarathonFinish,
   submitSignal,
+  marathonLock = false,
+  hideBottomNav = false,
+  onLockedChange,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
+  const [lockedP1, setLockedP1] = useState<Set<number>>(new Set());
+  const [lockedP2, setLockedP2] = useState<Set<number>>(new Set());
+  const [lockedP3, setLockedP3] = useState<Set<number>>(new Set());
+  const [lockedP4, setLockedP4] = useState<Set<number>>(new Set());
   const computedPageNumber = pageBase != null
     ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
     : undefined;
@@ -199,6 +212,38 @@ const ReadingExamEngine = ({
   useEffect(() => {
     if (initialSection != null) setCurrentIndex(initialSection);
   }, [initialSection]);
+
+  // Marathon: emit lockedIndices for the current part.
+  const currentLockedSet = partType === "part1" ? lockedP1
+    : partType === "part2" ? lockedP2
+    : partType === "part3" ? lockedP3
+    : lockedP4;
+  useEffect(() => {
+    if (!onLockedChange) return;
+    const totalQ = partType === "part1" ? (part1Question?.gaps.length || 0)
+      : partType === "part2" ? part2SectionCount
+      : partType === "part3" ? (part3Question?.statements.length || 0)
+      : (part4Question?.paragraphs?.length || part4Question?.questions.length || 0);
+    const arr = new Array(totalQ).fill(false);
+    currentLockedSet.forEach((i) => { if (i >= 0 && i < totalQ) arr[i] = true; });
+    onLockedChange(arr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLockedSet, partType, part2SectionCount]);
+
+  // Marathon Part 2: lock the section we're leaving whenever currentIndex changes.
+  const prevSectionRef = (globalThis as any).React ? null : null; // placeholder to keep TS calm
+  useEffect(() => {
+    if (!marathonLock || partType !== "part2") return;
+    // Locks the section we WERE on when it changes.
+    const prev = currentIndex;
+    return () => {
+      setLockedP2((s) => {
+        if (s.has(prev)) return s;
+        const n = new Set(s); n.add(prev); return n;
+      });
+    };
+  }, [currentIndex, marathonLock, partType]);
+
 
 
   // Panel "questions": for part2 each section = 1 question; others = per item.
@@ -426,20 +471,27 @@ const ReadingExamEngine = ({
   // Stable answer handlers (functional setState → no answer-array deps → not recreated on timer tick).
   const onAnswerP1 = useCallback((gi: number, val: number) => {
     if (submitted) return;
+    if (marathonLock && lockedP1.has(gi)) return;
     setP1Answers((prev) => { const n = [...prev]; n[gi] = val; return n; });
-  }, [submitted]);
+    if (marathonLock) setLockedP1((s) => { const n = new Set(s); n.add(gi); return n; });
+  }, [submitted, marathonLock, lockedP1]);
   const onAnswerP3 = useCallback((si: number, pi: number) => {
     if (submitted) return;
+    if (marathonLock && lockedP3.has(si)) return;
     setP3Answers((prev) => { const n = [...prev]; n[si] = pi; return n; });
-  }, [submitted]);
+    if (marathonLock) setLockedP3((s) => { const n = new Set(s); n.add(si); return n; });
+  }, [submitted, marathonLock, lockedP3]);
   const onAnswerP4 = useCallback((pIdx: number, val: number) => {
     if (submitted) return;
+    if (marathonLock && lockedP4.has(pIdx)) return;
     setP4Answers((prev) => { const n = [...prev]; n[pIdx] = val; return n; });
-  }, [submitted]);
+    if (marathonLock) setLockedP4((s) => { const n = new Set(s); n.add(pIdx); return n; });
+  }, [submitted, marathonLock, lockedP4]);
   const onPlacementsChangeP2 = useCallback((sIdx: number, p: Record<number, string>) => {
     if (submitted) return;
+    if (marathonLock && lockedP2.has(sIdx)) return;
     setP2Placements((prev) => prev.map((x, i) => (i === sIdx ? p : x)));
-  }, [submitted]);
+  }, [submitted, marathonLock, lockedP2]);
   const onSectionChangeP2 = useCallback((i: number) => setCurrentIndex(i), []);
   const onToggleBookmarkCurrent = useCallback(() => toggleBookmark(currentIndex), [toggleBookmark, currentIndex]);
   const onPart1Next = useCallback(() => { if (!submitted) handleSubmit(); }, [submitted, handleSubmit]);
@@ -614,6 +666,8 @@ const ReadingExamEngine = ({
             hideTimer={hideTimer}
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
+            lockedIndices={lockedP1}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -636,6 +690,8 @@ const ReadingExamEngine = ({
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
             hideTimer={hideTimer}
+            lockedSections={lockedP2}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -659,6 +715,8 @@ const ReadingExamEngine = ({
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
             hideTimer={hideTimer}
+            lockedIndices={lockedP3}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -680,6 +738,8 @@ const ReadingExamEngine = ({
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
             hideTimer={hideTimer}
+            lockedIndices={lockedP4}
+            hideBottomNav={hideBottomNav}
           />
         )}
       </div>

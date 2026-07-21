@@ -27,6 +27,10 @@ interface Props {
   reviewData?: ReadingReviewData | null;
   reviewDataLoading?: boolean;
   hideTimer?: boolean;
+  /** Marathon: per-paragraph locked/graded set. */
+  lockedIndices?: Set<number>;
+  /** Marathon: hide the BottomNavBar. */
+  hideBottomNav?: boolean;
 }
 
 const ReadingPart4Long = ({
@@ -35,8 +39,10 @@ const ReadingPart4Long = ({
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
+  lockedIndices, hideBottomNav = false,
 }: Props) => {
-  const reveal = submitted || !!revealAnswers;
+  const globallyRevealed = submitted || !!revealAnswers;
+  const revealFor = (pIdx: number) => globallyRevealed || (lockedIndices?.has(pIdx) ?? false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +74,7 @@ const ReadingPart4Long = ({
   });
 
   const handleSelect = (paragraphArrayIdx: number, headingIdx: number) => {
-    if (reveal) return;
+    if (revealFor(paragraphArrayIdx)) return;
     onAnswer(paragraphArrayIdx, headingIdx);
     setOpenDropdown(null);
   };
@@ -108,6 +114,7 @@ const ReadingPart4Long = ({
         {paragraphs.map((para, pIdx) => {
           const selected = answers[pIdx];
           const correctHeadingIdx = correctMap[pIdx];
+          const reveal = revealFor(pIdx);
           const isCorrect = reveal && selected === correctHeadingIdx;
           const isWrong = reveal && selected !== null && selected !== correctHeadingIdx;
 
@@ -211,16 +218,18 @@ const ReadingPart4Long = ({
       </div>
 
 
-      <BottomNavBar
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onSubmit={onSubmit}
-        isFirst={isFirst}
-        isLast={isLast}
-        submitLabel="Submit"
-        sections={sections}
-        onSubmitTest={onSubmitTest}
-      />
+      {!hideBottomNav && (
+        <BottomNavBar
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSubmit={onSubmit}
+          isFirst={isFirst}
+          isLast={isLast}
+          submitLabel="Submit"
+          sections={sections}
+          onSubmitTest={onSubmitTest}
+        />
+      )}
     </div>
   );
 };

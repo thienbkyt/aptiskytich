@@ -20,6 +20,8 @@ interface Props {
   currentQ?: number;
   /** Per-question answered flags for the CURRENT (in-progress) set. */
   currentAnswered?: boolean[];
+  /** Per-question locked/graded flags for the CURRENT set (marathon per-question grading). */
+  currentLocked?: boolean[];
   isRetryMode?: boolean;
   /** Enable in-set chip jump for the current set. */
   allowJumpInCurrent?: boolean;
@@ -31,7 +33,7 @@ interface Props {
 
 const MarathonNavigator = ({
   sets, results, currentIndex, qCounts,
-  currentQ, currentAnswered,
+  currentQ, currentAnswered, currentLocked,
   isRetryMode, allowJumpInCurrent = true,
   onReview, onJumpQuestion, onEnterSet,
 }: Props) => {
@@ -151,6 +153,7 @@ const MarathonNavigator = ({
 
               let state: "done" | "answered" | "empty" = "empty";
               if (isDone) state = "done";
+              else if (isCurrent && currentLocked?.[qi]) state = "done";
               else if (isCurrent && currentAnswered?.[qi]) state = "answered";
 
               const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;

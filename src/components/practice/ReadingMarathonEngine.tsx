@@ -60,9 +60,10 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [jumpQ, setJumpQ] = useState<number | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<any>(null);
   const [submitSignal, setSubmitSignal] = useState(0);
+  const [currentLocked, setCurrentLocked] = useState<boolean[]>([]);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
 
-  useEffect(() => { setCurrentAnswers(null); }, [currentIndex, attempt]);
+  useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); }, [currentIndex, attempt]);
 
   const currentAnswered = useMemo(() => {
     const count = (sets[currentIndex] as any)?.question_count ?? 0;
@@ -354,36 +355,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     else if (partType === "part4") initialAnswers.p4 = saved;
   }
 
-  if (midReview) {
-    const r = results[midReview.setIndex];
-    if (r) {
-      return (
-        <div className="min-h-screen bg-background">
-          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-            <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-              <Button size="sm" variant="outline" onClick={() => setMidReview(null)}>
-                Quay lại đề đang làm
-              </Button>
-              <span className="text-xs text-muted-foreground truncate">
-                Xem lại · Đề {midReview.setIndex + 1}
-              </span>
-            </div>
-          </div>
-          <HistoryReviewRenderer
-            examSetId={r.examSetId}
-            skill="reading"
-            part={r.part}
-            testTitle={`Đề ${midReview.setIndex + 1}`}
-            qResults={r.qResults}
-            onExit={() => setMidReview(null)}
-            pageBase={0}
-            pageTotal={pagesPerSet}
-            initialSection={Math.min(midReview.qIndex, pagesPerSet - 1)}
-          />
-        </div>
-      );
-    }
-  }
+  const midReviewEntry = midReview ? results[midReview.setIndex] : null;
+
+
 
   // Use exam_sets.question_count as authoritative per-set chip count.
   const qCounts = sets.map((s: any) => {
@@ -394,34 +368,52 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
       <div className="flex-1 min-w-0">
-        <ReadingExamEngine
-          key={`${attempt}-${currentIndex}`}
-          partType={partType}
-          testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
-          timeLimit={HUGE_TIME}
-          hideTimer
-          skipIntro
-          allowReveal
-          reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
-          showResultsOnSubmit={false}
-          onExit={onExit}
-          onComplete={handleComplete}
-          onMarathonFinish={() => setPhase("completed")}
-          onPreviousPart={() => {
-            if (currentIndex > 0) {
-              setEnterAtLast(true);
-              setCurrentIndex((i) => i - 1);
-            }
-          }}
-          enterAtLastQuestion={enterAtLast}
-          initialAnswers={initialAnswers}
-          onAnswersChange={(a) => setCurrentAnswers(a)}
-          pageBase={currentIndex * pagesPerSet}
-          pageTotal={sets.length * pagesPerSet}
-          initialSection={jumpQ ?? undefined}
-          submitSignal={submitSignal}
-          {...engineData}
-        />
+        {midReviewEntry ? (
+          <HistoryReviewRenderer
+            key={`mid-${midReview!.setIndex}-${midReview!.qIndex}`}
+            examSetId={midReviewEntry.examSetId}
+            skill="reading"
+            part={midReviewEntry.part}
+            testTitle={`Đề ${midReview!.setIndex + 1}`}
+            qResults={midReviewEntry.qResults}
+            onExit={() => setMidReview(null)}
+            pageBase={0}
+            pageTotal={pagesPerSet}
+            initialSection={Math.min(midReview!.qIndex, pagesPerSet - 1)}
+          />
+        ) : (
+          <ReadingExamEngine
+            key={`${attempt}-${currentIndex}`}
+            partType={partType}
+            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+            timeLimit={HUGE_TIME}
+            hideTimer
+            skipIntro
+            allowReveal={false}
+            reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
+            showResultsOnSubmit={false}
+            onExit={onExit}
+            onComplete={handleComplete}
+            onMarathonFinish={() => setPhase("completed")}
+            onPreviousPart={() => {
+              if (currentIndex > 0) {
+                setEnterAtLast(true);
+                setCurrentIndex((i) => i - 1);
+              }
+            }}
+            enterAtLastQuestion={enterAtLast}
+            initialAnswers={initialAnswers}
+            onAnswersChange={(a) => setCurrentAnswers(a)}
+            pageBase={currentIndex * pagesPerSet}
+            pageTotal={sets.length * pagesPerSet}
+            initialSection={jumpQ ?? undefined}
+            submitSignal={submitSignal}
+            marathonLock
+            hideBottomNav
+            onLockedChange={setCurrentLocked}
+            {...engineData}
+          />
+        )}
       </div>
       <MarathonNavigator
         sets={sets}
@@ -429,10 +421,12 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         currentIndex={currentIndex}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
+        currentLocked={currentLocked}
         isRetryMode={isRetryMode}
         allowJumpInCurrent={partType !== "part1"}
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
+          if (midReview) setMidReview(null);
           const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
           setJumpQ(clamped);
           setTimeout(() => setJumpQ(null), 0);
@@ -441,6 +435,14 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           try {
             if (si < 0 || si >= sets.length) return;
             const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+            if (midReview) {
+              setMidReview(null);
+              setEnterAtLast(false);
+              setJumpQ(clamped);
+              setCurrentIndex(si);
+              setTimeout(() => setJumpQ(null), 0);
+              return;
+            }
             const hasAnyAnswer = currentAnswered.some(Boolean);
             if (hasAnyAnswer) {
               // Auto-submit the current in-progress set, then jump.
