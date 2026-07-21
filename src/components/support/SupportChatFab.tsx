@@ -73,7 +73,7 @@ export default function SupportChatFab() {
         onClick={() => setOpen((v) => !v)}
         aria-label="Liên hệ hỗ trợ"
         aria-expanded={open}
-        className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full text-white shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+        className={`w-12 h-12 min-w-[48px] min-h-[48px] rounded-full text-white shadow-xl flex items-center justify-center ${!open ? "animate-support-fab-beat" : ""}`}
         style={{ backgroundColor: BRAND }}
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
