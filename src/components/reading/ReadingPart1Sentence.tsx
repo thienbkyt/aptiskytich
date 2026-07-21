@@ -223,16 +223,18 @@ const ReadingPart1Sentence = ({
         )}
       </div>
 
-      <BottomNavBar
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onSubmit={onSubmit}
-        isFirst={isFirst}
-        isLast={isLast}
-        submitLabel="Submit"
-        sections={sections}
-        onSubmitTest={onSubmitTest}
-      />
+      {!hideBottomNav && (
+        <BottomNavBar
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSubmit={onSubmit}
+          isFirst={isFirst}
+          isLast={isLast}
+          submitLabel="Submit"
+          sections={sections}
+          onSubmitTest={onSubmitTest}
+        />
+      )}
     </div>
   );
 };
