@@ -120,6 +120,8 @@ const ReadingExamEngine = ({
   marathonLock = false,
   hideBottomNav = false,
   onLockedChange,
+  hideBackToResults = false,
+  onSectionChange,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
