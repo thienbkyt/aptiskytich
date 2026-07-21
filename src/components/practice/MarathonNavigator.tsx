@@ -62,9 +62,15 @@ const MarathonNavigator = ({
   // Global position of the active question.
   const currentGlobal = useMemo(() => {
     let base = 0;
-    for (let i = 0; i < currentIndex; i++) {
-      base += results[i]?.qResults?.length ?? qCounts?.[i] ?? 0;
-    }
+    try {
+      for (let i = 0; i < currentIndex; i++) {
+        const done = results[i]?.qResults?.length;
+        const planned = qCounts?.[i];
+        base += (typeof done === "number" && done > 0)
+          ? done
+          : (typeof planned === "number" && planned > 0 ? planned : 0);
+      }
+    } catch { /* noop */ }
     return base + (currentQ ?? 0);
   }, [currentIndex, currentQ, results, qCounts]);
 
