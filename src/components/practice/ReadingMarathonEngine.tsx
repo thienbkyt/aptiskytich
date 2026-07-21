@@ -20,6 +20,7 @@ interface Props {
   onExit: () => void;
   resume?: boolean;
   persist?: boolean;
+  isRetryMode?: boolean;
 }
 
 type Phase = "loading" | "exam" | "completed";
