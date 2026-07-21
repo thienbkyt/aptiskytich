@@ -140,11 +140,25 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const nextResults = results.slice();
     nextResults[currentIndex] = entry;
     const isLastSet = currentIndex >= sets.length - 1;
-    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    // Prefer a pending navigator jump when present, else advance sequentially.
+    const pending = pendingJumpRef.current;
+    pendingJumpRef.current = null;
+    const nextIndex = pending
+      ? Math.max(0, Math.min(pending.si, sets.length - 1))
+      : (isLastSet ? currentIndex : currentIndex + 1);
     setResults(nextResults);
     if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
-    if (!isLastSet) { setEnterAtLast(false); setCurrentIndex(nextIndex); }
-    else setPhase("completed");
+    if (pending) {
+      setEnterAtLast(false);
+      setJumpQ(pending.qi);
+      setTimeout(() => setJumpQ(null), 0);
+      setCurrentIndex(nextIndex);
+    } else if (!isLastSet) {
+      setEnterAtLast(false);
+      setCurrentIndex(nextIndex);
+    } else {
+      setPhase("completed");
+    }
   }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
