@@ -61,7 +61,15 @@ export const useAudioRecording = ({
     setMicError(null);
     setIsRequestingMic(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
       setIsRequestingMic(false);
       const pickMime = () => {
         const c = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];

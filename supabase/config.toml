@@ -17,4 +17,6 @@ project_id = "bacoamhbatqpxatrrflz"
     verify_jwt = true
   [functions.cleanup-old-recordings]
     verify_jwt = true
+  [functions.cleanup-recordings]
+    verify_jwt = false
 

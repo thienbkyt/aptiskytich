@@ -130,8 +130,13 @@ const SpeakingReviewPage = ({
           if (cached) return cached;
           const { data: s } = await supabase.storage
             .from("speaking-recordings").createSignedUrl(r.audio_url, 3600);
-          if (s?.signedUrl) setCached(r.id, s.signedUrl);
-          return s?.signedUrl ?? null;
+          if (s?.signedUrl) {
+            setCached(r.id, s.signedUrl);
+            return s.signedUrl;
+          }
+          // Row exists but file is gone → mark as expired so UI can show the
+          // "hết hạn lưu trữ" notice instead of a broken player.
+          return "__EXPIRED__";
         }),
       );
 

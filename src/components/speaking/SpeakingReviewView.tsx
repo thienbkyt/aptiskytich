@@ -160,7 +160,11 @@ const SpeakingReviewView = ({
         <div className="w-[340px] shrink-0 space-y-3">
           <div className="bg-white rounded-xl shadow-sm p-4">
             <p className="text-xs font-semibold text-muted-foreground mb-2">Bài ghi âm của bạn</p>
-            {audioUrl ? (
+            {audioUrl === "__EXPIRED__" ? (
+              <p className="text-xs text-gray-500 italic leading-relaxed">
+                Bản ghi âm đã hết hạn lưu trữ (7 ngày). Điểm, nhận xét và transcript vẫn được giữ đầy đủ.
+              </p>
+            ) : audioUrl ? (
               <audio controls src={audioUrl} className="w-full h-9" />
             ) : (
               <p className="text-xs text-muted-foreground italic">Không có bài ghi âm cho câu này.</p>
