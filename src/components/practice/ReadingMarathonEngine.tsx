@@ -355,36 +355,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     else if (partType === "part4") initialAnswers.p4 = saved;
   }
 
-  if (midReview) {
-    const r = results[midReview.setIndex];
-    if (r) {
-      return (
-        <div className="min-h-screen bg-background">
-          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-            <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-              <Button size="sm" variant="outline" onClick={() => setMidReview(null)}>
-                Quay lại đề đang làm
-              </Button>
-              <span className="text-xs text-muted-foreground truncate">
-                Xem lại · Đề {midReview.setIndex + 1}
-              </span>
-            </div>
-          </div>
-          <HistoryReviewRenderer
-            examSetId={r.examSetId}
-            skill="reading"
-            part={r.part}
-            testTitle={`Đề ${midReview.setIndex + 1}`}
-            qResults={r.qResults}
-            onExit={() => setMidReview(null)}
-            pageBase={0}
-            pageTotal={pagesPerSet}
-            initialSection={Math.min(midReview.qIndex, pagesPerSet - 1)}
-          />
-        </div>
-      );
-    }
-  }
+  const midReviewEntry = midReview ? results[midReview.setIndex] : null;
+
+
 
   // Use exam_sets.question_count as authoritative per-set chip count.
   const qCounts = sets.map((s: any) => {
