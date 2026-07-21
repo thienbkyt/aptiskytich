@@ -54,6 +54,7 @@ const ReadingPart2Cohesion = ({
   };
   const [dragging, setDragging] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState<string | null>(null);
+  const reveal = globallyRevealed || (lockedSections?.has(currentSection) ?? false);
 
   // Clear selection when switching section or when reveal
   useEffect(() => { setSelectedText(null); }, [currentSection, reveal]);
