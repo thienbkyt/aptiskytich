@@ -14,10 +14,31 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Auth: cron secret OR admin JWT
+  // Auth: cron secret (from vault via service role, or env fallback) OR admin JWT
   const cronHeader = req.headers.get("x-cron-secret");
-  const cronSecret = Deno.env.get("CRON_SECRET");
-  const isCron = !!cronHeader && !!cronSecret && cronHeader === cronSecret;
+  let isCron = false;
+  if (cronHeader) {
+    const envSecret = Deno.env.get("CRON_SECRET");
+    if (envSecret && cronHeader === envSecret) {
+      isCron = true;
+    } else {
+      try {
+        const svc = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        );
+        const { data } = await (svc as any)
+          .schema("vault")
+          .from("decrypted_secrets")
+          .select("decrypted_secret")
+          .eq("name", "cleanup_recordings_cron_secret")
+          .maybeSingle();
+        if (data?.decrypted_secret && cronHeader === data.decrypted_secret) {
+          isCron = true;
+        }
+      } catch { /* ignore, fall through */ }
+    }
+  }
   if (!isCron) {
     const auth = await requireAdmin(req, corsHeaders);
     if (auth instanceof Response) return auth;
