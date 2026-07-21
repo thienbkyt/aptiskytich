@@ -190,17 +190,31 @@ const Listening = () => {
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ListeningPartType;
     setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now(), skipIntro: opts?.skipIntro ?? false }));
-    const questions = await fetchExamQuestions(set.id);
-    const sourceQuestionIds = questions.map((q: any) => q.id);
-    let engineData: any = { sourceQuestionIds };
-    switch (partType) {
-      case "part1": engineData.part1Questions = toListeningPart1(questions); break;
-      case "part2": engineData.part2Questions = toListeningPart2(questions); break;
-      case "part3": engineData.part3Questions = toListeningPart3(questions); break;
-      case "part4": engineData.part4Questions = toListeningPart4(questions); break;
+    try {
+      const questions = await fetchExamQuestions(set.id);
+      if (!questions || questions.length === 0) {
+        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+        setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
+        return;
+      }
+      const sourceQuestionIds = questions.map((q: any) => q.id);
+      let engineData: any = { sourceQuestionIds };
+      switch (partType) {
+        case "part1": engineData.part1Questions = toListeningPart1(questions); break;
+        case "part2": engineData.part2Questions = toListeningPart2(questions); break;
+        case "part3": engineData.part3Questions = toListeningPart3(questions); break;
+        case "part4": engineData.part4Questions = toListeningPart4(questions); break;
+      }
+      setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
+    } catch (e) {
+      console.error("[Listening.handleStartFromDB] failed", e);
+      toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
+    } finally {
+      setExam((prev) => (prev.loadingExam ? { ...prev, loadingExam: false } : prev));
     }
-    setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };
+
 
   const handleRandomPractice = () => {
     if (examSets.length > 0) {
