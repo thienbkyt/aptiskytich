@@ -92,6 +92,12 @@ interface ReadingExamEngineProps {
   onMarathonFinish?: () => void;
   /** Marathon: bump to force submit the current in-progress set. */
   submitSignal?: number;
+  /** Marathon: auto-lock/grade each question upon answering (per-question mode). */
+  marathonLock?: boolean;
+  /** Marathon: hide the BottomNavBar (navigation happens via the marathon sidebar). */
+  hideBottomNav?: boolean;
+  /** Marathon: notifies parent of per-question locked flags for current part. */
+  onLockedChange?: (locked: boolean[]) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
