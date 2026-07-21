@@ -153,6 +153,7 @@ const MarathonNavigator = ({
 
               let state: "done" | "answered" | "empty" = "empty";
               if (isDone) state = "done";
+              else if (isCurrent && currentLocked?.[qi]) state = "done";
               else if (isCurrent && currentAnswered?.[qi]) state = "answered";
 
               const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;
