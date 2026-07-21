@@ -380,6 +380,23 @@ body.history-review-mode .exam-light-bottom-bar {
     animation: spin 18s linear infinite;
   }
 
+  @keyframes support-fab-beat {
+    0%, 55%, 100% { transform: scale(1); }
+    12%, 36% { transform: scale(1.14); }
+    24%, 48% { transform: scale(1); }
+  }
+  .animate-support-fab-beat {
+    animation: support-fab-beat 2.6s ease-in-out infinite;
+  }
+  .animate-support-fab-beat:hover {
+    animation-play-state: paused;
+    transform: scale(1.05);
+  }
+  .animate-support-fab-beat:active {
+    animation-play-state: paused;
+    transform: scale(0.95);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-breathing,
     .animate-border-beam,
@@ -388,7 +405,8 @@ body.history-review-mode .exam-light-bottom-bar {
     .animate-grid-drift,
     .animate-spin-slow,
     .animate-glow-pulse,
-    .animate-float {
+    .animate-float,
+    .animate-support-fab-beat {
       animation: none !important;
     }
   }
