@@ -14,8 +14,8 @@ interface Props {
   sets: { id: string }[];
   results: (MarathonResult | undefined)[];
   currentIndex: number;
-  /** Chip count per set (authoritative; used for both done and pending sets). */
-  qCounts?: (number | undefined)[];
+  /** Authoritative chip count per set (from exam_sets.question_count). */
+  qCounts?: (number | undefined | null)[];
   /** Active question index within the current in-progress set (0-based). */
   currentQ?: number;
   isRetryMode?: boolean;
@@ -23,23 +23,34 @@ interface Props {
   allowJumpInCurrent?: boolean;
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
+  /** Switch marathon to a future (not-yet-done) set at the given question index. */
+  onEnterFutureSet?: (setIndex: number, questionIndex: number) => void;
 }
 
 const MarathonNavigator = ({
   sets, results, currentIndex, qCounts,
   currentQ,
   isRetryMode, allowJumpInCurrent = true,
-  onReview, onJumpQuestion,
+  onReview, onJumpQuestion, onEnterFutureSet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [onlyWrong, setOnlyWrong] = useState(false);
 
-  // Flatten all chips: global index -> { si, qi }
+  // Flatten all chips: global index -> { si, qi }. Skips sets with missing/0 count.
   const flat = useMemo(() => {
     const out: { si: number; qi: number }[] = [];
-    for (let si = 0; si < sets.length; si++) {
-      const count = results[si]?.qResults?.length ?? qCounts?.[si] ?? 0;
-      for (let qi = 0; qi < count; qi++) out.push({ si, qi });
+    try {
+      for (let si = 0; si < sets.length; si++) {
+        const done = results[si]?.qResults?.length;
+        const planned = qCounts?.[si];
+        const raw = (typeof done === "number" && done > 0)
+          ? done
+          : (typeof planned === "number" && planned > 0 ? planned : 0);
+        const count = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+        for (let qi = 0; qi < count; qi++) out.push({ si, qi });
+      }
+    } catch {
+      return [];
     }
     return out;
   }, [sets.length, results, qCounts]);
