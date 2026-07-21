@@ -483,6 +483,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         results={results as any}
         currentIndex={currentIndex}
         qCounts={qCounts}
+        currentAnswered={currentAnswered}
         isRetryMode={isRetryMode}
         allowJumpInCurrent
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
