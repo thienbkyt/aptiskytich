@@ -14,8 +14,8 @@ interface Props {
   sets: { id: string }[];
   results: (MarathonResult | undefined)[];
   currentIndex: number;
-  /** Chip count per set (authoritative; used for both done and pending sets). */
-  qCounts?: (number | undefined)[];
+  /** Authoritative chip count per set (from exam_sets.question_count). */
+  qCounts?: (number | undefined | null)[];
   /** Active question index within the current in-progress set (0-based). */
   currentQ?: number;
   isRetryMode?: boolean;
@@ -23,23 +23,34 @@ interface Props {
   allowJumpInCurrent?: boolean;
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
+  /** Switch marathon to a future (not-yet-done) set at the given question index. */
+  onEnterFutureSet?: (setIndex: number, questionIndex: number) => void;
 }
 
 const MarathonNavigator = ({
   sets, results, currentIndex, qCounts,
   currentQ,
   isRetryMode, allowJumpInCurrent = true,
-  onReview, onJumpQuestion,
+  onReview, onJumpQuestion, onEnterFutureSet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [onlyWrong, setOnlyWrong] = useState(false);
 
-  // Flatten all chips: global index -> { si, qi }
+  // Flatten all chips: global index -> { si, qi }. Skips sets with missing/0 count.
   const flat = useMemo(() => {
     const out: { si: number; qi: number }[] = [];
-    for (let si = 0; si < sets.length; si++) {
-      const count = results[si]?.qResults?.length ?? qCounts?.[si] ?? 0;
-      for (let qi = 0; qi < count; qi++) out.push({ si, qi });
+    try {
+      for (let si = 0; si < sets.length; si++) {
+        const done = results[si]?.qResults?.length;
+        const planned = qCounts?.[si];
+        const raw = (typeof done === "number" && done > 0)
+          ? done
+          : (typeof planned === "number" && planned > 0 ? planned : 0);
+        const count = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+        for (let qi = 0; qi < count; qi++) out.push({ si, qi });
+      }
+    } catch {
+      return [];
     }
     return out;
   }, [sets.length, results, qCounts]);
@@ -51,9 +62,15 @@ const MarathonNavigator = ({
   // Global position of the active question.
   const currentGlobal = useMemo(() => {
     let base = 0;
-    for (let i = 0; i < currentIndex; i++) {
-      base += results[i]?.qResults?.length ?? qCounts?.[i] ?? 0;
-    }
+    try {
+      for (let i = 0; i < currentIndex; i++) {
+        const done = results[i]?.qResults?.length;
+        const planned = qCounts?.[i];
+        base += (typeof done === "number" && done > 0)
+          ? done
+          : (typeof planned === "number" && planned > 0 ? planned : 0);
+      }
+    } catch { /* noop */ }
     return base + (currentQ ?? 0);
   }, [currentIndex, currentQ, results, qCounts]);
 
@@ -143,9 +160,6 @@ const MarathonNavigator = ({
               const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;
               const dim = onlyWrong && !(isDone && state === "wrong");
 
-              const clickable =
-                isDone || (isCurrent && allowJumpInCurrent && !!onJumpQuestion);
-
               const cls =
                 state === "correct"
                   ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
@@ -158,10 +172,17 @@ const MarathonNavigator = ({
                   key={gi}
                   id={`marathon-nav-chip-${gi}`}
                   type="button"
-                  disabled={!clickable}
                   onClick={() => {
-                    if (isDone) onReview(si, qi);
-                    else if (isCurrent && allowJumpInCurrent) onJumpQuestion?.(qi);
+                    try {
+                      if (si < 0 || si >= sets.length) return;
+                      if (isDone) {
+                        onReview(si, qi);
+                      } else if (isCurrent) {
+                        if (allowJumpInCurrent) onJumpQuestion?.(qi);
+                      } else if (isFuture) {
+                        onEnterFutureSet?.(si, qi);
+                      }
+                    } catch { /* swallow to keep exam alive */ }
                   }}
                   className={cn(
                     "w-[26px] h-[26px] rounded text-[11px] font-semibold border transition-colors",
@@ -169,7 +190,7 @@ const MarathonNavigator = ({
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
                     dim && "opacity-25",
                     isFuture && !isDone && "opacity-45",
-                    !clickable && "cursor-not-allowed",
+                    "cursor-pointer",
                   )}
                   title={`Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
                 >

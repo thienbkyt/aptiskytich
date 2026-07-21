@@ -415,7 +415,13 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     }
   }
 
-  const qCounts = loaded.map((l) => l?.pageCount);
+  // Authoritative per-set chip count: prefer exam_sets.question_count; fall back to loaded pageCount.
+  const qCounts = sets.map((s: any, i) => {
+    const qc = typeof s?.question_count === "number" ? s.question_count : null;
+    if (qc && qc > 0) return qc;
+    const lc = loaded?.[i]?.pageCount;
+    return typeof lc === "number" && lc > 0 ? lc : undefined;
+  });
 
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
@@ -461,9 +467,21 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         allowJumpInCurrent
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
-          setJumpQ(qi);
+          const max = Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1;
+          setJumpQ(Math.max(0, Math.min(qi, max)));
           // reset shortly after so future clicks on same index still work
           setTimeout(() => setJumpQ(null), 0);
+        }}
+        onEnterFutureSet={(si, qi) => {
+          try {
+            if (si < 0 || si >= sets.length) return;
+            const max = Math.max(1, loaded[si]?.pageCount ?? 1) - 1;
+            const clamped = Math.max(0, Math.min(qi, max));
+            setEnterAtLast(false);
+            setJumpQ(clamped);
+            setCurrentIndex(si);
+            setTimeout(() => setJumpQ(null), 0);
+          } catch { /* noop */ }
         }}
       />
     </div>

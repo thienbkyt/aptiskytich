@@ -338,8 +338,11 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     }
   }
 
-  // Chips per set = section count (pagesPerSet). Matches user's "1..60" expectation for Part 2+3.
-  const qCounts = sets.map(() => pagesPerSet);
+  // Use exam_sets.question_count as authoritative per-set chip count.
+  const qCounts = sets.map((s: any) => {
+    const n = typeof s?.question_count === "number" ? s.question_count : null;
+    return n && n > 0 ? n : undefined;
+  });
 
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
@@ -380,8 +383,19 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         allowJumpInCurrent={partType !== "part1"}
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
-          setJumpQ(qi);
+          const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+          setJumpQ(clamped);
           setTimeout(() => setJumpQ(null), 0);
+        }}
+        onEnterFutureSet={(si, qi) => {
+          try {
+            if (si < 0 || si >= sets.length) return;
+            const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+            setEnterAtLast(false);
+            setJumpQ(clamped);
+            setCurrentIndex(si);
+            setTimeout(() => setJumpQ(null), 0);
+          } catch { /* noop */ }
         }}
       />
     </div>
