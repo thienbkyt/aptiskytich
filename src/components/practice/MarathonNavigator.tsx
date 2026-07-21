@@ -190,7 +190,7 @@ const MarathonNavigator = ({
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
                     dim && "opacity-25",
                     isFuture && !isDone && "opacity-45",
-                    !clickable && "cursor-not-allowed",
+                    "cursor-pointer",
                   )}
                   title={`Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
                 >
