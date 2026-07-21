@@ -98,6 +98,10 @@ interface ReadingExamEngineProps {
   hideBottomNav?: boolean;
   /** Marathon: notifies parent of per-question locked flags for current part. */
   onLockedChange?: (locked: boolean[]) => void;
+  /** Marathon review: hide the "← Quay lại kết quả" header button and keep Thoát confirm. */
+  hideBackToResults?: boolean;
+  /** Notifies parent whenever the active section index changes (Part 2). */
+  onSectionChange?: (i: number) => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
