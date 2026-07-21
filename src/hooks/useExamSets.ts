@@ -69,7 +69,7 @@ export const useExamSets = (skill: string) => {
     queryFn: async (): Promise<ExamSetRow[]> => {
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until")
+        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until, question_count")
         .eq("skill", skill)
         .eq("is_published", true)
         .order("created_at", { ascending: true });
