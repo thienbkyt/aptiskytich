@@ -29,6 +29,10 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideTimer?: boolean;
+  /** Marathon: per-statement locked/graded set. */
+  lockedIndices?: Set<number>;
+  /** Marathon: hide the BottomNavBar. */
+  hideBottomNav?: boolean;
 }
 
 const ReadingPart3Opinion = ({
@@ -37,8 +41,11 @@ const ReadingPart3Opinion = ({
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
   pageNumber, pageTotal, hideTimer = false,
+  lockedIndices, hideBottomNav = false,
 }: Props) => {
-  const reveal = submitted || !!revealAnswers;
+  const globallyRevealed = submitted || !!revealAnswers;
+  const revealFor = (si: number) => globallyRevealed || (lockedIndices?.has(si) ?? false);
+  const reveal = globallyRevealed || (lockedIndices && lockedIndices.size > 0);
 
   return (
     <div className="min-h-[70vh] flex flex-col pb-20">
