@@ -114,6 +114,7 @@ const ReadingPart4Long = ({
         {paragraphs.map((para, pIdx) => {
           const selected = answers[pIdx];
           const correctHeadingIdx = correctMap[pIdx];
+          const reveal = revealFor(pIdx);
           const isCorrect = reveal && selected === correctHeadingIdx;
           const isWrong = reveal && selected !== null && selected !== correctHeadingIdx;
 
@@ -217,16 +218,18 @@ const ReadingPart4Long = ({
       </div>
 
 
-      <BottomNavBar
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onSubmit={onSubmit}
-        isFirst={isFirst}
-        isLast={isLast}
-        submitLabel="Submit"
-        sections={sections}
-        onSubmitTest={onSubmitTest}
-      />
+      {!hideBottomNav && (
+        <BottomNavBar
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSubmit={onSubmit}
+          isFirst={isFirst}
+          isLast={isLast}
+          submitLabel="Submit"
+          sections={sections}
+          onSubmitTest={onSubmitTest}
+        />
+      )}
     </div>
   );
 };
