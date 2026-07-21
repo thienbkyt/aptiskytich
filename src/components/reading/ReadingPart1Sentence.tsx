@@ -157,7 +157,7 @@ const ReadingPart1Sentence = ({
         <p className="text-base font-bold text-foreground mb-8">{question.instruction}</p>
         {renderPassage()}
 
-        {reveal && (
+        {anyRevealed && (
           <div className="mt-10 border-t border-border pt-6">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-foreground">Đáp án &amp; dịch nghĩa</p>
@@ -173,7 +173,7 @@ const ReadingPart1Sentence = ({
                   .map(m => Number(m[1]))
                   .filter(idx => question.gaps[idx]);
                 // Skip the first gap — it's the "done for you" example.
-                const scoredGapIdx = allGapIdx.slice(1);
+                const scoredGapIdx = allGapIdx.slice(1).filter((gi) => revealFor(gi));
                 return scoredGapIdx.map((gi, displayIdx) => {
                   const g = question.gaps[gi];
                   const userVal = answers[gi];
