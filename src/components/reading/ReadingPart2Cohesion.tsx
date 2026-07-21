@@ -29,6 +29,10 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideTimer?: boolean;
+  /** Marathon: per-section locked/graded set. */
+  lockedSections?: Set<number>;
+  /** Marathon: hide the BottomNavBar. */
+  hideBottomNav?: boolean;
 }
 
 const ReadingPart2Cohesion = ({
@@ -38,8 +42,9 @@ const ReadingPart2Cohesion = ({
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
   pageNumber, pageTotal, hideTimer = false,
+  lockedSections, hideBottomNav = false,
 }: Props) => {
-  const reveal = submitted || !!revealAnswers;
+  const globallyRevealed = submitted || !!revealAnswers;
   const [currentSectionLocal, setCurrentSectionLocal] = useState(0);
   const currentSection = currentSectionProp ?? currentSectionLocal;
   const setCurrentSection = (updater: number | ((p: number) => number)) => {
