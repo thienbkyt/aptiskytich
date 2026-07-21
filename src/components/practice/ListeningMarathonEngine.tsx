@@ -63,6 +63,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
   const [jumpQ, setJumpQ] = useState<number | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<any[]>([]);
+  const [submitSignal, setSubmitSignal] = useState(0);
+  const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
   const isRetryMode = !!wrongQuestionIdsBySet;
 
   // Reset current-set answered tracking when the active set changes.
