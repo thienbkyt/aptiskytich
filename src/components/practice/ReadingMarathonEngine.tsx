@@ -167,7 +167,11 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       ? Math.max(0, Math.min(pending.si, sets.length - 1))
       : (isLastSet ? currentIndex : currentIndex + 1);
     setResults(nextResults);
-    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
+    // Drop the draft for this set now that it's submitted.
+    const nextDrafts = { ...drafts };
+    delete nextDrafts[set.id];
+    setDrafts(nextDrafts);
+    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, updatedAt: Date.now() });
     if (pending) {
       setEnterAtLast(false);
       setJumpQ(pending.qi);
