@@ -193,25 +193,40 @@ const Reading = () => {
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ReadingPartType;
     setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now(), totalForScore: null, skipIntro: opts?.skipIntro ?? false }));
-    const [questions, fullRow] = await Promise.all([
-      fetchExamQuestions(set.id),
-      supabase.from("exam_sets").select("full_test_id").eq("id", set.id).maybeSingle(),
-    ]);
-    const fullTestId = (fullRow.data as any)?.full_test_id ?? null;
-    const sourceQuestionIds = questions.map((q: any) => q.id);
-    let engineData: any = { sourceQuestionIds };
-    switch (partType) {
-      case "part1": engineData.part1Question = toReadingPart1(questions); break;
-      case "part2": engineData.part2Question = toReadingPart2(questions); break;
-      case "part3": engineData.part3Question = toReadingPart3(questions); break;
-      case "part4": engineData.part4Question = toReadingPart4(questions); break;
+    try {
+      const [questions, fullRow] = await Promise.all([
+        fetchExamQuestions(set.id),
+        supabase.from("exam_sets").select("full_test_id").eq("id", set.id).maybeSingle()
+          .then((r) => r, () => ({ data: null } as any)),
+      ]);
+      if (!questions || questions.length === 0) {
+        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+        setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
+        return;
+      }
+      const fullTestId = (fullRow?.data as any)?.full_test_id ?? null;
+      const sourceQuestionIds = questions.map((q: any) => q.id);
+      let engineData: any = { sourceQuestionIds };
+      switch (partType) {
+        case "part1": engineData.part1Question = toReadingPart1(questions); break;
+        case "part2": engineData.part2Question = toReadingPart2(questions); break;
+        case "part3": engineData.part3Question = toReadingPart3(questions); break;
+        case "part4": engineData.part4Question = toReadingPart4(questions); break;
+      }
+      setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
+      // Fire-and-forget: compute T from sibling parts in the same full test.
+      computeReadingFullTotal(fullTestId).then((T) => {
+        setExam((prev) => (prev.examSetId === set.id ? { ...prev, totalForScore: T } : prev));
+      }).catch(() => {});
+    } catch (e) {
+      console.error("[Reading.handleStartFromDB] failed", e);
+      toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
+    } finally {
+      setExam((prev) => (prev.loadingExam ? { ...prev, loadingExam: false } : prev));
     }
-    setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
-    // Fire-and-forget: compute T from sibling parts in the same full test.
-    computeReadingFullTotal(fullTestId).then((T) => {
-      setExam((prev) => (prev.examSetId === set.id ? { ...prev, totalForScore: T } : prev));
-    });
   };
+
 
   const handleRandomPractice = () => {
     if (examSets.length > 0) {
@@ -328,9 +343,11 @@ const Reading = () => {
             <div className="space-y-4 text-center">
               <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
               <TechSkeleton variant="text" className="w-32 mx-auto" />
+              <Button variant="outline" size="sm" className="mt-6" onClick={handleExit}>Thoát</Button>
             </div>
           </main>
         </div>
+
       );
     }
 
