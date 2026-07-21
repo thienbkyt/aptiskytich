@@ -160,9 +160,6 @@ const MarathonNavigator = ({
               const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;
               const dim = onlyWrong && !(isDone && state === "wrong");
 
-              const clickable =
-                isDone || (isCurrent && allowJumpInCurrent && !!onJumpQuestion);
-
               const cls =
                 state === "correct"
                   ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
@@ -175,10 +172,17 @@ const MarathonNavigator = ({
                   key={gi}
                   id={`marathon-nav-chip-${gi}`}
                   type="button"
-                  disabled={!clickable}
                   onClick={() => {
-                    if (isDone) onReview(si, qi);
-                    else if (isCurrent && allowJumpInCurrent) onJumpQuestion?.(qi);
+                    try {
+                      if (si < 0 || si >= sets.length) return;
+                      if (isDone) {
+                        onReview(si, qi);
+                      } else if (isCurrent) {
+                        if (allowJumpInCurrent) onJumpQuestion?.(qi);
+                      } else if (isFuture) {
+                        onEnterFutureSet?.(si, qi);
+                      }
+                    } catch { /* swallow to keep exam alive */ }
                   }}
                   className={cn(
                     "w-[26px] h-[26px] rounded text-[11px] font-semibold border transition-colors",
