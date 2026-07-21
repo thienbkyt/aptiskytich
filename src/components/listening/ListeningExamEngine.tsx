@@ -71,6 +71,8 @@ interface ListeningExamEngineProps {
   enterAtLastQuestion?: boolean;
   reviewScopeNote?: string;
   onMarathonFinish?: () => void;
+  /** Marathon: bump to force submit the current in-progress set. */
+  submitSignal?: number;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -92,6 +94,7 @@ const ListeningExamEngine = ({
   enterAtLastQuestion = false,
   reviewScopeNote,
   onMarathonFinish,
+  submitSignal,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -238,6 +241,15 @@ const ListeningExamEngine = ({
     if (hideTimer) return;
     if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
   }, [hasStarted, submitted, timeLeft, hideTimer]);
+
+  // Marathon: parent bumps submitSignal to auto-submit current set before jumping.
+  useEffect(() => {
+    if (!submitSignal) return;
+    if (submitted) return;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    handleSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitSignal]);
 
   const handleSubmit = useCallback(() => {
     setSubmitted(true);

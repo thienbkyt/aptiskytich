@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import ExamHeader from "@/components/exam/ExamHeader";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
@@ -63,6 +63,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
   const [jumpQ, setJumpQ] = useState<number | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<any[]>([]);
+  const [submitSignal, setSubmitSignal] = useState(0);
+  const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
   const isRetryMode = !!wrongQuestionIdsBySet;
 
   // Reset current-set answered tracking when the active set changes.
@@ -167,14 +169,25 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     const nextResults = results.slice();
     nextResults[currentIndex] = entry;
     const isLastSet = currentIndex >= sets.length - 1;
-    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    const pending = pendingJumpRef.current;
+    pendingJumpRef.current = null;
+    const nextIndex = pending
+      ? Math.max(0, Math.min(pending.si, sets.length - 1))
+      : (isLastSet ? currentIndex : currentIndex + 1);
     setResults(nextResults);
     setEnterAtLast(false);
     if (persist) {
       saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
     }
-    if (!isLastSet) setCurrentIndex(nextIndex);
-    else setPhase("completed");
+    if (pending) {
+      setJumpQ(pending.qi);
+      setTimeout(() => setJumpQ(null), 0);
+      setCurrentIndex(nextIndex);
+    } else if (!isLastSet) {
+      setCurrentIndex(nextIndex);
+    } else {
+      setPhase("completed");
+    }
   }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
@@ -475,6 +488,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           onAnswersChange={(a) => setCurrentAnswers(Array.isArray(a) ? a : [])}
           pageBase={pageBase}
           pageTotal={pageTotal}
+          submitSignal={submitSignal}
           {...engineData}
         />
       </div>
@@ -498,6 +512,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             if (si < 0 || si >= sets.length) return;
             const max = Math.max(1, loaded[si]?.pageCount ?? 1) - 1;
             const clamped = Math.max(0, Math.min(qi, max));
+            const hasAnyAnswer = currentAnswered.some(Boolean);
+            if (hasAnyAnswer) {
+              pendingJumpRef.current = { si, qi: clamped };
+              setSubmitSignal((s) => s + 1);
+              return;
+            }
             setEnterAtLast(false);
             setJumpQ(clamped);
             setCurrentIndex(si);

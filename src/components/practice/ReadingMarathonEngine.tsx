@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import ReadingExamEngine, { type ReadingPartType } from "@/components/reading/ReadingExamEngine";
 import ExamHeader from "@/components/exam/ExamHeader";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
@@ -59,6 +59,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
   const [jumpQ, setJumpQ] = useState<number | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<any>(null);
+  const [submitSignal, setSubmitSignal] = useState(0);
+  const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
 
   useEffect(() => { setCurrentAnswers(null); }, [currentIndex, attempt]);
 
@@ -138,11 +140,25 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const nextResults = results.slice();
     nextResults[currentIndex] = entry;
     const isLastSet = currentIndex >= sets.length - 1;
-    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    // Prefer a pending navigator jump when present, else advance sequentially.
+    const pending = pendingJumpRef.current;
+    pendingJumpRef.current = null;
+    const nextIndex = pending
+      ? Math.max(0, Math.min(pending.si, sets.length - 1))
+      : (isLastSet ? currentIndex : currentIndex + 1);
     setResults(nextResults);
     if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
-    if (!isLastSet) { setEnterAtLast(false); setCurrentIndex(nextIndex); }
-    else setPhase("completed");
+    if (pending) {
+      setEnterAtLast(false);
+      setJumpQ(pending.qi);
+      setTimeout(() => setJumpQ(null), 0);
+      setCurrentIndex(nextIndex);
+    } else if (!isLastSet) {
+      setEnterAtLast(false);
+      setCurrentIndex(nextIndex);
+    } else {
+      setPhase("completed");
+    }
   }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
@@ -403,6 +419,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           pageBase={currentIndex * pagesPerSet}
           pageTotal={sets.length * pagesPerSet}
           initialSection={jumpQ ?? undefined}
+          submitSignal={submitSignal}
           {...engineData}
         />
       </div>
@@ -424,6 +441,13 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           try {
             if (si < 0 || si >= sets.length) return;
             const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+            const hasAnyAnswer = currentAnswered.some(Boolean);
+            if (hasAnyAnswer) {
+              // Auto-submit the current in-progress set, then jump.
+              pendingJumpRef.current = { si, qi: clamped };
+              setSubmitSignal((s) => s + 1);
+              return;
+            }
             setEnterAtLast(false);
             setJumpQ(clamped);
             setCurrentIndex(si);
