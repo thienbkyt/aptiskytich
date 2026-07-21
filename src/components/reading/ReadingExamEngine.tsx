@@ -90,6 +90,8 @@ interface ReadingExamEngineProps {
   allowReveal?: boolean;
   reviewScopeNote?: string;
   onMarathonFinish?: () => void;
+  /** Marathon: bump to force submit the current in-progress set. */
+  submitSignal?: number;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
