@@ -383,37 +383,92 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     }
   }
 
+  // Mid-marathon review overlay (from Marathon Navigator chip)
+  if (midReview) {
+    const r = results[midReview.setIndex];
+    if (r) {
+      return (
+        <div className="min-h-screen bg-background">
+          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+            <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+              <Button size="sm" variant="outline" onClick={() => setMidReview(null)}>
+                Quay lại đề đang làm
+              </Button>
+              <span className="text-xs text-muted-foreground truncate">
+                Xem lại · Đề {midReview.setIndex + 1} · Câu {midReview.qIndex + 1}/{r.qResults.length}
+              </span>
+            </div>
+          </div>
+          <HistoryReviewRenderer
+            examSetId={r.examSetId}
+            skill="listening"
+            part={r.part}
+            testTitle={`Đề ${midReview.setIndex + 1}`}
+            qResults={r.qResults}
+            onExit={() => setMidReview(null)}
+            pageBase={0}
+            pageTotal={r.qResults.length}
+            initialSection={midReview.qIndex}
+          />
+        </div>
+      );
+    }
+  }
+
+  const qCounts = loaded.map((l) => l?.pageCount);
+
   return (
-    <ListeningExamEngine
-      key={`${attempt}-${currentIndex}`}
-      partType={partType}
-      testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
-      timeLimit={HUGE_TIME}
-      hideTimer
-      skipIntro
-      allowReveal
-      reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
-      onMarathonFinish={() => setPhase("completed")}
-      showResultsOnSubmit={false}
-      onExit={onExit}
-      onComplete={handleComplete}
-      onPreviousPart={() => {
-        if (currentIndex > 0) {
-          setEnterAtLast(true);
-          setCurrentIndex((i) => i - 1);
-        }
-      }}
-      initialQuestion={
-        enterAtLast
-          ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
-          : 0
-      }
-      initialAnswers={initialAnswers}
-      pageBase={pageBase}
-      pageTotal={pageTotal}
-      {...engineData}
-    />
+    <div className="lg:flex lg:items-stretch min-h-screen">
+      <div className="flex-1 min-w-0">
+        <ListeningExamEngine
+          key={`${attempt}-${currentIndex}`}
+          partType={partType}
+          testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+          timeLimit={HUGE_TIME}
+          hideTimer
+          skipIntro
+          allowReveal
+          reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
+          onMarathonFinish={() => setPhase("completed")}
+          showResultsOnSubmit={false}
+          onExit={onExit}
+          onComplete={handleComplete}
+          onPreviousPart={() => {
+            if (currentIndex > 0) {
+              setEnterAtLast(true);
+              setCurrentIndex((i) => i - 1);
+            }
+          }}
+          initialQuestion={
+            jumpQ != null
+              ? jumpQ
+              : enterAtLast
+              ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
+              : 0
+          }
+          initialAnswers={initialAnswers}
+          pageBase={pageBase}
+          pageTotal={pageTotal}
+          {...engineData}
+        />
+      </div>
+      <MarathonNavigator
+        sets={sets}
+        results={results as any}
+        currentIndex={currentIndex}
+        qCounts={qCounts}
+        isRetryMode={isRetryMode}
+        allowJumpInCurrent
+        onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
+        onJumpQuestion={(qi) => {
+          setJumpQ(qi);
+          // reset shortly after so future clicks on same index still work
+          setTimeout(() => setJumpQ(null), 0);
+        }}
+      />
+    </div>
   );
 };
+
 
 export default ListeningMarathonEngine;
