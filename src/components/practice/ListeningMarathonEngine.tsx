@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import ExamHeader from "@/components/exam/ExamHeader";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
