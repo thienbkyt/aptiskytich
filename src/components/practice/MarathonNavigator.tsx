@@ -25,8 +25,8 @@ interface Props {
   allowJumpInCurrent?: boolean;
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
-  /** Switch marathon to a future (not-yet-done) set at the given question index. */
-  onEnterFutureSet?: (setIndex: number, questionIndex: number) => void;
+  /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
+  onEnterSet?: (setIndex: number, questionIndex: number) => void;
 }
 
 const MarathonNavigator = ({
