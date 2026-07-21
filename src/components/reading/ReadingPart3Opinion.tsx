@@ -144,8 +144,9 @@ const ReadingPart3Opinion = ({
       <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
         {question.statements.map((stmt, si) => {
           const selected = answers[si];
-          const isCorrect = reveal && selected === stmt.correctPerson;
-          const isWrong = reveal && selected !== null && selected !== stmt.correctPerson;
+          const revealHere = revealFor(si);
+          const isCorrect = revealHere && selected === stmt.correctPerson;
+          const isWrong = revealHere && selected !== null && selected !== stmt.correctPerson;
 
           return (
             <div key={si} data-question-index={si} className="flex items-center gap-3 flex-wrap">
