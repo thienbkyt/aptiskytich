@@ -420,7 +420,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           setJumpQ(clamped);
           setTimeout(() => setJumpQ(null), 0);
         }}
-        onEnterFutureSet={(si, qi) => {
+        onEnterSet={(si, qi) => {
           try {
             if (si < 0 || si >= sets.length) return;
             const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));

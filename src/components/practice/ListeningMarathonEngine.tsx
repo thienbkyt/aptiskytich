@@ -493,7 +493,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           // reset shortly after so future clicks on same index still work
           setTimeout(() => setJumpQ(null), 0);
         }}
-        onEnterFutureSet={(si, qi) => {
+        onEnterSet={(si, qi) => {
           try {
             if (si < 0 || si >= sets.length) return;
             const max = Math.max(1, loaded[si]?.pageCount ?? 1) - 1;
