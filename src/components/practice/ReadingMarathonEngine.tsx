@@ -59,6 +59,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
   const [jumpQ, setJumpQ] = useState<number | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<any>(null);
+  const [submitSignal, setSubmitSignal] = useState(0);
+  const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
 
   useEffect(() => { setCurrentAnswers(null); }, [currentIndex, attempt]);
 
