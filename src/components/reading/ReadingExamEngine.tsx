@@ -106,6 +106,7 @@ const ReadingExamEngine = ({
   pageBase, pageTotal, initialSection, onPageCount, allowReveal = false,
   reviewScopeNote,
   onMarathonFinish,
+  submitSignal,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
