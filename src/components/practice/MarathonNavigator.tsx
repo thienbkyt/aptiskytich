@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { X, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,14 +14,12 @@ interface Props {
   sets: { id: string }[];
   results: (MarathonResult | undefined)[];
   currentIndex: number;
-  /** Planned question count per set (used for chip count when a set is not done yet). */
+  /** Chip count per set (authoritative; used for both done and pending sets). */
   qCounts?: (number | undefined)[];
-  /** In the current in-progress set, which question is active (0-based). */
+  /** Active question index within the current in-progress set (0-based). */
   currentQ?: number;
-  /** In the current in-progress set, per-question answered flags. */
-  currentAnswered?: boolean[];
   isRetryMode?: boolean;
-  /** Enable in-set chip jump for the current set. Off => chips still visible but no-op. */
+  /** Enable in-set chip jump for the current set. */
   allowJumpInCurrent?: boolean;
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
@@ -29,19 +27,39 @@ interface Props {
 
 const MarathonNavigator = ({
   sets, results, currentIndex, qCounts,
-  currentQ, currentAnswered,
+  currentQ,
   isRetryMode, allowJumpInCurrent = true,
   onReview, onJumpQuestion,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [onlyWrong, setOnlyWrong] = useState(false);
 
+  // Flatten all chips: global index -> { si, qi }
+  const flat = useMemo(() => {
+    const out: { si: number; qi: number }[] = [];
+    for (let si = 0; si < sets.length; si++) {
+      const count = results[si]?.qResults?.length ?? qCounts?.[si] ?? 0;
+      for (let qi = 0; qi < count; qi++) out.push({ si, qi });
+    }
+    return out;
+  }, [sets.length, results, qCounts]);
+
   const totalCorrect = results.reduce((s, r) => s + (r?.correct ?? 0), 0);
   const totalWrong = results.reduce((s, r) => s + ((r?.total ?? 0) - (r?.correct ?? 0)), 0);
+  const totalChips = flat.length;
+
+  // Global position of the active question.
+  const currentGlobal = useMemo(() => {
+    let base = 0;
+    for (let i = 0; i < currentIndex; i++) {
+      base += results[i]?.qResults?.length ?? qCounts?.[i] ?? 0;
+    }
+    return base + (currentQ ?? 0);
+  }, [currentIndex, currentQ, results, qCounts]);
 
   const backToCurrent = () => {
-    const el = document.getElementById(`marathon-nav-set-${currentIndex}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById(`marathon-nav-chip-${currentGlobal}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   const body = (onClose?: () => void) => (
@@ -67,7 +85,9 @@ const MarathonNavigator = ({
           <span className="font-semibold text-emerald-700 dark:text-emerald-400">{totalCorrect} đúng</span>
           <span className="mx-1.5 text-muted-foreground">/</span>
           <span className="font-semibold text-red-700 dark:text-red-400">{totalWrong} sai</span>
-          <span className="ml-1.5 text-muted-foreground">· Đề {Math.min(currentIndex + 1, sets.length)}/{sets.length}</span>
+          <span className="ml-1.5 text-muted-foreground">
+            · Câu {Math.min(currentGlobal + 1, Math.max(totalChips, 1))}/{totalChips}
+          </span>
         </div>
 
         <div className="rounded-md bg-muted/50 p-2 flex items-center gap-2 text-[11px]">
@@ -97,92 +117,68 @@ const MarathonNavigator = ({
             onClick={backToCurrent}
             className="text-[11px] font-medium text-[#24085a] dark:text-primary hover:underline"
           >
-            Về đề đang làm
+            Về câu đang làm
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {sets.map((s, si) => {
-          const r = results[si];
-          const isDone = !!r;
-          const isCurrent = si === currentIndex && !isDone;
-          const isFuture = si > currentIndex && !isDone;
+      <div className="flex-1 overflow-y-auto p-3">
+        {totalChips === 0 ? (
+          <div className="text-[11px] text-muted-foreground italic">—</div>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {flat.map((cell, gi) => {
+              const { si, qi } = cell;
+              const r = results[si];
+              const isDone = !!r;
+              const isCurrent = si === currentIndex && !isDone;
+              const isFuture = si > currentIndex && !isDone;
 
-          // Determine chip count.
-          const count = r?.total ?? qCounts?.[si] ?? 0;
+              let state: "correct" | "wrong" | "empty" = "empty";
+              if (isDone) {
+                const q = r!.qResults?.[qi];
+                state = q ? (q.is_correct ? "correct" : "wrong") : "empty";
+              }
 
-          let label = "";
-          if (isDone) label = `Đề ${si + 1} · ${r!.correct}/${r!.total}`;
-          else if (isCurrent) label = `Đề ${si + 1} · đang làm`;
-          else label = `Đề ${si + 1} · chưa làm`;
+              const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;
+              const dim = onlyWrong && !(isDone && state === "wrong");
 
-          return (
-            <div
-              key={s.id}
-              id={`marathon-nav-set-${si}`}
-              className={cn(
-                "rounded-md",
-                isCurrent && "bg-primary/5 border border-primary/20 p-2",
-                isFuture && "opacity-45",
-              )}
-            >
-              <div className="text-[11px] text-muted-foreground mb-1.5 font-medium">{label}</div>
+              const clickable =
+                isDone || (isCurrent && allowJumpInCurrent && !!onJumpQuestion);
 
-              {count === 0 ? (
-                <div className="text-[11px] text-muted-foreground italic">—</div>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {Array.from({ length: count }).map((_, qi) => {
-                    let state: "correct" | "wrong" | "empty" = "empty";
-                    if (isDone) {
-                      const q = r!.qResults?.[qi];
-                      state = q ? (q.is_correct ? "correct" : "wrong") : "empty";
-                    } else if (isCurrent && currentAnswered?.[qi]) {
-                      // still "empty" (not graded yet) — leave gray
-                    }
+              const cls =
+                state === "correct"
+                  ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
+                  : state === "wrong"
+                  ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
+                  : "bg-muted text-muted-foreground border-border";
 
-                    const isCurrentChip = isCurrent && currentQ === qi;
-                    const dim = onlyWrong && isDone && state !== "wrong";
-
-                    const clickable =
-                      (isDone) ||
-                      (isCurrent && allowJumpInCurrent && onJumpQuestion);
-
-                    const cls =
-                      state === "correct"
-                        ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
-                        : state === "wrong"
-                        ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
-                        : "bg-muted text-muted-foreground border-border";
-
-                    return (
-                      <button
-                        key={qi}
-                        type="button"
-                        disabled={!clickable}
-                        onClick={() => {
-                          if (isDone) onReview(si, qi);
-                          else if (isCurrent && allowJumpInCurrent) onJumpQuestion?.(qi);
-                        }}
-                        className={cn(
-                          "w-[26px] h-[26px] rounded text-[11px] font-semibold border transition-colors",
-                          cls,
-                          isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
-                          dim && "opacity-25",
-                          !clickable && "cursor-not-allowed",
-                        )}
-                        title={`Đề ${si + 1} · Câu ${qi + 1}`}
-                      >
-                        {qi + 1}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+              return (
+                <button
+                  key={gi}
+                  id={`marathon-nav-chip-${gi}`}
+                  type="button"
+                  disabled={!clickable}
+                  onClick={() => {
+                    if (isDone) onReview(si, qi);
+                    else if (isCurrent && allowJumpInCurrent) onJumpQuestion?.(qi);
+                  }}
+                  className={cn(
+                    "w-[26px] h-[26px] rounded text-[11px] font-semibold border transition-colors",
+                    cls,
+                    isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
+                    dim && "opacity-25",
+                    isFuture && !isDone && "opacity-45",
+                    !clickable && "cursor-not-allowed",
+                  )}
+                  title={`Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
+                >
+                  {gi + 1}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </aside>
   );
