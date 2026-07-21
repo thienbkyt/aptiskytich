@@ -11,6 +11,7 @@ import {
 import { saveExamResult } from "@/lib/saveExamResult";
 import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import MarathonNavigator from "@/components/practice/MarathonNavigator";
 
 interface Props {
   sets: ExamSetRow[];
