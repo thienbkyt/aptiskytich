@@ -133,16 +133,29 @@ const Writing = () => {
     const normalizedPart = normalizePart(set.part);
     const partType = partToTask[normalizedPart] || "task1";
     setExam({ active: true, partType, testTitle: set.title, completed: false, loadingExam: true, examSetId: set.id, startedAt: Date.now(), skipIntro: opts?.skipIntro ?? false });
-    const questions = await fetchExamQuestions(set.id);
-    const sourceQuestionIds = questions.map((q: any) => q.id);
-    let engineData: any = { sourceQuestionIds };
-    switch (normalizedPart) {
-      case "part1": engineData.part1Data = toWritingPart1(questions); break;
-      case "part2": engineData.part2Data = toWritingPart2(questions); break;
-      case "part3": engineData.part3Data = toWritingPart3(questions); break;
-      case "part4": engineData.part4Data = toWritingPart4(questions); break;
+    try {
+      const questions = await fetchExamQuestions(set.id);
+      if (!questions || questions.length === 0) {
+        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+        setExam({ active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false });
+        return;
+      }
+      const sourceQuestionIds = questions.map((q: any) => q.id);
+      let engineData: any = { sourceQuestionIds };
+      switch (normalizedPart) {
+        case "part1": engineData.part1Data = toWritingPart1(questions); break;
+        case "part2": engineData.part2Data = toWritingPart2(questions); break;
+        case "part3": engineData.part3Data = toWritingPart3(questions); break;
+        case "part4": engineData.part4Data = toWritingPart4(questions); break;
+      }
+      setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
+    } catch (e) {
+      console.error("[Writing.handleStartFromDB] failed", e);
+      toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      setExam({ active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false });
+    } finally {
+      setExam((prev) => prev.active ? { ...prev, loadingExam: false } : prev);
     }
-    setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
   };
 
   const handleRandomPractice = () => {
@@ -187,6 +200,7 @@ const Writing = () => {
             <div className="space-y-4 text-center">
               <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
               <TechSkeleton variant="text" className="w-32 mx-auto" />
+              <Button variant="outline" size="sm" onClick={handleExit} className="mt-4">Thoát</Button>
             </div>
           </main>
         </div>

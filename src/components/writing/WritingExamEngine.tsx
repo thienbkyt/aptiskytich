@@ -121,11 +121,11 @@ const WritingExamEngine = ({
   }, [partType]);
 
   const [shortAnswers, setShortAnswers] = useState<string[]>(
-    initialAnswers?.shortAnswers ?? new Array(part1Data?.questions.length || 5).fill("")
+    initialAnswers?.shortAnswers ?? new Array(part1Data?.questions?.length ?? 0).fill("")
   );
   const [textAnswer, setTextAnswer] = useState(initialAnswers?.textAnswer ?? "");
   const [part3Answers, setPart3Answers] = useState<string[]>(
-    initialAnswers?.part3Answers ?? new Array(part3Data?.questions.length || 3).fill("")
+    initialAnswers?.part3Answers ?? new Array(part3Data?.questions?.length ?? 0).fill("")
   );
   const [informalAnswer, setInformalAnswer] = useState(initialAnswers?.informalAnswer ?? "");
   const [formalAnswer, setFormalAnswer] = useState(initialAnswers?.formalAnswer ?? "");
@@ -170,9 +170,14 @@ const WritingExamEngine = ({
 
   const getTextAndQuestions = (): { text: string; questions: string[] } => {
     if (partType === "task1" && part1Data) {
+      const qs = part1Data.questions || [];
       return {
-        text: shortAnswers.map((a, i) => `Q${i + 1}: ${part1Data.questions[i].text}\nA: ${a}`).join("\n\n"),
-        questions: part1Data.questions.map(q => q.text),
+        text: shortAnswers
+          .map((a, i) => ({ a, t: qs[i]?.text ?? "" }))
+          .filter((x) => x.t)
+          .map((x, i) => `Q${i + 1}: ${x.t}\nA: ${x.a}`)
+          .join("\n\n"),
+        questions: qs.map((q) => q?.text ?? "").filter(Boolean),
       };
     }
     if (partType === "task2" && part2Data) {
@@ -182,9 +187,14 @@ const WritingExamEngine = ({
       };
     }
     if (partType === "task3" && part3Data) {
+      const qs = part3Data.questions || [];
       return {
-        text: part3Answers.map((a, i) => `Q${i + 1}: ${part3Data.questions[i].text}\nA: ${a}`).join("\n\n"),
-        questions: part3Data.questions.map(q => q.text),
+        text: part3Answers
+          .map((a, i) => ({ a, t: qs[i]?.text ?? "" }))
+          .filter((x) => x.t)
+          .map((x, i) => `Q${i + 1}: ${x.t}\nA: ${x.a}`)
+          .join("\n\n"),
+        questions: qs.map((q) => q?.text ?? "").filter(Boolean),
       };
     }
     if (partType === "task4" && part4Data) {
@@ -452,6 +462,31 @@ const WritingExamEngine = ({
             onReview={!v2Loading && !isGrading && (v2Grading ?? grading) ? () => setIsReviewing(true) : undefined}
             quotaExceeded={quotaExceeded}
           />
+        </div>
+      </div>
+    );
+  }
+
+  const missingData =
+    (partType === "task1" && !part1Data?.questions?.length) ||
+    (partType === "task2" && !part2Data) ||
+    (partType === "task3" && !part3Data?.questions?.length) ||
+    (partType === "task4" && !part4Data);
+  if (phase === "practice" && !reviewMode && missingData) {
+    return (
+      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+        <RotateDeviceOverlay />
+        <ExamHeader skillLabel="Writing" partLabel={partLabel} onExit={onExit} />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-base text-foreground max-w-md">
+            Đề này chưa có dữ liệu câu hỏi. Vui lòng chọn đề khác hoặc báo lỗi cho admin.
+          </p>
+          <button
+            onClick={onExit}
+            className="bg-[#CC1C01] text-white rounded px-5 py-2.5 hover:opacity-90 transition"
+          >
+            Thoát
+          </button>
         </div>
       </div>
     );
