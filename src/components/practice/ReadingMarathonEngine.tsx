@@ -58,6 +58,37 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
   const [jumpQ, setJumpQ] = useState<number | null>(null);
+  const [currentAnswers, setCurrentAnswers] = useState<any>(null);
+
+  useEffect(() => { setCurrentAnswers(null); }, [currentIndex, attempt]);
+
+  const currentAnswered = useMemo(() => {
+    const count = (sets[currentIndex] as any)?.question_count ?? 0;
+    const out: boolean[] = new Array(count).fill(false);
+    try {
+      const key = partType === "part1" ? "p1" : partType === "part2" ? "p2" : partType === "part3" ? "p3" : "p4";
+      const bag = currentAnswers?.[key];
+      const isAnswered = (v: any): boolean => {
+        if (v == null) return false;
+        if (typeof v === "number") return v >= 0;
+        if (typeof v === "string") return v !== "";
+        if (Array.isArray(v)) return v.length > 0;
+        if (typeof v === "object") return Object.keys(v).length > 0;
+        return !!v;
+      };
+      if (Array.isArray(bag)) {
+        for (let i = 0; i < Math.min(count, bag.length); i++) {
+          if (isAnswered(bag[i])) out[i] = true;
+        }
+      } else if (bag && typeof bag === "object") {
+        // e.g. placements keyed by index
+        for (let i = 0; i < count; i++) {
+          if (isAnswered(bag[i]) || isAnswered(bag[String(i)])) out[i] = true;
+        }
+      }
+    } catch { /* noop */ }
+    return out;
+  }, [currentAnswers, currentIndex, sets, partType]);
 
 
   const accCorrect = useMemo(
@@ -368,6 +399,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           }}
           enterAtLastQuestion={enterAtLast}
           initialAnswers={initialAnswers}
+          onAnswersChange={(a) => setCurrentAnswers(a)}
           pageBase={currentIndex * pagesPerSet}
           pageTotal={sets.length * pagesPerSet}
           initialSection={jumpQ ?? undefined}
@@ -379,6 +411,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         results={results as any}
         currentIndex={currentIndex}
         qCounts={qCounts}
+        currentAnswered={currentAnswered}
         isRetryMode={isRetryMode}
         allowJumpInCurrent={partType !== "part1"}
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}

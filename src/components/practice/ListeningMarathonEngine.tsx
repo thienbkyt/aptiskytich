@@ -62,7 +62,26 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
   const [jumpQ, setJumpQ] = useState<number | null>(null);
+  const [currentAnswers, setCurrentAnswers] = useState<any[]>([]);
   const isRetryMode = !!wrongQuestionIdsBySet;
+
+  // Reset current-set answered tracking when the active set changes.
+  useEffect(() => { setCurrentAnswers([]); }, [currentIndex, attempt]);
+
+  const currentAnswered = useMemo(() => {
+    const count = loaded?.[currentIndex]?.pageCount ?? 0;
+    const out: boolean[] = new Array(count).fill(false);
+    try {
+      for (let i = 0; i < count; i++) {
+        const a = currentAnswers?.[i];
+        if (a == null) continue;
+        if (typeof a === "string" && a === "") continue;
+        if (Array.isArray(a) && a.length === 0) continue;
+        out[i] = true;
+      }
+    } catch { /* noop */ }
+    return out;
+  }, [currentAnswers, loaded, currentIndex]);
 
 
   const accCorrect = useMemo(
@@ -453,6 +472,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               : 0
           }
           initialAnswers={initialAnswers}
+          onAnswersChange={(a) => setCurrentAnswers(Array.isArray(a) ? a : [])}
           pageBase={pageBase}
           pageTotal={pageTotal}
           {...engineData}
@@ -463,6 +483,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         results={results as any}
         currentIndex={currentIndex}
         qCounts={qCounts}
+        currentAnswered={currentAnswered}
         isRetryMode={isRetryMode}
         allowJumpInCurrent
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}

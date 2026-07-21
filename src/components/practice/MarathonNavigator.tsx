@@ -18,6 +18,8 @@ interface Props {
   qCounts?: (number | undefined | null)[];
   /** Active question index within the current in-progress set (0-based). */
   currentQ?: number;
+  /** Per-question answered flags for the CURRENT (in-progress) set. */
+  currentAnswered?: boolean[];
   isRetryMode?: boolean;
   /** Enable in-set chip jump for the current set. */
   allowJumpInCurrent?: boolean;
@@ -29,7 +31,7 @@ interface Props {
 
 const MarathonNavigator = ({
   sets, results, currentIndex, qCounts,
-  currentQ,
+  currentQ, currentAnswered,
   isRetryMode, allowJumpInCurrent = true,
   onReview, onJumpQuestion, onEnterFutureSet,
 }: Props) => {
@@ -59,6 +61,16 @@ const MarathonNavigator = ({
   const totalWrong = results.reduce((s, r) => s + ((r?.total ?? 0) - (r?.correct ?? 0)), 0);
   const totalChips = flat.length;
 
+  // "Đã làm" = tổng câu ở các đề đã nộp + số câu đã trả lời ở đề đang làm.
+  const answeredInCurrent = useMemo(() => {
+    if (!currentAnswered) return 0;
+    let n = 0;
+    for (const b of currentAnswered) if (b) n++;
+    return n;
+  }, [currentAnswered]);
+  const submittedTotal = results.reduce((s, r) => s + (r?.total ?? 0), 0);
+  const doneCount = submittedTotal + answeredInCurrent;
+
   // Global position of the active question.
   const currentGlobal = useMemo(() => {
     let base = 0;
@@ -79,6 +91,9 @@ const MarathonNavigator = ({
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
+  const filterDisabled = totalWrong === 0;
+  const effectiveOnlyWrong = onlyWrong && !filterDisabled;
+
   const body = (onClose?: () => void) => (
     <aside className="w-full h-full bg-card/95 border-l border-border flex flex-col">
       <div className="p-3 border-b border-border flex items-center justify-between gap-2">
@@ -98,16 +113,19 @@ const MarathonNavigator = ({
       </div>
 
       <div className="p-3 border-b border-border space-y-2.5">
-        <div className="text-xs">
-          <span className="font-semibold text-emerald-700 dark:text-emerald-400">{totalCorrect} đúng</span>
-          <span className="mx-1.5 text-muted-foreground">/</span>
-          <span className="font-semibold text-red-700 dark:text-red-400">{totalWrong} sai</span>
-          <span className="ml-1.5 text-muted-foreground">
-            · Câu {Math.min(currentGlobal + 1, Math.max(totalChips, 1))}/{totalChips}
+        <div className="text-xs text-foreground">
+          <span className="font-semibold">Đã làm {doneCount}/{totalChips || 0}</span>
+          <span className="mx-1.5 text-muted-foreground">·</span>
+          <span className="font-semibold text-emerald-700 dark:text-emerald-400">Đúng {totalCorrect}</span>
+          <span className="mx-1 text-muted-foreground">/</span>
+          <span className="font-semibold text-red-700 dark:text-red-400">Sai {totalWrong}</span>
+          <span className="mx-1.5 text-muted-foreground">·</span>
+          <span className="text-muted-foreground">
+            Câu {Math.min(currentGlobal + 1, Math.max(totalChips, 1))}/{totalChips}
           </span>
         </div>
 
-        <div className="rounded-md bg-muted/50 p-2 flex items-center gap-2 text-[11px]">
+        <div className="rounded-md bg-muted/50 p-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
           <span className="inline-flex items-center gap-1">
             <span className="inline-block w-3 h-3 rounded bg-emerald-500/70" /> đúng
           </span>
@@ -115,19 +133,34 @@ const MarathonNavigator = ({
             <span className="inline-block w-3 h-3 rounded bg-red-500/70" /> sai
           </span>
           <span className="inline-flex items-center gap-1">
+            <span className="inline-block w-3 h-3 rounded border-2 border-blue-500 bg-muted dark:border-blue-400" /> đã trả lời
+          </span>
+          <span className="inline-flex items-center gap-1">
             <span className="inline-block w-3 h-3 rounded border border-border bg-muted" /> chưa làm
           </span>
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer select-none">
+          <label
+            className={cn(
+              "flex items-center gap-2 text-xs select-none",
+              filterDisabled
+                ? "text-muted-foreground opacity-60 cursor-not-allowed"
+                : "text-foreground cursor-pointer",
+            )}
+            title={filterDisabled ? "Chưa có câu sai nào" : undefined}
+          >
             <input
               type="checkbox"
-              checked={onlyWrong}
-              onChange={() => setOnlyWrong((v) => !v)}
+              checked={effectiveOnlyWrong}
+              disabled={filterDisabled}
+              onChange={() => !filterDisabled && setOnlyWrong((v) => !v)}
               className="rounded border-border"
             />
             Chỉ hiện câu sai
+            {filterDisabled && (
+              <span className="text-[10px] text-muted-foreground italic">(Chưa có câu sai nào)</span>
+            )}
           </label>
           <button
             type="button"
@@ -142,6 +175,10 @@ const MarathonNavigator = ({
       <div className="flex-1 overflow-y-auto p-3">
         {totalChips === 0 ? (
           <div className="text-[11px] text-muted-foreground italic">—</div>
+        ) : effectiveOnlyWrong && totalWrong === 0 ? (
+          <div className="h-full flex items-center justify-center text-center text-[11px] text-muted-foreground italic px-3">
+            Chưa có câu sai nào — làm xong đề nào thì câu sai sẽ hiện ở đây.
+          </div>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {flat.map((cell, gi) => {
@@ -151,21 +188,25 @@ const MarathonNavigator = ({
               const isCurrent = si === currentIndex && !isDone;
               const isFuture = si > currentIndex && !isDone;
 
-              let state: "correct" | "wrong" | "empty" = "empty";
+              let state: "correct" | "wrong" | "answered" | "empty" = "empty";
               if (isDone) {
                 const q = r!.qResults?.[qi];
                 state = q ? (q.is_correct ? "correct" : "wrong") : "empty";
+              } else if (isCurrent && currentAnswered?.[qi]) {
+                state = "answered";
               }
 
               const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;
-              const dim = onlyWrong && !(isDone && state === "wrong");
+              const dim = effectiveOnlyWrong && !(isDone && state === "wrong");
 
               const cls =
                 state === "correct"
                   ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
                   : state === "wrong"
                   ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
-                  : "bg-muted text-muted-foreground border-border";
+                  : state === "answered"
+                  ? "bg-muted text-foreground border-2 border-blue-500 dark:border-blue-400 hover:bg-muted"
+                  : "bg-muted text-muted-foreground border border-border";
 
               return (
                 <button
@@ -185,7 +226,7 @@ const MarathonNavigator = ({
                     } catch { /* swallow to keep exam alive */ }
                   }}
                   className={cn(
-                    "w-[26px] h-[26px] rounded text-[11px] font-semibold border transition-colors",
+                    "w-[26px] h-[26px] rounded text-[11px] font-semibold transition-colors",
                     cls,
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
                     dim && "opacity-25",
