@@ -169,14 +169,25 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     const nextResults = results.slice();
     nextResults[currentIndex] = entry;
     const isLastSet = currentIndex >= sets.length - 1;
-    const nextIndex = isLastSet ? currentIndex : currentIndex + 1;
+    const pending = pendingJumpRef.current;
+    pendingJumpRef.current = null;
+    const nextIndex = pending
+      ? Math.max(0, Math.min(pending.si, sets.length - 1))
+      : (isLastSet ? currentIndex : currentIndex + 1);
     setResults(nextResults);
     setEnterAtLast(false);
     if (persist) {
       saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
     }
-    if (!isLastSet) setCurrentIndex(nextIndex);
-    else setPhase("completed");
+    if (pending) {
+      setJumpQ(pending.qi);
+      setTimeout(() => setJumpQ(null), 0);
+      setCurrentIndex(nextIndex);
+    } else if (!isLastSet) {
+      setCurrentIndex(nextIndex);
+    } else {
+      setPhase("completed");
+    }
   }, [currentIndex, sets, results, persist, partType]);
 
   useEffect(() => {
