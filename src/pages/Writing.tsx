@@ -200,6 +200,7 @@ const Writing = () => {
             <div className="space-y-4 text-center">
               <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
               <TechSkeleton variant="text" className="w-32 mx-auto" />
+              <Button variant="outline" size="sm" onClick={handleExit} className="mt-4">Thoát</Button>
             </div>
           </main>
         </div>
