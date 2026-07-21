@@ -113,9 +113,16 @@ const ReadingExamEngine = ({
   reviewScopeNote,
   onMarathonFinish,
   submitSignal,
+  marathonLock = false,
+  hideBottomNav = false,
+  onLockedChange,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
+  const [lockedP1, setLockedP1] = useState<Set<number>>(new Set());
+  const [lockedP2, setLockedP2] = useState<Set<number>>(new Set());
+  const [lockedP3, setLockedP3] = useState<Set<number>>(new Set());
+  const [lockedP4, setLockedP4] = useState<Set<number>>(new Set());
   const computedPageNumber = pageBase != null
     ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
     : undefined;
