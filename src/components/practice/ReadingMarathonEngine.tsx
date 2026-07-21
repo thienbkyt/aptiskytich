@@ -307,33 +307,85 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     else if (partType === "part4") initialAnswers.p4 = saved;
   }
 
+  if (midReview) {
+    const r = results[midReview.setIndex];
+    if (r) {
+      return (
+        <div className="min-h-screen bg-background">
+          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+            <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+              <Button size="sm" variant="outline" onClick={() => setMidReview(null)}>
+                Quay lại đề đang làm
+              </Button>
+              <span className="text-xs text-muted-foreground truncate">
+                Xem lại · Đề {midReview.setIndex + 1}
+              </span>
+            </div>
+          </div>
+          <HistoryReviewRenderer
+            examSetId={r.examSetId}
+            skill="reading"
+            part={r.part}
+            testTitle={`Đề ${midReview.setIndex + 1}`}
+            qResults={r.qResults}
+            onExit={() => setMidReview(null)}
+            pageBase={0}
+            pageTotal={pagesPerSet}
+            initialSection={Math.min(midReview.qIndex, pagesPerSet - 1)}
+          />
+        </div>
+      );
+    }
+  }
+
+  const qCounts = sets.map((_, i) => results[i]?.total);
+
   return (
-    <ReadingExamEngine
-      key={`${attempt}-${currentIndex}`}
-      partType={partType}
-      testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
-      timeLimit={HUGE_TIME}
-      hideTimer
-      skipIntro
-      allowReveal
-      reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
-      showResultsOnSubmit={false}
-      onExit={onExit}
-      onComplete={handleComplete}
-      onMarathonFinish={() => setPhase("completed")}
-      onPreviousPart={() => {
-        if (currentIndex > 0) {
-          setEnterAtLast(true);
-          setCurrentIndex((i) => i - 1);
-        }
-      }}
-      enterAtLastQuestion={enterAtLast}
-      initialAnswers={initialAnswers}
-      pageBase={currentIndex * pagesPerSet}
-      pageTotal={sets.length * pagesPerSet}
-      {...engineData}
-    />
+    <div className="lg:flex lg:items-stretch min-h-screen">
+      <div className="flex-1 min-w-0">
+        <ReadingExamEngine
+          key={`${attempt}-${currentIndex}`}
+          partType={partType}
+          testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+          timeLimit={HUGE_TIME}
+          hideTimer
+          skipIntro
+          allowReveal
+          reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
+          showResultsOnSubmit={false}
+          onExit={onExit}
+          onComplete={handleComplete}
+          onMarathonFinish={() => setPhase("completed")}
+          onPreviousPart={() => {
+            if (currentIndex > 0) {
+              setEnterAtLast(true);
+              setCurrentIndex((i) => i - 1);
+            }
+          }}
+          enterAtLastQuestion={enterAtLast}
+          initialAnswers={initialAnswers}
+          pageBase={currentIndex * pagesPerSet}
+          pageTotal={sets.length * pagesPerSet}
+          initialSection={jumpQ ?? undefined}
+          {...engineData}
+        />
+      </div>
+      <MarathonNavigator
+        sets={sets}
+        results={results as any}
+        currentIndex={currentIndex}
+        qCounts={qCounts}
+        isRetryMode={isRetryMode}
+        allowJumpInCurrent={partType !== "part1"}
+        onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
+        onJumpQuestion={(qi) => {
+          setJumpQ(qi);
+          setTimeout(() => setJumpQ(null), 0);
+        }}
+      />
+    </div>
   );
 };
+
 
 export default ReadingMarathonEngine;
