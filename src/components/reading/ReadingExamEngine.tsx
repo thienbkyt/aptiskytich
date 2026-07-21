@@ -666,6 +666,8 @@ const ReadingExamEngine = ({
             hideTimer={hideTimer}
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
+            lockedIndices={lockedP1}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -688,6 +690,8 @@ const ReadingExamEngine = ({
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
             hideTimer={hideTimer}
+            lockedSections={lockedP2}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -711,6 +715,8 @@ const ReadingExamEngine = ({
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
             hideTimer={hideTimer}
+            lockedIndices={lockedP3}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -732,6 +738,8 @@ const ReadingExamEngine = ({
             reviewData={effectiveReviewData}
             reviewDataLoading={effectiveReviewLoading}
             hideTimer={hideTimer}
+            lockedIndices={lockedP4}
+            hideBottomNav={hideBottomNav}
           />
         )}
       </div>
