@@ -497,7 +497,8 @@ body.history-review-mode .exam-light-bottom-bar {
 
   @media (prefers-reduced-motion: reduce) {
     .tech-card, .tech-card::before, .tech-card::after,
-    .tech-btn, .tech-btn::after, .tech-row {
+    .tech-btn, .tech-btn::after, .tech-row,
+    .animate-support-fab-beat {
       transition: none !important; animation: none !important;
     }
     .tech-card:hover, .tech-btn:hover, .tech-card:active, .tech-btn:active { transform: none !important; }
