@@ -383,8 +383,19 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         allowJumpInCurrent={partType !== "part1"}
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
-          setJumpQ(qi);
+          const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+          setJumpQ(clamped);
           setTimeout(() => setJumpQ(null), 0);
+        }}
+        onEnterFutureSet={(si, qi) => {
+          try {
+            if (si < 0 || si >= sets.length) return;
+            const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+            setEnterAtLast(false);
+            setJumpQ(clamped);
+            setCurrentIndex(si);
+            setTimeout(() => setJumpQ(null), 0);
+          } catch { /* noop */ }
         }}
       />
     </div>
