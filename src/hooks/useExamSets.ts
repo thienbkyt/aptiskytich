@@ -99,16 +99,20 @@ export const useExamSets = (skill: string) => {
  * Fetch all exam_questions for a given exam_set_id
  */
 export const fetchExamQuestions = async (examSetId: string): Promise<ExamQuestionRow[]> => {
-  const { data, error } = await supabase
-    .from("exam_questions")
-    .select("*")
-    .eq("exam_set_id", examSetId)
-    .order("order_index", { ascending: true });
-
-  if (error || !data) return [];
-  return data.map((q) => ({
+  let data: any = null, error: any = null;
+  try {
+    const res = await withTimeout(
+      supabase.from("exam_questions").select("*").eq("exam_set_id", examSetId).order("order_index", { ascending: true }) as any
+    );
+    data = (res as any).data; error = (res as any).error;
+  } catch (e) { error = e; }
+  if (error || !data) {
+    console.error("[fetchExamQuestions] failed", { examSetId, error });
+    return [];
+  }
+  return data.map((q: any) => ({
     ...q,
-    options: (q.options as unknown as string[]) || [],
+    options: (q.options as string[]) || [],
     extra_data: (q.extra_data as Record<string, any>) || {},
   })) as ExamQuestionRow[];
 };
