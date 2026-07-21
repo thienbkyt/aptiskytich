@@ -27,6 +27,10 @@ interface Props {
   hideTimer?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  /** Marathon: per-gap locked/graded set. When set, each gap in it is treated as revealed and locked. */
+  lockedIndices?: Set<number>;
+  /** Marathon: hide the BottomNavBar. */
+  hideBottomNav?: boolean;
 }
 
 const ReadingPart1Sentence = ({
@@ -36,8 +40,11 @@ const ReadingPart1Sentence = ({
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
   pageNumber, pageTotal,
+  lockedIndices, hideBottomNav = false,
 }: Props) => {
-  const reveal = submitted || !!revealAnswers;
+  const globallyRevealed = submitted || !!revealAnswers;
+  const revealFor = (gi: number) => globallyRevealed || (lockedIndices?.has(gi) ?? false);
+  const anyRevealed = globallyRevealed || (lockedIndices && lockedIndices.size > 0);
 
   const usedGapIdx = [...question.passage.matchAll(/\{(\d+)\}/g)]
     .map(m => Number(m[1]))
