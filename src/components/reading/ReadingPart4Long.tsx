@@ -27,6 +27,10 @@ interface Props {
   reviewData?: ReadingReviewData | null;
   reviewDataLoading?: boolean;
   hideTimer?: boolean;
+  /** Marathon: per-paragraph locked/graded set. */
+  lockedIndices?: Set<number>;
+  /** Marathon: hide the BottomNavBar. */
+  hideBottomNav?: boolean;
 }
 
 const ReadingPart4Long = ({
@@ -35,8 +39,10 @@ const ReadingPart4Long = ({
   isFirst, isLast, sections, onSubmitTest,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
+  lockedIndices, hideBottomNav = false,
 }: Props) => {
-  const reveal = submitted || !!revealAnswers;
+  const globallyRevealed = submitted || !!revealAnswers;
+  const revealFor = (pIdx: number) => globallyRevealed || (lockedIndices?.has(pIdx) ?? false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
