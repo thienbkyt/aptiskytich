@@ -36,7 +36,6 @@ const MarathonNavigator = ({
   onReview, onJumpQuestion, onEnterSet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [onlyWrong, setOnlyWrong] = useState(false);
 
   // Flatten all chips: global index -> { si, qi }. Skips sets with missing/0 count.
   const flat = useMemo(() => {
@@ -57,8 +56,6 @@ const MarathonNavigator = ({
     return out;
   }, [sets.length, results, qCounts]);
 
-  const totalCorrect = results.reduce((s, r) => s + (r?.correct ?? 0), 0);
-  const totalWrong = results.reduce((s, r) => s + ((r?.total ?? 0) - (r?.correct ?? 0)), 0);
   const totalChips = flat.length;
 
   // "Đã làm" = tổng câu ở các đề đã nộp + số câu đã trả lời ở đề đang làm.
@@ -91,9 +88,6 @@ const MarathonNavigator = ({
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const filterDisabled = totalWrong === 0;
-  const effectiveOnlyWrong = onlyWrong && !filterDisabled;
-
   const body = (onClose?: () => void) => (
     <aside className="w-full h-full bg-card/95 border-l border-border flex flex-col">
       <div className="p-3 border-b border-border flex items-center justify-between gap-2">
@@ -116,10 +110,6 @@ const MarathonNavigator = ({
         <div className="text-xs text-foreground">
           <span className="font-semibold">Đã làm {doneCount}/{totalChips || 0}</span>
           <span className="mx-1.5 text-muted-foreground">·</span>
-          <span className="font-semibold text-emerald-700 dark:text-emerald-400">Đúng {totalCorrect}</span>
-          <span className="mx-1 text-muted-foreground">/</span>
-          <span className="font-semibold text-red-700 dark:text-red-400">Sai {totalWrong}</span>
-          <span className="mx-1.5 text-muted-foreground">·</span>
           <span className="text-muted-foreground">
             Câu {Math.min(currentGlobal + 1, Math.max(totalChips, 1))}/{totalChips}
           </span>
@@ -127,38 +117,17 @@ const MarathonNavigator = ({
 
         <div className="rounded-md bg-muted/50 p-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded bg-emerald-500/70" /> đúng
+            <span className="inline-block w-3 h-3 rounded bg-muted-foreground/40" /> đã làm
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded bg-red-500/70" /> sai
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded border-2 border-blue-500 bg-muted dark:border-blue-400" /> đã trả lời
+            <span className="inline-block w-3 h-3 rounded border-2 border-blue-500 bg-muted dark:border-blue-400" /> đang làm dở
           </span>
           <span className="inline-flex items-center gap-1">
             <span className="inline-block w-3 h-3 rounded border border-border bg-muted" /> chưa làm
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <label
-            className={cn(
-              "flex items-center gap-2 text-xs select-none",
-              filterDisabled
-                ? "text-muted-foreground opacity-60 cursor-not-allowed"
-                : "text-foreground cursor-pointer",
-            )}
-            title={filterDisabled ? "Chưa có câu sai nào" : undefined}
-          >
-            <input
-              type="checkbox"
-              checked={effectiveOnlyWrong}
-              disabled={filterDisabled}
-              onChange={() => !filterDisabled && setOnlyWrong((v) => !v)}
-              className="rounded border-border"
-            />
-            Chỉ hiện câu sai
-          </label>
+        <div className="flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={backToCurrent}
@@ -172,10 +141,6 @@ const MarathonNavigator = ({
       <div className="flex-1 overflow-y-auto p-3">
         {totalChips === 0 ? (
           <div className="text-[11px] text-muted-foreground italic">—</div>
-        ) : effectiveOnlyWrong && totalWrong === 0 ? (
-          <div className="h-full flex items-center justify-center text-center text-[11px] text-muted-foreground italic px-3">
-            Chưa có câu sai nào — làm xong đề nào thì câu sai sẽ hiện ở đây.
-          </div>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {flat.map((cell, gi) => {
@@ -184,22 +149,15 @@ const MarathonNavigator = ({
               const isDone = !!r;
               const isCurrent = !isDone && si === currentIndex;
 
-              let state: "correct" | "wrong" | "answered" | "empty" = "empty";
-              if (isDone) {
-                const q = r!.qResults?.[qi];
-                state = q ? (q.is_correct ? "correct" : "wrong") : "empty";
-              } else if (isCurrent && currentAnswered?.[qi]) {
-                state = "answered";
-              }
+              let state: "done" | "answered" | "empty" = "empty";
+              if (isDone) state = "done";
+              else if (isCurrent && currentAnswered?.[qi]) state = "answered";
 
               const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;
-              const dim = effectiveOnlyWrong && !(isDone && state === "wrong");
 
               const cls =
-                state === "correct"
-                  ? "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800"
-                  : state === "wrong"
-                  ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
+                state === "done"
+                  ? "bg-muted-foreground/25 text-foreground border border-border hover:bg-muted-foreground/35 dark:bg-muted-foreground/20"
                   : state === "answered"
                   ? "bg-muted text-foreground border-2 border-blue-500 dark:border-blue-400 hover:bg-muted"
                   : "bg-muted text-muted-foreground border border-border";
@@ -225,7 +183,6 @@ const MarathonNavigator = ({
                     "w-[26px] h-[26px] rounded text-[11px] font-semibold transition-colors",
                     cls,
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
-                    dim && "opacity-25",
                     !isDone && !isCurrent && "opacity-45",
                     "cursor-pointer",
                   )}
