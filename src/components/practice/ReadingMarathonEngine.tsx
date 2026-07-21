@@ -364,24 +364,43 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     );
   }
 
-  const saved = results[currentIndex]?.answers;
+  // Prefer submitted answers when present, else fall back to per-set draft.
+  const currentSetId = sets[currentIndex]?.id;
+  const savedFromResult = results[currentIndex]?.answers;
+  const draftForSet = currentSetId ? drafts[currentSetId] : undefined;
   const initialAnswers: any = {};
-  if (saved !== undefined) {
-    if (partType === "part1") initialAnswers.p1 = saved;
-    else if (partType === "part2") initialAnswers.p2 = saved;
-    else if (partType === "part3") initialAnswers.p3 = saved;
-    else if (partType === "part4") initialAnswers.p4 = saved;
+  const rawInit = savedFromResult !== undefined ? savedFromResult : draftForSet;
+  if (rawInit !== undefined) {
+    if (partType === "part1") initialAnswers.p1 = rawInit;
+    else if (partType === "part2") initialAnswers.p2 = rawInit;
+    else if (partType === "part3") initialAnswers.p3 = rawInit;
+    else if (partType === "part4") initialAnswers.p4 = rawInit;
   }
 
   const midReviewEntry = midReview ? results[midReview.setIndex] : null;
 
+  // One chip per "màn hình câu hỏi" of a set (pagesPerSet).
+  const qCounts = sets.map(() => pagesPerSet);
 
-
-  // Use exam_sets.question_count as authoritative per-set chip count.
-  const qCounts = sets.map((s: any) => {
-    const n = typeof s?.question_count === "number" ? s.question_count : null;
-    return n && n > 0 ? n : undefined;
-  });
+  const persistAnswers = (a: any) => {
+    setCurrentAnswers(a);
+    // Extract raw per-part bag, then persist as a draft so a reload restores partial work.
+    if (!currentSetId) return;
+    const key = partType === "part1" ? "p1" : partType === "part2" ? "p2" : partType === "part3" ? "p3" : "p4";
+    const bag = a?.[key];
+    setDrafts((prev) => {
+      const next = { ...prev, [currentSetId]: bag };
+      if (persist) {
+        saveMarathonProgress("reading", partType, {
+          currentIndex,
+          results: results as any,
+          drafts: next,
+          updatedAt: Date.now(),
+        });
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
@@ -398,6 +417,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             pageBase={0}
             pageTotal={pagesPerSet}
             initialSection={Math.min(midReview!.qIndex, pagesPerSet - 1)}
+            hideTimer
+            hideBottomNav
+            hideBackToResults
           />
         ) : (
           <ReadingExamEngine
@@ -421,7 +443,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             }}
             enterAtLastQuestion={enterAtLast}
             initialAnswers={initialAnswers}
-            onAnswersChange={(a) => setCurrentAnswers(a)}
+            onAnswersChange={persistAnswers}
+            onSectionChange={setActiveSection}
             pageBase={currentIndex * pagesPerSet}
             pageTotal={sets.length * pagesPerSet}
             initialSection={jumpQ ?? undefined}
@@ -437,11 +460,11 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         sets={sets}
         results={results as any}
         currentIndex={currentIndex}
+        currentQ={activeSection}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
-        currentLocked={currentLocked}
+        currentLocked={chipLocked}
         isRetryMode={isRetryMode}
-        allowJumpInCurrent={partType !== "part1"}
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
           if (midReview) setMidReview(null);
