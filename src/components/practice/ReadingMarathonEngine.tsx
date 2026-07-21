@@ -411,6 +411,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         results={results as any}
         currentIndex={currentIndex}
         qCounts={qCounts}
+        currentAnswered={currentAnswered}
         isRetryMode={isRetryMode}
         allowJumpInCurrent={partType !== "part1"}
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
