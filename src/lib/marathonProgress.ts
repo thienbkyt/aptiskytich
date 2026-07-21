@@ -4,6 +4,8 @@ export type MarathonResultEntry = { correct: number; total: number; examSetId: s
 export interface MarathonProgress {
   currentIndex: number;
   results: (MarathonResultEntry | null)[];
+  /** Per-set draft answers keyed by examSetId (unsubmitted work-in-progress). */
+  drafts?: Record<string, any>;
   updatedAt: number;
 }
 export interface MarathonLast {
