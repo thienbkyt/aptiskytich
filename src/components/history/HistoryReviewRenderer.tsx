@@ -34,6 +34,14 @@ interface Props {
   pageTotal?: number;
   initialSection?: number;
   onPageCount?: (n: number) => void;
+  /** Optional override for the review timer (defaults to skill-standard). */
+  timeLimit?: number;
+  /** Marathon review: hide countdown timer in the underlying engine. */
+  hideTimer?: boolean;
+  /** Marathon review: hide the bottom navigation bar. */
+  hideBottomNav?: boolean;
+  /** Marathon review: suppress the "← Quay lại kết quả" header button. */
+  hideBackToResults?: boolean;
 }
 
 const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection, onPageCount }: Props) => {
