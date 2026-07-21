@@ -46,6 +46,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [engineData, setEngineData] = useState<any>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [drafts, setDrafts] = useState<Record<string, any>>(() => savedInit?.drafts ?? {});
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
     const base = new Array(sets.length).fill(undefined);
     savedInit?.results?.forEach((r) => {
@@ -61,9 +62,10 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [currentAnswers, setCurrentAnswers] = useState<any>(null);
   const [submitSignal, setSubmitSignal] = useState(0);
   const [currentLocked, setCurrentLocked] = useState<boolean[]>([]);
+  const [activeSection, setActiveSection] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
 
-  useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); }, [currentIndex, attempt]);
+  useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
   const currentAnswered = useMemo(() => {
     const count = (sets[currentIndex] as any)?.question_count ?? 0;
