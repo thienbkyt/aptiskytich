@@ -60,9 +60,10 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [jumpQ, setJumpQ] = useState<number | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<any>(null);
   const [submitSignal, setSubmitSignal] = useState(0);
+  const [currentLocked, setCurrentLocked] = useState<boolean[]>([]);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
 
-  useEffect(() => { setCurrentAnswers(null); }, [currentIndex, attempt]);
+  useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); }, [currentIndex, attempt]);
 
   const currentAnswered = useMemo(() => {
     const count = (sets[currentIndex] as any)?.question_count ?? 0;
