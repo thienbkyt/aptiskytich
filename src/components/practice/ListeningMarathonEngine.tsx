@@ -472,6 +472,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               : 0
           }
           initialAnswers={initialAnswers}
+          onAnswersChange={(a) => setCurrentAnswers(Array.isArray(a) ? a : [])}
           pageBase={pageBase}
           pageTotal={pageTotal}
           {...engineData}
