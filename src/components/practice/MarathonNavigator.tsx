@@ -158,14 +158,11 @@ const MarathonNavigator = ({
               className="rounded border-border"
             />
             Chỉ hiện câu sai
-            {filterDisabled && (
-              <span className="text-[10px] text-muted-foreground italic">(Chưa có câu sai nào)</span>
-            )}
           </label>
           <button
             type="button"
             onClick={backToCurrent}
-            className="text-[11px] font-medium text-[#24085a] dark:text-primary hover:underline"
+            className="text-[11px] font-medium text-[#24085a] dark:text-primary hover:underline whitespace-nowrap shrink-0"
           >
             Về câu đang làm
           </button>
