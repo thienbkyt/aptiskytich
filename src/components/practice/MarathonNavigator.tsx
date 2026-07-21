@@ -25,15 +25,15 @@ interface Props {
   allowJumpInCurrent?: boolean;
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
-  /** Switch marathon to a future (not-yet-done) set at the given question index. */
-  onEnterFutureSet?: (setIndex: number, questionIndex: number) => void;
+  /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
+  onEnterSet?: (setIndex: number, questionIndex: number) => void;
 }
 
 const MarathonNavigator = ({
   sets, results, currentIndex, qCounts,
   currentQ, currentAnswered,
   isRetryMode, allowJumpInCurrent = true,
-  onReview, onJumpQuestion, onEnterFutureSet,
+  onReview, onJumpQuestion, onEnterSet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [onlyWrong, setOnlyWrong] = useState(false);
@@ -158,14 +158,11 @@ const MarathonNavigator = ({
               className="rounded border-border"
             />
             Chỉ hiện câu sai
-            {filterDisabled && (
-              <span className="text-[10px] text-muted-foreground italic">(Chưa có câu sai nào)</span>
-            )}
           </label>
           <button
             type="button"
             onClick={backToCurrent}
-            className="text-[11px] font-medium text-[#24085a] dark:text-primary hover:underline"
+            className="text-[11px] font-medium text-[#24085a] dark:text-primary hover:underline whitespace-nowrap shrink-0"
           >
             Về câu đang làm
           </button>
@@ -185,8 +182,7 @@ const MarathonNavigator = ({
               const { si, qi } = cell;
               const r = results[si];
               const isDone = !!r;
-              const isCurrent = si === currentIndex && !isDone;
-              const isFuture = si > currentIndex && !isDone;
+              const isCurrent = !isDone && si === currentIndex;
 
               let state: "correct" | "wrong" | "answered" | "empty" = "empty";
               if (isDone) {
@@ -218,10 +214,10 @@ const MarathonNavigator = ({
                       if (si < 0 || si >= sets.length) return;
                       if (isDone) {
                         onReview(si, qi);
-                      } else if (isCurrent) {
+                      } else if (si === currentIndex) {
                         if (allowJumpInCurrent) onJumpQuestion?.(qi);
-                      } else if (isFuture) {
-                        onEnterFutureSet?.(si, qi);
+                      } else {
+                        onEnterSet?.(si, qi);
                       }
                     } catch { /* swallow to keep exam alive */ }
                   }}
@@ -230,7 +226,7 @@ const MarathonNavigator = ({
                     cls,
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
                     dim && "opacity-25",
-                    isFuture && !isDone && "opacity-45",
+                    !isDone && !isCurrent && "opacity-45",
                     "cursor-pointer",
                   )}
                   title={`Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
