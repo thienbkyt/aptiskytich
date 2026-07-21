@@ -38,7 +38,7 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
+const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, isRetryMode = false }: Props) => {
   const savedInit = resume && persist ? loadMarathonProgress("reading", partType) : null;
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
@@ -56,6 +56,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     return base;
   });
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
+  const [midReview, setMidReview] = useState<{ setIndex: number; qIndex: number } | null>(null);
+  const [jumpQ, setJumpQ] = useState<number | null>(null);
+
 
   const accCorrect = useMemo(
     () => results.reduce((sum, r) => sum + (r?.correct ?? 0), 0),
