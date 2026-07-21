@@ -419,6 +419,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           pageBase={currentIndex * pagesPerSet}
           pageTotal={sets.length * pagesPerSet}
           initialSection={jumpQ ?? undefined}
+          submitSignal={submitSignal}
           {...engineData}
         />
       </div>
@@ -440,6 +441,13 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           try {
             if (si < 0 || si >= sets.length) return;
             const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+            const hasAnyAnswer = currentAnswered.some(Boolean);
+            if (hasAnyAnswer) {
+              // Auto-submit the current in-progress set, then jump.
+              pendingJumpRef.current = { si, qi: clamped };
+              setSubmitSignal((s) => s + 1);
+              return;
+            }
             setEnterAtLast(false);
             setJumpQ(clamped);
             setCurrentIndex(si);
