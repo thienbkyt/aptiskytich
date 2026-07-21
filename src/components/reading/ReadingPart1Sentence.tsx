@@ -73,6 +73,7 @@ const ReadingPart1Sentence = ({
         }
 
         const selectedValue = answers[gapIndex];
+        const reveal = revealFor(gapIndex);
         const isCorrect = reveal && selectedValue === gap.correct;
         const isWrong = reveal && selectedValue !== null && selectedValue !== undefined && selectedValue !== gap.correct;
 
