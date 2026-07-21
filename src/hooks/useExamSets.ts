@@ -14,6 +14,7 @@ export interface ExamSetRow {
   created_at: string;
   access_tier?: "free" | "pro" | "premium";
   new_until?: string | null;
+  question_count?: number | null;
 }
 
 export const NEW_TAG_DAYS = 10;
