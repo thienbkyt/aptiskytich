@@ -2,6 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { compareExamItems } from "@/lib/sortExamSets";
 
+const withTimeout = <T,>(p: PromiseLike<T>, ms = 15000): Promise<T> =>
+  Promise.race([
+    Promise.resolve(p) as Promise<T>,
+    new Promise<T>((_, rej) => setTimeout(() => rej(new Error("Tải đề quá lâu (timeout)")), ms)),
+  ]);
+
 export interface ExamSetRow {
   id: string;
   title: string;
