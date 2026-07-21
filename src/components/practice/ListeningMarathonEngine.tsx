@@ -488,6 +488,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           onAnswersChange={(a) => setCurrentAnswers(Array.isArray(a) ? a : [])}
           pageBase={pageBase}
           pageTotal={pageTotal}
+          submitSignal={submitSignal}
           {...engineData}
         />
       </div>
@@ -511,6 +512,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             if (si < 0 || si >= sets.length) return;
             const max = Math.max(1, loaded[si]?.pageCount ?? 1) - 1;
             const clamped = Math.max(0, Math.min(qi, max));
+            const hasAnyAnswer = currentAnswered.some(Boolean);
+            if (hasAnyAnswer) {
+              pendingJumpRef.current = { si, qi: clamped };
+              setSubmitSignal((s) => s + 1);
+              return;
+            }
             setEnterAtLast(false);
             setJumpQ(clamped);
             setCurrentIndex(si);
