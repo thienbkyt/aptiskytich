@@ -399,6 +399,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           }}
           enterAtLastQuestion={enterAtLast}
           initialAnswers={initialAnswers}
+          onAnswersChange={(a) => setCurrentAnswers(a)}
           pageBase={currentIndex * pagesPerSet}
           pageTotal={sets.length * pagesPerSet}
           initialSection={jumpQ ?? undefined}
