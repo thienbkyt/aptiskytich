@@ -213,6 +213,38 @@ const ReadingExamEngine = ({
     if (initialSection != null) setCurrentIndex(initialSection);
   }, [initialSection]);
 
+  // Marathon: emit lockedIndices for the current part.
+  const currentLockedSet = partType === "part1" ? lockedP1
+    : partType === "part2" ? lockedP2
+    : partType === "part3" ? lockedP3
+    : lockedP4;
+  useEffect(() => {
+    if (!onLockedChange) return;
+    const totalQ = partType === "part1" ? (part1Question?.gaps.length || 0)
+      : partType === "part2" ? part2SectionCount
+      : partType === "part3" ? (part3Question?.statements.length || 0)
+      : (part4Question?.paragraphs?.length || part4Question?.questions.length || 0);
+    const arr = new Array(totalQ).fill(false);
+    currentLockedSet.forEach((i) => { if (i >= 0 && i < totalQ) arr[i] = true; });
+    onLockedChange(arr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLockedSet, partType, part2SectionCount]);
+
+  // Marathon Part 2: lock the section we're leaving whenever currentIndex changes.
+  const prevSectionRef = (globalThis as any).React ? null : null; // placeholder to keep TS calm
+  useEffect(() => {
+    if (!marathonLock || partType !== "part2") return;
+    // Locks the section we WERE on when it changes.
+    const prev = currentIndex;
+    return () => {
+      setLockedP2((s) => {
+        if (s.has(prev)) return s;
+        const n = new Set(s); n.add(prev); return n;
+      });
+    };
+  }, [currentIndex, marathonLock, partType]);
+
+
 
   // Panel "questions": for part2 each section = 1 question; others = per item.
   const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
