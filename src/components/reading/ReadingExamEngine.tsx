@@ -219,6 +219,12 @@ const ReadingExamEngine = ({
     if (initialSection != null) setCurrentIndex(initialSection);
   }, [initialSection]);
 
+  // Notify parent whenever the active section changes.
+  useEffect(() => {
+    onSectionChange?.(currentIndex);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex]);
+
   // Marathon: emit lockedIndices for the current part.
   const currentLockedSet = partType === "part1" ? lockedP1
     : partType === "part2" ? lockedP2
