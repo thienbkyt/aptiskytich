@@ -503,6 +503,32 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             setTimeout(() => setJumpQ(null), 0);
           } catch { /* noop */ }
         }}
+        onRetrySet={(si) => {
+          try {
+            if (si < 0 || si >= sets.length) return;
+            const setId = sets[si]?.id;
+            const nextResults = results.slice();
+            nextResults[si] = undefined;
+            setResults(nextResults);
+            const nextDrafts = { ...drafts };
+            if (setId) delete nextDrafts[setId];
+            setDrafts(nextDrafts);
+            if (persist) {
+              saveMarathonProgress("reading", partType, {
+                currentIndex: si,
+                results: nextResults as any,
+                drafts: nextDrafts,
+                updatedAt: Date.now(),
+              });
+            }
+            setMidReview(null);
+            setEnterAtLast(false);
+            setJumpQ(0);
+            setCurrentIndex(si);
+            setAttempt((a) => a + 1);
+            setTimeout(() => setJumpQ(null), 0);
+          } catch { /* noop */ }
+        }}
       />
     </div>
   );

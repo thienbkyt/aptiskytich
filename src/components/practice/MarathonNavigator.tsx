@@ -33,13 +33,15 @@ interface Props {
   onJumpQuestion?: (questionIndex: number) => void;
   /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
   onEnterSet?: (setIndex: number, questionIndex: number) => void;
+  /** Marathon: reset a submitted set so the user can redo it. Enables "Làm lại đề này". */
+  onRetrySet?: (setIndex: number) => void;
 }
 
 const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
   currentQ, reviewingQ, currentAnswered, currentLocked,
   isRetryMode, allowJumpInCurrent = true,
-  onReview, onJumpQuestion, onEnterSet,
+  onReview, onJumpQuestion, onEnterSet, onRetrySet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -64,37 +66,17 @@ const MarathonNavigator = ({
 
   const totalChips = flat.length;
 
-  // "Đã làm" = tổng câu ở các đề đã nộp + số câu đã trả lời ở đề đang làm.
-  const answeredInCurrent = useMemo(() => {
-    if (!currentAnswered) return 0;
-    let n = 0;
-    for (const b of currentAnswered) if (b) n++;
-    return n;
-  }, [currentAnswered]);
-  const submittedTotal = results.reduce((s, r) => s + (r?.total ?? 0), 0);
-  const doneCount = submittedTotal + answeredInCurrent;
+  // Đếm theo ĐỀ: đã làm = số đề đã nộp; tổng = số đề.
+  const submittedSets = useMemo(
+    () => results.reduce((n, r) => n + (r ? 1 : 0), 0),
+    [results],
+  );
+  const totalSets = sets.length;
 
-  // Global position of the active question. When reviewing, follow the reviewing set.
-  const effectiveIndex = (reviewingIndex ?? -1) >= 0 ? (reviewingIndex as number) : currentIndex;
-  const effectiveQ = (reviewingIndex ?? -1) >= 0 ? (reviewingQ ?? 0) : (currentQ ?? 0);
-  const currentGlobal = useMemo(() => {
-    let base = 0;
-    try {
-      for (let i = 0; i < effectiveIndex; i++) {
-        const done = results[i]?.qResults?.length;
-        const planned = qCounts?.[i];
-        base += (typeof done === "number" && done > 0)
-          ? done
-          : (typeof planned === "number" && planned > 0 ? planned : 0);
-      }
-    } catch { /* noop */ }
-    return base + effectiveQ;
-  }, [effectiveIndex, effectiveQ, results, qCounts]);
-
-  const backToCurrent = () => {
-    const el = document.getElementById(`marathon-nav-chip-${currentGlobal}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
+  // Đề đang đứng: xem lại thì theo đề đang xem, không thì theo đề đang làm.
+  const isReviewingMode = (reviewingIndex ?? -1) >= 0;
+  const activeSetIndex = isReviewingMode ? (reviewingIndex as number) : currentIndex;
+  const activeSetNumber = Math.min(activeSetIndex + 1, Math.max(totalSets, 1));
 
   const body = (onClose?: () => void) => (
     <aside className="w-full h-full bg-card/95 border-l border-border flex flex-col">
@@ -116,10 +98,10 @@ const MarathonNavigator = ({
 
       <div className="p-3 border-b border-border space-y-2.5">
         <div className="text-xs text-foreground">
-          <span className="font-semibold">Đã làm {doneCount}/{totalChips || 0}</span>
+          <span className="font-semibold">Đã làm {submittedSets}/{totalSets || 0}</span>
           <span className="mx-1.5 text-muted-foreground">·</span>
           <span className="text-muted-foreground">
-            Câu {Math.min(currentGlobal + 1, Math.max(totalChips, 1))}/{totalChips}
+            Đề {activeSetNumber}/{totalSets}
           </span>
         </div>
 
@@ -135,15 +117,17 @@ const MarathonNavigator = ({
           </span>
         </div>
 
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={backToCurrent}
-            className="text-[11px] font-medium text-[#24085a] dark:text-primary hover:underline whitespace-nowrap shrink-0"
-          >
-            Về câu đang làm
-          </button>
-        </div>
+        {isReviewingMode && onRetrySet && (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => onRetrySet(activeSetIndex)}
+              className="text-[11px] font-semibold text-[#CC1C01] hover:underline whitespace-nowrap shrink-0"
+            >
+              Làm lại đề này
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
@@ -163,8 +147,8 @@ const MarathonNavigator = ({
               else if (isCurrent && currentLocked?.[qi]) state = "done";
               else if (isCurrent && currentAnswered?.[qi]) state = "answered";
 
-              const isCurrentChip = isReviewing
-                ? (reviewingQ ?? -1) === qi
+              const isCurrentChip = isReviewingMode
+                ? (isReviewing && (reviewingQ ?? 0) === qi)
                 : (isCurrent && (currentQ ?? -1) === qi);
 
               const cls =
