@@ -464,6 +464,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         sets={sets}
         results={results as any}
         currentIndex={currentIndex}
+        reviewingIndex={midReview ? midReview.setIndex : null}
+        reviewingQ={midReview ? midReview.qIndex : undefined}
         currentQ={activeSection}
         qCounts={qCounts}
         currentAnswered={currentAnswered}

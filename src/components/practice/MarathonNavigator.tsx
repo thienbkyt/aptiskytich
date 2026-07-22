@@ -14,10 +14,14 @@ interface Props {
   sets: { id: string }[];
   results: (MarathonResult | undefined)[];
   currentIndex: number;
+  /** When the parent is inline-reviewing a submitted set, highlight this set instead of currentIndex. */
+  reviewingIndex?: number | null;
   /** Authoritative chip count per set (from exam_sets.question_count). */
   qCounts?: (number | undefined | null)[];
   /** Active question index within the current in-progress set (0-based). */
   currentQ?: number;
+  /** Active question index within the reviewing set (when reviewingIndex is set). */
+  reviewingQ?: number;
   /** Per-question answered flags for the CURRENT (in-progress) set. */
   currentAnswered?: boolean[];
   /** Per-question locked/graded flags for the CURRENT set (marathon per-question grading). */
@@ -32,8 +36,8 @@ interface Props {
 }
 
 const MarathonNavigator = ({
-  sets, results, currentIndex, qCounts,
-  currentQ, currentAnswered, currentLocked,
+  sets, results, currentIndex, reviewingIndex, qCounts,
+  currentQ, reviewingQ, currentAnswered, currentLocked,
   isRetryMode, allowJumpInCurrent = true,
   onReview, onJumpQuestion, onEnterSet,
 }: Props) => {
@@ -70,11 +74,13 @@ const MarathonNavigator = ({
   const submittedTotal = results.reduce((s, r) => s + (r?.total ?? 0), 0);
   const doneCount = submittedTotal + answeredInCurrent;
 
-  // Global position of the active question.
+  // Global position of the active question. When reviewing, follow the reviewing set.
+  const effectiveIndex = (reviewingIndex ?? -1) >= 0 ? (reviewingIndex as number) : currentIndex;
+  const effectiveQ = (reviewingIndex ?? -1) >= 0 ? (reviewingQ ?? 0) : (currentQ ?? 0);
   const currentGlobal = useMemo(() => {
     let base = 0;
     try {
-      for (let i = 0; i < currentIndex; i++) {
+      for (let i = 0; i < effectiveIndex; i++) {
         const done = results[i]?.qResults?.length;
         const planned = qCounts?.[i];
         base += (typeof done === "number" && done > 0)
@@ -82,8 +88,8 @@ const MarathonNavigator = ({
           : (typeof planned === "number" && planned > 0 ? planned : 0);
       }
     } catch { /* noop */ }
-    return base + (currentQ ?? 0);
-  }, [currentIndex, currentQ, results, qCounts]);
+    return base + effectiveQ;
+  }, [effectiveIndex, effectiveQ, results, qCounts]);
 
   const backToCurrent = () => {
     const el = document.getElementById(`marathon-nav-chip-${currentGlobal}`);
@@ -150,13 +156,16 @@ const MarathonNavigator = ({
               const r = results[si];
               const isDone = !!r;
               const isCurrent = !isDone && si === currentIndex;
+              const isReviewing = (reviewingIndex ?? -1) === si;
 
               let state: "done" | "answered" | "empty" = "empty";
               if (isDone) state = "done";
               else if (isCurrent && currentLocked?.[qi]) state = "done";
               else if (isCurrent && currentAnswered?.[qi]) state = "answered";
 
-              const isCurrentChip = isCurrent && (currentQ ?? -1) === qi;
+              const isCurrentChip = isReviewing
+                ? (reviewingQ ?? -1) === qi
+                : (isCurrent && (currentQ ?? -1) === qi);
 
               const cls =
                 state === "done"

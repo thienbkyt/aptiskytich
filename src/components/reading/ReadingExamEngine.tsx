@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -349,8 +349,12 @@ const ReadingExamEngine = ({
   }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   // Marathon: parent bumps submitSignal to auto-submit current set before jumping.
+  // Guard with a ref so a stale non-zero value at mount doesn't auto-submit a fresh set.
+  const lastSubmitSignalRef = useRef<number>(submitSignal ?? 0);
   useEffect(() => {
-    if (!submitSignal) return;
+    const s = submitSignal ?? 0;
+    if (s <= lastSubmitSignalRef.current) return;
+    lastSubmitSignalRef.current = s;
     if (submitted) return;
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     handleSubmit();
