@@ -66,37 +66,17 @@ const MarathonNavigator = ({
 
   const totalChips = flat.length;
 
-  // "Đã làm" = tổng câu ở các đề đã nộp + số câu đã trả lời ở đề đang làm.
-  const answeredInCurrent = useMemo(() => {
-    if (!currentAnswered) return 0;
-    let n = 0;
-    for (const b of currentAnswered) if (b) n++;
-    return n;
-  }, [currentAnswered]);
-  const submittedTotal = results.reduce((s, r) => s + (r?.total ?? 0), 0);
-  const doneCount = submittedTotal + answeredInCurrent;
+  // Đếm theo ĐỀ: đã làm = số đề đã nộp; tổng = số đề.
+  const submittedSets = useMemo(
+    () => results.reduce((n, r) => n + (r ? 1 : 0), 0),
+    [results],
+  );
+  const totalSets = sets.length;
 
-  // Global position of the active question. When reviewing, follow the reviewing set.
-  const effectiveIndex = (reviewingIndex ?? -1) >= 0 ? (reviewingIndex as number) : currentIndex;
-  const effectiveQ = (reviewingIndex ?? -1) >= 0 ? (reviewingQ ?? 0) : (currentQ ?? 0);
-  const currentGlobal = useMemo(() => {
-    let base = 0;
-    try {
-      for (let i = 0; i < effectiveIndex; i++) {
-        const done = results[i]?.qResults?.length;
-        const planned = qCounts?.[i];
-        base += (typeof done === "number" && done > 0)
-          ? done
-          : (typeof planned === "number" && planned > 0 ? planned : 0);
-      }
-    } catch { /* noop */ }
-    return base + effectiveQ;
-  }, [effectiveIndex, effectiveQ, results, qCounts]);
-
-  const backToCurrent = () => {
-    const el = document.getElementById(`marathon-nav-chip-${currentGlobal}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
+  // Đề đang đứng: xem lại thì theo đề đang xem, không thì theo đề đang làm.
+  const isReviewingMode = (reviewingIndex ?? -1) >= 0;
+  const activeSetIndex = isReviewingMode ? (reviewingIndex as number) : currentIndex;
+  const activeSetNumber = Math.min(activeSetIndex + 1, Math.max(totalSets, 1));
 
   const body = (onClose?: () => void) => (
     <aside className="w-full h-full bg-card/95 border-l border-border flex flex-col">
