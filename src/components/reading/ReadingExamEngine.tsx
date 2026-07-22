@@ -144,7 +144,7 @@ const ReadingExamEngine = ({
     document.body.classList.add("exam-active");
     return () => document.body.classList.remove("exam-active");
   }, []);
-  useExitWarning(hasStarted && !submitted && !reviewMode);
+  useExitWarning(hasStarted && !submitted && !reviewMode && !marathonLock);
 
   // Reveal-on-demand for practice mode (per page key).
   const [revealedKeys, setRevealedKeys] = useState<Set<number>>(new Set());
