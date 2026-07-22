@@ -242,18 +242,10 @@ const ReadingExamEngine = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLockedSet, partType, part2SectionCount]);
 
-  // Marathon Part 2: lock the section we're leaving whenever currentIndex changes.
+  // Marathon Part 2: (per-question auto-lock disabled — grading happens on set submit)
   const prevSectionRef = (globalThis as any).React ? null : null; // placeholder to keep TS calm
   useEffect(() => {
-    if (!marathonLock || partType !== "part2") return;
-    // Locks the section we WERE on when it changes.
-    const prev = currentIndex;
-    return () => {
-      setLockedP2((s) => {
-        if (s.has(prev)) return s;
-        const n = new Set(s); n.add(prev); return n;
-      });
-    };
+    // no-op
   }, [currentIndex, marathonLock, partType]);
 
 
