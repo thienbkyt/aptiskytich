@@ -41,7 +41,7 @@ const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
   currentQ, reviewingQ, currentAnswered, currentLocked,
   isRetryMode, allowJumpInCurrent = true,
-  onReview, onJumpQuestion, onEnterSet,
+  onReview, onJumpQuestion, onEnterSet, onRetrySet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
