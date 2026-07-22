@@ -424,7 +424,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
     ) : (
       <>
         <HistoryReviewRenderer
-          key={`${current.testResultId}-${qIdx}`}
+          key={current.testResultId}
           examSetId={current.examSetId}
           skill={current.skill}
           part={current.part}
