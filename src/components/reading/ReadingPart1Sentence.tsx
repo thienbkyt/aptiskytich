@@ -74,6 +74,7 @@ const ReadingPart1Sentence = ({
 
         const selectedValue = answers[gapIndex];
         const reveal = revealFor(gapIndex);
+        const locked = submitted || (lockedIndices?.has(gapIndex) ?? false);
         const isCorrect = reveal && selectedValue === gap.correct;
         const isWrong = reveal && selectedValue !== null && selectedValue !== undefined && selectedValue !== gap.correct;
 
@@ -83,7 +84,7 @@ const ReadingPart1Sentence = ({
             data-question-index={gapIndex}
             value={selectedValue !== null && selectedValue !== undefined ? selectedValue : ""}
             onChange={(e) => onAnswer(gapIndex, parseInt(e.target.value))}
-            disabled={reveal}
+            disabled={locked}
             className={`inline-block mx-1 px-3 py-1 text-sm border rounded bg-background appearance-auto cursor-pointer min-w-[120px]
               ${reveal
                 ? isCorrect
