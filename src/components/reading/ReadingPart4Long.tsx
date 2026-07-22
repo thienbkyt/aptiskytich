@@ -74,7 +74,7 @@ const ReadingPart4Long = ({
   });
 
   const handleSelect = (paragraphArrayIdx: number, headingIdx: number) => {
-    if (revealFor(paragraphArrayIdx)) return;
+    if (submitted || (lockedIndices?.has(paragraphArrayIdx) ?? false)) return;
     onAnswer(paragraphArrayIdx, headingIdx);
     setOpenDropdown(null);
   };
