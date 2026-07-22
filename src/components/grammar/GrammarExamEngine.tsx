@@ -129,13 +129,13 @@ const GrammarExamEngine = ({
     onGroupCount?.(groups.length);
   }, [groups.length, onGroupCount]);
 
-  // Jump to initialGroup once on mount (review mode).
+  // Jump to initialGroup whenever it changes (review pager navigates without remount).
   useEffect(() => {
     if (initialGroup != null && groups[initialGroup]) {
       setCurrentIndex(groups[initialGroup].startIdx);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialGroup, groups.length]);
 
 
 
