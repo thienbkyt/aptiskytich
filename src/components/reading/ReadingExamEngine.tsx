@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import BottomNavBar from "@/components/reading/BottomNavBar";
