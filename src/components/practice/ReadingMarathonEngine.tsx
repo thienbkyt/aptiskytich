@@ -64,6 +64,18 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [currentLocked, setCurrentLocked] = useState<boolean[]>([]);
   const [activeSection, setActiveSection] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
+  const questionsCacheRef = useRef<Map<string, any[]>>(new Map());
+
+  const buildEngineData = useCallback((questions: any[]) => {
+    const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
+    switch (partType) {
+      case "part1": data.part1Question = toReadingPart1(questions); break;
+      case "part2": data.part2Question = toReadingPart2(questions); break;
+      case "part3": data.part3Question = toReadingPart3(questions); break;
+      case "part4": data.part4Question = toReadingPart4(questions); break;
+    }
+    return data;
+  }, [partType]);
 
   useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
@@ -128,25 +140,40 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   useEffect(() => {
     if (currentIndex >= sets.length) return;
+    const set = sets[currentIndex];
+    const cached = questionsCacheRef.current.get(set.id);
+    if (cached) {
+      // Instant switch — no loading state, no network.
+      setEngineData(buildEngineData(cached));
+      setPhase("exam");
+      // Prefetch the next set into cache for an instant next hop.
+      const nextSet = sets[currentIndex + 1];
+      if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
+        fetchExamQuestions(nextSet.id)
+          .then((qs) => { questionsCacheRef.current.set(nextSet.id, qs); })
+          .catch(() => { /* noop */ });
+      }
+      return;
+    }
     let cancelled = false;
     setPhase("loading");
     setEngineData(null);
     (async () => {
-      const set = sets[currentIndex];
       const questions = await fetchExamQuestions(set.id);
       if (cancelled) return;
-      const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
-      switch (partType) {
-        case "part1": data.part1Question = toReadingPart1(questions); break;
-        case "part2": data.part2Question = toReadingPart2(questions); break;
-        case "part3": data.part3Question = toReadingPart3(questions); break;
-        case "part4": data.part4Question = toReadingPart4(questions); break;
-      }
-      setEngineData(data);
+      questionsCacheRef.current.set(set.id, questions);
+      setEngineData(buildEngineData(questions));
       setPhase("exam");
+      // Prefetch neighbor after first paint.
+      const nextSet = sets[currentIndex + 1];
+      if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
+        fetchExamQuestions(nextSet.id)
+          .then((qs) => { if (!cancelled) questionsCacheRef.current.set(nextSet.id, qs); })
+          .catch(() => { /* noop */ });
+      }
     })();
     return () => { cancelled = true; };
-  }, [currentIndex, sets, partType]);
+  }, [currentIndex, sets, partType, buildEngineData]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
