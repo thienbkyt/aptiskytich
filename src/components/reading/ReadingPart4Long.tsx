@@ -115,6 +115,7 @@ const ReadingPart4Long = ({
           const selected = answers[pIdx];
           const correctHeadingIdx = correctMap[pIdx];
           const reveal = revealFor(pIdx);
+          const locked = submitted || (lockedIndices?.has(pIdx) ?? false);
           const isCorrect = reveal && selected === correctHeadingIdx;
           const isWrong = reveal && selected !== null && selected !== correctHeadingIdx;
 
@@ -130,7 +131,7 @@ const ReadingPart4Long = ({
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-sm font-bold text-foreground min-w-[24px]">{para.index}.</span>
                 <div className="relative flex-1 max-w-sm">
-                  {reveal ? (
+                  {locked ? (
                     <div
                       className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm ${
                         isCorrect
@@ -150,7 +151,15 @@ const ReadingPart4Long = ({
                     <>
                       <button
                         onClick={() => setOpenDropdown(openDropdown === pIdx ? null : pIdx)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm text-left transition-all border-border bg-background text-foreground hover:border-muted-foreground/50"
+                        className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm text-left transition-all bg-background hover:border-muted-foreground/50 ${
+                          reveal
+                            ? isCorrect
+                              ? "border-green-500 text-green-700"
+                              : isWrong
+                                ? "border-destructive text-destructive"
+                                : "border-border text-foreground"
+                            : "border-border text-foreground"
+                        }`}
                       >
                         <span className={selected !== null ? "font-medium" : "italic opacity-60"}>
                           {selected !== null ? allHeadingTexts[selected] : "Choose a heading..."}
