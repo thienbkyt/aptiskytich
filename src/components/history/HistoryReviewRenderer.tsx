@@ -44,11 +44,22 @@ interface Props {
   hideBackToResults?: boolean;
 }
 
+// Session-lived cache of resolved question rows keyed by cache-id.
+// Non-grammar reviews key on examSetId. Grammar reviews merge sibling
+// exam_sets (via full_test_id) so we key on `grammar:${examSetId}` and
+// remember the resolved full_test_id → rows mapping too.
+const reviewRowsCache = new Map<string, ExamQuestionRow[]>();
+
 const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection, onPageCount, timeLimit, hideTimer, hideBottomNav, hideBackToResults }: Props) => {
-  const [rows, setRows] = useState<ExamQuestionRow[] | null>(null);
+  const cacheKey = skill === "grammar" ? `grammar:${examSetId}` : examSetId;
+  const [rows, setRows] = useState<ExamQuestionRow[] | null>(() => reviewRowsCache.get(cacheKey) ?? null);
   const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
 
   useEffect(() => {
+    // Fast path: already cached — no network, no spinner.
+    const cached = reviewRowsCache.get(cacheKey);
+    if (cached) { setRows(cached); return; }
+
     let cancelled = false;
     (async () => {
       // Grammar & Vocabulary in skill-full-practice merges multiple exam_sets
@@ -77,15 +88,20 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
             const qs = await fetchExamQuestions(s.id);
             all.push(...qs);
           }
-          if (!cancelled) setRows(all.length ? all : await fetchExamQuestions(examSetId));
+          const resolved = all.length ? all : await fetchExamQuestions(examSetId);
+          if (cancelled) return;
+          reviewRowsCache.set(cacheKey, resolved);
+          setRows(resolved);
           return;
         }
       }
       const r = await fetchExamQuestions(examSetId);
-      if (!cancelled) setRows(r);
+      if (cancelled) return;
+      reviewRowsCache.set(cacheKey, r);
+      setRows(r);
     })();
     return () => { cancelled = true; };
-  }, [examSetId, skill]);
+  }, [cacheKey, examSetId, skill]);
 
   // Report page count for the current part (drives outer pager).
   useEffect(() => {
