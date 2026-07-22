@@ -98,10 +98,10 @@ const MarathonNavigator = ({
 
       <div className="p-3 border-b border-border space-y-2.5">
         <div className="text-xs text-foreground">
-          <span className="font-semibold">Đã làm {doneCount}/{totalChips || 0}</span>
+          <span className="font-semibold">Đã làm {submittedSets}/{totalSets || 0}</span>
           <span className="mx-1.5 text-muted-foreground">·</span>
           <span className="text-muted-foreground">
-            Câu {Math.min(currentGlobal + 1, Math.max(totalChips, 1))}/{totalChips}
+            Đề {activeSetNumber}/{totalSets}
           </span>
         </div>
 
@@ -117,15 +117,17 @@ const MarathonNavigator = ({
           </span>
         </div>
 
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={backToCurrent}
-            className="text-[11px] font-medium text-[#24085a] dark:text-primary hover:underline whitespace-nowrap shrink-0"
-          >
-            Về câu đang làm
-          </button>
-        </div>
+        {isReviewingMode && onRetrySet && (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => onRetrySet(activeSetIndex)}
+              className="text-[11px] font-semibold text-[#CC1C01] hover:underline whitespace-nowrap shrink-0"
+            >
+              Làm lại đề này
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
