@@ -117,7 +117,7 @@ const MarathonNavigator = ({
           </span>
         </div>
 
-        {isReviewingMode && onRetrySet && (
+        {isReviewingMode && onRetrySet && !!results[activeSetIndex] && (
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
