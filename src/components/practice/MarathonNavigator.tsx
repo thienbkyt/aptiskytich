@@ -124,7 +124,7 @@ const MarathonNavigator = ({
               onClick={() => onRetrySet(activeSetIndex)}
               className="text-[11px] font-semibold text-[#CC1C01] hover:underline whitespace-nowrap shrink-0"
             >
-              Làm lại đề này
+              Làm lại câu này
             </button>
           </div>
         )}
