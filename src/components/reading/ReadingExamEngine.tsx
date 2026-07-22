@@ -487,27 +487,20 @@ const ReadingExamEngine = ({
   // Stable answer handlers (functional setState → no answer-array deps → not recreated on timer tick).
   const onAnswerP1 = useCallback((gi: number, val: number) => {
     if (submitted) return;
-    if (marathonLock && lockedP1.has(gi)) return;
     setP1Answers((prev) => { const n = [...prev]; n[gi] = val; return n; });
-    if (marathonLock) setLockedP1((s) => { const n = new Set(s); n.add(gi); return n; });
-  }, [submitted, marathonLock, lockedP1]);
+  }, [submitted]);
   const onAnswerP3 = useCallback((si: number, pi: number) => {
     if (submitted) return;
-    if (marathonLock && lockedP3.has(si)) return;
     setP3Answers((prev) => { const n = [...prev]; n[si] = pi; return n; });
-    if (marathonLock) setLockedP3((s) => { const n = new Set(s); n.add(si); return n; });
-  }, [submitted, marathonLock, lockedP3]);
+  }, [submitted]);
   const onAnswerP4 = useCallback((pIdx: number, val: number) => {
     if (submitted) return;
-    if (marathonLock && lockedP4.has(pIdx)) return;
     setP4Answers((prev) => { const n = [...prev]; n[pIdx] = val; return n; });
-    if (marathonLock) setLockedP4((s) => { const n = new Set(s); n.add(pIdx); return n; });
-  }, [submitted, marathonLock, lockedP4]);
+  }, [submitted]);
   const onPlacementsChangeP2 = useCallback((sIdx: number, p: Record<number, string>) => {
     if (submitted) return;
-    if (marathonLock && lockedP2.has(sIdx)) return;
     setP2Placements((prev) => prev.map((x, i) => (i === sIdx ? p : x)));
-  }, [submitted, marathonLock, lockedP2]);
+  }, [submitted]);
   const onSectionChangeP2 = useCallback((i: number) => setCurrentIndex(i), []);
   const onToggleBookmarkCurrent = useCallback(() => toggleBookmark(currentIndex), [toggleBookmark, currentIndex]);
   const onPart1Next = useCallback(() => { if (!submitted) handleSubmit(); }, [submitted, handleSubmit]);
