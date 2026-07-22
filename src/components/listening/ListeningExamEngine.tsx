@@ -243,8 +243,12 @@ const ListeningExamEngine = ({
   }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   // Marathon: parent bumps submitSignal to auto-submit current set before jumping.
+  // Guard with a ref so a stale non-zero value at mount doesn't auto-submit a fresh set.
+  const lastSubmitSignalRef = useRef<number>(submitSignal ?? 0);
   useEffect(() => {
-    if (!submitSignal) return;
+    const s = submitSignal ?? 0;
+    if (s <= lastSubmitSignalRef.current) return;
+    lastSubmitSignalRef.current = s;
     if (submitted) return;
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     handleSubmit();
