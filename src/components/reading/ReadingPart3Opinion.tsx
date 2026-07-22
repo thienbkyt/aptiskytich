@@ -145,6 +145,7 @@ const ReadingPart3Opinion = ({
         {question.statements.map((stmt, si) => {
           const selected = answers[si];
           const revealHere = revealFor(si);
+          const lockedHere = submitted || (lockedIndices?.has(si) ?? false);
           const isCorrect = revealHere && selected === stmt.correctPerson;
           const isWrong = revealHere && selected !== null && selected !== stmt.correctPerson;
 
@@ -159,11 +160,11 @@ const ReadingPart3Opinion = ({
                 <select
                   value={selected !== null && selected !== undefined ? selected : ""}
                   onChange={(e) => {
-                    if (revealHere) return;
+                    if (lockedHere) return;
                     const val = e.target.value;
                     if (val !== "") onAnswer(si, Number(val));
                   }}
-                  disabled={revealHere}
+                  disabled={lockedHere}
                   className={`appearance-none rounded-lg border-2 px-3 py-2 pr-8 text-sm font-medium min-w-[140px] bg-white transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
                     revealHere
                       ? isCorrect
