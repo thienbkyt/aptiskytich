@@ -64,6 +64,18 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [currentLocked, setCurrentLocked] = useState<boolean[]>([]);
   const [activeSection, setActiveSection] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
+  const questionsCacheRef = useRef<Map<string, any[]>>(new Map());
+
+  const buildEngineData = useCallback((questions: any[]) => {
+    const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
+    switch (partType) {
+      case "part1": data.part1Question = toReadingPart1(questions); break;
+      case "part2": data.part2Question = toReadingPart2(questions); break;
+      case "part3": data.part3Question = toReadingPart3(questions); break;
+      case "part4": data.part4Question = toReadingPart4(questions); break;
+    }
+    return data;
+  }, [partType]);
 
   useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
