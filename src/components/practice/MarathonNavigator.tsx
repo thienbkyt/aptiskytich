@@ -147,8 +147,8 @@ const MarathonNavigator = ({
               else if (isCurrent && currentLocked?.[qi]) state = "done";
               else if (isCurrent && currentAnswered?.[qi]) state = "answered";
 
-              const isCurrentChip = isReviewing
-                ? (reviewingQ ?? -1) === qi
+              const isCurrentChip = isReviewingMode
+                ? (isReviewing && (reviewingQ ?? 0) === qi)
                 : (isCurrent && (currentQ ?? -1) === qi);
 
               const cls =
