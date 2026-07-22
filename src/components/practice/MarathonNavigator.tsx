@@ -33,6 +33,8 @@ interface Props {
   onJumpQuestion?: (questionIndex: number) => void;
   /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
   onEnterSet?: (setIndex: number, questionIndex: number) => void;
+  /** Marathon: reset a submitted set so the user can redo it. Enables "Làm lại đề này". */
+  onRetrySet?: (setIndex: number) => void;
 }
 
 const MarathonNavigator = ({
