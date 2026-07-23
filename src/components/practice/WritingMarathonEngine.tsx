@@ -177,12 +177,54 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           currentIndex: idx,
           results: [],
           drafts: next as any,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
       return next;
     });
   }, [sets, persist, marathonKey]);
+
+  // Upsert a single "đã viết N/M" History row for this session.
+  const persistHistoryRow = useCallback(async (answersMapNow: Record<string, WritingAnswers>) => {
+    if (savingHistoryRef.current) return;
+    const written = sets.filter((s) => isNonEmpty(answersMapNow[s.id])).length;
+    if (written === 0) return;
+    savingHistoryRef.current = true;
+    try {
+      const label = `Marathon · ${partName(partType)} · đã viết ${written}/${sets.length}`;
+      const id = await upsertMarathonResult({
+        testResultId: testResultIdRef.current,
+        sessionId: sessionIdRef.current,
+        skill: "writing",
+        correct: 0,
+        total: 0,
+        extraSkillScores: {
+          label,
+          part: marathonKey,
+          done: written,
+          totalSets: sets.length,
+          writingUnscored: true,
+        },
+      });
+      if (id) {
+        testResultIdRef.current = id;
+        if (persist) {
+          saveMarathonProgress("writing", marathonKey, {
+            currentIndex,
+            results: [],
+            drafts: answersMapNow as any,
+            sessionId: sessionIdRef.current,
+            testResultId: id,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+    } finally {
+      savingHistoryRef.current = false;
+    }
+  }, [sets, partType, marathonKey, currentIndex, persist]);
 
   // Persist draft snapshot when leaving via unload.
   useEffect(() => {
