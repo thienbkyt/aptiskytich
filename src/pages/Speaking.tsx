@@ -325,7 +325,7 @@ const Speaking = () => {
                 isLocked={isLocked}
                 onLockedClick={(set) => guard(set, () => {})}
               />
-
+            )
           ) : (
 
             <>
