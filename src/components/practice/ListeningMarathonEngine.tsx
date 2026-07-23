@@ -426,7 +426,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   if (phase === "loading" || !loaded) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center">
           <div className="space-y-4 text-center">
             <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
