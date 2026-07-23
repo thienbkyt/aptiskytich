@@ -8,7 +8,7 @@ import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
 import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
-import { saveExamResult, upsertMarathonResult } from "@/lib/saveExamResult";
+import { upsertMarathonResult } from "@/lib/saveExamResult";
 import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
