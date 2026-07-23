@@ -195,6 +195,24 @@ const Writing = () => {
     );
   }
 
+  if (marathon.active) {
+    const partLabel = TASKS.find((t) => t.id === marathon.partType)?.label ?? "Part";
+    const marathonSets = examSets.filter((s) => normalizePart(s.part) === partToTask[marathon.partType]?.replace("task", "part") || normalizePart(s.part) === activePartKey);
+    // Simpler: derive from partType.
+    const targetPartKey = marathon.partType === "task1" ? "part1" : marathon.partType === "task2" ? "part2" : marathon.partType === "task3" ? "part3" : "part4";
+    const sets = examSets.filter((s) => normalizePart(s.part) === targetPartKey);
+    return (
+      <WritingMarathonEngine
+        sets={sets}
+        partType={marathon.partType}
+        skillLabel={`Writing · Marathon ${partLabel}`}
+        resume={marathon.resume}
+        onExit={() => { setProgressTick((t) => t + 1); setMarathon({ active: false, partType: marathon.partType }); }}
+      />
+    );
+  }
+
+
   if (exam.active) {
     if (exam.loadingExam) {
       return (
