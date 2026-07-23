@@ -50,6 +50,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [drafts, setDrafts] = useState<Record<string, any[]>>(() => (savedInit?.drafts as any) ?? {});
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
     const base = new Array(sets.length).fill(undefined);
     savedInit?.results?.forEach((r) => {
@@ -176,8 +177,11 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
       : (isLastSet ? currentIndex : currentIndex + 1);
     setResults(nextResults);
     setEnterAtLast(false);
+    const nextDrafts = { ...drafts };
+    delete nextDrafts[set.id];
+    setDrafts(nextDrafts);
     if (persist) {
-      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
+      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, updatedAt: Date.now() });
     }
     if (pending) {
       setJumpQ(pending.qi);
@@ -188,7 +192,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets, results, persist, partType]);
+  }, [currentIndex, sets, results, persist, partType, drafts]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
@@ -394,8 +398,10 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const engineData = loaded[currentIndex]?.engineData;
   if (!engineData) return null;
 
-  // Rebuild initialAnswers for current set from previously saved qResults so
-  // Previous navigation keeps the user's selections intact.
+  const currentSetId = sets[currentIndex]?.id;
+  const draftForSet = currentSetId ? drafts[currentSetId] : undefined;
+
+  // Rebuild initialAnswers for current set: prefer submitted qResults, else draft.
   const prevEntry = results[currentIndex];
   let initialAnswers: any[] | undefined;
   if (prevEntry?.qResults?.length) {
@@ -413,39 +419,27 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         } catch { return null; }
       });
     }
+  } else if (Array.isArray(draftForSet) && draftForSet.length) {
+    initialAnswers = draftForSet;
   }
 
-  // Mid-marathon review overlay (from Marathon Navigator chip)
-  if (midReview) {
-    const r = results[midReview.setIndex];
-    if (r) {
-      return (
-        <div className="min-h-screen bg-background">
-          <div className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-            <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-              <Button size="sm" variant="outline" onClick={() => setMidReview(null)}>
-                Quay lại đề đang làm
-              </Button>
-              <span className="text-xs text-muted-foreground truncate">
-                Xem lại · Đề {midReview.setIndex + 1} · Câu {midReview.qIndex + 1}/{r.qResults.length}
-              </span>
-            </div>
-          </div>
-          <HistoryReviewRenderer
-            examSetId={r.examSetId}
-            skill="listening"
-            part={r.part}
-            testTitle={`Đề ${midReview.setIndex + 1}`}
-            qResults={r.qResults}
-            onExit={() => setMidReview(null)}
-            pageBase={0}
-            pageTotal={r.qResults.length}
-            initialSection={midReview.qIndex}
-          />
-        </div>
-      );
-    }
-  }
+  const persistAnswers = (a: any[]) => {
+    const arr = Array.isArray(a) ? a : [];
+    setCurrentAnswers(arr);
+    if (!currentSetId) return;
+    setDrafts((prev) => {
+      const next = { ...prev, [currentSetId]: arr };
+      if (persist) {
+        saveMarathonProgress("listening", partType, {
+          currentIndex,
+          results: results as any,
+          drafts: next,
+          updatedAt: Date.now(),
+        });
+      }
+      return next;
+    });
+  };
 
   // Authoritative per-set chip count: prefer exam_sets.question_count; fall back to loaded pageCount.
   const qCounts = sets.map((s: any, i) => {
@@ -455,56 +449,79 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     return typeof lc === "number" && lc > 0 ? lc : undefined;
   });
 
+  const midReviewEntry = midReview ? results[midReview.setIndex] : null;
+  const midPageCount = midReviewEntry?.qResults.length ?? 0;
+
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
       <div className="flex-1 min-w-0">
-        <ListeningExamEngine
-          key={`${attempt}-${currentIndex}`}
-          partType={partType}
-          testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
-          timeLimit={HUGE_TIME}
-          hideTimer
-          skipIntro
-          allowReveal
-          reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
-          onMarathonFinish={() => setPhase("completed")}
-          showResultsOnSubmit={false}
-          onExit={onExit}
-          onComplete={handleComplete}
-          onPreviousPart={() => {
-            if (currentIndex > 0) {
-              setEnterAtLast(true);
-              setCurrentIndex((i) => i - 1);
+        {midReviewEntry ? (
+          <HistoryReviewRenderer
+            key={`mid-${midReview!.setIndex}-${midReview!.qIndex}`}
+            examSetId={midReviewEntry.examSetId}
+            skill="listening"
+            part={midReviewEntry.part}
+            testTitle={`Đề ${midReview!.setIndex + 1}`}
+            qResults={midReviewEntry.qResults}
+            onExit={() => setMidReview(null)}
+            pageBase={0}
+            pageTotal={midPageCount}
+            initialSection={Math.min(midReview!.qIndex, Math.max(0, midPageCount - 1))}
+            hideTimer
+            hideBottomNav
+            hideBackToResults
+          />
+        ) : (
+          <ListeningExamEngine
+            key={`${attempt}-${currentIndex}`}
+            partType={partType}
+            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+            timeLimit={HUGE_TIME}
+            hideTimer
+            skipIntro
+            allowReveal
+            reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
+            onMarathonFinish={() => setPhase("completed")}
+            showResultsOnSubmit={false}
+            onExit={onExit}
+            onComplete={handleComplete}
+            onPreviousPart={() => {
+              if (currentIndex > 0) {
+                setEnterAtLast(true);
+                setCurrentIndex((i) => i - 1);
+              }
+            }}
+            initialQuestion={
+              jumpQ != null
+                ? jumpQ
+                : enterAtLast
+                ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
+                : 0
             }
-          }}
-          initialQuestion={
-            jumpQ != null
-              ? jumpQ
-              : enterAtLast
-              ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
-              : 0
-          }
-          initialAnswers={initialAnswers}
-          onAnswersChange={(a) => setCurrentAnswers(Array.isArray(a) ? a : [])}
-          pageBase={pageBase}
-          pageTotal={pageTotal}
-          submitSignal={submitSignal}
-          {...engineData}
-        />
+            initialAnswers={initialAnswers}
+            onAnswersChange={persistAnswers}
+            pageBase={pageBase}
+            pageTotal={pageTotal}
+            submitSignal={submitSignal}
+            {...engineData}
+          />
+        )}
       </div>
       <MarathonNavigator
         sets={sets}
         results={results as any}
         currentIndex={currentIndex}
+        reviewingIndex={midReview ? midReview.setIndex : null}
+        reviewingQ={midReview ? midReview.qIndex : undefined}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
         isRetryMode={isRetryMode}
         allowJumpInCurrent
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
+          if (midReview) setMidReview(null);
           const max = Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1;
           setJumpQ(Math.max(0, Math.min(qi, max)));
-          // reset shortly after so future clicks on same index still work
           setTimeout(() => setJumpQ(null), 0);
         }}
         onEnterSet={(si, qi) => {
@@ -512,6 +529,14 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             if (si < 0 || si >= sets.length) return;
             const max = Math.max(1, loaded[si]?.pageCount ?? 1) - 1;
             const clamped = Math.max(0, Math.min(qi, max));
+            if (midReview) {
+              setMidReview(null);
+              setEnterAtLast(false);
+              setJumpQ(clamped);
+              setCurrentIndex(si);
+              setTimeout(() => setJumpQ(null), 0);
+              return;
+            }
             const hasAnyAnswer = currentAnswered.some(Boolean);
             if (hasAnyAnswer) {
               pendingJumpRef.current = { si, qi: clamped };
@@ -521,6 +546,32 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             setEnterAtLast(false);
             setJumpQ(clamped);
             setCurrentIndex(si);
+            setTimeout(() => setJumpQ(null), 0);
+          } catch { /* noop */ }
+        }}
+        onRetrySet={(si) => {
+          try {
+            if (si < 0 || si >= sets.length) return;
+            const setId = sets[si]?.id;
+            const nextResults = results.slice();
+            nextResults[si] = undefined;
+            setResults(nextResults);
+            const nextDrafts = { ...drafts };
+            if (setId) delete nextDrafts[setId];
+            setDrafts(nextDrafts);
+            if (persist) {
+              saveMarathonProgress("listening", partType, {
+                currentIndex: si,
+                results: nextResults as any,
+                drafts: nextDrafts,
+                updatedAt: Date.now(),
+              });
+            }
+            setMidReview(null);
+            setEnterAtLast(false);
+            setJumpQ(0);
+            setCurrentIndex(si);
+            setAttempt((a) => a + 1);
             setTimeout(() => setJumpQ(null), 0);
           } catch { /* noop */ }
         }}
