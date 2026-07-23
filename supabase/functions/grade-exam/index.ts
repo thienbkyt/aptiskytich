@@ -1047,22 +1047,31 @@ ${partsIn.formalText ?? ""}`;
       };
 
       const model = "google/gemini-2.5-flash";
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPromptV2 },
-            { role: "user", content: [{ type: "text", text: userText }] },
-          ],
-          tools: [toolV2],
-          tool_choice: { type: "function", function: { name: "submit_writing_grading_v2" } },
-        }),
-      });
+      let resp: Response;
+      try {
+        resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          signal: AbortSignal.timeout(120_000),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPromptV2 },
+              { role: "user", content: [{ type: "text", text: userText }] },
+            ],
+            tools: [toolV2],
+            tool_choice: { type: "function", function: { name: "submit_writing_grading_v2" } },
+          }),
+        });
+      } catch (e) {
+        console.error("[grade-exam writing_v2] fetch failed/timeout", (e as any)?.message || e);
+        return new Response(JSON.stringify({ error: "AI timeout, thử lại.", notGraded: true }), {
+          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       if (!resp.ok) {
         const errText = await resp.text().catch(() => "");
