@@ -472,6 +472,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           currentIndex,
           results: results as any,
           drafts: next,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
