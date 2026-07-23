@@ -65,6 +65,11 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [activeSection, setActiveSection] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
   const questionsCacheRef = useRef<Map<string, any[]>>(new Map());
+  const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
+  const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
+  const savingRef = useRef(false);
+  const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
+  useEffect(() => { resultsRef.current = results; }, [results]);
 
   const buildEngineData = useCallback((questions: any[]) => {
     const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
