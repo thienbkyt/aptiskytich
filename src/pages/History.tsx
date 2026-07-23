@@ -36,6 +36,7 @@ interface HistoryRow {
   full_test_id: string | null;
   isMarathon: boolean;
   fullPartSession: string | null;
+  review_snapshot: any;
   // computed display
   displayScore: string;     // e.g. "12/25" or "8/10" or "—"
   displayBand: string;      // e.g. "B1" or "—"
@@ -213,6 +214,7 @@ const History = () => {
             full_test_id: r.full_test_id ?? null,
             isMarathon,
             fullPartSession: ss.fullPartSession ?? null,
+            review_snapshot: r.review_snapshot ?? null,
             ...disp,
           };
         });
@@ -290,10 +292,15 @@ const History = () => {
             fpMap.set(r.fullPartSession, g);
           }
           g.partCount++;
-          if (r.skill === "speaking") {
-            const a = speakingAggMap[r.id]; g.num += a?.sum || 0; g.den += a?.max || 0;
-          } else if (r.skill === "writing") {
-            const a = writingAggMap[r.id]; g.num += a?.sum || 0; g.den += a?.max || 0;
+          if (r.skill === "speaking" || r.skill === "writing") {
+            const a = r.skill === "speaking" ? speakingAggMap[r.id] : writingAggMap[r.id];
+            if (a && a.max > 0) {
+              g.num += a.sum; g.den += a.max;
+            } else {
+              const snap: any = r.review_snapshot || {};
+              const s50 = typeof snap.scaled50 === "number" ? snap.scaled50 : null;
+              if (s50 != null) { g.num += s50; g.den += 50; }
+            }
           } else {
             g.num += r.score; g.den += r.total;
           }
