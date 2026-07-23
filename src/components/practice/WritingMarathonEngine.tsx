@@ -7,10 +7,7 @@ import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
-import { saveMarathonProgress, loadMarathonProgress, clearMarathonProgress } from "@/lib/marathonProgress";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { CheckCircle2, XCircle, Sparkles, Loader2 } from "lucide-react";
+import { saveMarathonProgress, loadMarathonProgress } from "@/lib/marathonProgress";
 
 interface Props {
   sets: ExamSetRow[];
