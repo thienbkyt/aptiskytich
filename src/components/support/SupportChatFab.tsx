@@ -73,11 +73,11 @@ export default function SupportChatFab() {
         onClick={() => setOpen((v) => !v)}
         aria-label="Liên hệ hỗ trợ"
         aria-expanded={open}
-        className={`h-12 min-h-[48px] rounded-full text-white shadow-xl flex items-center justify-center gap-2 transition-all ${!open ? "animate-support-fab-beat" : ""} w-12 min-w-[48px] sm:w-auto sm:min-w-0 sm:px-4`}
+        className={`h-10 min-h-[40px] rounded-full text-white shadow-xl flex items-center justify-center gap-1.5 transition-all ${!open ? "animate-support-fab-beat" : ""} w-10 min-w-[40px] sm:w-auto sm:min-w-0 sm:px-3`}
         style={{ backgroundColor: BRAND }}
       >
-        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
-        <span className="hidden sm:inline text-sm font-semibold whitespace-nowrap">Chat với admin</span>
+        {open ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
+        <span className="hidden sm:inline text-xs font-semibold whitespace-nowrap">Chat với admin</span>
       </button>
     </div>
   );
