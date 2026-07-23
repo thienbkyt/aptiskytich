@@ -19,12 +19,15 @@ interface Props {
   reviewMode?: boolean;
   revealAnswers?: boolean;
   isLast?: boolean;
+  hideBottomNav?: boolean;
+  hideTimer?: boolean;
 }
 
 const WritingPart2Social = ({
   data, answer, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
+  hideBottomNav = false, hideTimer = false,
 }: Props) => {
   const showSample = !!revealAnswers && !submitted;
   const wordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0;
