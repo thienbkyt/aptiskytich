@@ -227,18 +227,18 @@ const Navbar = () => {
             Đề Key Dự Đoán
           </Link>
 
-          {/* Blog - Mẹo — top-level */}
+          {/* Lịch sử — top-level */}
           <Link
-            to="/meo-thi-aptis"
-            {...prefetchHandlers("/meo-thi-aptis")}
+            to="/history"
+            {...prefetchHandlers("/history")}
             className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
-              isBlogActive
+              isHistoryActive
                 ? "bg-primary/10 text-primary"
                 : "text-foreground hover:bg-muted"
             }`}
           >
-            <Newspaper className="w-4 h-4" />
-            Blog - Mẹo
+            <History className="w-4 h-4" />
+            Lịch sử
           </Link>
         </div>
 
