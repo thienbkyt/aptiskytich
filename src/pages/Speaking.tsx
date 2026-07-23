@@ -209,6 +209,19 @@ const Speaking = () => {
     );
   }
 
+  // Browse (view-only) mode
+  if (browsePart) {
+    const info = BROWSE_PARTS.find((p) => p.id === browsePart);
+    return (
+      <SpeakingBrowseViewer
+        sets={browseSets}
+        partType={browsePart}
+        partLabel={info?.label ?? "Part"}
+        onExit={() => setBrowsePart(null)}
+      />
+    );
+  }
+
   if (exam.active) {
     if (exam.loadingExam) {
       return (
