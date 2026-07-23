@@ -209,7 +209,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const nextDrafts = { ...drafts };
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
-    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, updatedAt: Date.now() });
+    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     if (pending) {
       setEnterAtLast(false);
       setJumpQ(pending.qi);
