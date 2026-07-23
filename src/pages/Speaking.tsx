@@ -122,7 +122,7 @@ const Speaking = () => {
   }, [searchParams, examSets, loading]);
 
   const filteredSets = useMemo(() => {
-    if (activeTab === "full" || activeTab === "browse") return [];
+    if (activeTab === "full") return [];
     return examSets
       .filter((s) => normalizePart(s.part) === activeTab)
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
