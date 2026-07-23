@@ -143,6 +143,12 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
       );
   };
 
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("kt-open-notifications", handler);
+    return () => window.removeEventListener("kt-open-notifications", handler);
+  }, []);
+
   const markAllRead = async () => {
     const unread = items.filter((n) => !readIds.has(n.id));
     if (unread.length === 0) return;

@@ -19,6 +19,7 @@ import ReportFab from "@/components/ReportFab";
 import SupportChatFab from "@/components/support/SupportChatFab";
 import VisitLogger from "@/components/VisitLogger";
 import PostLoginFBGroupModal from "@/components/PostLoginFBGroupModal";
+import NotificationToaster from "@/components/NotificationToaster";
 import RequireAdmin from "@/components/auth/RequireAdmin";
 import { LoginGateProvider } from "@/components/auth/LoginGate";
 import { MobileNoticeProvider, useMobileNotice } from "@/components/common/MobileNoticeGate";
@@ -175,6 +176,7 @@ const App = () => (
                 <SupportChatFab />
                 <VisitLogger />
                 <PostLoginFBGroupModal />
+                <NotificationToaster />
                 <DeviceSessionGuard />
                 <PostLoginMobileNotice />
               </LoginGateProvider>
