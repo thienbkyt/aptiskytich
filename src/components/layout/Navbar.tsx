@@ -510,15 +510,15 @@ const Navbar = () => {
                 Đề Key Dự Đoán
               </Link>
 
-              {/* Blog - Mẹo — top-level */}
+              {/* Lịch sử — top-level */}
               <Link
-                to="/meo-thi-aptis"
+                to="/history"
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                  isBlogActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                  isHistoryActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                 }`}
               >
-                <Newspaper className="w-4 h-4 text-primary" />
-                Blog - Mẹo
+                <History className="w-4 h-4 text-primary" />
+                Lịch sử
               </Link>
 
               {isAdmin && (
