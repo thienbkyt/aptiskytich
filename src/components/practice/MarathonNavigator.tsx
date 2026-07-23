@@ -83,6 +83,8 @@ const MarathonNavigator = ({
   const activeSetIndex = isReviewingMode ? (reviewingIndex as number) : currentIndex;
   const activeSetNumber = Math.min(activeSetIndex + 1, Math.max(totalSets, 1));
 
+  const isWriting = mode === "writing";
+
   const body = (onClose?: () => void) => (
     <aside className="w-full h-full bg-card/95 border-l border-border flex flex-col">
       <div className="p-3 border-b border-border flex items-center justify-between gap-2">
