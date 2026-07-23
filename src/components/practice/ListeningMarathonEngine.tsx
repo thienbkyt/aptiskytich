@@ -410,6 +410,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
                   setSavedOnce(false);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
+                  sessionIdRef.current = newMarathonSessionId();
+                  testResultIdRef.current = null;
                 }}
               >
                 Làm lại từ đầu
