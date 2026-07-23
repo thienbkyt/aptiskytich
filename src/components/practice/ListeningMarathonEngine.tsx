@@ -177,8 +177,11 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
       : (isLastSet ? currentIndex : currentIndex + 1);
     setResults(nextResults);
     setEnterAtLast(false);
+    const nextDrafts = { ...drafts };
+    delete nextDrafts[set.id];
+    setDrafts(nextDrafts);
     if (persist) {
-      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, updatedAt: Date.now() });
+      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, updatedAt: Date.now() });
     }
     if (pending) {
       setJumpQ(pending.qi);
@@ -189,7 +192,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets, results, persist, partType]);
+  }, [currentIndex, sets, results, persist, partType, drafts]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
