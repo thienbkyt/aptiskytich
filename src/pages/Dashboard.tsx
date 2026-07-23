@@ -20,6 +20,7 @@ import StatPill from "@/components/dashboard/StatPill";
 import TierPill from "@/components/dashboard/TierPill";
 import QuickActionCard from "@/components/dashboard/QuickActionCard";
 import StreakRing from "@/components/dashboard/StreakRing";
+import BlogTipsCard from "@/components/dashboard/BlogTipsCard";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
