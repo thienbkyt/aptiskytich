@@ -5,6 +5,7 @@ import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
   BookOpen, ClipboardCheck, Sparkles, GraduationCap, Newspaper, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
+  History,
   type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
