@@ -289,6 +289,7 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         mode="writing"
         onReview={(si) => openReview(si)}
         onEnterSet={(si) => goToSet(si)}
+        onRetrySet={(si) => handleRetrySet(si)}
       />
     </div>
   );
