@@ -5,13 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 
+type NotifType = "feature" | "content" | "general";
+
 interface Notif {
   id: string;
   title: string;
   body: string | null;
+  type: NotifType;
   link_url: string | null;
   is_active: boolean;
   target_user_id: string | null;
+  created_at: string;
 }
 
 const MAX_VISIBLE = 2;
@@ -73,6 +77,10 @@ const NotificationToaster = () => {
 
   const handleClick = async (n: Notif) => {
     if (!user) return;
+    // Open the detail modal for this exact notification
+    window.dispatchEvent(
+      new CustomEvent("kt-open-notification-detail", { detail: n }),
+    );
     // Mark read
     try {
       await supabase.from("notification_reads").upsert(
@@ -82,12 +90,6 @@ const NotificationToaster = () => {
       setUnread((c) => Math.max(0, c - 1));
     } catch {
       /* ignore */
-    }
-    if (n.link_url) {
-      if (n.link_url.startsWith("/")) navigate(n.link_url);
-      else window.open(n.link_url, "_blank", "noreferrer");
-    } else {
-      window.dispatchEvent(new CustomEvent("kt-open-notifications"));
     }
   };
 
@@ -103,7 +105,7 @@ const NotificationToaster = () => {
       const [notifRes, readsRes] = await Promise.all([
         supabase
           .from("notifications")
-          .select("id, title, body, link_url, is_active, target_user_id, created_at")
+          .select("id, title, body, type, link_url, is_active, target_user_id, created_at")
           .eq("is_active", true)
           .or(`target_user_id.is.null,target_user_id.eq.${user.id}`)
           .order("created_at", { ascending: false })
