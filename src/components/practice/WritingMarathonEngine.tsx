@@ -205,6 +205,30 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     if (si < 0 || si >= sets.length) return;
     commitCurrent(currentIndex);
     setReviewIndex(si);
+    setCurrentIndex(si);
+    setAttempt((a) => a + 1);
+  };
+
+  const handleRetrySet = (si: number) => {
+    if (si < 0 || si >= sets.length) return;
+    const setId = sets[si]?.id;
+    if (!setId) return;
+    setAnswersMap((prev) => {
+      const next = { ...prev };
+      delete next[setId];
+      if (persist) {
+        saveMarathonProgress("writing", marathonKey, {
+          currentIndex: si,
+          results: [],
+          drafts: next as any,
+          updatedAt: Date.now(),
+        });
+      }
+      return next;
+    });
+    currentAnswersRef.current = emptyAnswers();
+    setReviewIndex(null);
+    setCurrentIndex(si);
     setAttempt((a) => a + 1);
   };
 
