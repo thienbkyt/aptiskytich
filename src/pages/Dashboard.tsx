@@ -563,6 +563,30 @@ const Dashboard = () => {
             {/* RIGHT (1 col) */}
             <div className="space-y-6">
 
+              {/* BLOG - TIPS */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                <BlogTipsCard />
+              </motion.div>
+
+              {/* CONTINUE CTA */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+                <GlowCard className="p-6 overflow-hidden relative" spotlight>
+                  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+                  <div className="relative">
+                    <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-[#7a0f00] text-primary-foreground mb-3 shadow-glow-soft">
+                      <Mic className="w-5 h-5" />
+                    </div>
+                    <h2 className="font-heading font-extrabold text-foreground mb-1">Tăng tốc Speaking</h2>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      AI Kỳ Tích chấm + feedback chi tiết. Chỉ 12 phút mỗi ngày.
+                    </p>
+                    <Button asChild variant="glow" size="sm" className="w-full">
+                      <Link to="/speaking">Luyện Speaking <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                    </Button>
+                  </div>
+                </GlowCard>
+              </motion.div>
+
               {/* RECENT RESULTS */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
                 <GlowCard className="p-6">
@@ -614,40 +638,6 @@ const Dashboard = () => {
                       })}
                     </div>
                   )}
-                </GlowCard>
-              </motion.div>
-
-              {/* CONTINUE CTA */}
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-                <GlowCard className="p-6 overflow-hidden relative" spotlight>
-                  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-                  <div className="relative">
-                    <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-[#7a0f00] text-primary-foreground mb-3 shadow-glow-soft">
-                      <Mic className="w-5 h-5" />
-                    </div>
-                    <h2 className="font-heading font-extrabold text-foreground mb-1">Tăng tốc Speaking</h2>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      AI Kỳ Tích chấm + feedback chi tiết. Chỉ 12 phút mỗi ngày.
-                    </p>
-                    <Button asChild variant="glow" size="sm" className="w-full">
-                      <Link to="/speaking">Luyện Speaking <ArrowRight className="w-3 h-3 ml-1" /></Link>
-                    </Button>
-                  </div>
-                </GlowCard>
-              </motion.div>
-
-              {/* TIP CARD */}
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-                <GlowCard className="p-5 border-accent/30">
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 shrink-0 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-accent" />
-                    </div>
-                    <div>
-                      <div className="text-xs uppercase tracking-wider text-accent font-bold mb-1">Mẹo hôm nay</div>
-                      <p className="text-sm text-foreground leading-relaxed">{tipOfDay}</p>
-                    </div>
-                  </div>
                 </GlowCard>
               </motion.div>
             </div>
