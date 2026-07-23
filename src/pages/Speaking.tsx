@@ -85,6 +85,7 @@ const Speaking = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
+  const [browsePart, setBrowsePart] = useState<SpeakingPartType | null>(null);
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount.
