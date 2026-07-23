@@ -70,12 +70,11 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBa
       {showConfirm && onMarathonFinish && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowConfirm(false); }}>
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-3">Kết thúc Marathon?</h2>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">Nộp và chấm các câu bạn đã làm. Đề đang làm dở (chưa nộp hết) sẽ không được tính vào điểm.</p>
-            <div className="flex flex-col gap-2">
-              <button onClick={() => { setShowConfirm(false); onMarathonFinish(); }} className="w-full px-6 py-3 rounded-lg bg-[#24085a] hover:bg-[#1a0640] text-white text-sm font-semibold transition-colors">Nộp các câu đã làm</button>
-              <button onClick={() => { setShowConfirm(false); onExit?.(); }} className="w-full px-6 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors">Lưu & thoát (làm tiếp sau)</button>
-              <button onClick={() => setShowConfirm(false)} className="w-full px-6 py-3 rounded-lg text-gray-500 hover:bg-gray-50 text-sm font-semibold transition-colors">Ở lại</button>
+            <h2 className="text-xl font-bold text-gray-900 mb-3">Thoát marathon?</h2>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">Tiến độ đã được lưu tự động. Lần sau bạn có thể vào làm tiếp từ đúng chỗ đang dừng.</p>
+            <div className="flex flex-col gap-3 items-center">
+              <button onClick={() => { setShowConfirm(false); onExit?.(); }} className="w-full px-6 py-3 rounded-lg bg-[#CC1C01] hover:bg-[#4D0D0D] text-white text-sm font-semibold transition-colors">Lưu & thoát</button>
+              <button onClick={() => setShowConfirm(false)} className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">Ở lại</button>
             </div>
           </div>
         </div>
