@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Eye, Info, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
