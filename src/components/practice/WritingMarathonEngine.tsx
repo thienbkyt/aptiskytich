@@ -75,84 +75,21 @@ const CHECKLISTS: Record<WritingPartType, string[]> = {
   ],
 };
 
-type ChecklistItemResult = { pass: boolean; hint: string };
-type ChecklistResult = { partType: WritingPartType; items: ChecklistItemResult[]; passed: number; total: number };
-
-const Checklist = ({
-  partType,
-  result,
-  loading,
-  onGrade,
-  canGrade,
-}: {
-  partType: WritingPartType;
-  result?: ChecklistResult | null;
-  loading?: boolean;
-  onGrade?: () => void;
-  canGrade?: boolean;
-}) => {
+const Checklist = ({ partType }: { partType: WritingPartType }) => {
   const items = CHECKLISTS[partType];
-  const graded = !!result;
   return (
     <div className="mt-6 rounded-2xl border border-border bg-card p-5">
-      <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          CHECKLIST · {partName(partType)}
-          {graded && (
-            <span className="ml-2 text-[11px] font-semibold text-foreground normal-case tracking-normal">
-              · {result!.passed}/{result!.total} đạt
-            </span>
-          )}
-        </p>
-        {onGrade && (
-          <button
-            type="button"
-            onClick={onGrade}
-            disabled={loading || !canGrade}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#CC1C01] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition"
-            title={!canGrade ? "Hãy viết bài trước khi nhờ AI tick" : ""}
-          >
-            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-            {loading ? "Đang tick…" : graded ? "Tick lại" : "Nhờ AI checklist"}
-          </button>
-        )}
-      </div>
-      <p className="text-sm italic text-muted-foreground mb-3">
-        {graded
-          ? "AI chỉ tick đạt/chưa đạt và gợi ý cực ngắn — không sửa lỗi, không chấm band."
-          : "Điểm cao đến từ viết chính xác và đúng văn phong, không phải dùng từ khó, dựa vào check list viết để được điểm tối đa nha!"}
+      <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
+        CHECKLIST · {partName(partType)}
       </p>
-      {graded ? (
-        <ul className="space-y-2 text-sm">
-          {items.map((line, i) => {
-            const r = result!.items[i];
-            const pass = !!r?.pass;
-            return (
-              <li key={i} className="flex items-start gap-2">
-                {pass ? (
-                  <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
-                ) : (
-                  <XCircle className="w-4 h-4 mt-0.5 shrink-0 text-red-600" />
-                )}
-                <div className="flex-1">
-                  <span className={pass ? "text-foreground" : "text-foreground font-medium"}>
-                    {line}
-                  </span>
-                  {!pass && r?.hint && (
-                    <span className="block text-xs text-red-700 mt-0.5">→ {r.hint}</span>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <ul className="list-disc pl-5 space-y-1.5 text-sm text-foreground">
-          {items.map((line, i) => <li key={i}>{line}</li>)}
-        </ul>
-      )}
+      <p className="text-sm italic text-muted-foreground mb-3">
+        Điểm cao đến từ viết chính xác và đúng văn phong, không phải dùng từ khó, dựa vào checklist viết để được điểm tối đa nha!
+      </p>
+      <ul className="list-disc pl-5 space-y-1.5 text-sm text-foreground">
+        {items.map((line, i) => <li key={i}>{line}</li>)}
+      </ul>
       <p className="mt-4 text-xs text-muted-foreground">
-        Chế độ marathon AI chỉ giúp checklist bài viết, nếu muốn sửa bài chi tiết và chấm band thì hãy chuyển qua&nbsp;
+        Muốn sửa bài chi tiết và chấm band? Chuyển qua&nbsp;
         <span className="font-semibold block sm:inline">Luyện Part lẻ hoặc Full test</span>&nbsp;nhé.
       </p>
     </div>
