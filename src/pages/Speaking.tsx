@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, Search, Clock, Shuffle, ArrowRight, Loader2, Inbox } from "lucide-react";
+import { Mic, Search, Clock, Shuffle, ArrowRight, Loader2, Inbox, Eye, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
+import SpeakingBrowseViewer from "@/components/speaking/SpeakingBrowseViewer";
 
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
