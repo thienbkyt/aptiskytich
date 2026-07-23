@@ -6,6 +6,10 @@ export interface MarathonProgress {
   results: (MarathonResultEntry | null)[];
   /** Per-set draft answers keyed by examSetId (unsubmitted work-in-progress). */
   drafts?: Record<string, any>;
+  /** Stable per-session id — one History row per session, updated as progress grows. */
+  sessionId?: string;
+  /** test_results.id created for this session on first save; updated thereafter. */
+  testResultId?: string | null;
   updatedAt: number;
 }
 export interface MarathonLast {
@@ -33,4 +37,13 @@ export function saveMarathonLast(skill: string, part: string, data: MarathonLast
 }
 export function loadMarathonLast(skill: string, part: string): MarathonLast | null {
   try { const r = localStorage.getItem(lastKey(skill, part)); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+
+/** Cryptographically-random enough session id. */
+export function newMarathonSessionId(): string {
+  try {
+    // @ts-ignore
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  } catch { /* noop */ }
+  return `mth_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }

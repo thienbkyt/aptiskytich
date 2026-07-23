@@ -7,7 +7,8 @@ import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
-import { saveMarathonProgress, loadMarathonProgress } from "@/lib/marathonProgress";
+import { saveMarathonProgress, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
+import { upsertMarathonResult } from "@/lib/saveExamResult";
 
 interface Props {
   sets: ExamSetRow[];
@@ -112,6 +113,9 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const questionsCacheRef = useRef<Map<string, any[]>>(new Map());
+  const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
+  const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
+  const savingHistoryRef = useRef(false);
 
   const buildEngineData = useCallback((questions: any[]) => {
     const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
@@ -173,12 +177,54 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           currentIndex: idx,
           results: [],
           drafts: next as any,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
       return next;
     });
   }, [sets, persist, marathonKey]);
+
+  // Upsert a single "đã viết N/M" History row for this session.
+  const persistHistoryRow = useCallback(async (answersMapNow: Record<string, WritingAnswers>) => {
+    if (savingHistoryRef.current) return;
+    const written = sets.filter((s) => isNonEmpty(answersMapNow[s.id])).length;
+    if (written === 0) return;
+    savingHistoryRef.current = true;
+    try {
+      const label = `Marathon · ${partName(partType)} · đã viết ${written}/${sets.length}`;
+      const id = await upsertMarathonResult({
+        testResultId: testResultIdRef.current,
+        sessionId: sessionIdRef.current,
+        skill: "writing",
+        correct: 0,
+        total: 0,
+        extraSkillScores: {
+          label,
+          part: marathonKey,
+          done: written,
+          totalSets: sets.length,
+          writingUnscored: true,
+        },
+      });
+      if (id) {
+        testResultIdRef.current = id;
+        if (persist) {
+          saveMarathonProgress("writing", marathonKey, {
+            currentIndex,
+            results: [],
+            drafts: answersMapNow as any,
+            sessionId: sessionIdRef.current,
+            testResultId: id,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+    } finally {
+      savingHistoryRef.current = false;
+    }
+  }, [sets, partType, marathonKey, currentIndex, persist]);
 
   // Persist draft snapshot when leaving via unload.
   useEffect(() => {
@@ -221,6 +267,8 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           currentIndex: si,
           results: [],
           drafts: next as any,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
@@ -234,6 +282,16 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   const handleExit = () => {
     commitCurrent(currentIndex);
+    // Compute updated answers map synchronously for the persist call.
+    const setId = sets[currentIndex]?.id;
+    const live = currentAnswersRef.current;
+    const merged = { ...answersMap };
+    if (setId) {
+      if (isNonEmpty(live)) merged[setId] = live;
+      else delete merged[setId];
+    }
+    // Fire-and-forget — exit immediately.
+    persistHistoryRow(merged);
     onExit();
   };
 

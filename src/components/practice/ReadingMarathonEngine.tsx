@@ -8,8 +8,8 @@ import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
 import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
-import { saveExamResult } from "@/lib/saveExamResult";
-import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress } from "@/lib/marathonProgress";
+import { upsertMarathonResult } from "@/lib/saveExamResult";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 
@@ -65,6 +65,11 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const [activeSection, setActiveSection] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
   const questionsCacheRef = useRef<Map<string, any[]>>(new Map());
+  const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
+  const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
+  const savingRef = useRef(false);
+  const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
+  useEffect(() => { resultsRef.current = results; }, [results]);
 
   const buildEngineData = useCallback((questions: any[]) => {
     const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
@@ -138,6 +143,12 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     [results]
   );
 
+  const partName =
+    partType === "part1" ? "Part 1"
+    : partType === "part2" ? "Part 2 + 3"
+    : partType === "part3" ? "Part 4"
+    : "Part 5";
+
   useEffect(() => {
     if (currentIndex >= sets.length) return;
     const set = sets[currentIndex];
@@ -198,7 +209,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const nextDrafts = { ...drafts };
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
-    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, updatedAt: Date.now() });
+    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     if (pending) {
       setEnterAtLast(false);
       setJumpQ(pending.qi);
@@ -212,56 +223,91 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     }
   }, [currentIndex, sets, results, persist, partType]);
 
-  useEffect(() => {
-    if (phase !== "completed" || savedOnce) return;
-    setSavedOnce(true);
-    if (accTotal === 0) return;
-    (async () => {
+  // Build a snapshot + upsert the single per-session History row. Called from
+  // completed effect and from exit — same row is updated across both paths.
+  const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
+    if (savingRef.current) return;
+    const list = resultsRef.current;
+    const reviewable_ = list.filter((r): r is ResultEntry => !!r);
+    if (reviewable_.length === 0) return;
+    const accCorrect_ = reviewable_.reduce((s, r) => s + (r.correct ?? 0), 0);
+    const accTotal_ = reviewable_.reduce((s, r) => s + (r.total ?? 0), 0);
+    if (accTotal_ === 0) return;
+    savingRef.current = true;
+    try {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
-      const { buildReadingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
-      const items: any[] = [];
-      reviewable.forEach((r) => {
-        // engineData isn't preserved on the entry — rebuild from set questions on the fly
-        // would be costly; skip per-set items here, marathons still ship raw.perSet.
-        items.push({
-          questionText: `Đề ${r.examSetId} · ${r.part}`,
-          userAnswer: `${r.correct}/${r.total}`,
-          isCorrect: r.correct === r.total,
-        });
-      });
-      const { scaled50, band } = computeScaleAndBand("reading", accCorrect, accTotal);
+      const { computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+      const items: any[] = reviewable_.map((r) => ({
+        questionText: `Đề ${r.examSetId} · ${r.part}`,
+        userAnswer: `${r.correct}/${r.total}`,
+        isCorrect: r.correct === r.total,
+      }));
+      const { scaled50, band } = computeScaleAndBand("reading", accCorrect_, accTotal_);
       const snap = buildReviewSnapshot({
         skill: "reading",
         part: partType,
         testTitle: `Marathon · ${partName}`,
-        score: accCorrect, total: accTotal,
+        score: accCorrect_, total: accTotal_,
         scaled50, band,
         items,
         raw: {
           mode: "marathon",
           partType,
-          perSet: reviewable.map((r) => ({
+          perSet: reviewable_.map((r) => ({
             examSetId: r.examSetId, part: r.part,
             correct: r.correct, total: r.total,
             qResults: r.qResults, answers: r.answers,
           })),
         },
       });
-      saveExamResult({
-        examSetId: null,
+      const id = await upsertMarathonResult({
+        testResultId: testResultIdRef.current,
+        sessionId: sessionIdRef.current,
         skill: "reading",
-        correct: accCorrect,
-        total: accTotal,
-        extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
+        correct: accCorrect_,
+        total: accTotal_,
+        extraSkillScores: {
+          label: `Marathon · ${partName}`,
+          done: reviewable_.length,
+          totalSets: sets.length,
+        },
         reviewSnapshot: snap,
       });
-      if (persist) {
-        const wrongSetIds = reviewable.filter((r) => r.correct < r.total).map((r) => r.examSetId);
-        saveMarathonLast("reading", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+      if (id) {
+        testResultIdRef.current = id;
+        if (persist) {
+          saveMarathonProgress("reading", partType, {
+            currentIndex: resultsRef.current === list ? currentIndex : currentIndex,
+            results: list as any,
+            drafts,
+            sessionId: sessionIdRef.current,
+            testResultId: id,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+      if (opts?.finalize && persist) {
+        const wrongSetIds = reviewable_.filter((r) => r.correct < r.total).map((r) => r.examSetId);
+        saveMarathonLast("reading", partType, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
         clearMarathonProgress("reading", partType);
       }
-    })();
-  }, [phase, savedOnce, accCorrect, accTotal]);
+    } finally {
+      savingRef.current = false;
+    }
+  }, [partType, partName, sets.length, currentIndex, drafts, persist]);
+
+  useEffect(() => {
+    if (phase !== "completed" || savedOnce) return;
+    setSavedOnce(true);
+    persistHistoryRow({ finalize: true });
+  }, [phase, savedOnce, persistHistoryRow]);
+
+  const handleExitMarathon = useCallback(() => {
+    // Fire-and-forget the save so leaving is instant. If it fails the user
+    // can retry — but the History row will still exist from earlier saves.
+    persistHistoryRow();
+    onExit();
+  }, [persistHistoryRow, onExit]);
 
   useEffect(() => {
     if (reviewIndex === null) return;
@@ -271,11 +317,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     };
   }, [reviewIndex !== null]);
 
-  const partName =
-    partType === "part1" ? "Part 1"
-    : partType === "part2" ? "Part 2 + 3"
-    : partType === "part3" ? "Part 4"
-    : "Part 5";
+
+
 
   const pages = reviewable.flatMap((entry, ri) =>
     Array.from({ length: pagesPerSet }, (_, section) => ({ entry, ri, section }))
@@ -341,7 +384,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   if (phase === "completed") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg w-full bg-card border border-border rounded-2xl p-8 text-center shadow-lg">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -354,7 +397,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
               Đúng {accCorrect}/{accTotal} câu
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 flex-wrap">
-              <Button variant="outline" onClick={onExit}>Thoát</Button>
+              <Button variant="outline" onClick={handleExitMarathon}>Thoát</Button>
               {reviewable.length > 0 && (
                 <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
                   <Eye className="w-4 h-4" /> Xem lại từng câu →
@@ -370,6 +413,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
                   setSavedOnce(false);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
+                  // New session → next save inserts a fresh History row.
+                  sessionIdRef.current = newMarathonSessionId();
+                  testResultIdRef.current = null;
                 }}
               >
                 Làm lại từ đầu
@@ -426,6 +472,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           currentIndex,
           results: results as any,
           drafts: next,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
@@ -463,7 +511,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             allowReveal={true}
             reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
             showResultsOnSubmit={false}
-            onExit={onExit}
+            onExit={handleExitMarathon}
             onComplete={handleComplete}
             onMarathonFinish={() => setPhase("completed")}
             onPreviousPart={() => {
@@ -545,6 +593,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,
+                sessionId: sessionIdRef.current,
+                testResultId: testResultIdRef.current,
                 updatedAt: Date.now(),
               });
             }

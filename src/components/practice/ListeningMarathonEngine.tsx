@@ -8,8 +8,8 @@ import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
 import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
 } from "@/lib/examTransformers";
-import { saveExamResult } from "@/lib/saveExamResult";
-import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress } from "@/lib/marathonProgress";
+import { upsertMarathonResult } from "@/lib/saveExamResult";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 
@@ -66,6 +66,11 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const [currentAnswers, setCurrentAnswers] = useState<any[]>([]);
   const [submitSignal, setSubmitSignal] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
+  const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
+  const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
+  const savingHistoryRef = useRef(false);
+  const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
+  useEffect(() => { resultsRef.current = results; }, [results]);
   const isRetryMode = !!wrongQuestionIdsBySet;
 
   // Reset current-set answered tracking when the active set changes.
@@ -181,7 +186,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
     if (persist) {
-      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, updatedAt: Date.now() });
+      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     }
     if (pending) {
       setJumpQ(pending.qi);
@@ -194,34 +199,45 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     }
   }, [currentIndex, sets, results, persist, partType, drafts]);
 
-  useEffect(() => {
-    if (phase !== "completed" || savedOnce) return;
-    setSavedOnce(true);
-    if (accTotal === 0) return;
-    (async () => {
+  const partName =
+    partType === "part1" ? "Part 1"
+    : partType === "part2" ? "Part 2"
+    : partType === "part3" ? "Part 3"
+    : "Part 4";
+
+  // Upsert single "Marathon · Part X" History row for this session.
+  const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
+    if (savingHistoryRef.current) return;
+    const list = resultsRef.current;
+    const reviewable_ = list.filter((r): r is ResultEntry => !!r);
+    if (reviewable_.length === 0) return;
+    const accCorrect_ = reviewable_.reduce((s, r) => s + (r.correct ?? 0), 0);
+    const accTotal_ = reviewable_.reduce((s, r) => s + (r.total ?? 0), 0);
+    if (accTotal_ === 0) return;
+    savingHistoryRef.current = true;
+    try {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
       const items: any[] = [];
-      reviewable.forEach((r) => {
+      reviewable_.forEach((r) => {
         const ed = loaded?.[sets.findIndex((s) => s.id === r.examSetId)]?.engineData ?? null;
         if (ed) {
-          try {
-            items.push(...buildListeningItems(partType as any, ed, {}, r.qResults || []));
-          } catch { /* noop */ }
+          try { items.push(...buildListeningItems(partType as any, ed, {}, r.qResults || [])); }
+          catch { /* noop */ }
         }
       });
-      const { scaled50, band } = computeScaleAndBand("listening", accCorrect, accTotal);
+      const { scaled50, band } = computeScaleAndBand("listening", accCorrect_, accTotal_);
       const snap = buildReviewSnapshot({
         skill: "listening",
         part: partType,
         testTitle: `Marathon · ${partName}`,
-        score: accCorrect, total: accTotal,
+        score: accCorrect_, total: accTotal_,
         scaled50, band,
         items,
         raw: {
           mode: "marathon",
           partType,
-          perSet: reviewable.map((r) => ({
+          perSet: reviewable_.map((r) => ({
             examSetId: r.examSetId, part: r.part,
             correct: r.correct, total: r.total,
             qResults: r.qResults,
@@ -229,28 +245,57 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           })),
         },
       });
-      saveExamResult({
-        examSetId: null,
+      const id = await upsertMarathonResult({
+        testResultId: testResultIdRef.current,
+        sessionId: sessionIdRef.current,
         skill: "listening",
-        correct: accCorrect,
-        total: accTotal,
-        extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
+        correct: accCorrect_,
+        total: accTotal_,
+        extraSkillScores: {
+          label: `Marathon · ${partName}`,
+          done: reviewable_.length,
+          totalSets: sets.length,
+        },
         reviewSnapshot: snap,
       });
-      if (persist) {
-        const wrongSetIds = reviewable
-          .filter((r) => r.qResults.some((q) => !q.is_correct))
-          .map((r) => r.examSetId);
+      if (id) {
+        testResultIdRef.current = id;
+        if (persist) {
+          saveMarathonProgress("listening", partType, {
+            currentIndex,
+            results: list as any,
+            drafts,
+            sessionId: sessionIdRef.current,
+            testResultId: id,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+      if (opts?.finalize && persist) {
+        const wrongSetIds = reviewable_.filter((r) => r.qResults.some((q) => !q.is_correct)).map((r) => r.examSetId);
         const wrongQBySet: Record<string, string[]> = {};
-        reviewable.forEach((r) => {
+        reviewable_.forEach((r) => {
           const wq = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
           if (wq.length) wrongQBySet[r.examSetId] = wq;
         });
-        saveMarathonLast("listening", partType, { correct: accCorrect, total: accTotal, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
+        saveMarathonLast("listening", partType, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
         clearMarathonProgress("listening", partType);
       }
-    })();
-  }, [phase, savedOnce, accCorrect, accTotal]);
+    } finally {
+      savingHistoryRef.current = false;
+    }
+  }, [partType, partName, sets, loaded, currentIndex, drafts, persist]);
+
+  useEffect(() => {
+    if (phase !== "completed" || savedOnce) return;
+    setSavedOnce(true);
+    persistHistoryRow({ finalize: true });
+  }, [phase, savedOnce, persistHistoryRow]);
+
+  const handleExitMarathon = useCallback(() => {
+    persistHistoryRow();
+    onExit();
+  }, [persistHistoryRow, onExit]);
 
   // Add body class while reviewing for any review-mode global styles.
   useEffect(() => {
@@ -261,11 +306,6 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     };
   }, [reviewIndex !== null]);
 
-  const partName =
-    partType === "part1" ? "Part 1"
-    : partType === "part2" ? "Part 2"
-    : partType === "part3" ? "Part 3"
-    : "Part 4";
 
   // Build flat pages array across all completed sets — 1 page per qResults entry.
   const pages = useMemo(() => {
@@ -341,7 +381,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   if (phase === "completed") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg w-full bg-card border border-border rounded-2xl p-8 text-center shadow-lg">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -354,7 +394,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               Đúng {accCorrect}/{accTotal} câu
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 flex-wrap">
-              <Button variant="outline" onClick={onExit}>Thoát</Button>
+              <Button variant="outline" onClick={handleExitMarathon}>Thoát</Button>
               {reviewable.length > 0 && (
                 <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
                   <Eye className="w-4 h-4" /> Xem lại từng câu →
@@ -370,6 +410,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
                   setSavedOnce(false);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
+                  sessionIdRef.current = newMarathonSessionId();
+                  testResultIdRef.current = null;
                 }}
               >
                 Làm lại từ đầu
@@ -384,7 +426,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   if (phase === "loading" || !loaded) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center">
           <div className="space-y-4 text-center">
             <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
@@ -434,6 +476,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           currentIndex,
           results: results as any,
           drafts: next,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
@@ -483,7 +527,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
             onMarathonFinish={() => setPhase("completed")}
             showResultsOnSubmit={false}
-            onExit={onExit}
+            onExit={handleExitMarathon}
             onComplete={handleComplete}
             onPreviousPart={() => {
               if (currentIndex > 0) {
@@ -564,6 +608,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,
+                sessionId: sessionIdRef.current,
+                testResultId: testResultIdRef.current,
                 updatedAt: Date.now(),
               });
             }

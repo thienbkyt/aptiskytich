@@ -122,6 +122,99 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
   }
 }
 
+/**
+ * Upsert a single History row for a Marathon session.
+ *
+ * First call for a session (no `testResultId`) INSERTs a `test_results` row and
+ * returns its id. Subsequent calls UPDATE the same row's score/total/level/
+ * correct_answers/review_snapshot via the `finalize_skill_test_result` RPC so
+ * exit-during-marathon and full completion both land on the same History entry.
+ *
+ * `total === 0` is allowed for Writing marathons (no scoring); score/total are
+ * stored as 0 and the label carries the "đã viết N/M" summary.
+ */
+export async function upsertMarathonResult(opts: {
+  testResultId?: string | null;
+  sessionId: string;
+  skill: string;
+  correct: number;
+  total: number;
+  /** Merged into `skill_scores` on insert. Should include `label` and `mode: "marathon"`. */
+  extraSkillScores?: Record<string, any>;
+  reviewSnapshot?: any;
+}): Promise<string | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const total = Math.max(opts.total, 0);
+    const correctRaw = Math.max(opts.correct, 0);
+    const correct = total > 0 ? Math.min(correctRaw, total) : correctRaw;
+    const level = total > 0 ? getLevel(correct, total) : "A1";
+
+    const notify = () => {
+      try {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("exam-result-saved", { detail: { skill: opts.skill, marathon: true, sessionId: opts.sessionId } }));
+        }
+      } catch { /* noop */ }
+    };
+
+    // Update path — same row, new stats.
+    if (opts.testResultId) {
+      const { error } = await supabase.rpc("finalize_skill_test_result", {
+        p_test_result_id: opts.testResultId,
+        p_score: correct,
+        p_total: total || 0,
+        p_level: level,
+        p_correct_answers: correct,
+        p_review_snapshot: opts.reviewSnapshot ?? null,
+      } as any);
+      if (!error) {
+        notify();
+        return opts.testResultId;
+      }
+      // If the row was deleted underneath us, fall through to insert.
+      console.warn("[upsertMarathonResult] update failed, re-inserting:", error);
+    }
+
+    const { data: inserted, error: insErr } = await supabase
+      .from("test_results")
+      .insert({
+        user_id: user.id,
+        correct_answers: correct,
+        score: correct,
+        // NOT NULL column — keep at least 1 so DB accepts writing (total=0) rows.
+        total: Math.max(total, 1),
+        level,
+        exam_set_id: null,
+        skill_scores: {
+          skill: opts.skill,
+          correct,
+          total,
+          mode: "marathon",
+          marathonSessionId: opts.sessionId,
+          ...(opts.extraSkillScores || {}),
+        } as any,
+        review_snapshot: opts.reviewSnapshot ?? null,
+      } as any)
+      .select("id")
+      .single();
+    if (insErr || !inserted) {
+      console.warn("[upsertMarathonResult] insert failed:", insErr);
+      return null;
+    }
+    await updateLearningStreak(user.id);
+    notify();
+    return (inserted as any).id;
+  } catch (err) {
+    console.warn("[upsertMarathonResult] skipped:", err);
+    return null;
+  }
+}
+
+
+
 
 /** Today's date in Asia/Ho_Chi_Minh as YYYY-MM-DD. */
 function getVNToday(): string {
