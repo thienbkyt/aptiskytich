@@ -238,7 +238,7 @@ const Navbar = () => {
             }`}
           >
             <History className="w-4 h-4" />
-            Lịch sử
+            Lịch sử học tập
           </Link>
         </div>
 
@@ -518,7 +518,7 @@ const Navbar = () => {
                 }`}
               >
                 <History className="w-4 h-4 text-primary" />
-                Lịch sử
+                Lịch sử học tập
               </Link>
 
               {isAdmin && (
