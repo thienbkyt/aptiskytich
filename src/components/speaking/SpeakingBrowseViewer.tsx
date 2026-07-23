@@ -153,6 +153,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
               <div className="space-y-5">
                 {questions.map((q, qi) => {
                   const sample = (q.extra_data as any)?.sampleAnswer || q.explanation || "";
+                  const isPart4 = partType === "part4";
                   return (
                     <div key={q.id} className="rounded-xl border border-border bg-card p-5">
                       <div className="flex items-start gap-2 mb-3">
@@ -163,7 +164,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                           {q.question_text}
                         </p>
                       </div>
-                      {showSamples && (
+                      {!isPart4 && showSamples && (
                         <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
                           <div className="text-xs font-bold uppercase tracking-wide text-primary mb-2">
                             Bài nói mẫu
@@ -181,6 +182,28 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                   );
                 })}
               </div>
+
+              {/* Part 4: single combined sample answer for the whole set */}
+              {partType === "part4" && showSamples && (() => {
+                const combined =
+                  (questions[0]?.extra_data as any)?.sampleAnswer ||
+                  questions[0]?.explanation ||
+                  "";
+                return (
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                    <div className="text-xs font-bold uppercase tracking-wide text-primary mb-2">
+                      Bài nói mẫu (trả lời cả 3 câu)
+                    </div>
+                    {combined.trim() ? (
+                      <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                        {combined}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">Chưa có bài nói mẫu.</p>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Reveal sample answers */}
               <div className="flex justify-start">
