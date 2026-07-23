@@ -145,8 +145,24 @@ const NotificationBell = ({ variant = "desktop" }: Props) => {
 
   useEffect(() => {
     const handler = () => setOpen(true);
+    const detailHandler = (e: Event) => {
+      const n = (e as CustomEvent).detail as Notification | undefined;
+      if (!n) return;
+      setReadIds((prev) => {
+        if (prev.has(n.id)) return prev;
+        const next = new Set(prev);
+        next.add(n.id);
+        return next;
+      });
+      setSelected(n);
+      setOpen(false);
+    };
     window.addEventListener("kt-open-notifications", handler);
-    return () => window.removeEventListener("kt-open-notifications", handler);
+    window.addEventListener("kt-open-notification-detail", detailHandler as EventListener);
+    return () => {
+      window.removeEventListener("kt-open-notifications", handler);
+      window.removeEventListener("kt-open-notification-detail", detailHandler as EventListener);
+    };
   }, []);
 
   const markAllRead = async () => {
