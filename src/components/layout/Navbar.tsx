@@ -3,8 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
-  BookOpen, ClipboardCheck, Sparkles, GraduationCap, Newspaper, Crown,
+  BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
+  History,
   type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
@@ -58,7 +59,7 @@ const Navbar = () => {
   const isSkillActive = [...skillLinks, ...toolLinks].some((l) => isActive(l.path));
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
   const isKeyActive = isActive("/key-du-doan");
-  const isBlogActive = isActive("/meo-thi-aptis");
+  const isHistoryActive = isActive("/history");
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -226,18 +227,18 @@ const Navbar = () => {
             Đề Key Dự Đoán
           </Link>
 
-          {/* Blog - Mẹo — top-level */}
+          {/* Lịch sử — top-level */}
           <Link
-            to="/meo-thi-aptis"
-            {...prefetchHandlers("/meo-thi-aptis")}
+            to="/history"
+            {...prefetchHandlers("/history")}
             className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
-              isBlogActive
+              isHistoryActive
                 ? "bg-primary/10 text-primary"
                 : "text-foreground hover:bg-muted"
             }`}
           >
-            <Newspaper className="w-4 h-4" />
-            Blog - Mẹo
+            <History className="w-4 h-4" />
+            Lịch sử
           </Link>
         </div>
 
@@ -509,15 +510,15 @@ const Navbar = () => {
                 Đề Key Dự Đoán
               </Link>
 
-              {/* Blog - Mẹo — top-level */}
+              {/* Lịch sử — top-level */}
               <Link
-                to="/meo-thi-aptis"
+                to="/history"
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                  isBlogActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                  isHistoryActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
                 }`}
               >
-                <Newspaper className="w-4 h-4 text-primary" />
-                Blog - Mẹo
+                <History className="w-4 h-4 text-primary" />
+                Lịch sử
               </Link>
 
               {isAdmin && (
