@@ -106,7 +106,7 @@ const MarathonNavigator = ({
       <div className="p-3 border-b border-border space-y-2.5">
         <div className="text-xs text-foreground">
           <span className="font-semibold">
-            {isWriting ? "Đã viết" : "Đã làm"} {submittedSets}/{totalSets || 0}
+            {isWriting ? "Đã làm" : "Đã làm"} {submittedSets}/{totalSets || 0}
           </span>
           <span className="mx-1.5 text-muted-foreground">·</span>
           <span className="text-muted-foreground">
@@ -116,7 +116,7 @@ const MarathonNavigator = ({
 
         <div className="rounded-md bg-muted/50 p-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded bg-muted-foreground/40" /> {isWriting ? "đã viết" : "đã làm"}
+            <span className="inline-block w-3 h-3 rounded bg-muted-foreground/40" /> {isWriting ? "Đã làm" : "đã làm"}
           </span>
           {!isWriting && (
             <span className="inline-flex items-center gap-1">
@@ -124,7 +124,7 @@ const MarathonNavigator = ({
             </span>
           )}
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded border border-border bg-muted" /> {isWriting ? "chưa viết" : "chưa làm"}
+            <span className="inline-block w-3 h-3 rounded border border-border bg-muted" /> {isWriting ? "Chưa làm" : "chưa làm"}
           </span>
         </div>
 
