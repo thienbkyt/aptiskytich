@@ -21,12 +21,15 @@ interface Props {
   reviewMode?: boolean;
   revealAnswers?: boolean;
   isLast?: boolean;
+  hideBottomNav?: boolean;
+  hideTimer?: boolean;
 }
 
 const WritingPart3Questions = ({
   data, answers, onAnswerChange, timeLeft, totalTime,
   submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
+  hideBottomNav = false, hideTimer = false,
 }: Props) => {
   const showSample = !!revealAnswers && !submitted;
   return (
