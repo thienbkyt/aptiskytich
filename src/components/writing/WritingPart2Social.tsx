@@ -78,7 +78,7 @@ const WritingPart2Social = ({
         </div>
       )}
 
-      {!reviewMode && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
+      {!reviewMode && !hideBottomNav && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
     </div>
   );
 };
