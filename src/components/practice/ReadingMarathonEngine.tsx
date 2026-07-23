@@ -143,6 +143,12 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     [results]
   );
 
+  const partName =
+    partType === "part1" ? "Part 1"
+    : partType === "part2" ? "Part 2 + 3"
+    : partType === "part3" ? "Part 4"
+    : "Part 5";
+
   useEffect(() => {
     if (currentIndex >= sets.length) return;
     const set = sets[currentIndex];
