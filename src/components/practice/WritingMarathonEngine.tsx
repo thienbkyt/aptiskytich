@@ -7,7 +7,8 @@ import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
-import { saveMarathonProgress, loadMarathonProgress } from "@/lib/marathonProgress";
+import { saveMarathonProgress, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
+import { upsertMarathonResult } from "@/lib/saveExamResult";
 
 interface Props {
   sets: ExamSetRow[];
