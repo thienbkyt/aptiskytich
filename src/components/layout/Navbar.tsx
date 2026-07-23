@@ -59,7 +59,7 @@ const Navbar = () => {
   const isSkillActive = [...skillLinks, ...toolLinks].some((l) => isActive(l.path));
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
   const isKeyActive = isActive("/key-du-doan");
-  const isBlogActive = isActive("/meo-thi-aptis");
+  const isHistoryActive = isActive("/history");
 
   // Close mobile menu on route change
   useEffect(() => {
