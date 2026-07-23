@@ -110,6 +110,199 @@ serve(async (req) => {
       : defaultTiers;
 
     // ============================================================
+    // WRITING CHECKLIST (lightweight, marathon-only) — no band, no rewrite.
+    // Returns pass/fail + short hint per checklist item.
+    // ============================================================
+    if ((type as string) === "writing_checklist") {
+      const pt: string = String((body as any).partType || "");
+      const studentText: string = String((body as any).text ?? "").slice(0, 12_000);
+      const qs: string[] = Array.isArray(questions) ? questions.map((q) => String(q ?? "")) : [];
+      if (!["task1", "task2", "task3", "task4"].includes(pt)) {
+        return new Response(JSON.stringify({ error: "Invalid writing partType" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!studentText.trim()) {
+        return new Response(JSON.stringify({ error: "empty_text" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Soft quota respect
+      if (userId && !isInternal) {
+        try {
+          const { data: access } = await supabaseClient.rpc("check_feature_access", {
+            p_key: "ai_grading_writing", p_scope: null,
+          });
+          const a = (access ?? {}) as any;
+          if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
+            const userTier = (a.tier as string) ?? "free";
+            const need = userTier === "pro" ? "premium" : "pro";
+            return new Response(JSON.stringify({
+              error: a.reason === "disabled" ? "disabled" : "quota_exceeded",
+              upgrade: true, need, tier: userTier,
+              freeQuota: a.free_quota ?? 0, proQuota: a.pro_quota ?? null,
+              used: a.used ?? 0, remaining: a.remaining ?? 0,
+            }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+        } catch (_) { /* fail-open on RPC error */ }
+      }
+
+      const CHECKLISTS_VN: Record<string, string[]> = {
+        task1: [
+          "Mỗi câu trả lời đúng trọng tâm câu hỏi.",
+          "Chính tả, ngữ pháp cụm từ đúng.",
+          "Trả lời trong 1–5 từ.",
+        ],
+        task2: [
+          "Trả lời đúng chủ đề, viết thành câu hoàn chỉnh.",
+          "Đủ 20–30 từ.",
+          "Ngữ pháp, chính tả chính xác.",
+          "Từ vựng đa dạng, dùng đúng chỗ.",
+          "Ý mạch lạc, giọng thân thiện.",
+        ],
+        task3: [
+          "Đúng loại từng câu: kể kinh nghiệm / đưa lời khuyên / nêu quan điểm.",
+          "Mỗi câu đủ 30–40 từ.",
+          "Ngữ pháp chính xác.",
+          "Giữ giọng casual; lời khuyên kiểu \"You should…\", tránh \"I strongly recommend that you…\".",
+        ],
+        task4: [
+          "Email cho bạn ~40–50 từ, văn phong thân mật.",
+          "Email cho chủ tịch club 120–150 từ, văn phong trang trọng.",
+          "Hai email thể hiện rõ hai văn phong khác nhau.",
+          "Đủ số từ; ngữ pháp, từ vựng chính xác.",
+        ],
+      };
+      const items = CHECKLISTS_VN[pt];
+
+      const toolChecklist = {
+        type: "function",
+        function: {
+          name: "submit_checklist",
+          description: "Tick pass/fail for each checklist criterion of an Aptis Writing part. NO grammar fixes, NO rewriting, NO band, NO improved version.",
+          parameters: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              items: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  properties: {
+                    pass: { type: "boolean" },
+                    hint: { type: "string", description: "Very short VN hint (<= 12 words) only if pass=false; empty otherwise." },
+                  },
+                  required: ["pass", "hint"],
+                },
+              },
+            },
+            required: ["items"],
+          },
+        },
+      };
+
+      const systemPrompt = `Bạn là giám khảo Aptis Writing. Nhiệm vụ DUY NHẤT: đối chiếu bài viết của học viên với checklist tiêu chí sau và tick từng dòng đạt/chưa đạt.
+TUYỆT ĐỐI KHÔNG:
+- Sửa lỗi ngữ pháp, không viết lại câu.
+- Không chấm band, không cho điểm.
+- Không đề xuất improvedVersion.
+Với mỗi tiêu chí:
+- pass=true nếu bài viết đáp ứng.
+- pass=false nếu chưa đạt. Kèm 1 gợi ý cực ngắn tiếng Việt (<= 12 từ), không sửa câu, chỉ chỉ ra thiếu gì.
+- Nếu pass=true thì hint là chuỗi rỗng.
+Trả đúng số lượng và đúng thứ tự tiêu chí như đầu vào.`;
+
+      const criteriaList = items.map((c, i) => `${i + 1}. ${c}`).join("\n");
+      const userText = `partType: ${pt}
+CHECKLIST (đúng thứ tự, trả ${items.length} items):
+${criteriaList}
+
+Câu hỏi/đề bài:
+${qs.map((q, i) => `${i + 1}. ${q}`).join("\n") || "(không có)"}
+
+Bài viết của học viên:
+${studentText}`;
+
+      const model = "google/gemini-2.5-flash-lite";
+      let resp: Response;
+      try {
+        resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userText },
+            ],
+            tools: [toolChecklist],
+            tool_choice: { type: "function", function: { name: "submit_checklist" } },
+          }),
+        });
+      } catch (e) {
+        console.error("[writing_checklist] fetch failed", (e as any)?.message || e);
+        return new Response(JSON.stringify({ error: "gateway_unreachable" }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => "");
+        console.error("[writing_checklist] gateway error", resp.status, errText.slice(0, 300));
+        if (resp.status === 429) {
+          return new Response(JSON.stringify({ error: "rate_limited" }), {
+            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: `gateway_${resp.status}` }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const rawData = await resp.json();
+      logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_checklist", partType: pt } }).catch(() => {});
+      const tc = rawData.choices?.[0]?.message?.tool_calls?.[0];
+      if (!tc?.function?.arguments) {
+        return new Response(JSON.stringify({ error: "no_tool_call" }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      let parsedItems: Array<{ pass: boolean; hint: string }> = [];
+      try {
+        const parsed = JSON.parse(tc.function.arguments);
+        parsedItems = Array.isArray(parsed.items) ? parsed.items : [];
+      } catch (_) {
+        parsedItems = [];
+      }
+      // Normalize length to match checklist
+      const normalized = items.map((_c, i) => {
+        const it = parsedItems[i] || { pass: false, hint: "" };
+        return {
+          pass: !!it.pass,
+          hint: String(it.hint ?? "").slice(0, 160),
+        };
+      });
+      const passed = normalized.filter((x) => x.pass).length;
+
+      // Log a usage row so quota counts this call.
+      try {
+        await serviceClient.from("feature_usage").insert({
+          user_id: userId, feature_key: "ai_grading_writing", scope: `checklist:${pt}`,
+        });
+      } catch (_) { /* noop */ }
+
+      return new Response(JSON.stringify({
+        partType: pt,
+        items: normalized,
+        passed,
+        total: items.length,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ============================================================
     // SPEAKING V2 (new 5-criteria rubric) — runs PARALLEL to legacy.
     // ============================================================
     if ((type as string) === "speaking_finalize") {
