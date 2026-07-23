@@ -86,6 +86,8 @@ const Writing = () => {
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean }>({ active: false, partType: "task1" });
+  const [progressTick, setProgressTick] = useState(0);
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount.
