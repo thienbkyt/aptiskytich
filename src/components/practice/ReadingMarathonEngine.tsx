@@ -384,7 +384,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   if (phase === "completed") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg w-full bg-card border border-border rounded-2xl p-8 text-center shadow-lg">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
