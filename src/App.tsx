@@ -176,6 +176,7 @@ const App = () => (
                 <SupportChatFab />
                 <VisitLogger />
                 <PostLoginFBGroupModal />
+                <NotificationToaster />
                 <DeviceSessionGuard />
                 <PostLoginMobileNotice />
               </LoginGateProvider>
