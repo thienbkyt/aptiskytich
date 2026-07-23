@@ -509,7 +509,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             allowReveal={true}
             reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
             showResultsOnSubmit={false}
-            onExit={onExit}
+            onExit={handleExitMarathon}
             onComplete={handleComplete}
             onMarathonFinish={() => setPhase("completed")}
             onPreviousPart={() => {
