@@ -250,15 +250,7 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             initialAnswers={initialAnswers}
             onAnswersChange={(a) => { currentAnswersRef.current = a; }}
             reviewMode={isReviewingSet}
-            belowContent={
-              <Checklist
-                partType={partType}
-                result={activeChecklist}
-                loading={checklistLoading}
-                onGrade={handleGradeChecklist}
-                canGrade={canGrade}
-              />
-            }
+            belowContent={<Checklist partType={partType} />}
             {...engineData}
           />
         )}
