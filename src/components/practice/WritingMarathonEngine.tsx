@@ -267,6 +267,8 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
           currentIndex: si,
           results: [],
           drafts: next as any,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
@@ -280,6 +282,16 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   const handleExit = () => {
     commitCurrent(currentIndex);
+    // Compute updated answers map synchronously for the persist call.
+    const setId = sets[currentIndex]?.id;
+    const live = currentAnswersRef.current;
+    const merged = { ...answersMap };
+    if (setId) {
+      if (isNonEmpty(live)) merged[setId] = live;
+      else delete merged[setId];
+    }
+    // Fire-and-forget — exit immediately.
+    persistHistoryRow(merged);
     onExit();
   };
 
