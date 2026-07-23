@@ -105,7 +105,7 @@ const NotificationToaster = () => {
       const [notifRes, readsRes] = await Promise.all([
         supabase
           .from("notifications")
-          .select("id, title, body, link_url, is_active, target_user_id, created_at")
+          .select("id, title, body, type, link_url, is_active, target_user_id, created_at")
           .eq("is_active", true)
           .or(`target_user_id.is.null,target_user_id.eq.${user.id}`)
           .order("created_at", { ascending: false })
