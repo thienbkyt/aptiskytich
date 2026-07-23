@@ -193,7 +193,8 @@ const ReadingExamEngine = ({
   // Internal fetch of translate-review when parent did not supply reviewData.
   // Enabled only in review/submitted mode to avoid pre-fetching during practice.
   const internalFetchEnabled = reviewData === undefined && (submitted || isReviewing || !!reviewMode || revealedKeys.size > 0);
-  const cacheKey = examSetId ?? sourceQuestionIds?.[0] ?? null;
+  // Only real exam_set ids are valid for translate-review (edge function validates against exam_sets table).
+  const cacheKey = examSetId ?? null;
   const partSnapshot = useMemo(
     () => ({ partType, part1Question, part2Question, part3Question, part4Question }),
     [partType, part1Question, part2Question, part3Question, part4Question],
