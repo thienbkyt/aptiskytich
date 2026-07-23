@@ -105,6 +105,14 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
 
     // Learning streak
     await updateLearningStreak(user.id);
+
+    // Notify listeners (useUserExamProgress) so exam listings refresh without F5.
+    try {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("exam-result-saved", { detail: { skill: opts.skill, examSetId: opts.examSetId } }));
+      }
+    } catch { /* noop */ }
+
     return testResultId;
   } catch (err) {
     console.warn("[saveExamResult] skipped:", err);

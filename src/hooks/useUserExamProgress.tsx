@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,6 +18,17 @@ export type ExamProgressMap = Map<string, ExamProgressItem>;
 export const useUserExamProgress = () => {
   const { user, loading: authLoading } = useAuth();
   const enabled = !authLoading && !!user;
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!enabled) return;
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: ["userExamProgress", user?.id] });
+    };
+    window.addEventListener("exam-result-saved", handler);
+    return () => window.removeEventListener("exam-result-saved", handler);
+  }, [enabled, queryClient, user?.id]);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["userExamProgress", user?.id],
