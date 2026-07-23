@@ -66,6 +66,11 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const [currentAnswers, setCurrentAnswers] = useState<any[]>([]);
   const [submitSignal, setSubmitSignal] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
+  const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
+  const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
+  const savingHistoryRef = useRef(false);
+  const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
+  useEffect(() => { resultsRef.current = results; }, [results]);
   const isRetryMode = !!wrongQuestionIdsBySet;
 
   // Reset current-set answered tracking when the active set changes.
