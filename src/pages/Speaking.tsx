@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mic, Search, Clock, Shuffle, ArrowRight, Loader2, Inbox } from "lucide-react";
+import { Mic, Search, Clock, Shuffle, ArrowRight, Loader2, Inbox, Eye, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import SpeakingExamEngine from "@/components/speaking/SpeakingExamEngine";
+import SpeakingBrowseViewer from "@/components/speaking/SpeakingBrowseViewer";
 
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
@@ -31,10 +32,18 @@ import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 
 const TASKS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
+  { id: "browse" as const, label: "Xem toàn bộ đề", subtitle: "Ngân hàng đề + bài mẫu" },
   { id: "part1" as const, label: "Part 1", subtitle: "Personal Questions" },
   { id: "part2" as const, label: "Part 2", subtitle: "Describe a Picture" },
   { id: "part3" as const, label: "Part 3", subtitle: "Compare Pictures" },
   { id: "part4" as const, label: "Part 4", subtitle: "Opinion Questions" },
+];
+
+const BROWSE_PARTS: { id: SpeakingPartType; label: string; subtitle: string }[] = [
+  { id: "part1", label: "Part 1", subtitle: "Personal Questions" },
+  { id: "part2", label: "Part 2", subtitle: "Describe a Picture" },
+  { id: "part3", label: "Part 3", subtitle: "Compare Pictures" },
+  { id: "part4", label: "Part 4", subtitle: "Opinion Questions" },
 ];
 
 const TIME_LIMITS: Record<SpeakingPartType, number> = {
@@ -76,6 +85,7 @@ const Speaking = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
+  const [browsePart, setBrowsePart] = useState<SpeakingPartType | null>(null);
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount.
@@ -113,11 +123,28 @@ const Speaking = () => {
   }, [searchParams, examSets, loading]);
 
   const filteredSets = useMemo(() => {
-    if (activeTab === "full") return [];
+    if (activeTab === "full" || activeTab === "browse") return [];
     return examSets
       .filter((s) => normalizePart(s.part) === activeTab)
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
+
+  const browseSets = useMemo(() => {
+    if (!browsePart) return [];
+    return examSets.filter((s) => normalizePart(s.part) === browsePart);
+  }, [browsePart, examSets]);
+
+  // Max tier per part for PRO gating in browse tab
+  const partMaxTier = useMemo(() => {
+    const rank = (t: string) => (t === "premium" ? 2 : t === "pro" ? 1 : 0);
+    const m: Record<string, "free" | "pro" | "premium"> = { part1: "free", part2: "free", part3: "free", part4: "free" };
+    for (const s of examSets) {
+      const p = normalizePart(s.part);
+      const t = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
+      if (rank(t) > rank(m[p] ?? "free")) m[p] = t;
+    }
+    return m;
+  }, [examSets]);
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as SpeakingPartType;
@@ -178,6 +205,19 @@ const Speaking = () => {
         skill="speaking"
         testTitle={fullPractice.title}
         onExit={handleExitFullPractice}
+      />
+    );
+  }
+
+  // Browse (view-only) mode
+  if (browsePart) {
+    const info = BROWSE_PARTS.find((p) => p.id === browsePart);
+    return (
+      <SpeakingBrowseViewer
+        sets={browseSets}
+        partType={browsePart}
+        partLabel={info?.label ?? "Part"}
+        onExit={() => setBrowsePart(null)}
       />
     );
   }
@@ -288,6 +328,61 @@ const Speaking = () => {
               />
 
             )
+          ) : activeTab === "browse" ? (
+            <div>
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-1">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-heading font-semibold text-foreground">Xem toàn bộ đề Speaking</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Ngân hàng đề kèm bài nói mẫu. Chỉ để xem tham khảo — không ghi âm, không chấm điểm. Dành cho tài khoản PRO.
+                </p>
+              </div>
+              {loading || authLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map((i) => <TechSkeleton key={i} variant="card" className="h-40" />)}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {BROWSE_PARTS.map((p) => {
+                    const partSets = examSets.filter((s) => normalizePart(s.part) === p.id);
+                    const count = partSets.length;
+                    const tier = partMaxTier[p.id] ?? "pro";
+                    const locked = isLocked({ access_tier: tier } as any);
+                    const disabled = count === 0;
+                    return (
+                      <motion.div key={p.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                        <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
+                              {p.label}
+                            </Badge>
+                            <ExamTierBadge tier={tier} locked={locked} />
+                          </div>
+                          <h3 className="text-lg font-heading font-bold text-foreground mb-1">
+                            Xem toàn bộ đề {p.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-3">{p.subtitle}</p>
+                          <div className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5" /> {count} đề · Bài nói mẫu tham khảo
+                          </div>
+                          <div className="flex-1" />
+                          <Button
+                            size="sm"
+                            disabled={disabled}
+                            onClick={() => guard({ access_tier: tier } as any, () => setBrowsePart(p.id))}
+                            className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
+                          >
+                            {disabled ? "Chưa có đề" : locked ? "Mở khóa" : (<>Xem đề <ArrowRight className="w-4 h-4" /></>)}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           ) : (
             <>
               {activeTaskInfo && (
