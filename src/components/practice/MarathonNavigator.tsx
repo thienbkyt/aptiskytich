@@ -157,7 +157,7 @@ const MarathonNavigator = ({
                   onClick={() => {
                     try {
                       if (isDone) onReview(si, 0);
-                      else if (si !== currentIndex) onEnterSet?.(si, 0);
+                      else onEnterSet?.(si, 0);
                     } catch { /* noop */ }
                   }}
                   className={cn(
