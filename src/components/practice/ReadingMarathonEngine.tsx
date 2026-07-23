@@ -413,6 +413,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
                   setSavedOnce(false);
                   setPhase("loading");
                   setAttempt((a) => a + 1);
+                  // New session → next save inserts a fresh History row.
+                  sessionIdRef.current = newMarathonSessionId();
+                  testResultIdRef.current = null;
                 }}
               >
                 Làm lại từ đầu
