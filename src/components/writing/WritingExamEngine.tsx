@@ -83,6 +83,8 @@ interface WritingExamEngineProps {
   hideBottomNav?: boolean;
   /** Marathon-only: render extra content directly below the writing area (checklist, etc). */
   belowContent?: React.ReactNode;
+  /** Marathon-only: when set, the exit dialog uses the marathon-style "Lưu & thoát" confirm. */
+  onMarathonFinish?: () => void;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
