@@ -36,6 +36,7 @@ interface HistoryRow {
   full_test_id: string | null;
   isMarathon: boolean;
   fullPartSession: string | null;
+  review_snapshot: any;
   // computed display
   displayScore: string;     // e.g. "12/25" or "8/10" or "—"
   displayBand: string;      // e.g. "B1" or "—"
