@@ -570,6 +570,8 @@ const WritingExamEngine = ({
             isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
+            hideBottomNav={hideBottomNav}
+            hideTimer={hideTimer}
           />
         )}
 
