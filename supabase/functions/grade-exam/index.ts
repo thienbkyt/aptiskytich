@@ -230,6 +230,7 @@ ${studentText}`;
       try {
         resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
+          signal: AbortSignal.timeout(45_000),
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${LOVABLE_API_KEY}`,
