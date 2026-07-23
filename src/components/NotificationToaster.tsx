@@ -5,13 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 
+type NotifType = "feature" | "content" | "general";
+
 interface Notif {
   id: string;
   title: string;
   body: string | null;
+  type: NotifType;
   link_url: string | null;
   is_active: boolean;
   target_user_id: string | null;
+  created_at: string;
 }
 
 const MAX_VISIBLE = 2;
