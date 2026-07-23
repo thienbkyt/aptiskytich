@@ -77,6 +77,12 @@ interface WritingExamEngineProps {
   enterAtLastQuestion?: boolean;
   /** Practice-only: show "Reveal answer" button (sample essay). Default false. Never set in Full Test. */
   allowReveal?: boolean;
+  /** Marathon-only: hide the internal timer. */
+  hideTimer?: boolean;
+  /** Marathon-only: hide the bottom nav bar rendered inside each part. */
+  hideBottomNav?: boolean;
+  /** Marathon-only: render extra content directly below the writing area (checklist, etc). */
+  belowContent?: React.ReactNode;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
