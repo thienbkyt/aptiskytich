@@ -83,6 +83,8 @@ interface WritingExamEngineProps {
   hideBottomNav?: boolean;
   /** Marathon-only: render extra content directly below the writing area (checklist, etc). */
   belowContent?: React.ReactNode;
+  /** Marathon-only: when set, the exit dialog uses the marathon-style "Lưu & thoát" confirm. */
+  onMarathonFinish?: () => void;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
@@ -102,7 +104,7 @@ const WritingExamEngine = ({
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
   allowReveal = false,
-  hideTimer = false, hideBottomNav = false, belowContent,
+  hideTimer = false, hideBottomNav = false, belowContent, onMarathonFinish,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
@@ -523,7 +525,7 @@ const WritingExamEngine = ({
         skillLabel="Writing"
         partLabel={partLabel}
         onExit={onExit}
-        
+        onMarathonFinish={onMarathonFinish}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
       <div className={`flex-1 px-4 pt-8 ${reviewMode ? "pb-4" : "pb-20"} max-w-3xl mx-auto w-full`}>

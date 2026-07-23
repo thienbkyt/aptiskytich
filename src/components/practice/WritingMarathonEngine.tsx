@@ -419,6 +419,7 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             hideBottomNav
             allowReveal
             onExit={handleExit}
+            onMarathonFinish={handleExit}
             initialAnswers={initialAnswers}
             onAnswersChange={(a) => { currentAnswersRef.current = a; }}
             reviewMode={isReviewingSet}
