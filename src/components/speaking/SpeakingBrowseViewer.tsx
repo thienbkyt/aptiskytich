@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Eye, Info, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
@@ -26,6 +26,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
   const [activeIdx, setActiveIdx] = useState(0);
   const [questions, setQuestions] = useState<ExamQuestionRow[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showSamples, setShowSamples] = useState(false);
 
   const currentSet = sets[activeIdx];
 
@@ -162,21 +163,36 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                           {q.question_text}
                         </p>
                       </div>
-                      <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
-                        <div className="text-xs font-bold uppercase tracking-wide text-primary mb-2">
-                          Bài nói mẫu
+                      {showSamples && (
+                        <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
+                          <div className="text-xs font-bold uppercase tracking-wide text-primary mb-2">
+                            Bài nói mẫu
+                          </div>
+                          {sample.trim() ? (
+                            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                              {sample}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">Chưa có bài nói mẫu.</p>
+                          )}
                         </div>
-                        {sample.trim() ? (
-                          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-                            {sample}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground italic">Chưa có bài nói mẫu.</p>
-                        )}
-                      </div>
+                      )}
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Reveal sample answers */}
+              <div className="flex justify-start">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowSamples((s) => !s)}
+                  className="gap-1.5 border-primary text-primary hover:bg-primary/5"
+                >
+                  {showSamples ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showSamples ? "Ẩn bài mẫu" : "Hiện bài mẫu"}
+                </Button>
               </div>
             </>
           )}
