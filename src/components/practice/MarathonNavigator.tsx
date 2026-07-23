@@ -29,6 +29,11 @@ interface Props {
   isRetryMode?: boolean;
   /** Enable in-set chip jump for the current set. */
   allowJumpInCurrent?: boolean;
+  /**
+   * Mode: default = correct/wrong marathons (Reading/Listening).
+   * writing = only 2 states (đã viết / chưa viết), one chip per set, no retry button.
+   */
+  mode?: "default" | "writing";
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
   /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
@@ -40,7 +45,7 @@ interface Props {
 const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
   currentQ, reviewingQ, currentAnswered, currentLocked,
-  isRetryMode, allowJumpInCurrent = true,
+  isRetryMode, allowJumpInCurrent = true, mode = "default",
   onReview, onJumpQuestion, onEnterSet, onRetrySet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
