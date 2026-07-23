@@ -155,7 +155,8 @@ const Checklist = ({
         </ul>
       )}
       <p className="mt-4 text-xs text-muted-foreground">
-        Muốn sửa bài chi tiết và chấm band thì chuyển qua Luyện <span className="font-semibold">Part lẻ</span> hoặc <span className="font-semibold">Full test</span>&nbsp;nhé.
+        Chế độ marathon AI chỉ giúp checklist bài viết, nếu muốn sửa bài chi tiết và chấm band thì hãy chuyển qua&nbsp;
+        <span className="font-semibold block sm:inline">Luyện Part lẻ hoặc Full test</span>&nbsp;nhé.
       </p>
     </div>
   );
