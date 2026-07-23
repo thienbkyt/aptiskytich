@@ -104,7 +104,7 @@ const WritingExamEngine = ({
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
   allowReveal = false,
-  hideTimer = false, hideBottomNav = false, belowContent,
+  hideTimer = false, hideBottomNav = false, belowContent, onMarathonFinish,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
