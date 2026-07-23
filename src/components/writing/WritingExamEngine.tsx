@@ -507,7 +507,7 @@ const WritingExamEngine = ({
 
       <RotateDeviceOverlay />
       {adminControls}
-      {phase === "practice" && !submitted && !reviewMode && (
+      {phase === "practice" && (reviewMode || !submitted) && (
         <>
           <ExamReportButton
             examQuestionId={sourceQuestionIds?.[0] ?? null}
