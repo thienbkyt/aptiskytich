@@ -317,11 +317,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     };
   }, [reviewIndex !== null]);
 
-  const partName =
-    partType === "part1" ? "Part 1"
-    : partType === "part2" ? "Part 2 + 3"
-    : partType === "part3" ? "Part 4"
-    : "Part 5";
+
+
 
   const pages = reviewable.flatMap((entry, ri) =>
     Array.from({ length: pagesPerSet }, (_, section) => ({ entry, ri, section }))
