@@ -476,6 +476,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           currentIndex,
           results: results as any,
           drafts: next,
+          sessionId: sessionIdRef.current,
+          testResultId: testResultIdRef.current,
           updatedAt: Date.now(),
         });
       }
@@ -525,7 +527,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
             onMarathonFinish={() => setPhase("completed")}
             showResultsOnSubmit={false}
-            onExit={onExit}
+            onExit={handleExitMarathon}
             onComplete={handleComplete}
             onPreviousPart={() => {
               if (currentIndex > 0) {
@@ -606,6 +608,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,
+                sessionId: sessionIdRef.current,
+                testResultId: testResultIdRef.current,
                 updatedAt: Date.now(),
               });
             }
