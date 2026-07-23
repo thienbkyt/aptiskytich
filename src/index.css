@@ -381,12 +381,12 @@ body.history-review-mode .exam-light-bottom-bar {
   }
 
   @keyframes support-fab-beat {
-    0%, 55%, 100% { transform: scale(1); }
-    12%, 36% { transform: scale(1.14); }
-    24%, 48% { transform: scale(1); }
+    0%, 100% { transform: scale(1); }
+    8% { transform: scale(1.05); }
+    16% { transform: scale(1); }
   }
   .animate-support-fab-beat {
-    animation: support-fab-beat 2.6s ease-in-out infinite;
+    animation: support-fab-beat 4.5s ease-in-out infinite;
   }
   .animate-support-fab-beat:hover {
     animation-play-state: paused;
