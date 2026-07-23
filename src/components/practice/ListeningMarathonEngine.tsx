@@ -394,7 +394,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               Đúng {accCorrect}/{accTotal} câu
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6 flex-wrap">
-              <Button variant="outline" onClick={onExit}>Thoát</Button>
+              <Button variant="outline" onClick={handleExitMarathon}>Thoát</Button>
               {reviewable.length > 0 && (
                 <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
                   <Eye className="w-4 h-4" /> Xem lại từng câu →
