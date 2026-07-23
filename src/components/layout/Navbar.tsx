@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
-  BookOpen, ClipboardCheck, Sparkles, GraduationCap, Newspaper, Crown,
+  BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
   type LucideIcon,
