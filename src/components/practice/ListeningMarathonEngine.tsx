@@ -306,11 +306,6 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     };
   }, [reviewIndex !== null]);
 
-  const partName =
-    partType === "part1" ? "Part 1"
-    : partType === "part2" ? "Part 2"
-    : partType === "part3" ? "Part 3"
-    : "Part 4";
 
   // Build flat pages array across all completed sets — 1 page per qResults entry.
   const pages = useMemo(() => {
