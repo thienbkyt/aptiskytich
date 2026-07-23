@@ -32,10 +32,18 @@ import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 
 const TASKS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
+  { id: "browse" as const, label: "Xem toàn bộ đề", subtitle: "Ngân hàng đề + bài mẫu" },
   { id: "part1" as const, label: "Part 1", subtitle: "Personal Questions" },
   { id: "part2" as const, label: "Part 2", subtitle: "Describe a Picture" },
   { id: "part3" as const, label: "Part 3", subtitle: "Compare Pictures" },
   { id: "part4" as const, label: "Part 4", subtitle: "Opinion Questions" },
+];
+
+const BROWSE_PARTS: { id: SpeakingPartType; label: string; subtitle: string }[] = [
+  { id: "part1", label: "Part 1", subtitle: "Personal Questions" },
+  { id: "part2", label: "Part 2", subtitle: "Describe a Picture" },
+  { id: "part3", label: "Part 3", subtitle: "Compare Pictures" },
+  { id: "part4", label: "Part 4", subtitle: "Opinion Questions" },
 ];
 
 const TIME_LIMITS: Record<SpeakingPartType, number> = {
