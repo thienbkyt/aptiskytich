@@ -29,6 +29,11 @@ interface Props {
   isRetryMode?: boolean;
   /** Enable in-set chip jump for the current set. */
   allowJumpInCurrent?: boolean;
+  /**
+   * Mode: default = correct/wrong marathons (Reading/Listening).
+   * writing = only 2 states (đã viết / chưa viết), one chip per set, no retry button.
+   */
+  mode?: "default" | "writing";
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
   /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
@@ -40,7 +45,7 @@ interface Props {
 const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
   currentQ, reviewingQ, currentAnswered, currentLocked,
-  isRetryMode, allowJumpInCurrent = true,
+  isRetryMode, allowJumpInCurrent = true, mode = "default",
   onReview, onJumpQuestion, onEnterSet, onRetrySet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -78,6 +83,8 @@ const MarathonNavigator = ({
   const activeSetIndex = isReviewingMode ? (reviewingIndex as number) : currentIndex;
   const activeSetNumber = Math.min(activeSetIndex + 1, Math.max(totalSets, 1));
 
+  const isWriting = mode === "writing";
+
   const body = (onClose?: () => void) => (
     <aside className="w-full h-full bg-card/95 border-l border-border flex flex-col">
       <div className="p-3 border-b border-border flex items-center justify-between gap-2">
@@ -98,7 +105,9 @@ const MarathonNavigator = ({
 
       <div className="p-3 border-b border-border space-y-2.5">
         <div className="text-xs text-foreground">
-          <span className="font-semibold">Đã làm {submittedSets}/{totalSets || 0}</span>
+          <span className="font-semibold">
+            {isWriting ? "Đã viết" : "Đã làm"} {submittedSets}/{totalSets || 0}
+          </span>
           <span className="mx-1.5 text-muted-foreground">·</span>
           <span className="text-muted-foreground">
             Đề {activeSetNumber}/{totalSets}
@@ -107,17 +116,19 @@ const MarathonNavigator = ({
 
         <div className="rounded-md bg-muted/50 p-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded bg-muted-foreground/40" /> đã làm
+            <span className="inline-block w-3 h-3 rounded bg-muted-foreground/40" /> {isWriting ? "đã viết" : "đã làm"}
           </span>
+          {!isWriting && (
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-block w-3 h-3 rounded border-2 border-blue-500 bg-muted dark:border-blue-400" /> đang làm dở
+            </span>
+          )}
           <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded border-2 border-blue-500 bg-muted dark:border-blue-400" /> đang làm dở
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="inline-block w-3 h-3 rounded border border-border bg-muted" /> chưa làm
+            <span className="inline-block w-3 h-3 rounded border border-border bg-muted" /> {isWriting ? "chưa viết" : "chưa làm"}
           </span>
         </div>
 
-        {isReviewingMode && onRetrySet && !!results[activeSetIndex] && (
+        {!isWriting && isReviewingMode && onRetrySet && !!results[activeSetIndex] && (
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
@@ -131,7 +142,38 @@ const MarathonNavigator = ({
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        {totalChips === 0 ? (
+        {isWriting ? (
+          <div className="flex flex-wrap gap-1.5">
+            {sets.map((_, si) => {
+              const isDone = !!results[si];
+              const isActive = si === activeSetIndex;
+              const cls = isDone
+                ? "bg-muted-foreground/25 text-foreground border border-border hover:bg-muted-foreground/35 dark:bg-muted-foreground/20"
+                : "bg-muted text-muted-foreground border border-border";
+              return (
+                <button
+                  key={si}
+                  type="button"
+                  onClick={() => {
+                    try {
+                      if (isDone) onReview(si, 0);
+                      else if (si !== currentIndex) onEnterSet?.(si, 0);
+                    } catch { /* noop */ }
+                  }}
+                  className={cn(
+                    "min-w-[36px] h-[26px] px-1.5 rounded text-[11px] font-semibold transition-colors",
+                    cls,
+                    isActive && "ring-2 ring-[#24085a] ring-offset-1",
+                    "cursor-pointer",
+                  )}
+                  title={`Đề ${si + 1}`}
+                >
+                  {si + 1}
+                </button>
+              );
+            })}
+          </div>
+        ) : totalChips === 0 ? (
           <div className="text-[11px] text-muted-foreground italic">—</div>
         ) : (
           <div className="flex flex-wrap gap-1.5">

@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2, Inbox } from "lucide-react";
+import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2, Inbox, Infinity as InfinityIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
+import WritingMarathonEngine from "@/components/practice/WritingMarathonEngine";
+import { loadMarathonProgress, clearMarathonProgress } from "@/lib/marathonProgress";
 
 import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
@@ -84,6 +86,8 @@ const Writing = () => {
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean }>({ active: false, partType: "task1" });
+  const [progressTick, setProgressTick] = useState(0);
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount.
@@ -190,6 +194,25 @@ const Writing = () => {
       />
     );
   }
+
+  if (marathon.active) {
+    const partLabel = TASKS.find((t) => t.id === marathon.partType)?.label ?? "Part";
+    const targetPartKey = marathon.partType === "task1" ? "part1"
+      : marathon.partType === "task2" ? "part2"
+      : marathon.partType === "task3" ? "part3" : "part4";
+    const sets = examSets.filter((s) => normalizePart(s.part) === targetPartKey);
+    return (
+      <WritingMarathonEngine
+        sets={sets}
+        partType={marathon.partType}
+        skillLabel={`Writing · Marathon ${partLabel}`}
+        resume={marathon.resume}
+        onExit={() => { setProgressTick((t) => t + 1); setMarathon({ active: false, partType: marathon.partType }); }}
+      />
+    );
+  }
+
+
 
   if (exam.active) {
     if (exam.loadingExam) {
@@ -338,6 +361,86 @@ const Writing = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                  {filteredSets.length > 0 && activeTab !== "full" && (() => {
+                    void progressTick;
+                    const marathonPartType = activeTab as WritingPartType;
+                    const savedProg = loadMarathonProgress("writing", activePartKey);
+                    const doneCount = Object.values((savedProg?.drafts as any) ?? {}).filter((a: any) => {
+                      const anyStr = (s?: string) => !!(s && s.trim());
+                      if (!a) return false;
+                      return (a.shortAnswers?.some(anyStr)) || (a.part3Answers?.some(anyStr))
+                        || anyStr(a.textAnswer) || anyStr(a.informalAnswer) || anyStr(a.formalAnswer);
+                    }).length;
+                    const hasResume = doneCount > 0 && doneCount < filteredSets.length;
+                    // Marathon Writing luôn yêu cầu PRO.
+                    const fakeSet = { access_tier: "pro" } as any;
+                    const marathonLocked = isLocked(fakeSet);
+                    return (
+                      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                        <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
+                          <div className="absolute top-3 right-3">
+                            {hasResume ? (
+                              <span className="inline-flex items-center select-none text-[12px] font-bold px-2.5 py-1 rounded-full text-primary bg-primary/10 border border-primary/30">
+                                Đang làm dở
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
+                              <InfinityIcon className="w-3 h-3" /> Marathon
+                            </Badge>
+                            <ExamTierBadge tier="pro" locked={marathonLocked} />
+                          </div>
+                          <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
+                            Luyện tất cả đề {activeTaskInfo?.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Viết liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ, không chấm AI
+                          </p>
+                          {hasResume && (
+                            <>
+                              <p className="text-xs text-primary font-semibold mt-2 mb-1.5">
+                                Đang làm dở: đã viết {doneCount}/{filteredSets.length} đề ({Math.round((doneCount / filteredSets.length) * 100)}%)
+                              </p>
+                              <div className="w-full h-1.5 rounded-full bg-primary/15 overflow-hidden mb-3">
+                                <div className="h-full bg-primary transition-all" style={{ width: `${Math.round((doneCount / filteredSets.length) * 100)}%` }} />
+                              </div>
+                            </>
+                          )}
+                          <div className="flex-1" />
+                          {hasResume ? (
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true }))}
+                                className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
+                              >
+                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
+                              </Button>
+                              <div className="flex items-center justify-center gap-4 text-xs pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => guard(fakeSet, () => { clearMarathonProgress("writing", activePartKey); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: marathonPartType }); })}
+                                  className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
+                                >
+                                  Làm lại từ đầu
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType }))}
+                                className="gap-1.5 font-semibold"
+                              >
+                                {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
                   {filteredSets.map((set, index) => {
                     const locked = isLocked(set);
                     return (

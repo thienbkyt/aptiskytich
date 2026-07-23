@@ -77,6 +77,12 @@ interface WritingExamEngineProps {
   enterAtLastQuestion?: boolean;
   /** Practice-only: show "Reveal answer" button (sample essay). Default false. Never set in Full Test. */
   allowReveal?: boolean;
+  /** Marathon-only: hide the internal timer. */
+  hideTimer?: boolean;
+  /** Marathon-only: hide the bottom nav bar rendered inside each part. */
+  hideBottomNav?: boolean;
+  /** Marathon-only: render extra content directly below the writing area (checklist, etc). */
+  belowContent?: React.ReactNode;
 }
 
 type Phase = "instructions" | "writing_intro" | "practice" | "grading" | "results";
@@ -96,6 +102,7 @@ const WritingExamEngine = ({
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
   allowReveal = false,
+  hideTimer = false, hideBottomNav = false, belowContent,
 }: WritingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
@@ -541,6 +548,8 @@ const WritingExamEngine = ({
             isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
+            hideBottomNav={hideBottomNav}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -561,6 +570,8 @@ const WritingExamEngine = ({
             isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
+            hideBottomNav={hideBottomNav}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -585,6 +596,8 @@ const WritingExamEngine = ({
             isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
+            hideBottomNav={hideBottomNav}
+            hideTimer={hideTimer}
           />
         )}
 
@@ -607,8 +620,12 @@ const WritingExamEngine = ({
             isLast={isLast}
             reviewMode={reviewMode}
             revealAnswers={revealed}
+            hideBottomNav={hideBottomNav}
+            hideTimer={hideTimer}
           />
         )}
+
+        {belowContent}
 
         {(reviewMode || isReviewing) && effectiveGrading && (() => {
           const allErrors = [

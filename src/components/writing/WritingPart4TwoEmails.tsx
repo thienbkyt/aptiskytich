@@ -22,6 +22,8 @@ interface Props {
   reviewMode?: boolean;
   revealAnswers?: boolean;
   isLast?: boolean;
+  hideBottomNav?: boolean;
+  hideTimer?: boolean;
 }
 
 const WritingPart4TwoEmails = ({
@@ -29,6 +31,7 @@ const WritingPart4TwoEmails = ({
   onInformalChange, onFormalChange,
   timeLeft, totalTime, submitted, onSubmit, onPrevious, sections,
   isBookmarked = false, onToggleBookmark, onSubmitTest, reviewMode, revealAnswers, isLast = true,
+  hideBottomNav = false, hideTimer = false,
 }: Props) => {
   const showSample = !!revealAnswers && !submitted;
   const [informalSample, formalSample] = (() => {
@@ -54,7 +57,7 @@ const WritingPart4TwoEmails = ({
             <Bookmark className={`w-4 h-4 ${isBookmarked ? "fill-primary" : ""}`} />
             Bookmark
           </button>
-          <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />
+          {!hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={totalTime} />}
         </div>
       </div>
 
@@ -108,7 +111,7 @@ const WritingPart4TwoEmails = ({
         )}
       </div>
 
-      {!reviewMode && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
+      {!reviewMode && !hideBottomNav && <BottomNavBar isFirst={!onPrevious} isLast={isLast} onNext={!submitted ? onSubmit : undefined} onSubmit={!submitted ? onSubmit : undefined} onPrevious={onPrevious} sections={sections} onSubmitTest={onSubmitTest} />}
     </div>
   );
 };
