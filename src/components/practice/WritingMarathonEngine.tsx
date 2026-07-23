@@ -286,6 +286,114 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   const isReviewingSet = reviewIndex !== null && !!answersMap[sets[reviewIndex]?.id];
 
+  // ---- AI checklist state (per set id) ----
+  const [checklistMap, setChecklistMap] = useState<Record<string, ChecklistResult>>({});
+  const [checklistLoading, setChecklistLoading] = useState(false);
+  const activeSetId = sets[activeSetIndex]?.id;
+  const activeChecklist = activeSetId ? checklistMap[activeSetId] : null;
+
+  const buildStudentText = useCallback((a: WritingAnswers): string => {
+    switch (partType) {
+      case "task1":
+        return (a.shortAnswers || []).map((s, i) => `${i + 1}. ${s ?? ""}`).join("\n");
+      case "task2":
+        return a.textAnswer || "";
+      case "task3":
+        return (a.part3Answers || []).map((s, i) => `${i + 1}. ${s ?? ""}`).join("\n\n");
+      case "task4":
+        return `EMAIL 1 (bạn — informal):\n${a.informalAnswer || ""}\n\nEMAIL 2 (chủ tịch — formal):\n${a.formalAnswer || ""}`;
+    }
+  }, [partType]);
+
+  const collectQuestions = useCallback((data: any): string[] => {
+    if (!data) return [];
+    try {
+      if (partType === "task1" && data.part1Data?.questions) {
+        return (data.part1Data.questions as any[]).map((q: any) => String(q?.question ?? q ?? ""));
+      }
+      if (partType === "task2") {
+        return [String(data.part2Data?.prompt ?? data.part2Data?.question ?? "")].filter(Boolean);
+      }
+      if (partType === "task3" && data.part3Data?.questions) {
+        return (data.part3Data.questions as any[]).map((q: any) => String(q?.question ?? q ?? ""));
+      }
+      if (partType === "task4" && data.part4Data) {
+        return [
+          String(data.part4Data.informalPrompt ?? data.part4Data.situation ?? ""),
+          String(data.part4Data.formalPrompt ?? ""),
+        ].filter(Boolean);
+      }
+    } catch { /* noop */ }
+    return [];
+  }, [partType]);
+
+  const handleGradeChecklist = useCallback(async () => {
+    if (!activeSetId) return;
+    const answersForSet: WritingAnswers = isReviewingSet
+      ? (answersMap[activeSetId] || emptyAnswers())
+      : currentAnswersRef.current;
+    if (!isNonEmpty(answersForSet)) {
+      toast.error("Hãy viết bài trước khi nhờ AI tick checklist.");
+      return;
+    }
+    const text = buildStudentText(answersForSet).trim();
+    if (!text) {
+      toast.error("Chưa có nội dung để tick.");
+      return;
+    }
+    setChecklistLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("grade-exam", {
+        body: {
+          type: "writing_checklist",
+          partType,
+          text,
+          questions: collectQuestions(engineData),
+        },
+      });
+      if (error) {
+        const ctx: any = (error as any)?.context;
+        let msg = "Không thể tick checklist. Vui lòng thử lại.";
+        if (ctx && typeof ctx.json === "function") {
+          try {
+            const b = await ctx.json();
+            if (b?.error === "rate_limited") msg = "AI đang quá tải, thử lại sau ít phút.";
+          } catch { /* noop */ }
+        }
+        toast.error(msg);
+        return;
+      }
+      if ((data as any)?.error === "quota_exceeded" || (data as any)?.error === "disabled") {
+        toast.message("Bạn đã dùng hết lượt AI tháng này.", {
+          description: "Marathon vẫn dùng được — bạn có thể tự soi bằng checklist tĩnh.",
+        });
+        return;
+      }
+      if ((data as any)?.error) {
+        toast.error("Không thể tick checklist. Vui lòng thử lại.");
+        return;
+      }
+      const items = Array.isArray((data as any)?.items) ? (data as any).items : [];
+      setChecklistMap((prev) => ({
+        ...prev,
+        [activeSetId]: {
+          partType,
+          items,
+          passed: Number((data as any)?.passed ?? items.filter((x: any) => x?.pass).length),
+          total: Number((data as any)?.total ?? items.length),
+        },
+      }));
+    } catch (e) {
+      console.error("[writing checklist] error", e);
+      toast.error("Không thể tick checklist. Vui lòng thử lại.");
+    } finally {
+      setChecklistLoading(false);
+    }
+  }, [activeSetId, isReviewingSet, answersMap, buildStudentText, collectQuestions, engineData, partType]);
+
+  // Reset checklist state whenever we jump/review a different set (fresh view).
+  const canGrade = !!activeSetId;
+
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
       <div className="flex-1 min-w-0">
@@ -313,11 +421,20 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             initialAnswers={initialAnswers}
             onAnswersChange={(a) => { currentAnswersRef.current = a; }}
             reviewMode={isReviewingSet}
-            belowContent={<Checklist partType={partType} />}
+            belowContent={
+              <Checklist
+                partType={partType}
+                result={activeChecklist}
+                loading={checklistLoading}
+                onGrade={handleGradeChecklist}
+                canGrade={canGrade}
+              />
+            }
             {...engineData}
           />
         )}
       </div>
+
 
       <MarathonNavigator
         sets={sets}
