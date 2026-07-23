@@ -593,6 +593,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,
+                sessionId: sessionIdRef.current,
+                testResultId: testResultIdRef.current,
                 updatedAt: Date.now(),
               });
             }
