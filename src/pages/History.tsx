@@ -214,6 +214,7 @@ const History = () => {
             full_test_id: r.full_test_id ?? null,
             isMarathon,
             fullPartSession: ss.fullPartSession ?? null,
+            review_snapshot: r.review_snapshot ?? null,
             ...disp,
           };
         });
