@@ -113,6 +113,9 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const questionsCacheRef = useRef<Map<string, any[]>>(new Map());
+  const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
+  const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
+  const savingHistoryRef = useRef(false);
 
   const buildEngineData = useCallback((questions: any[]) => {
     const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
