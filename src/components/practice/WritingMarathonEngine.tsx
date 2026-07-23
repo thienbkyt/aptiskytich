@@ -100,7 +100,7 @@ const Checklist = ({
     <div className="mt-6 rounded-2xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3 flex-wrap mb-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          CHECKLIST ĐIỂM · {partName(partType)}
+          CHECKLIST · {partName(partType)}
           {graded && (
             <span className="ml-2 text-[11px] font-semibold text-foreground normal-case tracking-normal">
               · {result!.passed}/{result!.total} đạt
