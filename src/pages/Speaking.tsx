@@ -344,6 +344,46 @@ const Speaking = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                  {(() => {
+                    const partId = activeTab as SpeakingPartType;
+                    const info = BROWSE_PARTS.find((p) => p.id === partId);
+                    if (!info) return null;
+                    const partSets = examSets.filter((s) => normalizePart(s.part) === partId);
+                    const count = partSets.length;
+                    const tier = partMaxTier[partId] ?? "pro";
+                    const locked = isLocked({ access_tier: tier } as any);
+                    const disabled = count === 0;
+                    return (
+                      <motion.div key={`browse-${partId}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                        <div className="group relative tech-card bg-card border-2 border-primary/40 rounded-xl p-5 flex flex-col h-full">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
+                              {info.label}
+                            </Badge>
+                            <ExamTierBadge tier={tier} locked={locked} />
+                          </div>
+                          <h3 className="text-xl font-heading font-bold text-foreground mb-2">
+                            Xem toàn bộ đề {info.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Bài nói mẫu tham khảo — chỉ để xem, không ghi âm, không chấm điểm.
+                          </p>
+                          <div className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5" /> {count} đề · Bài nói mẫu
+                          </div>
+                          <div className="flex-1" />
+                          <Button
+                            size="sm"
+                            disabled={disabled}
+                            onClick={() => guard({ access_tier: tier } as any, () => setBrowsePart(partId))}
+                            className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
+                          >
+                            {disabled ? "Chưa có đề" : locked ? "Mở khóa" : (<>Xem đề <ArrowRight className="w-4 h-4" /></>)}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
                   {filteredSets.map((set, index) => {
                     const locked = isLocked(set);
                     return (
