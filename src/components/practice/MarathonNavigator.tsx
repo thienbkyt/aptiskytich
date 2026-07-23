@@ -128,14 +128,14 @@ const MarathonNavigator = ({
           </span>
         </div>
 
-        {!isWriting && isReviewingMode && onRetrySet && !!results[activeSetIndex] && (
+        {isReviewingMode && onRetrySet && !!results[activeSetIndex] && (
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => onRetrySet(activeSetIndex)}
               className="text-[11px] font-semibold text-[#CC1C01] hover:underline whitespace-nowrap shrink-0"
             >
-              Làm lại câu này
+              {isWriting ? "Làm lại đề này" : "Làm lại câu này"}
             </button>
           </div>
         )}
@@ -157,7 +157,7 @@ const MarathonNavigator = ({
                   onClick={() => {
                     try {
                       if (isDone) onReview(si, 0);
-                      else if (si !== currentIndex) onEnterSet?.(si, 0);
+                      else onEnterSet?.(si, 0);
                     } catch { /* noop */ }
                   }}
                   className={cn(
