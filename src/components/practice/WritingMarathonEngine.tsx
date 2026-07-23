@@ -80,7 +80,7 @@ const Checklist = ({ partType }: { partType: WritingPartType }) => {
   return (
     <div className="mt-6 rounded-2xl border border-border bg-card p-5">
       <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
-        CHECKLIST · {partName(partType)}
+        CHECKLIST VIẾT BÀI · {partName(partType).toUpperCase()}
       </p>
       <p className="text-sm italic text-muted-foreground mb-3">
         Điểm cao đến từ viết chính xác và đúng văn phong, không phải dùng từ khó, dựa vào checklist viết để được điểm tối đa nha!
