@@ -474,7 +474,15 @@ const Reading = () => {
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
-                        <div className="absolute top-3 right-3"><CornerResultBadge item={marathonProgress.get(activeTab)} /></div>
+                        <div className="absolute top-3 right-3">
+                          {hasResume ? (
+                            <span className="inline-flex items-center select-none text-[12px] font-bold px-2.5 py-1 rounded-full text-primary bg-primary/10 border border-primary/30">
+                              Đang làm dở
+                            </span>
+                          ) : (
+                            <CornerResultBadge item={marathonProgress.get(activeTab)} />
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 mb-3">
                           <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
                             <InfinityIcon className="w-3 h-3" /> Marathon
@@ -488,9 +496,17 @@ const Reading = () => {
                           Làm liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ
                         </p>
                         {hasResume && (
-                          <p className="text-xs text-primary font-semibold mb-3">
-                            Đang làm dở: đã xong {doneCount}/{filteredSets.length} đề ({Math.round((doneCount / filteredSets.length) * 100)}%)
-                          </p>
+                          <>
+                            <p className="text-xs text-primary font-semibold mt-2 mb-1.5">
+                              Đang làm dở: đã xong {doneCount}/{filteredSets.length} đề ({Math.round((doneCount / filteredSets.length) * 100)}%)
+                            </p>
+                            <div className="w-full h-1.5 rounded-full bg-primary/15 overflow-hidden mb-3">
+                              <div
+                                className="h-full bg-primary transition-all"
+                                style={{ width: `${Math.round((doneCount / filteredSets.length) * 100)}%` }}
+                              />
+                            </div>
+                          </>
                         )}
                         {!hasResume && lastRun && (
                           <p className="text-xs text-muted-foreground mb-3">
@@ -498,26 +514,39 @@ const Reading = () => {
                           </p>
                         )}
                         <div className="flex-1" />
-                        <div className="flex flex-wrap justify-end gap-2">
-                          {hasResume ? (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
+                        {hasResume ? (
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true }))}
+                              className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
+                            >
+                              {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
+                            </Button>
+                            <div className="flex items-center justify-center gap-4 text-xs pt-1">
+                              {wrongCount > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
+                                    active: true,
+                                    partType: activeTab as ReadingPartType,
+                                    retryWrongSetIds: wrongSetIds,
+                                  }))}
+                                  className="text-primary hover:underline font-medium"
+                                >
+                                  Làm lại câu sai ({wrongCount})
+                                </button>
+                              )}
+                              <button
+                                type="button"
                                 onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType }); })}
-                                className="gap-1.5 font-semibold"
+                                className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
                               >
                                 Làm lại từ đầu
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true }))}
-                                className="gap-1.5 font-semibold"
-                              >
-                                {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
-                              </Button>
-                            </>
-                          ) : (
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               size="sm"
                               onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType }))}
@@ -525,22 +554,22 @@ const Reading = () => {
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
                             </Button>
-                          )}
-                          {wrongCount > 0 && (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
-                                active: true,
-                                partType: activeTab as ReadingPartType,
-                                retryWrongSetIds: wrongSetIds,
-                              }))}
-                              className="gap-1.5 font-semibold"
-                            >
-                              Làm lại câu sai ({wrongCount})
-                            </Button>
-                          )}
-                        </div>
+                            {wrongCount > 0 && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
+                                  active: true,
+                                  partType: activeTab as ReadingPartType,
+                                  retryWrongSetIds: wrongSetIds,
+                                }))}
+                                className="gap-1.5 font-semibold"
+                              >
+                                Làm lại câu sai ({wrongCount})
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                     );
