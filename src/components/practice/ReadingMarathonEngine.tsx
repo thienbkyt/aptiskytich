@@ -217,56 +217,91 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     }
   }, [currentIndex, sets, results, persist, partType]);
 
-  useEffect(() => {
-    if (phase !== "completed" || savedOnce) return;
-    setSavedOnce(true);
-    if (accTotal === 0) return;
-    (async () => {
+  // Build a snapshot + upsert the single per-session History row. Called from
+  // completed effect and from exit — same row is updated across both paths.
+  const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
+    if (savingRef.current) return;
+    const list = resultsRef.current;
+    const reviewable_ = list.filter((r): r is ResultEntry => !!r);
+    if (reviewable_.length === 0) return;
+    const accCorrect_ = reviewable_.reduce((s, r) => s + (r.correct ?? 0), 0);
+    const accTotal_ = reviewable_.reduce((s, r) => s + (r.total ?? 0), 0);
+    if (accTotal_ === 0) return;
+    savingRef.current = true;
+    try {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
-      const { buildReadingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
-      const items: any[] = [];
-      reviewable.forEach((r) => {
-        // engineData isn't preserved on the entry — rebuild from set questions on the fly
-        // would be costly; skip per-set items here, marathons still ship raw.perSet.
-        items.push({
-          questionText: `Đề ${r.examSetId} · ${r.part}`,
-          userAnswer: `${r.correct}/${r.total}`,
-          isCorrect: r.correct === r.total,
-        });
-      });
-      const { scaled50, band } = computeScaleAndBand("reading", accCorrect, accTotal);
+      const { computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+      const items: any[] = reviewable_.map((r) => ({
+        questionText: `Đề ${r.examSetId} · ${r.part}`,
+        userAnswer: `${r.correct}/${r.total}`,
+        isCorrect: r.correct === r.total,
+      }));
+      const { scaled50, band } = computeScaleAndBand("reading", accCorrect_, accTotal_);
       const snap = buildReviewSnapshot({
         skill: "reading",
         part: partType,
         testTitle: `Marathon · ${partName}`,
-        score: accCorrect, total: accTotal,
+        score: accCorrect_, total: accTotal_,
         scaled50, band,
         items,
         raw: {
           mode: "marathon",
           partType,
-          perSet: reviewable.map((r) => ({
+          perSet: reviewable_.map((r) => ({
             examSetId: r.examSetId, part: r.part,
             correct: r.correct, total: r.total,
             qResults: r.qResults, answers: r.answers,
           })),
         },
       });
-      saveExamResult({
-        examSetId: null,
+      const id = await upsertMarathonResult({
+        testResultId: testResultIdRef.current,
+        sessionId: sessionIdRef.current,
         skill: "reading",
-        correct: accCorrect,
-        total: accTotal,
-        extraSkillScores: { mode: "marathon", label: `Marathon · ${partName}` },
+        correct: accCorrect_,
+        total: accTotal_,
+        extraSkillScores: {
+          label: `Marathon · ${partName}`,
+          done: reviewable_.length,
+          totalSets: sets.length,
+        },
         reviewSnapshot: snap,
       });
-      if (persist) {
-        const wrongSetIds = reviewable.filter((r) => r.correct < r.total).map((r) => r.examSetId);
-        saveMarathonLast("reading", partType, { correct: accCorrect, total: accTotal, wrongSetIds, updatedAt: Date.now() });
+      if (id) {
+        testResultIdRef.current = id;
+        if (persist) {
+          saveMarathonProgress("reading", partType, {
+            currentIndex: resultsRef.current === list ? currentIndex : currentIndex,
+            results: list as any,
+            drafts,
+            sessionId: sessionIdRef.current,
+            testResultId: id,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+      if (opts?.finalize && persist) {
+        const wrongSetIds = reviewable_.filter((r) => r.correct < r.total).map((r) => r.examSetId);
+        saveMarathonLast("reading", partType, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
         clearMarathonProgress("reading", partType);
       }
-    })();
-  }, [phase, savedOnce, accCorrect, accTotal]);
+    } finally {
+      savingRef.current = false;
+    }
+  }, [partType, partName, sets.length, currentIndex, drafts, persist]);
+
+  useEffect(() => {
+    if (phase !== "completed" || savedOnce) return;
+    setSavedOnce(true);
+    persistHistoryRow({ finalize: true });
+  }, [phase, savedOnce, persistHistoryRow]);
+
+  const handleExitMarathon = useCallback(() => {
+    // Fire-and-forget the save so leaving is instant. If it fails the user
+    // can retry — but the History row will still exist from earlier saves.
+    persistHistoryRow();
+    onExit();
+  }, [persistHistoryRow, onExit]);
 
   useEffect(() => {
     if (reviewIndex === null) return;
