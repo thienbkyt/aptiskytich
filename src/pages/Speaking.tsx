@@ -123,11 +123,28 @@ const Speaking = () => {
   }, [searchParams, examSets, loading]);
 
   const filteredSets = useMemo(() => {
-    if (activeTab === "full") return [];
+    if (activeTab === "full" || activeTab === "browse") return [];
     return examSets
       .filter((s) => normalizePart(s.part) === activeTab)
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
+
+  const browseSets = useMemo(() => {
+    if (!browsePart) return [];
+    return examSets.filter((s) => normalizePart(s.part) === browsePart);
+  }, [browsePart, examSets]);
+
+  // Max tier per part for PRO gating in browse tab
+  const partMaxTier = useMemo(() => {
+    const rank = (t: string) => (t === "premium" ? 2 : t === "pro" ? 1 : 0);
+    const m: Record<string, "free" | "pro" | "premium"> = { part1: "free", part2: "free", part3: "free", part4: "free" };
+    for (const s of examSets) {
+      const p = normalizePart(s.part);
+      const t = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
+      if (rank(t) > rank(m[p] ?? "free")) m[p] = t;
+    }
+    return m;
+  }, [examSets]);
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as SpeakingPartType;
