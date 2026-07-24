@@ -374,6 +374,9 @@ const Speaking = () => {
               )}
               {hasPriority && (
                 <div className="mb-4">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Nhãn ưu tiên dựa trên mức độ đề hay xuất hiện trong các key dự đoán gần đây — Ưu tiên cao là đề hay gặp nhất, nên luyện trước.
+                  </p>
                   <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
                 </div>
               )}
