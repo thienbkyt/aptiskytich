@@ -538,12 +538,13 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         results={results as any}
         currentIndex={currentIndex}
         reviewingIndex={midReview ? midReview.setIndex : null}
-        reviewingQ={midReview ? midReview.qIndex : undefined}
-        currentQ={activeSection}
+        reviewingQ={midReview ? 0 : undefined}
+        currentQ={0}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
         currentLocked={chipLocked}
         isRetryMode={isRetryMode}
+        chipLabelMode="set"
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
           if (midReview) setMidReview(null);
