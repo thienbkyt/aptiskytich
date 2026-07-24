@@ -91,20 +91,33 @@ const PostLoginFBGroupModal = () => {
               </DialogTitle>
 
               <DialogDescription className="mt-3 text-center text-sm text-white/90 md:text-base">
-                Để nhanh đạt mục tiêu Aptis cùng cộng đồng.
+                Tham gia cộng đồng tự học & giải đáp Aptis để nhanh đạt mục tiêu.
               </DialogDescription>
 
-              <a
-                href={FB_GROUP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 inline-flex w-full max-w-[260px] items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-[#CC1C01] shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-                aria-label="Tham gia nhóm Facebook"
-              >
-                <FacebookIcon className="h-4 w-4 fill-current" />
-                Tham gia nhóm
-                <ArrowRight className="h-4 w-4" />
-              </a>
+              <div className="mt-6 flex w-full flex-col gap-3">
+                <a
+                  href={FB_GROUP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#CC1C01] shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                  aria-label="Tham gia nhóm Facebook"
+                >
+                  <FacebookIcon className="h-4 w-4 fill-current" />
+                  Tham gia nhóm Facebook
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+                <a
+                  href={ZALO_GROUP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0068FF] px-5 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                  aria-label="Tham gia nhóm Zalo"
+                >
+                  <ZaloIcon className="h-4 w-4" />
+                  Tham gia Zalo
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
 
               <DialogClose className="mt-4 text-sm font-medium text-white/80 transition-colors hover:text-white focus:outline-none">
                 Để sau
