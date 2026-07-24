@@ -41,7 +41,7 @@ const PARTS = [
   { id: "part1" as const, label: "Part 1", subtitle: "Word recognition (Câu 1 - 13)" },
   { id: "part2" as const, label: "Part 2", subtitle: "Matching information (Câu 14)" },
   { id: "part3" as const, label: "Part 3", subtitle: "Short conversations (Câu 15)" },
-  { id: "part4" as const, label: "Part 4", subtitle: "Monologues" },
+  { id: "part4" as const, label: "Part 4", subtitle: "Monologues (Câu 16 - 17)" },
 ];
 
 const LISTENING_TIME: Record<string, number> = {
