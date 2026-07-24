@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 
-type NotifType = "feature" | "content" | "general";
+type NotifType = "feature" | "content" | "general" | "key_update";
 
 interface Notification {
   id: string;
