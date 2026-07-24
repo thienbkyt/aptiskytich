@@ -482,16 +482,16 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       <div className="flex-1 min-w-0">
         {midReviewEntry ? (
           <HistoryReviewRenderer
-            key={`mid-${midReview!.setIndex}-${midReview!.qIndex}`}
+            key={`mid-${midReview!.setIndex}`}
             examSetId={midReviewEntry.examSetId}
             skill="reading"
             part={midReviewEntry.part}
             testTitle={`Đề ${midReview!.setIndex + 1}`}
             qResults={midReviewEntry.qResults}
             onExit={() => setMidReview(null)}
-            pageBase={0}
-            pageTotal={pagesPerSet}
-            initialSection={Math.min(midReview!.qIndex, pagesPerSet - 1)}
+            pageBase={partType === "part2" ? undefined : midReview!.setIndex}
+            pageTotal={partType === "part2" ? undefined : sets.length}
+            initialSection={0}
             hideTimer
             hideBottomNav
             hideBackToResults
@@ -520,9 +520,10 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             initialAnswers={initialAnswers}
             onAnswersChange={persistAnswers}
             onSectionChange={setActiveSection}
-            pageBase={currentIndex * pagesPerSet}
-            pageTotal={sets.length * pagesPerSet}
-            initialSection={jumpQ ?? undefined}
+            pageBase={partType === "part2" ? undefined : currentIndex}
+            pageTotal={partType === "part2" ? undefined : sets.length}
+            pageLabelPrefix={partType === "part2" ? `Đề ${currentIndex + 1}/${sets.length}` : undefined}
+            initialSection={partType === "part2" ? 0 : (jumpQ ?? undefined)}
             submitSignal={submitSignal}
             marathonLock
             hideBottomNav
