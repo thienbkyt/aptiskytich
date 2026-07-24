@@ -212,13 +212,14 @@ const Reading = () => {
       normalizePart(s.part) === marathon.partType
       && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
       && (!marathon.prio || keyPrio.get(s.id) === marathon.prio)
+      && (!marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel)
     );
     if (marathon.retryWrongSetIds?.length) {
       const ids = new Set(marathon.retryWrongSetIds);
       base = base.filter((s) => ids.has(s.id));
     }
     return base;
-  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.retryWrongSetIds, keySetIds, keyPrio]);
+  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels]);
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ReadingPartType;
