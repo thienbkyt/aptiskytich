@@ -212,34 +212,24 @@ export async function saveSpeakingSkillResult(
     } = await supabase.auth.getUser();
     if (!user) return { id: null, error: null };
 
-    const payload: any = {
-      user_id: user.id,
-      test_result_id: args.testResultId ?? null,
-      exam_set_id: args.examSetId ?? null,
-      full_test_session_id: args.fullTestSessionId ?? null,
-      parts: args.parts,
-      raw_total: args.rawTotal,
-      scale50: args.scale50,
-      cefr: args.cefr,
-      grey_zone: args.greyZone,
-      flag_review: args.flagReview,
-      feedback: args.feedback ?? null,
-    };
-
-    const onConflict = args.fullTestSessionId
-      ? "user_id,full_test_session_id"
-      : "user_id,test_result_id";
-    const { data, error } = await (supabase as any)
-      .from("speaking_skill_results")
-      .upsert(payload, { onConflict })
-      .select("id")
-      .maybeSingle();
+    const { data, error } = await (supabase as any).rpc("finalize_speaking_skill_result", {
+      p_test_result_id: args.testResultId ?? null,
+      p_exam_set_id: args.examSetId ?? null,
+      p_full_test_session_id: args.fullTestSessionId ?? null,
+      p_parts: args.parts,
+      p_raw_total: args.rawTotal,
+      p_scale50: args.scale50,
+      p_cefr: args.cefr,
+      p_grey_zone: args.greyZone,
+      p_flag_review: args.flagReview,
+      p_feedback: args.feedback ?? null,
+    });
 
     if (error) {
-      console.warn("[saveSpeakingSkillResult] upsert failed:", error);
+      console.warn("[saveSpeakingSkillResult] rpc failed:", error);
       return { id: null, error };
     }
-    return { id: data?.id ?? null, error: null };
+    return { id: (data as string) ?? null, error: null };
   } catch (e) {
     console.warn("[saveSpeakingSkillResult] unexpected error:", e);
     return { id: null, error: e };
