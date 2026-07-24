@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown, Eye,
+  Loader2, Users, UserPlus, Radio, TrendingUp, TrendingDown, Eye,
   Wallet, CreditCard, BadgePercent, ShoppingCart, Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
