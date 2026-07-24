@@ -5,7 +5,7 @@ import { Calendar as CalendarIcon, Loader2, Save, Search, Sparkles, Trash2, Arro
 
 interface NotifyKeyButtonProps { keyDate: string }
 const NotifyKeyButton = ({ keyDate }: NotifyKeyButtonProps) => {
-  const [sending, setSending] = useStateReact(false);
+  const [sending, setSending] = useState(false);
   const onClick = async () => {
     if (!confirm(`Gửi thông báo & email cho toàn bộ học viên đã xác minh email về Key ngày ${keyDate}?\n\nHành động này chỉ chạy MỘT LẦN cho mỗi ngày key.`)) return;
     setSending(true);
