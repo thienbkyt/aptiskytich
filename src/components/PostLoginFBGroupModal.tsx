@@ -100,10 +100,10 @@ const PostLoginFBGroupModal = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#CC1C01] shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-                  aria-label="Tham gia nhóm Facebook"
+                  aria-label="Cộng đồng Facebook"
                 >
                   <FacebookIcon className="h-4 w-4 fill-current" />
-                  Tham gia nhóm Facebook
+                  Cộng đồng Facebook
                   <ArrowRight className="h-4 w-4" />
                 </a>
                 <a
@@ -111,10 +111,10 @@ const PostLoginFBGroupModal = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0068FF] px-5 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-                  aria-label="Tham gia nhóm Zalo"
+                  aria-label="Cộng đồng Zalo"
                 >
                   <ZaloIcon className="h-4 w-4" />
-                  Tham gia Zalo
+                  Cộng đồng Zalo
                   <ArrowRight className="h-4 w-4" />
                 </a>
               </div>
