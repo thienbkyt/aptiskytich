@@ -160,8 +160,13 @@ const Speaking = () => {
 
   const browseSets = useMemo(() => {
     if (!browsePart) return [];
-    return examSets.filter((s) => normalizePart(s.part) === browsePart);
-  }, [browsePart, examSets]);
+    const inPart = examSets.filter((s) => normalizePart(s.part) === browsePart);
+    if (browseSetIds && browseSetIds.length) {
+      const allow = new Set(browseSetIds);
+      return inPart.filter((s) => allow.has(s.id));
+    }
+    return inPart;
+  }, [browsePart, browseSetIds, examSets]);
 
   // Max tier per part for PRO gating in browse tab
   const partMaxTier = useMemo(() => {
