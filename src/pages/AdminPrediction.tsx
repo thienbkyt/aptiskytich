@@ -349,11 +349,14 @@ const AdminPrediction = () => {
                 </Button>
               </div>
               {keyRow && (
-                <div className="text-sm text-muted-foreground">
-                  Trạng thái:{" "}
-                  <Badge variant={keyRow.is_published ? "default" : "secondary"}>
-                    {keyRow.is_published ? "Đã xuất bản" : "Nháp"}
-                  </Badge>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-sm text-muted-foreground">
+                    Trạng thái:{" "}
+                    <Badge variant={keyRow.is_published ? "default" : "secondary"}>
+                      {keyRow.is_published ? "Đã xuất bản" : "Nháp"}
+                    </Badge>
+                  </div>
+                  <NotifyKeyButton keyDate={format(date, "dd/MM/yyyy")} />
                 </div>
               )}
             </CardContent>
