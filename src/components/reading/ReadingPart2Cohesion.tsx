@@ -174,9 +174,11 @@ const ReadingPart2Cohesion = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading</p>
           <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
-            {pageNumber !== undefined && pageTotal !== undefined
-              ? `Question ${pageNumber} of ${pageTotal}`
-              : `Question ${currentSection + 1} of ${totalSections}`}
+            {pageLabelPrefix
+              ? `${pageLabelPrefix} · Đoạn ${currentSection + 1}/${totalSections}`
+              : pageNumber !== undefined && pageTotal !== undefined
+                ? `Question ${pageNumber} of ${pageTotal}`
+                : `Question ${currentSection + 1} of ${totalSections}`}
           </p>
         </div>
         <div className="flex items-center gap-4">
