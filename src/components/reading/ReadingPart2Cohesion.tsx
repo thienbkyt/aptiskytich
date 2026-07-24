@@ -371,6 +371,29 @@ const ReadingPart2Cohesion = ({
           onSubmitTest={onSubmitTest}
         />
       )}
+      {hideBottomNav && totalSections > 1 && (
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={goPrevSection}
+            disabled={isFirst}
+            className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
+          >
+            ← Đoạn trước
+          </button>
+          <span className="text-xs text-muted-foreground">
+            Đoạn {currentSection + 1}/{totalSections}
+          </span>
+          <button
+            type="button"
+            onClick={goNextSection}
+            disabled={isLast}
+            className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
+          >
+            Đoạn sau →
+          </button>
+        </div>
+      )}
     </div>
   );
 };
