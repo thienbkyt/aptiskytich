@@ -91,8 +91,8 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]> }>({
-    active: false, partType: "part1", keyId: null, prio: null,
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null }>({
+    active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null,
   });
   const [progressTick, setProgressTick] = useState(0);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
@@ -206,13 +206,14 @@ const Listening = () => {
       normalizePart(s.part) === marathon.partType
       && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
       && (!marathon.prio || keyPrio.get(s.id) === marathon.prio)
+      && (!marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel)
     );
     if (marathon.retryWrongSetIds?.length) {
       const ids = new Set(marathon.retryWrongSetIds);
       base = base.filter((s) => ids.has(s.id));
     }
     return base;
-  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.retryWrongSetIds, keySetIds, keyPrio]);
+  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels]);
 
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
@@ -481,8 +482,10 @@ const Listening = () => {
                     }, "free" as "free" | "pro" | "premium");
                     const marathonLocked = isLocked({ access_tier: maxTier } as any);
                     void progressTick;
-                    const savedProg = loadMarathonProgress("listening", activeTab);
-                    const lastRun = loadMarathonLast("listening", activeTab);
+                    const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
+                    const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
+                    const savedProg = !activePrio ? loadMarathonProgress("listening", activeTab) : null;
+                    const lastRun = !activePrio ? loadMarathonLast("listening", activeTab) : null;
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
                     const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
                     const wrongQMap: Record<string, string[]> = {};
@@ -501,7 +504,7 @@ const Listening = () => {
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                       <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
-                        <div className="absolute top-3 right-3"><CornerResultBadge item={marathonProgress.get(activeTab)} /></div>
+                        <div className="absolute top-3 right-3">{!activePrio && <CornerResultBadge item={marathonProgress.get(activeTab)} />}</div>
                         <div className="flex items-center gap-2 mb-3">
                           <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
                             <InfinityIcon className="w-3 h-3" /> Marathon
@@ -509,10 +512,10 @@ const Listening = () => {
                           <ExamTierBadge tier={maxTier} locked={marathonLocked} />
                         </div>
                         <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
-                          Luyện tất cả đề {activePartInfo?.label}
+                          {prioName ? `Luyện đề ${prioName} ${activePartInfo?.label}` : `Luyện tất cả đề ${activePartInfo?.label}`}
                         </h3>
                         <p className="text-sm text-muted-foreground mb-1">
-                          Làm liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ
+                          Làm liên tục {filteredSets.length} đề{prioName ? ` (${prioName})` : ""} — không giới hạn giờ
                         </p>
                         {hasResume && (
                           <p className="text-xs text-primary font-semibold mb-3">
@@ -531,14 +534,14 @@ const Listening = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("listening", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ListeningPartType }); })}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("listening", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }); })}
                                 className="gap-1.5 font-semibold"
                               >
                                 Làm lại từ đầu
                               </Button>
                               <Button
                                 size="sm"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, resume: true }))}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, resume: true, priorityLabel: activePrio }))}
                                 className="gap-1.5 font-semibold"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
@@ -547,7 +550,7 @@ const Listening = () => {
                           ) : (
                             <Button
                               size="sm"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }))}
                               className="gap-1.5 font-semibold"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
@@ -562,6 +565,7 @@ const Listening = () => {
                                 partType: activeTab as ListeningPartType,
                                 retryWrongSetIds: wrongSetIds,
                                 wrongQuestionIdsBySet: isPart1 ? wrongQMap : undefined,
+                                priorityLabel: activePrio,
                               }))}
                               className="gap-1.5 font-semibold"
                             >
@@ -571,6 +575,7 @@ const Listening = () => {
                         </div>
                       </div>
                     </motion.div>
+
                     );
                   })()}
                   {filteredSets.map((set, index) => {

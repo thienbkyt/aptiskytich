@@ -89,7 +89,7 @@ const Writing = () => {
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean }>({ active: false, partType: "task1" });
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean; priorityLabel?: "high" | "medium" | "low" | null }>({ active: false, partType: "task1", priorityLabel: null });
   const [progressTick, setProgressTick] = useState(0);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
@@ -228,7 +228,9 @@ const Writing = () => {
     const targetPartKey = marathon.partType === "task1" ? "part1"
       : marathon.partType === "task2" ? "part2"
       : marathon.partType === "task3" ? "part3" : "part4";
-    const sets = examSets.filter((s) => normalizePart(s.part) === targetPartKey);
+    const sets = examSets
+      .filter((s) => normalizePart(s.part) === targetPartKey)
+      .filter((s) => !marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel);
     return (
       <WritingMarathonEngine
         sets={sets}
@@ -397,7 +399,9 @@ const Writing = () => {
                   {filteredSets.length > 0 && activeTab !== "full" && (() => {
                     void progressTick;
                     const marathonPartType = activeTab as WritingPartType;
-                    const savedProg = loadMarathonProgress("writing", activePartKey);
+                    const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
+                    const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
+                    const savedProg = !activePrio ? loadMarathonProgress("writing", activePartKey) : null;
                     const doneCount = Object.values((savedProg?.drafts as any) ?? {}).filter((a: any) => {
                       const anyStr = (s?: string) => !!(s && s.trim());
                       if (!a) return false;
@@ -425,10 +429,10 @@ const Writing = () => {
                             <ExamTierBadge tier="pro" locked={marathonLocked} />
                           </div>
                           <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
-                            Luyện tất cả đề {activeTaskInfo?.label}
+                            {prioName ? `Luyện đề ${prioName} ${activeTaskInfo?.label}` : `Luyện tất cả đề ${activeTaskInfo?.label}`}
                           </h3>
                           <p className="text-sm text-muted-foreground mb-1">
-                            Viết liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ, không chấm AI
+                            Viết liên tục {filteredSets.length} đề{prioName ? ` (${prioName})` : ""} — không giới hạn giờ, không chấm AI
                           </p>
                           {hasResume && (
                             <>
@@ -444,7 +448,7 @@ const Writing = () => {
                           {hasResume ? (
                             <div className="flex flex-col gap-2">
                               <Button
-                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true }))}
+                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true, priorityLabel: activePrio }))}
                                 className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
@@ -452,7 +456,7 @@ const Writing = () => {
                               <div className="flex items-center justify-center gap-4 text-xs pt-1">
                                 <button
                                   type="button"
-                                  onClick={() => guard(fakeSet, () => { clearMarathonProgress("writing", activePartKey); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: marathonPartType }); })}
+                                  onClick={() => guard(fakeSet, () => { clearMarathonProgress("writing", activePartKey); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }); })}
                                   className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
                                 >
                                   Làm lại từ đầu
@@ -463,7 +467,7 @@ const Writing = () => {
                             <div className="flex flex-wrap justify-end gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType }))}
+                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }))}
                                 className="gap-1.5 font-semibold"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
@@ -472,6 +476,7 @@ const Writing = () => {
                           )}
                         </div>
                       </motion.div>
+
                     );
                   })()}
                   {filteredSets.map((set, index) => {
