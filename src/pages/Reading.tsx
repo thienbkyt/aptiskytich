@@ -500,8 +500,10 @@ const Reading = () => {
                     }, "free" as "free" | "pro" | "premium");
                     const marathonLocked = isLocked({ access_tier: maxTier } as any);
                     void progressTick;
-                    const savedProg = loadMarathonProgress("reading", activeTab);
-                    const lastRun = loadMarathonLast("reading", activeTab);
+                    const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
+                    const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
+                    const savedProg = !activePrio ? loadMarathonProgress("reading", activeTab) : null;
+                    const lastRun = !activePrio ? loadMarathonLast("reading", activeTab) : null;
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
                     const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
                     const progWrongIds = (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
@@ -516,7 +518,7 @@ const Reading = () => {
                               Đang làm dở
                             </span>
                           ) : (
-                            <CornerResultBadge item={marathonProgress.get(activeTab)} />
+                            !activePrio && <CornerResultBadge item={marathonProgress.get(activeTab)} />
                           )}
                         </div>
                         <div className="flex items-center gap-2 mb-3">
@@ -526,10 +528,10 @@ const Reading = () => {
                           <ExamTierBadge tier={maxTier} locked={marathonLocked} />
                         </div>
                         <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
-                          Luyện tất cả đề {activePartInfo?.label}
+                          {prioName ? `Luyện đề ${prioName} ${activePartInfo?.label}` : `Luyện tất cả đề ${activePartInfo?.label}`}
                         </h3>
                         <p className="text-sm text-muted-foreground mb-1">
-                          Làm liên tục toàn bộ {filteredSets.length} đề — không giới hạn giờ
+                          Làm liên tục {filteredSets.length} đề{prioName ? ` (${prioName})` : ""} — không giới hạn giờ
                         </p>
                         {hasResume && (
                           <>
@@ -553,7 +555,7 @@ const Reading = () => {
                         {hasResume ? (
                           <div className="flex flex-col gap-2">
                             <Button
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true, priorityLabel: activePrio }))}
                               className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
@@ -566,6 +568,7 @@ const Reading = () => {
                                     active: true,
                                     partType: activeTab as ReadingPartType,
                                     retryWrongSetIds: wrongSetIds,
+                                    priorityLabel: activePrio,
                                   }))}
                                   className="text-primary hover:underline font-medium"
                                 >
@@ -574,7 +577,7 @@ const Reading = () => {
                               )}
                               <button
                                 type="button"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType }); })}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio }); })}
                                 className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
                               >
                                 Làm lại từ đầu
@@ -585,7 +588,7 @@ const Reading = () => {
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               size="sm"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio }))}
                               className="gap-1.5 font-semibold"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
@@ -598,6 +601,7 @@ const Reading = () => {
                                   active: true,
                                   partType: activeTab as ReadingPartType,
                                   retryWrongSetIds: wrongSetIds,
+                                  priorityLabel: activePrio,
                                 }))}
                                 className="gap-1.5 font-semibold"
                               >
@@ -608,6 +612,7 @@ const Reading = () => {
                         )}
                       </div>
                     </motion.div>
+
                     );
                   })()}
                   {filteredSets.map((set, index) => {
