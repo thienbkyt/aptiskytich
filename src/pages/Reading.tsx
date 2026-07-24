@@ -569,7 +569,7 @@ const Reading = () => {
                         {hasResume ? (
                           <div className="flex flex-col gap-2">
                             <Button
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true, priorityLabel: activePrio }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true, priorityLabel: activePrio, setIds: filteredSetIds }))}
                               className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
@@ -602,7 +602,7 @@ const Reading = () => {
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               size="sm"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio, setIds: filteredSetIds }))}
                               className="gap-1.5 font-semibold"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
