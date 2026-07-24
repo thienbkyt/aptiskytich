@@ -515,6 +515,7 @@ const Reading = () => {
                     void progressTick;
                     const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
                     const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
+                    const filteredSetIds = activePrio ? filteredSets.map((s) => s.id) : null;
                     const savedProg = !activePrio ? loadMarathonProgress("reading", activeTab) : null;
                     const lastRun = !activePrio ? loadMarathonLast("reading", activeTab) : null;
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
