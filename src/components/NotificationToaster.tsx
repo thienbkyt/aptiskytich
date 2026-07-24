@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 
-type NotifType = "feature" | "content" | "general";
+type NotifType = "feature" | "content" | "general" | "key_update";
 
 interface Notif {
   id: string;
