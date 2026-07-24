@@ -89,6 +89,7 @@ const WithDict = ({ children }: { children: ReactNode }) => (
 
 const DeviceSessionGuard = () => {
   useDeviceSession();
+  usePresenceHeartbeat();
   return null;
 };
 
