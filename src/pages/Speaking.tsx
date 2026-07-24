@@ -88,6 +88,8 @@ const Speaking = () => {
     active: false, fullTestId: "", title: "",
   });
   const [browsePart, setBrowsePart] = useState<SpeakingPartType | null>(null);
+  const [browseSetIds, setBrowseSetIds] = useState<string[] | null>(null);
+  const [browsePriorityLabel, setBrowsePriorityLabel] = useState<PriorityFilterValue>("all");
   const { user: authUser, loading: authLoading } = useAuth();
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
