@@ -1,6 +1,37 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Loader2, Save, Search, Sparkles, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2, Save, Search, Sparkles, Trash2, ArrowUp, ArrowDown, Bell } from "lucide-react";
+import { useState as useStateReact } from "react";
+
+interface NotifyKeyButtonProps { keyDate: string }
+const NotifyKeyButton = ({ keyDate }: NotifyKeyButtonProps) => {
+  const [sending, setSending] = useStateReact(false);
+  const onClick = async () => {
+    if (!confirm(`Gửi thông báo & email cho toàn bộ học viên đã xác minh email về Key ngày ${keyDate}?\n\nHành động này chỉ chạy MỘT LẦN cho mỗi ngày key.`)) return;
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("notify-new-key", {
+        body: { key_date: keyDate },
+      });
+      if (error) throw error;
+      if (data?.already_sent) {
+        toast.info(`Key ngày ${keyDate} đã được gửi trước đó (${data.email_count} email).`);
+      } else {
+        toast.success(`Đã gửi thông báo · ${data?.enqueued ?? 0} email đang được đưa vào hàng đợi (${data?.failed ?? 0} lỗi).`);
+      }
+    } catch (e: any) {
+      toast.error("Không gửi được: " + (e?.message || e));
+    } finally {
+      setSending(false);
+    }
+  };
+  return (
+    <Button onClick={onClick} disabled={sending} variant="default" className="bg-[#CC1C01] hover:bg-[#4D0D0D]">
+      {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Bell className="w-4 h-4 mr-2" />}
+      📣 Gửi thông báo Key {keyDate}
+    </Button>
+  );
+};
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
