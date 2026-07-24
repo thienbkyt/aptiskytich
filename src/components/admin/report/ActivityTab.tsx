@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  Loader2, Users, UserPlus, Flame, TrendingUp, TrendingDown, Eye,
+  Loader2, Users, UserPlus, Radio, TrendingUp, TrendingDown, Eye,
   Wallet, CreditCard, BadgePercent, ShoppingCart, Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,7 @@ const ActivityTab = () => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [daily, setDaily] = useState<DailyRow[]>([]);
   const [streakDist, setStreakDist] = useState<StreakBucket[]>([]);
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
 
   const bounds = useMemo(
     () => resolveBounds(range, customFrom, customTo),
@@ -79,6 +80,19 @@ const ActivityTab = () => {
   }, [bounds.gte, bounds.lte]);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadOnline = useCallback(async () => {
+    const { data } = await supabase.rpc("admin_online_users", { p_window_seconds: 300 });
+    if (typeof data === "number") setOnlineCount(data);
+  }, []);
+
+  useEffect(() => {
+    loadOnline();
+    const t = window.setInterval(loadOnline, 45_000);
+    const onVis = () => { if (document.visibilityState === "visible") loadOnline(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { window.clearInterval(t); document.removeEventListener("visibilitychange", onVis); };
+  }, [loadOnline]);
 
   const dailySeries = useMemo(
     () => daily.map((r) => ({ ...r, label: dayLabel(r.day) })),
@@ -181,16 +195,23 @@ const ActivityTab = () => {
 
         <Card className="p-5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
-            <Flame className="w-4 h-4" /> Học viên chăm ({label})
+            <Radio className="w-4 h-4" /> Đang online
           </div>
-          <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_ACCENT }}>
-            {summary.consistent_users_period.toLocaleString("vi-VN")}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+            <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_ACCENT }}>
+              {onlineCount != null ? onlineCount.toLocaleString("vi-VN") : "—"}
+            </p>
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Học ≥ {summary.consistent_threshold_days} ngày khác nhau · {consistentPeriodPct.toFixed(1)}% trên {summary.active_users_period.toLocaleString("vi-VN")} user hoạt động
+            Hoạt động trong 5 phút qua
           </p>
         </Card>
       </div>
+
 
       {/* DAU / WAU / MAU */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

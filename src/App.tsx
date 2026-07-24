@@ -24,6 +24,7 @@ import RequireAdmin from "@/components/auth/RequireAdmin";
 import { LoginGateProvider } from "@/components/auth/LoginGate";
 import { MobileNoticeProvider, useMobileNotice } from "@/components/common/MobileNoticeGate";
 import useDeviceSession from "@/hooks/useDeviceSession";
+import usePresenceHeartbeat from "@/hooks/usePresenceHeartbeat";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
 import { getDeviceType } from "@/lib/deviceInfo";
@@ -88,6 +89,7 @@ const WithDict = ({ children }: { children: ReactNode }) => (
 
 const DeviceSessionGuard = () => {
   useDeviceSession();
+  usePresenceHeartbeat();
   return null;
 };
 

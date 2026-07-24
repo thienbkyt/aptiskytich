@@ -1187,6 +1187,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          last_active_at: string | null
           updated_at: string
           user_id: string
         }
@@ -1195,6 +1196,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          last_active_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1203,6 +1205,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          last_active_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2124,6 +2127,10 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
+      admin_online_users: {
+        Args: { p_window_seconds?: number }
+        Returns: number
+      }
       admin_ops_summary: {
         Args: { p_from: string; p_to: string }
         Returns: Json
@@ -2282,6 +2289,7 @@ export type Database = {
       send_subscription_reminder_emails: { Args: never; Returns: number }
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
+      touch_last_active: { Args: never; Returns: undefined }
       user_tier: { Args: { p_uid: string }; Returns: string }
     }
     Enums: {
