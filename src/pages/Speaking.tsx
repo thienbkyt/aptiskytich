@@ -88,6 +88,8 @@ const Speaking = () => {
     active: false, fullTestId: "", title: "",
   });
   const [browsePart, setBrowsePart] = useState<SpeakingPartType | null>(null);
+  const [browseSetIds, setBrowseSetIds] = useState<string[] | null>(null);
+  const [browsePriorityLabel, setBrowsePriorityLabel] = useState<PriorityFilterValue>("all");
   const { user: authUser, loading: authLoading } = useAuth();
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
@@ -158,8 +160,13 @@ const Speaking = () => {
 
   const browseSets = useMemo(() => {
     if (!browsePart) return [];
-    return examSets.filter((s) => normalizePart(s.part) === browsePart);
-  }, [browsePart, examSets]);
+    const inPart = examSets.filter((s) => normalizePart(s.part) === browsePart);
+    if (browseSetIds && browseSetIds.length) {
+      const allow = new Set(browseSetIds);
+      return inPart.filter((s) => allow.has(s.id));
+    }
+    return inPart;
+  }, [browsePart, browseSetIds, examSets]);
 
   // Max tier per part for PRO gating in browse tab
   const partMaxTier = useMemo(() => {
@@ -244,7 +251,7 @@ const Speaking = () => {
         sets={browseSets}
         partType={browsePart}
         partLabel={info?.label ?? "Part"}
-        onExit={() => setBrowsePart(null)}
+        onExit={() => { setBrowsePart(null); setBrowseSetIds(null); setBrowsePriorityLabel("all"); }}
       />
     );
   }
@@ -381,13 +388,21 @@ const Speaking = () => {
                     const partId = activeTab as SpeakingPartType;
                     const info = BROWSE_PARTS.find((p) => p.id === partId);
                     if (!info) return null;
-                    const partSets = examSets.filter((s) => normalizePart(s.part) === partId);
-                    const count = partSets.length;
+                    const scopedSets = priorityFilter === "all"
+                      ? examSets.filter((s) => normalizePart(s.part) === partId)
+                      : filteredSets;
+                    const count = scopedSets.length;
                     const tier = partMaxTier[partId] ?? "pro";
                     const locked = isLocked({ access_tier: tier } as any);
                     const disabled = count === 0;
+                    const priorityText = priorityFilter === "high" ? "ưu tiên cao"
+                      : priorityFilter === "medium" ? "ưu tiên vừa"
+                      : priorityFilter === "low" ? "ưu tiên thấp"
+                      : "toàn bộ";
+                    const title = `Xem đề ${priorityText} ${info.label}`;
+                    const snapshotIds = priorityFilter === "all" ? null : scopedSets.map((s) => s.id);
                     return (
-                      <motion.div key={`browse-${partId}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                      <motion.div key={`browse-${partId}-${priorityFilter}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                         <div className="group relative tech-card bg-card border-2 border-primary/40 rounded-xl p-5 flex flex-col h-full">
                           <div className="flex items-center gap-2 mb-3">
                             <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
@@ -396,7 +411,7 @@ const Speaking = () => {
                             <ExamTierBadge tier={tier} locked={locked} />
                           </div>
                           <h3 className="text-xl font-heading font-bold text-foreground mb-2">
-                            Xem toàn bộ đề {info.label}
+                            {title}
                           </h3>
                           <p className="text-sm text-muted-foreground mb-3">
                             Bài nói mẫu tham khảo — chỉ để xem, không ghi âm, không chấm điểm.
@@ -408,7 +423,11 @@ const Speaking = () => {
                           <Button
                             size="sm"
                             disabled={disabled}
-                            onClick={() => guard({ access_tier: tier } as any, () => setBrowsePart(partId))}
+                            onClick={() => guard({ access_tier: tier } as any, () => {
+                              setBrowseSetIds(snapshotIds);
+                              setBrowsePriorityLabel(priorityFilter);
+                              setBrowsePart(partId);
+                            })}
                             className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
                           >
                             {disabled ? "Chưa có đề" : locked ? "Mở khóa" : (<>Xem đề <ArrowRight className="w-4 h-4" /></>)}
