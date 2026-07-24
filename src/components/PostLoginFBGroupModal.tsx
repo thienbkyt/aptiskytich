@@ -11,7 +11,8 @@ import {
 import { ArrowRight, Sparkles, Users, X } from "lucide-react";
 
 const FB_GROUP_URL = "https://www.facebook.com/groups/1551779633112657";
-const FLAG_KEY = "kt_show_group_popup";
+const ZALO_GROUP_URL = "https://zalo.me/g/ql84r9dxlh0ygjz8950u";
+const SESSION_SHOWN_KEY = "kt_group_popup_shown";
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg
@@ -23,6 +24,12 @@ const FacebookIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ZaloIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+    <path d="M12.001 2C6.478 2 2 5.943 2 10.807c0 2.773 1.457 5.24 3.727 6.85-.13.744-.53 2.257-.606 2.583-.093.401.147.396.31.288.126-.084 2.02-1.375 2.836-1.93 1.157.324 2.395.5 3.734.5C17.523 19.098 22 15.155 22 10.29 22 5.943 17.523 2 12.001 2z"/>
+  </svg>
+);
+
 const PostLoginFBGroupModal = () => {
   const [open, setOpen] = useState(false);
   const shownRef = useRef(false);
@@ -31,12 +38,11 @@ const PostLoginFBGroupModal = () => {
     if (shownRef.current) return;
     if (typeof window === "undefined") return;
     try {
-      if (sessionStorage.getItem(FLAG_KEY) === "1") {
-        sessionStorage.removeItem(FLAG_KEY);
-        shownRef.current = true;
-        const t = setTimeout(() => setOpen(true), 400);
-        return () => clearTimeout(t);
-      }
+      if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return;
+      sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
+      shownRef.current = true;
+      const t = setTimeout(() => setOpen(true), 800);
+      return () => clearTimeout(t);
     } catch {
       // ignore storage errors
     }
