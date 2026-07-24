@@ -531,7 +531,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
                 ? jumpQ
                 : enterAtLast
                 ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
-                : 0
+                : undefined
             }
             initialAnswers={initialAnswers}
             onAnswersChange={persistAnswers}
