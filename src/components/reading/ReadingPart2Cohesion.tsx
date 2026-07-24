@@ -43,7 +43,7 @@ const ReadingPart2Cohesion = ({
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
-  pageNumber, pageTotal, hideTimer = false,
+  pageNumber, pageTotal, pageLabelPrefix, hideTimer = false,
   lockedSections, hideBottomNav = false,
 }: Props) => {
   const globallyRevealed = submitted || !!revealAnswers;
