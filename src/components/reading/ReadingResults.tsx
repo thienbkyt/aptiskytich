@@ -218,6 +218,27 @@ const Part2Review = ({ q, placements }: { q: ReadingCohesionQuestion; placements
           <div key={sIdx} className="space-y-2">
             <p className="text-sm font-semibold text-foreground">Đoạn {sIdx + 1}</p>
             {sorted.map((s) => {
+              const isDoneForYou = sIdx === 0 && s.correctPosition === 1;
+              if (isDoneForYou) {
+                return (
+                  <div
+                    key={s.correctPosition}
+                    className="text-sm rounded-md p-3 border border-border bg-muted/40"
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <p className="text-xs text-muted-foreground">Vị trí {s.correctPosition}</p>
+                          <span className="inline-flex items-center rounded px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium">
+                            Cho sẵn
+                          </span>
+                        </div>
+                        <p className="text-foreground">{s.text}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
               const userAtPos = p[s.correctPosition];
               const ok = userAtPos === s.text;
               return (
