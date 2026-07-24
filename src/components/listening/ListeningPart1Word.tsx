@@ -61,7 +61,7 @@ const ListeningPart1Word = ({
           <p className="text-sm font-heading font-bold text-foreground">Listening – Part 1</p>
           <p className="text-sm text-foreground">
             {pageNumber != null && pageTotal != null
-              ? `Question ${pageNumber} of ${pageTotal}`
+              ? `Đề ${pageNumber}/${pageTotal}`
               : `Question ${currentIndex + 1} of ${questions.length}`}
           </p>
         </div>

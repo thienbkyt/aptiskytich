@@ -76,20 +76,21 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   // Reset current-set answered tracking when the active set changes.
   useEffect(() => { setCurrentAnswers([]); }, [currentIndex, attempt]);
 
+  // Mục lục theo ĐỀ: mỗi đề Listening = 1 ô. "Đã trả lời" = có ít nhất một
+  // câu con được chọn trong đề đang làm.
   const currentAnswered = useMemo(() => {
-    const count = loaded?.[currentIndex]?.pageCount ?? 0;
-    const out: boolean[] = new Array(count).fill(false);
     try {
-      for (let i = 0; i < count; i++) {
-        const a = currentAnswers?.[i];
-        if (a == null) continue;
-        if (typeof a === "string" && a === "") continue;
-        if (Array.isArray(a) && a.length === 0) continue;
-        out[i] = true;
-      }
-    } catch { /* noop */ }
-    return out;
-  }, [currentAnswers, loaded, currentIndex]);
+      const anyAnswered = (currentAnswers ?? []).some((a: any) => {
+        if (a == null) return false;
+        if (typeof a === "string") return a !== "";
+        if (Array.isArray(a)) return a.length > 0;
+        if (typeof a === "number") return a >= 0;
+        return !!a;
+      });
+      return [anyAnswered];
+    } catch { return [false]; }
+  }, [currentAnswers]);
+
 
 
   const accCorrect = useMemo(
@@ -157,16 +158,10 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     return () => { cancelled = true; };
   }, [sets, partType, attempt]);
 
-  const pageTotal = useMemo(
-    () => (loaded ? loaded.reduce((s, l) => s + l.pageCount, 0) : 0),
-    [loaded]
-  );
-  const pageBase = useMemo(() => {
-    if (!loaded) return 0;
-    let base = 0;
-    for (let i = 0; i < currentIndex && i < loaded.length; i++) base += loaded[i].pageCount;
-    return base;
-  }, [loaded, currentIndex]);
+  // Mục lục theo ĐỀ → pageBase = chỉ số đề hiện tại, pageTotal = tổng số đề.
+  const pageTotal = sets.length;
+  const pageBase = currentIndex;
+
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
@@ -485,13 +480,9 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     });
   };
 
-  // Authoritative per-set chip count: prefer exam_sets.question_count; fall back to loaded pageCount.
-  const qCounts = sets.map((s: any, i) => {
-    const qc = typeof s?.question_count === "number" ? s.question_count : null;
-    if (qc && qc > 0) return qc;
-    const lc = loaded?.[i]?.pageCount;
-    return typeof lc === "number" && lc > 0 ? lc : undefined;
-  });
+  // Mục lục THEO ĐỀ: mỗi đề đúng 1 ô. Câu con trong đề đi bằng nút Next/Previous.
+  const qCounts = sets.map(() => 1);
+
 
   const midReviewEntry = midReview ? results[midReview.setIndex] : null;
   const midPageCount = midReviewEntry?.qResults.length ?? 0;
@@ -540,7 +531,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
                 ? jumpQ
                 : enterAtLast
                 ? Math.max(1, loaded[currentIndex]?.pageCount ?? 1) - 1
-                : 0
+                : undefined
             }
             initialAnswers={initialAnswers}
             onAnswersChange={persistAnswers}
@@ -556,11 +547,13 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         results={results as any}
         currentIndex={currentIndex}
         reviewingIndex={midReview ? midReview.setIndex : null}
-        reviewingQ={midReview ? midReview.qIndex : undefined}
+        reviewingQ={midReview ? 0 : undefined}
+        currentQ={0}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
         isRetryMode={isRetryMode}
-        allowJumpInCurrent
+        chipLabelMode="set"
+        allowJumpInCurrent={false}
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
           if (midReview) setMidReview(null);

@@ -54,10 +54,15 @@ const MarathonNavigator = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Flatten all chips: global index -> { si, qi }. Skips sets with missing/0 count.
+  // chipLabelMode="set" forces exactly 1 chip per set (mục lục theo đề).
   const flat = useMemo(() => {
     const out: { si: number; qi: number }[] = [];
     try {
       for (let si = 0; si < sets.length; si++) {
+        if (chipLabelMode === "set") {
+          out.push({ si, qi: 0 });
+          continue;
+        }
         const done = results[si]?.qResults?.length;
         const planned = qCounts?.[si];
         const raw = (typeof done === "number" && done > 0)
@@ -70,7 +75,8 @@ const MarathonNavigator = ({
       return [];
     }
     return out;
-  }, [sets.length, results, qCounts]);
+  }, [sets.length, results, qCounts, chipLabelMode]);
+
 
   const totalChips = flat.length;
 
