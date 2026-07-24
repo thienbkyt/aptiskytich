@@ -222,54 +222,10 @@ function getVNToday(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
-async function updateLearningStreak(userId: string) {
+async function updateLearningStreak(_userId: string) {
   try {
-    const today = getVNToday();
-
-    const { data: existing, error: selErr } = await supabase
-      .from("learning_streaks")
-      .select("id,current_streak,longest_streak,last_activity_date")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (selErr) {
-      console.warn("[updateLearningStreak] select failed:", selErr);
-    }
-
-    if (!existing) {
-      const { error: insErr } = await supabase.from("learning_streaks").insert({
-        user_id: userId,
-        current_streak: 1,
-        longest_streak: 1,
-        last_activity_date: today,
-      } as any);
-      if (insErr) console.warn("[updateLearningStreak] insert failed:", insErr);
-      return;
-    }
-
-    // Same VN day → nothing to update
-    if (existing.last_activity_date === today) return;
-
-    // Compute day diff using calendar-date math (no timezone drift here since
-    // both dates are already VN-local YYYY-MM-DD strings).
-    const todayD = new Date(today + "T00:00:00Z").getTime();
-    const lastD = existing.last_activity_date
-      ? new Date(existing.last_activity_date + "T00:00:00Z").getTime()
-      : 0;
-    const diffDays = lastD ? Math.round((todayD - lastD) / 86400000) : Infinity;
-
-    const newCurrent = diffDays === 1 ? (existing.current_streak || 0) + 1 : 1;
-    const newLongest = Math.max(existing.longest_streak || 0, newCurrent);
-
-    const { error: updErr } = await supabase
-      .from("learning_streaks")
-      .update({
-        current_streak: newCurrent,
-        longest_streak: newLongest,
-        last_activity_date: today,
-      } as any)
-      .eq("id", existing.id);
-    if (updErr) console.warn("[updateLearningStreak] update failed:", updErr);
+    const { error } = await (supabase as any).rpc("bump_learning_streak");
+    if (error) console.warn("[updateLearningStreak] rpc failed:", error);
   } catch (err) {
     console.warn("[updateLearningStreak] skipped:", err);
   }
