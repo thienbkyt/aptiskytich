@@ -158,16 +158,10 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     return () => { cancelled = true; };
   }, [sets, partType, attempt]);
 
-  const pageTotal = useMemo(
-    () => (loaded ? loaded.reduce((s, l) => s + l.pageCount, 0) : 0),
-    [loaded]
-  );
-  const pageBase = useMemo(() => {
-    if (!loaded) return 0;
-    let base = 0;
-    for (let i = 0; i < currentIndex && i < loaded.length; i++) base += loaded[i].pageCount;
-    return base;
-  }, [loaded, currentIndex]);
+  // Mục lục theo ĐỀ → pageBase = chỉ số đề hiện tại, pageTotal = tổng số đề.
+  const pageTotal = sets.length;
+  const pageBase = currentIndex;
+
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
