@@ -95,8 +95,8 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; priorityLabel?: "high" | "medium" | "low" | null }>({
-    active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null,
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
+    active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null, setIds: null,
   });
   const [progressTick, setProgressTick] = useState(0);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
@@ -208,6 +208,19 @@ const Reading = () => {
   }, [partSets, priorityFilter, priorityLabels]);
 
   const marathonSets = useMemo(() => {
+    // When a snapshot of exam IDs was captured at click time, use it as the
+    // authoritative set list (preserves the exact filtered order shown on the card).
+    if (marathon.setIds && marathon.setIds.length) {
+      const wanted = new Set(marathon.setIds);
+      const byId = new Map(examSets.map((s) => [s.id, s] as const));
+      let base = marathon.setIds.map((id) => byId.get(id)).filter((s): s is ExamSetRow => !!s);
+      if (marathon.retryWrongSetIds?.length) {
+        const ids = new Set(marathon.retryWrongSetIds);
+        base = base.filter((s) => ids.has(s.id));
+      }
+      void wanted;
+      return base;
+    }
     let base = examSets.filter((s) =>
       normalizePart(s.part) === marathon.partType
       && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
@@ -219,7 +232,7 @@ const Reading = () => {
       base = base.filter((s) => ids.has(s.id));
     }
     return base;
-  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels]);
+  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, marathon.setIds, keySetIds, keyPrio, priorityLabels]);
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ReadingPartType;
@@ -502,6 +515,7 @@ const Reading = () => {
                     void progressTick;
                     const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
                     const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
+                    const filteredSetIds = activePrio ? filteredSets.map((s) => s.id) : null;
                     const savedProg = !activePrio ? loadMarathonProgress("reading", activeTab) : null;
                     const lastRun = !activePrio ? loadMarathonLast("reading", activeTab) : null;
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
@@ -555,7 +569,7 @@ const Reading = () => {
                         {hasResume ? (
                           <div className="flex flex-col gap-2">
                             <Button
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true, priorityLabel: activePrio }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, resume: true, priorityLabel: activePrio, setIds: filteredSetIds }))}
                               className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
@@ -568,7 +582,7 @@ const Reading = () => {
                                     active: true,
                                     partType: activeTab as ReadingPartType,
                                     retryWrongSetIds: wrongSetIds,
-                                    priorityLabel: activePrio,
+                                    priorityLabel: activePrio, setIds: filteredSetIds,
                                   }))}
                                   className="text-primary hover:underline font-medium"
                                 >
@@ -577,7 +591,7 @@ const Reading = () => {
                               )}
                               <button
                                 type="button"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio }); })}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio, setIds: filteredSetIds }); })}
                                 className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
                               >
                                 Làm lại từ đầu
@@ -588,7 +602,7 @@ const Reading = () => {
                           <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               size="sm"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio, setIds: filteredSetIds }))}
                               className="gap-1.5 font-semibold"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
@@ -601,7 +615,7 @@ const Reading = () => {
                                   active: true,
                                   partType: activeTab as ReadingPartType,
                                   retryWrongSetIds: wrongSetIds,
-                                  priorityLabel: activePrio,
+                                  priorityLabel: activePrio, setIds: filteredSetIds,
                                 }))}
                                 className="gap-1.5 font-semibold"
                               >
