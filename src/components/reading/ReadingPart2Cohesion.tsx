@@ -301,13 +301,21 @@ const ReadingPart2Cohesion = ({
               {[1, 2, 3, 4, 5].map((pos) => {
                 const correct = section.sentences.find((s) => s.correctPosition === pos);
                 if (!correct) return null;
+                const isDoneForYou = currentSection === 0 && pos === 1;
                 const translation = reviewData?.translations?.[part2ItemId(currentSection, pos)];
                 return (
                   <div key={pos} className="bg-background border border-border rounded-md px-3 py-2 text-sm">
                     <div className="flex items-start gap-2">
                       <span className="text-xs font-bold text-primary mt-0.5">{pos}.</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-foreground">{correct.text}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {isDoneForYou && (
+                            <span className="inline-flex items-center rounded px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium">
+                              Cho sẵn
+                            </span>
+                          )}
+                          <p className="text-foreground">{correct.text}</p>
+                        </div>
                         {translation ? (
                           <p className="mt-1 text-xs text-muted-foreground">{translation}</p>
                         ) : reviewDataLoading ? (
