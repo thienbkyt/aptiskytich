@@ -53,6 +53,7 @@ const ActivityTab = () => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [daily, setDaily] = useState<DailyRow[]>([]);
   const [streakDist, setStreakDist] = useState<StreakBucket[]>([]);
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
 
   const bounds = useMemo(
     () => resolveBounds(range, customFrom, customTo),
@@ -79,6 +80,19 @@ const ActivityTab = () => {
   }, [bounds.gte, bounds.lte]);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadOnline = useCallback(async () => {
+    const { data } = await supabase.rpc("admin_online_users", { p_window_seconds: 300 });
+    if (typeof data === "number") setOnlineCount(data);
+  }, []);
+
+  useEffect(() => {
+    loadOnline();
+    const t = window.setInterval(loadOnline, 45_000);
+    const onVis = () => { if (document.visibilityState === "visible") loadOnline(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { window.clearInterval(t); document.removeEventListener("visibilitychange", onVis); };
+  }, [loadOnline]);
 
   const dailySeries = useMemo(
     () => daily.map((r) => ({ ...r, label: dayLabel(r.day) })),
