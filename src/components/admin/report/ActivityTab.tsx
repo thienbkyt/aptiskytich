@@ -149,7 +149,7 @@ const ActivityTab = () => {
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
-            <Users className="w-4 h-4" /> Tổng user ({label})
+            <Users className="w-4 h-4" /> TỔNG USER
           </div>
           <p className="text-3xl font-heading font-extrabold text-foreground">{summary.total_users_at_end.toLocaleString("vi-VN")}</p>
           <p className="text-xs text-muted-foreground mt-1">+{summary.new_users.toLocaleString("vi-VN")} user mới trong kỳ</p>
