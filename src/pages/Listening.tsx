@@ -461,10 +461,11 @@ const Listening = () => {
                   </p>
                 </div>
               )}
-              <div className="mb-4">
-                <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
-              </div>
-
+              {hasPriority && (
+                <div className="mb-4">
+                  <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
+                </div>
+              )}
 
               {loading || authLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
