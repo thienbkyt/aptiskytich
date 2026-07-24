@@ -251,7 +251,7 @@ const Speaking = () => {
         sets={browseSets}
         partType={browsePart}
         partLabel={info?.label ?? "Part"}
-        onExit={() => setBrowsePart(null)}
+        onExit={() => { setBrowsePart(null); setBrowseSetIds(null); setBrowsePriorityLabel("all"); }}
       />
     );
   }
