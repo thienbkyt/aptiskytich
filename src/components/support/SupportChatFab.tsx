@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Facebook } from "lucide-react";
+import { MessageCircle, X, Facebook, Users } from "lucide-react";
 import { ZALO_URL, FB_URL } from "@/config/contact";
+
+const COMMUNITY_FB_URL = "https://web.facebook.com/share/g/1HxaRc8JTi/";
+const COMMUNITY_ZALO_URL = "https://zalo.me/g/ql84r9dxlh0ygjz8950u";
 
 const BRAND = "#CC1C01";
 
