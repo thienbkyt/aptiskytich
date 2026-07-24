@@ -50,6 +50,13 @@ const TYPE_META: Record<
     iconText: "text-white",
     pillClass: "text-[#4D0D0D] bg-[#4D0D0D]/7",
   },
+  key_update: {
+    label: "Key dự đoán",
+    icon: Key,
+    iconBg: "bg-[#CC1C01]",
+    iconText: "text-white",
+    pillClass: "text-[#CC1C01] bg-[#CC1C01]/10",
+  },
 };
 
 function timeAgo(iso: string): string {
