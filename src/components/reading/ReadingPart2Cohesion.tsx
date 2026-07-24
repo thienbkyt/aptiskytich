@@ -192,11 +192,6 @@ const ReadingPart2Cohesion = ({
       </div>
 
       <p className="text-sm font-semibold text-foreground mb-1">{question.instruction}</p>
-      {!reveal && (
-        <p className="text-xs text-muted-foreground mb-4">
-          Chạm để chọn câu, rồi chạm ô để đặt (hoặc kéo thả trên máy tính).
-        </p>
-      )}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -226,20 +221,17 @@ const ReadingPart2Cohesion = ({
 
               if (isDoneForYou && fixedText) {
                 return (
-                  <div
-                    key={pos}
-                    className="relative border border-border rounded-md px-4 py-3 bg-muted/40 text-sm text-foreground"
-                  >
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground select-none">
-                      {pos}
-                    </span>
-                    <div className="pl-6 flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center rounded px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium">
-                        Cho sẵn
-                      </span>
-                      <span>{fixedText}</span>
-                    </div>
+                <div
+                  key={pos}
+                  className="relative border border-border rounded-md px-4 py-3 bg-muted/40 text-sm text-foreground"
+                >
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground select-none">
+                    {pos}
+                  </span>
+                  <div className="pl-6 flex items-center gap-2 flex-wrap">
+                    <span>{fixedText}</span>
                   </div>
+                </div>
                 );
               }
 
