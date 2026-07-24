@@ -32,6 +32,8 @@ interface Props {
   testResultId?: string;
   pageBase?: number;
   pageTotal?: number;
+  /** Reading Part 2 marathon: label prefix like "Đề X/N". */
+  pageLabelPrefix?: string;
   initialSection?: number;
   onPageCount?: (n: number) => void;
   /** Optional override for the review timer (defaults to skill-standard). */
