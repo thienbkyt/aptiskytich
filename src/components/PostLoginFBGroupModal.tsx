@@ -11,7 +11,8 @@ import {
 import { ArrowRight, Sparkles, Users, X } from "lucide-react";
 
 const FB_GROUP_URL = "https://www.facebook.com/groups/1551779633112657";
-const FLAG_KEY = "kt_show_group_popup";
+const ZALO_GROUP_URL = "https://zalo.me/g/ql84r9dxlh0ygjz8950u";
+const SESSION_SHOWN_KEY = "kt_group_popup_shown";
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg
@@ -23,6 +24,12 @@ const FacebookIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ZaloIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+    <path d="M12.001 2C6.478 2 2 5.943 2 10.807c0 2.773 1.457 5.24 3.727 6.85-.13.744-.53 2.257-.606 2.583-.093.401.147.396.31.288.126-.084 2.02-1.375 2.836-1.93 1.157.324 2.395.5 3.734.5C17.523 19.098 22 15.155 22 10.29 22 5.943 17.523 2 12.001 2z"/>
+  </svg>
+);
+
 const PostLoginFBGroupModal = () => {
   const [open, setOpen] = useState(false);
   const shownRef = useRef(false);
@@ -31,12 +38,11 @@ const PostLoginFBGroupModal = () => {
     if (shownRef.current) return;
     if (typeof window === "undefined") return;
     try {
-      if (sessionStorage.getItem(FLAG_KEY) === "1") {
-        sessionStorage.removeItem(FLAG_KEY);
-        shownRef.current = true;
-        const t = setTimeout(() => setOpen(true), 400);
-        return () => clearTimeout(t);
-      }
+      if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return;
+      sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
+      shownRef.current = true;
+      const t = setTimeout(() => setOpen(true), 800);
+      return () => clearTimeout(t);
     } catch {
       // ignore storage errors
     }
@@ -85,20 +91,33 @@ const PostLoginFBGroupModal = () => {
               </DialogTitle>
 
               <DialogDescription className="mt-3 text-center text-sm text-white/90 md:text-base">
-                Để nhanh đạt mục tiêu Aptis cùng cộng đồng.
+                Tham gia cộng đồng tự học & giải đáp Aptis để nhanh đạt mục tiêu.
               </DialogDescription>
 
-              <a
-                href={FB_GROUP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 inline-flex w-full max-w-[260px] items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-[#CC1C01] shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-                aria-label="Tham gia nhóm Facebook"
-              >
-                <FacebookIcon className="h-4 w-4 fill-current" />
-                Tham gia nhóm
-                <ArrowRight className="h-4 w-4" />
-              </a>
+              <div className="mt-6 flex w-full flex-col gap-3">
+                <a
+                  href={FB_GROUP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-[#CC1C01] shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                  aria-label="Tham gia nhóm Facebook"
+                >
+                  <FacebookIcon className="h-4 w-4 fill-current" />
+                  Tham gia nhóm Facebook
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+                <a
+                  href={ZALO_GROUP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0068FF] px-5 py-3 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                  aria-label="Tham gia nhóm Zalo"
+                >
+                  <ZaloIcon className="h-4 w-4" />
+                  Tham gia Zalo
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
 
               <DialogClose className="mt-4 text-sm font-medium text-white/80 transition-colors hover:text-white focus:outline-none">
                 Để sau
