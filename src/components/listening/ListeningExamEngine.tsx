@@ -551,7 +551,7 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
-            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
           />
         )}
@@ -572,7 +572,7 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
-            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
           />
         )}
@@ -593,7 +593,7 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
-            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
           />
         )}
@@ -614,7 +614,7 @@ const ListeningExamEngine = ({
             highlights={highlights}
             highlightLoading={effectiveHighlightLoading}
             hideTimer={hideTimer}
-            pageNumber={pageBase != null ? pageBase + currentIndex + 1 : undefined}
+            pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
           />
         )}
