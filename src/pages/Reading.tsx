@@ -208,6 +208,19 @@ const Reading = () => {
   }, [partSets, priorityFilter, priorityLabels]);
 
   const marathonSets = useMemo(() => {
+    // When a snapshot of exam IDs was captured at click time, use it as the
+    // authoritative set list (preserves the exact filtered order shown on the card).
+    if (marathon.setIds && marathon.setIds.length) {
+      const wanted = new Set(marathon.setIds);
+      const byId = new Map(examSets.map((s) => [s.id, s] as const));
+      let base = marathon.setIds.map((id) => byId.get(id)).filter((s): s is ExamSetRow => !!s);
+      if (marathon.retryWrongSetIds?.length) {
+        const ids = new Set(marathon.retryWrongSetIds);
+        base = base.filter((s) => ids.has(s.id));
+      }
+      void wanted;
+      return base;
+    }
     let base = examSets.filter((s) =>
       normalizePart(s.part) === marathon.partType
       && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
@@ -219,7 +232,7 @@ const Reading = () => {
       base = base.filter((s) => ids.has(s.id));
     }
     return base;
-  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels]);
+  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, marathon.setIds, keySetIds, keyPrio, priorityLabels]);
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ReadingPartType;
