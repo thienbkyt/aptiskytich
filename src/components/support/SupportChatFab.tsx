@@ -69,6 +69,28 @@ export default function SupportChatFab() {
             </span>
             Facebook
           </a>
+          <a
+            href={COMMUNITY_ZALO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-white pl-3 pr-4 py-2 text-sm font-semibold shadow-lg border border-slate-200 text-slate-800 hover:bg-slate-50"
+          >
+            <span className="w-7 h-7 rounded-full bg-[#00A3FF] text-white flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </span>
+            Cộng đồng Zalo
+          </a>
+          <a
+            href={COMMUNITY_FB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-white pl-3 pr-4 py-2 text-sm font-semibold shadow-lg border border-slate-200 text-slate-800 hover:bg-slate-50"
+          >
+            <span className="w-7 h-7 rounded-full bg-[#1877F2] text-white flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </span>
+            Cộng đồng Facebook
+          </a>
         </div>
       )}
       <button
