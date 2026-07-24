@@ -103,9 +103,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       const key = partType === "part1" ? "p1" : partType === "part2" ? "p2" : partType === "part3" ? "p3" : "p4";
       const bag = currentAnswers?.[key];
       if (partType === "part2") {
-        // p2 is an array of Record<number,string> keyed by section.
+        // Collapse across BOTH sections: chip is "answered" if any placement exists.
         if (Array.isArray(bag)) {
-          for (let i = 0; i < pagesPerSet; i++) out[i] = isAnsweredVal(bag[i]);
+          out[0] = bag.some((sec) => isAnsweredVal(sec));
         }
       } else {
         const anyAns = Array.isArray(bag)
@@ -121,13 +121,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const chipLocked = useMemo(() => {
     const out: boolean[] = new Array(pagesPerSet).fill(false);
     if (!currentLocked || currentLocked.length === 0) return out;
-    if (partType === "part2") {
-      for (let i = 0; i < pagesPerSet; i++) out[i] = !!currentLocked[i];
-    } else {
-      out[0] = currentLocked.length > 0 && currentLocked.every(Boolean);
-    }
+    out[0] = currentLocked.every(Boolean);
     return out;
-  }, [currentLocked, partType, pagesPerSet]);
+  }, [currentLocked, pagesPerSet]);
 
 
   const accCorrect = useMemo(
