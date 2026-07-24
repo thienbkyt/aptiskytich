@@ -28,6 +28,8 @@ interface Props {
   reviewDataLoading?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  /** Marathon override: label like "Đề X/N"; final rendered as `${prefix} · Đoạn Y/2`. */
+  pageLabelPrefix?: string;
   hideTimer?: boolean;
   /** Marathon: per-section locked/graded set. */
   lockedSections?: Set<number>;
