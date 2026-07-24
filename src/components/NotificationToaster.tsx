@@ -44,12 +44,11 @@ const NotificationToaster = () => {
     toast(n.title, {
       description: body || undefined,
       duration: 8000,
+      closeButton: true,
       action: {
         label: "Xem",
         onClick: () => handleClick(n),
       },
-      onDismiss: () => {},
-      // Clicking body area also navigates
       className: "cursor-pointer",
     });
   };
@@ -72,7 +71,7 @@ const NotificationToaster = () => {
     }
   };
 
-  // Bootstrap: fetch active unread notifs on login
+  // Bootstrap: fetch active unread notifs once per session on app open
   useEffect(() => {
     if (!user) return;
     if (bootstrappedRef.current === user.id) return;
@@ -80,7 +79,6 @@ const NotificationToaster = () => {
 
     let cancelled = false;
     (async () => {
-      const toasted = loadToasted(user.id);
       const [notifRes, readsRes] = await Promise.all([
         supabase
           .from("notifications")
@@ -94,7 +92,7 @@ const NotificationToaster = () => {
       if (cancelled) return;
       const readIds = new Set<string>((readsRes.data || []).map((r: any) => r.notification_id));
       const candidates = ((notifRes.data as Notif[]) || []).filter(
-        (n) => !readIds.has(n.id) && !toasted.has(n.id),
+        (n) => !readIds.has(n.id),
       );
       if (candidates.length === 0) return;
 
@@ -106,6 +104,7 @@ const NotificationToaster = () => {
         toast(`và ${rest.length} thông báo khác`, {
           description: "Xem trong chuông thông báo.",
           duration: 8000,
+          closeButton: true,
           action: {
             label: "Mở",
             onClick: () =>
@@ -113,9 +112,6 @@ const NotificationToaster = () => {
           },
         });
       }
-      // Mark all as toasted
-      candidates.forEach((n) => toasted.add(n.id));
-      saveToasted(user.id, toasted);
     })();
 
     return () => {
@@ -135,10 +131,6 @@ const NotificationToaster = () => {
           const n = payload.new as Notif;
           if (!n || !n.is_active) return;
           if (n.target_user_id && n.target_user_id !== user.id) return;
-          const toasted = loadToasted(user.id);
-          if (toasted.has(n.id)) return;
-          toasted.add(n.id);
-          saveToasted(user.id, toasted);
           showToastFor(n);
           // Bump unread badge
           setUnread((c) => c + 1);
