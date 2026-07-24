@@ -19,6 +19,9 @@ import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
+import { useExamPriorityLabels, aggregatePriority } from "@/hooks/useExamPriorityLabels";
+import PriorityBadge from "@/components/practice/PriorityBadge";
+import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
 
 interface FullPracticeState {
   active: boolean;
@@ -59,11 +62,42 @@ const GrammarVocabulary = () => {
     }
   }, [searchParams, fullSets, fullLoading]);
 
-  const filteredSets = useMemo(() => {
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
+  const { keySetsBySet, windowSize } = useExamPriorityLabels();
+  const setPriority = useMemo(() => {
+    const m = new Map<string, "high" | "medium" | "low">();
+    fullSets.forEach((s) => {
+      const info = aggregatePriority(s.examSetIds, keySetsBySet, windowSize);
+      if (info) m.set(s.fullTestId, info.label);
+    });
+    return m;
+  }, [fullSets, keySetsBySet, windowSize]);
+  const searchedSets = useMemo(() => {
     if (!searchQuery.trim()) return fullSets;
     const q = searchQuery.toLowerCase();
     return fullSets.filter((s) => s.title.toLowerCase().includes(q));
   }, [searchQuery, fullSets]);
+  const priorityCounts = useMemo(() => {
+    const c = { all: searchedSets.length, high: 0, medium: 0, low: 0 } as Record<string, number>;
+    searchedSets.forEach((s) => { const l = setPriority.get(s.fullTestId); if (l) c[l]++; });
+    return c;
+  }, [searchedSets, setPriority]);
+  const filteredSets = useMemo(() => {
+    let list = searchedSets;
+    if (priorityFilter !== "all") list = list.filter((s) => setPriority.get(s.fullTestId) === priorityFilter);
+    const rank = (id: string) => { const l = setPriority.get(id); return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
+    const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
+    return [...list].sort((a, b) => {
+      const ga = (a as any).access_tier === "free" ? 0 : 1;
+      const gb = (b as any).access_tier === "free" ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      const ra = rank(a.fullTestId), rb = rank(b.fullTestId);
+      if (ra !== rb) return ra - rb;
+      const na = num(a.title), nb = num(b.title);
+      if (na !== nb) return na - nb;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [searchedSets, priorityFilter, setPriority]);
 
   const handleStartFullPractice = (set: SkillFullSetItem, skipIntro = false) => {
     setFullPractice({ active: true, fullTestId: set.fullTestId, title: set.title, skipIntro });
