@@ -491,6 +491,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             onExit={() => setMidReview(null)}
             pageBase={partType === "part2" ? undefined : midReview!.setIndex}
             pageTotal={partType === "part2" ? undefined : sets.length}
+            pageLabelPrefix={partType === "part2" ? `Đề ${midReview!.setIndex + 1}/${sets.length}` : undefined}
             initialSection={0}
             hideTimer
             hideBottomNav
