@@ -95,8 +95,8 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; priorityLabel?: "high" | "medium" | "low" | null }>({
-    active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null,
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
+    active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null, setIds: null,
   });
   const [progressTick, setProgressTick] = useState(0);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
