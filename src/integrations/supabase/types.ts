@@ -808,6 +808,24 @@ export type Database = {
           },
         ]
       }
+      key_notify_log: {
+        Row: {
+          email_count: number
+          key_date: string
+          sent_at: string
+        }
+        Insert: {
+          email_count?: number
+          key_date: string
+          sent_at?: string
+        }
+        Update: {
+          email_count?: number
+          key_date?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       learning_streaks: {
         Row: {
           created_at: string
