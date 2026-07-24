@@ -2181,6 +2181,14 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      exam_priority_counts: {
+        Args: { p_window?: number }
+        Returns: {
+          exam_set_id: string
+          key_count: number
+          window_size: number
+        }[]
+      }
       finalize_skill_test_result: {
         Args: {
           p_correct_answers?: number
