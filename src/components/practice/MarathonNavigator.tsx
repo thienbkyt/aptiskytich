@@ -226,9 +226,9 @@ const MarathonNavigator = ({
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
                     "cursor-pointer",
                   )}
-                  title={`Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
+                  title={chipLabelMode === "set" ? `Đề ${si + 1}` : `Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
                 >
-                  {gi + 1}
+                  {chipLabelMode === "set" ? si + 1 : gi + 1}
                 </button>
               );
             })}
