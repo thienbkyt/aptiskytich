@@ -98,6 +98,8 @@ export function buildReadingItems(
     const q = engineData.part2Question;
     (q.sections || []).forEach((sec: any, sIdx: number) => {
       (sec.sentences || []).forEach((s: any) => {
+        // Skip the "done for you" sentence (section 0, correctPosition 1)
+        if (sIdx === 0 && s.correctPosition === 1) return;
         const placements = answers?.[sIdx];
         let userPos: number | null = null;
         if (placements && typeof placements === "object") {
