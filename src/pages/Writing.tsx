@@ -89,7 +89,7 @@ const Writing = () => {
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({ active: false, fullTestId: "", title: "" });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean }>({ active: false, partType: "task1" });
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: WritingPartType; resume?: boolean; priorityLabel?: "high" | "medium" | "low" | null }>({ active: false, partType: "task1", priorityLabel: null });
   const [progressTick, setProgressTick] = useState(0);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
@@ -228,7 +228,9 @@ const Writing = () => {
     const targetPartKey = marathon.partType === "task1" ? "part1"
       : marathon.partType === "task2" ? "part2"
       : marathon.partType === "task3" ? "part3" : "part4";
-    const sets = examSets.filter((s) => normalizePart(s.part) === targetPartKey);
+    const sets = examSets
+      .filter((s) => normalizePart(s.part) === targetPartKey)
+      .filter((s) => !marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel);
     return (
       <WritingMarathonEngine
         sets={sets}
