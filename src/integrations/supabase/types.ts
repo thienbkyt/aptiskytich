@@ -2136,6 +2136,7 @@ export type Database = {
           count: number
         }[]
       }
+      bump_learning_streak: { Args: never; Returns: undefined }
       check_feature_access: {
         Args: { p_key: string; p_scope?: string }
         Returns: Json
@@ -2199,6 +2200,36 @@ export type Database = {
           p_total?: number
         }
         Returns: undefined
+      }
+      finalize_speaking_skill_result: {
+        Args: {
+          p_cefr: string
+          p_exam_set_id: string
+          p_feedback: string
+          p_flag_review: boolean
+          p_full_test_session_id: string
+          p_grey_zone: boolean
+          p_parts: Json
+          p_raw_total: number
+          p_scale50: number
+          p_test_result_id: string
+        }
+        Returns: string
+      }
+      finalize_writing_skill_result: {
+        Args: {
+          p_cefr: string
+          p_exam_set_id: string
+          p_feedback: string
+          p_flag_review: boolean
+          p_full_test_session_id: string
+          p_grey_zone: boolean
+          p_parts: Json
+          p_raw_total: number
+          p_scale50: number
+          p_test_result_id: string
+        }
+        Returns: string
       }
       get_db_size_mb: { Args: never; Returns: number }
       get_storage_size_mb: {
