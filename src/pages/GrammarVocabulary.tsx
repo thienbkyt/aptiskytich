@@ -82,6 +82,8 @@ const GrammarVocabulary = () => {
     searchedSets.forEach((s) => { const l = setPriority.get(s.fullTestId); if (l) c[l]++; });
     return c;
   }, [searchedSets, setPriority]);
+  const hasPriority = useMemo(() => searchedSets.some((s) => setPriority.get(s.fullTestId) != null), [searchedSets, setPriority]);
+  useEffect(() => { if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all"); }, [hasPriority, priorityFilter]);
   const filteredSets = useMemo(() => {
     let list = searchedSets;
     if (priorityFilter !== "all") list = list.filter((s) => setPriority.get(s.fullTestId) === priorityFilter);

@@ -188,6 +188,8 @@ const Reading = () => {
     partSets.forEach((s) => { const l = priorityLabels.get(s.id)?.label; if (l) c[l]++; });
     return c;
   }, [partSets, priorityLabels]);
+  const hasPriority = useMemo(() => partSets.some((s) => priorityLabels.get(s.id)?.label != null), [partSets, priorityLabels]);
+  useEffect(() => { if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all"); }, [hasPriority, priorityFilter]);
   const filteredSets = useMemo(() => {
     let list = partSets;
     if (priorityFilter !== "all") list = list.filter((s) => priorityLabels.get(s.id)?.label === priorityFilter);
