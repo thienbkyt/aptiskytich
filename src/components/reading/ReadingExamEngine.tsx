@@ -693,6 +693,7 @@ const ReadingExamEngine = ({
             reviewDataLoading={effectiveReviewLoading}
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
+            pageLabelPrefix={pageLabelPrefix}
             hideTimer={hideTimer}
             lockedSections={lockedP2}
             hideBottomNav={hideBottomNav}
