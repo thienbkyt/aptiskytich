@@ -39,7 +39,7 @@ import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
   { id: "part1" as const, label: "Part 1", subtitle: "Word recognition (Câu 1 - 13)" },
-  { id: "part2" as const, label: "Part 2", subtitle: "Matching information" },
+  { id: "part2" as const, label: "Part 2", subtitle: "Matching information (Câu 14)" },
   { id: "part3" as const, label: "Part 3", subtitle: "Short conversations" },
   { id: "part4" as const, label: "Part 4", subtitle: "Monologues" },
 ];
