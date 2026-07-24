@@ -480,13 +480,9 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     });
   };
 
-  // Authoritative per-set chip count: prefer exam_sets.question_count; fall back to loaded pageCount.
-  const qCounts = sets.map((s: any, i) => {
-    const qc = typeof s?.question_count === "number" ? s.question_count : null;
-    if (qc && qc > 0) return qc;
-    const lc = loaded?.[i]?.pageCount;
-    return typeof lc === "number" && lc > 0 ? lc : undefined;
-  });
+  // Mục lục THEO ĐỀ: mỗi đề đúng 1 ô. Câu con trong đề đi bằng nút Next/Previous.
+  const qCounts = sets.map(() => 1);
+
 
   const midReviewEntry = midReview ? results[midReview.setIndex] : null;
   const midPageCount = midReviewEntry?.qResults.length ?? 0;
