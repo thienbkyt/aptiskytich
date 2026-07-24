@@ -19,27 +19,6 @@ interface Notif {
 }
 
 const MAX_VISIBLE = 2;
-const storageKey = (uid: string) => `kt_toasted_notifs_${uid}`;
-
-function loadToasted(uid: string): Set<string> {
-  try {
-    const raw = localStorage.getItem(storageKey(uid));
-    if (!raw) return new Set();
-    return new Set(JSON.parse(raw) as string[]);
-  } catch {
-    return new Set();
-  }
-}
-
-function saveToasted(uid: string, set: Set<string>) {
-  try {
-    // Cap list to avoid unbounded growth
-    const arr = Array.from(set).slice(-200);
-    localStorage.setItem(storageKey(uid), JSON.stringify(arr));
-  } catch {
-    /* ignore */
-  }
-}
 
 function excerpt(s: string | null | undefined, n = 120): string {
   if (!s) return "";
