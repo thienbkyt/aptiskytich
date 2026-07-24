@@ -32,6 +32,9 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import { useAuth } from "@/hooks/useAuth";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { loadMarathonProgress, loadMarathonLast, clearMarathonProgress } from "@/lib/marathonProgress";
+import { useExamPriorityLabels } from "@/hooks/useExamPriorityLabels";
+import PriorityBadge from "@/components/practice/PriorityBadge";
+import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
 
 const PARTS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -92,6 +95,8 @@ const Listening = () => {
     active: false, partType: "part1", keyId: null, prio: null,
   });
   const [progressTick, setProgressTick] = useState(0);
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
+  const { labels: priorityLabels } = useExamPriorityLabels();
   const [keySetIds, setKeySetIds] = useState<Set<string> | null>(null);
   const [keyPrio, setKeyPrio] = useState<Map<string, string>>(new Map());
   const { user: authUser, loading: authLoading } = useAuth();
@@ -166,12 +171,33 @@ const Listening = () => {
     return () => { cancelled = true; };
   }, [marathon.keyId]);
 
-  const filteredSets = useMemo(() => {
+  const partSets = useMemo(() => {
     if (activeTab === "full") return [];
     return examSets
       .filter((s) => normalizePart(s.part) === activeTab)
       .filter((s) => searchQuery.trim() ? s.title.toLowerCase().includes(searchQuery.toLowerCase()) : true);
   }, [activeTab, searchQuery, examSets]);
+  const priorityCounts = useMemo(() => {
+    const c = { all: partSets.length, high: 0, medium: 0, low: 0 } as Record<string, number>;
+    partSets.forEach((s) => { const l = priorityLabels.get(s.id)?.label; if (l) c[l]++; });
+    return c;
+  }, [partSets, priorityLabels]);
+  const filteredSets = useMemo(() => {
+    let list = partSets;
+    if (priorityFilter !== "all") list = list.filter((s) => priorityLabels.get(s.id)?.label === priorityFilter);
+    const rank = (id: string) => { const l = priorityLabels.get(id)?.label; return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
+    const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
+    return [...list].sort((a, b) => {
+      const ga = a.access_tier === "free" ? 0 : 1;
+      const gb = b.access_tier === "free" ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      const ra = rank(a.id), rb = rank(b.id);
+      if (ra !== rb) return ra - rb;
+      const na = num(a.title), nb = num(b.title);
+      if (na !== nb) return na - nb;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [partSets, priorityFilter, priorityLabels]);
 
   const marathonSets = useMemo(() => {
     let base = examSets.filter((s) =>
@@ -433,6 +459,10 @@ const Listening = () => {
                   </p>
                 </div>
               )}
+              <div className="mb-4">
+                <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
+              </div>
+
 
               {loading || authLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -549,6 +579,8 @@ const Listening = () => {
                         <div className="flex items-center gap-2 mb-3">
                           <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activePartInfo?.label}</Badge>
                           <ExamTierBadge tier={set.access_tier} locked={locked} />
+                          <PriorityBadge label={priorityLabels.get(set.id)?.label} />
+
                           {isNewSet(set) && (
                             <Badge className="w-fit text-[11px] font-semibold bg-emerald-500 text-white border-0 hover:bg-emerald-500">MỚI</Badge>
                           )}
