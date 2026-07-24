@@ -363,6 +363,10 @@ const Speaking = () => {
                   </p>
                 </div>
               )}
+              <div className="mb-4">
+                <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
+              </div>
+
 
               {loading || authLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -419,6 +423,8 @@ const Speaking = () => {
                         <div className="flex items-center gap-2 mb-3">
                           <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">{activeTaskInfo?.label}</Badge>
                           <ExamTierBadge tier={set.access_tier} locked={locked} />
+                          <PriorityBadge label={priorityLabels.get(set.id)?.label} />
+
                           {isNewSet(set) && (
                             <Badge className="w-fit text-[11px] font-semibold bg-emerald-500 text-white border-0 hover:bg-emerald-500">MỚI</Badge>
                           )}
