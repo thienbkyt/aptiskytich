@@ -76,20 +76,21 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   // Reset current-set answered tracking when the active set changes.
   useEffect(() => { setCurrentAnswers([]); }, [currentIndex, attempt]);
 
+  // Mục lục theo ĐỀ: mỗi đề Listening = 1 ô. "Đã trả lời" = có ít nhất một
+  // câu con được chọn trong đề đang làm.
   const currentAnswered = useMemo(() => {
-    const count = loaded?.[currentIndex]?.pageCount ?? 0;
-    const out: boolean[] = new Array(count).fill(false);
     try {
-      for (let i = 0; i < count; i++) {
-        const a = currentAnswers?.[i];
-        if (a == null) continue;
-        if (typeof a === "string" && a === "") continue;
-        if (Array.isArray(a) && a.length === 0) continue;
-        out[i] = true;
-      }
-    } catch { /* noop */ }
-    return out;
-  }, [currentAnswers, loaded, currentIndex]);
+      const anyAnswered = (currentAnswers ?? []).some((a: any) => {
+        if (a == null) return false;
+        if (typeof a === "string") return a !== "";
+        if (Array.isArray(a)) return a.length > 0;
+        if (typeof a === "number") return a >= 0;
+        return !!a;
+      });
+      return [anyAnswered];
+    } catch { return [false]; }
+  }, [currentAnswers]);
+
 
 
   const accCorrect = useMemo(
