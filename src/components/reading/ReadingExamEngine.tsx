@@ -115,7 +115,7 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
-  pageBase, pageTotal, initialSection, onPageCount, allowReveal = false,
+  pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, allowReveal = false,
   reviewScopeNote,
   onMarathonFinish,
   submitSignal,
