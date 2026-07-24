@@ -34,6 +34,8 @@ interface Props {
    * writing = only 2 states (đã viết / chưa viết), one chip per set, no retry button.
    */
   mode?: "default" | "writing";
+  /** Chip labelling: "question" (default, per-question) or "set" (one chip = one đề). */
+  chipLabelMode?: "question" | "set";
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
   /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
