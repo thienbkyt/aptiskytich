@@ -256,7 +256,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const props: any = {
       partType: pt, testTitle, timeLimit: timeLimit ?? 1800,
       onExit, reviewMode: true, initialAnswers: init,
-      pageBase, pageTotal, initialSection, examSetId,
+      pageBase, pageTotal, pageLabelPrefix, initialSection, examSetId,
       hideTimer, hideBottomNav, hideBackToResults,
     };
     if (pt === "part1") props.part1Question = toReadingPart1(rows);
