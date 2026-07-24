@@ -582,7 +582,7 @@ const Reading = () => {
                                     active: true,
                                     partType: activeTab as ReadingPartType,
                                     retryWrongSetIds: wrongSetIds,
-                                    priorityLabel: activePrio,
+                                    priorityLabel: activePrio, setIds: filteredSetIds,
                                   }))}
                                   className="text-primary hover:underline font-medium"
                                 >
@@ -591,7 +591,7 @@ const Reading = () => {
                               )}
                               <button
                                 type="button"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio }); })}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("reading", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ReadingPartType, priorityLabel: activePrio, setIds: filteredSetIds }); })}
                                 className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
                               >
                                 Làm lại từ đầu
@@ -615,7 +615,7 @@ const Reading = () => {
                                   active: true,
                                   partType: activeTab as ReadingPartType,
                                   retryWrongSetIds: wrongSetIds,
-                                  priorityLabel: activePrio,
+                                  priorityLabel: activePrio, setIds: filteredSetIds,
                                 }))}
                                 className="gap-1.5 font-semibold"
                               >
