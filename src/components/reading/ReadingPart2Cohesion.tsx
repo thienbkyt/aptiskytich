@@ -28,6 +28,8 @@ interface Props {
   reviewDataLoading?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  /** Marathon override: label like "Đề X/N"; final rendered as `${prefix} · Đoạn Y/2`. */
+  pageLabelPrefix?: string;
   hideTimer?: boolean;
   /** Marathon: per-section locked/graded set. */
   lockedSections?: Set<number>;
@@ -41,7 +43,7 @@ const ReadingPart2Cohesion = ({
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
-  pageNumber, pageTotal, hideTimer = false,
+  pageNumber, pageTotal, pageLabelPrefix, hideTimer = false,
   lockedSections, hideBottomNav = false,
 }: Props) => {
   const globallyRevealed = submitted || !!revealAnswers;
@@ -172,9 +174,11 @@ const ReadingPart2Cohesion = ({
         <div>
           <p className="text-sm font-heading font-bold text-foreground">Reading</p>
           <p className="text-2xl md:text-3xl font-heading font-bold text-foreground mt-1">
-            {pageNumber !== undefined && pageTotal !== undefined
-              ? `Question ${pageNumber} of ${pageTotal}`
-              : `Question ${currentSection + 1} of ${totalSections}`}
+            {pageLabelPrefix
+              ? `${pageLabelPrefix} · Đoạn ${currentSection + 1}/${totalSections}`
+              : pageNumber !== undefined && pageTotal !== undefined
+                ? `Question ${pageNumber} of ${pageTotal}`
+                : `Question ${currentSection + 1} of ${totalSections}`}
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -366,6 +370,29 @@ const ReadingPart2Cohesion = ({
           sections={sections}
           onSubmitTest={onSubmitTest}
         />
+      )}
+      {hideBottomNav && totalSections > 1 && (
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={goPrevSection}
+            disabled={isFirst}
+            className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
+          >
+            ← Đoạn trước
+          </button>
+          <span className="text-xs text-muted-foreground">
+            Đoạn {currentSection + 1}/{totalSections}
+          </span>
+          <button
+            type="button"
+            onClick={goNextSection}
+            disabled={isLast}
+            className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
+          >
+            Đoạn sau →
+          </button>
+        </div>
       )}
     </div>
   );

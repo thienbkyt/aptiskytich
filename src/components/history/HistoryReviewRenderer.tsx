@@ -32,6 +32,8 @@ interface Props {
   testResultId?: string;
   pageBase?: number;
   pageTotal?: number;
+  /** Reading Part 2 marathon: label prefix like "Đề X/N". */
+  pageLabelPrefix?: string;
   initialSection?: number;
   onPageCount?: (n: number) => void;
   /** Optional override for the review timer (defaults to skill-standard). */
@@ -50,7 +52,7 @@ interface Props {
 // remember the resolved full_test_id → rows mapping too.
 const reviewRowsCache = new Map<string, ExamQuestionRow[]>();
 
-const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, initialSection, onPageCount, timeLimit, hideTimer, hideBottomNav, hideBackToResults }: Props) => {
+const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, timeLimit, hideTimer, hideBottomNav, hideBackToResults }: Props) => {
   const cacheKey = skill === "grammar" ? `grammar:${examSetId}` : examSetId;
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(() => reviewRowsCache.get(cacheKey) ?? null);
   const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
@@ -254,7 +256,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     const props: any = {
       partType: pt, testTitle, timeLimit: timeLimit ?? 1800,
       onExit, reviewMode: true, initialAnswers: init,
-      pageBase, pageTotal, initialSection, examSetId,
+      pageBase, pageTotal, pageLabelPrefix, initialSection, examSetId,
       hideTimer, hideBottomNav, hideBackToResults,
     };
     if (pt === "part1") props.part1Question = toReadingPart1(rows);

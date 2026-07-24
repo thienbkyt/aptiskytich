@@ -84,9 +84,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
-  // One navigator chip == one "màn hình câu hỏi" of a set.
-  // Reading Part 2 (Cohesion) paginates its two sections; every other part is a single page.
-  const pagesPerSet = partType === "part2" ? 2 : 1;
+  // One navigator chip == one ĐỀ. Part 2 has 2 sections handled internally via
+  // "Đoạn trước / sau" buttons — mục lục vẫn chỉ 1 ô/đề để đếm khớp N đề.
+  const pagesPerSet = 1;
 
   const isAnsweredVal = (v: any): boolean => {
     if (v == null) return false;
@@ -103,9 +103,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       const key = partType === "part1" ? "p1" : partType === "part2" ? "p2" : partType === "part3" ? "p3" : "p4";
       const bag = currentAnswers?.[key];
       if (partType === "part2") {
-        // p2 is an array of Record<number,string> keyed by section.
+        // Collapse across BOTH sections: chip is "answered" if any placement exists.
         if (Array.isArray(bag)) {
-          for (let i = 0; i < pagesPerSet; i++) out[i] = isAnsweredVal(bag[i]);
+          out[0] = bag.some((sec) => isAnsweredVal(sec));
         }
       } else {
         const anyAns = Array.isArray(bag)
@@ -121,13 +121,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
   const chipLocked = useMemo(() => {
     const out: boolean[] = new Array(pagesPerSet).fill(false);
     if (!currentLocked || currentLocked.length === 0) return out;
-    if (partType === "part2") {
-      for (let i = 0; i < pagesPerSet; i++) out[i] = !!currentLocked[i];
-    } else {
-      out[0] = currentLocked.length > 0 && currentLocked.every(Boolean);
-    }
+    out[0] = currentLocked.every(Boolean);
     return out;
-  }, [currentLocked, partType, pagesPerSet]);
+  }, [currentLocked, pagesPerSet]);
 
 
   const accCorrect = useMemo(
@@ -486,16 +482,17 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       <div className="flex-1 min-w-0">
         {midReviewEntry ? (
           <HistoryReviewRenderer
-            key={`mid-${midReview!.setIndex}-${midReview!.qIndex}`}
+            key={`mid-${midReview!.setIndex}`}
             examSetId={midReviewEntry.examSetId}
             skill="reading"
             part={midReviewEntry.part}
             testTitle={`Đề ${midReview!.setIndex + 1}`}
             qResults={midReviewEntry.qResults}
             onExit={() => setMidReview(null)}
-            pageBase={0}
-            pageTotal={pagesPerSet}
-            initialSection={Math.min(midReview!.qIndex, pagesPerSet - 1)}
+            pageBase={partType === "part2" ? undefined : midReview!.setIndex}
+            pageTotal={partType === "part2" ? undefined : sets.length}
+            pageLabelPrefix={partType === "part2" ? `Đề ${midReview!.setIndex + 1}/${sets.length}` : undefined}
+            initialSection={0}
             hideTimer
             hideBottomNav
             hideBackToResults
@@ -524,9 +521,10 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             initialAnswers={initialAnswers}
             onAnswersChange={persistAnswers}
             onSectionChange={setActiveSection}
-            pageBase={currentIndex * pagesPerSet}
-            pageTotal={sets.length * pagesPerSet}
-            initialSection={jumpQ ?? undefined}
+            pageBase={partType === "part2" ? undefined : currentIndex}
+            pageTotal={partType === "part2" ? undefined : sets.length}
+            pageLabelPrefix={partType === "part2" ? `Đề ${currentIndex + 1}/${sets.length}` : undefined}
+            initialSection={partType === "part2" ? 0 : (jumpQ ?? undefined)}
             submitSignal={submitSignal}
             marathonLock
             hideBottomNav
@@ -540,12 +538,13 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         results={results as any}
         currentIndex={currentIndex}
         reviewingIndex={midReview ? midReview.setIndex : null}
-        reviewingQ={midReview ? midReview.qIndex : undefined}
-        currentQ={activeSection}
+        reviewingQ={midReview ? 0 : undefined}
+        currentQ={0}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
         currentLocked={chipLocked}
         isRetryMode={isRetryMode}
+        chipLabelMode="set"
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
           if (midReview) setMidReview(null);

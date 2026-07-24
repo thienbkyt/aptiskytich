@@ -34,6 +34,8 @@ interface Props {
    * writing = only 2 states (đã viết / chưa viết), one chip per set, no retry button.
    */
   mode?: "default" | "writing";
+  /** Chip labelling: "question" (default, per-question) or "set" (one chip = one đề). */
+  chipLabelMode?: "question" | "set";
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
   /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
@@ -46,6 +48,7 @@ const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
   currentQ, reviewingQ, currentAnswered, currentLocked,
   isRetryMode, allowJumpInCurrent = true, mode = "default",
+  chipLabelMode = "question",
   onReview, onJumpQuestion, onEnterSet, onRetrySet,
 }: Props) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -223,9 +226,9 @@ const MarathonNavigator = ({
                     isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
                     "cursor-pointer",
                   )}
-                  title={`Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
+                  title={chipLabelMode === "set" ? `Đề ${si + 1}` : `Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
                 >
-                  {gi + 1}
+                  {chipLabelMode === "set" ? si + 1 : gi + 1}
                 </button>
               );
             })}

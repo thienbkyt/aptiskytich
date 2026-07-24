@@ -82,6 +82,8 @@ interface ReadingExamEngineProps {
   /** Optional page numbering for marathon mode. */
   pageBase?: number;
   pageTotal?: number;
+  /** Marathon Part 2: label prefix like "Đề X/N"; renders as `${prefix} · Đoạn Y/2`. */
+  pageLabelPrefix?: string;
   /** For Part 2: which section index to mount at initially. */
   initialSection?: number;
   /** Notifies parent of total page count for this part (used by review pager). */
@@ -113,7 +115,7 @@ const ReadingExamEngine = ({
   initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
-  pageBase, pageTotal, initialSection, onPageCount, allowReveal = false,
+  pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, allowReveal = false,
   reviewScopeNote,
   onMarathonFinish,
   submitSignal,
@@ -691,6 +693,7 @@ const ReadingExamEngine = ({
             reviewDataLoading={effectiveReviewLoading}
             pageNumber={computedPageNumber}
             pageTotal={pageTotal}
+            pageLabelPrefix={pageLabelPrefix}
             hideTimer={hideTimer}
             lockedSections={lockedP2}
             hideBottomNav={hideBottomNav}
