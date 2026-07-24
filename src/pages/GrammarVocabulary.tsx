@@ -168,6 +168,11 @@ const GrammarVocabulary = () => {
             </p>
           </div>
 
+          <div className="mb-4">
+            <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
+          </div>
+
+
           {fullLoading || authLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => <TechSkeleton key={i} variant="card" className="h-48" />)}
@@ -196,6 +201,8 @@ const GrammarVocabulary = () => {
                         Grammar & Vocab
                       </Badge>
                       <ExamTierBadge tier={(set as any).access_tier} locked={locked} />
+                      <PriorityBadge label={setPriority.get(set.fullTestId)} />
+
                     </div>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">{set.title}</h3>
                     <p className="text-sm text-muted-foreground mb-3">{set.questionCount} câu · {set.partCount} phần</p>
