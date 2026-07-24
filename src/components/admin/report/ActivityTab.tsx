@@ -157,7 +157,7 @@ const ActivityTab = () => {
 
         <Card className="p-5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide mb-2">
-            <UserPlus className="w-4 h-4" /> User mới ({label})
+            <UserPlus className="w-4 h-4" /> USER MỚI
           </div>
           <div className="flex items-center gap-3">
             <p className="text-3xl font-heading font-extrabold" style={{ color: COLOR_PRIMARY }}>
