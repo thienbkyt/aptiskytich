@@ -91,8 +91,8 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]> }>({
-    active: false, partType: "part1", keyId: null, prio: null,
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null }>({
+    active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null,
   });
   const [progressTick, setProgressTick] = useState(0);
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
