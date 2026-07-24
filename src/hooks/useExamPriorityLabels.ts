@@ -31,28 +31,20 @@ export function useExamPriorityLabels(): ExamPriorityData {
     queryKey: ["examPriorityLabels", WINDOW],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data: keys } = await supabase
-        .from("prediction_keys")
-        .select("id, date")
-        .eq("is_published", true)
-        .order("date", { ascending: false })
-        .limit(WINDOW);
-      const keyIds = (keys ?? []).map((k: any) => k.id as string);
-      if (keyIds.length === 0) {
-        return { keySetsBySet: new Map<string, Set<string>>(), windowSize: 0 };
-      }
-      const { data: items } = await supabase
-        .from("prediction_items")
-        .select("exam_set_id, key_id")
-        .in("key_id", keyIds);
+      const { data: rows, error } = await supabase.rpc("exam_priority_counts" as any, { p_window: WINDOW });
+      if (error) throw error;
       const keySetsBySet = new Map<string, Set<string>>();
-      (items ?? []).forEach((row: any) => {
-        if (!row?.exam_set_id || !row?.key_id) return;
-        let s = keySetsBySet.get(row.exam_set_id);
-        if (!s) { s = new Set(); keySetsBySet.set(row.exam_set_id, s); }
-        s.add(row.key_id);
+      let windowSize = 0;
+      (rows ?? []).forEach((r: any) => {
+        if (!r?.exam_set_id) return;
+        windowSize = Number(r.window_size) || windowSize;
+        // Synthesize a Set sized to key_count so aggregatePriority (which unions sets) stays correct per-exam.
+        const s = new Set<string>();
+        const n = Number(r.key_count) || 0;
+        for (let i = 0; i < n; i++) s.add(`${r.exam_set_id}:${i}`);
+        keySetsBySet.set(r.exam_set_id as string, s);
       });
-      return { keySetsBySet, windowSize: keyIds.length };
+      return { keySetsBySet, windowSize };
     },
   });
 
