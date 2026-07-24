@@ -71,7 +71,7 @@ const ListeningPart3Conversation = ({
           <p className="text-base text-foreground mb-1">Listening</p>
           <h2 className="text-2xl md:text-3xl font-heading font-bold text-foreground">
             {pageNumber != null && pageTotal != null
-              ? `Question ${pageNumber} of ${pageTotal}`
+              ? `Đề ${pageNumber}/${pageTotal}`
               : `Question ${currentIndex + 1} of ${questions.length}`}
           </h2>
         </div>
