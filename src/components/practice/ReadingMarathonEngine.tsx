@@ -84,9 +84,9 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
 
   useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
-  // One navigator chip == one "màn hình câu hỏi" of a set.
-  // Reading Part 2 (Cohesion) paginates its two sections; every other part is a single page.
-  const pagesPerSet = partType === "part2" ? 2 : 1;
+  // One navigator chip == one ĐỀ. Part 2 has 2 sections handled internally via
+  // "Đoạn trước / sau" buttons — mục lục vẫn chỉ 1 ô/đề để đếm khớp N đề.
+  const pagesPerSet = 1;
 
   const isAnsweredVal = (v: any): boolean => {
     if (v == null) return false;
