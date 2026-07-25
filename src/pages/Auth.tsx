@@ -46,8 +46,12 @@ const getPasswordStrength = (pw: string): { label: string; level: 0 | 1 | 2 | 3;
   return { label: "Mạnh", level: 3, color: "bg-green-500" };
 };
 
+const SCHOOL_EMAIL_RE = /@([a-z0-9-]+\.)*(edu(\.[a-z]{2,})?|ac\.[a-z]{2,}|k12\.[a-z]{2,})$/i;
+
 const Auth = () => {
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [searchParams] = useSearchParams();
+  const initialMode: AuthMode = searchParams.get("tab") === "signup" ? "signup" : "login";
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -56,10 +60,11 @@ const Auth = () => {
   const [showPw, setShowPw] = useState(false);
   const [loginErr, setLoginErr] = useState<string | null>(null);
   const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [signupErr, setSignupErr] = useState<string | null>(null);
+  const [signupSentTo, setSignupSentTo] = useState<string | null>(null);
   const [forgotSentTo, setForgotSentTo] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -96,23 +101,28 @@ const Auth = () => {
       if (error.message.toLowerCase().includes("email not confirmed")) setNeedsConfirm(true);
       toast({ title: "Đăng nhập thất bại", description: viMsg, variant: "destructive" });
     } else {
-      try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
       navigate(redirectTarget, { replace: true });
     }
   };
 
   const handleResendConfirm = async () => {
-    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (resendIn > 0) return;
+    const target = signupSentTo || email;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({ type: "signup", email: target });
+    setLoading(false);
     if (error) {
       toast({ title: "Lỗi", description: translateError(error.message), variant: "destructive" });
     } else {
       toast({ title: "Đã gửi lại email xác nhận", description: "Vui lòng kiểm tra hộp thư." });
+      setResendIn(60);
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSignupErr(null);
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -123,10 +133,12 @@ const Auth = () => {
     });
     setLoading(false);
     if (error) {
-      toast({ title: "Đăng ký thất bại", description: translateError(error.message), variant: "destructive" });
+      const viMsg = translateError(error.message);
+      setSignupErr(viMsg);
+      toast({ title: "Đăng ký thất bại", description: viMsg, variant: "destructive" });
     } else {
-      toast({ title: "Đăng ký thành công!", description: "Kiểm tra email để xác nhận tài khoản." });
-      setMode("login");
+      setSignupSentTo(email);
+      setResendIn(60);
     }
   };
 
@@ -162,11 +174,9 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
     const result = await signInWithGoogle(window.location.origin + redirectTarget);
     if ((result as any).redirected) return;
     if ((result as any).error) {
-      try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
       setGoogleLoading(false);
       toast({ title: "Đăng nhập Google thất bại", description: translateError((result as any).error.message), variant: "destructive" });
       return;
@@ -283,55 +293,99 @@ const Auth = () => {
             )}
 
             {mode === "signup" && (
-              <motion.form key="signup" onSubmit={handleSignup} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Họ tên</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input id="name" placeholder="Nguyễn Văn A" value={name} onChange={(e) => setName(e.target.value)} className="pl-10" required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email2">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input id="email2" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password2">Mật khẩu</Label>
-                  {renderPasswordInput("password2", password, setPassword, "Tối thiểu 6 ký tự", 6)}
-                  {password && (
-                    <div className="space-y-1">
-                      <div className="flex gap-1">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= pwStrength.level ? pwStrength.color : "bg-muted"}`} />
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Độ mạnh: <span className="font-medium">{pwStrength.label}</span></p>
+              <motion.div key="signup" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4">
+                {signupSentTo ? (
+                  <div className="space-y-4 text-center">
+                    <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
+                      <CheckCircle2 className="w-7 h-7 text-green-600" />
                     </div>
-                  )}
-                </div>
-                <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2" disabled={loading}>
-                  {loading ? "Đang xử lý..." : (<>Đăng ký <ArrowRight className="w-4 h-4" /></>)}
-                </Button>
+                    <div>
+                      <h2 className="font-heading font-bold text-foreground text-lg mb-1">Đăng ký thành công!</h2>
+                      <p className="text-sm text-muted-foreground">
+                        Đã gửi email xác nhận tới <span className="font-medium text-foreground">{signupSentTo}</span>. Vui lòng mở email và bấm vào link xác nhận để kích hoạt tài khoản.
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Không thấy email? Hãy kiểm tra cả mục <span className="font-medium">Spam / Quảng cáo</span>.
+                      </p>
+                    </div>
+                    {SCHOOL_EMAIL_RE.test(signupSentTo) && (
+                      <div className="rounded-md bg-yellow-500/10 border border-yellow-500/30 p-3 text-xs text-left text-foreground">
+                        ⚠️ Email trường học thường chặn thư tự động — nếu không nhận được email, bạn nên đăng ký lại bằng Gmail để chắc chắn nhận được email xác nhận.
+                      </div>
+                    )}
+                    <Button type="button" onClick={handleResendConfirm} disabled={resendIn > 0 || loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                      {resendIn > 0 ? `Gửi lại sau ${resendIn}s` : (loading ? "Đang gửi..." : "Gửi lại email xác nhận")}
+                    </Button>
+                    <Button type="button" variant="outline" className="w-full" onClick={() => { setSignupSentTo(null); setResendIn(0); setSignupErr(null); }}>
+                      Đăng ký email khác
+                    </Button>
+                    <button type="button" onClick={() => { setMode("login"); setSignupSentTo(null); setSignupErr(null); }} className="text-sm text-primary hover:underline">← Quay lại đăng nhập</button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSignup} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Họ tên</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                        <Input id="name" placeholder="Nguyễn Văn A" value={name} onChange={(e) => setName(e.target.value)} className="pl-10" required />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email2">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                        <Input id="email2" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
+                      </div>
+                      {email && SCHOOL_EMAIL_RE.test(email) && (
+                        <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                          ⚠️ Email trường học thường chặn thư tự động — nên dùng Gmail để nhận được email xác nhận.
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password2">Mật khẩu</Label>
+                      {renderPasswordInput("password2", password, setPassword, "Tối thiểu 6 ký tự", 6)}
+                      {password && (
+                        <div className="space-y-1">
+                          <div className="flex gap-1">
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= pwStrength.level ? pwStrength.color : "bg-muted"}`} />
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Độ mạnh: <span className="font-medium">{pwStrength.label}</span></p>
+                        </div>
+                      )}
+                    </div>
 
-                <div className="relative my-2">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-zinc-900 px-2 text-muted-foreground">hoặc</span></div>
-                </div>
+                    {signupErr && (
+                      <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                        {signupErr}
+                      </div>
+                    )}
 
-                <Button type="button" variant="outline" className="w-full gap-2" onClick={handleGoogleLogin} disabled={googleLoading}>
-                  {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
-                  Đăng ký với Google
-                </Button>
+                    <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2" disabled={loading}>
+                      {loading ? "Đang xử lý..." : (<>Đăng ký <ArrowRight className="w-4 h-4" /></>)}
+                    </Button>
 
-                <p className="text-center text-sm text-muted-foreground pt-1">
-                  Đã có tài khoản?{" "}
-                  <button type="button" onClick={() => setMode("login")} className="text-primary hover:underline">Đăng nhập</button>
-                </p>
-              </motion.form>
+                    <div className="relative my-2">
+                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                      <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-zinc-900 px-2 text-muted-foreground">hoặc</span></div>
+                    </div>
+
+                    <Button type="button" variant="outline" className="w-full gap-2" onClick={handleGoogleLogin} disabled={googleLoading}>
+                      {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
+                      Đăng ký với Google
+                    </Button>
+
+                    <p className="text-center text-sm text-muted-foreground pt-1">
+                      Đã có tài khoản?{" "}
+                      <button type="button" onClick={() => { setMode("login"); setSignupErr(null); }} className="text-primary hover:underline">Đăng nhập</button>
+                    </p>
+                  </form>
+                )}
+              </motion.div>
             )}
+
 
             {mode === "forgot" && (
               <motion.div key="forgot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4">
