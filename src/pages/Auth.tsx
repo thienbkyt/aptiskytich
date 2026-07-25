@@ -174,11 +174,9 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
     const result = await signInWithGoogle(window.location.origin + redirectTarget);
     if ((result as any).redirected) return;
     if ((result as any).error) {
-      try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
       setGoogleLoading(false);
       toast({ title: "Đăng nhập Google thất bại", description: translateError((result as any).error.message), variant: "destructive" });
       return;
