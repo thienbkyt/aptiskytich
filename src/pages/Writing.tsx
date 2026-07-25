@@ -84,7 +84,7 @@ const Writing = () => {
   const { guard, isLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("writing");
   const { progress } = useUserExamProgress();
-  const { progress: gradedProgress } = useUserGradedProgress("writing");
+  const { progress: gradedProgress, bandBySetId: writingBandBySetId } = useUserGradedProgress("writing");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false,
   });
@@ -363,7 +363,8 @@ const Writing = () => {
               </div>
             ) : (
               <FullPartSection
-                progress={gradedProgress}
+                progress={progress}
+                bandBySetId={writingBandBySetId}
                 skillKey="writing"
                 skillName="Writing"
                 sets={fullSets}

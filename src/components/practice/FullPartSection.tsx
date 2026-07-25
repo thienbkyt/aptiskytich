@@ -18,9 +18,16 @@ interface FullPartSectionProps {
   skillKey?: "listening" | "reading" | "writing" | "speaking";
   isLocked?: (set: SkillFullSetItem) => boolean;
   onLockedClick?: (set: SkillFullSetItem) => void;
+  /** Optional: per-exam-set CEFR band map. When provided, band badge is derived
+   *  from this map (best CEFR across the set's parts). If no band is available,
+   *  the badge is hidden. Used by writing/speaking where progress values are not
+   *  raw scores. Reading/Listening keep the legacy score-based band calculation. */
+  bandBySetId?: Map<string, string>;
 }
 
-const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick }: FullPartSectionProps) => {
+const CEFR_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
+
+const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick, bandBySetId }: FullPartSectionProps) => {
 
   return (
     <div>
@@ -51,13 +58,23 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
               : 0;
             const allDone = doneCount > 0 && doneCount === set.examSetIds.length;
             let bandLabel: string | null = null;
-            if (allDone && progress && skillKey) {
-              let sumScore = 0, sumTotal = 0;
-              set.examSetIds.forEach((id) => {
-                const p = progress.get(id);
-                if (p) { sumScore += p.bestScore; sumTotal += p.total; }
-              });
-              if (sumTotal > 0) bandLabel = getSkillBand(toScaledScore(sumScore, sumTotal), skillKey);
+            if (allDone && skillKey) {
+              if (bandBySetId) {
+                // Writing/Speaking: derive band from real graded results (best CEFR across parts).
+                let best: string | null = null;
+                set.examSetIds.forEach((id) => {
+                  const b = bandBySetId.get(id);
+                  if (b && (!best || (CEFR_RANK[b] ?? -1) > (CEFR_RANK[best] ?? -1))) best = b;
+                });
+                bandLabel = best; // null → badge hidden
+              } else if (progress) {
+                let sumScore = 0, sumTotal = 0;
+                set.examSetIds.forEach((id) => {
+                  const p = progress.get(id);
+                  if (p) { sumScore += p.bestScore; sumTotal += p.total; }
+                });
+                if (sumTotal > 0) bandLabel = getSkillBand(toScaledScore(sumScore, sumTotal), skillKey);
+              }
             }
             return (
             <motion.div
