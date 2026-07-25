@@ -101,23 +101,28 @@ const Auth = () => {
       if (error.message.toLowerCase().includes("email not confirmed")) setNeedsConfirm(true);
       toast({ title: "Đăng nhập thất bại", description: viMsg, variant: "destructive" });
     } else {
-      try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
       navigate(redirectTarget, { replace: true });
     }
   };
 
   const handleResendConfirm = async () => {
-    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (resendIn > 0) return;
+    const target = signupSentTo || email;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({ type: "signup", email: target });
+    setLoading(false);
     if (error) {
       toast({ title: "Lỗi", description: translateError(error.message), variant: "destructive" });
     } else {
       toast({ title: "Đã gửi lại email xác nhận", description: "Vui lòng kiểm tra hộp thư." });
+      setResendIn(60);
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSignupErr(null);
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -128,10 +133,12 @@ const Auth = () => {
     });
     setLoading(false);
     if (error) {
-      toast({ title: "Đăng ký thất bại", description: translateError(error.message), variant: "destructive" });
+      const viMsg = translateError(error.message);
+      setSignupErr(viMsg);
+      toast({ title: "Đăng ký thất bại", description: viMsg, variant: "destructive" });
     } else {
-      toast({ title: "Đăng ký thành công!", description: "Kiểm tra email để xác nhận tài khoản." });
-      setMode("login");
+      setSignupSentTo(email);
+      setResendIn(60);
     }
   };
 
