@@ -351,7 +351,8 @@ const Speaking = () => {
               </div>
             ) : (
               <FullPartSection
-                progress={gradedProgress}
+                progress={progress}
+                bandBySetId={speakingBandBySetId}
                 skillKey="speaking"
                 skillName="Speaking"
                 sets={fullSets}
