@@ -46,8 +46,12 @@ const getPasswordStrength = (pw: string): { label: string; level: 0 | 1 | 2 | 3;
   return { label: "Mạnh", level: 3, color: "bg-green-500" };
 };
 
+const SCHOOL_EMAIL_RE = /@([a-z0-9-]+\.)*(edu(\.[a-z]{2,})?|ac\.[a-z]{2,}|k12\.[a-z]{2,})$/i;
+
 const Auth = () => {
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [searchParams] = useSearchParams();
+  const initialMode: AuthMode = searchParams.get("tab") === "signup" ? "signup" : "login";
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -56,10 +60,11 @@ const Auth = () => {
   const [showPw, setShowPw] = useState(false);
   const [loginErr, setLoginErr] = useState<string | null>(null);
   const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [signupErr, setSignupErr] = useState<string | null>(null);
+  const [signupSentTo, setSignupSentTo] = useState<string | null>(null);
   const [forgotSentTo, setForgotSentTo] = useState<string | null>(null);
   const [resendIn, setResendIn] = useState(0);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
 
