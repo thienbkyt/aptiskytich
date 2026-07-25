@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   Dialog,
