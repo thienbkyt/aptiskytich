@@ -68,11 +68,9 @@ export function LoginGateProvider({ children }: { children: ReactNode }) {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
     const result = await signInWithGoogle(window.location.href);
     if ((result as any).redirected) return;
     if ((result as any).error) {
-      try { sessionStorage.removeItem("kt_show_group_popup"); } catch {}
       setGoogleLoading(false);
       toast.error("Đăng nhập Google thất bại.");
       return;
