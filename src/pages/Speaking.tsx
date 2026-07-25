@@ -80,7 +80,7 @@ const Speaking = () => {
   const { guard, isLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("speaking");
   const { progress } = useUserExamProgress();
-  const { progress: gradedProgress } = useUserGradedProgress("speaking");
+  const { progress: gradedProgress, bandBySetId: speakingBandBySetId } = useUserGradedProgress("speaking");
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", loadingExam: false,
   });
