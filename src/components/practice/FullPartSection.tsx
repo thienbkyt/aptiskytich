@@ -58,13 +58,23 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
               : 0;
             const allDone = doneCount > 0 && doneCount === set.examSetIds.length;
             let bandLabel: string | null = null;
-            if (allDone && progress && skillKey) {
-              let sumScore = 0, sumTotal = 0;
-              set.examSetIds.forEach((id) => {
-                const p = progress.get(id);
-                if (p) { sumScore += p.bestScore; sumTotal += p.total; }
-              });
-              if (sumTotal > 0) bandLabel = getSkillBand(toScaledScore(sumScore, sumTotal), skillKey);
+            if (allDone && skillKey) {
+              if (bandBySetId) {
+                // Writing/Speaking: derive band from real graded results (best CEFR across parts).
+                let best: string | null = null;
+                set.examSetIds.forEach((id) => {
+                  const b = bandBySetId.get(id);
+                  if (b && (!best || (CEFR_RANK[b] ?? -1) > (CEFR_RANK[best] ?? -1))) best = b;
+                });
+                bandLabel = best; // null → badge hidden
+              } else if (progress) {
+                let sumScore = 0, sumTotal = 0;
+                set.examSetIds.forEach((id) => {
+                  const p = progress.get(id);
+                  if (p) { sumScore += p.bestScore; sumTotal += p.total; }
+                });
+                if (sumTotal > 0) bandLabel = getSkillBand(toScaledScore(sumScore, sumTotal), skillKey);
+              }
             }
             return (
             <motion.div
