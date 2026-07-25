@@ -35,10 +35,15 @@ const ZaloIcon = ({ className }: { className?: string }) => (
 const PostLoginFBGroupModal = () => {
   const [open, setOpen] = useState(false);
   const shownRef = useRef(false);
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (shownRef.current) return;
     if (typeof window === "undefined") return;
+    if (loading) return;
+    if (!user) return;
+    if (location.pathname.startsWith("/auth")) return;
     try {
       if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return;
       sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
@@ -48,7 +53,7 @@ const PostLoginFBGroupModal = () => {
     } catch {
       // ignore storage errors
     }
-  }, []);
+  }, [user, loading, location.pathname]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
