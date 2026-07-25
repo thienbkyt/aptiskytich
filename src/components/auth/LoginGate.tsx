@@ -57,7 +57,7 @@ export function LoginGateProvider({ children }: { children: ReactNode }) {
       toast.error("Đăng nhập thất bại. Kiểm tra email/mật khẩu.");
       return;
     }
-    try { sessionStorage.setItem("kt_show_group_popup", "1"); } catch {}
+    // Group popup is shown by PostLoginFBGroupModal itself once per session.
     setOpen(false);
     setEmail("");
     setPassword("");
