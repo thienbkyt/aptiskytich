@@ -33,7 +33,7 @@ const stats = [
   { value: "596+", label: "Đề thi Aptis" },
   { value: "Đề Key", label: "Update hằng ngày" },
   { value: "AI\u00A0", label: "Giải thích chi tiết từng câu" },
-  { value: "Mô phỏng", label: "Giống bài thi thật 100%" },
+  { value: "Mô phỏng", label: "Giống bài thi thật" },
 ];
 
 const heroChips = [
@@ -124,7 +124,7 @@ const Index = () => {
               >
                 Luyện thi Aptis&nbsp;
                 <br />
-                giống thật 100%
+                giống thật bài thi thật
                 <br />
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] via-[#E85A1F] to-[#FEAD5F] animate-gradient-shift">
                   AI chấm điểm ngay
