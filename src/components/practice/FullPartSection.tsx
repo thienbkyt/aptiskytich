@@ -18,9 +18,16 @@ interface FullPartSectionProps {
   skillKey?: "listening" | "reading" | "writing" | "speaking";
   isLocked?: (set: SkillFullSetItem) => boolean;
   onLockedClick?: (set: SkillFullSetItem) => void;
+  /** Optional: per-exam-set CEFR band map. When provided, band badge is derived
+   *  from this map (best CEFR across the set's parts). If no band is available,
+   *  the badge is hidden. Used by writing/speaking where progress values are not
+   *  raw scores. Reading/Listening keep the legacy score-based band calculation. */
+  bandBySetId?: Map<string, string>;
 }
 
-const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick }: FullPartSectionProps) => {
+const CEFR_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
+
+const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick, bandBySetId }: FullPartSectionProps) => {
 
   return (
     <div>
