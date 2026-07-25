@@ -363,7 +363,8 @@ const Writing = () => {
               </div>
             ) : (
               <FullPartSection
-                progress={gradedProgress}
+                progress={progress}
+                bandBySetId={writingBandBySetId}
                 skillKey="writing"
                 skillName="Writing"
                 sets={fullSets}
