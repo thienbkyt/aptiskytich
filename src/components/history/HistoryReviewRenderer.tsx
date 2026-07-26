@@ -168,7 +168,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
         setWritingGrading({
           partType: part, partScore: Number.isFinite(raw) ? Math.min(30, Math.round(raw)) : 0, maxPoints: 30,
           addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
-          grammarErrors: (wsrPart.grammarErrors as any) || [], spellingErrors: (wsrPart.spellingErrors as any) || [],
+          ...splitWritingErrors((wsrPart.grammarErrors as any) || [], (wsrPart.spellingErrors as any) || []),
           feedback: wsrPart.feedback || "", improvedVersion, upgradeTips,
         } as any);
       }
