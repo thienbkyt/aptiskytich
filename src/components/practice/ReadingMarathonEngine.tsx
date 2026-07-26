@@ -294,6 +294,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         total: accTotal_,
         extraSkillScores: {
           label: `Marathon · ${partName}`,
+          partType,
           done: reviewable_.length,
           totalSets: sets.length,
         },
