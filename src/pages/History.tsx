@@ -299,13 +299,23 @@ const History = () => {
         const groups = Array.from(sessionMap.values()).map((g) => {
           g.skillCount = new Set(g.rows.map((r) => r.skill)).size;
           let total = 0, has = false, gv: number | null = null;
+          const scaledBySkill: Record<string, number> = {};
           for (const sk of Object.keys(g.skillAgg)) {
             const { num, den } = g.skillAgg[sk];
             if (den <= 0) continue;
-            const scaled = Math.min(50, Math.round((num / den) * 50));
+            scaledBySkill[sk] = Math.min(50, Math.round((num / den) * 50));
+          }
+          // Writing/Speaking: ĐỌC điểm đã lưu, không tự tính lại từ bảng gradings.
+          const wOff = writingOfficialBySession[g.sessionId];
+          if (wOff) scaledBySkill.writing = wOff.scale50;
+          const sOff = speakingOfficialBySession[g.sessionId];
+          if (sOff) scaledBySkill.speaking = sOff.scale50;
+          for (const sk of Object.keys(scaledBySkill)) {
+            const scaled = scaledBySkill[sk];
             if (sk === "grammar") gv = scaled;
             else if (FOUR_SKILLS.includes(sk)) { total += scaled; has = true; }
           }
+
           g.totalScaled = total; g.gvScaled = gv; g.hasScaled = has;
           return g;
         });
