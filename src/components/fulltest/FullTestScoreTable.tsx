@@ -2,16 +2,23 @@ import { getSkillBand, getLevelColor, toScaledScore } from "@/data/questions";
 
 type SkillKey = "speaking" | "listening" | "grammar" | "reading" | "writing";
 type Scores = Record<SkillKey, { correct: number; total: number }>;
+/** Điểm /50 + CEFR đã lưu sẵn (Writing/Speaking) — hiển thị nguyên, không tính lại. */
+type Overrides = Partial<Record<SkillKey, { scale50: number; cefr?: string | null }>>;
 
 interface Props {
   scores: Scores;
+  overrides?: Overrides;
 }
 
 const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
 const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
 
-const FullTestScoreTable = ({ scores }: Props) => {
-  const score50 = (sk: SkillKey) => toScaledScore(scores[sk].correct, scores[sk].total);
+const FullTestScoreTable = ({ scores, overrides }: Props) => {
+  const score50 = (sk: SkillKey) => {
+    const o = overrides?.[sk];
+    if (o && Number.isFinite(o.scale50)) return Math.round(o.scale50);
+    return toScaledScore(scores[sk].correct, scores[sk].total);
+  };
 
   const gv = score50("grammar");
   const listening = score50("listening");
@@ -21,12 +28,16 @@ const FullTestScoreTable = ({ scores }: Props) => {
 
   const total200 = listening + reading + speaking + writing;
 
-  const bandFor = (sk: "listening" | "reading" | "speaking" | "writing") =>
-    scores[sk].total > 0 ? getSkillBand(score50(sk), sk) : null;
+  const bandFor = (sk: "listening" | "reading" | "speaking" | "writing") => {
+    const o = overrides?.[sk];
+    if (o && Number.isFinite(o.scale50)) return o.cefr || getSkillBand(score50(sk), sk);
+    return scores[sk].total > 0 ? getSkillBand(score50(sk), sk) : null;
+  };
 
   const bands = (["listening", "reading", "speaking", "writing"] as const)
     .map((sk) => bandFor(sk))
     .filter((b): b is string => !!b);
+
 
   let overall: string = "—";
   if (bands.length > 0) {
