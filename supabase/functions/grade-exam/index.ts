@@ -1100,8 +1100,18 @@ ${partsIn.formalText ?? ""}`;
         });
       }
       const parsed = JSON.parse(tc.function.arguments);
-      const grammarErrors = Array.isArray(parsed.grammarErrors) ? parsed.grammarErrors : [];
-      const spellingErrors = Array.isArray(parsed.spellingErrors) ? parsed.spellingErrors : [];
+      // --- Sanitize error lists ---
+      // 1) Drop "style suggestion" items the AI mislabelled as errors.
+      // 2) Move pure spelling items out of grammarErrors into spellingErrors.
+      const STYLE_RE = /(không\s*(hoàn toàn\s*)?sai|không phải là\s*(hoàn toàn\s*)?sai|vẫn\s*(là\s*)?đúng|đúng ngữ pháp nhưng|chỉ là\s|nghe\s*(sẽ\s*)?tự nhiên hơn|phù hợp hơn|hay hơn|trang trọng hơn|có thể dùng|nên dùng.*sẽ.*hơn|not wrong|still correct)/i;
+      const SPELL_RE = /^\s*(\*\*)?\s*(lỗi\s*)?(chính\s*tả|sai\s*chính\s*tả|spelling)/i;
+      const isStyleNote = (e: any) => STYLE_RE.test(String(e?.explanation ?? ""));
+      const isSpellingNote = (e: any) => SPELL_RE.test(String(e?.explanation ?? ""));
+      const rawGrammar = (Array.isArray(parsed.grammarErrors) ? parsed.grammarErrors : []).filter((e: any) => !isStyleNote(e));
+      const rawSpelling = (Array.isArray(parsed.spellingErrors) ? parsed.spellingErrors : []).filter((e: any) => !isStyleNote(e));
+      const grammarErrors = rawGrammar.filter((e: any) => !isSpellingNote(e));
+      const spellingErrors = [...rawSpelling, ...rawGrammar.filter((e: any) => isSpellingNote(e))];
+
       const forcedComplexity = !!parsed.forcedComplexity;
       const feedback: string = String(parsed.feedback ?? "");
       const improvedVersion: string = String(parsed.improvedVersion ?? "");
