@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { splitWritingErrors } from "@/lib/writingErrorFilter";
+
 
 interface Props {
   userId: string;
