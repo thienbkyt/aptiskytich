@@ -847,7 +847,16 @@ ERROR DETECTION (grammarErrors phải bao gồm ĐẦY ĐỦ các loại):
 - Lỗi DIỄN ĐẠT: câu tối nghĩa, câu Việt-Anh, câu lủng củng, dịch word-by-word.
 - Lỗi LOGIC: mâu thuẫn, thiếu liên kết ý, kết luận không theo tiền đề.
 - Lỗi DÙNG TỪ SAI CHỖ / SAI NGHĨA (wrong word / collocation): dùng từ không đúng ngữ cảnh, sai collocation, sai sắc thái.
-Mỗi lỗi 1 mục {original, corrected, explanation}. explanation (tiếng Việt) PHẢI nói RÕ loại lỗi ở đầu, ví dụ: "Lỗi diễn đạt: …", "Lỗi dùng từ sai nghĩa: …", "Lỗi logic: …", "Lỗi ngữ pháp: …". Lỗi chính tả thuần túy để ở spellingErrors.
+Mỗi lỗi 1 mục {original, corrected, explanation}. explanation (tiếng Việt) PHẢI nói RÕ loại lỗi ở đầu, ví dụ: "Lỗi diễn đạt: …", "Lỗi dùng từ sai nghĩa: …", "Lỗi logic: …", "Lỗi ngữ pháp: …".
+
+PHÂN LOẠI BẮT BUỘC:
+- Lỗi SAI CHÍNH TẢ thuần túy (viết sai từ, thiếu/thừa chữ cái, sai hoa/thường của từ) LUÔN đưa vào spellingErrors, TUYỆT ĐỐI KHÔNG đưa vào grammarErrors. Ngược lại, spellingErrors chỉ chứa lỗi chính tả, không chứa lỗi ngữ pháp.
+- explanation trong grammarErrors KHÔNG được bắt đầu bằng "Lỗi chính tả".
+
+KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
+- Nếu câu học viên ĐÚNG ngữ pháp, đúng nghĩa và chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
+- Không được viết explanation kiểu "không sai", "không hoàn toàn sai", "vẫn đúng nhưng…", "chỉ là … hơn". Nếu muốn góp ý, đưa vào mục **Gợi ý nâng cao** của feedback (hoặc upgradeTips), không gạch đỏ như lỗi.
+
 
 FEEDBACK FORMAT (BẮT BUỘC, 100% TIẾNG VIỆT, KHÔNG trộn Anh-Việt trừ tên riêng):
 Chia feedback thành các mục, MỖI mục bắt đầu bằng nhãn in đậm trên DÒNG RIÊNG (đúng chuỗi ký tự Markdown), theo thứ tự và chỉ dùng các nhãn sau (bỏ mục không áp dụng cho part):
