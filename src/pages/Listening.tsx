@@ -254,54 +254,72 @@ const Listening = () => {
   };
 
   const handleComplete = async (correct: number, total: number, perQuestion?: any[]) => {
-    const snap = await (async () => {
+    // Locals first — state may be reset if the learner exits right after submitting.
+    const examSetId = exam.examSetId ?? null;
+    const partType = exam.partType;
+    const engineData = exam.engineData;
+    const testTitle = exam.testTitle;
+    const timeSpent = exam.startedAt ? Math.floor((Date.now() - exam.startedAt) / 1000) : undefined;
+
+    setExam((prev) => ({ ...prev, correct, total }));
+    saveTestResult({ correct, total, skill: "listening" });
+
+    const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+    const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+    const { scaled50, band } = computeScaleAndBand("listening", correct, total);
+
+    const makeSnap = (highlights: Record<string, string>) => {
       try {
-        const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
-        const { supabase } = await import("@/integrations/supabase/client");
-        const { buildHighlightRequest } = await import("@/lib/listeningReview");
-        const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
-        let highlights: Record<string, string> = {};
-        try {
-          const partLike = { partType: exam.partType, ...(exam.engineData || {}) } as any;
-          const items = buildHighlightRequest(partLike);
-          if ((items?.length || 0) > 0) {
-            const res = await supabase.functions.invoke("listening-highlight", {
-              body: { exam_set_id: exam.examSetId, items },
-            });
-            const p = (res?.data || {}) as any;
-            highlights = p.highlights || {};
-          }
-        } catch { /* best-effort */ }
-        const builtItems = buildListeningItems(exam.partType, exam.engineData, highlights, perQuestion || []);
-        const { scaled50, band } = computeScaleAndBand("listening", correct, total);
         return buildReviewSnapshot({
           skill: "listening",
-          part: exam.partType,
-          testTitle: exam.testTitle,
+          part: partType,
+          testTitle,
           score: correct, total,
           scaled50, band,
-          items: builtItems,
-          raw: {
-            engineData: exam.engineData,
-            perQuestion: perQuestion || [],
-            highlights,
-          },
+          items: buildListeningItems(partType, engineData, highlights, perQuestion || []),
+          raw: { engineData, perQuestion: perQuestion || [], highlights },
         });
       } catch { return null; }
-    })();
-    setExam((prev) => {
-      const timeSpent = prev.startedAt ? Math.floor((Date.now() - prev.startedAt) / 1000) : undefined;
-      saveExamResult({
-        examSetId: prev.examSetId ?? null,
-        skill: "listening",
-        correct, total, timeSpent,
-        perQuestion,
-        reviewSnapshot: snap,
-      });
-      return { ...prev, correct, total };
+    };
+
+    // 1) SAVE IMMEDIATELY — never gated behind an AI call.
+    const testResultId = await saveExamResult({
+      examSetId,
+      skill: "listening",
+      correct, total, timeSpent,
+      perQuestion,
+      reviewSnapshot: makeSnap({}),
     });
-    saveTestResult({ correct, total, skill: "listening" });
+
+    // 2) Enrich with AI highlights afterwards (best-effort, 8s timeout).
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { buildHighlightRequest } = await import("@/lib/listeningReview");
+      const partLike = { partType, ...(engineData || {}) } as any;
+      const items = buildHighlightRequest(partLike);
+      if (examSetId && testResultId && (items?.length || 0) > 0) {
+        const res: any = await Promise.race([
+          supabase.functions.invoke("listening-highlight", { body: { exam_set_id: examSetId, items } }),
+          new Promise((resolve) => setTimeout(() => resolve({ data: null }), 8000)),
+        ]);
+        const highlights = ((res?.data || {}) as any).highlights || {};
+        if (Object.keys(highlights).length > 0) {
+          const enriched = makeSnap(highlights);
+          if (enriched) {
+            await supabase.rpc("finalize_skill_test_result", {
+              p_test_result_id: testResultId,
+              p_score: correct,
+              p_total: total || 1,
+              p_level: null,
+              p_correct_answers: correct,
+              p_review_snapshot: enriched,
+            } as any);
+          }
+        }
+      }
+    } catch { /* best-effort */ }
   };
+
 
   const navigate = useNavigate();
   const handleExit = () => {
