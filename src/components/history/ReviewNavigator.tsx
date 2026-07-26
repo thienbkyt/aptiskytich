@@ -67,12 +67,26 @@ const ReviewNavigator = ({
 
   let totalCorrect = 0;
   let totalWrong = 0;
+  let hasObjective = false;
   for (let i = 0; i < pages.length; i++) {
     const st = statuses[i];
     if (!st || st.isAI) continue;
+    if (st.items.length > 0) hasObjective = true;
     for (const it of st.items) {
       if (it.isCorrect === true) totalCorrect++;
       else if (it.isCorrect === false) totalWrong++;
+    }
+  }
+
+  // Writing/Speaking are AI-graded — show band/score instead of correct/wrong counts.
+  const aiSummary: string[] = [];
+  if (!hasObjective) {
+    for (const sk of order) {
+      const meta = skillMeta[sk];
+      const fb = groups[sk].map((i) => statuses[i]?.band).find(Boolean) || null;
+      const band = meta?.band || fb;
+      const parts = [band, meta?.score50 != null ? `${meta.score50}/50` : null].filter(Boolean);
+      if (parts.length) aiSummary.push(`${SKILL_LABELS[sk] || sk}: ${parts.join(" · ")}`);
     }
   }
 
@@ -92,23 +106,37 @@ const ReviewNavigator = ({
         )}
       </div>
 
-      <div className="p-3 border-b border-border space-y-2">
-        <div className="text-xs">
-          <span className="font-semibold text-emerald-700 dark:text-emerald-400">{totalCorrect} đúng</span>
-          <span className="mx-1.5 text-muted-foreground">/</span>
-          <span className="font-semibold text-red-700 dark:text-red-400">{totalWrong} sai</span>
-          <span className="ml-1 text-muted-foreground">(Điểm số)</span>
+      {(hasObjective || aiSummary.length > 0) && (
+        <div className="p-3 border-b border-border space-y-2">
+          {hasObjective ? (
+            <>
+              <div className="text-xs">
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">{totalCorrect} đúng</span>
+                <span className="mx-1.5 text-muted-foreground">/</span>
+                <span className="font-semibold text-red-700 dark:text-red-400">{totalWrong} sai</span>
+                <span className="ml-1 text-muted-foreground">(Điểm số)</span>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={onlyWrong}
+                  onChange={onToggleOnlyWrong}
+                  className="rounded border-border"
+                />
+                Chỉ hiện câu sai
+              </label>
+            </>
+          ) : (
+            <div className="text-xs space-y-1">
+              {aiSummary.map((s) => (
+                <div key={s} className="font-semibold text-foreground">{s}</div>
+              ))}
+              <div className="text-muted-foreground font-normal">Bài chấm AI — không tính đúng/sai từng câu.</div>
+            </div>
+          )}
         </div>
-        <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={onlyWrong}
-            onChange={onToggleOnlyWrong}
-            className="rounded border-border"
-          />
-          Chỉ hiện câu sai
-        </label>
-      </div>
+      )}
+
 
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {order.map((sk) => {
