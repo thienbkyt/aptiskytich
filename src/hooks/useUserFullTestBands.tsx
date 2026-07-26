@@ -83,7 +83,7 @@ export const useUserFullTestBands = () => {
       if (!cancelled) setBands(map);
     })();
     return () => { cancelled = true; };
-  }, [user, authLoading]);
+  }, [user, authLoading, refreshKey]);
 
   return { bands };
 };
