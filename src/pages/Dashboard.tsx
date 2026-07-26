@@ -275,7 +275,10 @@ const Dashboard = () => {
             speakingAggMap[t.id],
           );
           const skillLabel = SKILL_LABELS[skill] || (skill !== "unknown" ? skill : "Bài luyện");
-          const partLabel = setInfo?.part ? `Part ${setInfo.part}` : (t.full_test_session_id ? "Full test" : "");
+          const partLabel = setInfo?.part
+            ? `Part ${setInfo.part}`
+            : (ss.fullPartSession ? "Full Part" : (t.full_test_session_id ? "Full test" : ""));
+
           return {
             id: t.id,
             dateTime: formatDateTime(t.created_at),

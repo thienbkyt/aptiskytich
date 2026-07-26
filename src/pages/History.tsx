@@ -252,7 +252,10 @@ const History = () => {
         // Full Test grouping
         const sessionMap = new Map<string, FullTestGroup>();
         for (const r of merged) {
-          if (!r.full_test_session_id) continue;
+          // Full Part sessions cũng ghi full_test_session_id + cờ fullPartSession —
+          // loại chúng để tab Full Test chỉ còn phiên thi thử thật.
+          if (!r.full_test_session_id || r.fullPartSession) continue;
+
           let g = sessionMap.get(r.full_test_session_id);
           if (!g) {
             g = {
@@ -393,13 +396,15 @@ const History = () => {
 
   // Top stats
   const stats = useMemo(() => {
-    const totalAttempts = perSkillRows.length + fullTestGroups.length;
+    const totalAttempts = perSkillRows.length + fullTestGroups.length + fullPartGroups.length;
     const weekStart = startOfWeek().getTime();
     const thisWeek =
       perSkillRows.filter((r) => toTimeSafe(r.created_at) >= weekStart).length +
-      fullTestGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
+      fullTestGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length +
+      fullPartGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
     return { totalAttempts, thisWeek };
-  }, [perSkillRows, fullTestGroups]);
+  }, [perSkillRows, fullTestGroups, fullPartGroups]);
+
 
 
   if (authLoading) {
