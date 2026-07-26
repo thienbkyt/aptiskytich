@@ -25,7 +25,6 @@ import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { useUserMarathonProgress } from "@/hooks/useUserMarathonProgress";
-import { saveTestResult } from "@/lib/testResults";
 import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
@@ -262,7 +261,6 @@ const Listening = () => {
     const timeSpent = exam.startedAt ? Math.floor((Date.now() - exam.startedAt) / 1000) : undefined;
 
     setExam((prev) => ({ ...prev, correct, total }));
-    saveTestResult({ correct, total, skill: "listening" });
 
     const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
     const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");

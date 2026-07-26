@@ -36,14 +36,12 @@ const ProgressBanner = ({ skill, skillLabel }: Props) => {
             .in("id", setIds);
           (sets || []).forEach((s: any) => { if (s.skill === skill) matchedSetIds.add(s.id); });
         }
-        // Count unique exam sets completed for this skill; fall back to skill_scores when no set linked
+        // Count unique exam sets completed for this skill
         const uniq = new Set<string>();
-        let fallback = 0;
         results.forEach((r: any) => {
           if (r.exam_set_id && matchedSetIds.has(r.exam_set_id)) uniq.add(r.exam_set_id);
-          else if (!r.exam_set_id && r.skill_scores?.skill === skill) fallback += 1;
         });
-        if (!cancelled) setCount(uniq.size + fallback);
+        if (!cancelled) setCount(uniq.size);
       } catch {
         if (!cancelled) setCount(0);
       }
