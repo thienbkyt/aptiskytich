@@ -343,7 +343,7 @@ const Reading = () => {
               p_test_result_id: testResultId,
               p_score: correct,
               p_total: total || 1,
-              p_level: band,
+              p_level: null,
               p_correct_answers: correct,
               p_review_snapshot: enriched,
             } as any);
