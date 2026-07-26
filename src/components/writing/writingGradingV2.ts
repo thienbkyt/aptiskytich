@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
+import { splitWritingErrors } from "@/lib/writingErrorFilter";
+
 
 export type WritingBandsV2 = {
   tf: string; // "0".."5" (Part 1: aggregate content-band 0..5)
