@@ -31,10 +31,22 @@ export const useUserMarathonProgress = (skill: "reading" | "listening") => {
       (data || []).forEach((r: any) => {
         const ss = r.skill_scores || {};
         if (ss.mode !== "marathon" || ss.skill !== skill) return;
-        const m = String(ss.label || "").match(/Part\s*(\d)/i);
-        if (!m) return;
+        // Prefer the explicit part code written at save time.
+        let part: string | null =
+          typeof ss.partType === "string" && /^part[1-9]$/.test(ss.partType) ? ss.partType : null;
+        if (!part) {
+          // Legacy rows: derive from the display label, per skill (Reading labels are offset).
+          const m = String(ss.label || "").match(/Part\s*(\d)(\s*\+\s*\d)?/i);
+          if (!m) return;
+          const n = m[1];
+          if (skill === "reading") {
+            part = n === "1" ? "part1" : n === "2" ? "part2" : n === "4" ? "part3" : n === "5" ? "part4" : null;
+          } else {
+            part = `part${n}`;
+          }
+        }
+        if (!part) return;
         if (!r.total || r.total <= 0 || r.score > r.total) return;
-        const part = `part${m[1]}`;
         const prev = map.get(part);
         if (!prev || r.score > prev.bestScore) {
           map.set(part, { bestScore: r.score, total: r.total, bestPct: Math.round((r.score / r.total) * 100) });

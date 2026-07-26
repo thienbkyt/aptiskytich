@@ -278,6 +278,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         total: accTotal_,
         extraSkillScores: {
           label: `Marathon · ${partName}`,
+          partType,
           done: reviewable_.length,
           totalSets: sets.length,
         },
