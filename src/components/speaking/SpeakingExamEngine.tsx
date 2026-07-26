@@ -332,6 +332,24 @@ const SpeakingExamEngine = ({
           console.warn("[Speaking V2] save skill result failed:", e);
         }
 
+        // Persist the official skill score into the test_results row itself
+        // (real columns + snapshot) so History/Dashboard don't show 0 / A1.
+        try {
+          if (testResultIdRef.current) {
+            const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+            await mergeSnapshotAI(testResultIdRef.current, {}, {
+              score: scale50Out,
+              total: 50,
+              scaled50: scale50Out,
+              band: cefrOut || null,
+            });
+          }
+        } catch (e) {
+          console.warn("[Speaking V2] persist score failed:", e);
+        }
+
+
+
       } catch (e: any) {
         console.error("[Speaking V2] grading failed:", e);
         setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
