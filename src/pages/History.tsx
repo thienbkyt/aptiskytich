@@ -198,8 +198,12 @@ const History = () => {
             .eq("user_id", user.id)
             .not("full_test_session_id", "is", null),
         ]);
-        const officialBySession: Record<string, { scale50: number; cefr: string | null }> = {};
-        const collectOfficial = (list: any[] | null) => {
+        type OfficialScore = { scale50: number; cefr: string | null };
+        // Writing và Speaking phải TÁCH map riêng: trong phiên Full Test thật hai kỹ năng
+        // dùng CHUNG một full_test_session_id nên gộp chung sẽ bị ghi đè lẫn nhau.
+        const writingOfficialBySession: Record<string, OfficialScore> = {};
+        const speakingOfficialBySession: Record<string, OfficialScore> = {};
+        const collectOfficial = (list: any[] | null, target: Record<string, OfficialScore>) => {
           (list || [])
             .slice()
             .sort((a, b) => toTimeSafe(a.created_at) - toTimeSafe(b.created_at))
@@ -207,11 +211,12 @@ const History = () => {
               const sid = r.full_test_session_id as string;
               const s50 = Number(r.scale50);
               if (!sid || !Number.isFinite(s50) || s50 <= 0) return;
-              officialBySession[sid] = { scale50: Math.round(s50), cefr: r.cefr ?? null };
+              target[sid] = { scale50: Math.round(s50), cefr: r.cefr ?? null };
             });
         };
-        collectOfficial(wsr as any[]);
-        collectOfficial(ssr as any[]);
+        collectOfficial(wsr as any[], writingOfficialBySession);
+        collectOfficial(ssr as any[], speakingOfficialBySession);
+
 
 
         const merged: HistoryRow[] = (results || []).map((r: any) => {
