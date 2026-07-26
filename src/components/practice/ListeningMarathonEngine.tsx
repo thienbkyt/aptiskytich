@@ -222,7 +222,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets, results, persist, partType, drafts]);
+  }, [currentIndex, sets, results, persist, partType, drafts, loaded]);
 
   const partName =
     partType === "part1" ? "Part 1"

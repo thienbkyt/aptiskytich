@@ -247,7 +247,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets, results, persist, partType]);
+  }, [currentIndex, sets, results, persist, partType, engineData, partName, drafts]);
 
   // Build a snapshot + upsert the single per-session History row. Called from
   // completed effect and from exit — same row is updated across both paths.
