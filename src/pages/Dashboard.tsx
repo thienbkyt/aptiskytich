@@ -125,15 +125,16 @@ const Dashboard = () => {
       try {
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-        const [profileRes, streakRes, testsRes, allResultsRes, speakingGradRes, writingGradRes, examGradRes] = await Promise.all([
+        const [profileRes, streakRes, testsRes, allResultsRes, speakingSkillRes, writingSkillRes] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
           supabase.from("test_results").select("id,score,total,level,created_at,skill_scores,review_snapshot,exam_set_id,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
           supabase.from("test_results").select("skill_scores,created_at").eq("user_id", user.id),
-          supabase.from("speaking_question_gradings").select("part_score,max_points").eq("user_id", user.id),
-          supabase.from("writing_question_gradings").select("part_score,max_points").eq("user_id", user.id),
-          supabase.from("exam_gradings").select("criteria").eq("user_id", user.id).eq("skill", "writing"),
+          // Nguồn điểm duy nhất cho Speaking/Writing: bảng kết quả kỹ năng đã lưu.
+          supabase.from("speaking_skill_results").select("scale50").eq("user_id", user.id),
+          supabase.from("writing_skill_results").select("scale50").eq("user_id", user.id),
         ]);
+
 
         if (cancelled) return;
 
@@ -179,28 +180,18 @@ const Dashboard = () => {
         };
         const clampPct = (n: number) => Math.max(0, Math.min(100, n));
 
-        // Speaking % from AI gradings
-        let sCorrect = 0, sMax = 0;
-        (speakingGradRes.data || []).forEach((r: any) => {
-          sCorrect += Number(r.part_score) || 0;
-          sMax += Number(r.max_points) || 0;
-        });
-        const speakingPct = sMax > 0 ? clampPct(Math.round((sCorrect / sMax) * 100)) : 0;
+        // Speaking/Writing %: đọc điểm /50 đã lưu, không tự tính lại từ bảng gradings.
+        const avgScale50Pct = (list: any[] | null | undefined) => {
+          const vals = (list || [])
+            .map((r: any) => Number(r.scale50))
+            .filter((n) => Number.isFinite(n) && n > 0);
+          if (vals.length === 0) return 0;
+          const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+          return clampPct(Math.round((avg / 50) * 100));
+        };
+        const speakingPct = avgScale50Pct(speakingSkillRes.data as any[]);
+        const writingPct = avgScale50Pct(writingSkillRes.data as any[]);
 
-        // Writing % from AI: writing_question_gradings + exam_gradings(writing).criteria
-        let wCorrect = 0, wMax = 0;
-        (writingGradRes.data || []).forEach((r: any) => {
-          wCorrect += Number(r.part_score) || 0;
-          wMax += Number(r.max_points) || 0;
-        });
-        (examGradRes.data || []).forEach((r: any) => {
-          const c = r.criteria;
-          if (c && typeof c === "object") {
-            wCorrect += Number((c as any).partScore) || 0;
-            wMax += Number((c as any).maxPoints) || 0;
-          }
-        });
-        const writingPct = wMax > 0 ? clampPct(Math.round((wCorrect / wMax) * 100)) : 0;
 
         const nowVN = toVNDate(new Date());
         const todayIdx = vnWeekdayIndex(new Date());

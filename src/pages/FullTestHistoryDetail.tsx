@@ -127,14 +127,61 @@ const FullTestHistoryDetail = () => {
   const toScore50 = (correct: number, total: number) =>
     total > 0 ? Math.round((correct / total) * 50) : 0;
 
+  // Writing/Speaking: ĐỌC scale50 + cefr đã lưu theo mã phiên (không cộng dồn row,
+  // vì các part Writing lưu thang /30 lẫn /50 nên cộng trộn sẽ sai).
+  const [officialSkill, setOfficialSkill] = useState<
+    Partial<Record<SkillKey, { scale50: number; cefr?: string | null }>>
+  >({});
+  useEffect(() => {
+    if (!user || !sessionId) return;
+    let cancelled = false;
+    (async () => {
+      const [{ data: wsr }, { data: ssr }] = await Promise.all([
+        supabase
+          .from("writing_skill_results")
+          .select("scale50,cefr,created_at")
+          .eq("user_id", user.id)
+          .eq("full_test_session_id", sessionId)
+          .order("created_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from("speaking_skill_results")
+          .select("scale50,cefr,created_at")
+          .eq("user_id", user.id)
+          .eq("full_test_session_id", sessionId)
+          .order("created_at", { ascending: false })
+          .limit(1),
+      ]);
+      if (cancelled) return;
+      const next: Partial<Record<SkillKey, { scale50: number; cefr?: string | null }>> = {};
+      const w: any = (wsr || [])[0];
+      if (w && Number.isFinite(Number(w.scale50)) && Number(w.scale50) > 0) {
+        next.writing = { scale50: Math.round(Number(w.scale50)), cefr: w.cefr ?? null };
+      }
+      const s: any = (ssr || [])[0];
+      if (s && Number.isFinite(Number(s.scale50)) && Number(s.scale50) > 0) {
+        next.speaking = { scale50: Math.round(Number(s.scale50)), cefr: s.cefr ?? null };
+      }
+      setOfficialSkill(next);
+    })();
+    return () => { cancelled = true; };
+  }, [user, sessionId]);
+
   const skillScore50s = useMemo(
-    () => SKILL_ORDER.map((sk) => skillAgg[sk]).filter((a) => a.total > 0).map((a) => toScore50(a.correct, a.total)),
-    [skillAgg]
+    () =>
+      SKILL_ORDER.map((sk) => {
+        const o = officialSkill[sk];
+        if (o) return o.scale50;
+        const a = skillAgg[sk];
+        return a.total > 0 ? toScore50(a.correct, a.total) : null;
+      }).filter((v): v is number => v != null),
+    [skillAgg, officialSkill]
   );
   const avgScore50 = skillScore50s.length
     ? skillScore50s.reduce((a, b) => a + b, 0) / skillScore50s.length
     : 0;
   const overallLevel = skillScore50s.length > 0 ? getLevel(Math.round(avgScore50), 50) : "—";
+
 
   // Speaking in full-test stores ONE aggregate test_results row covering all parts,
   // but for review we want one page per speaking exam_set. Resolve member sets.
@@ -267,7 +314,7 @@ const FullTestHistoryDetail = () => {
               </div>
 
               {/* Aptis score table */}
-              <FullTestScoreTable scores={skillAgg as any} />
+              <FullTestScoreTable scores={skillAgg as any} overrides={officialSkill} />
 
               <div className="flex flex-wrap justify-center gap-3 mt-6">
                 <Button

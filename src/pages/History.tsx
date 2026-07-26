@@ -198,8 +198,12 @@ const History = () => {
             .eq("user_id", user.id)
             .not("full_test_session_id", "is", null),
         ]);
-        const officialBySession: Record<string, { scale50: number; cefr: string | null }> = {};
-        const collectOfficial = (list: any[] | null) => {
+        type OfficialScore = { scale50: number; cefr: string | null };
+        // Writing và Speaking phải TÁCH map riêng: trong phiên Full Test thật hai kỹ năng
+        // dùng CHUNG một full_test_session_id nên gộp chung sẽ bị ghi đè lẫn nhau.
+        const writingOfficialBySession: Record<string, OfficialScore> = {};
+        const speakingOfficialBySession: Record<string, OfficialScore> = {};
+        const collectOfficial = (list: any[] | null, target: Record<string, OfficialScore>) => {
           (list || [])
             .slice()
             .sort((a, b) => toTimeSafe(a.created_at) - toTimeSafe(b.created_at))
@@ -207,11 +211,12 @@ const History = () => {
               const sid = r.full_test_session_id as string;
               const s50 = Number(r.scale50);
               if (!sid || !Number.isFinite(s50) || s50 <= 0) return;
-              officialBySession[sid] = { scale50: Math.round(s50), cefr: r.cefr ?? null };
+              target[sid] = { scale50: Math.round(s50), cefr: r.cefr ?? null };
             });
         };
-        collectOfficial(wsr as any[]);
-        collectOfficial(ssr as any[]);
+        collectOfficial(wsr as any[], writingOfficialBySession);
+        collectOfficial(ssr as any[], speakingOfficialBySession);
+
 
 
         const merged: HistoryRow[] = (results || []).map((r: any) => {
@@ -294,13 +299,23 @@ const History = () => {
         const groups = Array.from(sessionMap.values()).map((g) => {
           g.skillCount = new Set(g.rows.map((r) => r.skill)).size;
           let total = 0, has = false, gv: number | null = null;
+          const scaledBySkill: Record<string, number> = {};
           for (const sk of Object.keys(g.skillAgg)) {
             const { num, den } = g.skillAgg[sk];
             if (den <= 0) continue;
-            const scaled = Math.min(50, Math.round((num / den) * 50));
+            scaledBySkill[sk] = Math.min(50, Math.round((num / den) * 50));
+          }
+          // Writing/Speaking: ĐỌC điểm đã lưu, không tự tính lại từ bảng gradings.
+          const wOff = writingOfficialBySession[g.sessionId];
+          if (wOff) scaledBySkill.writing = wOff.scale50;
+          const sOff = speakingOfficialBySession[g.sessionId];
+          if (sOff) scaledBySkill.speaking = sOff.scale50;
+          for (const sk of Object.keys(scaledBySkill)) {
+            const scaled = scaledBySkill[sk];
             if (sk === "grammar") gv = scaled;
             else if (FOUR_SKILLS.includes(sk)) { total += scaled; has = true; }
           }
+
           g.totalScaled = total; g.gvScaled = gv; g.hasScaled = has;
           return g;
         });
@@ -346,9 +361,10 @@ const History = () => {
         const fpGroups = Array.from(fpMap.values()).map((g) => {
           const isGrammar = g.skill === "grammar";
           const official =
-            g.skill === "writing" || g.skill === "speaking"
-              ? officialBySession[g.sessionId]
-              : undefined;
+            g.skill === "writing" ? writingOfficialBySession[g.sessionId]
+            : g.skill === "speaking" ? speakingOfficialBySession[g.sessionId]
+            : undefined;
+
           if (official) {
             // Stored rubric-weighted score — display as saved, no recomputation.
             g.displayScore = `${official.scale50}/50`;
