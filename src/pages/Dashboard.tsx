@@ -155,10 +155,14 @@ const Dashboard = () => {
         allResults.forEach((row: any) => {
           const ss = row.skill_scores;
           if (!ss || typeof ss !== "object") return;
+          // Marathon lưu 2 loại row: row tổng (mode "marathon") và row per-set
+          // (mode "marathon-set"). Chỉ tính row per-set để không nhân đôi.
+          if (ss.mode === "marathon") return;
           const skill = ss.skill;
           const correct = Number(ss.correct) || 0;
           const total = Number(ss.total) || 0;
           if (!skill || total <= 0) return;
+
           if (!skillAgg[skill]) skillAgg[skill] = { correct: 0, total: 0 };
           skillAgg[skill].correct += correct;
           skillAgg[skill].total += total;

@@ -193,14 +193,34 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults, answers } as any;
     // Also save a per-set record so this exam shows as "Đã làm" in the part list.
     if (persist) {
-      saveExamResult({
-        examSetId: set.id,
-        skill: "reading",
-        correct, total,
-        perQuestion,
-        extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
-      });
+      const edSnapshot = engineData;
+      (async () => {
+        let snap: any = null;
+        try {
+          const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+          const { buildReadingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+          const { scaled50, band } = computeScaleAndBand("reading", correct, total);
+          snap = buildReviewSnapshot({
+            skill: "reading",
+            part: partType,
+            testTitle: `${partName} · Đề ${currentIndex + 1}/${sets.length}`,
+            score: correct, total,
+            scaled50, band,
+            items: buildReadingItems(partType as any, edSnapshot, {}, {}, qResults || []),
+            raw: { engineData: edSnapshot, perQuestion: qResults || [], translations: {}, part3Evidence: {} },
+          });
+        } catch { /* noop */ }
+        saveExamResult({
+          examSetId: set.id,
+          skill: "reading",
+          correct, total,
+          perQuestion,
+          reviewSnapshot: snap,
+          extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
+        });
+      })();
     }
+
     const nextResults = results.slice();
     nextResults[currentIndex] = entry;
     const isLastSet = currentIndex >= sets.length - 1;
