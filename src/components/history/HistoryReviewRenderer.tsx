@@ -153,8 +153,11 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
         setWritingGrading({
           partType: part, partScore: match.part_score || 0, maxPoints: match.max_points || 0,
           addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
-          grammarErrors: (match.grammar_errors as any) || (wsrPart?.grammarErrors as any) || [],
-          spellingErrors: (match.spelling_errors as any) || (wsrPart?.spellingErrors as any) || [],
+          ...splitWritingErrors(
+            (match.grammar_errors as any) || (wsrPart?.grammarErrors as any) || [],
+            (match.spelling_errors as any) || (wsrPart?.spellingErrors as any) || [],
+          ),
+
           feedback: match.feedback || wsrPart?.feedback || "",
           improvedVersion, upgradeTips,
         } as any);
