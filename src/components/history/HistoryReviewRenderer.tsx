@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { splitWritingErrors } from "@/lib/writingErrorFilter";
+
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import {
   toGrammarQuestions,
