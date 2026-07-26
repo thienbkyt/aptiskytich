@@ -314,7 +314,7 @@ const FullTestHistoryDetail = () => {
               </div>
 
               {/* Aptis score table */}
-              <FullTestScoreTable scores={skillAgg as any} />
+              <FullTestScoreTable scores={skillAgg as any} overrides={officialSkill} />
 
               <div className="flex flex-wrap justify-center gap-3 mt-6">
                 <Button
