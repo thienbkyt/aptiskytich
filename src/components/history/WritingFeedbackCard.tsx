@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { splitWritingErrors } from "@/lib/writingErrorFilter";
+
 
 interface Props {
   userId: string;
@@ -59,8 +61,11 @@ const WritingFeedbackCard = ({ userId, testResultId }: Props) => {
   return (
     <div className="max-w-3xl mx-auto px-4 pt-4 space-y-4">
       {rows.map((g, i) => {
-        const grammar = (g.grammar_errors as any[]) || [];
-        const spelling = (g.spelling_errors as any[]) || [];
+        const { grammarErrors: grammar, spellingErrors: spelling } = splitWritingErrors(
+          g.grammar_errors as any[],
+          g.spelling_errors as any[],
+        );
+
         return (
           <div key={i} className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between mb-2">

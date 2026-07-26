@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
+import { splitWritingErrors } from "@/lib/writingErrorFilter";
+
 
 export type WritingBandsV2 = {
   tf: string; // "0".."5" (Part 1: aggregate content-band 0..5)
@@ -103,8 +105,8 @@ export async function gradeWritingPartV2(
     analysis: data.analysis ?? "",
     criteriaAnalysis: data.criteriaAnalysis ?? undefined,
     feedback: data.feedback ?? "",
-    grammarErrors: Array.isArray(data.grammarErrors) ? data.grammarErrors : [],
-    spellingErrors: Array.isArray(data.spellingErrors) ? data.spellingErrors : [],
+    ...splitWritingErrors(data.grammarErrors, data.spellingErrors),
+
     improvedVersion: data.improvedVersion ?? "",
     forcedComplexity: !!data.forcedComplexity,
   };
