@@ -50,10 +50,12 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
 
   if (!grading) return null;
 
+  const clean = splitWritingErrors(grading.grammarErrors, grading.spellingErrors);
   const allErrors = [
-    ...(grading.grammarErrors || []).map((e) => ({ ...e, kind: "Ngữ pháp" })),
-    ...(grading.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
+    ...clean.grammarErrors.map((e) => ({ ...e, kind: "Ngữ pháp" })),
+    ...clean.spellingErrors.map((e) => ({ ...e, kind: "Chính tả" })),
   ];
+
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
