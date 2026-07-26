@@ -339,8 +339,18 @@ const History = () => {
           }
         }
         const fpGroups = Array.from(fpMap.values()).map((g) => {
-          const scaled = g.den > 0 ? Math.round((g.num / g.den) * 50) : null;
           const isGrammar = g.skill === "grammar";
+          const official =
+            g.skill === "writing" || g.skill === "speaking"
+              ? officialBySession[g.sessionId]
+              : undefined;
+          if (official) {
+            // Stored rubric-weighted score — display as saved, no recomputation.
+            g.displayScore = `${official.scale50}/50`;
+            g.displayBand = official.cefr || getSkillBand(official.scale50, g.skill as any);
+            return g;
+          }
+          const scaled = g.den > 0 ? Math.round((g.num / g.den) * 50) : null;
           g.displayScore = scaled != null ? `${scaled}/50` : "—";
           g.displayBand = scaled != null && !isGrammar ? getSkillBand(scaled, g.skill as any) : "—";
           return g;
