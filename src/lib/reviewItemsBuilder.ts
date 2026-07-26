@@ -371,11 +371,32 @@ export async function mergeSnapshotAI(
       items: nextItems,
       ...(extra || {}),
     };
+
+    // 1) Snapshot write (many screens read review_snapshot).
     await supabase
       .from("test_results")
       .update({ review_snapshot: updated as any })
       .eq("id", testResultId);
+
+    // 2) Real columns (score/total/level) — same contract as the
+    //    `process-grading-jobs` worker. Integers, clamped to [0, total].
+    const rawTotal = Number(extra?.total);
+    const rawScore = Number(extra?.score);
+    if (Number.isFinite(rawTotal) && rawTotal > 0 && Number.isFinite(rawScore)) {
+      const total = Math.round(rawTotal);
+      const score = Math.max(0, Math.min(total, Math.round(rawScore)));
+      const level = extra?.band ? String(extra.band) : undefined;
+      const { error: rpcErr } = await supabase.rpc("finalize_skill_test_result", {
+        p_test_result_id: testResultId,
+        p_score: score,
+        p_total: total,
+        p_correct_answers: score,
+        ...(level ? { p_level: level } : {}),
+      } as any);
+      if (rpcErr) console.warn("[mergeSnapshotAI] finalize failed", rpcErr);
+    }
   } catch (e) {
     console.warn("[mergeSnapshotAI] skipped", e);
   }
 }
+
