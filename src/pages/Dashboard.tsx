@@ -125,15 +125,16 @@ const Dashboard = () => {
       try {
         const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-        const [profileRes, streakRes, testsRes, allResultsRes, speakingGradRes, writingGradRes, examGradRes] = await Promise.all([
+        const [profileRes, streakRes, testsRes, allResultsRes, speakingSkillRes, writingSkillRes] = await Promise.all([
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
           supabase.from("test_results").select("id,score,total,level,created_at,skill_scores,review_snapshot,exam_set_id,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
           supabase.from("test_results").select("skill_scores,created_at").eq("user_id", user.id),
-          supabase.from("speaking_question_gradings").select("part_score,max_points").eq("user_id", user.id),
-          supabase.from("writing_question_gradings").select("part_score,max_points").eq("user_id", user.id),
-          supabase.from("exam_gradings").select("criteria").eq("user_id", user.id).eq("skill", "writing"),
+          // Nguồn điểm duy nhất cho Speaking/Writing: bảng kết quả kỹ năng đã lưu.
+          supabase.from("speaking_skill_results").select("scale50").eq("user_id", user.id),
+          supabase.from("writing_skill_results").select("scale50").eq("user_id", user.id),
         ]);
+
 
         if (cancelled) return;
 
