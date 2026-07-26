@@ -1345,6 +1345,36 @@ export type Database = {
         }
         Relationships: []
       }
+      score_backfill_backup_2026_07: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          old_level: string | null
+          old_review_snapshot: Json | null
+          old_score: number | null
+          old_total: number | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          kind: string
+          old_level?: string | null
+          old_review_snapshot?: Json | null
+          old_score?: number | null
+          old_total?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          old_level?: string | null
+          old_review_snapshot?: Json | null
+          old_score?: number | null
+          old_total?: number | null
+        }
+        Relationships: []
+      }
       sentence_translation_cache: {
         Row: {
           created_at: string
