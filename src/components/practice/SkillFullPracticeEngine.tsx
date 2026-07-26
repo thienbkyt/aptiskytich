@@ -1052,7 +1052,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
               }, {
                 score: v2.rawPart,
                 total: 30,
-                scaled50: Math.round((v2.rawPart / 30) * 50),
+                // Per-part figure only — NOT the skill score. Never sum/average these.
+                partScaled50: Math.round((v2.rawPart / 30) * 50),
               });
             }
           } catch (e) { console.warn("[SkillFullPractice v2] bake AI failed", e); }

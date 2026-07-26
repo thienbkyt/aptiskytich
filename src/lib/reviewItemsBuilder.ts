@@ -345,7 +345,11 @@ export function speakingQuestionsFromPart(
 export async function mergeSnapshotAI(
   testResultId: string | null | undefined,
   aiByIndex: Record<number, ReviewSnapshotAI>,
-  extra?: { score?: number; total?: number; band?: string | null; scaled50?: number | null },
+  /**
+   * `scaled50` = official skill score (only for whole-skill attempts).
+   * `partScaled50` = per-part-only figure, meaningless when summed across parts.
+   */
+  extra?: { score?: number; total?: number; band?: string | null; scaled50?: number | null; partScaled50?: number | null },
 ): Promise<void> {
   if (!testResultId) return;
   try {

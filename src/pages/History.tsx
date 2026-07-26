@@ -184,6 +184,36 @@ const History = () => {
           speakingAggMap[g.test_result_id] = a;
         });
 
+        // Official Writing/Speaking skill scores (single source of truth),
+        // keyed by full-part session id. History must READ these, never recompute.
+        const [{ data: wsr }, { data: ssr }] = await Promise.all([
+          supabase
+            .from("writing_skill_results")
+            .select("full_test_session_id,scale50,cefr,created_at")
+            .eq("user_id", user.id)
+            .not("full_test_session_id", "is", null),
+          supabase
+            .from("speaking_skill_results")
+            .select("full_test_session_id,scale50,cefr,created_at")
+            .eq("user_id", user.id)
+            .not("full_test_session_id", "is", null),
+        ]);
+        const officialBySession: Record<string, { scale50: number; cefr: string | null }> = {};
+        const collectOfficial = (list: any[] | null) => {
+          (list || [])
+            .slice()
+            .sort((a, b) => toTimeSafe(a.created_at) - toTimeSafe(b.created_at))
+            .forEach((r: any) => {
+              const sid = r.full_test_session_id as string;
+              const s50 = Number(r.scale50);
+              if (!sid || !Number.isFinite(s50) || s50 <= 0) return;
+              officialBySession[sid] = { scale50: Math.round(s50), cefr: r.cefr ?? null };
+            });
+        };
+        collectOfficial(wsr as any[]);
+        collectOfficial(ssr as any[]);
+
+
         const merged: HistoryRow[] = (results || []).map((r: any) => {
           const setInfo = r.exam_set_id ? setsMap[r.exam_set_id] : undefined;
           const ss = (r.skill_scores || {}) as any;
@@ -297,8 +327,10 @@ const History = () => {
             if (a && a.max > 0) {
               g.num += a.sum; g.den += a.max;
             } else {
+              // Fallback only (no stored skill result): per-part figures.
               const snap: any = r.review_snapshot || {};
-              const s50 = typeof snap.scaled50 === "number" ? snap.scaled50 : null;
+              const s50 = typeof snap.partScaled50 === "number" ? snap.partScaled50
+                : typeof snap.scaled50 === "number" ? snap.scaled50 : null;
               if (s50 != null) { g.num += s50; g.den += 50; }
             }
           } else {
@@ -309,8 +341,18 @@ const History = () => {
           }
         }
         const fpGroups = Array.from(fpMap.values()).map((g) => {
-          const scaled = g.den > 0 ? Math.round((g.num / g.den) * 50) : null;
           const isGrammar = g.skill === "grammar";
+          const official =
+            g.skill === "writing" || g.skill === "speaking"
+              ? officialBySession[g.sessionId]
+              : undefined;
+          if (official) {
+            // Stored rubric-weighted score — display as saved, no recomputation.
+            g.displayScore = `${official.scale50}/50`;
+            g.displayBand = official.cefr || getSkillBand(official.scale50, g.skill as any);
+            return g;
+          }
+          const scaled = g.den > 0 ? Math.round((g.num / g.den) * 50) : null;
           g.displayScore = scaled != null ? `${scaled}/50` : "—";
           g.displayBand = scaled != null && !isGrammar ? getSkillBand(scaled, g.skill as any) : "—";
           return g;
