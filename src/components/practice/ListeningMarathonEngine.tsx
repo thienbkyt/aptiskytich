@@ -169,14 +169,34 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults };
     // Also save a per-set record so this exam shows as "Đã làm" in the part list.
     if (persist) {
-      saveExamResult({
-        examSetId: set.id,
-        skill: "listening",
-        correct, total,
-        perQuestion,
-        extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
-      });
+      const edSnapshot = loaded?.[currentIndex]?.engineData ?? null;
+      (async () => {
+        let snap: any = null;
+        try {
+          const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
+          const { buildListeningItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
+          const { scaled50, band } = computeScaleAndBand("listening", correct, total);
+          snap = buildReviewSnapshot({
+            skill: "listening",
+            part: partType,
+            testTitle: `Đề ${currentIndex + 1}/${sets.length}`,
+            score: correct, total,
+            scaled50, band,
+            items: buildListeningItems(partType as any, edSnapshot, {}, qResults || []),
+            raw: { engineData: edSnapshot, perQuestion: qResults || [], highlights: {} },
+          });
+        } catch { /* noop */ }
+        saveExamResult({
+          examSetId: set.id,
+          skill: "listening",
+          correct, total,
+          perQuestion,
+          reviewSnapshot: snap,
+          extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
+        });
+      })();
     }
+
     const nextResults = results.slice();
     nextResults[currentIndex] = entry;
     const isLastSet = currentIndex >= sets.length - 1;
@@ -202,7 +222,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets, results, persist, partType, drafts]);
+  }, [currentIndex, sets, results, persist, partType, drafts, loaded]);
 
   const partName =
     partType === "part1" ? "Part 1"
