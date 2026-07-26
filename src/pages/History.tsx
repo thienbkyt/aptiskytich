@@ -327,8 +327,10 @@ const History = () => {
             if (a && a.max > 0) {
               g.num += a.sum; g.den += a.max;
             } else {
+              // Fallback only (no stored skill result): per-part figures.
               const snap: any = r.review_snapshot || {};
-              const s50 = typeof snap.scaled50 === "number" ? snap.scaled50 : null;
+              const s50 = typeof snap.partScaled50 === "number" ? snap.partScaled50
+                : typeof snap.scaled50 === "number" ? snap.scaled50 : null;
               if (s50 != null) { g.num += s50; g.den += 50; }
             }
           } else {
