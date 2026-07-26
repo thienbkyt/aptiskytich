@@ -361,9 +361,10 @@ const History = () => {
         const fpGroups = Array.from(fpMap.values()).map((g) => {
           const isGrammar = g.skill === "grammar";
           const official =
-            g.skill === "writing" || g.skill === "speaking"
-              ? officialBySession[g.sessionId]
-              : undefined;
+            g.skill === "writing" ? writingOfficialBySession[g.sessionId]
+            : g.skill === "speaking" ? speakingOfficialBySession[g.sessionId]
+            : undefined;
+
           if (official) {
             // Stored rubric-weighted score — display as saved, no recomputation.
             g.displayScore = `${official.scale50}/50`;
