@@ -1,6 +1,8 @@
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { Eye, Loader2 } from "lucide-react";
 import UpgradeLock from "@/components/pro/UpgradeLock";
+import { splitWritingErrors } from "@/lib/writingErrorFilter";
+
 
 interface SubmissionPart {
   prompt: string;
