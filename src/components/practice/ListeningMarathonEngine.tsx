@@ -8,7 +8,7 @@ import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
 import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
 } from "@/lib/examTransformers";
-import { upsertMarathonResult } from "@/lib/saveExamResult";
+import { upsertMarathonResult, saveExamResult } from "@/lib/saveExamResult";
 import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
@@ -167,6 +167,16 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     const set = sets[currentIndex];
     const qResults: QResult[] = Array.isArray(perQuestion) ? (perQuestion as QResult[]) : [];
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults };
+    // Also save a per-set record so this exam shows as "Đã làm" in the part list.
+    if (persist) {
+      saveExamResult({
+        examSetId: set.id,
+        skill: "listening",
+        correct, total,
+        perQuestion,
+        extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
+      });
+    }
     const nextResults = results.slice();
     nextResults[currentIndex] = entry;
     const isLastSet = currentIndex >= sets.length - 1;
