@@ -634,11 +634,11 @@ const ProUsersSection = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder={studentsLoading ? "Đang tải danh sách user..." : "VD: nguyen@gmail.com"}
+                  placeholder="Gõ ít nhất 2 ký tự: VD nguyen@gmail.com"
                   value={selected ? selected.email : search}
                   onChange={(e) => { setSelected(null); setSearch(e.target.value); }}
                   className="pl-9"
-                  disabled={studentsLoading}
+
                 />
               </div>
               {!selected && matches.length > 0 && (
