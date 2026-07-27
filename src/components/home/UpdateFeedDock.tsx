@@ -1,16 +1,15 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, X, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useUpdateFeed, relativeLabel, isToday, type FeedItem } from "@/hooks/useUpdateFeed";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { safeSessionStorage } from "@/lib/safeStorage";
 
 const RED = "#CC1C01";
 const ORANGE = "#FEAD5F";
 const CREAM = "#FFF8F5";
-const DISMISS_KEY = "home-update-dock-dismissed";
+
 
 const FILTERS: { key: string; label: string }[] = [
   { key: "all", label: "Tất cả" },
