@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, X, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -118,9 +119,8 @@ const UpdateFeedDock = () => {
 
   const showPanel = !isMobile || expanded;
 
-  return (
-    <>
-      <div className="fixed z-[80] left-4 bottom-4 max-w-[calc(100vw-2rem)]">
+  const dock = (
+    <div className="fixed z-[120] left-4 bottom-4 max-w-[calc(100vw-2rem)]">
         {isMobile && !expanded && (
           <button
             type="button"
@@ -187,7 +187,12 @@ const UpdateFeedDock = () => {
             </button>
           </div>
         )}
-      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {typeof document !== "undefined" ? createPortal(dock, document.body) : dock}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden">
