@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import UpdateFeedSection from "@/components/home/UpdateFeedSection";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
@@ -271,6 +272,8 @@ const Index = () => {
           </motion.div>
         </div>
       </section>
+
+      <UpdateFeedSection />
 
       {/* Trust bar — 5 key advantages */}
       <section className="relative py-8 md:py-10" style={{ background: "#FFFFFF" }}>

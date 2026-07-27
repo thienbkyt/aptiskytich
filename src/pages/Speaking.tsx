@@ -74,7 +74,7 @@ const Speaking = () => {
     description: "Luyện Speaking Aptis 4 parts với AI chấm fluency, pronunciation, grammar, vocabulary theo CEFR A1–C1. Có ghi âm và feedback chi tiết.",
     path: "/speaking",
   });
-  const [activeTab, setActiveTab] = useState("full");
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("speaking");
   const { guard, isLocked, LockModal } = useExamAccessGate();

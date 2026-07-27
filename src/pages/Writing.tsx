@@ -78,7 +78,7 @@ const Writing = () => {
     description: "Luyện Writing Aptis 4 parts: AI chấm Task Response, Grammar, Vocabulary, Coherence; highlight lỗi và gợi ý nâng cấp câu.",
     path: "/writing",
   });
-  const [activeTab, setActiveTab] = useState("full");
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("writing");
   const { guard, isLocked, LockModal } = useExamAccessGate();

@@ -124,7 +124,9 @@ export default function PredictionKeyView() {
         itemCount: k.prediction_items?.[0]?.count ?? 0,
       }));
       setKeys(rows);
-      const firstWithItems = rows.find((k: any) => k.itemCount > 0) || rows[0];
+      const wantedId = new URLSearchParams(window.location.search).get("keyId");
+      const wanted = wantedId ? rows.find((k: any) => k.id === wantedId) : null;
+      const firstWithItems = wanted || rows.find((k: any) => k.itemCount > 0) || rows[0];
       if (firstWithItems) setSelectedKeyId(firstWithItems.id);
       setLoadingKeys(false);
     })();

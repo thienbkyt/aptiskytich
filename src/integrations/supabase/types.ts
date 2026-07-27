@@ -2284,6 +2284,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      homepage_update_feed: {
+        Args: { p_limit?: number }
+        Returns: {
+          cnt: number
+          day: string
+          high_count: number
+          item_count: number
+          key_id: string
+          key_title: string
+          kind: string
+          part: string
+          skill: string
+        }[]
+      }
       is_premium: { Args: { p_uid: string }; Returns: boolean }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
       log_feature_usage: {
