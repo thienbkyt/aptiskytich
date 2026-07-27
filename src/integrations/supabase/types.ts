@@ -2298,6 +2298,21 @@ export type Database = {
           skill: string
         }[]
       }
+      homepage_update_feed_items: {
+        Args: { p_limit?: number }
+        Returns: {
+          day: string
+          high_count: number
+          item_count: number
+          key_id: string
+          key_title: string
+          kind: string
+          part: string
+          set_id: string
+          set_title: string
+          skill: string
+        }[]
+      }
       is_premium: { Args: { p_uid: string }; Returns: boolean }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
       log_feature_usage: {
