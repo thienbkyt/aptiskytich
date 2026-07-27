@@ -659,6 +659,7 @@ const Index = () => {
       <Footer />
 
       <InstallAppCard />
+      <UpdateFeedDock />
     </div>
   );
 };
