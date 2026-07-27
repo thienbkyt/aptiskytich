@@ -111,7 +111,7 @@ serve(async (req) => {
         .from("learning_streaks")
         .select("user_id,current_streak,last_activity_date")
         .in("user_id", userIds),
-      admin.rpc("admin_user_test_stats"),
+      userClient.rpc("admin_user_test_stats"),
       admin
         .from("user_roles")
         .select("user_id")
