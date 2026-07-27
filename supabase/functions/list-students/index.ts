@@ -56,17 +56,26 @@ serve(async (req) => {
       });
     }
 
+    // Optional light mode: only user_id, email, display_name
+    let mode = "full";
+    try {
+      if (req.method === "POST") {
+        const body = await req.json().catch(() => null);
+        if (body?.mode === "light") mode = "light";
+      }
+    } catch (_) { /* ignore */ }
+
     // Fetch users (paginate up to 1000)
     const usersOut: any[] = [];
     let page = 1;
     while (true) {
       const { data, error } = await admin.auth.admin.listUsers({
         page,
-        perPage: 200,
+        perPage: 1000,
       });
       if (error) throw error;
       usersOut.push(...(data?.users ?? []));
-      if (!data?.users || data.users.length < 200) break;
+      if (!data?.users || data.users.length < 1000) break;
       page++;
       if (page > 10) break;
     }
@@ -78,17 +87,31 @@ serve(async (req) => {
       });
     }
 
-    const [profilesRes, streaksRes, resultsRes, rolesRes] = await Promise.all([
-      admin.from("profiles").select("user_id,display_name,avatar_url").in("user_id", userIds),
+    const profilesRes = await admin
+      .from("profiles")
+      .select("user_id,display_name,avatar_url")
+      .in("user_id", userIds);
+
+    const profilesMap = new Map<string, any>();
+    (profilesRes.data ?? []).forEach((p: any) => profilesMap.set(p.user_id, p));
+
+    if (mode === "light") {
+      const students = usersOut.map((u) => ({
+        user_id: u.id,
+        email: u.email ?? "",
+        display_name: profilesMap.get(u.id)?.display_name ?? null,
+      }));
+      return new Response(JSON.stringify({ students }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const [streaksRes, statsRes, rolesRes] = await Promise.all([
       admin
         .from("learning_streaks")
         .select("user_id,current_streak,last_activity_date")
         .in("user_id", userIds),
-      admin
-        .from("test_results")
-        .select("user_id,level,created_at")
-        .in("user_id", userIds)
-        .order("created_at", { ascending: false }),
+      userClient.rpc("admin_user_test_stats"),
       admin
         .from("user_roles")
         .select("user_id")
@@ -98,9 +121,6 @@ serve(async (req) => {
 
     const adminSet = new Set<string>((rolesRes.data ?? []).map((r: any) => r.user_id));
 
-
-    const profilesMap = new Map<string, any>();
-    (profilesRes.data ?? []).forEach((p: any) => profilesMap.set(p.user_id, p));
     const streaksMap = new Map<string, any>();
     (streaksRes.data ?? []).forEach((s: any) => streaksMap.set(s.user_id, s));
 
@@ -108,11 +128,11 @@ serve(async (req) => {
       string,
       { count: number; lastLevel: string | null }
     >();
-    (resultsRes.data ?? []).forEach((r: any) => {
-      const cur = resultsAgg.get(r.user_id) ?? { count: 0, lastLevel: null };
-      cur.count += 1;
-      if (cur.lastLevel === null) cur.lastLevel = r.level ?? null;
-      resultsAgg.set(r.user_id, cur);
+    (statsRes.data ?? []).forEach((r: any) => {
+      resultsAgg.set(r.user_id, {
+        count: r.total_attempts ?? 0,
+        lastLevel: r.latest_level ?? null,
+      });
     });
 
     const students = usersOut.map((u) => {
@@ -132,6 +152,7 @@ serve(async (req) => {
         is_admin: adminSet.has(u.id),
       };
     });
+
 
 
     // Sort by created_at desc

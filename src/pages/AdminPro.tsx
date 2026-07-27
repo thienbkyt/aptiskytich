@@ -516,7 +516,7 @@ const ProUsersSection = () => {
   useEffect(() => {
     (async () => {
       setStudentsLoading(true);
-      const { data, error } = await supabase.functions.invoke("list-students");
+      const { data, error } = await supabase.functions.invoke("list-students", { body: { mode: "light" } });
       if (error) toast.error("Không tải được danh sách user");
       setStudents(((data as any)?.students ?? []).map((s: any) => ({
         user_id: s.user_id, email: s.email, display_name: s.display_name,

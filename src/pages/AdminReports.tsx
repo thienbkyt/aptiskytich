@@ -181,7 +181,7 @@ const AdminReports = () => {
     const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean) as string[]));
     if (userIds.length > 0) {
       try {
-        const { data: sData, error: sErr } = await supabase.functions.invoke("list-students");
+        const { data: sData, error: sErr } = await supabase.functions.invoke("list-students", { body: { mode: "light" } });
         if (!sErr && sData?.students) {
           const map: Record<string, ReporterInfo> = {};
           for (const s of sData.students as any[]) {
