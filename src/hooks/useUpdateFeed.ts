@@ -63,10 +63,10 @@ export const isToday = (d: Date) => relativeLabel(d) === "hôm nay";
 
 export function useUpdateFeed() {
   const { data, isLoading } = useQuery({
-    queryKey: ["homepageUpdateFeed"],
+    queryKey: ["homepageUpdateFeedItems"],
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<FeedItem[]> => {
-      const { data: rows, error } = await supabase.rpc("homepage_update_feed" as any, { p_limit: 200 });
+      const { data: rows, error } = await supabase.rpc("homepage_update_feed_items" as any, { p_limit: 200 });
       if (error) throw error;
       const items: FeedItem[] = [];
       (rows ?? []).forEach((r: any, i: number) => {
@@ -91,14 +91,16 @@ export function useUpdateFeed() {
         const path = SKILL_PATH[skill];
         if (!path) return;
         items.push({
-          id: `exam-${r.day}-${skill}-${part}-${i}`,
+          id: `exam-${r.set_id ?? i}`,
           kind: "exam",
           date,
           bucket: skill,
           badge: SKILL_LABEL[skill] ?? skill.toUpperCase(),
-          title: `Thêm ${r.cnt} đề ${label}`,
-          subtitle: desc ? `${SKILL_LABEL[skill] ?? skill} · ${desc}` : SKILL_LABEL[skill] ?? skill,
-          href: `${path}?tab=${tabIdFor(skill, part)}`,
+          title: String(r.set_title ?? `Đề ${label}`),
+          subtitle: desc ? `${label} · ${desc}` : label,
+          href: r.set_id
+            ? `${path}?tab=${tabIdFor(skill, part)}&set=${r.set_id}`
+            : `${path}?tab=${tabIdFor(skill, part)}`,
         });
       });
       items.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -108,3 +110,4 @@ export function useUpdateFeed() {
 
   return { items: data ?? [], loading: isLoading };
 }
+

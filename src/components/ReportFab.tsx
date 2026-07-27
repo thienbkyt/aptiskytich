@@ -106,7 +106,7 @@ export default function ReportFab() {
     }
   };
 
-  if (hidden) return null;
+  if (hidden || location.pathname === "/") return null;
 
   return (
     <>
