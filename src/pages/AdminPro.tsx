@@ -488,11 +488,12 @@ const FeatureFlagsSection = () => {
 // ─────────────────────────────────────────────────────────────
 const ProUsersSection = () => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [studentsLoading, setStudentsLoading] = useState(true);
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [subsLoading, setSubsLoading] = useState(true);
 
   const [search, setSearch] = useState("");
+  const [matches, setMatches] = useState<Student[]>([]);
+  const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Student | null>(null);
   const [grantTier, setGrantTier] = useState<GrantTier>("pro");
   const [duration, setDuration] = useState<GrantDuration>("30d");
@@ -509,20 +510,23 @@ const ProUsersSection = () => {
       .in("tier", ["pro", "premium"])
       .order("updated_at", { ascending: false });
     if (error) toast.error("Không tải được danh sách Pro");
-    setSubs((data as any) ?? []);
+    const rows = ((data as any) ?? []) as Subscription[];
+    setSubs(rows);
     setSubsLoading(false);
+
+    // Resolve emails only for the users shown in this table
+    const ids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+    if (ids.length > 0) {
+      const { data: eData } = await supabase.rpc("admin_emails_by_ids", { p_user_ids: ids });
+      setStudents(((eData as any) ?? []).map((s: any) => ({
+        user_id: s.user_id, email: s.email ?? "", display_name: s.display_name,
+      })));
+    } else {
+      setStudents([]);
+    }
   };
 
   useEffect(() => {
-    (async () => {
-      setStudentsLoading(true);
-      const { data, error } = await supabase.functions.invoke("list-students", { body: { mode: "light" } });
-      if (error) toast.error("Không tải được danh sách user");
-      setStudents(((data as any)?.students ?? []).map((s: any) => ({
-        user_id: s.user_id, email: s.email, display_name: s.display_name,
-      })));
-      setStudentsLoading(false);
-    })();
     reloadSubs();
   }, []);
 
@@ -532,16 +536,26 @@ const ProUsersSection = () => {
     return m;
   }, [students]);
 
-  const matches = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return [] as Student[];
-    return students
-      .filter((s) =>
-        s.email.toLowerCase().includes(q) ||
-        (s.display_name ?? "").toLowerCase().includes(q),
-      )
-      .slice(0, 8);
-  }, [search, students]);
+  // Server-side search (min 2 chars, debounced)
+  useEffect(() => {
+    const q = search.trim();
+    if (selected || q.length < 2) {
+      setMatches([]);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("admin_search_users", { p_query: q });
+      if (cancelled) return;
+      setMatches(((data as any) ?? []).map((s: any) => ({
+        user_id: s.user_id, email: s.email ?? "", display_name: s.display_name,
+      })));
+      setSearching(false);
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [search, selected]);
+
 
   const computePromoUntil = (): string | null => {
     const now = new Date();
