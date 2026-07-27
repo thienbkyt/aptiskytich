@@ -2143,6 +2143,14 @@ export type Database = {
           count: number
         }[]
       }
+      admin_user_test_stats: {
+        Args: never
+        Returns: {
+          latest_level: string
+          total_attempts: number
+          user_id: string
+        }[]
+      }
       bump_learning_streak: { Args: never; Returns: undefined }
       check_feature_access: {
         Args: { p_key: string; p_scope?: string }
