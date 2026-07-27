@@ -2127,6 +2127,14 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
+      admin_emails_by_ids: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          display_name: string
+          email: string
+          user_id: string
+        }[]
+      }
       admin_online_users: {
         Args: { p_window_seconds?: number }
         Returns: number
@@ -2136,6 +2144,14 @@ export type Database = {
         Returns: Json
       }
       admin_outcomes: { Args: { p_from: string; p_to: string }; Returns: Json }
+      admin_search_users: {
+        Args: { p_query: string }
+        Returns: {
+          display_name: string
+          email: string
+          user_id: string
+        }[]
+      }
       admin_streak_distribution: {
         Args: never
         Returns: {
