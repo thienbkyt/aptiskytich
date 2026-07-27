@@ -79,15 +79,16 @@ const UpdateFeedDock = () => {
   const { items, loading } = useUpdateFeed();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const [dismissed, setDismissed] = useState(
-    () => safeSessionStorage.getItem(DISMISS_KEY) === "1",
-  );
-  const [expanded, setExpanded] = useState(false);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("all");
 
   const latest = items[0];
   const latestLabel = latest ? relativeLabel(latest.date) : null;
+
+  const recentCount = useMemo(() => {
+    const cutoff = Date.now() - 7 * 86400000;
+    return items.filter((i) => i.date.getTime() >= cutoff).length;
+  }, [items]);
 
   const filtered = useMemo(
     () => (filter === "all" ? items : items.filter((i) => i.bucket === filter)),
@@ -110,85 +111,26 @@ const UpdateFeedDock = () => {
     navigate(href);
   };
 
-  const dismiss = () => {
-    safeSessionStorage.setItem(DISMISS_KEY, "1");
-    setDismissed(true);
-  };
-
-  if (loading || items.length === 0 || dismissed) return null;
-
-  const showPanel = !isMobile || expanded;
+  if (loading || items.length === 0) return null;
 
   const dock = (
     <div className="fixed z-[120] left-4 bottom-4 max-w-[calc(100vw-2rem)]">
-        {isMobile && !expanded && (
-          <button
-            type="button"
-            onClick={() => setExpanded(true)}
-            className="flex items-center gap-2 rounded-full bg-white border border-[#F2E2D4] px-3 py-2 text-xs font-semibold shadow-lg"
-            style={{ color: "#3C1C12" }}
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-            </span>
-            Đề mới
-          </button>
-        )}
-
-        {showPanel && (
-          <div
-            className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#F2E2D4] overflow-hidden"
-            style={{ background: CREAM, boxShadow: "0 16px 40px -20px rgba(60, 28, 18, 0.45)" }}
-          >
-            <div className="flex items-start gap-2 px-3 py-2.5 bg-white border-b border-[#F2E2D4]">
-              <span className="relative flex h-2 w-2 mt-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-extrabold" style={{ color: "#3C1C12" }}>
-                  Đề mới cập nhật
-                </div>
-                <div className="text-[11px]" style={{ color: "#8A6656" }}>
-                  Gần nhất: {latestLabel}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => (isMobile ? setExpanded(false) : dismiss())}
-                aria-label="Đóng bảng cập nhật"
-                className="text-[#9A7B6C] hover:text-[#3C1C12]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-2.5 space-y-2">
-              {items.slice(0, 3).map((item, idx) => (
-                <Row
-                  key={item.id}
-                  item={item}
-                  highlight={idx === 0 && isToday(item.date)}
-                  onGo={go}
-                  compact
-                />
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="w-full flex items-center justify-center gap-1 py-2.5 text-xs font-semibold bg-white border-t border-[#F2E2D4] hover:bg-[#FFEDE6] transition-colors"
-              style={{ color: RED }}
-            >
-              Xem tất cả cập nhật
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 rounded-full bg-white border border-[#F2E2D4] px-3.5 py-2 text-xs font-semibold shadow-lg hover:bg-[#FFEDE6] transition-colors"
+        style={{ color: "#3C1C12" }}
+      >
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+        </span>
+        {isMobile ? "Đề mới" : "Đề mới cập nhật"}
+        {recentCount > 0 && <span style={{ color: RED }}>· {recentCount}</span>}
+      </button>
     </div>
   );
+
 
   return (
     <>
