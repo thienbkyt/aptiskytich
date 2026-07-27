@@ -177,17 +177,17 @@ const AdminReports = () => {
       setQuestionSetMap({});
     }
 
-    // Load reporter emails via list-students (admin-only edge function)
+    // Load reporter emails for ONLY the ids present in these reports
     const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean) as string[]));
     if (userIds.length > 0) {
       try {
-        const { data: sData, error: sErr } = await supabase.functions.invoke("list-students", { body: { mode: "light" } });
-        if (!sErr && sData?.students) {
+        const { data: sData, error: sErr } = await supabase.rpc("admin_emails_by_ids", {
+          p_user_ids: userIds,
+        });
+        if (!sErr && sData) {
           const map: Record<string, ReporterInfo> = {};
-          for (const s of sData.students as any[]) {
-            if (userIds.includes(s.user_id)) {
-              map[s.user_id] = { email: s.email ?? "", display_name: s.display_name ?? null };
-            }
+          for (const s of sData as any[]) {
+            map[s.user_id] = { email: s.email ?? "", display_name: s.display_name ?? null };
           }
           setReporterMap(map);
         } else {
@@ -199,6 +199,7 @@ const AdminReports = () => {
     } else {
       setReporterMap({});
     }
+
 
     setLoading(false);
   }, [skillFilter, statusFilter, categoryFilter, toast]);
