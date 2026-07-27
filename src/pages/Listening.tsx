@@ -76,7 +76,7 @@ const Listening = () => {
     description: "Luyện Listening Aptis 4 parts với audio chuẩn đề thật. Giới hạn 2 lần nghe mỗi câu, có script và giải thích sau khi nộp bài.",
     path: "/listening",
   });
-  const [activeTab, setActiveTab] = useState("full");
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("listening");
   const { guard, isLocked, LockModal } = useExamAccessGate();

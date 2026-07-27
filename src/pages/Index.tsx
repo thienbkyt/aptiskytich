@@ -272,6 +272,8 @@ const Index = () => {
         </div>
       </section>
 
+      <UpdateFeedSection />
+
       {/* Trust bar — 5 key advantages */}
       <section className="relative py-8 md:py-10" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
