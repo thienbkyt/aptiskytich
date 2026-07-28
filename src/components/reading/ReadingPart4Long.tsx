@@ -4,7 +4,63 @@ import { Bookmark, CheckCircle2, XCircle, ChevronDown, Loader2 } from "lucide-re
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { ReadingLongQuestion } from "@/data/readingQuestions";
-import { part4ItemId, type ReadingReviewData } from "@/lib/readingReview";
+import { part4ItemId, part4EvidenceId, type ReadingReviewData } from "@/lib/readingReview";
+
+/** Normalize for tolerant matching: collapse whitespace, straighten quotes, nbsp -> space. */
+const normalizeForMatch = (s: string) =>
+  s
+    .replace(/\u00a0/g, " ")
+    .replace(/[\u2018\u2019\u201b\u2032]/g, "'")
+    .replace(/[\u201c\u201d\u201f\u2033]/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Render paragraph text with the evidence sentence highlighted, if uniquely found. */
+const renderParagraph = (text: string, evidence?: string) => {
+  const plain = <>{text}</>;
+  if (!evidence) return plain;
+  const normEvidence = normalizeForMatch(evidence);
+  if (!normEvidence) return plain;
+
+  // Build normalized text alongside a map back to original indices.
+  let norm = "";
+  const map: number[] = [];
+  let prevSpace = false;
+  for (let i = 0; i < text.length; i++) {
+    let ch = text[i];
+    if (ch === "\u00a0") ch = " ";
+    if ("\u2018\u2019\u201b\u2032".includes(ch)) ch = "'";
+    if ("\u201c\u201d\u201f\u2033".includes(ch)) ch = '"';
+    if (/\s/.test(ch)) {
+      if (prevSpace) continue;
+      prevSpace = true;
+      norm += " ";
+      map.push(i);
+      continue;
+    }
+    prevSpace = false;
+    norm += ch;
+    map.push(i);
+  }
+  // Account for leading/trailing trim in normalizeForMatch semantics
+  const first = norm.indexOf(normEvidence);
+  if (first < 0) return plain;
+  if (norm.indexOf(normEvidence, first + 1) >= 0) return plain; // ambiguous
+
+  const startOrig = map[first];
+  const lastNormIdx = first + normEvidence.length - 1;
+  const endOrig = (map[lastNormIdx] ?? text.length - 1) + 1;
+
+  return (
+    <>
+      {text.slice(0, startOrig)}
+      <mark className="bg-yellow-200/70 dark:bg-yellow-500/30 text-inherit rounded px-0.5">
+        {text.slice(startOrig, endOrig)}
+      </mark>
+      {text.slice(endOrig)}
+    </>
+  );
+};
 
 interface Props {
   question: ReadingLongQuestion;
