@@ -48,6 +48,11 @@ export interface TranslateReviewPart3 {
   blocks: Record<string, string>;
   correctPerson: string;
 }
+export interface TranslateReviewPart4Paragraph {
+  index: number;
+  text: string;
+  correctHeading: string;
+}
 
 /** Build the request body items for translate-review based on the part snapshot. */
 export function buildReviewRequest(part: {
@@ -56,9 +61,10 @@ export function buildReviewRequest(part: {
   part2Question?: ReadingCohesionQuestion;
   part3Question?: ReadingOpinionQuestion;
   part4Question?: ReadingLongQuestion;
-}): { items: TranslateReviewItem[]; part3: TranslateReviewPart3[] } {
+}): { items: TranslateReviewItem[]; part3: TranslateReviewPart3[]; part4: TranslateReviewPart4Paragraph[] } {
   const items: TranslateReviewItem[] = [];
   const part3: TranslateReviewPart3[] = [];
+  const part4: TranslateReviewPart4Paragraph[] = [];
 
   if (part.partType === "part1" && part.part1Question) {
     part.part1Question.gaps.forEach((_g, gi) => {
