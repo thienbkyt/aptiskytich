@@ -302,7 +302,7 @@ export default function PricingPage() {
                   </>
                 )}
                 {!premiumPlans[0] && (
-                  <p className="text-sm text-muted-foreground mb-4">Sắp ra mắt</p>
+                  <p className="text-sm text-muted-foreground mb-4">Sắp ra mắt.</p>
                 )}
                 <ul className="space-y-2 mb-5">
                   {PREMIUM_PERKS.map((p) => (
