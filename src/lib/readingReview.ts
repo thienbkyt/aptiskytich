@@ -94,12 +94,18 @@ export function buildReviewRequest(part: {
       });
     });
   } else if (part.partType === "part4" && part.part4Question) {
-    (part.part4Question.headings || []).forEach((h, hi) => {
+    const q = part.part4Question;
+    const headings = q.headings || [];
+    headings.forEach((h, hi) => {
       items.push({ id: part4ItemId(hi), text: h.text });
+    });
+    (q.paragraphs || []).forEach((p) => {
+      const h = headings.find((hh) => hh.paragraphIndex === p.index);
+      part4.push({ index: p.index, text: p.text, correctHeading: h?.text ?? "" });
     });
   }
 
-  return { items, part3 };
+  return { items, part3, part4 };
 }
 
 export const personLetterToIndex = (letter: string): number => {
