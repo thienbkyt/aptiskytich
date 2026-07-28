@@ -336,6 +336,40 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     onExit();
   }, [persistHistoryRow, onExit]);
 
+  // "Lưu & thoát": if the in-progress set has at least one answer, submit+grade
+  // it first so it lands in resultsRef before persistHistoryRow() runs.
+  const pendingExitRef = useRef<{ index: number; timer?: any } | null>(null);
+  const handleMarathonSaveExit = useCallback(() => {
+    const idx = currentIndex;
+    const alreadySubmitted = !!resultsRef.current[idx];
+    const hasAnswer = currentAnswered.some(Boolean);
+    if (alreadySubmitted || !hasAnswer) {
+      persistHistoryRow();
+      onExit();
+      return;
+    }
+    // Safety net: never trap the user if grading doesn't report back.
+    const timer = setTimeout(() => {
+      if (!pendingExitRef.current) return;
+      pendingExitRef.current = null;
+      persistHistoryRow();
+      onExit();
+    }, 2500);
+    pendingExitRef.current = { index: idx, timer };
+    setSubmitSignal((s) => s + 1);
+  }, [currentIndex, currentAnswered, persistHistoryRow, onExit]);
+
+  useEffect(() => {
+    const pending = pendingExitRef.current;
+    if (!pending) return;
+    if (!results[pending.index]) return;
+    if (pending.timer) clearTimeout(pending.timer);
+    pendingExitRef.current = null;
+    persistHistoryRow();
+    onExit();
+  }, [results, persistHistoryRow, onExit]);
+
+
   useEffect(() => {
     if (reviewIndex === null) return;
     document.body.classList.add("history-review-mode");
