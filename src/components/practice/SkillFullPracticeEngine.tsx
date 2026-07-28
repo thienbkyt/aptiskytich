@@ -817,7 +817,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       );
     }
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
-    const readingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
+    const readingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id), examSetId: currentPart.id };
     switch (partType) {
       case "part1": readingProps.part1Question = toReadingPart1(currentPart.questions); break;
       case "part2": readingProps.part2Question = toReadingPart2(currentPart.questions); break;
