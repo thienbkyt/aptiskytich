@@ -594,6 +594,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             marathonLock
             hideBottomNav
             onLockedChange={setCurrentLocked}
+            examSetId={sets[currentIndex]?.id ?? null}
             {...engineData}
           />
         )}
