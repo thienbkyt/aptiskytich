@@ -73,7 +73,7 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBa
             <h2 className="text-xl font-bold text-gray-900 mb-3">Thoát marathon?</h2>
             <p className="text-sm text-gray-600 mb-6 leading-relaxed">Tiến độ đã được lưu tự động. Lần sau bạn có thể vào làm tiếp từ đúng chỗ đang dừng.</p>
             <div className="flex flex-col gap-3 items-center">
-              <button onClick={() => { setShowConfirm(false); onExit?.(); }} className="w-full px-6 py-3 rounded-lg bg-[#CC1C01] hover:bg-[#4D0D0D] text-white text-sm font-semibold transition-colors">Lưu & thoát</button>
+              <button onClick={() => { setShowConfirm(false); if (onMarathonFinish) onMarathonFinish(); else onExit?.(); }} className="w-full px-6 py-3 rounded-lg bg-[#CC1C01] hover:bg-[#4D0D0D] text-white text-sm font-semibold transition-colors">Lưu & thoát</button>
               <button onClick={() => setShowConfirm(false)} className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">Ở lại</button>
             </div>
           </div>
