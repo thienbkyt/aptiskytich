@@ -8,6 +8,7 @@ import type {
 export type ReadingReviewData = {
   translations: Record<string, string>;
   part3Evidence: Record<string, { person: string; sentence: string }>;
+  part4Evidence?: Record<string, string>;
 };
 
 // Stable IDs used as keys in `translations`.
@@ -15,6 +16,7 @@ export const part1ItemId = (gapIndex: number) => `p1-g${gapIndex}`;
 export const part2ItemId = (sectionIdx: number, correctPosition: number) =>
   `p2-s${sectionIdx}-p${correctPosition}`;
 export const part4ItemId = (headingIdx: number) => `p4-h${headingIdx}`;
+export const part4EvidenceId = (paragraphIndex: number) => `p4-e${paragraphIndex}`;
 
 const PERSON_LETTERS = ["A", "B", "C", "D"];
 
