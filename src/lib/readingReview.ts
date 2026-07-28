@@ -8,6 +8,7 @@ import type {
 export type ReadingReviewData = {
   translations: Record<string, string>;
   part3Evidence: Record<string, { person: string; sentence: string }>;
+  part4Evidence?: Record<string, string>;
 };
 
 // Stable IDs used as keys in `translations`.
@@ -15,6 +16,7 @@ export const part1ItemId = (gapIndex: number) => `p1-g${gapIndex}`;
 export const part2ItemId = (sectionIdx: number, correctPosition: number) =>
   `p2-s${sectionIdx}-p${correctPosition}`;
 export const part4ItemId = (headingIdx: number) => `p4-h${headingIdx}`;
+export const part4EvidenceId = (paragraphIndex: number) => `p4-e${paragraphIndex}`;
 
 const PERSON_LETTERS = ["A", "B", "C", "D"];
 
@@ -46,6 +48,11 @@ export interface TranslateReviewPart3 {
   blocks: Record<string, string>;
   correctPerson: string;
 }
+export interface TranslateReviewPart4Paragraph {
+  index: number;
+  text: string;
+  correctHeading: string;
+}
 
 /** Build the request body items for translate-review based on the part snapshot. */
 export function buildReviewRequest(part: {
@@ -54,9 +61,10 @@ export function buildReviewRequest(part: {
   part2Question?: ReadingCohesionQuestion;
   part3Question?: ReadingOpinionQuestion;
   part4Question?: ReadingLongQuestion;
-}): { items: TranslateReviewItem[]; part3: TranslateReviewPart3[] } {
+}): { items: TranslateReviewItem[]; part3: TranslateReviewPart3[]; part4: TranslateReviewPart4Paragraph[] } {
   const items: TranslateReviewItem[] = [];
   const part3: TranslateReviewPart3[] = [];
+  const part4: TranslateReviewPart4Paragraph[] = [];
 
   if (part.partType === "part1" && part.part1Question) {
     part.part1Question.gaps.forEach((_g, gi) => {
@@ -86,12 +94,18 @@ export function buildReviewRequest(part: {
       });
     });
   } else if (part.partType === "part4" && part.part4Question) {
-    (part.part4Question.headings || []).forEach((h, hi) => {
+    const q = part.part4Question;
+    const headings = q.headings || [];
+    headings.forEach((h, hi) => {
       items.push({ id: part4ItemId(hi), text: h.text });
+    });
+    (q.paragraphs || []).forEach((p) => {
+      const h = headings.find((hh) => hh.paragraphIndex === p.index);
+      part4.push({ index: p.index, text: p.text, correctHeading: h?.text ?? "" });
     });
   }
 
-  return { items, part3 };
+  return { items, part3, part4 };
 }
 
 export const personLetterToIndex = (letter: string): number => {

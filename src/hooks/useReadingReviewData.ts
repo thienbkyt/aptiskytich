@@ -54,9 +54,9 @@ export function useReadingReviewData(
       return;
     }
     fetchedRef.current = examSetId;
-    const { items, part3 } = buildReviewRequest(part);
-    if (items.length === 0 && part3.length === 0) {
-      setData({ translations: {}, part3Evidence: {} });
+    const { items, part3, part4 } = buildReviewRequest(part);
+    if (items.length === 0 && part3.length === 0 && part4.length === 0) {
+      setData({ translations: {}, part3Evidence: {}, part4Evidence: {} });
       setStatus("ready");
       return;
     }
@@ -64,15 +64,16 @@ export function useReadingReviewData(
     (async () => {
       try {
         const res = await supabase.functions.invoke("translate-review", {
-          body: { exam_set_id: examSetId, items, part3 },
+          body: { exam_set_id: examSetId, items, part3, part4 },
         });
         if (res.error) throw res.error;
         const payload = res.data as
-          | { translations?: Record<string, string>; part3Evidence?: Record<string, { person: string; sentence: string }> }
+          | { translations?: Record<string, string>; part3Evidence?: Record<string, { person: string; sentence: string }>; part4Evidence?: Record<string, string> }
           | null;
         const safe: ReadingReviewData = {
           translations: payload?.translations ?? {},
           part3Evidence: payload?.part3Evidence ?? {},
+          part4Evidence: payload?.part4Evidence ?? {},
         };
         memoryCache.set(examSetId, safe);
         setData(safe);

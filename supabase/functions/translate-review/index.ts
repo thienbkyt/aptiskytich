@@ -13,10 +13,16 @@ interface Part3Item {
   blocks: Record<string, string>; // {A,B,C,D}
   correctPerson: string; // "A" | "B" | "C" | "D"
 }
+interface Part4Item {
+  index: number;
+  text: string;
+  correctHeading: string;
+}
 interface Body {
   exam_set_id: string;
   items?: TranslateItem[];
   part3?: Part3Item[];
+  part4?: Part4Item[];
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -68,6 +74,7 @@ Deno.serve(async (req) => {
 
     const items = body.items ?? [];
     const part3 = body.part3 ?? [];
+    const part4 = body.part4 ?? [];
 
     // Content fingerprint scopes the cache to the exact request payload so
     // an attacker with a crafted payload cannot poison the entry served to
@@ -79,6 +86,11 @@ Deno.serve(async (req) => {
         questionText: p.questionText,
         blocks: p.blocks,
         correctPerson: p.correctPerson,
+      })),
+      part4: part4.map((p) => ({
+        index: p.index,
+        text: p.text,
+        correctHeading: p.correctHeading,
       })),
     });
     const content_hash = await sha256Hex(canonical);
@@ -105,10 +117,20 @@ TASK 2 — For each Part 3 question, identify the ONE sentence (verbatim English
 PART3:
 ${JSON.stringify(part3, null, 2)}
 
+TASK 3 — For each Part 4 (long text heading-matching) paragraph, identify the ONE sentence inside THAT paragraph which contains the evidence leading to its correct heading.
+HARD CONSTRAINTS for TASK 3:
+- Copy the sentence VERBATIM from the paragraph text, character for character, including punctuation, capitalisation and quotes.
+- Do NOT rewrite, do NOT shorten, do NOT translate, do NOT add ellipses ("...") or any extra characters.
+- If you cannot quote a sentence verbatim, return an empty string "" for that paragraph.
+Key each entry of part4Evidence as "p4-" + "e" + the paragraph's index value (e.g. paragraph index 3 -> "p4-e3").
+PART4:
+${JSON.stringify(part4, null, 2)}
+
 Return ONLY valid JSON with this exact shape:
 {
   "translations": { "<id>": "<vietnamese>", ... },
-  "part3Evidence": { "<questionIndex>": { "person": "A|B|C|D", "sentence": "<exact english sentence from the block>" }, ... }
+  "part3Evidence": { "<questionIndex>": { "person": "A|B|C|D", "sentence": "<exact english sentence from the block>" }, ... },
+  "part4Evidence": { "p4-e<paragraph index>": "<exact verbatim sentence from that paragraph, or empty string>", ... }
 }`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -137,7 +159,7 @@ Return ONLY valid JSON with this exact shape:
 
     const aiJson = await aiRes.json();
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-    let parsed: { translations?: Record<string, string>; part3Evidence?: Record<string, { person: string; sentence: string }> } = {};
+    let parsed: { translations?: Record<string, string>; part3Evidence?: Record<string, { person: string; sentence: string }>; part4Evidence?: Record<string, string> } = {};
     try {
       parsed = JSON.parse(content);
     } catch {
@@ -150,6 +172,7 @@ Return ONLY valid JSON with this exact shape:
     const data = {
       translations: parsed.translations ?? {},
       part3Evidence: parsed.part3Evidence ?? {},
+      part4Evidence: parsed.part4Evidence ?? {},
     };
 
     await admin
