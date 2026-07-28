@@ -122,6 +122,7 @@ HARD CONSTRAINTS for TASK 3:
 - Copy the sentence VERBATIM from the paragraph text, character for character, including punctuation, capitalisation and quotes.
 - Do NOT rewrite, do NOT shorten, do NOT translate, do NOT add ellipses ("...") or any extra characters.
 - If you cannot quote a sentence verbatim, return an empty string "" for that paragraph.
+Key each entry of part4Evidence as "p4-" + "e" + the paragraph's index value (e.g. paragraph index 3 -> "p4-e3").
 PART4:
 ${JSON.stringify(part4, null, 2)}
 
@@ -129,7 +130,7 @@ Return ONLY valid JSON with this exact shape:
 {
   "translations": { "<id>": "<vietnamese>", ... },
   "part3Evidence": { "<questionIndex>": { "person": "A|B|C|D", "sentence": "<exact english sentence from the block>" }, ... },
-  "part4Evidence": { "<paragraph index>": "<exact verbatim sentence from that paragraph, or empty string>", ... }
+  "part4Evidence": { "p4-e<paragraph index>": "<exact verbatim sentence from that paragraph, or empty string>", ... }
 }`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
