@@ -275,7 +275,9 @@ const ReadingPart4Long = ({
                 </div>
               )}
               <div className="text-sm text-foreground leading-relaxed whitespace-pre-line pl-9">
-                {para.text}
+                {reveal
+                  ? renderParagraph(para.text, reviewData?.part4Evidence?.[part4EvidenceId(para.index)])
+                  : para.text}
               </div>
             </motion.div>
           );
