@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, GripVertical, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
@@ -371,7 +372,7 @@ const ReadingPart2Cohesion = ({
           onSubmitTest={onSubmitTest}
         />
       )}
-      {hideBottomNav && totalSections > 1 && (
+      {hideBottomNav && (
         <div className="mt-4 flex items-center justify-between gap-2">
           <button
             type="button"
@@ -384,14 +385,24 @@ const ReadingPart2Cohesion = ({
           <span className="text-xs text-muted-foreground">
             Đoạn {currentSection + 1}/{totalSections}
           </span>
-          <button
-            type="button"
-            onClick={goNextSection}
-            disabled={isLast}
-            className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
-          >
-            Đoạn sau →
-          </button>
+          {!isLast ? (
+            <button
+              type="button"
+              onClick={goNextSection}
+              disabled={isLast}
+              className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
+            >
+              Đoạn sau →
+            </button>
+          ) : !submitted ? (
+            <Button
+              type="button"
+              onClick={onSubmit}
+              className="exam-nav-submit exam-nav-next-button gap-2 px-6"
+            >
+              Nộp đề này
+            </Button>
+          ) : null}
         </div>
       )}
     </div>
