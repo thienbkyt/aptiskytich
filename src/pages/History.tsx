@@ -400,10 +400,67 @@ const History = () => {
           return g;
         });
 
+        // Marathon grouping — gom các đề con (mode "marathon-set") theo marathonSessionId.
+        // Dòng tổng kết (mode "marathon") mang CÙNG sessionId nên phải tách bằng mode.
+        const marathonRows = merged.filter(
+          (r) => r.isMarathon && !r.full_test_session_id && !r.fullPartSession,
+        );
+        const summaryBySession = new Map<string, HistoryRow>();
+        for (const r of marathonRows) {
+          if (r.marathonMode !== "marathon" || !r.marathonSessionId) continue;
+          const prev = summaryBySession.get(r.marathonSessionId);
+          if (!prev || toTimeSafe(r.created_at) > toTimeSafe(prev.created_at)) {
+            summaryBySession.set(r.marathonSessionId, r);
+          }
+        }
+        const mMap = new Map<string, MarathonGroup>();
+        const groupedRowIds = new Set<string>();
+        for (const r of marathonRows) {
+          if (r.marathonMode !== "marathon-set" || !r.marathonSessionId) continue;
+          groupedRowIds.add(r.id);
+          const sid = r.marathonSessionId;
+          let g = mMap.get(sid);
+          if (!g) {
+            const summary = summaryBySession.get(sid);
+            g = {
+              sessionId: sid,
+              skill: r.skill,
+              partType: summary?.marathonPartType || r.marathonPartType || null,
+              label: summary?.marathonLabel || r.marathonLabel || "Marathon",
+              created_at: r.created_at,
+              setCount: 0,
+              score: 0,
+              total: 0,
+              reviewRowId: summary?.review_snapshot ? summary.id : null,
+            };
+            mMap.set(sid, g);
+          }
+          g.setCount++;
+          g.score += Number(r.score) || 0;
+          g.total += Number(r.total) || 0;
+          if (toTimeSafe(r.created_at) > toTimeSafe(g.created_at)) g.created_at = r.created_at;
+        }
+        // Dòng tổng kết đã là đại diện của nhóm → không hiện riêng, và ưu tiên
+        // điểm/snapshot của nó nếu có.
+        for (const [sid, summary] of summaryBySession) {
+          const g = mMap.get(sid);
+          if (!g) continue;
+          groupedRowIds.add(summary.id);
+          if (Number(summary.total) > 0) {
+            g.score = Number(summary.score) || 0;
+            g.total = Number(summary.total) || 0;
+          }
+          if (!g.reviewRowId && summary.review_snapshot) g.reviewRowId = summary.id;
+          if (toTimeSafe(summary.created_at) > toTimeSafe(g.created_at)) g.created_at = summary.created_at;
+        }
+        const mGroups = Array.from(mMap.values());
+
         if (!cancelled) {
           setRows(merged);
           setFullTestGroups(groups);
           setFullPartGroups(fpGroups);
+          setMarathonGroups(mGroups);
+          setGroupedMarathonRowIds(groupedRowIds);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -413,9 +470,12 @@ const History = () => {
   }, [user]);
 
   const perSkillRows = useMemo(
-    () => rows.filter((r) => !r.full_test_session_id && !r.fullPartSession),
-    [rows],
+    () => rows.filter(
+      (r) => !r.full_test_session_id && !r.fullPartSession && !groupedMarathonRowIds.has(r.id),
+    ),
+    [rows, groupedMarathonRowIds],
   );
+
 
   type MixedItem =
     | { kind: "row"; created_at: string; row: HistoryRow }
