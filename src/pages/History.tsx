@@ -14,7 +14,7 @@ import {
 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { readingPartLabel } from "@/hooks/useExamSets";
+import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
 import { useAuth } from "@/hooks/useAuth";
 import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 import { getSkillBand } from "@/data/questions";
