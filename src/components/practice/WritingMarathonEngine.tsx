@@ -9,6 +9,7 @@ import {
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { saveMarathonProgress, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { upsertMarathonResult } from "@/lib/saveExamResult";
+import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 
 interface Props {
   sets: ExamSetRow[];
