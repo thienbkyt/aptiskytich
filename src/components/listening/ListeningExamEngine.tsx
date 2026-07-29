@@ -405,6 +405,20 @@ const ListeningExamEngine = ({
     onSubmitTest: !submitted ? handleSubmit : undefined,
   };
 
+  // Marathon mode (bottom nav hidden): ← → move between questions.
+  const arrowPrev = useCallback(() => {
+    setCurrentIndex((p) => Math.max(0, p - 1));
+  }, []);
+  const arrowNext = useCallback(() => {
+    setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+  }, [totalQuestions]);
+  useMarathonArrowKeys({
+    enabled: hideBottomNav && phase === "practice",
+    onPrev: arrowPrev,
+    onNext: arrowNext,
+  });
+
+
   const adminControls = !submitted && !reviewMode ? (
     <AdminExamControls
       label={
