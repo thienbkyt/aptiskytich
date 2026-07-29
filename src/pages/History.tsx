@@ -35,6 +35,10 @@ interface HistoryRow {
   full_test_session_id: string | null;
   full_test_id: string | null;
   isMarathon: boolean;
+  marathonMode: string | null;          // "marathon" | "marathon-set" | null
+  marathonSessionId: string | null;
+  marathonPartType: string | null;
+  marathonLabel: string | null;
   fullPartSession: string | null;
   review_snapshot: any;
   // computed display
@@ -66,6 +70,20 @@ interface FullPartGroup {
   displayScore: string;
   displayBand: string;
 }
+
+interface MarathonGroup {
+  sessionId: string;
+  skill: string;
+  partType: string | null;
+  label: string;
+  created_at: string;
+  setCount: number;
+  score: number;
+  total: number;
+  reviewRowId: string | null;   // row có review_snapshot để "Xem lại"
+}
+
+
 
 const SKILL_LABELS: Record<string, string> = {
   grammar: "Grammar",
@@ -116,6 +134,8 @@ const History = () => {
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [fullTestGroups, setFullTestGroups] = useState<FullTestGroup[]>([]);
   const [fullPartGroups, setFullPartGroups] = useState<FullPartGroup[]>([]);
+  const [marathonGroups, setMarathonGroups] = useState<MarathonGroup[]>([]);
+  const [groupedMarathonRowIds, setGroupedMarathonRowIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -224,9 +244,10 @@ const History = () => {
           const ss = (r.skill_scores || {}) as any;
           let skill = setInfo?.skill || ss.skill || "unknown";
           if (skill === "grammar_vocab") skill = "grammar";
-          const isMarathon = ss.mode === "marathon" || (!r.exam_set_id && !r.full_test_session_id && !!ss.label);
+          const mode: string | null = typeof ss.mode === "string" ? ss.mode : null;
+          const isMarathon = mode === "marathon" || mode === "marathon-set";
           const title = isMarathon
-            ? (ss.label || "Luyện nhanh (Marathon)")
+            ? (ss.label || setInfo?.title || "Luyện nhanh (Marathon)")
             : (setInfo?.title || "Đề mẫu");
           const disp = computeDisplay(
             { skill, score: r.score, total: r.total, level: r.level },
@@ -248,6 +269,10 @@ const History = () => {
             full_test_session_id: r.full_test_session_id ?? null,
             full_test_id: r.full_test_id ?? null,
             isMarathon,
+            marathonMode: mode,
+            marathonSessionId: typeof ss.marathonSessionId === "string" ? ss.marathonSessionId : null,
+            marathonPartType: ss.partType || ss.part || setInfo?.part || null,
+            marathonLabel: typeof ss.label === "string" ? ss.label : null,
             fullPartSession: ss.fullPartSession ?? null,
             review_snapshot: r.review_snapshot ?? null,
             ...disp,
@@ -377,10 +402,67 @@ const History = () => {
           return g;
         });
 
+        // Marathon grouping — gom các đề con (mode "marathon-set") theo marathonSessionId.
+        // Dòng tổng kết (mode "marathon") mang CÙNG sessionId nên phải tách bằng mode.
+        const marathonRows = merged.filter(
+          (r) => r.isMarathon && !r.full_test_session_id && !r.fullPartSession,
+        );
+        const summaryBySession = new Map<string, HistoryRow>();
+        for (const r of marathonRows) {
+          if (r.marathonMode !== "marathon" || !r.marathonSessionId) continue;
+          const prev = summaryBySession.get(r.marathonSessionId);
+          if (!prev || toTimeSafe(r.created_at) > toTimeSafe(prev.created_at)) {
+            summaryBySession.set(r.marathonSessionId, r);
+          }
+        }
+        const mMap = new Map<string, MarathonGroup>();
+        const groupedRowIds = new Set<string>();
+        for (const r of marathonRows) {
+          if (r.marathonMode !== "marathon-set" || !r.marathonSessionId) continue;
+          groupedRowIds.add(r.id);
+          const sid = r.marathonSessionId;
+          let g = mMap.get(sid);
+          if (!g) {
+            const summary = summaryBySession.get(sid);
+            g = {
+              sessionId: sid,
+              skill: r.skill,
+              partType: summary?.marathonPartType || r.marathonPartType || null,
+              label: summary?.marathonLabel || r.marathonLabel || "Marathon",
+              created_at: r.created_at,
+              setCount: 0,
+              score: 0,
+              total: 0,
+              reviewRowId: summary?.review_snapshot ? summary.id : null,
+            };
+            mMap.set(sid, g);
+          }
+          g.setCount++;
+          g.score += Number(r.score) || 0;
+          g.total += Number(r.total) || 0;
+          if (toTimeSafe(r.created_at) > toTimeSafe(g.created_at)) g.created_at = r.created_at;
+        }
+        // Dòng tổng kết đã là đại diện của nhóm → không hiện riêng, và ưu tiên
+        // điểm/snapshot của nó nếu có.
+        for (const [sid, summary] of summaryBySession) {
+          const g = mMap.get(sid);
+          if (!g) continue;
+          groupedRowIds.add(summary.id);
+          if (Number(summary.total) > 0) {
+            g.score = Number(summary.score) || 0;
+            g.total = Number(summary.total) || 0;
+          }
+          if (!g.reviewRowId && summary.review_snapshot) g.reviewRowId = summary.id;
+          if (toTimeSafe(summary.created_at) > toTimeSafe(g.created_at)) g.created_at = summary.created_at;
+        }
+        const mGroups = Array.from(mMap.values());
+
         if (!cancelled) {
           setRows(merged);
           setFullTestGroups(groups);
           setFullPartGroups(fpGroups);
+          setMarathonGroups(mGroups);
+          setGroupedMarathonRowIds(groupedRowIds);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -390,13 +472,17 @@ const History = () => {
   }, [user]);
 
   const perSkillRows = useMemo(
-    () => rows.filter((r) => !r.full_test_session_id && !r.fullPartSession),
-    [rows],
+    () => rows.filter(
+      (r) => !r.full_test_session_id && !r.fullPartSession && !groupedMarathonRowIds.has(r.id),
+    ),
+    [rows, groupedMarathonRowIds],
   );
+
 
   type MixedItem =
     | { kind: "row"; created_at: string; row: HistoryRow }
-    | { kind: "group"; created_at: string; group: FullPartGroup };
+    | { kind: "group"; created_at: string; group: FullPartGroup }
+    | { kind: "marathon"; created_at: string; marathon: MarathonGroup };
 
   const filteredItems = useMemo<MixedItem[]>(() => {
     const rowItems: MixedItem[] = perSkillRows
@@ -405,19 +491,24 @@ const History = () => {
     const groupItems: MixedItem[] = fullPartGroups
       .filter((g) => skillFilter === "all" || g.skill === skillFilter)
       .map((g) => ({ kind: "group", created_at: g.created_at, group: g }));
-    return [...rowItems, ...groupItems].sort(
+    const marathonItems: MixedItem[] = marathonGroups
+      .filter((g) => skillFilter === "all" || g.skill === skillFilter)
+      .map((g) => ({ kind: "marathon", created_at: g.created_at, marathon: g }));
+    return [...rowItems, ...groupItems, ...marathonItems].sort(
       (a, b) => toTimeSafe(b.created_at) - toTimeSafe(a.created_at),
     );
-  }, [perSkillRows, fullPartGroups, skillFilter]);
+  }, [perSkillRows, fullPartGroups, marathonGroups, skillFilter]);
 
   // Top stats
   const stats = useMemo(() => {
-    const totalAttempts = perSkillRows.length + fullTestGroups.length + fullPartGroups.length;
+    const totalAttempts =
+      perSkillRows.length + fullTestGroups.length + fullPartGroups.length + marathonGroups.length;
     const weekStart = startOfWeek().getTime();
     const thisWeek =
       perSkillRows.filter((r) => toTimeSafe(r.created_at) >= weekStart).length +
       fullTestGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length +
-      fullPartGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
+      fullPartGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length +
+      marathonGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
     return { totalAttempts, thisWeek };
   }, [perSkillRows, fullTestGroups, fullPartGroups]);
 
@@ -608,6 +699,53 @@ const History = () => {
                         </TableRow>
                       );
                     }
+                    if (item.kind === "marathon") {
+                      const m = item.marathon;
+                      const Icon = SKILL_ICON[m.skill] || ListChecks;
+                      const retryTo = m.partType
+                        ? `${SKILL_ROUTES[m.skill] || "/practice"}?marathon=${m.partType}`
+                        : SKILL_ROUTES[m.skill] || "/practice";
+                      return (
+                        <TableRow key={`mr-${m.sessionId}`}>
+                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" />{formatDateTime(m.created_at)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <Icon className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-foreground truncate">{SKILL_LABELS[m.skill] || m.skill}</span>
+                                  <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Marathon</Badge>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground truncate">{m.label}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-[11px]">{m.setCount} đề</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-foreground">
+                            {m.total > 0 ? `${m.score}/${m.total}` : "—"}
+                          </TableCell>
+                          <TableCell className="text-right"><span className="text-muted-foreground">—</span></TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex gap-2">
+                              {m.reviewRowId && (
+                                <Link to={`/history/marathon/${m.reviewRowId}`}>
+                                  <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                                </Link>
+                              )}
+                              <Link to={retryTo}>
+                                <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                              </Link>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
                     const r = item.row;
                     const Icon = SKILL_ICON[r.skill] || ListChecks;
                     return (
@@ -647,12 +785,18 @@ const History = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="inline-flex gap-2">
-                            <Link to={r.isMarathon ? `/history/marathon/${r.id}` : `/history/${r.id}?review=1`}>
-                              <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
-                            </Link>
+                            {r.review_snapshot && (
+                              <Link to={r.isMarathon ? `/history/marathon/${r.id}` : `/history/${r.id}?review=1`}>
+                                <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                              </Link>
+                            )}
                             <Link
                               to={
-                                r.exam_set_id
+                                r.isMarathon
+                                  ? (r.marathonPartType
+                                      ? `${SKILL_ROUTES[r.skill] || "/practice"}?marathon=${r.marathonPartType}`
+                                      : SKILL_ROUTES[r.skill] || "/practice")
+                                  : r.exam_set_id
                                   ? `${SKILL_ROUTES[r.skill] || "/practice"}?set=${r.exam_set_id}`
                                   : SKILL_ROUTES[r.skill] || "/practice"
                               }
