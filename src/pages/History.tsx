@@ -699,6 +699,53 @@ const History = () => {
                         </TableRow>
                       );
                     }
+                    if (item.kind === "marathon") {
+                      const m = item.marathon;
+                      const Icon = SKILL_ICON[m.skill] || ListChecks;
+                      const retryTo = m.partType
+                        ? `${SKILL_ROUTES[m.skill] || "/practice"}?marathon=${m.partType}`
+                        : SKILL_ROUTES[m.skill] || "/practice";
+                      return (
+                        <TableRow key={`mr-${m.sessionId}`}>
+                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5"><Calendar className="w-3 h-3" />{formatDateTime(m.created_at)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="w-7 h-7 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <Icon className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-medium text-foreground truncate">{SKILL_LABELS[m.skill] || m.skill}</span>
+                                  <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Marathon</Badge>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground truncate">{m.label}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-[11px]">{m.setCount} đề</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-foreground">
+                            {m.total > 0 ? `${m.score}/${m.total}` : "—"}
+                          </TableCell>
+                          <TableCell className="text-right"><span className="text-muted-foreground">—</span></TableCell>
+                          <TableCell className="text-right">
+                            <div className="inline-flex gap-2">
+                              {m.reviewRowId && (
+                                <Link to={`/history/marathon/${m.reviewRowId}`}>
+                                  <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                                </Link>
+                              )}
+                              <Link to={retryTo}>
+                                <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                              </Link>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
                     const r = item.row;
                     const Icon = SKILL_ICON[r.skill] || ListChecks;
                     return (
