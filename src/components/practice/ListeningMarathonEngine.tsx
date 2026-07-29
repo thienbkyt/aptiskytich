@@ -658,8 +658,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               setTimeout(() => setJumpQ(null), 0);
               return;
             }
-            const hasAnyAnswer = currentAnswered.some(Boolean);
-            if (hasAnyAnswer) {
+            // Per-question mode: only submit the set when EVERY question is done,
+            // so unanswered questions are never graded as blank.
+            const need = Math.max(1, loaded[currentIndex]?.pageCount ?? 1);
+            const doneCount = currentAnswered.filter(Boolean).length;
+            const allAnswered = doneCount >= need;
+            if (allAnswered) {
               pendingJumpRef.current = { si, qi: clamped };
               setSubmitSignal((s) => s + 1);
               return;
