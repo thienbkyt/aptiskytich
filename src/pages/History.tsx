@@ -35,6 +35,10 @@ interface HistoryRow {
   full_test_session_id: string | null;
   full_test_id: string | null;
   isMarathon: boolean;
+  marathonMode: string | null;          // "marathon" | "marathon-set" | null
+  marathonSessionId: string | null;
+  marathonPartType: string | null;
+  marathonLabel: string | null;
   fullPartSession: string | null;
   review_snapshot: any;
   // computed display
