@@ -71,10 +71,11 @@ const MarathonNavigator = ({
         }
         const done = results[si]?.qResults?.length;
         const planned = qCounts?.[si];
-        const raw = (typeof done === "number" && done > 0)
-          ? done
-          : (typeof planned === "number" && planned > 0 ? planned : 0);
+        const raw = (typeof planned === "number" && planned > 0)
+          ? planned
+          : (typeof done === "number" && done > 0 ? done : 0);
         const count = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+
         for (let qi = 0; qi < count; qi++) out.push({ si, qi });
       }
     } catch {
