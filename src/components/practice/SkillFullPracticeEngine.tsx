@@ -656,7 +656,25 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
           });
         }
+
+        // Write the part score back to its own test_results row (+ snapshot).
+        try {
+          const trId = speakingTestResultIdByPartRef.current[originalIdx] ?? null;
+          const graded = v2ByPart[sub.partType];
+          if (trId && graded) {
+            const rawPart = Number(graded.rawPart ?? 0);
+            const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+            await mergeSnapshotAI(
+              trId,
+              { 0: { partScore: rawPart, maxPoints: 30, feedback: graded.feedback ?? graded.analysis ?? undefined } as any },
+              { score: rawPart, total: 30, partScaled50: Math.round((rawPart / 30) * 50) },
+            );
+          }
+        } catch (e) {
+          console.warn("[SkillFullPractice V2] mergeSnapshotAI part failed", e);
+        }
       }
+
 
       // 3) Finalize → /50 + CEFR + flags.
       setSpeakingV2Message("Đang tổng hợp điểm /50 và CEFR...");
