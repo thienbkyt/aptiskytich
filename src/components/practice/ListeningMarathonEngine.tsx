@@ -604,6 +604,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             pageTotal={pageTotal}
             submitSignal={submitSignal}
             {...engineData}
+            examSetId={sets[currentIndex]?.id ?? null}
+
           />
         )}
       </div>
