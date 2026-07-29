@@ -67,6 +67,7 @@ interface FullPartGroup {
   partCount: number;
   num: number;
   den: number;
+  ungradedCount: number;
   displayScore: string;
   displayBand: string;
 }
@@ -371,6 +372,7 @@ const History = () => {
               partCount: 0,
               num: 0,
               den: 0,
+              ungradedCount: 0,
               displayScore: "—",
               displayBand: "—",
             };
@@ -383,10 +385,15 @@ const History = () => {
               g.num += a.sum; g.den += a.max;
             } else {
               // Fallback only (no stored skill result): per-part figures.
+              // Part chưa chấm = thiếu s50 HOẶC s50 === 0; không cộng vào tử/mẫu.
               const snap: any = r.review_snapshot || {};
               const s50 = typeof snap.partScaled50 === "number" ? snap.partScaled50
                 : typeof snap.scaled50 === "number" ? snap.scaled50 : null;
-              if (s50 != null) { g.num += s50; g.den += 50; }
+              if (s50 == null || s50 === 0) {
+                g.ungradedCount++;
+              } else {
+                g.num += s50; g.den += 50;
+              }
             }
           } else {
             g.num += r.score; g.den += r.total;
