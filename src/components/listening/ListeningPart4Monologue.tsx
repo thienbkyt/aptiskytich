@@ -40,13 +40,14 @@ interface Props {
   hideTimer?: boolean;
   pageNumber?: number;
   pageTotal?: number;
+  hideBottomNav?: boolean;
 }
 
 const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal,
+  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav,
 }: Props) => {
   const reveal = submitted || !!revealAnswers;
   const clip = questions[currentIndex];
@@ -66,7 +67,7 @@ const ListeningPart4Monologue = ({
           <p className="text-sm font-heading font-bold text-foreground">Listening – Part 4</p>
           <p className="text-sm text-foreground">
             {pageNumber != null && pageTotal != null
-              ? `Đề ${pageNumber}/${pageTotal}`
+              ? `Đề ${pageNumber}/${pageTotal} · Câu ${currentIndex + 1}/${questions.length}`
               : `Recording ${currentIndex + 1} of ${questions.length}`}
           </p>
         </div>
@@ -154,15 +155,29 @@ const ListeningPart4Monologue = ({
         </motion.div>
       </AnimatePresence>
 
-      <BottomNavBar
-        onPrevious={onPrevious}
-        onNext={onNext}
-        onSubmit={onSubmit}
-        isFirst={isFirst}
-        isLast={isLast}
-        sections={sections}
-        onSubmitTest={onSubmitTest}
-      />
+      {!hideBottomNav ? (
+        <BottomNavBar
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSubmit={onSubmit}
+          isFirst={isFirst}
+          isLast={isLast}
+          sections={sections}
+          onSubmitTest={onSubmitTest}
+        />
+      ) : (
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border px-4 py-2.5 flex items-center justify-between gap-3">
+          <div className="w-24" />
+          <span className="text-sm font-semibold text-foreground">Câu {currentIndex + 1}/{questions.length}</span>
+          <div className="w-24 flex justify-end">
+            {!submitted && currentIndex === questions.length - 1 && onSubmitTest && (
+              <button type="button" onClick={onSubmitTest} className="exam-nav-submit exam-nav-next-button gap-2 px-6">
+                Nộp đề này
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
