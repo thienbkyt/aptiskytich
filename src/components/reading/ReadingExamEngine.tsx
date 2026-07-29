@@ -663,6 +663,11 @@ const ReadingExamEngine = ({
         onMarathonFinish={onMarathonFinish}
         onBackToResults={!hideBackToResults && isReviewing ? () => setIsReviewing(false) : undefined}
       />
+      {hideBottomNav && phase === "practice" && (
+        <div className="hidden sm:block fixed bottom-3 left-4 z-30 text-xs text-muted-foreground">
+          Dùng ← → để chuyển câu
+        </div>
+      )}
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence
