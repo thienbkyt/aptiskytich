@@ -396,9 +396,10 @@ const Dashboard = () => {
         setData({
           displayName,
           streak: streakRes.data?.current_streak ?? 0,
-          totalQuestions: grandTotal,
+          totalQuestions: mcqTotal,
           accuracy: mcqTotal > 0 ? Math.round((mcqCorrect / mcqTotal) * 100) : 0,
-          currentLevel: tests[0]?.level || "—",
+          currentLevel,
+          skillsCovered,
           grammarPct:   pctOf("grammar_vocab"),
           readingPct:   pctOf("reading"),
           listeningPct: pctOf("listening"),
