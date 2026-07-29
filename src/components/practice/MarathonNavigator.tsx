@@ -53,9 +53,10 @@ const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
   currentQ, reviewingQ, currentAnswered, currentLocked,
   isRetryMode, allowJumpInCurrent = true, mode = "default",
-  chipLabelMode = "question",
+  chipLabelMode = "question", showSetLabels = false,
   onReview, onJumpQuestion, onEnterSet, onRetrySet,
 }: Props) => {
+
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Flatten all chips: global index -> { si, qi }. Skips sets with missing/0 count.
