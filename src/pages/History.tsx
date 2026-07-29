@@ -434,11 +434,12 @@ const History = () => {
           let g = mMap.get(sid);
           if (!g) {
             const summary = summaryBySession.get(sid);
+            const partType = summary?.marathonPartType || r.marathonPartType || null;
             g = {
               sessionId: sid,
               skill: r.skill,
-              partType: summary?.marathonPartType || r.marathonPartType || null,
-              label: summary?.marathonLabel || r.marathonLabel || "Marathon",
+              partType,
+              label: summary?.marathonLabel || r.marathonLabel || formatMarathonLabel(partType, r.skill),
               created_at: r.created_at,
               setCount: 0,
               score: 0,
