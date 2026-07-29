@@ -208,18 +208,26 @@ const Dashboard = () => {
 
         // Dự phòng: nếu chưa có writing_skill_results (luyện trước 29/07),
         // tính từ test_results các lượt Writing part lẻ thang /30.
+        let writingFallbackRows: any[] = [];
         if (writingPct === 0) {
-          const writingRows = allResults.filter((row: any) => {
+          writingFallbackRows = allResults.filter((row: any) => {
             const ss = row.skill_scores;
             if (!ss || typeof ss !== "object") return false;
             if (ss.mode === "marathon") return false;
             return ss.skill === "writing" && row.total === 30;
           });
-          if (writingRows.length > 0) {
-            const avg = writingRows.reduce((sum: number, row: any) => sum + (row.score / row.total), 0) / writingRows.length;
+          if (writingFallbackRows.length > 0) {
+            const avg = writingFallbackRows.reduce((sum: number, row: any) => sum + (row.score / row.total), 0) / writingFallbackRows.length;
             writingPct = clampPct(Math.round(avg * 100));
           }
         }
+
+        const grammarHas = (skillAgg["grammar_vocab"]?.total || 0) > 0;
+        const readingHas = (skillAgg["reading"]?.total || 0) > 0;
+        const listeningHas = (skillAgg["listening"]?.total || 0) > 0;
+        const speakingHas = (speakingSkillRes.data || []).some((r: any) => Number(r.scale50) > 0);
+        const writingHas =
+          (writingSkillRes.data || []).some((r: any) => Number(r.scale50) > 0) || writingFallbackRows.length > 0;
 
         // ── Band tổng: tính từ 4 kỹ năng (bỏ grammar) ──
         const speakingRows = (speakingSkillRes.data || []) as any[];
@@ -410,6 +418,11 @@ const Dashboard = () => {
           listeningPct: pctOf("listening"),
           speakingPct,
           writingPct,
+          grammarHas,
+          readingHas,
+          listeningHas,
+          speakingHas,
+          writingHas,
           recentTests,
           weeklyActivity,
         });
