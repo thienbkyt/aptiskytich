@@ -523,7 +523,7 @@ const History = () => {
       fullPartGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length +
       marathonGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
     return { totalAttempts, thisWeek };
-  }, [perSkillRows, fullTestGroups, fullPartGroups]);
+  }, [perSkillRows, fullTestGroups, fullPartGroups, marathonGroups]);
 
 
 
