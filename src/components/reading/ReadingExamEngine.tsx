@@ -21,6 +21,7 @@ import type {
 import type { ReadingReviewData } from "@/lib/readingReview";
 import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 import { useExitWarning } from "@/hooks/useExitWarning";
+import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
