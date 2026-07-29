@@ -71,6 +71,20 @@ interface FullPartGroup {
   displayBand: string;
 }
 
+interface MarathonGroup {
+  sessionId: string;
+  skill: string;
+  partType: string | null;
+  label: string;
+  created_at: string;
+  setCount: number;
+  score: number;
+  total: number;
+  reviewRowId: string | null;   // row có review_snapshot để "Xem lại"
+}
+
+
+
 const SKILL_LABELS: Record<string, string> = {
   grammar: "Grammar",
   grammar_vocab: "Grammar",
