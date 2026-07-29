@@ -80,24 +80,19 @@ export const computeHistoryDisplay = (
 
   }
 
-  if (snapScaled != null) {
-
-    return {
-
-      displayScore: `${snapScaled}/50`,
-
-      displayBand: noBand ? "—" : (snapBand || (r.level || "—")),
-
-      scorePct: snapScaled / 50,
-
-    };
-
+  if (skill === "reading" || skill === "listening") {
+    if (r.total > 0) {
+      return {
+        displayScore: `${r.score}/${r.total}`,
+        displayBand: "—",
+        scorePct: r.score / r.total,
+      };
+    }
+    return { displayScore: "—", displayBand: "—", scorePct: null };
   }
 
   if (r.total > 0) {
-
     return { displayScore: `${r.score}/${r.total}`, displayBand: noBand ? "—" : (r.level || "—"), scorePct: r.score / r.total };
-
   }
 
   return { displayScore: "—", displayBand: noBand ? "—" : (r.level || "—"), scorePct: null };
