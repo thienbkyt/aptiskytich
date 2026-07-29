@@ -248,6 +248,14 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     currentAnswersRef.current = emptyAnswers();
   };
 
+  // ← → switch between sets (each Writing set is a single task).
+  useMarathonArrowKeys({
+    enabled: phase === "exam" && !!engineData,
+    onPrev: () => goToSet((reviewIndex ?? currentIndex) - 1),
+    onNext: () => goToSet((reviewIndex ?? currentIndex) + 1),
+  });
+
+
   const openReview = (si: number) => {
     if (si < 0 || si >= sets.length) return;
     commitCurrent(currentIndex);
