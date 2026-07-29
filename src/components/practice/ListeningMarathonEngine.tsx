@@ -580,7 +580,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             skipIntro
             allowReveal
             reviewScopeNote={`Marathon · Đề ${currentIndex + 1}/${sets.length} — chỉ xét câu chưa làm của đề này`}
-            onMarathonFinish={() => setPhase("completed")}
+            onMarathonFinish={handleMarathonSaveExit}
+
             showResultsOnSubmit={false}
             onExit={handleExitMarathon}
             onComplete={handleComplete}
