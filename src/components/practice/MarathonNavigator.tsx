@@ -203,62 +203,23 @@ const MarathonNavigator = ({
           </div>
         ) : totalChips === 0 ? (
           <div className="text-[11px] text-muted-foreground italic">—</div>
+        ) : showSetLabels ? (
+          <div className="space-y-3">
+            {groupedFlat.map((grp) => (
+              <div key={grp.si}>
+                <div className="text-[11px] text-muted-foreground mb-1">Đề {grp.si + 1}</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {grp.cells.map(({ cell, gi }) => renderChip(cell, gi))}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="flex flex-wrap gap-1.5">
-            {flat.map((cell, gi) => {
-              const { si, qi } = cell;
-              const r = results[si];
-              const isDone = !!r;
-              const isCurrent = !isDone && si === currentIndex;
-              const isReviewing = (reviewingIndex ?? -1) === si;
-
-              let state: "done" | "answered" | "empty" = "empty";
-              if (isDone) state = "done";
-              else if (isCurrent && currentLocked?.[qi]) state = "done";
-              else if (isCurrent && currentAnswered?.[qi]) state = "answered";
-
-              const isCurrentChip = isReviewingMode
-                ? (isReviewing && (reviewingQ ?? 0) === qi)
-                : (isCurrent && (currentQ ?? -1) === qi);
-
-              const cls =
-                state === "done"
-                  ? "bg-muted-foreground/25 text-foreground border border-border hover:bg-muted-foreground/35 dark:bg-muted-foreground/20"
-                  : state === "answered"
-                  ? "bg-muted text-foreground border-2 border-blue-500 dark:border-blue-400 hover:bg-muted"
-                  : "bg-muted text-muted-foreground border border-border";
-
-              return (
-                <button
-                  key={gi}
-                  id={`marathon-nav-chip-${gi}`}
-                  type="button"
-                  onClick={() => {
-                    try {
-                      if (si < 0 || si >= sets.length) return;
-                      if (isDone) {
-                        onReview(si, qi);
-                      } else if (si === currentIndex) {
-                        if (allowJumpInCurrent) onJumpQuestion?.(qi);
-                      } else {
-                        onEnterSet?.(si, qi);
-                      }
-                    } catch { /* swallow to keep exam alive */ }
-                  }}
-                  className={cn(
-                    "w-[26px] h-[26px] rounded text-[11px] font-semibold transition-colors",
-                    cls,
-                    isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
-                    "cursor-pointer",
-                  )}
-                  title={chipLabelMode === "set" ? `Đề ${si + 1}` : `Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
-                >
-                  {chipLabelMode === "set" ? si + 1 : gi + 1}
-                </button>
-              );
-            })}
+            {flat.map((cell, gi) => renderChip(cell, gi))}
           </div>
         )}
+
       </div>
     </aside>
   );
