@@ -150,6 +150,15 @@ const MarathonNavigator = ({
     if (isDone) state = "done";
     else if (isCurrent && currentLocked?.[qi]) state = "done";
     else if (isCurrent && currentAnswered?.[qi]) state = "answered";
+    else if (!isDone && !isCurrent) {
+      try {
+        const draft = draftsBySet?.[(sets as any[])[si]?.id]?.[qi];
+        const hasDraft = Array.isArray(draft)
+          ? draft.length > 0
+          : (draft != null && (typeof draft !== "object" || Object.keys(draft).length > 0));
+        if (hasDraft) state = "answered";
+      } catch { /* noop */ }
+    }
 
     const isCurrentChip = isReviewingMode
       ? (isReviewing && (reviewingQ ?? 0) === qi)
