@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { X, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { normalizePart } from "@/hooks/useExamSets";
+
 
 export type MarathonQ = { is_correct: boolean; exam_question_id?: string };
 export type MarathonResult = {
