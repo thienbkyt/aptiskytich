@@ -190,7 +190,23 @@ const Dashboard = () => {
           return clampPct(Math.round((avg / 50) * 100));
         };
         const speakingPct = avgScale50Pct(speakingSkillRes.data as any[]);
-        const writingPct = avgScale50Pct(writingSkillRes.data as any[]);
+        let writingPct = avgScale50Pct(writingSkillRes.data as any[]);
+
+        // Dự phòng: nếu chưa có writing_skill_results (luyện trước 29/07),
+        // tính từ test_results các lượt Writing part lẻ thang /30.
+        if (writingPct === 0) {
+          const writingRows = allResults.filter((row: any) => {
+            const ss = row.skill_scores;
+            if (!ss || typeof ss !== "object") return false;
+            if (ss.mode === "marathon") return false;
+            return ss.skill === "writing" && row.total === 30;
+          });
+          if (writingRows.length > 0) {
+            const avg = writingRows.reduce((sum: number, row: any) => sum + (row.score / row.total), 0) / writingRows.length;
+            writingPct = clampPct(Math.round(avg * 100));
+          }
+        }
+
 
 
         const nowVN = toVNDate(new Date());
