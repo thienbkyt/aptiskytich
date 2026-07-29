@@ -26,11 +26,18 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
 import { computeHistoryDisplay, SKILL_LABELS } from "@/lib/historyDisplay";
 import { parseDateSafe, toTimeSafe } from "@/lib/safeDate";
+import { toScaledScore, getSkillBand } from "@/data/questions";
+
+// Dùng lại đúng logic quy đổi band tổng của FullTestScoreTable.
+const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
+const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
+const BAND_SKILLS = ["reading", "listening", "writing", "speaking"] as const;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06 } }),
 };
+
 
 interface RecentTest {
   id: string;
@@ -48,6 +55,8 @@ interface DashboardData {
   totalQuestions: number;
   accuracy: number;
   currentLevel: string;
+  skillsCovered: number;
+
   grammarPct: number;
   readingPct: number;
   listeningPct: number;
@@ -129,10 +138,10 @@ const Dashboard = () => {
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
           supabase.from("test_results").select("id,score,total,level,created_at,skill_scores,review_snapshot,exam_set_id,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
-          supabase.from("test_results").select("skill_scores,created_at").eq("user_id", user.id),
+          supabase.from("test_results").select("skill_scores,created_at,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }),
           // Nguồn điểm duy nhất cho Speaking/Writing: bảng kết quả kỹ năng đã lưu.
-          supabase.from("speaking_skill_results").select("scale50").eq("user_id", user.id),
-          supabase.from("writing_skill_results").select("scale50").eq("user_id", user.id),
+          supabase.from("speaking_skill_results").select("scale50,created_at,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("writing_skill_results").select("scale50,created_at,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }),
         ]);
 
 
@@ -207,6 +216,93 @@ const Dashboard = () => {
           }
         }
 
+        // ── Band tổng: tính từ 4 kỹ năng (bỏ grammar) ──
+        const speakingRows = (speakingSkillRes.data || []) as any[];
+        const writingRows50 = (writingSkillRes.data || []) as any[];
+        // Loại row tổng kết marathon để không đếm hai lần.
+        const scoreRows = allResults.filter((row: any) => {
+          const ss = row.skill_scores;
+          return ss && typeof ss === "object" && ss.mode !== "marathon" && ss.skill;
+        });
+
+        const scaledBySkill: Partial<Record<typeof BAND_SKILLS[number], number>> = {};
+
+        // NGUỒN 1: full test gần nhất có đủ cả 4 kỹ năng.
+        const sessionSkills = new Map<string, Map<string, { correct: number; total: number }>>();
+        const sessionOrder: string[] = [];
+        scoreRows.forEach((row: any) => {
+          const sid = row.full_test_session_id;
+          if (!sid) return;
+          const ss = row.skill_scores;
+          if (ss.fullPartSession) return;
+          if (!sessionSkills.has(sid)) { sessionSkills.set(sid, new Map()); sessionOrder.push(sid); }
+          sessionSkills.get(sid)!.set(ss.skill, {
+            correct: Number(ss.correct) || 0,
+            total: Number(ss.total) || 0,
+          });
+        });
+        const s50BySession = (list: any[]) => {
+          const m = new Map<string, number>();
+          list.forEach((r: any) => {
+            const sid = r.full_test_session_id;
+            const v = Number(r.scale50);
+            if (!sid || !Number.isFinite(v) || v <= 0) return;
+            if (!m.has(sid)) m.set(sid, Math.round(v));
+          });
+          return m;
+        };
+        const wBySession = s50BySession(writingRows50);
+        const sBySession = s50BySession(speakingRows);
+
+        for (const sid of sessionOrder) { // allResults đã sắp xếp mới → cũ
+          const skills = sessionSkills.get(sid)!;
+          const r = skills.get("reading");
+          const l = skills.get("listening");
+          const w = wBySession.get(sid);
+          const sp = sBySession.get(sid);
+          if (!r || !l || w === undefined || sp === undefined) continue;
+          if (r.total <= 0 || l.total <= 0) continue;
+          scaledBySkill.reading = toScaledScore(r.correct, r.total);
+          scaledBySkill.listening = toScaledScore(l.correct, l.total);
+          scaledBySkill.writing = w;
+          scaledBySkill.speaking = sp;
+          break;
+        }
+
+        // NGUỒN 2: dự phòng — 5 lượt gần nhất mỗi kỹ năng.
+        if (scaledBySkill.reading === undefined) {
+          (["reading", "listening"] as const).forEach((sk) => {
+            const rows = scoreRows
+              .filter((row: any) => row.skill_scores.skill === sk && (Number(row.skill_scores.total) || 0) > 0)
+              .slice(0, 5);
+            if (rows.length === 0) return;
+            const c = rows.reduce((s: number, row: any) => s + (Number(row.skill_scores.correct) || 0), 0);
+            const t = rows.reduce((s: number, row: any) => s + (Number(row.skill_scores.total) || 0), 0);
+            if (t > 0) scaledBySkill[sk] = toScaledScore(c, t);
+          });
+          const avgS50 = (list: any[]) => {
+            const vals = list
+              .map((r: any) => Number(r.scale50))
+              .filter((n) => Number.isFinite(n) && n > 0)
+              .slice(0, 5);
+            if (vals.length === 0) return undefined;
+            return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+          };
+          const wAvg = avgS50(writingRows50);
+          const sAvg = avgS50(speakingRows);
+          if (wAvg !== undefined) scaledBySkill.writing = wAvg;
+          if (sAvg !== undefined) scaledBySkill.speaking = sAvg;
+        }
+
+        const bandNums = BAND_SKILLS
+          .filter((sk) => scaledBySkill[sk] !== undefined)
+          .map((sk) => BAND_TO_NUM[getSkillBand(scaledBySkill[sk]!, sk)] ?? 0);
+        const skillsCovered = BAND_SKILLS.filter((sk) => scaledBySkill[sk] !== undefined).length;
+        let currentLevel = "Chưa đủ dữ liệu";
+        if (skillsCovered === 4) {
+          const avg = Math.round(bandNums.reduce((a, b) => a + b, 0) / bandNums.length);
+          currentLevel = NUM_TO_BAND[Math.max(0, Math.min(5, avg))];
+        }
 
 
         const nowVN = toVNDate(new Date());
@@ -300,9 +396,10 @@ const Dashboard = () => {
         setData({
           displayName,
           streak: streakRes.data?.current_streak ?? 0,
-          totalQuestions: grandTotal,
+          totalQuestions: mcqTotal,
           accuracy: mcqTotal > 0 ? Math.round((mcqCorrect / mcqTotal) * 100) : 0,
-          currentLevel: tests[0]?.level || "—",
+          currentLevel,
+          skillsCovered,
           grammarPct:   pctOf("grammar_vocab"),
           readingPct:   pctOf("reading"),
           listeningPct: pctOf("listening"),
@@ -383,7 +480,11 @@ const Dashboard = () => {
                     <GradientText>{d.displayName}</GradientText> 👋
                   </h1>
                   <p className="text-muted-foreground mt-2 text-sm md:text-base">
-                    Bạn đang ở band <strong className="text-foreground">{d.currentLevel}</strong>
+                    {d.skillsCovered === 4 ? (
+                      <>Bạn đang ở band <strong className="text-foreground">{d.currentLevel}</strong></>
+                    ) : (
+                      <>Đã có dữ liệu <strong className="text-foreground">{d.skillsCovered}/4 kỹ năng</strong> — làm thêm để biết band tổng</>
+                    )}
                     {d.streak > 0 && <> · Streak <strong className="text-primary">{d.streak} ngày</strong> 🔥</>}
                     {" "}— hôm nay luyện tiếp nhé!
                   </p>
