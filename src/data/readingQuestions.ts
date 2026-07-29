@@ -16,6 +16,7 @@ export interface ReadingPart2Sentence {
   correctPosition: number; // 1..5 (per section, normalized)
 }
 export interface ReadingPart2Section {
+  title?: string;
   sentences: ReadingPart2Sentence[];
 }
 export interface ReadingCohesionQuestion {
