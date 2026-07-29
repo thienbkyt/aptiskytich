@@ -463,13 +463,16 @@ const Dashboard = () => {
   const weekPct = Math.round((weekDoneCount / 7) * 100);
 
   const skills = [
-    { label: "Grammar & Vocab", pct: d.grammarPct, from: "from-primary",   to: "to-[#ff6b4a]" },
-    { label: "Reading",         pct: d.readingPct, from: "from-info",      to: "to-blue-400" },
-    { label: "Listening",       pct: d.listeningPct, from: "from-warning",  to: "to-yellow-300" },
-    { label: "Speaking",        pct: d.speakingPct, from: "from-accent",    to: "to-pink-400" },
-    { label: "Writing",         pct: d.writingPct, from: "from-success",   to: "to-emerald-300" },
+    { label: "Grammar & Vocab", pct: d.grammarPct, done: d.grammarHas, from: "from-primary",   to: "to-[#ff6b4a]" },
+    { label: "Reading",         pct: d.readingPct, done: d.readingHas, from: "from-info",      to: "to-blue-400" },
+    { label: "Listening",       pct: d.listeningPct, done: d.listeningHas, from: "from-warning",  to: "to-yellow-300" },
+    { label: "Speaking",        pct: d.speakingPct, done: d.speakingHas, from: "from-accent",    to: "to-pink-400" },
+    { label: "Writing",         pct: d.writingPct, done: d.writingHas, from: "from-success",   to: "to-emerald-300" },
   ];
-  const weakest = skills.reduce((min, s) => (s.pct < min.pct ? s : min), skills[0]);
+  const doneSkills = skills.filter((s) => s.done);
+  const weakest = doneSkills.length > 0
+    ? doneSkills.reduce((min, s) => (s.pct < min.pct ? s : min), doneSkills[0])
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -667,26 +670,34 @@ const Dashboard = () => {
                       <div key={s.label}>
                         <div className="flex items-baseline justify-between mb-2">
                           <span className="text-sm text-foreground font-medium">{s.label}</span>
-                          <span className="text-lg font-heading font-extrabold text-foreground">{s.pct}<span className="text-xs text-muted-foreground">%</span></span>
+                          {s.done ? (
+                            <span className="text-lg font-heading font-extrabold text-foreground">{s.pct}<span className="text-xs text-muted-foreground">%</span></span>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">Chưa làm</span>
+                          )}
                         </div>
-                        <div className="h-2 bg-muted/40 rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${s.pct}%` }}
-                            transition={{ duration: 1, delay: 0.2 }}
-                            className={`h-full bg-gradient-to-r ${s.from} ${s.to} rounded-full`}
-                            style={{ boxShadow: "0 0 10px hsl(var(--primary) / 0.3)" }}
-                          />
-                        </div>
+                        {s.done && (
+                          <div className="h-2 bg-muted/40 rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${s.pct}%` }}
+                              transition={{ duration: 1, delay: 0.2 }}
+                              className={`h-full bg-gradient-to-r ${s.from} ${s.to} rounded-full`}
+                              style={{ boxShadow: "0 0 10px hsl(var(--primary) / 0.3)" }}
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <div className="mt-5 pt-4 border-t border-border flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-primary shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      Kỹ năng yếu nhất: <strong className="text-foreground">{weakest.label}</strong> — nên luyện thêm!
-                    </p>
-                  </div>
+                  {weakest && (
+                    <div className="mt-5 pt-4 border-t border-border flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-primary shrink-0" />
+                      <p className="text-sm text-muted-foreground">
+                        Kỹ năng yếu nhất: <strong className="text-foreground">{weakest.label}</strong> — nên luyện thêm!
+                      </p>
+                    </div>
+                  )}
                 </GlowCard>
               </motion.div>
 
