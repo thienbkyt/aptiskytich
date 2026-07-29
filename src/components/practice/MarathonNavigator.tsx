@@ -110,6 +110,86 @@ const MarathonNavigator = ({
 
   const isWriting = mode === "writing";
 
+  const groupedFlat = useMemo(() => {
+    const map = new Map<number, { si: number; cells: { cell: { si: number; qi: number }; gi: number }[] }>();
+    flat.forEach((cell, gi) => {
+      if (!map.has(cell.si)) map.set(cell.si, { si: cell.si, cells: [] });
+      map.get(cell.si)!.cells.push({ cell, gi });
+    });
+    return Array.from(map.values());
+  }, [flat]);
+
+  // Chỉ số chip đang chọn (global) để tự cuộn vào tầm nhìn.
+  const activeChipGi = useMemo(() => {
+    const targetSi = isReviewingMode ? (reviewingIndex as number) : currentIndex;
+    const targetQi = isReviewingMode ? (reviewingQ ?? 0) : (currentQ ?? 0);
+    return flat.findIndex((c) => c.si === targetSi && c.qi === targetQi);
+  }, [flat, isReviewingMode, reviewingIndex, reviewingQ, currentIndex, currentQ]);
+
+  useEffect(() => {
+    if (activeChipGi < 0) return;
+    try {
+      const els = document.querySelectorAll(`[data-marathon-chip="${activeChipGi}"]`);
+      els.forEach((el) => (el as HTMLElement).scrollIntoView({ block: "nearest", behavior: "smooth" }));
+    } catch { /* noop */ }
+  }, [activeChipGi]);
+
+  const renderChip = (cell: { si: number; qi: number }, gi: number) => {
+    const { si, qi } = cell;
+    const r = results[si];
+    const isDone = !!r;
+    const isCurrent = !isDone && si === currentIndex;
+    const isReviewing = (reviewingIndex ?? -1) === si;
+
+    let state: "done" | "answered" | "empty" = "empty";
+    if (isDone) state = "done";
+    else if (isCurrent && currentLocked?.[qi]) state = "done";
+    else if (isCurrent && currentAnswered?.[qi]) state = "answered";
+
+    const isCurrentChip = isReviewingMode
+      ? (isReviewing && (reviewingQ ?? 0) === qi)
+      : (isCurrent && (currentQ ?? -1) === qi);
+
+    const cls =
+      state === "done"
+        ? "bg-muted-foreground/25 text-foreground border border-border hover:bg-muted-foreground/35 dark:bg-muted-foreground/20"
+        : state === "answered"
+        ? "bg-muted text-foreground border-2 border-blue-500 dark:border-blue-400 hover:bg-muted"
+        : "bg-muted text-muted-foreground border border-border";
+
+    return (
+      <button
+        key={gi}
+        id={`marathon-nav-chip-${gi}`}
+        data-marathon-chip={gi}
+        type="button"
+        onClick={() => {
+          try {
+            if (si < 0 || si >= sets.length) return;
+            if (isDone) {
+              onReview(si, qi);
+            } else if (si === currentIndex) {
+              if (allowJumpInCurrent) onJumpQuestion?.(qi);
+            } else {
+              onEnterSet?.(si, qi);
+            }
+          } catch { /* swallow to keep exam alive */ }
+        }}
+        className={cn(
+          "w-[26px] h-[26px] rounded text-[11px] font-semibold transition-colors",
+          cls,
+          isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
+          "cursor-pointer",
+        )}
+        title={chipLabelMode === "set" ? `Đề ${si + 1}` : `Câu ${gi + 1} · Đề ${si + 1} · Câu ${qi + 1}`}
+      >
+        {chipLabelMode === "set" ? si + 1 : gi + 1}
+      </button>
+    );
+  };
+
+
+
   const body = (onClose?: () => void) => (
     <aside className="w-full h-full bg-card/95 border-l border-border flex flex-col">
       <div className="p-3 border-b border-border flex items-center justify-between gap-2">
