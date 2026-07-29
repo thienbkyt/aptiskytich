@@ -724,7 +724,19 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         console.warn("[SkillFullPractice V2] saveSpeakingSkillResult failed", e);
       }
 
+      try {
+        if (lastTrId && scale50 > 0) {
+          const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+          await mergeSnapshotAI(lastTrId, {}, {
+            score: scale50, total: 50, scaled50: scale50, band: cefr || null,
+          });
+        }
+      } catch (e) {
+        console.warn("[SkillFullPractice V2] finalize speaking failed", e);
+      }
+
       setSpeakingV2Parts(v2Entries);
+
       setSpeakingV2Scale(scale50);
       setSpeakingV2Cefr(cefr);
       setSpeakingV2GreyZone(greyZone);
