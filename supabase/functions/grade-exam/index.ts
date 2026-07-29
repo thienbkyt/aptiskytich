@@ -315,17 +315,18 @@ ${studentText}`;
       const coreGV = (body as any).coreGV;
       const raw_total = p1 + p2 + p3 + p4 * 1.2; // max 126
       const scale50_base = Math.round((raw_total / 126) * 50);
-      // LENIENCY: scoring runs strict; apply +20% scaling for user-facing score.
-      const LENIENCY = 1.2;
-      const scale50 = Math.min(50, Math.round(scale50_base * LENIENCY));
+      // LENIENCY: scoring runs strict; apply +10% scaling for user-facing score.
+      const LENIENCY = 1.1;
+      const scale50 = Math.max(0, Math.min(50, Math.round(scale50_base * LENIENCY)));
       const CUTS: Array<{ band: string; cut: number }> = [
         { band: "C", cut: 48 },
         { band: "B2", cut: 41 },
-        { band: "B1", cut: 34 },
-        { band: "A2", cut: 24 },
-        { band: "A1", cut: 12 },
+        { band: "B1", cut: 26 },
+        { band: "A2", cut: 16 },
+        { band: "A1", cut: 4 },
         { band: "A0", cut: 0 },
       ];
+
       const order = ["A0", "A1", "A2", "B1", "B2", "C"];
       const rankOf = (b: string) => order.indexOf(b);
       let baseBand = "A0";
