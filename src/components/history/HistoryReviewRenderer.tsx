@@ -141,35 +141,42 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       const gr = (wqg || []) as any[];
       const partKey = (part || "").toLowerCase().replace(/\s+/g, "");
       const match = gr.find((g) => (g.part || "").toLowerCase().replace(/\s+/g, "") === partKey) || gr[0];
-      const { data: trRow } = await supabase.from("test_results").select("full_test_session_id").eq("id", testResultId).maybeSingle();
+      const { data: trRow } = await supabase.from("test_results").select("full_test_session_id,review_snapshot").eq("id", testResultId).maybeSingle();
       const sessionId = (trRow as any)?.full_test_session_id ?? null;
+      const snapshotAi = ((trRow as any)?.review_snapshot as any)?.items?.[0]?.ai ?? null;
       let q = supabase.from("writing_skill_results").select("parts,created_at").eq("user_id", userId);
       q = sessionId ? q.eq("full_test_session_id", sessionId) : q.eq("test_result_id", testResultId);
       const { data: wsr } = await q.order("created_at", { ascending: false }).limit(1);
       const wsrPart = (wsr as any[])?.[0]?.parts?.[taskKey] ?? null;
       if (cancelled) return;
-      if (!match && !wsrPart) { setWritingGrading(null); return; }
-      const improvedVersion = wsrPart?.improvedVersion || undefined;
-      const upgradeTips = wsrPart?.upgradeTips || undefined;
+      if (!match && !wsrPart && !snapshotAi) { setWritingGrading(null); return; }
+      const improvedVersion = wsrPart?.improvedVersion || snapshotAi?.improvedVersion || undefined;
+      const upgradeTips = wsrPart?.upgradeTips || snapshotAi?.upgradeTips || undefined;
+      const grammarSrc = (match?.grammar_errors as any) || (wsrPart?.grammarErrors as any) || (snapshotAi?.grammarErrors as any) || [];
+      const spellingSrc = (match?.spelling_errors as any) || (wsrPart?.spellingErrors as any) || (snapshotAi?.spellingErrors as any) || [];
+      const feedback = match?.feedback || wsrPart?.feedback || snapshotAi?.feedback || "";
       if (match) {
         setWritingGrading({
-          partType: part, partScore: match.part_score || 0, maxPoints: match.max_points || 0,
+          partType: part,
+          partScore: match.part_score ?? snapshotAi?.partScore ?? 0,
+          maxPoints: match.max_points ?? snapshotAi?.maxPoints ?? 0,
           addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
-          ...splitWritingErrors(
-            (match.grammar_errors as any) || (wsrPart?.grammarErrors as any) || [],
-            (match.spelling_errors as any) || (wsrPart?.spellingErrors as any) || [],
-          ),
-
-          feedback: match.feedback || wsrPart?.feedback || "",
+          ...splitWritingErrors(grammarSrc, spellingSrc),
+          feedback,
           improvedVersion, upgradeTips,
         } as any);
       } else {
-        const raw = Number(wsrPart.rawPart);
+        const raw = Number(wsrPart?.rawPart);
+        const fallbackScore = Number.isFinite(raw)
+          ? Math.min(30, Math.round(raw))
+          : Number(snapshotAi?.partScore) || 0;
         setWritingGrading({
-          partType: part, partScore: Number.isFinite(raw) ? Math.min(30, Math.round(raw)) : 0, maxPoints: 30,
+          partType: part,
+          partScore: fallbackScore,
+          maxPoints: Number(snapshotAi?.maxPoints) || 30,
           addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0, coherencePenaltyPercent: 0, openingClosingPenalty: 0,
-          ...splitWritingErrors((wsrPart.grammarErrors as any) || [], (wsrPart.spellingErrors as any) || []),
-          feedback: wsrPart.feedback || "", improvedVersion, upgradeTips,
+          ...splitWritingErrors(grammarSrc, spellingSrc),
+          feedback, improvedVersion, upgradeTips,
         } as any);
       }
     })();
