@@ -740,7 +740,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       }
 
       try {
-        if (lastTrId && scale50 > 0) {
+        if (lastTrId) {
           const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
           await mergeSnapshotAI(lastTrId, {}, {
             score: scale50, total: 50, scaled50: scale50, band: cefr || null,
