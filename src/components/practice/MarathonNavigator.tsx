@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { X, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { normalizePart } from "@/hooks/useExamSets";
 
 export type MarathonQ = { is_correct: boolean; exam_question_id?: string };
 export type MarathonResult = {
@@ -87,6 +88,16 @@ const MarathonNavigator = ({
   );
   const totalSets = sets.length;
 
+  // Reading Part 2 + 3 combines two texts per set.
+  const isReadingPart23 = useMemo(() => {
+    try {
+      const first = (sets as any[])[0];
+      return first?.skill === "reading" && normalizePart(first?.part || "") === "part2";
+    } catch {
+      return false;
+    }
+  }, [sets]);
+
   // Đề đang đứng: xem lại thì theo đề đang xem, không thì theo đề đang làm.
   const isReviewingMode = (reviewingIndex ?? -1) >= 0;
   const activeSetIndex = isReviewingMode ? (reviewingIndex as number) : currentIndex;
@@ -121,6 +132,9 @@ const MarathonNavigator = ({
           <span className="text-muted-foreground">
             Đề {activeSetNumber}/{totalSets}
           </span>
+          {isReadingPart23 && (
+            <p className="text-[11px] text-muted-foreground mt-0.5">Mỗi đề gồm 2 đoạn</p>
+          )}
         </div>
 
         <div className="rounded-md bg-muted/50 p-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
