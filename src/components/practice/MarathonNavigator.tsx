@@ -28,6 +28,8 @@ interface Props {
   currentAnswered?: boolean[];
   /** Per-question locked/graded flags for the CURRENT set (marathon per-question grading). */
   currentLocked?: boolean[];
+  /** Unsubmitted drafts keyed by examSetId → array of answers (index = question). */
+  draftsBySet?: Record<string, any[]>;
   isRetryMode?: boolean;
   /** Enable in-set chip jump for the current set. */
   allowJumpInCurrent?: boolean;
@@ -53,7 +55,7 @@ interface Props {
 
 const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
-  currentQ, reviewingQ, currentAnswered, currentLocked,
+  currentQ, reviewingQ, currentAnswered, currentLocked, draftsBySet,
   isRetryMode, allowJumpInCurrent = true, mode = "default",
   chipLabelMode = "question", showSetLabels = false,
   onReview, onJumpQuestion, onEnterSet, onRetrySet, onRetryQuestion,
@@ -148,6 +150,15 @@ const MarathonNavigator = ({
     if (isDone) state = "done";
     else if (isCurrent && currentLocked?.[qi]) state = "done";
     else if (isCurrent && currentAnswered?.[qi]) state = "answered";
+    else if (!isDone && !isCurrent) {
+      try {
+        const draft = draftsBySet?.[(sets as any[])[si]?.id]?.[qi];
+        const hasDraft = Array.isArray(draft)
+          ? draft.length > 0
+          : (draft != null && (typeof draft !== "object" || Object.keys(draft).length > 0));
+        if (hasDraft) state = "answered";
+      } catch { /* noop */ }
+    }
 
     const isCurrentChip = isReviewingMode
       ? (isReviewing && (reviewingQ ?? 0) === qi)
@@ -184,7 +195,7 @@ const MarathonNavigator = ({
           isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
           "cursor-pointer",
         )}
-        title={chipLabelMode === "set" ? `Đề ${si + 1}` : `Đề ${si + 1} · Câu ${qi + 1}`}
+        title={chipLabelMode === "set" ? `Đi tới đề ${si + 1}` : `Đi tới đề ${si + 1} câu ${qi + 1}`}
       >
         {chipLabelMode === "set" ? si + 1 : qi + 1}
       </button>
