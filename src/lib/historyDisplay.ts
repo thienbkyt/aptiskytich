@@ -33,7 +33,18 @@ export const computeHistoryDisplay = (
 
   if (isAI) {
 
+    if (skill === "writing" && r.total === 30) {
+
+      return {
+        displayScore: `${r.score}/${r.total}`,
+        displayBand: "—",
+        scorePct: r.score / r.total,
+      };
+
+    }
+
     const agg = skill === "writing" ? writingAgg : speakingAgg;
+
 
     if (agg && agg.max > 0) {
 
