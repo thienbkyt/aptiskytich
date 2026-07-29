@@ -26,11 +26,18 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import { DashboardSkeleton } from "@/components/ui/tech-skeleton";
 import { computeHistoryDisplay, SKILL_LABELS } from "@/lib/historyDisplay";
 import { parseDateSafe, toTimeSafe } from "@/lib/safeDate";
+import { toScaledScore, getSkillBand } from "@/data/questions";
+
+// Dùng lại đúng logic quy đổi band tổng của FullTestScoreTable.
+const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
+const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
+const BAND_SKILLS = ["reading", "listening", "writing", "speaking"] as const;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06 } }),
 };
+
 
 interface RecentTest {
   id: string;
