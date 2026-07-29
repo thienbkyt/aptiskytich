@@ -715,7 +715,8 @@ const History = () => {
                     if (item.kind === "marathon") {
                       const m = item.marathon;
                       const Icon = SKILL_ICON[m.skill] || ListChecks;
-                      const retryTo = m.partType
+                      const canRetryMarathon = !!m.partType && VALID_MARATHON_PARTS.includes(m.partType);
+                      const retryTo = canRetryMarathon
                         ? `${SKILL_ROUTES[m.skill] || "/practice"}?marathon=${m.partType}`
                         : SKILL_ROUTES[m.skill] || "/practice";
                       return (
@@ -751,9 +752,11 @@ const History = () => {
                                   <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
                                 </Link>
                               )}
-                              <Link to={retryTo}>
-                                <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
-                              </Link>
+                              {canRetryMarathon && (
+                                <Link to={retryTo}>
+                                  <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                                </Link>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
