@@ -134,6 +134,8 @@ const History = () => {
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [fullTestGroups, setFullTestGroups] = useState<FullTestGroup[]>([]);
   const [fullPartGroups, setFullPartGroups] = useState<FullPartGroup[]>([]);
+  const [marathonGroups, setMarathonGroups] = useState<MarathonGroup[]>([]);
+  const [groupedMarathonRowIds, setGroupedMarathonRowIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
