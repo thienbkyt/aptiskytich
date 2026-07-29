@@ -62,6 +62,11 @@ interface DashboardData {
   listeningPct: number;
   speakingPct: number;
   writingPct: number;
+  grammarHas: boolean;
+  readingHas: boolean;
+  listeningHas: boolean;
+  speakingHas: boolean;
+  writingHas: boolean;
   recentTests: RecentTest[];
   weeklyActivity: number[];
 }
