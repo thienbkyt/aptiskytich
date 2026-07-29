@@ -138,10 +138,10 @@ const Dashboard = () => {
           supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
           supabase.from("learning_streaks").select("current_streak").eq("user_id", user.id).maybeSingle(),
           supabase.from("test_results").select("id,score,total,level,created_at,skill_scores,review_snapshot,exam_set_id,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
-          supabase.from("test_results").select("skill_scores,created_at").eq("user_id", user.id),
+          supabase.from("test_results").select("skill_scores,created_at,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }),
           // Nguồn điểm duy nhất cho Speaking/Writing: bảng kết quả kỹ năng đã lưu.
-          supabase.from("speaking_skill_results").select("scale50").eq("user_id", user.id),
-          supabase.from("writing_skill_results").select("scale50").eq("user_id", user.id),
+          supabase.from("speaking_skill_results").select("scale50,created_at,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }),
+          supabase.from("writing_skill_results").select("scale50,created_at,full_test_session_id").eq("user_id", user.id).order("created_at", { ascending: false }),
         ]);
 
 
