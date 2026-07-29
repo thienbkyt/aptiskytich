@@ -127,6 +127,13 @@ const startOfWeek = () => {
 
 const computeDisplay = computeHistoryDisplay;
 
+const formatMarathonLabel = (partType: string | null, skill: string) => {
+  if (!partType) return "Marathon";
+  if (skill === "reading") return `Marathon · ${readingPartLabel(partType)}`;
+  const n = partType.replace(/^part/i, "");
+  return `Marathon · Part ${n}`;
+};
+
 const History = () => {
   const { user, loading: authLoading } = useAuth();
   const [params, setParams] = useSearchParams();
