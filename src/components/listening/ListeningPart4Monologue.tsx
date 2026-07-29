@@ -155,7 +155,7 @@ const ListeningPart4Monologue = ({
         </motion.div>
       </AnimatePresence>
 
-      {!hideBottomNav ? (
+      {!hideBottomNav && (
         <BottomNavBar
           onPrevious={onPrevious}
           onNext={onNext}
@@ -165,20 +165,6 @@ const ListeningPart4Monologue = ({
           sections={sections}
           onSubmitTest={onSubmitTest}
         />
-      ) : (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border px-4 py-2.5 flex items-center justify-between gap-3">
-          <div className="w-24 flex justify-start">
-            <span className="hidden sm:inline text-xs text-muted-foreground">Dùng ← → để chuyển câu</span>
-          </div>
-          <span className="text-sm font-semibold text-foreground">Câu {currentIndex + 1}/{questions.length}</span>
-          <div className="w-24 flex justify-end">
-            {!submitted && currentIndex === questions.length - 1 && onSubmitTest && (
-              <button type="button" onClick={onSubmitTest} className="exam-nav-submit exam-nav-next-button gap-2 px-6">
-                Nộp đề này
-              </button>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );
