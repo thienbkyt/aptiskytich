@@ -209,6 +209,9 @@ const ReadingPart2Cohesion = ({
         >
           {/* Left: drop zone slots 1..5 */}
           <div className="space-y-3">
+            {section?.title ? (
+              <p className="text-base md:text-lg font-bold text-left text-foreground mb-3">{section.title}</p>
+            ) : null}
             {[1, 2, 3, 4, 5].map((pos) => {
               const placed = current[pos];
               const correctText = correctTextForPosition(pos);

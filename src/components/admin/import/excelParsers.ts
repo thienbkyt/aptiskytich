@@ -229,6 +229,10 @@ const parseReadingPart2 = (rows: any[]): ParseResult => {
     audio_url: null, image_url: null, response_time: null,
     extra_data: {
       sentences: sentences.map((s) => ({ text: s.text, correctPosition: s.correctPosition })),
+      sectionTitles: [
+        rows[0].title_1?.toString().trim() || "",
+        rows[0].title_2?.toString().trim() || "",
+      ],
       instruction: "The sentences below make a complete text. Put them in the correct order.",
     },
   }];

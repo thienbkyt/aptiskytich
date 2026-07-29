@@ -69,7 +69,10 @@ export const toReadingPart2 = (rows: ExamQuestionRow[]): ReadingCohesionQuestion
     id: 1,
     type: "text-cohesion" as const,
     instruction: ed.instruction || "The sentences below are from some instructions. Put the sentences in the right order. The first sentence is done for you.",
-    sections: [{ sentences: group1 }, { sentences: group2 }],
+    sections: [
+      { title: ed.sectionTitles?.[0] ?? "", sentences: group1 },
+      { title: ed.sectionTitles?.[1] ?? "", sentences: group2 },
+    ],
     explanation: first.explanation || "",
   };
 };
