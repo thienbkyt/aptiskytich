@@ -20,10 +20,11 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
     const table = skill === "speaking" ? "speaking_skill_results" : "writing_skill_results";
     const { data } = await (supabase as any)
       .from(table)
-      .select("exam_set_id,scale50,cefr")
+      .select("exam_set_id,scale50,cefr,raw_total")
       .eq("user_id", user.id)
       .not("exam_set_id", "is", null);
     const bestScore = new Map<string, number>();
+    const bestRaw = new Map<string, number>();
     const bestBand = new Map<string, string>();
     ((data || []) as any[]).forEach((r) => {
       const sid = r.exam_set_id as string | null;
@@ -32,6 +33,11 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
       const prev = bestScore.get(sid) ?? -1;
       if (s50 > prev) bestScore.set(sid, s50);
       const cefr = (r.cefr || "").toString().toUpperCase();
+      if (!cefr) {
+        // Single-part attempt: no CEFR, score is raw /30.
+        const raw = Number(r.raw_total) || 0;
+        if (raw > (bestRaw.get(sid) ?? -1)) bestRaw.set(sid, raw);
+      }
       if (cefr && CEFR_RANK[cefr] !== undefined) {
         const prevBand = bestBand.get(sid);
         if (!prevBand || CEFR_RANK[cefr] > (CEFR_RANK[prevBand] ?? -1)) {
@@ -41,6 +47,11 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
     });
     const map: ExamProgressMap = new Map();
     bestScore.forEach((s50, sid) => {
+      if (!bestBand.has(sid) && bestRaw.has(sid)) {
+        const raw = bestRaw.get(sid) as number;
+        map.set(sid, { bestScore: raw, total: 30, bestPct: Math.round((raw / 30) * 100) });
+        return;
+      }
       const pct = Math.round((s50 / 50) * 100);
       map.set(sid, { bestScore: pct, total: 100, bestPct: pct });
     });

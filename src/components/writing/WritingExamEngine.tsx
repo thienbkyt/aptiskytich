@@ -291,6 +291,23 @@ const WritingExamEngine = ({
         improvedVersion: v2.improvedVersion || "",
       };
       setV2Grading(result);
+
+      // Persist single-part writing score (no CEFR — a lone part cannot yield a band).
+      try {
+        const { saveWritingSkillResult } = await import("@/components/writing/writingGradingV2");
+        const rawPart = Number(v2.rawPart) || 0;
+        await saveWritingSkillResult({
+          testResultId: (trid as string | null) ?? null,
+          examSetId: examSetId ?? null,
+          parts: { [partType]: { ...v2, rawPart } },
+          rawTotal: rawPart,
+          scale50: Math.round((rawPart / 30) * 50),
+          cefr: "",
+          greyZone: false,
+          flagReview: false,
+        });
+        window.dispatchEvent(new Event("exam-result-saved"));
+      } catch (e) { console.warn("[Writing] save skill result failed", e); }
     } catch (e: any) {
       toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
     } finally {
