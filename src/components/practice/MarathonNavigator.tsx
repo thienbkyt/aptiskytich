@@ -55,7 +55,7 @@ interface Props {
 
 const MarathonNavigator = ({
   sets, results, currentIndex, reviewingIndex, qCounts,
-  currentQ, reviewingQ, currentAnswered, currentLocked,
+  currentQ, reviewingQ, currentAnswered, currentLocked, draftsBySet,
   isRetryMode, allowJumpInCurrent = true, mode = "default",
   chipLabelMode = "question", showSetLabels = false,
   onReview, onJumpQuestion, onEnterSet, onRetrySet, onRetryQuestion,
