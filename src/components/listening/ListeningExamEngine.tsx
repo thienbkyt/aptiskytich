@@ -78,6 +78,12 @@ interface ListeningExamEngineProps {
   onMarathonFinish?: () => void;
   /** Marathon: bump to force submit the current in-progress set. */
   submitSignal?: number;
+  /** Marathon: auto-lock/grade each question upon answering (per-question mode). */
+  marathonLock?: boolean;
+  /** Marathon: notifies parent of per-question locked flags for this part. */
+  onLockedChange?: (locked: boolean[]) => void;
+  /** Marathon: bump `n` to clear + unlock question `qi` (Làm lại câu này). */
+  unlockSignal?: { qi: number; n: number } | null;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -101,6 +107,9 @@ const ListeningExamEngine = ({
   reviewScopeNote,
   onMarathonFinish,
   submitSignal,
+  marathonLock = false,
+  onLockedChange,
+  unlockSignal,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -112,6 +121,7 @@ const ListeningExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
+  const [lockedIdx, setLockedIdx] = useState<Set<number>>(new Set());
   useEffect(() => {
     document.body.classList.add("exam-active");
     return () => document.body.classList.remove("exam-active");
@@ -362,12 +372,76 @@ const ListeningExamEngine = ({
     resetLimitedAudioPlays();
   };
 
+  // Marathon per-question mode: a question counts as complete when every
+  // sub-item of that screen has an answer.
+  const isQuestionComplete = useCallback((qi: number, ans: any): boolean => {
+    if (ans == null) return false;
+    if (partType === "part1") return typeof ans === "number" && ans >= 0;
+    if (partType === "part2") {
+      const q = part2Questions?.[qi];
+      if (!q) return false;
+      const a = (ans || {}) as Record<string, string>;
+      return q.persons.every((p) => !!a[p.name]);
+    }
+    if (partType === "part3") {
+      const q = part3Questions?.[qi];
+      if (!q) return false;
+      const a = (ans || {}) as Record<number, string>;
+      return q.statements.every((_, si) => !!a[si]);
+    }
+    const c = part4Questions?.[qi];
+    if (!c) return false;
+    const a = (ans || {}) as Record<number, number>;
+    return c.questions.every((_, i) => a[i] != null);
+  }, [partType, part2Questions, part3Questions, part4Questions]);
+
+  // Pre-lock questions already completed when re-entering a set with drafts.
+  const didPrelockRef = useRef(false);
+  useEffect(() => {
+    if (!marathonLock || reviewMode || didPrelockRef.current) return;
+    if (!answers || answers.length === 0) return;
+    didPrelockRef.current = true;
+    const next = new Set<number>();
+    answers.forEach((a, i) => { if (isQuestionComplete(i, a)) next.add(i); });
+    if (next.size > 0) setLockedIdx(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marathonLock, reviewMode, answers.length]);
+
+  // Notify parent of per-question locked flags.
+  useEffect(() => {
+    if (!onLockedChange) return;
+    const arr = new Array(totalQuestions).fill(false);
+    lockedIdx.forEach((i) => { if (i >= 0 && i < totalQuestions) arr[i] = true; });
+    onLockedChange(arr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lockedIdx, totalQuestions]);
+
+  // Marathon: "Làm lại câu này" — clear + unlock exactly one question.
+  const lastUnlockRef = useRef<number>(unlockSignal?.n ?? 0);
+  useEffect(() => {
+    const n = unlockSignal?.n ?? 0;
+    if (n <= lastUnlockRef.current) return;
+    lastUnlockRef.current = n;
+    const qi = unlockSignal?.qi ?? 0;
+    setLockedIdx((prev) => { const s2 = new Set(prev); s2.delete(qi); return s2; });
+    setAnswers((prev) => { const arr = [...prev]; arr[qi] = null; return arr; });
+    setRevealedIdx((prev) => { const s2 = new Set(prev); s2.delete(qi); return s2; });
+    setCurrentIndex(qi);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlockSignal?.n]);
+
   const handleAnswer = (qi: number, ai: any) => {
     if (submitted) return;
+    if (marathonLock && lockedIdx.has(qi)) return;
     const n = [...answers];
     n[qi] = ai;
     setAnswers(n);
+    if (marathonLock && isQuestionComplete(qi, ai)) {
+      setLockedIdx((prev) => new Set(prev).add(qi));
+    }
   };
+
+  const isLockedHere = marathonLock && lockedIdx.has(currentIndex);
 
   const partLabel = PART_LABELS[partType];
 
@@ -564,7 +638,7 @@ const ListeningExamEngine = ({
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            revealAnswers={isRevealedHere}
+            revealAnswers={isRevealedHere || isLockedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -586,7 +660,7 @@ const ListeningExamEngine = ({
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            revealAnswers={isRevealedHere}
+            revealAnswers={isRevealedHere || isLockedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -608,7 +682,7 @@ const ListeningExamEngine = ({
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            revealAnswers={isRevealedHere}
+            revealAnswers={isRevealedHere || isLockedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
@@ -630,7 +704,7 @@ const ListeningExamEngine = ({
             timeLeft={timeLeft}
             totalTime={timeLimit}
             submitted={submitted}
-            revealAnswers={isRevealedHere}
+            revealAnswers={isRevealedHere || isLockedHere}
             onAnswer={handleAnswer}
             {...navProps}
             isBookmarked={bookmarked.has(currentIndex)}
