@@ -663,16 +663,31 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           const graded = v2ByPart[sub.partType];
           if (trId && graded) {
             const rawPart = Number(graded.rawPart ?? 0);
+            const isLastPart = originalIdx === orderedIndices[orderedIndices.length - 1];
             const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+            const aiByIndex: Record<number, any> = {};
+            (graded.perItem || []).forEach((it: any, i: number) => {
+              aiByIndex[i] = {
+                transcript: it?.transcript ?? null,
+                feedback: i === 0 ? (graded.feedback ?? graded.analysis ?? undefined) : undefined,
+                ...(i === 0 ? { partScore: rawPart, maxPoints: 30 } : {}),
+              };
+            });
+            if (!aiByIndex[0]) {
+              aiByIndex[0] = { partScore: rawPart, maxPoints: 30, feedback: graded.feedback ?? graded.analysis ?? undefined };
+            }
             await mergeSnapshotAI(
               trId,
-              { 0: { partScore: rawPart, maxPoints: 30, feedback: graded.feedback ?? graded.analysis ?? undefined } as any },
-              { score: rawPart, total: 30, partScaled50: Math.round((rawPart / 30) * 50) },
+              aiByIndex,
+              isLastPart
+                ? undefined
+                : { score: rawPart, total: 30, partScaled50: Math.round((rawPart / 30) * 50) },
             );
           }
         } catch (e) {
           console.warn("[SkillFullPractice V2] mergeSnapshotAI part failed", e);
         }
+
       }
 
 
