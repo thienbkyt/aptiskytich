@@ -546,13 +546,14 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     });
   };
 
-  // Mục lục THEO CÂU: số ô mỗi đề lấy từ exam_sets.question_count.
+  // Mục lục THEO MÀN HÌNH: ưu tiên pageCount thật của engine, fallback question_count.
   const qCounts = sets.map((s, i) => {
-    const n = Number((s as any).question_count);
-    if (Number.isFinite(n) && n > 0) return Math.floor(n);
     const pc = loaded?.[i]?.pageCount;
-    return Number.isFinite(pc as any) && (pc as number) > 0 ? (pc as number) : 1;
+    if (Number.isFinite(pc as any) && (pc as number) > 0) return pc as number;
+    const n = Number((s as any).question_count);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
   });
+
 
 
   const midReviewEntry = midReview ? results[midReview.setIndex] : null;

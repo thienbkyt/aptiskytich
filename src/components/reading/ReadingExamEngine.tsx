@@ -481,7 +481,10 @@ const ReadingExamEngine = ({
   }), [currentIndex, totalQuestions, submitted, handleSubmit, goPrevQuestion, goNextQuestion, goToPrevPhase, sections]);
 
   // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections.
-  const arrowPrev = useCallback(() => { navProps.onPrevious?.(); }, [navProps]);
+  const arrowPrev = useCallback(() => {
+    if (currentIndex > 0) navProps.onPrevious?.();
+  }, [currentIndex, navProps]);
+
   const arrowNext = useCallback(() => {
     if (currentIndex < totalQuestions - 1) goNextQuestion();
   }, [currentIndex, totalQuestions, goNextQuestion]);
