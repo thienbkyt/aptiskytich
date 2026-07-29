@@ -103,6 +103,8 @@ const SKILL_ROUTES: Record<string, string> = {
   writing: "/writing",
 };
 
+const VALID_MARATHON_PARTS = ["part1", "part2", "part3", "part4"];
+
 const SKILL_ICON: Record<string, any> = {
   grammar: GraduationCap,
   reading: BookOpen,
