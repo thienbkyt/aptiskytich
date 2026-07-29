@@ -55,6 +55,8 @@ interface DashboardData {
   totalQuestions: number;
   accuracy: number;
   currentLevel: string;
+  skillsCovered: number;
+
   grammarPct: number;
   readingPct: number;
   listeningPct: number;
