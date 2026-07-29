@@ -133,7 +133,7 @@ const MarathonNavigator = ({
             Đề {activeSetNumber}/{totalSets}
           </span>
           {isReadingPart23 && (
-            <p className="text-[11px] text-muted-foreground mt-0.5">Mỗi đề gồm 2 đoạn</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Lưu ý: Mỗi đề gồm 2 đoạn</p>
           )}
         </div>
 
