@@ -480,6 +480,18 @@ const ReadingExamEngine = ({
     onSubmitTest: !submitted ? handleSubmit : undefined,
   }), [currentIndex, totalQuestions, submitted, handleSubmit, goPrevQuestion, goNextQuestion, goToPrevPhase, sections]);
 
+  // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections.
+  const arrowPrev = useCallback(() => { navProps.onPrevious?.(); }, [navProps]);
+  const arrowNext = useCallback(() => {
+    if (currentIndex < totalQuestions - 1) goNextQuestion();
+  }, [currentIndex, totalQuestions, goNextQuestion]);
+  useMarathonArrowKeys({
+    enabled: hideBottomNav && phase === "practice",
+    onPrev: arrowPrev,
+    onNext: arrowNext,
+  });
+
+
   // Stable answer handlers (functional setState → no answer-array deps → not recreated on timer tick).
   const onAnswerP1 = useCallback((gi: number, val: number) => {
     if (submitted) return;
