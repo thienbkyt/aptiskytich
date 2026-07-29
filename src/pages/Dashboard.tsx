@@ -480,7 +480,11 @@ const Dashboard = () => {
                     <GradientText>{d.displayName}</GradientText> 👋
                   </h1>
                   <p className="text-muted-foreground mt-2 text-sm md:text-base">
-                    Bạn đang ở band <strong className="text-foreground">{d.currentLevel}</strong>
+                    {d.skillsCovered === 4 ? (
+                      <>Bạn đang ở band <strong className="text-foreground">{d.currentLevel}</strong></>
+                    ) : (
+                      <>Đã có dữ liệu <strong className="text-foreground">{d.skillsCovered}/4 kỹ năng</strong> — làm thêm để biết band tổng</>
+                    )}
                     {d.streak > 0 && <> · Streak <strong className="text-primary">{d.streak} ngày</strong> 🔥</>}
                     {" "}— hôm nay luyện tiếp nhé!
                   </p>
