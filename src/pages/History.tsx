@@ -271,7 +271,10 @@ const History = () => {
             isMarathon,
             marathonMode: mode,
             marathonSessionId: typeof ss.marathonSessionId === "string" ? ss.marathonSessionId : null,
-            marathonPartType: ss.partType || ss.part || setInfo?.part || null,
+            marathonPartType: (() => {
+              const raw = ss.partType || ss.part || setInfo?.part || null;
+              return raw ? normalizePart(raw) : null;
+            })(),
             marathonLabel: typeof ss.label === "string" ? ss.label : null,
             fullPartSession: ss.fullPartSession ?? null,
             review_snapshot: r.review_snapshot ?? null,
