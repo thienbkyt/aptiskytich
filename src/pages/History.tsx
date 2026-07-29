@@ -67,6 +67,7 @@ interface FullPartGroup {
   partCount: number;
   num: number;
   den: number;
+  ungradedCount: number;
   displayScore: string;
   displayBand: string;
 }
@@ -371,6 +372,7 @@ const History = () => {
               partCount: 0,
               num: 0,
               den: 0,
+              ungradedCount: 0,
               displayScore: "—",
               displayBand: "—",
             };
@@ -383,10 +385,15 @@ const History = () => {
               g.num += a.sum; g.den += a.max;
             } else {
               // Fallback only (no stored skill result): per-part figures.
+              // Part chưa chấm = thiếu s50 HOẶC s50 === 0; không cộng vào tử/mẫu.
               const snap: any = r.review_snapshot || {};
               const s50 = typeof snap.partScaled50 === "number" ? snap.partScaled50
                 : typeof snap.scaled50 === "number" ? snap.scaled50 : null;
-              if (s50 != null) { g.num += s50; g.den += 50; }
+              if (s50 == null || s50 === 0) {
+                g.ungradedCount++;
+              } else {
+                g.num += s50; g.den += 50;
+              }
             }
           } else {
             g.num += r.score; g.den += r.total;
@@ -685,6 +692,18 @@ const History = () => {
                                 <div className="flex items-center gap-1.5">
                                   <span className="font-medium text-foreground truncate">{SKILL_LABELS[g.skill] || g.skill}</span>
                                   <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Full Part</Badge>
+                                  {g.ungradedCount > 0 && (
+                                    <span
+                                      className="inline-flex items-center select-none text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                      style={{
+                                        color: "#92400e",
+                                        background: "#fef3c7",
+                                        border: "1px solid #fde68a",
+                                      }}
+                                    >
+                                      Chấm chưa đủ
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-[11px] text-muted-foreground truncate">{g.partCount} phần</div>
                               </div>
