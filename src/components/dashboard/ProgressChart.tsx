@@ -13,11 +13,11 @@ interface Props {
 }
 
 const SKILL_META: { key: string; label: string; color: string }[] = [
-  { key: "grammar",   label: "Grammar",   color: "hsl(var(--primary))" },
-  { key: "reading",   label: "Reading",   color: "hsl(var(--info))" },
-  { key: "listening", label: "Listening", color: "hsl(var(--warning))" },
-  { key: "speaking",  label: "Speaking",  color: "hsl(var(--accent))" },
-  { key: "writing",   label: "Writing",   color: "hsl(var(--success))" },
+  { key: "grammar_vocab", label: "Grammar", color: "hsl(var(--primary))" },
+  { key: "reading",       label: "Reading", color: "hsl(var(--info))" },
+  { key: "listening",     label: "Listening", color: "hsl(var(--warning))" },
+  { key: "speaking",      label: "Speaking", color: "hsl(var(--accent))" },
+  { key: "writing",       label: "Writing", color: "hsl(var(--success))" },
 ];
 
 interface ChartPoint {

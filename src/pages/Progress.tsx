@@ -16,11 +16,11 @@ import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { parseDateSafe, toTimeSafe } from "@/lib/safeDate";
 
 const SKILL_META = [
-  { key: "grammar",   label: "Grammar",   color: "hsl(var(--primary))" },
-  { key: "reading",   label: "Reading",   color: "hsl(var(--info))" },
-  { key: "listening", label: "Listening", color: "hsl(var(--warning))" },
-  { key: "speaking",  label: "Speaking",  color: "hsl(var(--accent))" },
-  { key: "writing",   label: "Writing",   color: "hsl(var(--success))" },
+  { key: "grammar_vocab", label: "Grammar", color: "hsl(var(--primary))" },
+  { key: "reading",       label: "Reading", color: "hsl(var(--info))" },
+  { key: "listening",     label: "Listening", color: "hsl(var(--warning))" },
+  { key: "speaking",      label: "Speaking", color: "hsl(var(--accent))" },
+  { key: "writing",       label: "Writing", color: "hsl(var(--success))" },
 ] as const;
 
 type SkillKey = typeof SKILL_META[number]["key"];
