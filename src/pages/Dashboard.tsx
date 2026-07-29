@@ -295,9 +295,8 @@ const Dashboard = () => {
         }
 
         const bandNums = BAND_SKILLS
-          .map((sk) => scaledBySkill[sk])
-          .filter((v): v is number => v !== undefined)
-          .map((v, i) => BAND_TO_NUM[getSkillBand(v, BAND_SKILLS[i])] ?? 0);
+          .filter((sk) => scaledBySkill[sk] !== undefined)
+          .map((sk) => BAND_TO_NUM[getSkillBand(scaledBySkill[sk]!, sk)] ?? 0);
         const skillsCovered = BAND_SKILLS.filter((sk) => scaledBySkill[sk] !== undefined).length;
         let currentLevel = "Chưa đủ dữ liệu";
         if (skillsCovered === 4) {
