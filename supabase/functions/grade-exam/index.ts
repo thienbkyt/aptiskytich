@@ -857,6 +857,12 @@ KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
 - Nếu câu học viên ĐÚNG ngữ pháp, đúng nghĩa và chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
 - Không được viết explanation kiểu "không sai", "không hoàn toàn sai", "vẫn đúng nhưng…", "chỉ là … hơn". Nếu muốn góp ý, đưa vào mục **Gợi ý nâng cao** của feedback (hoặc upgradeTips), không gạch đỏ như lỗi.
 
+RÀNG BUỘC CHẶT CHO grammarErrors VÀ spellingErrors:
+- CHỈ đưa một mục vào mảng khi trường "corrected" KHÁC trường "original" sau khi loại bỏ khoảng trắng thừa ở đầu/cuối. Nếu không sửa được gì thì KHÔNG đưa mục đó vào mảng.
+- Trường "corrected" phải là câu ĐÃ ÁP DỤNG sửa đổi rõ ràng; TUYỆT ĐỐI KHÔNG được chép lại nguyên câu gốc.
+- KHÔNG đưa nhận xét về nội dung, ý tưởng, mức độ phù hợp ngữ cảnh, hay góp ý phong cách vào hai mảng này. Những góp ý đó thuộc phần nhận xét theo tiêu chí (criteriaAnalysis / feedback), không phải lỗi cụ thể.
+- KHÔNG đưa vào mảng những mục mà bản thân phần explanation nói rằng câu đã đúng, chỉ cần cải thiện, hoặc "không sai".
+
 
 FEEDBACK FORMAT (BẮT BUỘC, 100% TIẾNG VIỆT, KHÔNG trộn Anh-Việt trừ tên riêng):
 Chia feedback thành các mục, MỖI mục bắt đầu bằng nhãn in đậm trên DÒNG RIÊNG (đúng chuỗi ký tự Markdown), theo thứ tự và chỉ dùng các nhãn sau (bỏ mục không áp dụng cho part):
@@ -1491,6 +1497,12 @@ RUBRIC PER partType — return ONLY these qualitative fields via the tool:
 • EVERY task (task1–task4) MUST also return:
   - improvedVersion: upgraded English rewrite of the student's whole submission for this part (keep ideas, fix grammar/vocab, upgrade structure, add linking words). For task4 cover BOTH emails (label clearly). Empty string if the student wrote nothing.
   - upgradeTips: Vietnamese, 2–4 sentences. Mẹo CỤ THỂ để bài này đạt điểm cao hơn trong Aptis (cấu trúc phức tạp, từ nối, triển khai ý + ví dụ, paraphrase, đa dạng từ vựng, đúng register với task4).
+
+RÀNG BUỘC CHO grammarErrors VÀ spellingErrors:
+- CHỈ đưa một mục vào mảng khi trường "corrected" KHÁC trường "original" sau khi loại bỏ khoảng trắng thừa ở đầu/cuối. Nếu không sửa được gì thì KHÔNG đưa mục đó vào mảng.
+- Trường "corrected" phải là câu ĐÃ ÁP DỤNG sửa đổi rõ ràng; TUYỆT ĐỐI KHÔNG được chép lại nguyên câu gốc.
+- KHÔNG đưa nhận xét về nội dung, ý tưởng, mức độ phù hợp ngữ cảnh, hay góp ý phong cách vào hai mảng này. Những góp ý đó thuộc phần feedback/criteriaAnalysis, không phải lỗi cụ thể.
+- KHÔNG đưa vào mảng những mục mà bản thân phần explanation nói rằng câu đã đúng, chỉ cần cải thiện, hoặc "không sai".
 
 FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
 - Bắt đầu bằng điểm mạnh thực sự của bài. Nếu một hạng mục đạt tối đa hãy khen rõ ràng.
