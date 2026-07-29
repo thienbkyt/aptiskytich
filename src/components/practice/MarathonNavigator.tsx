@@ -88,6 +88,16 @@ const MarathonNavigator = ({
   );
   const totalSets = sets.length;
 
+  // Reading Part 2 + 3 combines two texts per set.
+  const isReadingPart23 = useMemo(() => {
+    try {
+      const first = (sets as any[])[0];
+      return first?.skill === "reading" && normalizePart(first?.part || "") === "part2";
+    } catch {
+      return false;
+    }
+  }, [sets]);
+
   // Đề đang đứng: xem lại thì theo đề đang xem, không thì theo đề đang làm.
   const isReviewingMode = (reviewingIndex ?? -1) >= 0;
   const activeSetIndex = isReviewingMode ? (reviewingIndex as number) : currentIndex;
