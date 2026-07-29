@@ -785,12 +785,18 @@ const History = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="inline-flex gap-2">
-                            <Link to={r.isMarathon ? `/history/marathon/${r.id}` : `/history/${r.id}?review=1`}>
-                              <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
-                            </Link>
+                            {r.review_snapshot && (
+                              <Link to={r.isMarathon ? `/history/marathon/${r.id}` : `/history/${r.id}?review=1`}>
+                                <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
+                              </Link>
+                            )}
                             <Link
                               to={
-                                r.exam_set_id
+                                r.isMarathon
+                                  ? (r.marathonPartType
+                                      ? `${SKILL_ROUTES[r.skill] || "/practice"}?marathon=${r.marathonPartType}`
+                                      : SKILL_ROUTES[r.skill] || "/practice")
+                                  : r.exam_set_id
                                   ? `${SKILL_ROUTES[r.skill] || "/practice"}?set=${r.exam_set_id}`
                                   : SKILL_ROUTES[r.skill] || "/practice"
                               }
