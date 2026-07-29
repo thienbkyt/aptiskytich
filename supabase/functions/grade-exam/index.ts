@@ -315,17 +315,18 @@ ${studentText}`;
       const coreGV = (body as any).coreGV;
       const raw_total = p1 + p2 + p3 + p4 * 1.2; // max 126
       const scale50_base = Math.round((raw_total / 126) * 50);
-      // LENIENCY: scoring runs strict; apply +20% scaling for user-facing score.
-      const LENIENCY = 1.2;
-      const scale50 = Math.min(50, Math.round(scale50_base * LENIENCY));
+      // LENIENCY: scoring runs strict; apply +10% scaling for user-facing score.
+      const LENIENCY = 1.1;
+      const scale50 = Math.max(0, Math.min(50, Math.round(scale50_base * LENIENCY)));
       const CUTS: Array<{ band: string; cut: number }> = [
         { band: "C", cut: 48 },
         { band: "B2", cut: 41 },
-        { band: "B1", cut: 34 },
-        { band: "A2", cut: 24 },
-        { band: "A1", cut: 12 },
+        { band: "B1", cut: 26 },
+        { band: "A2", cut: 16 },
+        { band: "A1", cut: 4 },
         { band: "A0", cut: 0 },
       ];
+
       const order = ["A0", "A1", "A2", "B1", "B2", "C"];
       const rankOf = (b: string) => order.indexOf(b);
       let baseBand = "A0";
@@ -691,8 +692,8 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
     // ============================================================
     // WRITING FINALIZE (analytic rubric)
     // raw_total = raw_P1*0.5 + raw_P2 + raw_P3 + raw_P4*1.5   (max 120)
-    // scale50   = round(raw_total / 120 * 50)
-    // CUTS      = { C:46, B2:40, B1:33, A2:23, A1:12, A0:0 }
+    // scale50   = clamp(round(raw_total / 120 * 50) * 1.1, 0, 50)
+    // CUTS      = { C:48, B2:40, B1:26, A2:18, A1:6, A0:0 }
     // Grey zone: within 2 pts below a cut → bump if coreGV band >= that band
     // Appropriacy cap: forcedComplexity && cefr === 'C' → cefr=B2, scale50<=45
     // ============================================================
@@ -704,15 +705,17 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       const p4 = Number(rp.task4 ?? 0);
       const raw_total = p1 * 0.5 + p2 + p3 + p4 * 1.5;
       const scale50Base = Math.round((raw_total / 120) * 50);
-      let scale50 = Math.max(0, Math.min(50, scale50Base));
+      // LENIENCY: apply +10% scaling for user-facing score (same as Speaking).
+      let scale50 = Math.max(0, Math.min(50, Math.round(scale50Base * 1.1)));
       const CUTS: Array<{ band: string; cut: number }> = [
-        { band: "C", cut: 46 },
+        { band: "C", cut: 48 },
         { band: "B2", cut: 40 },
-        { band: "B1", cut: 33 },
-        { band: "A2", cut: 23 },
-        { band: "A1", cut: 12 },
+        { band: "B1", cut: 26 },
+        { band: "A2", cut: 18 },
+        { band: "A1", cut: 6 },
         { band: "A0", cut: 0 },
       ];
+
       const order = ["A0", "A1", "A2", "B1", "B2", "C"];
       const rankOf = (b: string) => order.indexOf(b);
       let baseBand = "A0";
