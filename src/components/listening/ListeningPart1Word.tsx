@@ -158,7 +158,7 @@ const ListeningPart1Word = ({
         />
       ) : (
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border px-4 py-2.5 flex items-center justify-between gap-3">
-          <div className="w-24" />
+          <span className="hidden sm:inline text-xs text-muted-foreground">Dùng ← → để chuyển câu</span>
           <span className="text-sm font-semibold text-foreground">Câu {currentIndex + 1}/{questions.length}</span>
           <div className="w-24 flex justify-end">
             {!submitted && currentIndex === questions.length - 1 && onSubmitTest && (

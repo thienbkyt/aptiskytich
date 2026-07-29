@@ -21,6 +21,7 @@ import type {
 import type { ReadingReviewData } from "@/lib/readingReview";
 import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 import { useExitWarning } from "@/hooks/useExitWarning";
+import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
@@ -479,6 +480,18 @@ const ReadingExamEngine = ({
     onSubmitTest: !submitted ? handleSubmit : undefined,
   }), [currentIndex, totalQuestions, submitted, handleSubmit, goPrevQuestion, goNextQuestion, goToPrevPhase, sections]);
 
+  // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections.
+  const arrowPrev = useCallback(() => { navProps.onPrevious?.(); }, [navProps]);
+  const arrowNext = useCallback(() => {
+    if (currentIndex < totalQuestions - 1) goNextQuestion();
+  }, [currentIndex, totalQuestions, goNextQuestion]);
+  useMarathonArrowKeys({
+    enabled: hideBottomNav && phase === "practice",
+    onPrev: arrowPrev,
+    onNext: arrowNext,
+  });
+
+
   // Stable answer handlers (functional setState → no answer-array deps → not recreated on timer tick).
   const onAnswerP1 = useCallback((gi: number, val: number) => {
     if (submitted) return;
@@ -650,6 +663,11 @@ const ReadingExamEngine = ({
         onMarathonFinish={onMarathonFinish}
         onBackToResults={!hideBackToResults && isReviewing ? () => setIsReviewing(false) : undefined}
       />
+      {hideBottomNav && phase === "practice" && (
+        <div className="hidden sm:block fixed bottom-3 left-4 z-30 text-xs text-muted-foreground">
+          Dùng ← → để chuyển câu
+        </div>
+      )}
       <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence

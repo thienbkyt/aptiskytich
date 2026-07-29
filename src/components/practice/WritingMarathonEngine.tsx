@@ -9,6 +9,7 @@ import {
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { saveMarathonProgress, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { upsertMarathonResult } from "@/lib/saveExamResult";
+import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 
 interface Props {
   sets: ExamSetRow[];
@@ -247,6 +248,14 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     currentAnswersRef.current = emptyAnswers();
   };
 
+  // ← → switch between sets (each Writing set is a single task).
+  useMarathonArrowKeys({
+    enabled: phase === "exam" && !!engineData,
+    onPrev: () => goToSet((reviewIndex ?? currentIndex) - 1),
+    onNext: () => goToSet((reviewIndex ?? currentIndex) + 1),
+  });
+
+
   const openReview = (si: number) => {
     if (si < 0 || si >= sets.length) return;
     commitCurrent(currentIndex);
@@ -335,6 +344,11 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             belowContent={<Checklist partType={partType} />}
             {...engineData}
           />
+        )}
+        {phase === "exam" && !!engineData && (
+          <div className="hidden sm:block fixed bottom-3 left-4 z-30 text-xs text-muted-foreground">
+            Dùng ← → để chuyển đề
+          </div>
         )}
       </div>
 

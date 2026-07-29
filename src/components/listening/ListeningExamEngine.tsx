@@ -22,6 +22,7 @@ import type {
 import { useListeningHighlightData } from "@/hooks/useListeningHighlightData";
 import type { ListeningHighlightData } from "@/lib/listeningReview";
 import { useExitWarning } from "@/hooks/useExitWarning";
+import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
@@ -403,6 +404,20 @@ const ListeningExamEngine = ({
     sections,
     onSubmitTest: !submitted ? handleSubmit : undefined,
   };
+
+  // Marathon mode (bottom nav hidden): ← → move between questions.
+  const arrowPrev = useCallback(() => {
+    setCurrentIndex((p) => Math.max(0, p - 1));
+  }, []);
+  const arrowNext = useCallback(() => {
+    setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+  }, [totalQuestions]);
+  useMarathonArrowKeys({
+    enabled: hideBottomNav && phase === "practice",
+    onPrev: arrowPrev,
+    onNext: arrowNext,
+  });
+
 
   const adminControls = !submitted && !reviewMode ? (
     <AdminExamControls
