@@ -62,6 +62,10 @@ interface ListeningExamEngineProps {
   hideTimer?: boolean;
   pageBase?: number;
   pageTotal?: number;
+  /** Marathon: hide BottomNavBar (Previous/Next) and use the compact inline bar instead. */
+  hideBottomNav?: boolean;
+  /** Notifies parent of the active question index (used by marathon navigator). */
+  onQuestionChange?: (i: number) => void;
   initialQuestion?: number;
   /** Notifies parent of total question count for this part (used by review pager). */
   onQuestionCount?: (n: number) => void;
@@ -90,6 +94,7 @@ const ListeningExamEngine = ({
   onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
+  hideBottomNav = false, onQuestionChange,
   allowReveal = false,
   enterAtLastQuestion = false,
   reviewScopeNote,
@@ -126,6 +131,7 @@ const ListeningExamEngine = ({
   useEffect(() => {
     if (phase === "practice") setHasStarted(true);
   }, [phase]);
+  useEffect(() => { onQuestionChange?.(currentIndex); }, [currentIndex, onQuestionChange]);
   useExitWarning(hasStarted && !submitted && !reviewMode);
 
   const toggleBookmark = useCallback((qi: number) => {
@@ -553,6 +559,7 @@ const ListeningExamEngine = ({
             hideTimer={hideTimer}
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -574,6 +581,7 @@ const ListeningExamEngine = ({
             hideTimer={hideTimer}
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -595,6 +603,7 @@ const ListeningExamEngine = ({
             hideTimer={hideTimer}
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
+            hideBottomNav={hideBottomNav}
           />
         )}
 
@@ -616,6 +625,7 @@ const ListeningExamEngine = ({
             hideTimer={hideTimer}
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
+            hideBottomNav={hideBottomNav}
           />
         )}
       </div>
