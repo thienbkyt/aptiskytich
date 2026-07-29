@@ -481,7 +481,8 @@ const History = () => {
 
   type MixedItem =
     | { kind: "row"; created_at: string; row: HistoryRow }
-    | { kind: "group"; created_at: string; group: FullPartGroup };
+    | { kind: "group"; created_at: string; group: FullPartGroup }
+    | { kind: "marathon"; created_at: string; marathon: MarathonGroup };
 
   const filteredItems = useMemo<MixedItem[]>(() => {
     const rowItems: MixedItem[] = perSkillRows
@@ -490,19 +491,24 @@ const History = () => {
     const groupItems: MixedItem[] = fullPartGroups
       .filter((g) => skillFilter === "all" || g.skill === skillFilter)
       .map((g) => ({ kind: "group", created_at: g.created_at, group: g }));
-    return [...rowItems, ...groupItems].sort(
+    const marathonItems: MixedItem[] = marathonGroups
+      .filter((g) => skillFilter === "all" || g.skill === skillFilter)
+      .map((g) => ({ kind: "marathon", created_at: g.created_at, marathon: g }));
+    return [...rowItems, ...groupItems, ...marathonItems].sort(
       (a, b) => toTimeSafe(b.created_at) - toTimeSafe(a.created_at),
     );
-  }, [perSkillRows, fullPartGroups, skillFilter]);
+  }, [perSkillRows, fullPartGroups, marathonGroups, skillFilter]);
 
   // Top stats
   const stats = useMemo(() => {
-    const totalAttempts = perSkillRows.length + fullTestGroups.length + fullPartGroups.length;
+    const totalAttempts =
+      perSkillRows.length + fullTestGroups.length + fullPartGroups.length + marathonGroups.length;
     const weekStart = startOfWeek().getTime();
     const thisWeek =
       perSkillRows.filter((r) => toTimeSafe(r.created_at) >= weekStart).length +
       fullTestGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length +
-      fullPartGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
+      fullPartGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length +
+      marathonGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
     return { totalAttempts, thisWeek };
   }, [perSkillRows, fullTestGroups, fullPartGroups]);
 
