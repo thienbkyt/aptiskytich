@@ -345,6 +345,11 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             {...engineData}
           />
         )}
+        {phase === "exam" && !!engineData && (
+          <div className="hidden sm:block fixed bottom-3 left-4 z-30 text-xs text-muted-foreground">
+            Dùng ← → để chuyển đề
+          </div>
+        )}
       </div>
 
 
