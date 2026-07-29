@@ -14,7 +14,7 @@ import {
 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { readingPartLabel } from "@/hooks/useExamSets";
+import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
 import { useAuth } from "@/hooks/useAuth";
 import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton";
 import { getSkillBand } from "@/data/questions";
@@ -103,6 +103,8 @@ const SKILL_ROUTES: Record<string, string> = {
   writing: "/writing",
 };
 
+const VALID_MARATHON_PARTS = ["part1", "part2", "part3", "part4"];
+
 const SKILL_ICON: Record<string, any> = {
   grammar: GraduationCap,
   reading: BookOpen,
@@ -126,6 +128,13 @@ const startOfWeek = () => {
 };
 
 const computeDisplay = computeHistoryDisplay;
+
+const formatMarathonLabel = (partType: string | null, skill: string) => {
+  if (!partType) return "Marathon";
+  if (skill === "reading") return `Marathon · ${readingPartLabel(partType)}`;
+  const n = partType.replace(/^part/i, "");
+  return `Marathon · Part ${n}`;
+};
 
 const History = () => {
   const { user, loading: authLoading } = useAuth();
@@ -271,7 +280,10 @@ const History = () => {
             isMarathon,
             marathonMode: mode,
             marathonSessionId: typeof ss.marathonSessionId === "string" ? ss.marathonSessionId : null,
-            marathonPartType: ss.partType || ss.part || setInfo?.part || null,
+            marathonPartType: (() => {
+              const raw = ss.partType || ss.part || setInfo?.part || null;
+              return raw ? normalizePart(raw) : null;
+            })(),
             marathonLabel: typeof ss.label === "string" ? ss.label : null,
             fullPartSession: ss.fullPartSession ?? null,
             review_snapshot: r.review_snapshot ?? null,
@@ -424,11 +436,12 @@ const History = () => {
           let g = mMap.get(sid);
           if (!g) {
             const summary = summaryBySession.get(sid);
+            const partType = summary?.marathonPartType || r.marathonPartType || null;
             g = {
               sessionId: sid,
               skill: r.skill,
-              partType: summary?.marathonPartType || r.marathonPartType || null,
-              label: summary?.marathonLabel || r.marathonLabel || "Marathon",
+              partType,
+              label: summary?.marathonLabel || r.marathonLabel || formatMarathonLabel(partType, r.skill),
               created_at: r.created_at,
               setCount: 0,
               score: 0,
@@ -510,7 +523,7 @@ const History = () => {
       fullPartGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length +
       marathonGroups.filter((g) => toTimeSafe(g.created_at) >= weekStart).length;
     return { totalAttempts, thisWeek };
-  }, [perSkillRows, fullTestGroups, fullPartGroups]);
+  }, [perSkillRows, fullTestGroups, fullPartGroups, marathonGroups]);
 
 
 
@@ -702,7 +715,8 @@ const History = () => {
                     if (item.kind === "marathon") {
                       const m = item.marathon;
                       const Icon = SKILL_ICON[m.skill] || ListChecks;
-                      const retryTo = m.partType
+                      const canRetryMarathon = !!m.partType && VALID_MARATHON_PARTS.includes(m.partType);
+                      const retryTo = canRetryMarathon
                         ? `${SKILL_ROUTES[m.skill] || "/practice"}?marathon=${m.partType}`
                         : SKILL_ROUTES[m.skill] || "/practice";
                       return (
@@ -738,9 +752,11 @@ const History = () => {
                                   <Button variant="outline" size="sm" className="gap-1.5"><Eye className="w-3.5 h-3.5" />Xem lại</Button>
                                 </Link>
                               )}
-                              <Link to={retryTo}>
-                                <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
-                              </Link>
+                              {canRetryMarathon && (
+                                <Link to={retryTo}>
+                                  <Button size="sm" className="gap-1.5"><RotateCcw className="w-3.5 h-3.5" />Làm lại</Button>
+                                </Link>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
