@@ -65,6 +65,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const [jumpQ, setJumpQ] = useState<number | null>(null);
   const [currentAnswers, setCurrentAnswers] = useState<any[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
+  const [currentLocked, setCurrentLocked] = useState<boolean[]>([]);
+  const [unlockSignal, setUnlockSignal] = useState<{ qi: number; n: number } | null>(null);
   const [submitSignal, setSubmitSignal] = useState(0);
   const pendingJumpRef = useRef<{ si: number; qi: number } | null>(null);
   const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
@@ -75,7 +77,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const isRetryMode = !!wrongQuestionIdsBySet;
 
   // Reset current-set answered tracking when the active set changes.
-  useEffect(() => { setCurrentAnswers([]); setCurrentQ(0); }, [currentIndex, attempt]);
+  useEffect(() => { setCurrentAnswers([]); setCurrentQ(0); setCurrentLocked([]); }, [currentIndex, attempt]);
 
   const isAnswerFilled = (a: any) => {
     if (a == null) return false;
@@ -611,6 +613,9 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             pageBase={pageBase}
             pageTotal={pageTotal}
             submitSignal={submitSignal}
+            marathonLock
+            onLockedChange={setCurrentLocked}
+            unlockSignal={unlockSignal}
             hideBottomNav
             onQuestionChange={setCurrentQ}
             {...engineData}
@@ -628,6 +633,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         currentQ={currentQ}
         qCounts={qCounts}
         currentAnswered={currentAnswered}
+        currentLocked={currentLocked}
         isRetryMode={isRetryMode}
         chipLabelMode={partType === "part1" ? "question" : "set"}
         showSetLabels={partType === "part1"}
@@ -652,8 +658,12 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               setTimeout(() => setJumpQ(null), 0);
               return;
             }
-            const hasAnyAnswer = currentAnswered.some(Boolean);
-            if (hasAnyAnswer) {
+            // Per-question mode: only submit the set when EVERY question is done,
+            // so unanswered questions are never graded as blank.
+            const need = Math.max(1, loaded[currentIndex]?.pageCount ?? 1);
+            const doneCount = currentAnswered.filter(Boolean).length;
+            const allAnswered = doneCount >= need;
+            if (allAnswered) {
               pendingJumpRef.current = { si, qi: clamped };
               setSubmitSignal((s) => s + 1);
               return;
@@ -664,15 +674,31 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             setTimeout(() => setJumpQ(null), 0);
           } catch { /* noop */ }
         }}
-        onRetrySet={(si) => {
+        onRetryQuestion={(si, qi) => {
           try {
             if (si < 0 || si >= sets.length) return;
+            // Same set, still in progress: just clear + unlock this question.
+            if (si === currentIndex && !results[si] && !midReview) {
+              setUnlockSignal((prev) => ({ qi, n: (prev?.n ?? 0) + 1 }));
+              return;
+            }
+            // Submitted set: drop its result, keep other answers, reopen at this question.
             const setId = sets[si]?.id;
             const nextResults = results.slice();
+            const entry = nextResults[si];
             nextResults[si] = undefined;
             setResults(nextResults);
             const nextDrafts = { ...drafts };
-            if (setId) delete nextDrafts[setId];
+            if (setId) {
+              const base: any[] = (drafts[setId] as any[])
+                ?? (entry?.qResults ?? []).map((r) => {
+                  if (!r.user_answer) return null;
+                  try { const p2 = JSON.parse(r.user_answer); return p2?.answer ?? null; } catch { const nn = parseInt(r.user_answer, 10); return Number.isFinite(nn) ? nn : null; }
+                });
+              const cleaned = [...(base ?? [])];
+              cleaned[qi] = null;
+              nextDrafts[setId] = cleaned;
+            }
             setDrafts(nextDrafts);
             if (persist) {
               saveMarathonProgress("listening", partType, {
@@ -686,7 +712,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             }
             setMidReview(null);
             setEnterAtLast(false);
-            setJumpQ(0);
+            setJumpQ(qi);
             setCurrentIndex(si);
             setAttempt((a) => a + 1);
             setTimeout(() => setJumpQ(null), 0);

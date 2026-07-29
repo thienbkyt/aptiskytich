@@ -47,6 +47,8 @@ interface Props {
   onEnterSet?: (setIndex: number, questionIndex: number) => void;
   /** Marathon: reset a submitted set so the user can redo it. Enables "Làm lại đề này". */
   onRetrySet?: (setIndex: number) => void;
+  /** Marathon per-question mode: clear + unlock just one question (takes precedence over onRetrySet). */
+  onRetryQuestion?: (setIndex: number, questionIndex: number) => void;
 }
 
 const MarathonNavigator = ({
@@ -54,7 +56,7 @@ const MarathonNavigator = ({
   currentQ, reviewingQ, currentAnswered, currentLocked,
   isRetryMode, allowJumpInCurrent = true, mode = "default",
   chipLabelMode = "question", showSetLabels = false,
-  onReview, onJumpQuestion, onEnterSet, onRetrySet,
+  onReview, onJumpQuestion, onEnterSet, onRetrySet, onRetryQuestion,
 }: Props) => {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -237,7 +239,19 @@ const MarathonNavigator = ({
           </span>
         </div>
 
-        {isReviewingMode && onRetrySet && !!results[activeSetIndex] && (
+        {onRetryQuestion
+          ? (isReviewingMode || !!currentLocked?.[currentQ ?? 0]) && (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => onRetryQuestion(activeSetIndex, isReviewingMode ? (reviewingQ ?? 0) : (currentQ ?? 0))}
+                className="text-[11px] font-semibold text-[#CC1C01] hover:underline whitespace-nowrap shrink-0"
+              >
+                Làm lại câu này
+              </button>
+            </div>
+          )
+          : isReviewingMode && onRetrySet && !!results[activeSetIndex] && (
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"
