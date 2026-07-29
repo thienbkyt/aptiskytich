@@ -216,6 +216,94 @@ const Dashboard = () => {
           }
         }
 
+        // ── Band tổng: tính từ 4 kỹ năng (bỏ grammar) ──
+        const speakingRows = (speakingSkillRes.data || []) as any[];
+        const writingRows50 = (writingSkillRes.data || []) as any[];
+        // Loại row tổng kết marathon để không đếm hai lần.
+        const scoreRows = allResults.filter((row: any) => {
+          const ss = row.skill_scores;
+          return ss && typeof ss === "object" && ss.mode !== "marathon" && ss.skill;
+        });
+
+        const scaledBySkill: Partial<Record<typeof BAND_SKILLS[number], number>> = {};
+
+        // NGUỒN 1: full test gần nhất có đủ cả 4 kỹ năng.
+        const sessionSkills = new Map<string, Map<string, { correct: number; total: number }>>();
+        const sessionOrder: string[] = [];
+        scoreRows.forEach((row: any) => {
+          const sid = row.full_test_session_id;
+          if (!sid) return;
+          const ss = row.skill_scores;
+          if (ss.fullPartSession) return;
+          if (!sessionSkills.has(sid)) { sessionSkills.set(sid, new Map()); sessionOrder.push(sid); }
+          sessionSkills.get(sid)!.set(ss.skill, {
+            correct: Number(ss.correct) || 0,
+            total: Number(ss.total) || 0,
+          });
+        });
+        const s50BySession = (list: any[]) => {
+          const m = new Map<string, number>();
+          list.forEach((r: any) => {
+            const sid = r.full_test_session_id;
+            const v = Number(r.scale50);
+            if (!sid || !Number.isFinite(v) || v <= 0) return;
+            if (!m.has(sid)) m.set(sid, Math.round(v));
+          });
+          return m;
+        };
+        const wBySession = s50BySession(writingRows50);
+        const sBySession = s50BySession(speakingRows);
+
+        for (const sid of sessionOrder) { // allResults đã sắp xếp mới → cũ
+          const skills = sessionSkills.get(sid)!;
+          const r = skills.get("reading");
+          const l = skills.get("listening");
+          const w = wBySession.get(sid);
+          const sp = sBySession.get(sid);
+          if (!r || !l || w === undefined || sp === undefined) continue;
+          if (r.total <= 0 || l.total <= 0) continue;
+          scaledBySkill.reading = toScaledScore(r.correct, r.total);
+          scaledBySkill.listening = toScaledScore(l.correct, l.total);
+          scaledBySkill.writing = w;
+          scaledBySkill.speaking = sp;
+          break;
+        }
+
+        // NGUỒN 2: dự phòng — 5 lượt gần nhất mỗi kỹ năng.
+        if (scaledBySkill.reading === undefined) {
+          (["reading", "listening"] as const).forEach((sk) => {
+            const rows = scoreRows
+              .filter((row: any) => row.skill_scores.skill === sk && (Number(row.skill_scores.total) || 0) > 0)
+              .slice(0, 5);
+            if (rows.length === 0) return;
+            const c = rows.reduce((s: number, row: any) => s + (Number(row.skill_scores.correct) || 0), 0);
+            const t = rows.reduce((s: number, row: any) => s + (Number(row.skill_scores.total) || 0), 0);
+            if (t > 0) scaledBySkill[sk] = toScaledScore(c, t);
+          });
+          const avgS50 = (list: any[]) => {
+            const vals = list
+              .map((r: any) => Number(r.scale50))
+              .filter((n) => Number.isFinite(n) && n > 0)
+              .slice(0, 5);
+            if (vals.length === 0) return undefined;
+            return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+          };
+          const wAvg = avgS50(writingRows50);
+          const sAvg = avgS50(speakingRows);
+          if (wAvg !== undefined) scaledBySkill.writing = wAvg;
+          if (sAvg !== undefined) scaledBySkill.speaking = sAvg;
+        }
+
+        const bandNums = BAND_SKILLS
+          .map((sk) => scaledBySkill[sk])
+          .filter((v): v is number => v !== undefined)
+          .map((v, i) => BAND_TO_NUM[getSkillBand(v, BAND_SKILLS[i])] ?? 0);
+        const skillsCovered = BAND_SKILLS.filter((sk) => scaledBySkill[sk] !== undefined).length;
+        let currentLevel = "Chưa đủ dữ liệu";
+        if (skillsCovered === 4) {
+          const avg = Math.round(bandNums.reduce((a, b) => a + b, 0) / bandNums.length);
+          currentLevel = NUM_TO_BAND[Math.max(0, Math.min(5, avg))];
+        }
 
 
         const nowVN = toVNDate(new Date());
