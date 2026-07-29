@@ -629,8 +629,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         qCounts={qCounts}
         currentAnswered={currentAnswered}
         isRetryMode={isRetryMode}
-        chipLabelMode="question"
-        showSetLabels
+        chipLabelMode={partType === "part1" ? "question" : "set"}
+        showSetLabels={partType === "part1"}
         allowJumpInCurrent
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {

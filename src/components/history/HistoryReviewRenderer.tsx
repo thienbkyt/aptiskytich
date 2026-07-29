@@ -281,7 +281,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
   // ─── LISTENING ───────────────────────────────────────────
   if (skill === "listening") {
     const pt = partType as ListeningPartType;
-    const props: any = { partType: pt, testTitle, timeLimit: 2100, onExit, reviewMode: true, pageBase, pageTotal, examSetId };
+    const props: any = { partType: pt, testTitle, timeLimit: 2100, onExit, reviewMode: true, pageBase, pageTotal, examSetId, hideTimer, hideBottomNav, hideBackToResults };
     if (pt === "part1") {
       props.part1Questions = toListeningPart1(rows);
       props.initialAnswers = rows.map((r) => { const raw = ansMap[r.id]; const nn = raw != null ? parseInt(raw, 10) : NaN; return Number.isFinite(nn) ? nn : null; });
