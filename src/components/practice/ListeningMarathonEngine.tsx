@@ -77,7 +77,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
   const isRetryMode = !!wrongQuestionIdsBySet;
 
   // Reset current-set answered tracking when the active set changes.
-  useEffect(() => { setCurrentAnswers([]); setCurrentQ(0); setCurrentLocked([]); }, [currentIndex, attempt]);
+  useEffect(() => { setCurrentAnswers([]); setCurrentLocked([]); }, [currentIndex, attempt]);
 
   const isAnswerFilled = (a: any) => {
     if (a == null) return false;
@@ -634,6 +634,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         qCounts={qCounts}
         currentAnswered={currentAnswered}
         currentLocked={currentLocked}
+        draftsBySet={drafts}
         isRetryMode={isRetryMode}
         chipLabelMode={partType === "part1" ? "question" : "set"}
         showSetLabels={partType === "part1"}

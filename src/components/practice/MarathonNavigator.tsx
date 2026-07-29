@@ -28,6 +28,8 @@ interface Props {
   currentAnswered?: boolean[];
   /** Per-question locked/graded flags for the CURRENT set (marathon per-question grading). */
   currentLocked?: boolean[];
+  /** Unsubmitted drafts keyed by examSetId → array of answers (index = question). */
+  draftsBySet?: Record<string, any[]>;
   isRetryMode?: boolean;
   /** Enable in-set chip jump for the current set. */
   allowJumpInCurrent?: boolean;
