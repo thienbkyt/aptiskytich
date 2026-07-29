@@ -2,6 +2,7 @@
  * Cleans AI writing error lists before display:
  * 1) Drops "style suggestion" items (explanation says the student wasn't actually wrong).
  * 2) Moves pure spelling items out of the grammar list into the spelling list.
+ * 3) Drops no-op corrections where `corrected` is identical to `original` after normalization.
  * Mirrors the server-side sanitizer in the grade-exam function so older stored
  * gradings are displayed correctly too.
  */
@@ -16,12 +17,33 @@ export function isStyleNote(e: any) {
   return STYLE_RE.test(expl(e));
 }
 
+function normalizeText(s: any): string {
+  return String(s ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function isSameAfterNormalization(a: any, b: any): boolean {
+  const na = normalizeText(a);
+  const nb = normalizeText(b);
+  if (na.toLowerCase() !== nb.toLowerCase()) return false;
+  // Ignore case difference on the very first character only.
+  if (na.length === 0 || nb.length === 0) return na === nb;
+  return na.slice(1) === nb.slice(1);
+}
+
+export function isNoOpCorrection(e: any) {
+  return isSameAfterNormalization(e?.original, e?.corrected);
+}
+
 export function splitWritingErrors<T = any>(
   grammar: T[] | null | undefined,
   spelling: T[] | null | undefined,
 ): { grammarErrors: T[]; spellingErrors: T[] } {
-  const g = (Array.isArray(grammar) ? grammar : []).filter((e) => !isStyleNote(e));
-  const s = (Array.isArray(spelling) ? spelling : []).filter((e) => !isStyleNote(e));
+  const g = (Array.isArray(grammar) ? grammar : [])
+    .filter((e) => !isStyleNote(e) && !isNoOpCorrection(e));
+  const s = (Array.isArray(spelling) ? spelling : [])
+    .filter((e) => !isStyleNote(e) && !isNoOpCorrection(e));
   return {
     grammarErrors: g.filter((e) => !SPELL_RE.test(expl(e))),
     spellingErrors: [...s, ...g.filter((e) => SPELL_RE.test(expl(e)))],

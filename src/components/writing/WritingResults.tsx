@@ -112,11 +112,9 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
       )}
 
       {/* Errors */}
-      <div className="bg-card border border-border rounded-2xl p-6">
-        <h3 className="text-sm font-heading font-bold text-foreground mb-4">❌ Lỗi cần sửa</h3>
-        {allErrors.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">Không phát hiện lỗi ngữ pháp/chính tả.</p>
-        ) : (
+      {allErrors.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-6">
+          <h3 className="text-sm font-heading font-bold text-foreground mb-4">❌ Lỗi cần sửa</h3>
           <div className="space-y-3">
             {allErrors.map((m, i) => (
               <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
@@ -127,8 +125,8 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
         {onReview && (
