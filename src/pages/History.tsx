@@ -228,9 +228,10 @@ const History = () => {
           const ss = (r.skill_scores || {}) as any;
           let skill = setInfo?.skill || ss.skill || "unknown";
           if (skill === "grammar_vocab") skill = "grammar";
-          const isMarathon = ss.mode === "marathon" || (!r.exam_set_id && !r.full_test_session_id && !!ss.label);
+          const mode: string | null = typeof ss.mode === "string" ? ss.mode : null;
+          const isMarathon = mode === "marathon" || mode === "marathon-set";
           const title = isMarathon
-            ? (ss.label || "Luyện nhanh (Marathon)")
+            ? (ss.label || setInfo?.title || "Luyện nhanh (Marathon)")
             : (setInfo?.title || "Đề mẫu");
           const disp = computeDisplay(
             { skill, score: r.score, total: r.total, level: r.level },
@@ -252,6 +253,10 @@ const History = () => {
             full_test_session_id: r.full_test_session_id ?? null,
             full_test_id: r.full_test_id ?? null,
             isMarathon,
+            marathonMode: mode,
+            marathonSessionId: typeof ss.marathonSessionId === "string" ? ss.marathonSessionId : null,
+            marathonPartType: ss.partType || ss.part || setInfo?.part || null,
+            marathonLabel: typeof ss.label === "string" ? ss.label : null,
             fullPartSession: ss.fullPartSession ?? null,
             review_snapshot: r.review_snapshot ?? null,
             ...disp,
