@@ -38,6 +38,9 @@ interface Props {
   mode?: "default" | "writing";
   /** Chip labelling: "question" (default, per-question) or "set" (one chip = one đề). */
   chipLabelMode?: "question" | "set";
+  /** Show a small "Đề N" label before each set's chip group. */
+  showSetLabels?: boolean;
+
   onReview: (setIndex: number, questionIndex: number) => void;
   onJumpQuestion?: (questionIndex: number) => void;
   /** Switch marathon to any not-yet-done set at the given question index (forward or backward). */
