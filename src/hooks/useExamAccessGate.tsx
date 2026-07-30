@@ -47,6 +47,7 @@ export function useExamAccessGate() {
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
   const [quota, setQuota] = useState<{ feature: GateFeature; cap: number } | null>(null);
+  const inFlightRef = useRef(false);
 
   const isLocked = useCallback(
     (set: MinimalSet | null | undefined) => {
