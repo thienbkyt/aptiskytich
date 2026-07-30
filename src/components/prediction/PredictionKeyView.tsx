@@ -121,7 +121,7 @@ interface MarathonState {
 
 export default function PredictionKeyView() {
   const { user } = useAuth();
-  const { isPremium, loading: tierLoading } = useIsPro();
+  const { isPro, loading: tierLoading } = useIsPro();
   const navigate = useNavigate();
 
   const [keys, setKeys] = useState<KeyRow[]>([]);
@@ -464,8 +464,8 @@ export default function PredictionKeyView() {
         </Popover>
       </div>
 
-      {!isPremium ? (
-        <UpgradeLock reason="premium" need="premium" featureLabel="Key Dự Đoán (Update hằng ngày)" />
+      {!isPro ? (
+        <UpgradeLock reason="pro" need="pro" featureLabel="Key Dự Đoán (Update hằng ngày)" />
       ) : loadingItems ? (
         <div className="space-y-3">
           <Skeleton className="h-24 w-full" />
