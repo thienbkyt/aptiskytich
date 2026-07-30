@@ -540,6 +540,24 @@ const WritingExamEngine = ({
   const isLast = isLastPart ?? true;
   return (
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
+      {quotaModal && (
+        <UpgradeLock
+          asModal
+          open
+          onOpenChange={(v) => { if (!v) setQuotaModal(null); }}
+          reason="quota_exceeded"
+          need="pro"
+          featureLabel="Chấm bài bằng AI"
+          freeQuota={quotaModal.cap}
+          remaining={0}
+          resetNote={
+            quotaModal.tier === "free"
+              ? "Tài khoản miễn phí có 3 lượt chấm AI (không reset). Bài viết của bạn đã được lưu."
+              : `Trần ${quotaModal.cap} lượt/ngày — reset lúc 00:00. Bài viết của bạn đã được lưu.`
+          }
+        />
+      )}
+
 
       <RotateDeviceOverlay />
       {adminControls}
