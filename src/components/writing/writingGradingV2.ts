@@ -78,6 +78,19 @@ export async function gradeWritingPartV2(
     text,
     parts,
   };
+  // Persist the exact grading payload BEFORE calling the AI, so a closed tab /
+  // dropped connection can be re-graded faithfully later. Never blocks grading.
+  if (opts?.testResultId) {
+    try {
+      await (supabase as any)
+        .from("test_results")
+        .update({ grade_payload: gradePayload })
+        .eq("id", opts.testResultId);
+    } catch (e) {
+      console.warn("[gradeWritingPartV2] failed to persist grade_payload:", e);
+    }
+  }
+
   const { data, error } = await supabase.functions.invoke("grade-exam", {
     body: gradePayload,
   });
@@ -189,6 +202,17 @@ export async function saveWritingSkillResult(
     if (error) {
       console.warn("[saveWritingSkillResult] rpc failed:", error);
       return { id: null, error };
+    }
+    // Graded successfully — clear the pending payload marker.
+    if (args.testResultId) {
+      try {
+        await (supabase as any)
+          .from("test_results")
+          .update({ grade_payload: null })
+          .eq("id", args.testResultId);
+      } catch (e) {
+        console.warn("[saveWritingSkillResult] failed to clear grade_payload:", e);
+      }
     }
     return { id: (data as string) ?? null, error: null };
   } catch (e) {
