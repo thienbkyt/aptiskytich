@@ -298,8 +298,12 @@ export default function PredictionKeyView() {
   const selectedDate = selectedKey ? new Date(selectedKey.date + "T00:00:00") : undefined;
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
-  // ascending strip (oldest -> newest)
-  const strip = useMemo(() => keys.slice().sort((a, b) => a.date.localeCompare(b.date)), [keys]);
+  // last 7 key days, ascending (oldest -> newest)
+  const strip = useMemo(
+    () => keys.slice().sort((a, b) => a.date.localeCompare(b.date)).slice(-7),
+    [keys]
+  );
+
   const newestId = strip[strip.length - 1]?.id;
 
   useEffect(() => {
