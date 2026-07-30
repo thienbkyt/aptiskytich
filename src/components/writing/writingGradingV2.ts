@@ -77,6 +77,7 @@ export async function gradeWritingPartV2(
     questions,
     text,
     parts,
+    gradingSessionId: opts?.fullTestSessionId ?? null,
   };
   // Persist the exact grading payload BEFORE calling the AI, so a closed tab /
   // dropped connection can be re-graded faithfully later. Never blocks grading.
