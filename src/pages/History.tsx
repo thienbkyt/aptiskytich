@@ -568,6 +568,27 @@ const History = () => {
     );
   }, [perSkillRows, fullPartGroups, marathonGroups, skillFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const pagedItems = filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [skillFilter]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+
+  const pageNumbers = useMemo<(number | "ellipsis")[]>(() => {
+    const out: (number | "ellipsis")[] = [];
+    const want = new Set<number>([1, totalPages, page - 1, page, page + 1]);
+    const list = Array.from(want).filter((n) => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+    let prev = 0;
+    for (const n of list) {
+      if (prev && n - prev > 1) out.push("ellipsis");
+      out.push(n);
+      prev = n;
+    }
+    return out;
+  }, [page, totalPages]);
+
+
+
   // Top stats
   const stats = useMemo(() => {
     const totalAttempts =
