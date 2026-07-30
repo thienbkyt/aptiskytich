@@ -128,6 +128,7 @@ export default function PredictionKeyView() {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [items, setItems] = useState<ItemRow[]>([]);
   const [best, setBest] = useState<Map<string, BestScore>>(new Map());
+  const [attempted, setAttempted] = useState<Set<string>>(new Set());
   const [loadingKeys, setLoadingKeys] = useState(true);
   const [loadingItems, setLoadingItems] = useState(false);
 
@@ -195,7 +196,7 @@ export default function PredictionKeyView() {
 
   // Load best raw score per exam set
   useEffect(() => {
-    if (!user || items.length === 0) { setBest(new Map()); return; }
+    if (!user || items.length === 0) { setBest(new Map()); setAttempted(new Set()); return; }
     let cancelled = false;
     (async () => {
       const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
@@ -207,11 +208,24 @@ export default function PredictionKeyView() {
       if (cancelled) return;
       const skillOf = new Map(items.map((i) => [i.exam_set_id, (i.skill || "").toLowerCase()]));
       const map = new Map<string, BestScore>();
+      const tried = new Set<string>();
       (data || []).forEach((r: any) => {
         if (!r.exam_set_id || !r.total || r.total <= 0) return;
+        tried.add(r.exam_set_id);
         const sk = skillOf.get(r.exam_set_id) || "";
         const subjective = sk === "writing" || sk === "speaking";
-        if (subjective && (r.total <= 1 || r.total === 50)) return;
+        if (subjective) {
+          if (r.total !== 30 && r.total !== 50) return;
+          const prev = map.get(r.exam_set_id);
+          if (!prev) { map.set(r.exam_set_id, { score: r.score, total: r.total }); return; }
+          // prefer the total===30 group; never compare ratios across scales
+          if (prev.total === r.total) {
+            if (r.score > prev.score) map.set(r.exam_set_id, { score: r.score, total: r.total });
+          } else if (r.total === 30) {
+            map.set(r.exam_set_id, { score: r.score, total: r.total });
+          }
+          return;
+        }
         const prev = map.get(r.exam_set_id);
         const ratio = r.score / r.total;
         if (!prev || ratio > prev.score / prev.total) {
@@ -219,6 +233,7 @@ export default function PredictionKeyView() {
         }
       });
       setBest(map);
+      setAttempted(tried);
     })();
     return () => { cancelled = true; };
   }, [user, items]);
@@ -256,7 +271,7 @@ export default function PredictionKeyView() {
 
   const matchPrio = (p: Priority) => prioFilter === "all" || p === prioFilter;
   const matchDone = (id: string) =>
-    doneFilter === "all" || (doneFilter === "done" ? best.has(id) : !best.has(id));
+    doneFilter === "all" || (doneFilter === "done" ? attempted.has(id) : !attempted.has(id));
   const matchPart = (part: string | null) =>
     partFilter === "all" || (normalizePart(part || "") || "other") === partFilter;
 
@@ -270,7 +285,7 @@ export default function PredictionKeyView() {
         if (d !== 0) return d;
         return a.sort_order - b.sort_order;
       });
-  }, [skillItems, prioFilter, doneFilter, partFilter, best]);
+  }, [skillItems, prioFilter, doneFilter, partFilter, best, attempted]);
 
   // Sets used by the action card: single part group (engines take one partType)
   const actionGroup = useMemo(() => {
@@ -467,7 +482,7 @@ export default function PredictionKeyView() {
             {availableSkills.map((sk) => {
               const Icon = SKILL_ICON[sk] || Sparkles;
               const all = items.filter((it) => (it.skill || "other").toLowerCase() === sk);
-              const done = all.filter((it) => best.has(it.exam_set_id)).length;
+              const done = all.filter((it) => attempted.has(it.exam_set_id)).length;
               const on = activeSkill === sk;
               return (
                 <button
@@ -629,7 +644,7 @@ export default function PredictionKeyView() {
                   const scoreEl = b ? (
                     <span className="text-xs font-semibold text-foreground">{b.score}/{b.total}</span>
                   ) : null;
-                  const statusEl = b ? (
+                  const statusEl = attempted.has(it.exam_set_id) ? (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
                     </span>
