@@ -755,7 +755,7 @@ const History = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.map((item) => {
+                  {pagedItems.map((item) => {
                     if (item.kind === "group") {
                       const g = item.group;
                       const Icon = SKILL_ICON[g.skill] || ListChecks;
