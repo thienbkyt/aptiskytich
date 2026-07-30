@@ -121,6 +121,8 @@ async function persistWritingPart(job: any, body: any): Promise<{ rawPart: numbe
     score: Math.round(rawPart),
     total: 30,
     correct_answers: Math.round(rawPart),
+    // Clear the pending-grading marker so the sweeper never re-queues this row.
+    grade_payload: null,
   } as any).eq("id", job.test_result_id);
   if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
 
