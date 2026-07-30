@@ -763,7 +763,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                 rawPart: merged.rawPart,
               };
             } catch (e) {
+              if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
               console.warn(`[FullTestEngine V2] gradeSpeakingPartV2 ${partType} failed`, e);
+
             }
           }
         } catch (e) {
@@ -1031,7 +1033,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             fullTestSessionId: sessionIdRef.current,
           });
         } catch (err) {
+          if (err instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
           console.warn(`[FullTest v2] gradeWritingPartV2 ${e.partType} failed`, err);
+
         }
         if (!v2) {
           failedParts += 1;

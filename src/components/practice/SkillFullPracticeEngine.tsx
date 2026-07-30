@@ -636,7 +636,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
           });
         } catch (e) {
+          if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
           console.warn(`[SkillFullPractice V2] gradeSpeakingPartV2 ${sub.partType} failed`, e);
+
           const empty: SpeakingPartResultV2 = {
             bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
             rawPart: 0,
@@ -1103,7 +1105,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             }
           } catch (e) { console.warn("[SkillFullPractice v2] bake AI failed", e); }
         } catch (e) {
+          if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
           console.warn(`[SkillFullPractice v2] gradeWritingPartV2 ${p.partType} failed`, e);
+
           failedParts += 1;
         }
         setWritingGradedCount(i + 1);
