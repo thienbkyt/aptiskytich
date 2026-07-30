@@ -63,15 +63,15 @@ const GrammarVocabulary = () => {
   }, [searchParams, fullSets, fullLoading]);
 
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
-  const { keySetsBySet, windowSize } = useExamPriorityLabels();
+  const { labels: priorityLabels } = useExamPriorityLabels();
   const setPriority = useMemo(() => {
     const m = new Map<string, "high" | "medium" | "low">();
     fullSets.forEach((s) => {
-      const info = aggregatePriority(s.examSetIds, keySetsBySet, windowSize);
+      const info = aggregatePriority(s.examSetIds, priorityLabels);
       if (info) m.set(s.fullTestId, info.label);
     });
     return m;
-  }, [fullSets, keySetsBySet, windowSize]);
+  }, [fullSets, priorityLabels]);
   const searchedSets = useMemo(() => {
     if (!searchQuery.trim()) return fullSets;
     const q = searchQuery.toLowerCase();
@@ -173,7 +173,7 @@ const GrammarVocabulary = () => {
           {hasPriority && (
             <div className="mb-4">
               <p className="text-xs text-muted-foreground mb-2">
-                Nhãn ưu tiên dựa trên mức độ đề hay xuất hiện trong các key dự đoán gần đây — Ưu tiên cao là đề hay gặp nhất, nên luyện trước.
+                Nhãn ưu tiên lấy từ key dự đoán đang hiệu lực (key mới nhất đã đăng) — Ưu tiên cao là đề nên luyện trước.
               </p>
               <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
             </div>
