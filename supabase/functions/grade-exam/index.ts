@@ -25,6 +25,8 @@ interface GradingRequest {
   // Part 4 aggregated grading
   subQuestions?: string[];
   usedConnectorsRequired?: boolean;
+  // Groups multiple part-gradings of one session into a single usage count
+  gradingSessionId?: string | null;
 }
 
 serve(async (req) => {
