@@ -110,6 +110,8 @@ const SKILL_ROUTES: Record<string, string> = {
 
 const VALID_MARATHON_PARTS = ["part1", "part2", "part3", "part4"];
 
+const PAGE_SIZE = 50;
+
 const SKILL_ICON: Record<string, any> = {
   grammar: GraduationCap,
   reading: BookOpen,
