@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { normalizePart, readingPartLabel } from "@/hooks/useExamSets";
+import { useNavigate } from "react-router-dom";
+import { normalizePart, readingPartLabel, type ExamSetRow } from "@/hooks/useExamSets";
 import { format } from "date-fns";
 import {
-  ArrowRight,
   CalendarDays,
   CheckCircle2,
-  Circle,
   Sparkles,
   BookOpen,
   Headphones,
   Type,
   PenLine,
   Mic,
-  ChevronDown,
+  ArrowRight,
+  Infinity as InfinityIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,28 +24,34 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { cn } from "@/lib/utils";
+import { loadMarathonProgress, loadMarathonLast } from "@/lib/marathonProgress";
+import ReadingMarathonEngine from "@/components/practice/ReadingMarathonEngine";
+import ListeningMarathonEngine from "@/components/practice/ListeningMarathonEngine";
+import WritingMarathonEngine from "@/components/practice/WritingMarathonEngine";
 
 type Priority = "high" | "medium" | "low" | "backup";
+type PrioFilter = "all" | "high" | "medium" | "backup";
 
-const PRIORITY_LABEL: Record<Priority, string> = {
-  high: "Ưu tiên cao",
-  medium: "Ưu tiên vừa",
-  low: "Ưu tiên thấp",
-  backup: "Backup",
+const PRIORITY_CHIP: Record<Priority, { label: string; style: React.CSSProperties; className: string }> = {
+  high: {
+    label: "Cao",
+    style: { color: "#CC1C01", background: "var(--bg-danger, rgba(204,28,1,0.10))" },
+    className: "",
+  },
+  medium: {
+    label: "Vừa",
+    style: { color: "#8a5a12", background: "var(--bg-warning, rgba(254,173,95,0.22))" },
+    className: "",
+  },
+  low: { label: "Backup", style: {}, className: "bg-muted text-muted-foreground" },
+  backup: { label: "Backup", style: {}, className: "bg-muted text-muted-foreground" },
 };
-const PRIORITY_COLOR: Record<Priority, string> = {
-  high: "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30",
-  medium: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
-  low: "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30",
-  backup: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30",
-};
-const PRIORITY_ORDER: Priority[] = ["high", "medium", "low", "backup"];
 
 const SKILL_LABEL: Record<string, string> = {
   reading: "Reading",
   listening: "Listening",
-  grammar_vocab: "Grammar & Vocabulary",
-  grammar: "Grammar & Vocabulary",
+  grammar_vocab: "Grammar & Vocab",
+  grammar: "Grammar & Vocab",
   writing: "Writing",
   speaking: "Speaking",
 };
@@ -59,6 +64,7 @@ const SKILL_ICON: Record<string, any> = {
   writing: PenLine,
   speaking: Mic,
 };
+const WEEKDAY_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
 function skillRoute(skill: string | null | undefined, setId: string): string {
   const s = (skill || "").toLowerCase();
@@ -69,6 +75,9 @@ function skillRoute(skill: string | null | undefined, setId: string): string {
   if (s === "speaking") return `/speaking?set=${setId}&jump=1&from=key`;
   return `/?set=${setId}`;
 }
+
+const partLabelFor = (skill: string, part: string) =>
+  skill === "reading" ? readingPartLabel(part) : part.replace(/^part(\d+)$/i, "Part $1");
 
 interface KeyRow {
   id: string;
@@ -84,6 +93,17 @@ interface ItemRow {
   title: string;
   skill: string | null;
   part: string | null;
+  set: ExamSetRow | null;
+}
+
+type BestScore = { score: number; total: number };
+
+interface MarathonState {
+  skill: string;
+  part: string;
+  sets: ExamSetRow[];
+  retry: boolean;
+  wrongQuestionIdsBySet?: Record<string, string[]>;
 }
 
 export default function PredictionKeyView() {
@@ -94,19 +114,15 @@ export default function PredictionKeyView() {
   const [keys, setKeys] = useState<KeyRow[]>([]);
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [items, setItems] = useState<ItemRow[]>([]);
-  const [history, setHistory] = useState<Map<string, { count: number; best: number }>>(new Map());
+  const [best, setBest] = useState<Map<string, BestScore>>(new Map());
   const [loadingKeys, setLoadingKeys] = useState(true);
   const [loadingItems, setLoadingItems] = useState(false);
-  const [activePriorities, setActivePriorities] = useState<Priority[]>([]);
-  const [activeSkills, setActiveSkills] = useState<string[]>([]);
-  const [activeStatus, setActiveStatus] = useState<("done" | "undone")[]>(["undone"]);
-  const [openSkill, setOpenSkill] = useState<string | undefined>(undefined);
-  const togglePriority = (p: Priority) =>
-    setActivePriorities((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
-  const toggleSkill = (s: string) =>
-    setActiveSkills((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
-  const toggleStatus = (s: "done" | "undone") =>
-    setActiveStatus((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+
+  const [activeSkill, setActiveSkill] = useState<string | null>(null);
+  const [prioFilter, setPrioFilter] = useState<PrioFilter>("all");
+  const [onlyUndone, setOnlyUndone] = useState(false);
+  const [marathonPart, setMarathonPart] = useState<string | null>(null);
+  const [marathon, setMarathon] = useState<MarathonState | null>(null);
 
   // Load keys
   useEffect(() => {
@@ -135,16 +151,13 @@ export default function PredictionKeyView() {
 
   // Load items for selected key
   useEffect(() => {
-    if (!selectedKeyId) {
-      setItems([]);
-      return;
-    }
+    if (!selectedKeyId) { setItems([]); return; }
     let cancelled = false;
     (async () => {
       setLoadingItems(true);
       const { data } = await supabase
         .from("prediction_items")
-        .select("id,exam_set_id,priority,sort_order,exam_sets(title,skill,part)")
+        .select("id,exam_set_id,priority,sort_order,exam_sets(*)")
         .eq("key_id", selectedKeyId)
         .order("sort_order", { ascending: true });
       if (cancelled) return;
@@ -156,6 +169,7 @@ export default function PredictionKeyView() {
         title: r.exam_sets?.title ?? "(không có tiêu đề)",
         skill: r.exam_sets?.skill ?? null,
         part: r.exam_sets?.part ?? null,
+        set: (r.exam_sets as ExamSetRow) ?? null,
       }));
       setItems(rows);
       setLoadingItems(false);
@@ -163,12 +177,9 @@ export default function PredictionKeyView() {
     return () => { cancelled = true; };
   }, [selectedKeyId]);
 
-  // Load user history for items
+  // Load best raw score per exam set
   useEffect(() => {
-    if (!user || items.length === 0) {
-      setHistory(new Map());
-      return;
-    }
+    if (!user || items.length === 0) { setBest(new Map()); return; }
     let cancelled = false;
     (async () => {
       const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
@@ -178,15 +189,20 @@ export default function PredictionKeyView() {
         .eq("user_id", user.id)
         .in("exam_set_id", ids);
       if (cancelled) return;
-      const map = new Map<string, { count: number; best: number }>();
+      const skillOf = new Map(items.map((i) => [i.exam_set_id, (i.skill || "").toLowerCase()]));
+      const map = new Map<string, BestScore>();
       (data || []).forEach((r: any) => {
         if (!r.exam_set_id || !r.total || r.total <= 0) return;
-        const pct = Math.round((r.score / r.total) * 100);
+        const sk = skillOf.get(r.exam_set_id) || "";
+        const subjective = sk === "writing" || sk === "speaking";
+        if (subjective && (r.total <= 1 || r.total === 50)) return;
         const prev = map.get(r.exam_set_id);
-        if (!prev) map.set(r.exam_set_id, { count: 1, best: pct });
-        else map.set(r.exam_set_id, { count: prev.count + 1, best: Math.max(prev.best, pct) });
+        const ratio = r.score / r.total;
+        if (!prev || ratio > prev.score / prev.total) {
+          map.set(r.exam_set_id, { score: r.score, total: r.total });
+        }
       });
-      setHistory(map);
+      setBest(map);
     })();
     return () => { cancelled = true; };
   }, [user, items]);
@@ -198,83 +214,47 @@ export default function PredictionKeyView() {
     );
   }, [items]);
 
-  // Overview counts (based on ALL items in key, ignoring filters)
-  const overview = useMemo(() => {
-    const total = items.length;
-    let done = 0;
-    let highUndone = 0;
-    items.forEach((it) => {
-      const isDone = history.has(it.exam_set_id);
-      if (isDone) done++;
-      if (it.priority === "high" && !isDone) highUndone++;
-    });
-    return { total, done, highUndone };
-  }, [items, history]);
+  const matchPrio = (p: Priority) =>
+    prioFilter === "all" ||
+    (prioFilter === "backup" ? p === "backup" || p === "low" : p === prioFilter);
 
   const visibleItems = useMemo(() => {
-    return items.filter((it) => {
-      const sk = (it.skill || "other").toLowerCase();
-      const okSkill = activeSkills.length === 0 || activeSkills.includes(sk);
-      const okPrio = activePriorities.length === 0 || activePriorities.includes(it.priority);
-      const done = history.has(it.exam_set_id);
-      const okStatus =
-        activeStatus.length === 0 ||
-        (activeStatus.includes("done") && done) ||
-        (activeStatus.includes("undone") && !done);
-      return okSkill && okPrio && okStatus;
-    });
-  }, [items, activeSkills, activePriorities, activeStatus, history]);
+    const rank: Priority[] = ["high", "medium", "low", "backup"];
+    return items
+      .filter((it) => {
+        const sk = (it.skill || "other").toLowerCase();
+        if (activeSkill && sk !== activeSkill) return false;
+        if (!matchPrio(it.priority)) return false;
+        if (onlyUndone && best.has(it.exam_set_id)) return false;
+        return true;
+      })
+      .slice()
+      .sort((a, b) => {
+        const d = rank.indexOf(a.priority) - rank.indexOf(b.priority);
+        if (d !== 0) return d;
+        return a.sort_order - b.sort_order;
+      });
+  }, [items, activeSkill, prioFilter, onlyUndone, best]);
 
-  // skill → part → items
-  const groupedBySkillPart = useMemo(() => {
-    const bySkill = new Map<string, Map<string, ItemRow[]>>();
-    visibleItems.forEach((it) => {
-      const sk = (it.skill || "other").toLowerCase();
-      const p = normalizePart(it.part || "") || "other";
-      if (!bySkill.has(sk)) bySkill.set(sk, new Map());
-      const pmap = bySkill.get(sk)!;
-      if (!pmap.has(p)) pmap.set(p, []);
-      pmap.get(p)!.push(it);
-    });
-    const skills = Array.from(bySkill.keys()).sort(
-      (a, b) => (SKILL_ORDER.indexOf(a) + 1 || 999) - (SKILL_ORDER.indexOf(b) + 1 || 999),
-    );
-    return skills.map((sk) => {
-      const pmap = bySkill.get(sk)!;
-      const parts = Array.from(pmap.keys()).sort();
-      const total = Array.from(pmap.values()).reduce((s, arr) => s + arr.length, 0);
-      return {
-        skill: sk,
-        label: SKILL_LABEL[sk] || sk,
-        total,
-        parts: parts.map((p) => {
-          const arr = pmap.get(p)!.slice().sort(
-            (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority),
-          );
-          return { part: p, items: arr };
-        }),
-      };
-    });
-  }, [visibleItems]);
+  // Parts available for the marathon card (single skill only)
+  const marathonParts = useMemo(() => {
+    if (!activeSkill) return [] as { part: string; sets: ExamSetRow[] }[];
+    const m = new Map<string, ExamSetRow[]>();
+    items
+      .filter((it) => (it.skill || "").toLowerCase() === activeSkill && matchPrio(it.priority) && it.set)
+      .forEach((it) => {
+        const p = normalizePart(it.part || "") || "other";
+        if (!m.has(p)) m.set(p, []);
+        m.get(p)!.push(it.set!);
+      });
+    return Array.from(m.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([part, sets]) => ({ part, sets }));
+  }, [items, activeSkill, prioFilter]);
 
-
-
-
-  // Load question counts per exam set
-  const [qCount, setQCount] = useState<Map<string, number>>(new Map());
   useEffect(() => {
-    if (items.length === 0) { setQCount(new Map()); return; }
-    let cancelled = false;
-    (async () => {
-      const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
-      const { data } = await supabase.from("exam_questions").select("exam_set_id").in("exam_set_id", ids);
-      if (cancelled) return;
-      const m = new Map<string, number>();
-      (data || []).forEach((r: any) => m.set(r.exam_set_id, (m.get(r.exam_set_id) || 0) + 1));
-      setQCount(m);
-    })();
-    return () => { cancelled = true; };
-  }, [items]);
+    setMarathonPart(marathonParts[0]?.part ?? null);
+  }, [activeSkill, prioFilter, marathonParts.length]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
@@ -283,16 +263,55 @@ export default function PredictionKeyView() {
     return m;
   }, [keys]);
   const keyDates = useMemo(() => keys.map((k) => new Date(k.date + "T00:00:00")), [keys]);
-  const selectedDate = useMemo(() => {
-    const k = keys.find((x) => x.id === selectedKeyId);
-    return k ? new Date(k.date + "T00:00:00") : undefined;
-  }, [keys, selectedKeyId]);
+  const selectedKey = keys.find((k) => k.id === selectedKeyId) || null;
+  const selectedDate = selectedKey ? new Date(selectedKey.date + "T00:00:00") : undefined;
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+
+  // ---- Marathon engine overlay ----
+  if (marathon) {
+    const label = `${SKILL_LABEL[marathon.skill] || marathon.skill} · Marathon ${partLabelFor(marathon.skill, marathon.part)}`;
+    const close = () => setMarathon(null);
+    return (
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+        {marathon.skill === "reading" && (
+          <ReadingMarathonEngine
+            sets={marathon.sets}
+            partType={marathon.part as any}
+            skillLabel={label}
+            persist={!marathon.retry}
+            isRetryMode={marathon.retry}
+            onExit={close}
+          />
+        )}
+        {marathon.skill === "listening" && (
+          <ListeningMarathonEngine
+            sets={marathon.sets}
+            partType={marathon.part as any}
+            skillLabel={label}
+            persist={!marathon.retry}
+            wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
+            onExit={close}
+          />
+        )}
+        {marathon.skill === "writing" && (
+          <WritingMarathonEngine
+            sets={marathon.sets}
+            partType={marathon.part.replace("part", "task") as any}
+            skillLabel={label}
+            persist={!marathon.retry}
+            onExit={close}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (loadingKeys || tierLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
@@ -307,381 +326,347 @@ export default function PredictionKeyView() {
     );
   }
 
-  const donePct = overview.total > 0 ? Math.round((overview.done / overview.total) * 100) : 0;
-  const DONUT_R = 22;
-  const DONUT_C = 2 * Math.PI * DONUT_R;
+  const recentKeys = keys.slice(0, 7);
 
   return (
     <div className="space-y-5">
-      {/* Hero banner */}
-      <div className="rounded-[14px] border border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 flex flex-wrap items-center gap-4">
-        {/* Left */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="w-[46px] h-[46px] rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-md">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-[18px] font-medium text-foreground">Đề Key Dự Đoán</p>
-              <Badge className="bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white border-0 text-[10px] font-bold uppercase tracking-wide">
-                Premium
-              </Badge>
-            </div>
-            <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1 flex-wrap">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/70 border border-border hover:border-primary/50 hover:text-foreground transition-colors font-medium">
-                    <CalendarDays className="w-3 h-3" />
-                    {selectedDate
-                      ? `${format(selectedDate, "dd/MM/yyyy")}${
-                          keyByDate.get(ymd(selectedDate))?.title
-                            ? ` · ${keyByDate.get(ymd(selectedDate))!.title}`
-                            : ""
-                        }`
-                      : "Chọn ngày"}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0 rounded-2xl border border-border shadow-xl bg-card"
-                  align="start"
-                  side="bottom"
-                  sideOffset={8}
+      {/* 1. Date strip */}
+      <div className="flex items-stretch gap-2">
+        <div className="flex-1 min-w-0 overflow-x-auto">
+          <div className="flex items-stretch gap-2 pb-1">
+            {recentKeys.map((k) => {
+              const d = new Date(k.date + "T00:00:00");
+              const on = k.id === selectedKeyId;
+              const isToday = k.date === todayStr;
+              return (
+                <button
+                  key={k.id}
+                  type="button"
+                  onClick={() => setSelectedKeyId(k.id)}
+                  className={cn(
+                    "shrink-0 min-w-[68px] rounded-xl border px-3 py-2 text-center transition-colors",
+                    on ? "border-2 font-semibold" : "border-border bg-card hover:bg-muted",
+                  )}
+                  style={on ? { borderColor: "#CC1C01", color: "#CC1C01", background: "var(--bg-danger, rgba(204,28,1,0.08))" } : undefined}
                 >
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    defaultMonth={selectedDate}
-                    onSelect={(d) => {
-                      if (!d) return;
-                      const k = keyByDate.get(ymd(d));
-                      if (k) setSelectedKeyId(k.id);
-                    }}
-                    disabled={(date) => !keyByDate.has(ymd(date))}
-                    modifiers={{ hasKey: keyDates }}
-                    modifiersClassNames={{
-                      hasKey: "font-bold text-primary underline underline-offset-4 decoration-2 decoration-primary",
-                    }}
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              <span>Chọn ngày để xem Key theo ngày</span>
-            </div>
+                  <div className="text-[11px] leading-tight opacity-80">{WEEKDAY_VI[d.getDay()]}</div>
+                  <div className="text-sm font-bold leading-tight">{format(d, "dd/MM")}</div>
+                  {isToday && <div className="text-[10px] leading-tight opacity-70">hôm nay</div>}
+                </button>
+              );
+            })}
           </div>
         </div>
-
-        {/* Right */}
-        {isPremium && items.length > 0 && (
-          <div className="flex items-center gap-4">
-            <div className="relative w-[62px] h-[62px] shrink-0">
-              <svg width="62" height="62" viewBox="0 0 62 62" className="-rotate-90">
-                <circle cx="31" cy="31" r={DONUT_R} fill="none" stroke="hsl(var(--border))" strokeWidth="6" />
-                <circle
-                  cx="31"
-                  cy="31"
-                  r={DONUT_R}
-                  fill="none"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                  strokeDasharray={DONUT_C}
-                  strokeDashoffset={DONUT_C - (DONUT_C * donePct) / 100}
-                  className="transition-all"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-foreground">
-                {donePct}%
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <p className="text-xs text-muted-foreground">
-                Đã làm <span className="font-bold text-foreground">{overview.done}/{overview.total}</span>
-              </p>
-              <Button
-                size="sm"
-                onClick={() => setActivePriorities(["high"])}
-                className="h-8 text-xs gap-1 bg-primary hover:bg-brand-brown text-primary-foreground"
-              >
-                <Sparkles className="w-3.5 h-3.5" /> Cày ưu tiên cao
-              </Button>
-              {overview.highUndone > 0 && (
-                <p className="text-[10px] text-muted-foreground">Còn {overview.highUndone} đề ưu tiên cao</p>
-              )}
-            </div>
-          </div>
-        )}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="h-auto shrink-0 gap-1.5 self-stretch">
+              <CalendarDays className="w-4 h-4" /> Ngày khác
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 rounded-2xl border border-border shadow-xl bg-card" align="end" sideOffset={8}>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              defaultMonth={selectedDate}
+              onSelect={(d) => {
+                if (!d) return;
+                const k = keyByDate.get(ymd(d));
+                if (k) setSelectedKeyId(k.id);
+              }}
+              disabled={(date) => !keyByDate.has(ymd(date))}
+              modifiers={{ hasKey: keyDates }}
+              modifiersClassNames={{
+                hasKey: "font-bold text-primary underline underline-offset-4 decoration-2 decoration-primary",
+              }}
+              className="p-3 pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
-
-      {/* Filters — skill */}
-      {availableSkills.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-muted-foreground">Kỹ năng:</span>
-          {availableSkills.map((s) => {
-            const on = activeSkills.includes(s);
-            return (
-              <button
-                key={s}
-                onClick={() => toggleSkill(s)}
-                className={cn(
-                  "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
-                  on ? "bg-primary/15 text-primary border-primary/40" : "bg-transparent text-muted-foreground border-border hover:bg-muted"
-                )}
-              >
-                {SKILL_LABEL[s] || s}
-              </button>
-            );
-          })}
-          {activeSkills.length > 0 && (
-            <button onClick={() => setActiveSkills([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
-          )}
-        </div>
-      )}
-
-      {/* Filters — priority */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-muted-foreground">Ưu tiên:</span>
-        {(["high", "medium", "low", "backup"] as Priority[]).map((p) => {
-          const on = activePriorities.includes(p);
-          return (
-            <button
-              key={p}
-              onClick={() => togglePriority(p)}
-              className={cn(
-                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
-                on ? PRIORITY_COLOR[p] : "bg-transparent text-muted-foreground border-border hover:bg-muted"
-              )}
-            >
-              {PRIORITY_LABEL[p]}
-            </button>
-          );
-        })}
-        {activePriorities.length > 0 && (
-          <button onClick={() => setActivePriorities([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
-        )}
-      </div>
-
-      {/* Filters — status */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-muted-foreground">Trạng thái:</span>
-        {([["done", "Đã làm"], ["undone", "Chưa làm"]] as const).map(([val, label]) => {
-          const on = activeStatus.includes(val);
-          return (
-            <button
-              key={val}
-              onClick={() => toggleStatus(val)}
-              className={cn(
-                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
-                on
-                  ? (val === "done"
-                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
-                      : "bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/40")
-                  : "bg-transparent text-muted-foreground border-border hover:bg-muted"
-              )}
-            >
-              {label}
-            </button>
-          );
-        })}
-        {activeStatus.length > 0 && (
-          <button onClick={() => setActiveStatus([])} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">Xoá</button>
-        )}
-      </div>
-
-      {/* Content */}
       {!isPremium ? (
-        <UpgradeLock
-          reason="premium"
-          need="premium"
-          featureLabel="Key Dự Đoán (Update hằng ngày)"
-        />
+        <UpgradeLock reason="premium" need="premium" featureLabel="Key Dự Đoán (Update hằng ngày)" />
       ) : loadingItems ? (
         <div className="space-y-3">
           <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-64 w-full" />
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-12 bg-card border border-dashed border-border rounded-xl">
           <p className="text-muted-foreground font-medium">Chưa có key cho ngày này</p>
         </div>
-      ) : groupedBySkillPart.length === 0 ? (
-        <div className="text-center py-12 bg-card border border-dashed border-border rounded-xl">
-          <p className="text-muted-foreground font-medium">Không có đề phù hợp bộ lọc</p>
-        </div>
       ) : (
-        <div className="space-y-2">
-          {groupedBySkillPart.map((sk) => {
-            const Icon = SKILL_ICON[sk.skill] || Sparkles;
-            const open = openSkill === sk.skill;
-            const allItems = sk.parts.flatMap((p) => p.items);
-            const skTotal = allItems.length;
-            const skDone = allItems.filter((it) => history.has(it.exam_set_id)).length;
-            const skPct = skTotal > 0 ? Math.round((skDone / skTotal) * 100) : 0;
-            const cHigh = allItems.filter((i) => i.priority === "high").length;
-            const cMed = allItems.filter((i) => i.priority === "medium").length;
-            const cLow = allItems.filter((i) => i.priority === "low" || i.priority === "backup").length;
-            return (
-              <div key={sk.skill} className="border border-border rounded-xl bg-card overflow-hidden">
+        <>
+          {/* 2. Skill tiles */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+            {availableSkills.map((sk) => {
+              const Icon = SKILL_ICON[sk] || Sparkles;
+              const all = items.filter((it) => (it.skill || "other").toLowerCase() === sk);
+              const done = all.filter((it) => best.has(it.exam_set_id)).length;
+              const on = activeSkill === sk;
+              return (
                 <button
+                  key={sk}
                   type="button"
-                  onClick={() => setOpenSkill(open ? undefined : sk.skill)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/40 text-left"
+                  onClick={() => setActiveSkill(on ? null : sk)}
+                  className={cn(
+                    "rounded-xl bg-card px-3 py-3 text-left transition-colors hover:bg-muted/50",
+                    on ? "border-2" : "border border-border",
+                  )}
+                  style={on ? { borderColor: "#CC1C01" } : undefined}
                 >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4" />
+                  <div className="flex items-center gap-2">
+                    <Icon className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-sm font-semibold text-foreground truncate">{SKILL_LABEL[sk] || sk}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-heading font-bold text-foreground">{sk.label}</p>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden shrink-0">
-                        <div className="h-full bg-primary transition-all" style={{ width: `${skPct}%` }} />
-                      </div>
-                      <span className="text-[11px] text-muted-foreground font-medium">{skDone}/{skTotal}</span>
-                      {cHigh > 0 && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-red-500/15 text-red-700 dark:text-red-300">Cao {cHigh}</span>
-                      )}
-                      {cMed > 0 && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300">Vừa {cMed}</span>
-                      )}
-                      {cLow > 0 && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Thấp {cLow}</span>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform shrink-0", open && "rotate-180")} />
+                  <p className="mt-1 text-xs text-muted-foreground font-medium">{done}/{all.length}</p>
                 </button>
+              );
+            })}
+          </div>
 
-                {open && (
-                  <div className="px-4 pb-4 pt-0">
-                    <div className="space-y-4">
-                      {sk.parts.map((pg) => {
-                        const isRL = sk.skill === "reading" || sk.skill === "listening";
-                        const highCount = pg.items.filter((i) => i.priority === "high").length;
-                        const partLabel = sk.skill === "reading"
-                          ? readingPartLabel(pg.part)
-                          : pg.part.replace(/^part(\d+)$/i, "Part $1");
-                        const highPrimary = pg.items.filter((i) => i.priority === "high" || i.priority === "medium");
-                        const lowSecondary = pg.items.filter((i) => i.priority === "low" || i.priority === "backup");
-                        return (
-                          <div key={pg.part} className="rounded-lg border border-border/60">
-                            <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/60 bg-muted/30 flex-wrap">
-                              <p className="text-sm font-semibold text-foreground">
-                                {partLabel} <span className="text-muted-foreground font-normal">· {pg.items.length} đề</span>
-                              </p>
-                              {isRL && (
-                                <div className="flex flex-wrap gap-1.5">
-                                  {highCount > 0 && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        navigate(
-                                          `/${sk.skill}?marathon=${pg.part}&keyId=${selectedKeyId}&prio=high&from=key`,
-                                        )
-                                      }
-                                      className="h-7 text-xs gap-1 border-red-500/40 text-red-700 dark:text-red-300 hover:bg-red-500/10"
-                                    >
-                                      <Sparkles className="w-3 h-3" /> Marathon Cao ({highCount})
-                                    </Button>
-                                  )}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      navigate(
-                                        `/${sk.skill}?marathon=${pg.part}&keyId=${selectedKeyId}&from=key`,
-                                      )
-                                    }
-                                    className="h-7 text-xs gap-1"
-                                  >
-                                    <Sparkles className="w-3 h-3" /> Marathon cả part ({pg.items.length})
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
+          {/* 3. Filters */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-medium text-muted-foreground">Ưu tiên</span>
+            {([["all", "Tất cả"], ["high", "Cao"], ["medium", "Vừa"], ["backup", "Backup"]] as const).map(([v, label]) => {
+              const on = prioFilter === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setPrioFilter(v as PrioFilter)}
+                  className={cn(
+                    "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                    on ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:bg-muted",
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+            <span className="w-px h-5 bg-border mx-1" />
+            <button
+              type="button"
+              onClick={() => setOnlyUndone((v) => !v)}
+              className={cn(
+                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+                onlyUndone ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:bg-muted",
+              )}
+            >
+              Chưa làm
+            </button>
+          </div>
 
-                            <ul className="divide-y divide-border/60">
-                              {highPrimary.map((it) => (
-                                <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
-                              ))}
-                            </ul>
+          {/* 4. Marathon card */}
+          <MarathonCard
+            activeSkill={activeSkill}
+            prioFilter={prioFilter}
+            parts={marathonParts}
+            marathonPart={marathonPart}
+            setMarathonPart={setMarathonPart}
+            onStart={(s) => setMarathon(s)}
+          />
 
-                            {lowSecondary.length > 0 && (
-                              <details className="group">
-                                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1.5 border-t border-border/60">
-                                  <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" />
-                                  Ít ưu tiên ({lowSecondary.length})
-                                </summary>
-                                <ul className="divide-y divide-border/60">
-                                  {lowSecondary.map((it) => (
-                                    <ItemRowView key={it.id} it={it} history={history} qCount={qCount} />
-                                  ))}
-                                </ul>
-                              </details>
-                            )}
+          {/* 5. Table */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 border-b border-border bg-muted/40 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="flex-1 min-w-0">Tên đề</div>
+              <div className="w-[100px] shrink-0">Kỹ năng · part</div>
+              <div className="w-[60px] shrink-0">Ưu tiên</div>
+              <div className="w-[54px] shrink-0">Điểm</div>
+              <div className="w-[72px] shrink-0">Trạng thái</div>
+            </div>
+            {visibleItems.length === 0 ? (
+              <p className="text-center py-10 text-sm text-muted-foreground">Không có đề phù hợp bộ lọc</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {visibleItems.map((it) => {
+                  const sk = (it.skill || "other").toLowerCase();
+                  const chip = PRIORITY_CHIP[it.priority] || PRIORITY_CHIP.medium;
+                  const b = best.get(it.exam_set_id);
+                  const skillPart = `${SKILL_LABEL[sk] || sk} · ${partLabelFor(sk, normalizePart(it.part || ""))}`;
+                  const chipEl = (
+                    <span
+                      className={cn("inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0", chip.className)}
+                      style={chip.style}
+                    >
+                      {chip.label}
+                    </span>
+                  );
+                  const scoreEl = b ? <span className="text-xs font-semibold text-foreground">{b.score}/{b.total}</span> : null;
+                  const statusEl = b ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Chưa làm</span>
+                  );
+                  return (
+                    <li key={it.id}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(skillRoute(it.skill, it.exam_set_id))}
+                        className="w-full text-left px-4 py-2.5 hover:bg-muted/50 transition-colors"
+                      >
+                        {/* desktop row */}
+                        <div className="hidden sm:flex items-center gap-3">
+                          <div className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">{it.title}</div>
+                          <div className="w-[100px] shrink-0 text-xs text-muted-foreground truncate">{skillPart}</div>
+                          <div className="w-[60px] shrink-0">{chipEl}</div>
+                          <div className="w-[54px] shrink-0">{scoreEl}</div>
+                          <div className="w-[72px] shrink-0">{statusEl}</div>
+                        </div>
+                        {/* mobile 2-tier */}
+                        <div className="sm:hidden">
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">{it.title}</span>
+                            {scoreEl}
+                            {chipEl}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                          <div className="mt-1 flex items-center justify-between gap-2">
+                            <span className="text-xs text-muted-foreground truncate">{skillPart}</span>
+                            {statusEl}
+                          </div>
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Hiện {visibleItems.length} đề{selectedDate ? ` · key ${format(selectedDate, "dd/MM")}` : ""}
+          </p>
+        </>
       )}
     </div>
   );
 }
 
-function ItemRowView({
-  it,
-  history,
-  qCount,
+const PRIO_NAME: Record<PrioFilter, string> = {
+  all: "",
+  high: "ưu tiên cao",
+  medium: "ưu tiên vừa",
+  backup: "backup",
+};
+
+function MarathonCard({
+  activeSkill,
+  prioFilter,
+  parts,
+  marathonPart,
+  setMarathonPart,
+  onStart,
 }: {
-  it: ItemRow;
-  history: Map<string, { count: number; best: number }>;
-  qCount: Map<string, number>;
+  activeSkill: string | null;
+  prioFilter: PrioFilter;
+  parts: { part: string; sets: ExamSetRow[] }[];
+  marathonPart: string | null;
+  setMarathonPart: (p: string) => void;
+  onStart: (s: MarathonState) => void;
 }) {
-  const h = history.get(it.exam_set_id);
-  const done = !!h;
-  const n = qCount.get(it.exam_set_id) ?? 0;
+  const supported = !!activeSkill && ["reading", "listening", "writing"].includes(activeSkill);
+  const current = parts.find((p) => p.part === marathonPart) || parts[0] || null;
+  const sets = current?.sets ?? [];
+
+  const skillKey = activeSkill === "writing" ? "writing" : activeSkill || "";
+  const partKey = current?.part ?? "";
+  const prog = supported && partKey ? loadMarathonProgress(skillKey, partKey) : null;
+  const last = supported && partKey ? loadMarathonLast(skillKey, partKey) : null;
+  const progWrongIds = (prog?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
+  const wrongSetIds: string[] = progWrongIds.length ? progWrongIds : (last?.wrongSetIds ?? []);
+  const wrongCount = wrongSetIds.length;
+
+  const prioName = PRIO_NAME[prioFilter];
+  const title = activeSkill
+    ? `Luyện ${sets.length} đề ${prioName ? prioName + " " : ""}${SKILL_LABEL[activeSkill] || activeSkill}`
+    : "Marathon theo kỹ năng";
+
+  const disabled = !supported || sets.length === 0;
+
   return (
-    <li className="px-3 py-2.5 flex items-center gap-3">
-      {done ? (
-        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-      ) : (
-        <Circle className="w-5 h-5 text-muted-foreground/50 shrink-0" />
+    <div
+      className={cn(
+        "relative rounded-xl border-2 p-4 bg-gradient-to-br from-primary/10 via-accent/5 to-background",
+        disabled && "opacity-60",
       )}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">
-          {it.title} <span className="text-xs text-muted-foreground font-normal">· {n} câu</span>
+      style={{ borderColor: "#CC1C01" }}
+    >
+      {last && supported && (
+        <span className="absolute top-3 right-3 text-[11px] font-semibold text-muted-foreground">
+          Lần trước {last.correct}/{last.total}
+        </span>
+      )}
+      <div className="flex items-center gap-2 mb-2">
+        <Badge className="w-fit text-[11px] font-semibold border-0 gap-1 text-white" style={{ background: "#CC1C01" }}>
+          <InfinityIcon className="w-3 h-3" /> Marathon
+        </Badge>
+        <Badge variant="outline" className="text-[10px] font-bold tracking-wide">PRO</Badge>
+      </div>
+      <h3 className="text-lg font-heading font-extrabold text-foreground">{title}</h3>
+      {!activeSkill ? (
+        <p className="text-sm text-muted-foreground mt-1">Chọn một kỹ năng để luyện marathon</p>
+      ) : !supported ? (
+        <p className="text-sm text-muted-foreground mt-1">Kỹ năng này chưa hỗ trợ marathon</p>
+      ) : (
+        <p className="text-sm text-muted-foreground mt-1">
+          Làm liên tục {sets.length} đề {current ? partLabelFor(activeSkill, current.part) : ""} — không giới hạn giờ
         </p>
-        {done && (
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-            {h!.count} lần · cao nhất {h!.best}%
-          </p>
+      )}
+
+      {supported && parts.length > 1 && (
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {parts.map((p) => (
+            <button
+              key={p.part}
+              type="button"
+              onClick={() => setMarathonPart(p.part)}
+              className={cn(
+                "text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors",
+                p.part === current?.part
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-muted-foreground border-border hover:bg-muted",
+              )}
+            >
+              {partLabelFor(activeSkill!, p.part)} ({p.sets.length})
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2 mt-4">
+        <Button
+          size="sm"
+          disabled={disabled}
+          onClick={() => current && onStart({ skill: activeSkill!, part: current.part, sets, retry: false })}
+          className="gap-1.5 font-semibold text-white hover:opacity-90"
+          style={{ background: "#CC1C01" }}
+        >
+          Bắt đầu <ArrowRight className="w-4 h-4" />
+        </Button>
+        {!disabled && wrongCount > 0 && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="gap-1.5 font-semibold"
+            onClick={() => {
+              const ids = new Set(wrongSetIds);
+              const retrySets = sets.filter((s) => ids.has(s.id));
+              if (retrySets.length === 0 || !current) return;
+              onStart({
+                skill: activeSkill!,
+                part: current.part,
+                sets: retrySets,
+                retry: true,
+                wrongQuestionIdsBySet: last?.wrongQuestionsBySet,
+              });
+            }}
+          >
+            Làm lại câu sai ({wrongCount})
+          </Button>
         )}
       </div>
-      <Badge
-        variant="outline"
-        className={cn("text-[10px] font-semibold border shrink-0", PRIORITY_COLOR[it.priority])}
-      >
-        {PRIORITY_LABEL[it.priority]}
-      </Badge>
-      <Button
-        asChild
-        size="sm"
-        variant={done ? "outline" : "default"}
-        className={cn(
-          "h-8 text-xs gap-1 shrink-0",
-          !done && "bg-primary hover:bg-brand-brown text-white",
-        )}
-      >
-        <Link to={skillRoute(it.skill, it.exam_set_id)}>
-          {done ? "Làm lại" : "Luyện"} <ArrowRight className="w-3 h-3" />
-        </Link>
-      </Button>
-    </li>
+    </div>
   );
 }
