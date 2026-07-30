@@ -63,15 +63,15 @@ const GrammarVocabulary = () => {
   }, [searchParams, fullSets, fullLoading]);
 
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
-  const { keySetsBySet, windowSize } = useExamPriorityLabels();
+  const { labels: priorityLabels } = useExamPriorityLabels();
   const setPriority = useMemo(() => {
     const m = new Map<string, "high" | "medium" | "low">();
     fullSets.forEach((s) => {
-      const info = aggregatePriority(s.examSetIds, keySetsBySet, windowSize);
+      const info = aggregatePriority(s.examSetIds, priorityLabels);
       if (info) m.set(s.fullTestId, info.label);
     });
     return m;
-  }, [fullSets, keySetsBySet, windowSize]);
+  }, [fullSets, priorityLabels]);
   const searchedSets = useMemo(() => {
     if (!searchQuery.trim()) return fullSets;
     const q = searchQuery.toLowerCase();
