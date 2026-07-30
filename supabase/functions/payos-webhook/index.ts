@@ -136,13 +136,21 @@ Deno.serve(async (req) => {
     let newTier: string;
     let newProUntil: string | null;
 
+    const subPayload: Record<string, unknown> = {
+      user_id: (payment as any).user_id,
+      updated_at: new Date().toISOString(),
+    };
+
     if (tier === "premium") {
       newTier = "premium";
       newProUntil = null;
+      subPayload.plan_key = (payment as any).plan_key;
+      subPayload.ai_daily_cap = null;
     } else {
       // Pro purchase
       if (isCurrentPremium) {
         // Do NOT downgrade premium; still mark payment paid
+        // Keep existing plan_key / ai_daily_cap untouched
         newTier = "premium";
         newProUntil = (currentSub as any)?.pro_until ?? null;
       } else {
@@ -156,18 +164,26 @@ Deno.serve(async (req) => {
           : null;
         newTier = "pro";
         newProUntil = end ? end.toISOString() : null;
+
+        const newCap = Number((plan as any)?.ai_daily_cap ?? 30);
+        const rawCurrentCap = (currentSub as any)?.ai_daily_cap;
+        const currentCap = rawCurrentCap === null || rawCurrentCap === undefined
+          ? null
+          : Number(rawCurrentCap);
+        subPayload.plan_key = (payment as any).plan_key;
+        subPayload.ai_daily_cap = currentCap === null
+          ? newCap
+          : Math.max(currentCap, newCap);
       }
     }
+
+    subPayload.tier = newTier;
+    subPayload.pro_until = newProUntil;
 
     // Upsert subscription
     const { error: upsertErr } = await admin
       .from("user_subscriptions")
-      .upsert({
-        user_id: (payment as any).user_id,
-        tier: newTier,
-        pro_until: newProUntil,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+      .upsert(subPayload, { onConflict: "user_id" });
 
     if (upsertErr) {
       console.error("Subscription upsert failed", upsertErr);
