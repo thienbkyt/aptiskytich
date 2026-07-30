@@ -423,14 +423,28 @@ ${studentText}`;
           });
           const a = (access ?? {}) as any;
           if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
-            const userTier = (a.tier as string) ?? "free";
-            const need = userTier === "pro" ? "premium" : "pro";
-            return new Response(JSON.stringify({
-              error: a.reason === "disabled" ? "disabled" : "quota_exceeded",
-              upgrade: true, need, tier: userTier,
-              freeQuota: a.free_quota ?? 0, proQuota: a.pro_quota ?? null,
-              used: a.used ?? 0, remaining: a.remaining ?? 0,
-            }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            let blocked = true;
+            const sid = typeof body.gradingSessionId === "string" ? body.gradingSessionId.trim() : "";
+            if (a.reason === "quota_exceeded" && sid) {
+              const { data: prior } = await serviceClient
+                .from("feature_usage")
+                .select("id")
+                .eq("user_id", userId)
+                .eq("feature_key", "ai_grading_speaking")
+                .eq("ref_id", sid)
+                .limit(1);
+              if (prior?.length) blocked = false;
+            }
+            if (blocked) {
+              const userTier = (a.tier as string) ?? "free";
+              const need = userTier === "pro" ? "premium" : "pro";
+              return new Response(JSON.stringify({
+                error: a.reason === "disabled" ? "disabled" : "quota_exceeded",
+                upgrade: true, need, tier: userTier,
+                freeQuota: a.free_quota ?? 0, proQuota: a.pro_quota ?? null,
+                used: a.used ?? 0, remaining: a.remaining ?? 0,
+              }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            }
           }
         } catch (e) {
           console.warn("[grade-exam v2] feature access check failed:", (e as any)?.message || e);
