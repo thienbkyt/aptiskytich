@@ -533,9 +533,22 @@ export default function PredictionKeyView() {
           </div>
 
           {/* 4. Action card */}
-          <div className="rounded-xl px-4 py-2.5" style={{ border: "2px solid #CC1C01" }}>
-            <div className={cn("flex items-center gap-2 flex-wrap", actionDisabled && "opacity-60")}>
-              <Badge className="text-[11px] font-semibold border-0 gap-1 text-white shrink-0" style={{ background: "#CC1C01" }}>
+          <div
+            className="rounded-xl px-4 py-2.5"
+            style={
+              partChosen
+                ? { border: "2px solid #CC1C01" }
+                : {
+                    border: "0.5px dashed var(--border-strong, hsl(var(--border)))",
+                    background: "var(--surface-1, hsl(var(--card)))",
+                  }
+            }
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge
+                className="text-[11px] font-semibold border-0 gap-1 text-white shrink-0"
+                style={partChosen ? { background: BRAND_GRADIENT } : { background: "hsl(var(--muted-foreground))" }}
+              >
                 {isSpeaking ? <Eye className="w-3 h-3" /> : <InfinityIcon className="w-3 h-3" />}
                 {isSpeaking ? "Xem đề" : "Marathon"}
               </Badge>
@@ -546,10 +559,14 @@ export default function PredictionKeyView() {
               <Button
                 size="sm"
                 disabled={actionDisabled}
-                className="ml-auto gap-1.5 font-semibold text-white hover:opacity-90 shrink-0"
-                style={{ background: "#CC1C01" }}
+                className="ml-auto gap-1.5 font-semibold text-white hover:opacity-90 shrink-0 border-0 disabled:cursor-not-allowed"
+                style={
+                  actionDisabled
+                    ? { background: BRAND_GRADIENT, opacity: 0.45, cursor: "not-allowed" }
+                    : { background: BRAND_GRADIENT }
+                }
                 onClick={() => {
-                  if (!actionGroup || !activeSkill) return;
+                  if (!actionGroup || !activeSkill || !partChosen) return;
                   if (isSpeaking) setBrowse({ sets: actionGroup.sets, part: actionGroup.part });
                   else setMarathon({ skill: activeSkill, part: actionGroup.part, sets: actionGroup.sets });
                 }}
@@ -557,12 +574,20 @@ export default function PredictionKeyView() {
                 {isSpeaking ? "Xem đề" : "Bắt đầu"} <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
-            {isSpeaking && (
+            {!partChosen && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {isSpeaking
+                  ? "Chọn một Part cụ thể ở trên để xem đề liên tục"
+                  : "Chọn một Part cụ thể ở trên để luyện marathon"}
+              </p>
+            )}
+            {partChosen && isSpeaking && (
               <p className="text-[11px] text-muted-foreground mt-1">
                 Bài nói mẫu tham khảo — chỉ để xem, không ghi âm, không chấm điểm.
               </p>
             )}
           </div>
+
 
           {/* 5. Table */}
           <div className="rounded-xl border border-border bg-card overflow-hidden">
