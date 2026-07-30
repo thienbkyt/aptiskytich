@@ -407,13 +407,12 @@ export default function PricingPage() {
                 </tbody>
               </table>
             </div>
-
-            </div>
           </div>
 
-          <p className="text-center text-xs text-muted-foreground mt-10">
+          <p className="text-center text-xs text-muted-foreground mt-12">
             Cần tư vấn chọn gói? Admin trả lời trong ít phút.
           </p>
+
           <div className="max-w-md mx-auto mt-3">
             <ContactAdminLinks />
           </div>
