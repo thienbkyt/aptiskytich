@@ -898,7 +898,50 @@ const History = () => {
                   })}
                 </TableBody>
               </Table>
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    Hiện {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredItems.length)} trong tổng {filteredItems.length} lượt
+                  </p>
+                  <Pagination className="mx-0 w-auto justify-end">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          aria-disabled={page === 1}
+                          className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                        />
+                      </PaginationItem>
+                      {pageNumbers.map((p, i) =>
+                        p === "ellipsis" ? (
+                          <PaginationItem key={`e-${i}`}><PaginationEllipsis /></PaginationItem>
+                        ) : (
+                          <PaginationItem key={p}>
+                            <PaginationLink
+                              href="#"
+                              isActive={p === page}
+                              onClick={(e) => { e.preventDefault(); setPage(p); }}
+                            >
+                              {p}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={page === totalPages}
+                          className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </div>
+
           )}
         </div>
       </main>
