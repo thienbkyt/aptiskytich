@@ -1,3 +1,4 @@
+import { QuotaExceededError } from "@/lib/quotaError";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
