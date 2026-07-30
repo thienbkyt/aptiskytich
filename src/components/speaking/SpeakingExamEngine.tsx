@@ -356,8 +356,13 @@ const SpeakingExamEngine = ({
 
 
       } catch (e: any) {
-        console.error("[Speaking V2] grading failed:", e);
-        setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
+        if (e instanceof QuotaExceededError) {
+          setQuotaModal(e.info);
+        } else {
+          console.error("[Speaking V2] grading failed:", e);
+          setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
+        }
+
       } finally {
         setIsGrading(false);
       }
