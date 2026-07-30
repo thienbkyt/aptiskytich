@@ -125,7 +125,7 @@ const Index = () => {
               >
                 Luyện thi Aptis&nbsp;
                 <br />
-                giống thật bài thi thật
+                giống bài thi thật
                 <br />
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] via-[#E85A1F] to-[#FEAD5F] animate-gradient-shift">
                   AI chấm điểm ngay
