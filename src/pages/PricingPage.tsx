@@ -175,25 +175,26 @@ export default function PricingPage() {
   };
 
   const PlanCard = ({ plan, order }: { plan: PricingPlan; order: string }) => (
-    <div className={cn("rounded-2xl border border-border bg-card p-5 flex flex-col", order)}>
-      <p className="text-sm font-heading font-bold text-foreground">{plan.label}</p>
-      <div className="mt-3">
-        <span className="text-2xl font-extrabold text-foreground">{formatVnd(plan.price_vnd)}</span>
+    <div className={cn("rounded-2xl border border-border bg-card shadow-sm p-5 flex flex-col h-full", order)}>
+      <p className="text-sm font-semibold text-muted-foreground">{plan.label}</p>
+      <div className="mt-2">
+        <span className="text-2xl font-bold tracking-tight text-foreground">{formatVnd(plan.price_vnd)}</span>
       </div>
       {perDay(plan) != null && (
-        <p className="text-sm font-semibold text-[#CC1C01] mt-1">
+        <p className="text-sm font-semibold text-[#CC1C01] mt-1.5">
           {formatVnd(perDay(plan)!)}/ngày
         </p>
       )}
       <div className="mt-2 min-h-[22px]"><SavingBadge p={plan} /></div>
       {plan.ai_daily_cap != null && (
-        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+        <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
           <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {plan.ai_daily_cap} lượt AI/ngày
         </p>
       )}
       <Button
         variant="outline"
-        className="mt-5 w-full"
+        className="mt-auto pt-0 w-full border-border text-foreground hover:bg-muted"
+        style={{ marginTop: "auto" }}
         disabled={buying === plan.key}
         onClick={() => onPick(plan)}
       >
@@ -202,6 +203,7 @@ export default function PricingPage() {
       </Button>
     </div>
   );
+
 
   return (
     <div className="min-h-screen bg-background">
