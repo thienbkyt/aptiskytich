@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { normalizePart, readingPartLabel, type ExamSetRow } from "@/hooks/useExamSets";
 import { format } from "date-fns";
@@ -12,6 +12,7 @@ import {
   PenLine,
   Mic,
   ArrowRight,
+  Eye,
   Infinity as InfinityIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,27 +25,35 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { cn } from "@/lib/utils";
-import { loadMarathonProgress, loadMarathonLast } from "@/lib/marathonProgress";
 import ReadingMarathonEngine from "@/components/practice/ReadingMarathonEngine";
 import ListeningMarathonEngine from "@/components/practice/ListeningMarathonEngine";
 import WritingMarathonEngine from "@/components/practice/WritingMarathonEngine";
+import SpeakingBrowseViewer from "@/components/speaking/SpeakingBrowseViewer";
 
 type Priority = "high" | "medium" | "low" | "backup";
-type PrioFilter = "all" | "high" | "medium" | "backup";
+type PrioFilter = "all" | Priority;
+type DoneFilter = "all" | "undone" | "done";
 
-const PRIORITY_CHIP: Record<Priority, { label: string; style: React.CSSProperties; className: string }> = {
-  high: {
-    label: "Cao",
-    style: { color: "#CC1C01", background: "var(--bg-danger, rgba(204,28,1,0.10))" },
-    className: "",
+const PRIORITY_LABEL: Record<Priority, string> = {
+  high: "Cao",
+  medium: "Vừa",
+  low: "Thấp",
+  backup: "Backup",
+};
+
+const PRIORITY_CHIP_STYLE: Record<Priority, React.CSSProperties> = {
+  high: { background: "#CC1C01", color: "#fff", border: "1px solid #CC1C01" },
+  medium: { background: "#FEAD5F", color: "#4D0D0D", border: "1px solid #FEAD5F" },
+  low: {
+    background: "var(--surface-0, hsl(var(--background)))",
+    color: "inherit",
+    border: "1px solid var(--border-strong, hsl(var(--border)))",
   },
-  medium: {
-    label: "Vừa",
-    style: { color: "#8a5a12", background: "var(--bg-warning, rgba(254,173,95,0.22))" },
-    className: "",
+  backup: {
+    background: "transparent",
+    color: "var(--text-secondary, hsl(var(--muted-foreground)))",
+    border: "1px dashed var(--border-strong, hsl(var(--border)))",
   },
-  low: { label: "Backup", style: {}, className: "bg-muted text-muted-foreground" },
-  backup: { label: "Backup", style: {}, className: "bg-muted text-muted-foreground" },
 };
 
 const SKILL_LABEL: Record<string, string> = {
@@ -65,6 +74,8 @@ const SKILL_ICON: Record<string, any> = {
   speaking: Mic,
 };
 const WEEKDAY_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+const GRID = "minmax(0,1fr) 92px 82px 60px 92px";
 
 function skillRoute(skill: string | null | undefined, setId: string): string {
   const s = (skill || "").toLowerCase();
@@ -102,8 +113,6 @@ interface MarathonState {
   skill: string;
   part: string;
   sets: ExamSetRow[];
-  retry: boolean;
-  wrongQuestionIdsBySet?: Record<string, string[]>;
 }
 
 export default function PredictionKeyView() {
@@ -120,9 +129,12 @@ export default function PredictionKeyView() {
 
   const [activeSkill, setActiveSkill] = useState<string | null>(null);
   const [prioFilter, setPrioFilter] = useState<PrioFilter>("all");
-  const [onlyUndone, setOnlyUndone] = useState(false);
-  const [marathonPart, setMarathonPart] = useState<string | null>(null);
+  const [doneFilter, setDoneFilter] = useState<DoneFilter>("all");
+  const [partFilter, setPartFilter] = useState<string>("all");
   const [marathon, setMarathon] = useState<MarathonState | null>(null);
+  const [browse, setBrowse] = useState<{ sets: ExamSetRow[]; part: string } | null>(null);
+
+  const stripRef = useRef<HTMLDivElement | null>(null);
 
   // Load keys
   useEffect(() => {
@@ -214,47 +226,62 @@ export default function PredictionKeyView() {
     );
   }, [items]);
 
-  const matchPrio = (p: Priority) =>
-    prioFilter === "all" ||
-    (prioFilter === "backup" ? p === "backup" || p === "low" : p === prioFilter);
+  // Always exactly one skill selected; default Speaking
+  useEffect(() => {
+    if (availableSkills.length === 0) { setActiveSkill(null); return; }
+    if (activeSkill && availableSkills.includes(activeSkill)) return;
+    setActiveSkill(availableSkills.includes("speaking") ? "speaking" : availableSkills[0]);
+  }, [availableSkills]);
+
+  // Reset part filter when skill changes
+  useEffect(() => { setPartFilter("all"); }, [activeSkill]);
+
+  const skillItems = useMemo(
+    () => items.filter((it) => (it.skill || "other").toLowerCase() === activeSkill),
+    [items, activeSkill]
+  );
+
+  const availableParts = useMemo(() => {
+    const m = new Map<string, number>();
+    skillItems.forEach((it) => {
+      const p = normalizePart(it.part || "") || "other";
+      m.set(p, (m.get(p) ?? 0) + 1);
+    });
+    return Array.from(m.keys()).sort((a, b) => a.localeCompare(b));
+  }, [skillItems]);
+
+  const matchPrio = (p: Priority) => prioFilter === "all" || p === prioFilter;
+  const matchDone = (id: string) =>
+    doneFilter === "all" || (doneFilter === "done" ? best.has(id) : !best.has(id));
+  const matchPart = (part: string | null) =>
+    partFilter === "all" || (normalizePart(part || "") || "other") === partFilter;
 
   const visibleItems = useMemo(() => {
     const rank: Priority[] = ["high", "medium", "low", "backup"];
-    return items
-      .filter((it) => {
-        const sk = (it.skill || "other").toLowerCase();
-        if (activeSkill && sk !== activeSkill) return false;
-        if (!matchPrio(it.priority)) return false;
-        if (onlyUndone && best.has(it.exam_set_id)) return false;
-        return true;
-      })
+    return skillItems
+      .filter((it) => matchPrio(it.priority) && matchDone(it.exam_set_id) && matchPart(it.part))
       .slice()
       .sort((a, b) => {
         const d = rank.indexOf(a.priority) - rank.indexOf(b.priority);
         if (d !== 0) return d;
         return a.sort_order - b.sort_order;
       });
-  }, [items, activeSkill, prioFilter, onlyUndone, best]);
+  }, [skillItems, prioFilter, doneFilter, partFilter, best]);
 
-  // Parts available for the marathon card (single skill only)
-  const marathonParts = useMemo(() => {
-    if (!activeSkill) return [] as { part: string; sets: ExamSetRow[] }[];
+  // Sets used by the action card: single part group (engines take one partType)
+  const actionGroup = useMemo(() => {
+    const pool = skillItems.filter((it) => matchPrio(it.priority) && matchPart(it.part) && it.set);
     const m = new Map<string, ExamSetRow[]>();
-    items
-      .filter((it) => (it.skill || "").toLowerCase() === activeSkill && matchPrio(it.priority) && it.set)
-      .forEach((it) => {
-        const p = normalizePart(it.part || "") || "other";
-        if (!m.has(p)) m.set(p, []);
-        m.get(p)!.push(it.set!);
-      });
-    return Array.from(m.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([part, sets]) => ({ part, sets }));
-  }, [items, activeSkill, prioFilter]);
-
-  useEffect(() => {
-    setMarathonPart(marathonParts[0]?.part ?? null);
-  }, [activeSkill, prioFilter, marathonParts.length]);
+    pool.forEach((it) => {
+      const p = normalizePart(it.part || "") || "other";
+      if (!m.has(p)) m.set(p, []);
+      m.get(p)!.push(it.set!);
+    });
+    const entries = Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    if (entries.length === 0) return null;
+    const [part, sets] = entries[0];
+    return { part, sets, singlePart: entries.length === 1 };
+  }, [skillItems, prioFilter, partFilter]);
 
   const ymd = (d: Date) => format(d, "yyyy-MM-dd");
   const keyByDate = useMemo(() => {
@@ -267,38 +294,46 @@ export default function PredictionKeyView() {
   const selectedDate = selectedKey ? new Date(selectedKey.date + "T00:00:00") : undefined;
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
-  // ---- Marathon engine overlay ----
+  // ascending strip (oldest -> newest)
+  const strip = useMemo(() => keys.slice().sort((a, b) => a.date.localeCompare(b.date)), [keys]);
+  const newestId = strip[strip.length - 1]?.id;
+
+  useEffect(() => {
+    const el = stripRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [strip.length]);
+
+  // ---- Overlays ----
+  if (browse) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+        <SpeakingBrowseViewer
+          sets={browse.sets}
+          partType={(browse.part as any) || "part1"}
+          partLabel={partLabelFor("speaking", browse.part)}
+          onExit={() => setBrowse(null)}
+        />
+      </div>
+    );
+  }
+
   if (marathon) {
     const label = `${SKILL_LABEL[marathon.skill] || marathon.skill} · Marathon ${partLabelFor(marathon.skill, marathon.part)}`;
     const close = () => setMarathon(null);
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
         {marathon.skill === "reading" && (
-          <ReadingMarathonEngine
-            sets={marathon.sets}
-            partType={marathon.part as any}
-            skillLabel={label}
-            persist={!marathon.retry}
-            isRetryMode={marathon.retry}
-            onExit={close}
-          />
+          <ReadingMarathonEngine sets={marathon.sets} partType={marathon.part as any} skillLabel={label} persist onExit={close} />
         )}
         {marathon.skill === "listening" && (
-          <ListeningMarathonEngine
-            sets={marathon.sets}
-            partType={marathon.part as any}
-            skillLabel={label}
-            persist={!marathon.retry}
-            wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
-            onExit={close}
-          />
+          <ListeningMarathonEngine sets={marathon.sets} partType={marathon.part as any} skillLabel={label} persist onExit={close} />
         )}
         {marathon.skill === "writing" && (
           <WritingMarathonEngine
             sets={marathon.sets}
             partType={marathon.part.replace("part", "task") as any}
             skillLabel={label}
-            persist={!marathon.retry}
+            persist
             onExit={close}
           />
         )}
@@ -326,32 +361,54 @@ export default function PredictionKeyView() {
     );
   }
 
-  const recentKeys = keys.slice(0, 7);
+  const prioName = prioFilter === "all" ? "" : `ưu tiên ${PRIORITY_LABEL[prioFilter].toLowerCase()}`;
+  const actionCount = actionGroup?.sets.length ?? 0;
+  const partName = actionGroup && (partFilter !== "all" || actionGroup.singlePart)
+    ? partLabelFor(activeSkill || "", actionGroup.part)
+    : "";
+  const actionTitleTail = [prioName, partName, SKILL_LABEL[activeSkill || ""] || activeSkill || ""]
+    .filter(Boolean)
+    .join(" ");
+  const isSpeaking = activeSkill === "speaking";
+  const marathonSupported = !!activeSkill && ["reading", "listening", "writing"].includes(activeSkill);
+  const actionDisabled = actionCount === 0 || (!isSpeaking && !marathonSupported);
 
   return (
     <div className="space-y-5">
       {/* 1. Date strip */}
       <div className="flex items-stretch gap-2">
-        <div className="flex-1 min-w-0 overflow-x-auto">
+        <div ref={stripRef} className="flex-1 min-w-0 overflow-x-auto">
           <div className="flex items-stretch gap-2 pb-1">
-            {recentKeys.map((k) => {
+            {strip.map((k) => {
               const d = new Date(k.date + "T00:00:00");
               const on = k.id === selectedKeyId;
-              const isToday = k.date === todayStr;
+              const isNewest = k.id === newestId;
               return (
                 <button
                   key={k.id}
                   type="button"
                   onClick={() => setSelectedKeyId(k.id)}
                   className={cn(
-                    "shrink-0 min-w-[68px] rounded-xl border px-3 py-2 text-center transition-colors",
-                    on ? "border-2 font-semibold" : "border-border bg-card hover:bg-muted",
+                    "shrink-0 min-w-[68px] rounded-xl px-3 py-2 text-center transition-colors",
+                    on ? "font-semibold" : "border border-border bg-card hover:bg-muted",
                   )}
-                  style={on ? { borderColor: "#CC1C01", color: "#CC1C01", background: "var(--bg-danger, rgba(204,28,1,0.08))" } : undefined}
+                  style={
+                    on
+                      ? {
+                          border: "1.5px solid #CC1C01",
+                          color: "#CC1C01",
+                          background: "var(--bg-danger, rgba(204,28,1,0.08))",
+                        }
+                      : undefined
+                  }
                 >
                   <div className="text-[11px] leading-tight opacity-80">{WEEKDAY_VI[d.getDay()]}</div>
-                  <div className="text-sm font-bold leading-tight">{format(d, "dd/MM")}</div>
-                  {isToday && <div className="text-[10px] leading-tight opacity-70">hôm nay</div>}
+                  <div className="text-sm font-bold leading-tight" style={on ? { color: "#CC1C01" } : undefined}>
+                    {format(d, "dd/MM")}
+                  </div>
+                  {isNewest && k.date === todayStr && (
+                    <div className="text-[10px] leading-tight opacity-70">hôm nay</div>
+                  )}
                 </button>
               );
             })}
@@ -408,92 +465,136 @@ export default function PredictionKeyView() {
                 <button
                   key={sk}
                   type="button"
-                  onClick={() => setActiveSkill(on ? null : sk)}
+                  onClick={() => setActiveSkill(sk)}
                   className={cn(
-                    "rounded-xl bg-card px-3 py-3 text-left transition-colors hover:bg-muted/50",
-                    on ? "border-2" : "border border-border",
+                    "rounded-xl px-3 py-3 text-left transition-colors",
+                    on ? "text-white" : "border border-border hover:bg-muted/50",
                   )}
-                  style={on ? { borderColor: "#CC1C01" } : undefined}
+                  style={
+                    on
+                      ? { background: "#CC1C01" }
+                      : { background: "var(--surface-1, hsl(var(--card)))" }
+                  }
                 >
                   <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-sm font-semibold text-foreground truncate">{SKILL_LABEL[sk] || sk}</span>
+                    <Icon className={cn("w-4 h-4 shrink-0")} style={{ color: on ? "#fff" : "#CC1C01" }} />
+                    <span className={cn("text-sm font-semibold truncate", on ? "text-white" : "text-foreground")}>
+                      {SKILL_LABEL[sk] || sk}
+                    </span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground font-medium">{done}/{all.length}</p>
+                  <p className={cn("mt-1", on ? "text-white" : "text-foreground")}>
+                    <span style={{ fontSize: 16, fontWeight: 500 }}>{all.length}</span>{" "}
+                    <span className="text-xs">đề</span>
+                  </p>
+                  <p className={cn("text-[11px]", on ? "text-white/80" : "text-muted-foreground")}>đã làm {done}</p>
                 </button>
               );
             })}
           </div>
 
           {/* 3. Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-muted-foreground">Ưu tiên</span>
-            {([["all", "Tất cả"], ["high", "Cao"], ["medium", "Vừa"], ["backup", "Backup"]] as const).map(([v, label]) => {
-              const on = prioFilter === v;
-              return (
-                <button
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-medium text-muted-foreground">Ưu tiên</span>
+              {(["all", "high", "medium", "low", "backup"] as PrioFilter[]).map((v) => (
+                <FilterChip
                   key={v}
-                  type="button"
-                  onClick={() => setPrioFilter(v as PrioFilter)}
-                  className={cn(
-                    "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
-                    on ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:bg-muted",
-                  )}
-                >
-                  {label}
-                </button>
-              );
-            })}
-            <span className="w-px h-5 bg-border mx-1" />
-            <button
-              type="button"
-              onClick={() => setOnlyUndone((v) => !v)}
-              className={cn(
-                "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
-                onlyUndone ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:bg-muted",
-              )}
-            >
-              Chưa làm
-            </button>
+                  active={prioFilter === v}
+                  onClick={() => setPrioFilter(v)}
+                  label={v === "all" ? "Tất cả" : PRIORITY_LABEL[v as Priority]}
+                />
+              ))}
+              <span className="w-px h-5 bg-border mx-1" />
+              <FilterChip
+                active={doneFilter === "undone"}
+                onClick={() => setDoneFilter((d) => (d === "undone" ? "all" : "undone"))}
+                label="Chưa làm"
+              />
+              <FilterChip
+                active={doneFilter === "done"}
+                onClick={() => setDoneFilter((d) => (d === "done" ? "all" : "done"))}
+                label="Đã làm"
+              />
+            </div>
+            {availableParts.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium text-muted-foreground">Part</span>
+                <FilterChip active={partFilter === "all"} onClick={() => setPartFilter("all")} label="Tất cả" />
+                {availableParts.map((p) => (
+                  <FilterChip
+                    key={p}
+                    active={partFilter === p}
+                    onClick={() => setPartFilter(p)}
+                    label={partLabelFor(activeSkill || "", p)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* 4. Marathon card */}
-          <MarathonCard
-            activeSkill={activeSkill}
-            prioFilter={prioFilter}
-            parts={marathonParts}
-            marathonPart={marathonPart}
-            setMarathonPart={setMarathonPart}
-            onStart={(s) => setMarathon(s)}
-          />
+          {/* 4. Action card */}
+          <div className="rounded-xl px-4 py-2.5" style={{ border: "2px solid #CC1C01" }}>
+            <div className={cn("flex items-center gap-2 flex-wrap", actionDisabled && "opacity-60")}>
+              <Badge className="text-[11px] font-semibold border-0 gap-1 text-white shrink-0" style={{ background: "#CC1C01" }}>
+                {isSpeaking ? <Eye className="w-3 h-3" /> : <InfinityIcon className="w-3 h-3" />}
+                {isSpeaking ? "Xem đề" : "Marathon"}
+              </Badge>
+              <Badge variant="outline" className="text-[10px] font-bold tracking-wide shrink-0">PRO</Badge>
+              <span className="text-sm font-semibold text-foreground truncate">
+                {isSpeaking ? "Xem" : "Luyện"} {actionCount} đề {actionTitleTail}
+              </span>
+              <Button
+                size="sm"
+                disabled={actionDisabled}
+                className="ml-auto gap-1.5 font-semibold text-white hover:opacity-90 shrink-0"
+                style={{ background: "#CC1C01" }}
+                onClick={() => {
+                  if (!actionGroup || !activeSkill) return;
+                  if (isSpeaking) setBrowse({ sets: actionGroup.sets, part: actionGroup.part });
+                  else setMarathon({ skill: activeSkill, part: actionGroup.part, sets: actionGroup.sets });
+                }}
+              >
+                {isSpeaking ? "Xem đề" : "Bắt đầu"} <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+            {isSpeaking && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Bài nói mẫu tham khảo — chỉ để xem, không ghi âm, không chấm điểm.
+              </p>
+            )}
+          </div>
 
           {/* 5. Table */}
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 border-b border-border bg-muted/40 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <div className="flex-1 min-w-0">Tên đề</div>
-              <div className="w-[100px] shrink-0">Kỹ năng · part</div>
-              <div className="w-[60px] shrink-0">Ưu tiên</div>
-              <div className="w-[54px] shrink-0">Điểm</div>
-              <div className="w-[72px] shrink-0">Trạng thái</div>
+            <div
+              className="hidden sm:grid items-center gap-3 px-4 py-2.5 border-b border-border bg-muted/40 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+              style={{ gridTemplateColumns: GRID }}
+            >
+              <div className="min-w-0">Tên đề</div>
+              <div>Part</div>
+              <div>Ưu tiên</div>
+              <div>Điểm</div>
+              <div>Trạng thái</div>
             </div>
             {visibleItems.length === 0 ? (
-              <p className="text-center py-10 text-sm text-muted-foreground">Không có đề phù hợp bộ lọc</p>
+              <p className="text-center py-10 text-sm text-muted-foreground">Không có đề nào khớp bộ lọc</p>
             ) : (
               <ul className="divide-y divide-border">
                 {visibleItems.map((it) => {
                   const sk = (it.skill || "other").toLowerCase();
-                  const chip = PRIORITY_CHIP[it.priority] || PRIORITY_CHIP.medium;
                   const b = best.get(it.exam_set_id);
-                  const skillPart = `${SKILL_LABEL[sk] || sk} · ${partLabelFor(sk, normalizePart(it.part || ""))}`;
+                  const partText = partLabelFor(sk, normalizePart(it.part || ""));
                   const chipEl = (
                     <span
-                      className={cn("inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0", chip.className)}
-                      style={chip.style}
+                      className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0"
+                      style={PRIORITY_CHIP_STYLE[it.priority] || PRIORITY_CHIP_STYLE.medium}
                     >
-                      {chip.label}
+                      {PRIORITY_LABEL[it.priority] || PRIORITY_LABEL.medium}
                     </span>
                   );
-                  const scoreEl = b ? <span className="text-xs font-semibold text-foreground">{b.score}/{b.total}</span> : null;
+                  const scoreEl = b ? (
+                    <span className="text-xs font-semibold text-foreground">{b.score}/{b.total}</span>
+                  ) : null;
                   const statusEl = b ? (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
@@ -509,12 +610,12 @@ export default function PredictionKeyView() {
                         className="w-full text-left px-4 py-2.5 hover:bg-muted/50 transition-colors"
                       >
                         {/* desktop row */}
-                        <div className="hidden sm:flex items-center gap-3">
-                          <div className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">{it.title}</div>
-                          <div className="w-[100px] shrink-0 text-xs text-muted-foreground truncate">{skillPart}</div>
-                          <div className="w-[60px] shrink-0">{chipEl}</div>
-                          <div className="w-[54px] shrink-0">{scoreEl}</div>
-                          <div className="w-[72px] shrink-0">{statusEl}</div>
+                        <div className="hidden sm:grid items-center gap-3" style={{ gridTemplateColumns: GRID }}>
+                          <div className="min-w-0 text-sm font-medium text-foreground truncate">{it.title}</div>
+                          <div className="text-xs text-muted-foreground truncate">{partText}</div>
+                          <div>{chipEl}</div>
+                          <div>{scoreEl}</div>
+                          <div>{statusEl}</div>
                         </div>
                         {/* mobile 2-tier */}
                         <div className="sm:hidden">
@@ -524,7 +625,7 @@ export default function PredictionKeyView() {
                             {chipEl}
                           </div>
                           <div className="mt-1 flex items-center justify-between gap-2">
-                            <span className="text-xs text-muted-foreground truncate">{skillPart}</span>
+                            <span className="text-xs text-muted-foreground truncate">{partText}</span>
                             {statusEl}
                           </div>
                         </div>
@@ -536,7 +637,8 @@ export default function PredictionKeyView() {
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Hiện {visibleItems.length} đề{selectedDate ? ` · key ${format(selectedDate, "dd/MM")}` : ""}
+            Hiện {visibleItems.length} đề · {SKILL_LABEL[activeSkill || ""] || activeSkill}
+            {selectedDate ? ` · key ${format(selectedDate, "dd/MM")}` : ""}
           </p>
         </>
       )}
@@ -544,129 +646,19 @@ export default function PredictionKeyView() {
   );
 }
 
-const PRIO_NAME: Record<PrioFilter, string> = {
-  all: "",
-  high: "ưu tiên cao",
-  medium: "ưu tiên vừa",
-  backup: "backup",
-};
-
-function MarathonCard({
-  activeSkill,
-  prioFilter,
-  parts,
-  marathonPart,
-  setMarathonPart,
-  onStart,
-}: {
-  activeSkill: string | null;
-  prioFilter: PrioFilter;
-  parts: { part: string; sets: ExamSetRow[] }[];
-  marathonPart: string | null;
-  setMarathonPart: (p: string) => void;
-  onStart: (s: MarathonState) => void;
-}) {
-  const supported = !!activeSkill && ["reading", "listening", "writing"].includes(activeSkill);
-  const current = parts.find((p) => p.part === marathonPart) || parts[0] || null;
-  const sets = current?.sets ?? [];
-
-  const skillKey = activeSkill === "writing" ? "writing" : activeSkill || "";
-  const partKey = current?.part ?? "";
-  const prog = supported && partKey ? loadMarathonProgress(skillKey, partKey) : null;
-  const last = supported && partKey ? loadMarathonLast(skillKey, partKey) : null;
-  const progWrongIds = (prog?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
-  const wrongSetIds: string[] = progWrongIds.length ? progWrongIds : (last?.wrongSetIds ?? []);
-  const wrongCount = wrongSetIds.length;
-
-  const prioName = PRIO_NAME[prioFilter];
-  const title = activeSkill
-    ? `Luyện ${sets.length} đề ${prioName ? prioName + " " : ""}${SKILL_LABEL[activeSkill] || activeSkill}`
-    : "Marathon theo kỹ năng";
-
-  const disabled = !supported || sets.length === 0;
-
+function FilterChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "relative rounded-xl border-2 p-4 bg-gradient-to-br from-primary/10 via-accent/5 to-background",
-        disabled && "opacity-60",
+        "text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors",
+        active
+          ? "bg-primary text-primary-foreground border-primary"
+          : "bg-card text-muted-foreground border-border hover:bg-muted",
       )}
-      style={{ borderColor: "#CC1C01" }}
     >
-      {last && supported && (
-        <span className="absolute top-3 right-3 text-[11px] font-semibold text-muted-foreground">
-          Lần trước {last.correct}/{last.total}
-        </span>
-      )}
-      <div className="flex items-center gap-2 mb-2">
-        <Badge className="w-fit text-[11px] font-semibold border-0 gap-1 text-white" style={{ background: "#CC1C01" }}>
-          <InfinityIcon className="w-3 h-3" /> Marathon
-        </Badge>
-        <Badge variant="outline" className="text-[10px] font-bold tracking-wide">PRO</Badge>
-      </div>
-      <h3 className="text-lg font-heading font-extrabold text-foreground">{title}</h3>
-      {!activeSkill ? (
-        <p className="text-sm text-muted-foreground mt-1">Chọn một kỹ năng để luyện marathon</p>
-      ) : !supported ? (
-        <p className="text-sm text-muted-foreground mt-1">Kỹ năng này chưa hỗ trợ marathon</p>
-      ) : (
-        <p className="text-sm text-muted-foreground mt-1">
-          Làm liên tục {sets.length} đề {current ? partLabelFor(activeSkill, current.part) : ""} — không giới hạn giờ
-        </p>
-      )}
-
-      {supported && parts.length > 1 && (
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {parts.map((p) => (
-            <button
-              key={p.part}
-              type="button"
-              onClick={() => setMarathonPart(p.part)}
-              className={cn(
-                "text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors",
-                p.part === current?.part
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card text-muted-foreground border-border hover:bg-muted",
-              )}
-            >
-              {partLabelFor(activeSkill!, p.part)} ({p.sets.length})
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 mt-4">
-        <Button
-          size="sm"
-          disabled={disabled}
-          onClick={() => current && onStart({ skill: activeSkill!, part: current.part, sets, retry: false })}
-          className="gap-1.5 font-semibold text-white hover:opacity-90"
-          style={{ background: "#CC1C01" }}
-        >
-          Bắt đầu <ArrowRight className="w-4 h-4" />
-        </Button>
-        {!disabled && wrongCount > 0 && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="gap-1.5 font-semibold"
-            onClick={() => {
-              const ids = new Set(wrongSetIds);
-              const retrySets = sets.filter((s) => ids.has(s.id));
-              if (retrySets.length === 0 || !current) return;
-              onStart({
-                skill: activeSkill!,
-                part: current.part,
-                sets: retrySets,
-                retry: true,
-                wrongQuestionIdsBySet: last?.wrongQuestionsBySet,
-              });
-            }}
-          >
-            Làm lại câu sai ({wrongCount})
-          </Button>
-        )}
-      </div>
-    </div>
+      {label}
+    </button>
   );
 }
