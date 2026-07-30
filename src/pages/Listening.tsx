@@ -553,14 +553,14 @@ const Listening = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("listening", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }); })}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => { clearMarathonProgress("listening", activeTab); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }); }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                 className="gap-1.5 font-semibold"
                               >
                                 Làm lại từ đầu
                               </Button>
                               <Button
                                 size="sm"
-                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, resume: true, priorityLabel: activePrio }))}
+                                onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, resume: true, priorityLabel: activePrio }), { feature: 'marathon', itemKey: 'resume', setIds: filteredSets.map((s) => s.id), noCharge: true })}
                                 className="gap-1.5 font-semibold"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
@@ -569,7 +569,7 @@ const Listening = () => {
                           ) : (
                             <Button
                               size="sm"
-                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }))}
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({ active: true, partType: activeTab as ListeningPartType, priorityLabel: activePrio }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                               className="gap-1.5 font-semibold"
                             >
                               {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
@@ -585,7 +585,7 @@ const Listening = () => {
                                 retryWrongSetIds: wrongSetIds,
                                 wrongQuestionIdsBySet: isPart1 ? wrongQMap : undefined,
                                 priorityLabel: activePrio,
-                              }))}
+                              }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                               className="gap-1.5 font-semibold"
                             >
                               {isPart1 ? `Làm lại câu sai (${wrongQTotal} câu)` : `Làm lại đề có câu sai (${wrongSetIds.length})`}

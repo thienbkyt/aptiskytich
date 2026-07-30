@@ -452,7 +452,7 @@ const Writing = () => {
                           {hasResume ? (
                             <div className="flex flex-col gap-2">
                               <Button
-                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true, priorityLabel: activePrio }))}
+                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, resume: true, priorityLabel: activePrio }), { feature: 'marathon', itemKey: 'resume', setIds: filteredSets.map((s) => s.id), noCharge: true })}
                                 className="w-full gap-1.5 font-semibold bg-primary hover:bg-[#4D0D0D] text-primary-foreground"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Tiếp tục (đề {doneCount + 1}/{filteredSets.length}) <ArrowRight className="w-4 h-4" /></>}
@@ -460,7 +460,7 @@ const Writing = () => {
                               <div className="flex items-center justify-center gap-4 text-xs pt-1">
                                 <button
                                   type="button"
-                                  onClick={() => guard(fakeSet, () => { clearMarathonProgress("writing", activePartKey); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }); })}
+                                  onClick={() => guard(fakeSet, () => { clearMarathonProgress("writing", activePartKey); setProgressTick((t) => t + 1); setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }); }, { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                   className="text-muted-foreground/70 hover:text-muted-foreground hover:underline"
                                 >
                                   Làm lại từ đầu
@@ -471,7 +471,7 @@ const Writing = () => {
                             <div className="flex flex-wrap justify-end gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }))}
+                                onClick={() => guard(fakeSet, () => setMarathon({ active: true, partType: marathonPartType, priorityLabel: activePrio }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                 className="gap-1.5 font-semibold"
                               >
                                 {marathonLocked ? <>Mở khóa</> : <>Bắt đầu <ArrowRight className="w-4 h-4" /></>}
