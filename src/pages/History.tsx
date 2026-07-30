@@ -20,6 +20,10 @@ import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton"
 import { getSkillBand } from "@/data/questions";
 import { computeHistoryDisplay } from "@/lib/historyDisplay";
 import { toTimeSafe } from "@/lib/safeDate";
+import {
+  Pagination, PaginationContent, PaginationItem, PaginationLink,
+  PaginationPrevious, PaginationNext, PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface HistoryRow {
   id: string;
