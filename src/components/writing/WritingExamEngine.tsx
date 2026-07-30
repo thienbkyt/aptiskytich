@@ -147,6 +147,8 @@ const WritingExamEngine = ({
   const { grading, isGrading, gradeExam, quotaExceeded } = useExamGrading();
   const [v2Grading, setV2Grading] = useState<WritingGradingResult | null>(null);
   const [v2Loading, setV2Loading] = useState(false);
+  const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
+
   const effectiveGrading = (gradingResult ?? v2Grading ?? grading) as WritingGradingResult | null;
 
   // Ensure exam-mode dark overrides apply during intro phase too
@@ -276,7 +278,9 @@ const WritingExamEngine = ({
       : undefined;
 
     let result: WritingGradingResult | null = null;
+    let quotaHit: QuotaInfo | null = null;
     setV2Loading(true);
+
     try {
       const v2 = await gradeWritingPartV2(partType, questions, text, partsArg, {
         testResultId: (trid as string | null) ?? null,
