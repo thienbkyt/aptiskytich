@@ -203,6 +203,17 @@ export async function saveWritingSkillResult(
       console.warn("[saveWritingSkillResult] rpc failed:", error);
       return { id: null, error };
     }
+    // Graded successfully — clear the pending payload marker.
+    if (args.testResultId) {
+      try {
+        await (supabase as any)
+          .from("test_results")
+          .update({ grade_payload: null })
+          .eq("id", args.testResultId);
+      } catch (e) {
+        console.warn("[saveWritingSkillResult] failed to clear grade_payload:", e);
+      }
+    }
     return { id: (data as string) ?? null, error: null };
   } catch (e) {
     console.warn("[saveWritingSkillResult] unexpected error:", e);
