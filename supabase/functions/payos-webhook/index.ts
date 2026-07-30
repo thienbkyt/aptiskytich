@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     // Load plan for duration
     const { data: plan } = await admin
       .from("pricing_plans")
-      .select("tier,duration_days")
+      .select("tier,duration_days,ai_daily_cap")
       .eq("key", (payment as any).plan_key)
       .maybeSingle();
 
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     // Read current subscription
     const { data: currentSub } = await admin
       .from("user_subscriptions")
-      .select("tier,pro_until")
+      .select("tier,pro_until,plan_key,ai_daily_cap")
       .eq("user_id", (payment as any).user_id)
       .maybeSingle();
 
