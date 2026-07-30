@@ -25,6 +25,8 @@ interface GradingRequest {
   // Part 4 aggregated grading
   subQuestions?: string[];
   usedConnectorsRequired?: boolean;
+  // Groups multiple part-gradings of one session into a single usage count
+  gradingSessionId?: string | null;
 }
 
 serve(async (req) => {
@@ -641,7 +643,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       try {
         if (userId) {
           await serviceClient.from("feature_usage").insert({
-            user_id: userId, feature_key: "ai_grading_speaking", scope: null, ref_id: null,
+            user_id: userId, feature_key: "ai_grading_speaking", scope: null, ref_id: (body.gradingSessionId ?? null),
           });
         }
       } catch { /* ignore */ }
@@ -1248,7 +1250,7 @@ ${partsIn.formalText ?? ""}`;
       if (userId) {
         try {
           await serviceClient.from("feature_usage").insert({
-            user_id: userId, feature_key: "ai_grading_writing", scope: null, ref_id: null,
+            user_id: userId, feature_key: "ai_grading_writing", scope: null, ref_id: (body.gradingSessionId ?? null),
           });
         } catch (e) {
           console.warn("[grade-exam writing_v2] feature_usage insert failed:", (e as any)?.message || e);

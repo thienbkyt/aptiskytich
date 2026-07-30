@@ -104,6 +104,7 @@ export async function gradeSpeakingPartV2(
     partType,
     questions,
     audios,
+    gradingSessionId: opts?.fullTestSessionId ?? null,
   };
 
   const { data, error } = await supabase.functions.invoke("grade-exam", {
