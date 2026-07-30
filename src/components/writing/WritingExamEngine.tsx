@@ -15,6 +15,9 @@ import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { gradeWritingPartV2 } from "@/components/writing/writingGradingV2";
+import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
+import UpgradeLock from "@/components/pro/UpgradeLock";
+
 import { toast } from "sonner";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 import type {
