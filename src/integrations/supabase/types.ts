@@ -1145,6 +1145,7 @@ export type Database = {
       pricing_plans: {
         Row: {
           active: boolean
+          ai_daily_cap: number | null
           duration_days: number | null
           highlight: boolean
           key: string
@@ -1157,6 +1158,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          ai_daily_cap?: number | null
           duration_days?: number | null
           highlight?: boolean
           key: string
@@ -1169,6 +1171,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          ai_daily_cap?: number | null
           duration_days?: number | null
           highlight?: boolean
           key?: string
