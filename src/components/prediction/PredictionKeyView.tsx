@@ -196,7 +196,7 @@ export default function PredictionKeyView() {
 
   // Load best raw score per exam set
   useEffect(() => {
-    if (!user || items.length === 0) { setBest(new Map()); return; }
+    if (!user || items.length === 0) { setBest(new Map()); setAttempted(new Set()); return; }
     let cancelled = false;
     (async () => {
       const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
@@ -208,11 +208,24 @@ export default function PredictionKeyView() {
       if (cancelled) return;
       const skillOf = new Map(items.map((i) => [i.exam_set_id, (i.skill || "").toLowerCase()]));
       const map = new Map<string, BestScore>();
+      const tried = new Set<string>();
       (data || []).forEach((r: any) => {
         if (!r.exam_set_id || !r.total || r.total <= 0) return;
+        tried.add(r.exam_set_id);
         const sk = skillOf.get(r.exam_set_id) || "";
         const subjective = sk === "writing" || sk === "speaking";
-        if (subjective && (r.total <= 1 || r.total === 50)) return;
+        if (subjective) {
+          if (r.total !== 30 && r.total !== 50) return;
+          const prev = map.get(r.exam_set_id);
+          if (!prev) { map.set(r.exam_set_id, { score: r.score, total: r.total }); return; }
+          // prefer the total===30 group; never compare ratios across scales
+          if (prev.total === r.total) {
+            if (r.score > prev.score) map.set(r.exam_set_id, { score: r.score, total: r.total });
+          } else if (r.total === 30) {
+            map.set(r.exam_set_id, { score: r.score, total: r.total });
+          }
+          return;
+        }
         const prev = map.get(r.exam_set_id);
         const ratio = r.score / r.total;
         if (!prev || ratio > prev.score / prev.total) {
@@ -220,6 +233,7 @@ export default function PredictionKeyView() {
         }
       });
       setBest(map);
+      setAttempted(tried);
     })();
     return () => { cancelled = true; };
   }, [user, items]);
