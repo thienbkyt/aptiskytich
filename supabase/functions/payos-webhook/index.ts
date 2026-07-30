@@ -54,8 +54,7 @@ Deno.serve(async (req) => {
     }
 
     const orderCode = Number((data as any).orderCode);
-    const code = body?.code ?? (data as any)?.code;
-    const isPaid = code === "00" || (data as any)?.code === "00";
+    const isPaid = String((data as any)?.code) === "00";
 
     if (!isPaid) {
       // Not a successful payment event — record but don't activate
@@ -83,12 +82,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Idempotent
-    if ((payment as any).status === "paid") {
+    // Amount check — only block underpayment
+    const paidAmount = Number((data as any).amount);
+    const expectedAmount = Number((payment as any).amount_vnd);
+    if (Number.isFinite(paidAmount) && paidAmount < expectedAmount) {
+      console.warn("Amount mismatch", { orderCode, paidAmount, expectedAmount });
+      return new Response(JSON.stringify({ success: true, ignored: "amount_mismatch" }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Atomic claim: only one concurrent webhook can flip pending -> paid
+    const { data: claimed, error: claimErr } = await admin
+      .from("payments")
+      .update({ status: "paid", paid_at: new Date().toISOString() })
+      .eq("id", (payment as any).id)
+      .eq("status", "pending")
+      .select("id");
+
+    if (claimErr) {
+      console.error("Payment claim failed", claimErr);
+      return new Response(JSON.stringify({ error: "Internal error" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!claimed || claimed.length === 0) {
       return new Response(JSON.stringify({ success: true, already: true }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // Load plan for duration
     const { data: plan } = await admin
@@ -147,16 +171,17 @@ Deno.serve(async (req) => {
 
     if (upsertErr) {
       console.error("Subscription upsert failed", upsertErr);
+      // Release the order so PayOS retry can grant the tier next time
+      await admin.from("payments").update({
+        status: "pending",
+        paid_at: null,
+      }).eq("id", (payment as any).id);
       return new Response(JSON.stringify({ error: "Internal error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Mark paid
-    await admin.from("payments").update({
-      status: "paid",
-      paid_at: new Date().toISOString(),
-    }).eq("id", (payment as any).id);
+
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
