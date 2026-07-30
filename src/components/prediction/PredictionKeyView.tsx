@@ -285,7 +285,7 @@ export default function PredictionKeyView() {
         if (d !== 0) return d;
         return a.sort_order - b.sort_order;
       });
-  }, [skillItems, prioFilter, doneFilter, partFilter, best]);
+  }, [skillItems, prioFilter, doneFilter, partFilter, best, attempted]);
 
   // Sets used by the action card: single part group (engines take one partType)
   const actionGroup = useMemo(() => {
