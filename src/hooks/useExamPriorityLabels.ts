@@ -4,83 +4,87 @@ import { supabase } from "@/integrations/supabase/client";
 export type PriorityLabel = "high" | "medium" | "low";
 
 export interface ExamPriorityInfo {
-  count: number;
-  ratio: number;
   label: PriorityLabel;
 }
 
 export interface ExamPriorityData {
   labels: Map<string, ExamPriorityInfo>;
-  keySetsBySet: Map<string, Set<string>>;
-  windowSize: number;
+  keyId: string | null;
+  keyDate: string | null;
   loading: boolean;
 }
 
-const WINDOW = 30;
+/** prediction_items.priority → UI priority label */
+const PRIORITY_FROM_DB: Record<string, PriorityLabel> = {
+  high: "high",
+  medium: "medium",
+  backup: "low",
+};
 
 /**
- * Computes automatic "priority" labels for exam sets based on how often each
- * exam appears in the most recent WINDOW (30) published prediction keys.
- *   ratio > 50%   → "high"
- *   35% – 50%     → "medium"
- *   < 35% (>0)    → "low"
- *   0             → no label
+ * Priority labels come straight from the currently effective prediction key
+ * (published key for today, otherwise the latest published key).
+ * Exams that are not in that key get no label at all.
  */
 export function useExamPriorityLabels(): ExamPriorityData {
   const { data, isLoading } = useQuery({
-    queryKey: ["examPriorityLabels", WINDOW],
+    queryKey: ["examPriorityLabels", "currentKey"],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data: rows, error } = await supabase.rpc("exam_priority_counts" as any, { p_window: WINDOW });
-      if (error) throw error;
-      const keySetsBySet = new Map<string, Set<string>>();
-      let windowSize = 0;
-      (rows ?? []).forEach((r: any) => {
-        if (!r?.exam_set_id) return;
-        windowSize = Number(r.window_size) || windowSize;
-        // Synthesize a Set sized to key_count so aggregatePriority (which unions sets) stays correct per-exam.
-        const s = new Set<string>();
-        const n = Number(r.key_count) || 0;
-        for (let i = 0; i < n; i++) s.add(`${r.exam_set_id}:${i}`);
-        keySetsBySet.set(r.exam_set_id as string, s);
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+      const { data: keyRow, error: keyErr } = await supabase
+        .from("prediction_keys")
+        .select("id, date")
+        .eq("is_published", true)
+        .lte("date", todayStr)
+        .order("date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (keyErr) throw keyErr;
+      if (!keyRow) return { labels: new Map<string, ExamPriorityInfo>(), keyId: null, keyDate: null };
+
+      const { data: items, error: itemErr } = await supabase
+        .from("prediction_items")
+        .select("exam_set_id, priority")
+        .eq("key_id", keyRow.id);
+      if (itemErr) throw itemErr;
+
+      const labels = new Map<string, ExamPriorityInfo>();
+      (items ?? []).forEach((it: any) => {
+        const label = PRIORITY_FROM_DB[String(it?.priority ?? "").toLowerCase()];
+        if (!it?.exam_set_id || !label) return;
+        const existing = labels.get(it.exam_set_id)?.label;
+        // keep the strongest priority if an exam appears more than once
+        if (!existing || PRIORITY_ORDER.indexOf(label) < PRIORITY_ORDER.indexOf(existing)) {
+          labels.set(it.exam_set_id, { label });
+        }
       });
-      return { keySetsBySet, windowSize };
+      return { labels, keyId: keyRow.id as string, keyDate: keyRow.date as string };
     },
   });
 
-  const keySetsBySet = data?.keySetsBySet ?? new Map<string, Set<string>>();
-  const windowSize = data?.windowSize ?? 0;
-
-  const labels = new Map<string, ExamPriorityInfo>();
-  if (windowSize > 0) {
-    keySetsBySet.forEach((keys, setId) => {
-      const count = keys.size;
-      if (count === 0) return;
-      const ratio = count / windowSize;
-      const label: PriorityLabel = ratio > 0.5 ? "high" : ratio >= 0.35 ? "medium" : "low";
-      labels.set(setId, { count, ratio, label });
-    });
-  }
-
-  return { labels, keySetsBySet, windowSize, loading: isLoading };
+  return {
+    labels: data?.labels ?? new Map<string, ExamPriorityInfo>(),
+    keyId: data?.keyId ?? null,
+    keyDate: data?.keyDate ?? null,
+    loading: isLoading,
+  };
 }
 
-/** Compute an aggregate priority label for a group of exam_set_ids (used by Grammar full sets). */
+/** Aggregate priority for a group of exam_set_ids (used by Grammar full sets): strongest wins. */
 export function aggregatePriority(
   examSetIds: string[],
-  keySetsBySet: Map<string, Set<string>>,
-  windowSize: number,
+  labels: Map<string, ExamPriorityInfo>,
 ): ExamPriorityInfo | null {
-  if (windowSize <= 0 || examSetIds.length === 0) return null;
-  const combined = new Set<string>();
+  let best: PriorityLabel | null = null;
   examSetIds.forEach((id) => {
-    const ks = keySetsBySet.get(id);
-    if (ks) ks.forEach((k) => combined.add(k));
+    const l = labels.get(id)?.label;
+    if (!l) return;
+    if (!best || PRIORITY_ORDER.indexOf(l) < PRIORITY_ORDER.indexOf(best)) best = l;
   });
-  if (combined.size === 0) return null;
-  const ratio = combined.size / windowSize;
-  const label: PriorityLabel = ratio > 0.5 ? "high" : ratio >= 0.35 ? "medium" : "low";
-  return { count: combined.size, ratio, label };
+  return best ? { label: best } : null;
 }
 
 export const PRIORITY_LABEL_VI: Record<PriorityLabel, string> = {
