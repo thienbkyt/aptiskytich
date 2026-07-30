@@ -215,7 +215,7 @@ const GrammarVocabulary = () => {
                     <div className="mb-4">{(() => { const done = set.examSetIds.filter(id => progress.has(id)).length; if (done === set.examSetIds.length && done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">Đã hoàn thành tất cả {set.partCount} Part</span>; if (done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-info bg-info/10 px-2.5 py-1 rounded-full">Đã làm {done}/{set.partCount} Part</span>; return <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>; })()}</div>
                     <div className="flex-1" />
                     <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => guard(set as any, () => handleStartFullPractice(set))} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
+                      <Button variant="ghost" size="sm" onClick={() => guard(set as any, () => handleStartFullPractice(set), { feature: 'full_part', itemKey: set.fullTestId, setIds: set.examSetIds })} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
                         {locked ? "Mở khóa" : "Luyện tập"}<ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>
