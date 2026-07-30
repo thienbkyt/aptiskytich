@@ -362,16 +362,16 @@ export default function PredictionKeyView() {
   }
 
   const prioName = prioFilter === "all" ? "" : `ưu tiên ${PRIORITY_LABEL[prioFilter].toLowerCase()}`;
-  const actionCount = actionGroup?.sets.length ?? 0;
-  const partName = actionGroup && (partFilter !== "all" || actionGroup.singlePart)
-    ? partLabelFor(activeSkill || "", actionGroup.part)
-    : "";
-  const actionTitleTail = [prioName, partName, SKILL_LABEL[activeSkill || ""] || activeSkill || ""]
+  const partChosen = partFilter !== "all";
+  const actionCount = partChosen ? actionGroup?.sets.length ?? 0 : 0;
+  const partName = partChosen && actionGroup ? partLabelFor(activeSkill || "", actionGroup.part) : "";
+  const actionTitleTail = [prioName, SKILL_LABEL[activeSkill || ""] || activeSkill || "", partName]
     .filter(Boolean)
     .join(" ");
   const isSpeaking = activeSkill === "speaking";
   const marathonSupported = !!activeSkill && ["reading", "listening", "writing"].includes(activeSkill);
-  const actionDisabled = actionCount === 0 || (!isSpeaking && !marathonSupported);
+  const actionDisabled = !partChosen || actionCount === 0 || (!isSpeaking && !marathonSupported);
+
 
   return (
     <div className="space-y-5">
