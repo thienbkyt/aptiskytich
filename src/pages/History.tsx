@@ -610,6 +610,14 @@ const History = () => {
           </div>
           <p className="text-muted-foreground mb-6">Toàn bộ kết quả các bài bạn đã hoàn thành.</p>
 
+          {loadError && (
+            <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {loadError}
+            </div>
+          )}
+
+
+
           {/* Stats strip */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
             <StatCard
