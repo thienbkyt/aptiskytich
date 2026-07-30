@@ -357,40 +357,57 @@ export default function PricingPage() {
           <div className="mt-14">
             <h2 className="text-xl font-heading font-bold text-foreground mb-4 text-center">So sánh chi tiết</h2>
             <div className="max-w-2xl mx-auto overflow-x-auto">
-
               <table className="w-full border-separate border-spacing-0 text-sm">
+                <colgroup>
+                  <col />
+                  <col style={{ width: 150 }} />
+                  <col style={{ width: 150 }} />
+                </colgroup>
                 <thead>
                   <tr>
-                    <th className="text-left p-3 font-semibold text-foreground">Tính năng</th>
-                    <th className="p-3 font-semibold text-center text-muted-foreground">Miễn phí</th>
+                    <th className="text-left p-3 text-sm font-semibold text-foreground">Tính năng</th>
+                    <th className="p-3 text-sm font-semibold text-center text-muted-foreground">Miễn phí</th>
                     <th
-                      className="p-3 font-semibold text-center text-[#CC1C01] rounded-t-xl"
-                      style={{ backgroundColor: "rgba(204,28,1,0.06)" }}
+                      className="p-3 text-sm font-semibold text-center text-[#CC1C01] rounded-t-xl"
+                      style={{
+                        backgroundColor: "rgba(204,28,1,0.06)",
+                        borderTop: "1px solid rgba(204,28,1,0.2)",
+                        borderLeft: "1px solid rgba(204,28,1,0.2)",
+                        borderRight: "1px solid rgba(204,28,1,0.2)",
+                      }}
                     >
                       Gói luyện thi
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {COMPARE_ROWS.map((row, i) => (
-                    <tr key={row.label}>
-                      <td className="p-3 text-foreground border-t border-border text-[12px] md:text-sm">{row.label}</td>
-                      <td className="p-3 text-center border-t border-border">
-                        <Cell v={row.free} />
-                      </td>
-                      <td
-                        className={cn(
-                          "p-3 text-center border-t border-border",
-                          i === COMPARE_ROWS.length - 1 && "rounded-b-xl",
-                        )}
-                        style={{ backgroundColor: "rgba(204,28,1,0.06)" }}
-                      >
-                        <Cell v={row.paid} />
-                      </td>
-                    </tr>
-                  ))}
+                  {COMPARE_ROWS.map((row, i) => {
+                    const last = i === COMPARE_ROWS.length - 1;
+                    return (
+                      <tr key={row.label}>
+                        <td className="p-3 text-sm text-foreground border-t border-border">{row.label}</td>
+                        <td className="p-3 text-center border-t border-border">
+                          <Cell v={row.free} />
+                        </td>
+                        <td
+                          className={cn("p-3 text-center", last && "rounded-b-xl")}
+                          style={{
+                            backgroundColor: "rgba(204,28,1,0.06)",
+                            borderTop: "1px solid hsl(var(--border))",
+                            borderLeft: "1px solid rgba(204,28,1,0.2)",
+                            borderRight: "1px solid rgba(204,28,1,0.2)",
+                            borderBottom: last ? "1px solid rgba(204,28,1,0.2)" : undefined,
+                          }}
+                        >
+                          <Cell v={row.paid} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
+            </div>
+
             </div>
           </div>
 
