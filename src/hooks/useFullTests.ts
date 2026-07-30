@@ -7,6 +7,7 @@ export interface FullTestItem {
   title: string;
   skills: string[];
   skillCount: number;
+  examSetIds: string[];
   isReady: boolean; // has all 5 skills
   category: "aptis" | "key" | null;
   /** Most restrictive tier among constituent exam_sets (matches useSkillFullSets). */
