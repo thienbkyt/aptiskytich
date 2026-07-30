@@ -482,7 +482,7 @@ export default function PredictionKeyView() {
             {availableSkills.map((sk) => {
               const Icon = SKILL_ICON[sk] || Sparkles;
               const all = items.filter((it) => (it.skill || "other").toLowerCase() === sk);
-              const done = all.filter((it) => best.has(it.exam_set_id)).length;
+              const done = all.filter((it) => attempted.has(it.exam_set_id)).length;
               const on = activeSkill === sk;
               return (
                 <button
