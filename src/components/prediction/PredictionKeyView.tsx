@@ -271,7 +271,7 @@ export default function PredictionKeyView() {
 
   const matchPrio = (p: Priority) => prioFilter === "all" || p === prioFilter;
   const matchDone = (id: string) =>
-    doneFilter === "all" || (doneFilter === "done" ? best.has(id) : !best.has(id));
+    doneFilter === "all" || (doneFilter === "done" ? attempted.has(id) : !attempted.has(id));
   const matchPart = (part: string | null) =>
     partFilter === "all" || (normalizePart(part || "") || "other") === partFilter;
 
