@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Crown, Loader2, Sparkles, X, Zap } from "lucide-react";
+import { CalendarClock, Check, Crown, Loader2, ShieldCheck, Sparkles, Users, X, Zap } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
