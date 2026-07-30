@@ -21,8 +21,11 @@ export interface UpgradeLockProps {
   /** What tier the user needs to upgrade to (overrides requiredTier when present). */
   need?: UpgradeRequiredTier;
   featureLabel?: string;
+  /** Small helper line under the description (e.g. quota reset info). */
+  resetNote?: string;
   remaining?: number | null;
   freeQuota?: number | null;
+
   asModal?: boolean;
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
@@ -83,7 +86,8 @@ function getCopy(
 }
 
 function LockBody(props: UpgradeLockProps) {
-  const { reason, featureLabel, remaining, freeQuota } = props;
+  const { reason, featureLabel, remaining, freeQuota, resetNote } = props;
+
   const need: UpgradeRequiredTier =
     props.need ?? props.requiredTier ?? (reason === "premium" ? "premium" : "pro");
   const copy = getCopy(reason, need, featureLabel, remaining, freeQuota);
@@ -101,6 +105,10 @@ function LockBody(props: UpgradeLockProps) {
       <div>
         <h3 className="text-lg font-heading font-bold text-foreground">{copy.title}</h3>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">{copy.desc}</p>
+        {resetNote && (
+          <p className="text-xs text-muted-foreground mt-2 max-w-sm">{resetNote}</p>
+        )}
+
         {(copy as any).remainingHint && (
           <p className="text-xs text-primary mt-2 font-medium">{(copy as any).remainingHint}</p>
         )}

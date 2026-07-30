@@ -15,6 +15,9 @@ import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { gradeWritingPartV2 } from "@/components/writing/writingGradingV2";
+import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
+import UpgradeLock from "@/components/pro/UpgradeLock";
+
 import { toast } from "sonner";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 import type {
@@ -144,6 +147,8 @@ const WritingExamEngine = ({
   const { grading, isGrading, gradeExam, quotaExceeded } = useExamGrading();
   const [v2Grading, setV2Grading] = useState<WritingGradingResult | null>(null);
   const [v2Loading, setV2Loading] = useState(false);
+  const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
+
   const effectiveGrading = (gradingResult ?? v2Grading ?? grading) as WritingGradingResult | null;
 
   // Ensure exam-mode dark overrides apply during intro phase too
@@ -273,7 +278,9 @@ const WritingExamEngine = ({
       : undefined;
 
     let result: WritingGradingResult | null = null;
+    let quotaHit: QuotaInfo | null = null;
     setV2Loading(true);
+
     try {
       const v2 = await gradeWritingPartV2(partType, questions, text, partsArg, {
         testResultId: (trid as string | null) ?? null,
@@ -309,10 +316,22 @@ const WritingExamEngine = ({
         window.dispatchEvent(new Event("exam-result-saved"));
       } catch (e) { console.warn("[Writing] save skill result failed", e); }
     } catch (e: any) {
-      toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
+      if (e instanceof QuotaExceededError) {
+        quotaHit = e.info;
+      } else {
+        toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
+      }
     } finally {
       setV2Loading(false);
     }
+
+    if (quotaHit) {
+      setQuotaModal(quotaHit);
+      setPhase("practice");
+      return;
+    }
+
+
 
     // Bake AI grading into the saved review_snapshot so History review is self-sufficient.
     try {
@@ -521,6 +540,24 @@ const WritingExamEngine = ({
   const isLast = isLastPart ?? true;
   return (
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
+      {quotaModal && (
+        <UpgradeLock
+          asModal
+          open
+          onOpenChange={(v) => { if (!v) setQuotaModal(null); }}
+          reason="quota_exceeded"
+          need="pro"
+          featureLabel="Chấm bài bằng AI"
+          freeQuota={quotaModal.cap}
+          remaining={0}
+          resetNote={
+            quotaModal.tier === "free"
+              ? "Tài khoản miễn phí có 3 lượt chấm AI (không reset). Bài viết của bạn đã được lưu."
+              : `Trần ${quotaModal.cap} lượt/ngày — reset lúc 00:00. Bài viết của bạn đã được lưu.`
+          }
+        />
+      )}
+
 
       <RotateDeviceOverlay />
       {adminControls}

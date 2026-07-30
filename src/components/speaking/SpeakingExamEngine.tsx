@@ -42,6 +42,9 @@ import {
   finalizeSpeaking,
   type SpeakingPartResultV2,
 } from "./speakingGradingV2";
+import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
+import UpgradeLock from "@/components/pro/UpgradeLock";
+
 
 import SpeakingProfileView from "./SpeakingProfileView";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
@@ -132,6 +135,8 @@ const SpeakingExamEngine = ({
   const [v2Scale, setV2Scale] = useState<number | null>(null);
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
   const [v2Error, setV2Error] = useState<string | null>(null);
+  const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
+
 
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
   const gradingRanRef = useRef(false);
@@ -351,8 +356,13 @@ const SpeakingExamEngine = ({
 
 
       } catch (e: any) {
-        console.error("[Speaking V2] grading failed:", e);
-        setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
+        if (e instanceof QuotaExceededError) {
+          setQuotaModal(e.info);
+        } else {
+          console.error("[Speaking V2] grading failed:", e);
+          setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
+        }
+
       } finally {
         setIsGrading(false);
       }
@@ -1124,6 +1134,25 @@ const SpeakingExamEngine = ({
                 <p className="text-sm text-rose-600 dark:text-rose-400">{v2Error}</p>
               </div>
             )}
+
+            {quotaModal && (
+              <UpgradeLock
+                asModal
+                open
+                onOpenChange={(v) => { if (!v) setQuotaModal(null); }}
+                reason="quota_exceeded"
+                need="pro"
+                featureLabel="Chấm bài bằng AI"
+                freeQuota={quotaModal.cap}
+                remaining={0}
+                resetNote={
+                  quotaModal.tier === "free"
+                    ? "Tài khoản miễn phí có 3 lượt chấm AI (không reset). Bản ghi âm của bạn đã được lưu."
+                    : `Trần ${quotaModal.cap} lượt/ngày — reset lúc 00:00. Bản ghi âm của bạn đã được lưu.`
+                }
+              />
+            )}
+
 
             {v2Result && (
               <SpeakingProfileView

@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { uploadSpeakingBlobs } from "@/lib/speakingUpload";
+import { QuotaExceededError } from "@/lib/quotaError";
+
 
 export type SpeakingBandsV2 = {
   tf: string;
@@ -112,10 +114,21 @@ export async function gradeSpeakingPartV2(
   });
 
   if (error || !data || (data as any).error) {
+    const errCode = (data as any)?.error;
+    if (errCode === "quota_exceeded" || errCode === "disabled") {
+      // Quota is not a technical failure — never retry it through the queue.
+      throw new QuotaExceededError({
+        used: Number((data as any).used ?? 0),
+        cap: Number((data as any).freeQuota ?? (data as any).proQuota ?? 0),
+        tier: String((data as any).tier ?? "free"),
+        need: "pro",
+      });
+    }
     // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
     // Upload audio blobs to storage so the queue payload stays small (no base64
     // in jsonb) and the worker can re-download when it retries.
     let audioPaths: Array<string | null> = [];
+
     try {
       audioPaths = await uploadSpeakingBlobs(
         audioBlobs,

@@ -97,11 +97,8 @@ export function useExamGrading() {
           need,
           tier: data.tier,
         });
-        toast.error(
-          need === "premium"
-            ? `Bạn đã dùng hết lượt chấm AI tháng này. Nâng cấp Premium để chấm không giới hạn.`
-            : `Bạn đã dùng hết ${data.freeQuota ?? 3} lượt chấm AI tháng này. Nâng cấp Pro để có thêm lượt.`
-        );
+        toast.error("Bạn đã dùng hết lượt chấm AI. Nâng cấp gói luyện thi để chấm tiếp.");
+
         return null;
       }
       if (data?.error) throw new Error(data.error);
