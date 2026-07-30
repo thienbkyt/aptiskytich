@@ -154,6 +154,7 @@ const History = () => {
   const [groupedMarathonRowIds, setGroupedMarathonRowIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!user) return;
