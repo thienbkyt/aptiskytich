@@ -476,11 +476,11 @@ export default function PredictionKeyView() {
                   onClick={() => setActiveSkill(sk)}
                   className={cn(
                     "rounded-xl px-3 py-3 text-left transition-colors",
-                    on ? "text-white" : "border border-border hover:bg-muted/50",
+                    on ? "text-white shadow-[0_4px_14px_rgba(204,28,1,0.35)]" : "border border-border hover:bg-muted/50",
                   )}
                   style={
                     on
-                      ? { background: "#CC1C01" }
+                      ? { background: BRAND_GRADIENT }
                       : { background: "var(--surface-1, hsl(var(--card)))" }
                   }
                 >
@@ -491,13 +491,14 @@ export default function PredictionKeyView() {
                     </span>
                   </div>
                   <p className={cn("mt-1", on ? "text-white" : "text-foreground")}>
-                    <span style={{ fontSize: 16, fontWeight: 500 }}>{all.length}</span>{" "}
+                    <span style={{ fontSize: 19, fontWeight: 500 }}>{all.length}</span>{" "}
                     <span className="text-xs">đề</span>
                   </p>
-                  <p className={cn("text-[11px]", on ? "text-white/80" : "text-muted-foreground")}>đã làm {done}</p>
+                  <p className={cn("text-[11px]", on ? "text-white/90" : "text-muted-foreground")}>đã làm {done}</p>
                 </button>
               );
             })}
+
           </div>
 
           {/* 3. Filters */}
