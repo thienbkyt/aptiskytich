@@ -77,6 +77,10 @@ const WEEKDAY_VI = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
 const GRID = "minmax(0,1fr) 92px 82px 60px 92px";
 
+/** Same gradient as the "Thi thử" CTA in Navbar.tsx */
+const BRAND_GRADIENT = "linear-gradient(to right, #CC1C01, #FEAD5F)";
+
+
 function skillRoute(skill: string | null | undefined, setId: string): string {
   const s = (skill || "").toLowerCase();
   if (s === "reading") return `/reading?set=${setId}&jump=1&from=key`;
