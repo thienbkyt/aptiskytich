@@ -7,6 +7,7 @@ export interface FullTestItem {
   title: string;
   skills: string[];
   skillCount: number;
+  examSetIds: string[];
   isReady: boolean; // has all 5 skills
   category: "aptis" | "key" | null;
   /** Most restrictive tier among constituent exam_sets (matches useSkillFullSets). */
@@ -85,6 +86,7 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
           title: ft.title,
           skills: skillArr,
           skillCount: skillArr.length,
+          examSetIds: memberIds,
           isReady,
           category: (ft.category as "aptis" | "key") ?? null,
           access_tier: maxTier,

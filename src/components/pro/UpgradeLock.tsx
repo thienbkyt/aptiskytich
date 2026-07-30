@@ -54,7 +54,7 @@ function getCopy(
   if (reason === "quota" || reason === "quota_exceeded") {
     const target = need === "premium"
       ? "Nâng cấp Premium để dùng KHÔNG GIỚI HẠN."
-      : "Nâng cấp Pro để có thêm lượt mỗi tháng (hoặc Premium để không giới hạn).";
+      : "Nâng cấp gói luyện thi để mở không giới hạn.";
     return {
       title: "Bạn đã hết lượt dùng",
       desc: `${name} cho phép ${freeQuota ?? 0} lượt miễn phí. ${target}`,

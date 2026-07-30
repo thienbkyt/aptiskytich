@@ -167,7 +167,7 @@ const FullTest = () => {
                     </div>
                     <div className="flex-1" />
                     <Button
-                      onClick={() => guard(test as any, () => handleStartTest(test))}
+                      onClick={() => guard(test as any, () => handleStartTest(test), { feature: 'full_test', itemKey: test.fullTestId, setIds: test.examSetIds })}
                       disabled={!test.isReady}
                       className="w-full bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
                     >

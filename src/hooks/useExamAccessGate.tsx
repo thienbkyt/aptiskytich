@@ -6,6 +6,23 @@ import UpgradeLock from "@/components/pro/UpgradeLock";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useMobileNotice } from "@/components/common/MobileNoticeGate";
+import { supabase } from "@/integrations/supabase/client";
+
+export type GateFeature = "full_part" | "full_test" | "marathon";
+
+export interface GateOpts {
+  feature: GateFeature;
+  itemKey: string;
+  setIds?: string[];
+  noCharge?: boolean;
+}
+
+const FEATURE_LABEL: Record<GateFeature, string> = {
+  full_part: "Luyện Full Part (miễn phí 3 đề)",
+  full_test: "Thi thử Full Test (miễn phí 1 đề)",
+  marathon: "Marathon (miễn phí 2 lượt)",
+};
+
 
 interface MinimalSet {
   access_tier?: string | null;
@@ -29,6 +46,7 @@ export function useExamAccessGate() {
   const { openMobileNotice } = useMobileNotice();
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
+  const [quota, setQuota] = useState<{ feature: GateFeature; cap: number } | null>(null);
 
   const isLocked = useCallback(
     (set: MinimalSet | null | undefined) => {
@@ -41,7 +59,7 @@ export function useExamAccessGate() {
   );
 
   const guard = useCallback(
-    <T extends MinimalSet>(set: T, action: () => void) => {
+    <T extends MinimalSet>(set: T, action: () => void, opts?: GateOpts) => {
       if (authLoading) return;
       if (!user) {
         const back = `${location.pathname}${location.search}`;
@@ -52,13 +70,42 @@ export function useExamAccessGate() {
         openMobileNotice(() => action());
         return;
       }
-      if (isLocked(set)) {
-        const req = normalizeTier(set.access_tier);
-        setNeedTier(req === "premium" ? "premium" : "pro");
-        setOpen(true);
+      if (!opts) {
+        if (isLocked(set)) {
+          const req = normalizeTier(set.access_tier);
+          setNeedTier(req === "premium" ? "premium" : "pro");
+          setOpen(true);
+          return;
+        }
+        openMobileNotice(() => action());
         return;
       }
-      openMobileNotice(() => action());
+
+      if (!isLocked(set)) {
+        openMobileNotice(() => action());
+        return;
+      }
+
+      void (async () => {
+        if (!opts.noCharge) {
+          const { data, error } = await supabase.rpc("try_open_item", {
+            p_feature: opts.feature,
+            p_item_key: opts.itemKey,
+            p_skill: null,
+          } as any);
+          const res = (data ?? {}) as { allowed?: boolean; cap?: number };
+          if (error || !res.allowed) {
+            setQuota({ feature: opts.feature, cap: Number(res.cap ?? 0) });
+            setNeedTier("pro");
+            setOpen(true);
+            return;
+          }
+        }
+        if (opts.setIds && opts.setIds.length) {
+          await supabase.rpc("open_sets_bulk", { p_set_ids: opts.setIds } as any);
+        }
+        openMobileNotice(() => action());
+      })();
     },
     [isLocked, loading, user, authLoading, navigate, location.pathname, location.search, openMobileNotice],
   );
@@ -67,12 +114,15 @@ export function useExamAccessGate() {
     <UpgradeLock
       asModal
       open={open}
-      onOpenChange={setOpen}
-      reason={needTier}
-      need={needTier}
-      featureLabel="Đề này"
+      onOpenChange={(v) => { setOpen(v); if (!v) setQuota(null); }}
+      reason={quota ? "quota_exceeded" : needTier}
+      need={quota ? "pro" : needTier}
+      freeQuota={quota ? quota.cap : undefined}
+      remaining={quota ? 0 : undefined}
+      featureLabel={quota ? FEATURE_LABEL[quota.feature] : "Đề này"}
     />
   );
+
 
   return { isPro, isProLoading: loading, guard, isLocked, LockModal, tier };
 }

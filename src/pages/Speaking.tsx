@@ -357,9 +357,9 @@ const Speaking = () => {
                 skillName="Speaking"
                 sets={fullSets}
                 loading={fullLoading}
-                onStart={(set) => guard(set as any, () => handleStartFullPractice(set))}
+                onStart={(set) => guard(set as any, () => handleStartFullPractice(set), { feature: 'full_part', itemKey: set.fullTestId, setIds: set.examSetIds })}
                 isLocked={isLocked}
-                onLockedClick={(set) => guard(set, () => {})}
+                onLockedClick={(set) => guard(set as any, () => handleStartFullPractice(set), { feature: 'full_part', itemKey: set.fullTestId, setIds: set.examSetIds })}
               />
             )
           ) : (

@@ -2361,6 +2361,7 @@ export type Database = {
         }
         Returns: number
       }
+      open_sets_bulk: { Args: { p_set_ids: string[] }; Returns: boolean }
       promo_active: { Args: never; Returns: boolean }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
