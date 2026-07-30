@@ -96,9 +96,28 @@ export async function gradeWritingPartV2(
     body: gradePayload,
   });
   if (error || !data || (data as any).error) {
+    const errCode = (data as any)?.error;
+    if (errCode === "quota_exceeded" || errCode === "disabled") {
+      // Quota is not a technical failure — never retry it through the queue.
+      if (opts?.testResultId) {
+        try {
+          await (supabase as any)
+            .from("test_results")
+            .update({ grade_payload: null })
+            .eq("id", opts.testResultId);
+        } catch (e) {
+          console.warn("[gradeWritingPartV2] failed to clear grade_payload:", e);
+        }
+      }
+      throw new QuotaExceededError({
+        used: Number((data as any).used ?? 0),
+        cap: Number((data as any).freeQuota ?? (data as any).proQuota ?? 0),
+        tier: String((data as any).tier ?? "free"),
+        need: "pro",
+      });
+    }
     // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
-    await enqueueGradingFallback({
-      skill: "writing",
+
       partType,
       testResultId: opts?.testResultId ?? null,
       examSetId: opts?.examSetId ?? null,
