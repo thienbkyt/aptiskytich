@@ -1652,6 +1652,7 @@ export type Database = {
           exam_set_id: string | null
           full_test_id: string | null
           full_test_session_id: string | null
+          grade_payload: Json | null
           id: string
           level: string
           review_snapshot: Json | null
@@ -1668,6 +1669,7 @@ export type Database = {
           exam_set_id?: string | null
           full_test_id?: string | null
           full_test_session_id?: string | null
+          grade_payload?: Json | null
           id?: string
           level: string
           review_snapshot?: Json | null
@@ -1684,6 +1686,7 @@ export type Database = {
           exam_set_id?: string | null
           full_test_id?: string | null
           full_test_session_id?: string | null
+          grade_payload?: Json | null
           id?: string
           level?: string
           review_snapshot?: Json | null
