@@ -105,6 +105,10 @@ function LockBody(props: UpgradeLockProps) {
       <div>
         <h3 className="text-lg font-heading font-bold text-foreground">{copy.title}</h3>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">{copy.desc}</p>
+        {resetNote && (
+          <p className="text-xs text-muted-foreground mt-2 max-w-sm">{resetNote}</p>
+        )}
+
         {(copy as any).remainingHint && (
           <p className="text-xs text-primary mt-2 font-medium">{(copy as any).remainingHint}</p>
         )}
