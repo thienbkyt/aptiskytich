@@ -22,13 +22,13 @@ function buildEmail(name: string, keyDate: string, unsubscribeUrl: string) {
   <p>Chào ${safeName},</p>
   <p>Đội ngũ <b>Aptis Kỳ Tích</b> vừa cập nhật bộ đề trọng tâm theo key dự đoán mới nhất. Hãy vào ôn ngay để bám sát đề thi sắp tới!</p>
   <p style="margin:22px 0">
-    <a href="${SITE_URL}/de-key-du-doan" style="background:#CC1C01;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Vào ôn theo key</a>
+    <a href="${SITE_URL}/key-du-doan" style="background:#CC1C01;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Vào ôn theo key</a>
   </p>
   <p style="color:#6b7280;font-size:13px;margin-top:24px">— Đội ngũ Aptis Kỳ Tích</p>
   <hr style="border:none;border-top:1px solid #eee;margin:20px 0"/>
   <p style="color:#9ca3af;font-size:12px">Không muốn nhận email này? <a href="${unsubscribeUrl}" style="color:#9ca3af">Hủy đăng ký</a>.</p>
 </div>`;
-  const text = `Chào ${name || "bạn"}, Key dự đoán ngày ${keyDate} đã cập nhật. Vào ôn ngay: ${SITE_URL}/de-key-du-doan`;
+  const text = `Chào ${name || "bạn"}, Key dự đoán ngày ${keyDate} đã cập nhật. Vào ôn ngay: ${SITE_URL}/key-du-doan`;
   return { subject, html, text };
 }
 
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       title: `🔑 Key dự đoán ngày ${keyDate} đã cập nhật`,
       body: "Bộ đề trọng tâm theo key mới nhất đã sẵn sàng. Vào ôn ngay để bám sát đề thi!",
       type: "key_update",
-      link_url: "/de-key-du-doan",
+      link_url: "/key-du-doan",
       is_active: true,
       created_by: userData.user.id,
     });
