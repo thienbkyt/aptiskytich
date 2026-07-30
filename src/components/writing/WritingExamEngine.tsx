@@ -309,10 +309,22 @@ const WritingExamEngine = ({
         window.dispatchEvent(new Event("exam-result-saved"));
       } catch (e) { console.warn("[Writing] save skill result failed", e); }
     } catch (e: any) {
-      toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
+      if (e instanceof QuotaExceededError) {
+        quotaHit = e.info;
+      } else {
+        toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
+      }
     } finally {
       setV2Loading(false);
     }
+
+    if (quotaHit) {
+      setQuotaModal(quotaHit);
+      setPhase("practice");
+      return;
+    }
+
+
 
     // Bake AI grading into the saved review_snapshot so History review is self-sufficient.
     try {
