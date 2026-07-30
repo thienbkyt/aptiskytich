@@ -171,16 +171,17 @@ Deno.serve(async (req) => {
 
     if (upsertErr) {
       console.error("Subscription upsert failed", upsertErr);
+      // Release the order so PayOS retry can grant the tier next time
+      await admin.from("payments").update({
+        status: "pending",
+        paid_at: null,
+      }).eq("id", (payment as any).id);
       return new Response(JSON.stringify({ error: "Internal error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Mark paid
-    await admin.from("payments").update({
-      status: "paid",
-      paid_at: new Date().toISOString(),
-    }).eq("id", (payment as any).id);
+
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
