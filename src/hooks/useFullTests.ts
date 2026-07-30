@@ -86,6 +86,7 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
           title: ft.title,
           skills: skillArr,
           skillCount: skillArr.length,
+          examSetIds: memberIds,
           isReady,
           category: (ft.category as "aptis" | "key") ?? null,
           access_tier: maxTier,
