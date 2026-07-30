@@ -20,6 +20,10 @@ import { HistorySkeleton, TechSkeletonRow } from "@/components/ui/tech-skeleton"
 import { getSkillBand } from "@/data/questions";
 import { computeHistoryDisplay } from "@/lib/historyDisplay";
 import { toTimeSafe } from "@/lib/safeDate";
+import {
+  Pagination, PaginationContent, PaginationItem, PaginationLink,
+  PaginationPrevious, PaginationNext, PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface HistoryRow {
   id: string;
@@ -106,6 +110,8 @@ const SKILL_ROUTES: Record<string, string> = {
 
 const VALID_MARATHON_PARTS = ["part1", "part2", "part3", "part4"];
 
+const PAGE_SIZE = 50;
+
 const SKILL_ICON: Record<string, any> = {
   grammar: GraduationCap,
   reading: BookOpen,
@@ -148,6 +154,7 @@ const History = () => {
   const [groupedMarathonRowIds, setGroupedMarathonRowIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     if (!user) return;
@@ -564,6 +571,27 @@ const History = () => {
     );
   }, [perSkillRows, fullPartGroups, marathonGroups, skillFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
+  const pagedItems = filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [skillFilter]);
+  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+
+  const pageNumbers = useMemo<(number | "ellipsis")[]>(() => {
+    const out: (number | "ellipsis")[] = [];
+    const want = new Set<number>([1, totalPages, page - 1, page, page + 1]);
+    const list = Array.from(want).filter((n) => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+    let prev = 0;
+    for (const n of list) {
+      if (prev && n - prev > 1) out.push("ellipsis");
+      out.push(n);
+      prev = n;
+    }
+    return out;
+  }, [page, totalPages]);
+
+
+
   // Top stats
   const stats = useMemo(() => {
     const totalAttempts =
@@ -727,7 +755,7 @@ const History = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.map((item) => {
+                  {pagedItems.map((item) => {
                     if (item.kind === "group") {
                       const g = item.group;
                       const Icon = SKILL_ICON[g.skill] || ListChecks;
@@ -898,7 +926,50 @@ const History = () => {
                   })}
                 </TableBody>
               </Table>
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    Hiện {(page - 1) * PAGE_SIZE + 1}-{Math.min(page * PAGE_SIZE, filteredItems.length)} trong tổng {filteredItems.length} lượt
+                  </p>
+                  <Pagination className="mx-0 w-auto justify-end">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          aria-disabled={page === 1}
+                          className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
+                        />
+                      </PaginationItem>
+                      {pageNumbers.map((p, i) =>
+                        p === "ellipsis" ? (
+                          <PaginationItem key={`e-${i}`}><PaginationEllipsis /></PaginationItem>
+                        ) : (
+                          <PaginationItem key={p}>
+                            <PaginationLink
+                              href="#"
+                              isActive={p === page}
+                              onClick={(e) => { e.preventDefault(); setPage(p); }}
+                            >
+                              {p}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={page === totalPages}
+                          className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                          onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </div>
+
           )}
         </div>
       </main>
