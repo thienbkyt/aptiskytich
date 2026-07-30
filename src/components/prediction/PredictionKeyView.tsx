@@ -644,7 +644,7 @@ export default function PredictionKeyView() {
                   const scoreEl = b ? (
                     <span className="text-xs font-semibold text-foreground">{b.score}/{b.total}</span>
                   ) : null;
-                  const statusEl = b ? (
+                  const statusEl = attempted.has(it.exam_set_id) ? (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
                     </span>
