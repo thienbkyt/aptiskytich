@@ -193,9 +193,8 @@ export default function PricingPage() {
       )}
       <Button
         variant="outline"
-        className="mt-auto pt-0 w-full border-border text-foreground hover:bg-muted"
-        style={{ marginTop: "auto" }}
-        disabled={buying === plan.key}
+        className="mt-auto w-full border-border text-foreground hover:bg-muted"
+
         onClick={() => onPick(plan)}
       >
         {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
