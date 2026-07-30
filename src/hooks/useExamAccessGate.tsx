@@ -86,12 +86,22 @@ export function useExamAccessGate() {
         return;
       }
 
+      if (opts.noCharge) {
+        // Resume: the opened_set rows were already created when the run started.
+        openMobileNotice(() => action());
+        return;
+      }
+
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
+
       void (async () => {
-        if (!opts.noCharge) {
+        try {
           const { data, error } = await supabase.rpc("try_open_item", {
             p_feature: opts.feature,
             p_item_key: opts.itemKey,
             p_skill: null,
+            p_set_ids: opts.setIds ?? null,
           } as any);
           const res = (data ?? {}) as { allowed?: boolean; cap?: number };
           if (error || !res.allowed) {
@@ -100,12 +110,12 @@ export function useExamAccessGate() {
             setOpen(true);
             return;
           }
+          openMobileNotice(() => action());
+        } finally {
+          inFlightRef.current = false;
         }
-        if (opts.setIds && opts.setIds.length) {
-          await supabase.rpc("open_sets_bulk", { p_set_ids: opts.setIds } as any);
-        }
-        openMobileNotice(() => action());
       })();
+
     },
     [isLocked, loading, user, authLoading, navigate, location.pathname, location.search, openMobileNotice],
   );
