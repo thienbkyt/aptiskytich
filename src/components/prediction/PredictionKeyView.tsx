@@ -121,7 +121,7 @@ interface MarathonState {
 
 export default function PredictionKeyView() {
   const { user } = useAuth();
-  const { isPremium, loading: tierLoading } = useIsPro();
+  const { isPro, loading: tierLoading } = useIsPro();
   const navigate = useNavigate();
 
   const [keys, setKeys] = useState<KeyRow[]>([]);
