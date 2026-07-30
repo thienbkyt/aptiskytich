@@ -6,6 +6,23 @@ import UpgradeLock from "@/components/pro/UpgradeLock";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useMobileNotice } from "@/components/common/MobileNoticeGate";
+import { supabase } from "@/integrations/supabase/client";
+
+export type GateFeature = "full_part" | "full_test" | "marathon";
+
+export interface GateOpts {
+  feature: GateFeature;
+  itemKey: string;
+  setIds?: string[];
+  noCharge?: boolean;
+}
+
+const FEATURE_LABEL: Record<GateFeature, string> = {
+  full_part: "Luyện Full Part (miễn phí 3 đề)",
+  full_test: "Thi thử Full Test (miễn phí 1 đề)",
+  marathon: "Marathon (miễn phí 2 lượt)",
+};
+
 
 interface MinimalSet {
   access_tier?: string | null;
