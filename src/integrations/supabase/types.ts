@@ -1871,18 +1871,24 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          ai_daily_cap: number | null
+          plan_key: string | null
           pro_until: string | null
           tier: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
           pro_until?: string | null
           tier?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
           pro_until?: string | null
           tier?: string
           updated_at?: string
