@@ -2384,7 +2384,12 @@ export type Database = {
       tier_rank: { Args: { t: string }; Returns: number }
       touch_last_active: { Args: never; Returns: undefined }
       try_open_item: {
-        Args: { p_feature: string; p_item_key: string; p_skill?: string }
+        Args: {
+          p_feature: string
+          p_item_key: string
+          p_set_ids?: string[]
+          p_skill?: string
+        }
         Returns: Json
       }
       user_tier: { Args: { p_uid: string }; Returns: string }
