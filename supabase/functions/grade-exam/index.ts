@@ -641,7 +641,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       try {
         if (userId) {
           await serviceClient.from("feature_usage").insert({
-            user_id: userId, feature_key: "ai_grading_speaking", scope: null, ref_id: null,
+            user_id: userId, feature_key: "ai_grading_speaking", scope: null, ref_id: (body.gradingSessionId ?? null),
           });
         }
       } catch { /* ignore */ }
