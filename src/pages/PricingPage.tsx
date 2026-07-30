@@ -228,122 +228,136 @@ export default function PricingPage() {
             )}
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <section className="mt-10 rounded-3xl bg-[#FFF8F5] dark:bg-muted/30 border border-border/60 p-5 sm:p-8 lg:p-10">
+            {loading ? (
+              <div className="flex justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.22fr_1fr] gap-5 items-stretch">
+                {/* Card 1 — Ngắn hạn */}
+                {shortPlan && (
+                  <div className="order-4 lg:order-none rounded-2xl border border-border bg-card shadow-sm p-5 flex flex-col h-full">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-muted-foreground">Ngắn hạn</p>
+                      <div className="inline-flex rounded-full bg-muted p-0.5">
+                        {(["day", "week"] as const).map((k) => (
+                          <button
+                            key={k}
+                            onClick={() => setShortKey(k)}
+                            className={cn(
+                              "px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-colors",
+                              shortKey === k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                            )}
+                          >
+                            {k === "day" ? "1 ngày" : "1 tuần"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-2xl font-bold tracking-tight text-foreground">{formatVnd(shortPlan.price_vnd)}</span>
+                    </div>
+                    {perDay(shortPlan) != null && (
+                      <p className="text-sm font-semibold text-[#CC1C01] mt-1.5">
+                        {formatVnd(perDay(shortPlan)!)}/ngày
+                      </p>
+                    )}
+                    <div className="mt-2 min-h-[22px]"><SavingBadge p={shortPlan} /></div>
+                    {shortPlan.ai_daily_cap != null && (
+                      <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
+                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {shortPlan.ai_daily_cap} lượt AI/ngày
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="mt-auto w-full border-border text-foreground hover:bg-muted"
+                      disabled={buying === shortPlan.key}
+                      onClick={() => onPick(shortPlan)}
+                    >
+                      {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Chọn gói
+                    </Button>
+                  </div>
+                )}
+
+                {/* Card 2 — 1 tháng */}
+                {monthPlan && <PlanCard plan={monthPlan} order="order-2 lg:order-none" />}
+
+                {/* Card 3 — hero */}
+                {heroPlan && (
+                  <div className="order-1 lg:order-none relative rounded-2xl bg-card p-6 lg:p-7 flex flex-col h-full border-2 border-[#CC1C01] shadow-md">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1C01] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                      Được lựa chọn nhiều nhất
+                    </span>
+                    <p className="text-sm font-semibold text-muted-foreground mt-1">{heroPlan.label}</p>
+                    <div className="mt-2">
+                      <span className="text-4xl font-extrabold tracking-tight text-foreground">{formatVnd(heroPlan.price_vnd)}</span>
+                    </div>
+                    {perDay(heroPlan) != null && (
+                      <p className="text-sm font-semibold text-[#CC1C01] mt-1.5">
+                        {formatVnd(perDay(heroPlan)!)}/ngày
+                      </p>
+                    )}
+                    <div className="mt-2 min-h-[22px]"><SavingBadge p={heroPlan} /></div>
+                    {heroPlan.ai_daily_cap != null && (
+                      <p className="text-xs text-foreground font-medium mt-1.5 flex items-center gap-1">
+                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {heroPlan.ai_daily_cap} lượt AI/ngày — cao nhất
+                      </p>
+                    )}
+                    <Button
+                      className="mt-auto w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
+                      disabled={buying === heroPlan.key}
+                      onClick={() => onPick(heroPlan)}
+                    >
+                      {buying === heroPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Bắt đầu {heroPlan.label}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Card 4 — 6 tháng */}
+                {halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
+                  <PlanCard plan={halfYearPlan} order="order-3 lg:order-none" />
+                )}
+              </div>
+            )}
+
+            {/* All plans include */}
+            <div className="mt-6 rounded-2xl bg-card border border-border shadow-sm p-6">
+              <h2 className="text-lg font-heading font-bold text-foreground mb-4">Tất cả các gói đều có</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {ALL_INCLUDED.map((f) => (
+                  <div key={f} className="flex items-start gap-2 text-sm text-foreground">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>{f}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.22fr_1fr] gap-5 lg:items-end">
-              {/* Card 1 — Ngắn hạn */}
-              {shortPlan && (
-                <div className="order-4 lg:order-none rounded-2xl border border-border bg-card p-5 flex flex-col">
-                  <p className="text-sm font-heading font-bold text-foreground">Ngắn hạn</p>
-                  <div className="mt-2 inline-flex rounded-full bg-muted p-0.5 self-start">
-                    {(["day", "week"] as const).map((k) => (
-                      <button
-                        key={k}
-                        onClick={() => setShortKey(k)}
-                        className={cn(
-                          "px-3 py-1 text-xs font-semibold rounded-full transition-colors",
-                          shortKey === k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
-                        )}
-                      >
-                        {k === "day" ? "1 ngày" : "1 tuần"}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-3">
-                    <span className="text-2xl font-extrabold text-foreground">{formatVnd(shortPlan.price_vnd)}</span>
-                  </div>
-                  {perDay(shortPlan) != null && (
-                    <p className="text-sm font-semibold text-[#CC1C01] mt-1">
-                      {formatVnd(perDay(shortPlan)!)}/ngày
-                    </p>
-                  )}
-                  <div className="mt-2 min-h-[22px]"><SavingBadge p={shortPlan} /></div>
-                  {shortPlan.ai_daily_cap != null && (
-                    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {shortPlan.ai_daily_cap} lượt AI/ngày
-                    </p>
-                  )}
-                  <Button
-                    variant="outline"
-                    className="mt-5 w-full"
-                    disabled={buying === shortPlan.key}
-                    onClick={() => onPick(shortPlan)}
-                  >
-                    {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Chọn gói
-                  </Button>
-                </div>
-              )}
 
-              {/* Card 2 — 1 tháng */}
-              {monthPlan && <PlanCard plan={monthPlan} order="order-2 lg:order-none" />}
-
-              {/* Card 3 — hero */}
-              {heroPlan && (
-                <div className="order-1 lg:order-none relative rounded-2xl bg-card p-6 lg:p-7 flex flex-col border-2 border-[#CC1C01] shadow-lg">
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1C01] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                    Được lựa chọn nhiều nhất
-                  </span>
-                  <p className="text-base font-heading font-bold text-foreground">{heroPlan.label}</p>
-                  <div className="mt-3">
-                    <span className="text-4xl font-extrabold text-foreground">{formatVnd(heroPlan.price_vnd)}</span>
-                  </div>
-                  {perDay(heroPlan) != null && (
-                    <p className="text-base font-bold text-[#CC1C01] mt-1">
-                      {formatVnd(perDay(heroPlan)!)}/ngày
-                    </p>
-                  )}
-                  <div className="mt-2 min-h-[22px]"><SavingBadge p={heroPlan} /></div>
-                  {heroPlan.ai_daily_cap != null && (
-                    <p className="text-xs text-foreground font-medium mt-2 flex items-center gap-1">
-                      <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {heroPlan.ai_daily_cap} lượt AI/ngày — cao nhất
-                    </p>
-                  )}
-                  <Button
-                    className="mt-5 w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
-                    disabled={buying === heroPlan.key}
-                    onClick={() => onPick(heroPlan)}
-                  >
-                    {buying === heroPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Bắt đầu {heroPlan.label}
-                  </Button>
-                </div>
-              )}
-
-              {/* Card 4 — 6 tháng */}
-              {halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
-                <PlanCard plan={halfYearPlan} order="order-3 lg:order-none" />
-              )}
-            </div>
-          )}
-
-          {/* All plans include */}
-          <div className="mt-12 rounded-2xl bg-muted/40 border border-border p-6">
-            <h2 className="text-lg font-heading font-bold text-foreground mb-4">Tất cả các gói đều có</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {ALL_INCLUDED.map((f) => (
-                <div key={f} className="flex items-start gap-2 text-sm text-foreground">
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>{f}</span>
-                </div>
+            {/* Trust row */}
+            <div className="mt-6 flex flex-wrap justify-center items-center gap-2">
+              {[
+                { icon: ShieldCheck, text: "PayOS — kích hoạt tự động ~1 phút" },
+                { icon: Users, text: "1.300+ học viên" },
+                { icon: CalendarClock, text: "Key cập nhật mỗi sáng" },
+              ].map(({ icon: Icon, text }) => (
+                <span
+                  key={text}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3 py-1.5 text-[12px] text-muted-foreground"
+                >
+                  <Icon className="w-3.5 h-3.5" /> {text}
+                </span>
               ))}
             </div>
-          </div>
-
-          {/* Trust row */}
-          <div className="mt-6 flex flex-wrap justify-center items-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
-            <span>PayOS — kích hoạt tự động ~1 phút</span>
-            <span>1.300+ học viên</span>
-            <span>Key cập nhật mỗi sáng</span>
-          </div>
+          </section>
 
           {/* Compare table */}
-          <div className="mt-12">
+          <div className="mt-14">
             <h2 className="text-xl font-heading font-bold text-foreground mb-4 text-center">So sánh chi tiết</h2>
-            <div className="overflow-x-auto">
+            <div className="max-w-2xl mx-auto overflow-x-auto">
+
               <table className="w-full border-separate border-spacing-0 text-sm">
                 <thead>
                   <tr>
