@@ -147,31 +147,68 @@ const History = () => {
   const [marathonGroups, setMarathonGroups] = useState<MarathonGroup[]>([]);
   const [groupedMarathonRowIds, setGroupedMarathonRowIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setLoadError(null);
+      const warn = (table: string, error: any) => {
+        console.error(`[History] query failed: ${table}`, error);
+        setLoadError("Không tải được đầy đủ lịch sử, thử tải lại trang.");
+      };
       try {
-        const { data: results } = await supabase
-          .from("test_results")
-          .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores,full_test_session_id,full_test_id,review_snapshot")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+        // Tải theo lô để không bị Supabase cắt cứng ở 1.000 dòng
+        const PAGE = 1000;
+        const MAX_PAGES = 20;
+        const results: any[] = [];
+        let mainFailed = false;
+        for (let page = 0; page < MAX_PAGES; page++) {
+          const from = page * PAGE;
+          const { data, error } = await supabase
+            .from("test_results")
+            .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores,full_test_session_id,full_test_id,review_snapshot")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .range(from, from + PAGE - 1);
+          if (error) {
+            warn("test_results", error);
+            mainFailed = true;
+            break;
+          }
+          const batch = data || [];
+          results.push(...batch);
+          if (batch.length < PAGE) break;
+        }
+        if (mainFailed) {
+          if (!cancelled) setLoading(false);
+          return;
+        }
+
+        const chunk = <T,>(arr: T[], size: number): T[][] => {
+          const out: T[][] = [];
+          for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+          return out;
+        };
+        const IN_CHUNK = 150;
 
         const setIds = Array.from(
           new Set((results || []).map((r: any) => r.exam_set_id).filter(Boolean))
         );
         const setsMap: Record<string, { title: string; skill: string; part: string }> = {};
         if (setIds.length > 0) {
-          const { data: sets } = await supabase
-            .from("exam_sets")
-            .select("id,title,skill,part")
-            .in("id", setIds);
-          (sets || []).forEach((s: any) => {
-            setsMap[s.id] = { title: s.title, skill: s.skill, part: s.part };
-          });
+          for (const ids of chunk(setIds, IN_CHUNK)) {
+            const { data: sets, error } = await supabase
+              .from("exam_sets")
+              .select("id,title,skill,part")
+              .in("id", ids);
+            if (error) warn("exam_sets", error);
+            (sets || []).forEach((s: any) => {
+              setsMap[s.id] = { title: s.title, skill: s.skill, part: s.part };
+            });
+          }
         }
 
         const ftIds = Array.from(
@@ -179,15 +216,18 @@ const History = () => {
         );
         const ftMap: Record<string, string> = {};
         if (ftIds.length > 0) {
-          const { data: fts } = await supabase
-            .from("full_tests")
-            .select("id,title")
-            .in("id", ftIds);
-          (fts || []).forEach((f: any) => { ftMap[f.id] = f.title; });
+          for (const ids of chunk(ftIds, IN_CHUNK)) {
+            const { data: fts, error } = await supabase
+              .from("full_tests")
+              .select("id,title")
+              .in("id", ids);
+            if (error) warn("full_tests", error);
+            (fts || []).forEach((f: any) => { ftMap[f.id] = f.title; });
+          }
         }
 
         // AI gradings aggregated per test_result_id
-        const [{ data: wg }, { data: sg }] = await Promise.all([
+        const [{ data: wg, error: wgErr }, { data: sg, error: sgErr }] = await Promise.all([
           supabase
             .from("writing_question_gradings")
             .select("test_result_id,part_score,max_points")
@@ -197,6 +237,8 @@ const History = () => {
             .select("test_result_id,part_score,max_points")
             .eq("user_id", user.id),
         ]);
+        if (wgErr) warn("writing_question_gradings", wgErr);
+        if (sgErr) warn("speaking_question_gradings", sgErr);
         const writingAggMap: Record<string, { sum: number; max: number }> = {};
         (wg || []).forEach((g: any) => {
           if (!g.test_result_id) return;
@@ -216,7 +258,7 @@ const History = () => {
 
         // Official Writing/Speaking skill scores (single source of truth),
         // keyed by full-part session id. History must READ these, never recompute.
-        const [{ data: wsr }, { data: ssr }] = await Promise.all([
+        const [{ data: wsr, error: wsrErr }, { data: ssr, error: ssrErr }] = await Promise.all([
           supabase
             .from("writing_skill_results")
             .select("full_test_session_id,scale50,cefr,created_at")
@@ -228,6 +270,9 @@ const History = () => {
             .eq("user_id", user.id)
             .not("full_test_session_id", "is", null),
         ]);
+        if (wsrErr) warn("writing_skill_results", wsrErr);
+        if (ssrErr) warn("speaking_skill_results", ssrErr);
+
         type OfficialScore = { scale50: number; cefr: string | null };
         // Writing và Speaking phải TÁCH map riêng: trong phiên Full Test thật hai kỹ năng
         // dùng CHUNG một full_test_session_id nên gộp chung sẽ bị ghi đè lẫn nhau.
@@ -564,6 +609,14 @@ const History = () => {
             <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground">Lịch sử làm bài</h1>
           </div>
           <p className="text-muted-foreground mb-6">Toàn bộ kết quả các bài bạn đã hoàn thành.</p>
+
+          {loadError && (
+            <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {loadError}
+            </div>
+          )}
+
+
 
           {/* Stats strip */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
