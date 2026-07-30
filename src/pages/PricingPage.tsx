@@ -154,9 +154,9 @@ export default function PricingPage() {
   };
 
   const bankInfo = useMemo(() => ({
-    bank: "Vietcombank",
-    number: "0123456789",
-    name: "APTIS KỲ TÍCH",
+    bank: "Ngân hàng TMCP Kiên Long",
+    number: "10142607300684752",
+    name: "NGUYEN TRONG GIANG",
   }), []);
 
   const tierLabel = isPremium ? "Premium" : isPro ? "Pro" : "Free";
