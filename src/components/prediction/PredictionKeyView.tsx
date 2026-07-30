@@ -128,6 +128,7 @@ export default function PredictionKeyView() {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [items, setItems] = useState<ItemRow[]>([]);
   const [best, setBest] = useState<Map<string, BestScore>>(new Map());
+  const [attempted, setAttempted] = useState<Set<string>>(new Set());
   const [loadingKeys, setLoadingKeys] = useState(true);
   const [loadingItems, setLoadingItems] = useState(false);
 
