@@ -78,6 +78,19 @@ export async function gradeWritingPartV2(
     text,
     parts,
   };
+  // Persist the exact grading payload BEFORE calling the AI, so a closed tab /
+  // dropped connection can be re-graded faithfully later. Never blocks grading.
+  if (opts?.testResultId) {
+    try {
+      await (supabase as any)
+        .from("test_results")
+        .update({ grade_payload: gradePayload })
+        .eq("id", opts.testResultId);
+    } catch (e) {
+      console.warn("[gradeWritingPartV2] failed to persist grade_payload:", e);
+    }
+  }
+
   const { data, error } = await supabase.functions.invoke("grade-exam", {
     body: gradePayload,
   });
