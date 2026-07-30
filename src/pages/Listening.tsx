@@ -481,7 +481,7 @@ const Listening = () => {
               {hasPriority && (
                 <div className="mb-4">
                   <p className="text-xs text-muted-foreground mb-2">
-                    Nhãn ưu tiên lấy từ key dự đoán đang hiệu lực (key mới nhất đã đăng) — Ưu tiên cao là đề nên luyện trước.
+                    Nhãn ưu tiên là các đề hay thi vào gần đây — Ưu tiên cao là đề nên luyện trước.
                   </p>
                   <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
                 </div>
