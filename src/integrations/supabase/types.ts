@@ -1851,6 +1851,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_opened_items: {
+        Row: {
+          created_at: string
+          feature: string
+          id: string
+          item_key: string
+          skill: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature: string
+          id?: string
+          item_key: string
+          skill?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature?: string
+          id?: string
+          item_key?: string
+          skill?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -2352,6 +2379,10 @@ export type Database = {
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
       touch_last_active: { Args: never; Returns: undefined }
+      try_open_item: {
+        Args: { p_feature: string; p_item_key: string; p_skill?: string }
+        Returns: Json
+      }
       user_tier: { Args: { p_uid: string }; Returns: string }
     }
     Enums: {
