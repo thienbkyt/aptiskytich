@@ -1248,7 +1248,7 @@ ${partsIn.formalText ?? ""}`;
       if (userId) {
         try {
           await serviceClient.from("feature_usage").insert({
-            user_id: userId, feature_key: "ai_grading_writing", scope: null, ref_id: null,
+            user_id: userId, feature_key: "ai_grading_writing", scope: null, ref_id: (body.gradingSessionId ?? null),
           });
         } catch (e) {
           console.warn("[grade-exam writing_v2] feature_usage insert failed:", (e as any)?.message || e);
