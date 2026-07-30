@@ -887,11 +887,15 @@ RETURN VIA TOOL CALL. Mọi lỗi liệt kê ĐẦY ĐỦ, mỗi lỗi 1 dòng {
 
       if (pt === "task1") {
         systemPromptV2 = `You are an expert Aptis Writing Part 1 grader (5 short answers, 1-5 từ mỗi câu). NO word-count cap.
-Chấm mỗi câu là "correct" khi VỪA đúng nội dung yêu cầu VỪA đúng chính tả/ngữ pháp. Trả về:
+Aptis Part 1 yêu cầu 1-5 TỪ, CỤM NGẮN LÀ HỢP LỆ và không cần chủ ngữ + động từ. Chấm correct = true khi cụm trả lời ĐÚNG NỘI DUNG câu hỏi và không có lỗi chính tả, KHÔNG trừ vì thiếu chủ ngữ, thiếu động từ hay thiếu mạo từ nếu cụm đó vẫn tự nhiên trong tiếng Anh (ví dụ 'In the evening', 'Twice a week', 'Reading books' đều ĐÚNG). Chỉ chấm sai khi: trả lời lệch nội dung, sai chính tả, hoặc dùng sai giới từ/mạo từ khiến cụm không tự nhiên. Trả về:
 - items: mảng 5 phần tử { correct: boolean, reason: string (tiếng Việt, ngắn) }
 - grammarErrors, spellingErrors: liệt kê đầy đủ (không bắt buộc questionIndex).
 - feedback: tiếng Việt theo thứ tự Task → Grammar/chính tả → Vocabulary. KHÔNG gợi ý nâng cấp.
-- improvedVersion: bản MẪU hoàn chỉnh cho 5 câu, MỖI dòng một CÂU NGẮN HOÀN CHỈNH (3–6 từ, có chủ ngữ + động từ, đúng chính tả/ngữ pháp), BÁM SÁT nội dung câu học viên đã trả lời (kể cả khi học viên chỉ viết 1 từ cụt). TUYỆT ĐỐI KHÔNG echo lại câu cụt. Ví dụ: học viên viết "hot" → "It's hot today." ; học viên viết "june" → "My favorite season is summer." ; học viên viết "book" → "I like reading books." Đánh số 1., 2., 3., 4., 5.
+- improvedVersion: 5 dòng, đánh số 1..5, mỗi dòng là bản CHỮA LẠI câu trả lời của học viên cho câu hỏi tương ứng trong danh sách Prompts. Nguyên tắc theo thứ tự ưu tiên:
+  (a) Bài mẫu BẮT BUỘC trả lời đúng câu hỏi. Nếu học viên trả lời lệch đề, viết linh tinh hoặc để trống thì BỎ nội dung đó và viết câu trả lời đúng cho câu hỏi.
+  (b) Nếu nội dung học viên viết đã đúng hướng câu hỏi thì GIỮ NGUYÊN ý đó, chỉ sửa chính tả/giới từ/mạo từ và rút về đúng dạng ngắn. Không bịa nội dung khác.
+  (c) Định dạng chuẩn Part 1: 1-5 TỪ, cụm ngắn tự nhiên, KHÔNG viết thành câu đầy đủ, KHÔNG viết 2 câu.
+  Ví dụ: hỏi 'What do you like to do in the evening?' — học viên viết 'I like reading books' → mẫu 'Reading books'; học viên viết 'hot' (lệch đề) → mẫu 'Watching films'; hỏi 'When do you usually study?' — học viên viết 'evening' → mẫu 'In the evening'.
 - forcedComplexity: boolean.
 ${SHARED_RUBRIC}`;
         userText = `partType: task1
