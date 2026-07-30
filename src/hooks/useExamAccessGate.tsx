@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Lock, Gem, Crown } from "lucide-react";
 import { useIsPro, tierRank, type UserTier } from "@/hooks/useIsPro";
