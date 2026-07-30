@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Check, Crown, Gem, Loader2, Sparkles, X } from "lucide-react";
+import { Check, Crown, Loader2, Sparkles, X, Zap } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -26,54 +26,40 @@ type PricingPlan = {
   sort_order: number;
   note: string | null;
   tier?: "pro" | "premium" | null;
+  ai_daily_cap?: number | null;
 };
 
 function formatVnd(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
 }
 
-function planBadge(p: PricingPlan) {
-  if (!p.highlight) return null;
-  if (p.duration_days == null) return "Hời nhất";
-  return "Phổ biến";
-}
-
 const FREE_PERKS = [
-  "Một số đề luyện cơ bản (Free)",
-  "Học từ vựng & flashcard giới hạn",
-  "Tra từ inline trong bài",
-  "Theo dõi tiến độ cơ bản",
+  "3 lượt chấm AI Writing + Speaking (trọn đời)",
+  "3 đề part lẻ mỗi kỹ năng",
+  "3 đề Luyện Full Part · 1 đề Thi thử Full Test",
+  "2 lượt Marathon",
+  "Bài mẫu, dịch cả câu, tra từ, Dictation, sổ từ vựng",
 ];
 
-const PRO_PERKS = [
-  "Mở khóa kho đề Pro (Reading, Listening, Writing, Speaking, G&V, Thi thử)",
-  "Chấm AI Speaking & Writing — số lượt cao theo tháng",
-  "Bài mẫu chuẩn band B1–C1",
-  "Dịch câu & tra từ chuyên sâu",
-  "Theo dõi tiến độ chi tiết",
+const PAID_PERKS = [
+  "Toàn bộ kho đề — part lẻ, Full Part, Thi thử",
+  "Đề Key Dự Đoán cập nhật hằng ngày",
+  "Chấm AI Speaking & Writing theo trần ngày của gói",
+  "Marathon không giới hạn",
+  "Đầy đủ tiện ích học tập",
 ];
 
-const PREMIUM_PERKS = [
-  "Đề Key Dự Đoán cập nhật hằng ngày (độc quyền Premium)",
-  "TẤT CẢ quyền lợi của Pro",
-  "Mở khóa kho đề Premium (cao cấp / mới nhất)",
-  "Chấm AI Speaking & Writing — KHÔNG GIỚI HẠN",
-  "AI Coach hỗ trợ học tập ưu tiên",
-  "Trọn đời — đầu tư một lần, dùng mãi mãi",
-];
-
-type CompareRow = { label: string; free: string | boolean; pro: string | boolean; premium: string | boolean };
+type CompareRow = { label: string; free: string | boolean; paid: string | boolean };
 const COMPARE_ROWS: CompareRow[] = [
-  { label: "Đề Key Dự Đoán (Update hằng ngày)", free: false, pro: false, premium: true },
-  { label: "Kho đề Free", free: true, pro: true, premium: true },
-  { label: "Kho đề Pro", free: false, pro: true, premium: true },
-  { label: "Kho đề Premium", free: false, pro: false, premium: true },
-  { label: "Chấm AI Writing", free: "3 lượt / tháng", pro: "10 lượt / tháng", premium: "Không giới hạn" },
-  { label: "Chấm AI Speaking", free: "3 lượt / tháng", pro: "10 lượt / tháng", premium: "Không giới hạn" },
-  { label: "AI Coach", free: false, pro: "Giới hạn", premium: "Ưu tiên" },
-  { label: "Tra từ inline", free: true, pro: true, premium: true },
-  { label: "Bài mẫu B1–C1", free: false, pro: true, premium: true },
-  { label: "Hỗ trợ", free: "Cộng đồng", pro: "Zalo/FB", premium: "Ưu tiên" },
+  { label: "Đề Key Dự Đoán", free: false, paid: true },
+  { label: "Kho đề part lẻ", free: "3 đề/kỹ năng", paid: "Toàn bộ" },
+  { label: "Luyện Full Part", free: "3 đề", paid: "Toàn bộ" },
+  { label: "Thi thử Full Test", free: "1 đề", paid: "Toàn bộ" },
+  { label: "Marathon", free: "2 lượt", paid: "Không giới hạn" },
+  { label: "Chấm AI Writing + Speaking", free: "3 lượt trọn đời", paid: "10-30 lượt/ngày theo gói" },
+  { label: "Bài mẫu B1-C", free: true, paid: true },
+  { label: "Dịch cả câu & tra từ", free: true, paid: true },
+  { label: "Hỗ trợ", free: "Cộng đồng", paid: "Zalo/FB ưu tiên" },
 ];
 
 export default function PricingPage() {
@@ -121,14 +107,17 @@ export default function PricingPage() {
     })();
   }, []);
 
-  const proPlans = useMemo(
-    () => plans.filter((p) => (p.tier ?? (p.duration_days == null ? "premium" : "pro")) === "pro"),
+  const paidPlans = useMemo(
+    () => plans.filter((p) => p.duration_days != null),
     [plans],
   );
-  const premiumPlans = useMemo(
-    () => plans.filter((p) => (p.tier ?? (p.duration_days == null ? "premium" : "pro")) === "premium"),
-    [plans],
-  );
+  const dayPlan = useMemo(() => plans.find((p) => p.key === "day"), [plans]);
+
+  const savingOf = (p: PricingPlan): number | null => {
+    if (!dayPlan || !p.duration_days || p.key === "day") return null;
+    const pct = Math.round((1 - p.price_vnd / (dayPlan.price_vnd * p.duration_days)) * 100);
+    return pct > 0 ? pct : null;
+  };
 
   const onPick = async (p: PricingPlan) => {
     if (!user) { navigate("/auth"); return; }
@@ -181,7 +170,7 @@ export default function PricingPage() {
               Chọn gói phù hợp với bạn
             </h1>
             <p className="text-muted-foreground mt-2">
-              Free để khởi động. Pro để học nghiêm túc. Premium để mở toàn bộ trọn đời.
+              Miễn phí để khởi động. Gói luyện thi theo thời hạn — từ 1 ngày đến 6 tháng, thời hạn càng dài càng tiết kiệm.
             </p>
             {(isPro || isPremium) && (
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold">
@@ -202,7 +191,7 @@ export default function PricingPage() {
                   <span className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
                     <Sparkles className="w-4 h-4 text-muted-foreground" />
                   </span>
-                  <h3 className="text-lg font-heading font-bold text-foreground">Free</h3>
+                  <h3 className="text-lg font-heading font-bold text-foreground">Miễn phí</h3>
                 </div>
                 <div className="mt-2 mb-1">
                   <span className="text-3xl font-extrabold text-foreground">0đ</span>
@@ -220,27 +209,27 @@ export default function PricingPage() {
                 </Button>
               </div>
 
-              {/* PRO */}
+              {/* PAID */}
               <div className={cn(
-                "rounded-2xl border bg-card p-6 flex flex-col relative",
+                "lg:col-span-2 rounded-2xl border bg-card p-6 flex flex-col relative",
                 "border-[#CC1C01] ring-2 ring-[#CC1C01]/20 shadow-md",
               )}>
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1C01] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                  Phổ biến
+                  Mở toàn bộ kho đề
                 </span>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-8 h-8 rounded-lg bg-[#CC1C01]/10 flex items-center justify-center">
                     <Crown className="w-4 h-4 text-[#CC1C01]" />
                   </span>
-                  <h3 className="text-lg font-heading font-bold text-foreground">Pro</h3>
+                  <h3 className="text-lg font-heading font-bold text-foreground">Gói luyện thi</h3>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">Chọn thời hạn phù hợp</p>
                 <div className="space-y-2 mb-4">
-                  {proPlans.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Chưa có gói Pro.</p>
+                  {paidPlans.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Chưa có gói nào.</p>
                   )}
-                  {proPlans.map((p) => {
-                    const badge = planBadge(p);
+                  {paidPlans.map((p) => {
+                    const saving = savingOf(p);
                     return (
                       <button
                         key={p.key}
@@ -252,15 +241,25 @@ export default function PricingPage() {
                         )}
                       >
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-semibold text-foreground truncate">{p.label}</p>
-                            {badge && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#CC1C01] text-white">{badge}</span>
+                            {p.highlight && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#CC1C01] text-white">Phổ biến</span>
+                            )}
+                            {saving != null && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white">
+                                Tiết kiệm {saving}%
+                              </span>
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {p.duration_days == null ? "Không thời hạn" : `${p.duration_days} ngày sử dụng`}
+                            {p.duration_days} ngày sử dụng
                           </p>
+                          {p.ai_daily_cap != null && (
+                            <p className="text-xs text-[#CC1C01] font-medium flex items-center gap-1 mt-0.5">
+                              <Zap className="w-3 h-3" /> {p.ai_daily_cap} lượt chấm AI/ngày
+                            </p>
+                          )}
                         </div>
                         <span className="text-lg font-extrabold text-[#CC1C01] shrink-0 flex items-center gap-1">
                           {buying === p.key && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -271,58 +270,13 @@ export default function PricingPage() {
                   })}
                 </div>
                 <ul className="space-y-2 mb-5">
-                  {PRO_PERKS.map((p) => (
+                  {PAID_PERKS.map((p) => (
                     <li key={p} className="flex gap-2 text-sm">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> <span>{p}</span>
                     </li>
                   ))}
                 </ul>
-                <p className="text-xs text-muted-foreground mt-auto">Bấm 1 gói để thanh toán qua payOS (chuyển khoản tự động). Hoặc <button onClick={() => proPlans[0] && setPicked(proPlans[0])} className="underline hover:text-[#CC1C01]">liên hệ admin thủ công</button>.</p>
-              </div>
-
-              {/* PREMIUM */}
-              <div className="rounded-2xl border-2 border-[#FEAD5F]/60 bg-gradient-to-b from-[#FEAD5F]/10 to-card p-6 flex flex-col relative shadow-md">
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                  Hời nhất · Trọn đời
-                </span>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center">
-                    <Gem className="w-4 h-4 text-white" />
-                  </span>
-                  <h3 className="text-lg font-heading font-bold text-foreground">Premium</h3>
-                </div>
-                {premiumPlans[0] && (
-                  <>
-                    <div className="mt-2 mb-1">
-                      <span className="text-3xl font-extrabold text-[#CC1C01]">
-                        {formatVnd(premiumPlans[0].price_vnd)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-4">Trọn đời — không gia hạn</p>
-                  </>
-                )}
-                {!premiumPlans[0] && (
-                  <p className="text-sm text-muted-foreground mb-4">Sắp ra mắt.</p>
-                )}
-                <ul className="space-y-2 mb-5">
-                  {PREMIUM_PERKS.map((p) => (
-                    <li key={p} className="flex gap-2 text-sm">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> <span>{p}</span>
-                    </li>
-                  ))}
-                </ul>
-                {premiumPlans[0] && (
-                  <Button
-                    onClick={() => onPick(premiumPlans[0])}
-                    disabled={buying === premiumPlans[0].key}
-                    className="mt-auto w-full gap-2 font-semibold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110"
-                  >
-                    {buying === premiumPlans[0].key
-                      ? <Loader2 className="w-4 h-4 animate-spin" />
-                      : <Gem className="w-4 h-4" />}
-                    Mua Premium
-                  </Button>
-                )}
+                <p className="text-xs text-muted-foreground mt-auto">Bấm 1 gói để thanh toán qua payOS (chuyển khoản tự động). Hoặc <button onClick={() => paidPlans[0] && setPicked(paidPlans[0])} className="underline hover:text-[#CC1C01]">liên hệ admin thủ công</button>.</p>
               </div>
             </div>
           )}
@@ -331,7 +285,7 @@ export default function PricingPage() {
           <div className="mt-14 rounded-2xl border border-border bg-card overflow-hidden">
             <div className="p-5 border-b border-border">
               <h2 className="text-xl font-heading font-bold text-foreground">So sánh nhanh</h2>
-              <p className="text-sm text-muted-foreground">Free · Pro · Premium</p>
+              <p className="text-sm text-muted-foreground">Miễn phí · Gói trả phí</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -339,12 +293,7 @@ export default function PricingPage() {
                   <tr className="bg-muted/50">
                     <th className="text-left p-3 font-semibold text-foreground">Tính năng</th>
                     <th className="p-3 font-semibold text-center">Free</th>
-                    <th className="p-3 font-semibold text-center text-[#CC1C01]">Pro</th>
-                    <th className="p-3 font-semibold text-center">
-                      <span className="inline-flex items-center gap-1 text-[#CC1C01]">
-                        <Gem className="w-3.5 h-3.5" /> Premium
-                      </span>
-                    </th>
+                    <th className="p-3 font-semibold text-center text-[#CC1C01]">Gói trả phí</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -352,8 +301,7 @@ export default function PricingPage() {
                     <tr key={row.label} className={i % 2 === 0 ? "" : "bg-muted/20"}>
                       <td className="p-3 text-foreground">{row.label}</td>
                       <td className="p-3 text-center"><Cell v={row.free} /></td>
-                      <td className="p-3 text-center"><Cell v={row.pro} /></td>
-                      <td className="p-3 text-center"><Cell v={row.premium} /></td>
+                      <td className="p-3 text-center"><Cell v={row.paid} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -376,7 +324,7 @@ export default function PricingPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {picked?.tier === "premium" ? <Gem className="w-5 h-5 text-[#CC1C01]" /> : <Crown className="w-5 h-5 text-[#CC1C01]" />}
+              <Crown className="w-5 h-5 text-[#CC1C01]" />
               Thanh toán gói {picked?.label}
             </DialogTitle>
             <DialogDescription>
@@ -406,8 +354,7 @@ export default function PricingPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Nội dung CK</span>
               <span className="font-mono text-xs font-semibold text-foreground">
-                {(picked?.tier === "premium" ? "PREMIUM " : "PRO ")}
-                {picked?.key.toUpperCase()} {user?.email ?? ""}
+                PRO {picked?.key.toUpperCase()} {user?.email ?? ""}
               </span>
             </div>
           </div>
