@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { splitWritingErrors } from "@/lib/writingErrorFilter";
+import { QuotaExceededError } from "@/lib/quotaError";
+
 
 
 export type WritingBandsV2 = {
@@ -117,8 +119,10 @@ export async function gradeWritingPartV2(
       });
     }
     // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
-
+    await enqueueGradingFallback({
+      skill: "writing",
       partType,
+
       testResultId: opts?.testResultId ?? null,
       examSetId: opts?.examSetId ?? null,
       fullTestSessionId: opts?.fullTestSessionId ?? null,
