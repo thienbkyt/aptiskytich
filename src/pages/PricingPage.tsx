@@ -450,7 +450,7 @@ export default function PricingPage() {
 
           {/* Mọi gói đều có */}
           <div className="mt-6 rounded-xl bg-muted px-6 py-5">
-            <p className="text-center text-sm font-semibold text-foreground">Mọi gói đều có đầy đủ</p>
+            <p className="text-center text-sm font-semibold text-foreground">Gói ôn tập đầy đủ các tính năng</p>
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
               {allIncluded.map((f) => (
                 <div key={f} className="flex items-start gap-2 text-[13px] text-muted-foreground">
