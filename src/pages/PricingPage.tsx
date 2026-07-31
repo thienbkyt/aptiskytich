@@ -219,7 +219,7 @@ export default function PricingPage() {
               Toàn bộ lộ trình ôn Aptis trong một tài khoản
             </h1>
             <p className="text-muted-foreground mt-2">
-              Mọi gói đều mở toàn bộ tính năng. Gói dài hơn: rẻ hơn mỗi ngày, nhiều lượt chấm AI hơn.
+              Mở khóa toàn bộ tính năng. Tối ưu thời gian ôn tập cùng AI và bộ Key chuẩn
             </p>
             {(isPro || isPremium) && (
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold">
