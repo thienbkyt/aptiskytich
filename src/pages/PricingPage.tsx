@@ -216,10 +216,10 @@ export default function PricingPage() {
               <Sparkles className="w-3.5 h-3.5 mr-1" /> Bảng giá
             </Badge>
             <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground">
-              Toàn bộ lộ trình ôn Aptis trong một tài khoản
+              Tất cả mọi thứ học trong một tài khoản
             </h1>
             <p className="text-muted-foreground mt-2">
-              Mở khóa toàn bộ tính năng. Tối ưu thời gian ôn tập cùng AI và bộ Key chuẩn
+              Mở khóa toàn bộ tính năng. Tối ưu thời gian ôn tập và đạt AIM cùng AI và bộ Key chuẩn
             </p>
             {(isPro || isPremium) && (
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-4 py-1.5 text-sm font-semibold">
