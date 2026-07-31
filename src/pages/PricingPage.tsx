@@ -34,12 +34,12 @@ function formatVnd(n: number) {
 }
 
 const ALL_INCLUDED = [
-  "Toàn bộ 596+ đề",
-  "Key Dự Đoán hằng ngày",
-  "Full Part + Thi thử",
+  "Hơn 596+ đề",
+  "Key Dự Đoán update hằng ngày",
+  "Ôn tập Fulltest - Từng part",
   "Marathon không giới hạn",
-  "Chấm AI có band điểm",
-  "Dịch câu · tra từ · bài mẫu",
+  "Chấm AI theo band điểm chuẩn bài thi",
+  "Dịch câu · tra từ ngay trong bài",
 ];
 
 type CompareRow = { label: string; free: string | boolean; paid: string | boolean };
