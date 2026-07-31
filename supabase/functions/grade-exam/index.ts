@@ -908,24 +908,56 @@ Sau mỗi nhãn xuống dòng rồi viết nội dung 1–3 câu tiếng Việt 
 
 RETURN VIA TOOL CALL. Mọi lỗi liệt kê ĐẦY ĐỦ, mỗi lỗi 1 dòng {original, corrected, explanation (tiếng Việt)}.`;
 
+      // Rubric rút gọn RIÊNG cho Part 1 (không band anchors, không 5 tiêu chí, không forced complexity)
+      const PART1_RUBRIC = `
+PHÂN LOẠI LỖI BẮT BUỘC:
+- Lỗi SAI CHÍNH TẢ thuần túy (viết sai từ, thiếu/thừa chữ cái, sai hoa/thường) LUÔN đưa vào spellingErrors, TUYỆT ĐỐI KHÔNG đưa vào grammarErrors.
+- grammarErrors chỉ chứa lỗi ngữ pháp thực sự; explanation KHÔNG được bắt đầu bằng "Lỗi chính tả".
+- CHỈ đưa một mục vào mảng khi "corrected" KHÁC "original" sau khi bỏ khoảng trắng thừa.
+
+KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
+- Nếu câu trả lời đúng ngữ pháp và đúng nghĩa, chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
+- Không viết explanation kiểu "không sai", "vẫn đúng nhưng…", "chỉ là … hơn".
+
+FEEDBACK FORMAT (BẮT BUỘC, 100% TIẾNG VIỆT):
+Chia feedback thành đúng 3 mục, MỖI mục bắt đầu bằng nhãn in đậm trên DÒNG RIÊNG, theo thứ tự:
+**Hoàn thành nhiệm vụ**
+**Ngữ pháp & chính tả**
+**Từ vựng**
+Sau mỗi nhãn xuống dòng rồi viết 1–3 câu tiếng Việt tự nhiên.
+
+RETURN VIA TOOL CALL.`;
+
       let systemPromptV2 = "";
       let userText = "";
       // Word-count reqs per part
       // P2: 20-30 · P3: 30-40/câu · P4: informal 40-50, formal 120-150 · P1: none
 
       if (pt === "task1") {
-        systemPromptV2 = `You are an expert Aptis Writing Part 1 grader (5 short answers, 1-5 từ mỗi câu). NO word-count cap.
-Aptis Part 1 yêu cầu 1-5 TỪ, CỤM NGẮN LÀ HỢP LỆ và không cần chủ ngữ + động từ. Chấm correct = true khi cụm trả lời ĐÚNG NỘI DUNG câu hỏi và không có lỗi chính tả, KHÔNG trừ vì thiếu chủ ngữ, thiếu động từ hay thiếu mạo từ nếu cụm đó vẫn tự nhiên trong tiếng Anh (ví dụ 'In the evening', 'Twice a week', 'Reading books' đều ĐÚNG). Chỉ chấm sai khi: trả lời lệch nội dung, sai chính tả, hoặc dùng sai giới từ/mạo từ khiến cụm không tự nhiên. Trả về:
-- items: mảng 5 phần tử { correct: boolean, reason: string (tiếng Việt, ngắn) }
+        systemPromptV2 = `You are an expert Aptis Writing Part 1 grader (5 short answers).
+
+QUY TẮC CHẤM TỪNG CÂU (bắt buộc):
+Một câu là correct = true khi thoả CẢ HAI điều kiện:
+(a) trả lời ĐÚNG NỘI DUNG câu hỏi;
+(b) KHÔNG có lỗi ngữ pháp hoặc lỗi chính tả.
+Nếu thoả cả hai → correct = true. Ngược lại → correct = false.
+
+TUYỆT ĐỐI KHÔNG XÉT ĐỘ DÀI câu trả lời. Câu trả lời dài hay ngắn, viết thành câu đầy đủ chủ ngữ + động từ hay chỉ là một cụm từ, đều được chấp nhận NHƯ NHAU và đều có thể correct = true. KHÔNG BAO GIỜ đánh correct = false vì lý do độ dài. KHÔNG BAO GIỜ khuyên học viên viết ngắn lại hay dài ra.
+
+Mỗi item PHẢI trả về reasonCode:
+- "ok" khi correct = true
+- "wrong_content" khi trả lời lệch nội dung câu hỏi
+- "grammar" khi có lỗi ngữ pháp (lỗi đó BẮT BUỘC phải xuất hiện trong grammarErrors)
+- "spelling" khi có lỗi chính tả (lỗi đó BẮT BUỘC phải xuất hiện trong spellingErrors)
+
+Trả về:
+- items: mảng 5 phần tử { correct: boolean, reason: string (tiếng Việt, ngắn), reasonCode }
 - grammarErrors, spellingErrors: liệt kê đầy đủ (không bắt buộc questionIndex).
-- feedback: tiếng Việt theo thứ tự Task → Grammar/chính tả → Vocabulary. KHÔNG gợi ý nâng cấp.
-- improvedVersion: 5 dòng, đánh số 1..5, mỗi dòng là bản CHỮA LẠI câu trả lời của học viên cho câu hỏi tương ứng trong danh sách Prompts. Nguyên tắc theo thứ tự ưu tiên:
-  (a) Bài mẫu BẮT BUỘC trả lời đúng câu hỏi. Nếu học viên trả lời lệch đề, viết linh tinh hoặc để trống thì BỎ nội dung đó và viết câu trả lời đúng cho câu hỏi.
-  (b) Nếu nội dung học viên viết đã đúng hướng câu hỏi thì GIỮ NGUYÊN ý đó, chỉ sửa chính tả/giới từ/mạo từ và rút về đúng dạng ngắn. Không bịa nội dung khác.
-  (c) Định dạng chuẩn Part 1: 1-5 TỪ, cụm ngắn tự nhiên, KHÔNG viết thành câu đầy đủ, KHÔNG viết 2 câu.
-  Ví dụ: hỏi 'What do you like to do in the evening?' — học viên viết 'I like reading books' → mẫu 'Reading books'; học viên viết 'hot' (lệch đề) → mẫu 'Watching films'; hỏi 'When do you usually study?' — học viên viết 'evening' → mẫu 'In the evening'.
-- forcedComplexity: boolean.
-${SHARED_RUBRIC}`;
+- feedback: tiếng Việt theo đúng FEEDBACK FORMAT. TUYỆT ĐỐI KHÔNG nhắc tới số từ, độ dài câu, hay khuyên rút gọn/mở rộng câu trả lời. Nếu CẢ 5 item đều correct thì feedback CHỈ ĐƯỢC KHEN, không nêu bất kỳ điểm cần cải thiện nào.
+- improvedVersion: 5 dòng, đánh số 1..5 tương ứng 5 câu hỏi. Nếu câu trả lời của học viên đã đúng nội dung và không có lỗi ngữ pháp/chính tả thì GIỮ NGUYÊN ĐÚNG NGUYÊN VĂN câu đó — không viết lại, không rút gọn thành cụm cụt, không đổi cách diễn đạt. CHỈ viết lại những câu thực sự sai (sai nội dung → viết câu trả lời đúng cho câu hỏi; sai ngữ pháp/chính tả → sửa lỗi và giữ nguyên ý học viên).
+- forcedComplexity: luôn trả về false.
+${PART1_RUBRIC}`;
+
         userText = `partType: task1
 Prompts:
 ${qs.map((q, i) => `${i + 1}. ${q}`).join("\n")}
