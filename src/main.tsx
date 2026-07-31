@@ -78,9 +78,18 @@ function showUpdateBanner() {
     /* ignore */
   }
 }
-window.addEventListener("vite:preloadError", (e) => {
-  e.preventDefault?.();
-  showUpdateBanner();
+// vite:preloadError là sự kiện chính thức Vite bắn ra khi một dynamic import chunk
+// tải thất bại (thường do deploy mới đè bundle). Xử lý: tự tải lại trang để lấy
+// bundle mới — bài làm dở được các cơ chế lưu hiện có giữ lại. Chốt sessionStorage
+// 10 giây để không rơi vào vòng lặp reload nếu mạng đứt thật.
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  const KEY = "chunk-reload-at";
+  const last = Number(sessionStorage.getItem(KEY) || 0);
+  if (Date.now() - last > 10000) {
+    sessionStorage.setItem(KEY, String(Date.now()));
+    window.location.reload();
+  }
 });
 
 // ───────── Global error overlay (helps debug white-screen on iPhone Safari) ─────────
