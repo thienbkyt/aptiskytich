@@ -430,12 +430,24 @@ const AdminPrediction = () => {
                   {results.map((r) => (
                     <div key={r.id} className="flex items-center justify-between p-3 hover:bg-muted/50">
                       <div className="min-w-0">
-                        <div className="font-medium truncate">{r.title}</div>
+                        <div className="font-medium truncate flex items-center gap-2">
+                          <span className="truncate">{r.title}</span>
+                          {r.clone_of && (
+                            <Badge variant="secondary" className="shrink-0 text-[10px] bg-muted text-muted-foreground">
+                              CLONE
+                            </Badge>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {r.skill} {r.part ? `· ${r.part}` : ""}
                         </div>
                       </div>
-                      <Button size="sm" onClick={() => addItem(r)}>
+                      <Button
+                        size="sm"
+                        onClick={() => addItem(r)}
+                        disabled={!!r.clone_of}
+                        title={r.clone_of ? "Đề nhân bản, không gắn vào key được" : undefined}
+                      >
                         Thêm
                       </Button>
                     </div>
