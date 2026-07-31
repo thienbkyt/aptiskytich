@@ -32,6 +32,21 @@ type PricingPlan = {
 
 type PublicStats = { hoc_vien: number; bai_cham_ai: number; de_thi: number };
 
+type PayInfo = {
+  checkoutUrl?: string | null;
+  orderCode?: number | null;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  bin?: string | null;
+  amount?: number | null;
+  description?: string | null;
+};
+
+function bankNameFromBin(bin?: string | null) {
+  if (bin === "970452") return "KienLongBank (PayOS)";
+  return "Ngân hàng (PayOS)";
+}
+
 const BASE_DAY_PRICE = 25000;
 
 function formatVnd(n: number) {
