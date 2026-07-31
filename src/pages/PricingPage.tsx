@@ -340,8 +340,8 @@ export default function PricingPage() {
             <div className="mt-6 flex flex-wrap justify-center items-center gap-2">
               {[
                 { icon: ShieldCheck, text: "PayOS — kích hoạt tự động ~1 phút" },
-                { icon: Users, text: "1.300+ học viên đang học" },
-                { icon: CalendarClock, text: "Key cập nhật mỗi sáng" },
+                { icon: Users, text: "2.300+ học viên đang học" },
+                { icon: CalendarClock, text: "DĐề mới cập nhạ" },
               ].map(({ icon: Icon, text }) => (
                 <span
                   key={text}
