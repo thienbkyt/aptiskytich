@@ -57,7 +57,7 @@ var list_exam_sets_default = defineTool2({
       process.env.SUPABASE_PUBLISHABLE_KEY,
       { auth: { persistSession: false } }
     );
-    let q = supabase.from("exam_sets").select("id, title, skill, part, exam_type, time_limit, description, created_at").eq("is_published", true).order("created_at", { ascending: false }).limit(limit);
+    let q = supabase.from("exam_sets").select("id, title, skill, part, exam_type, time_limit, description, created_at").eq("is_published", true).is("clone_of", null).order("created_at", { ascending: false }).limit(limit);
     if (skill) q = q.eq("skill", skill);
     if (part) q = q.eq("part", part);
     const { data, error } = await q;
