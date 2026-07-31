@@ -341,7 +341,7 @@ export default function PricingPage() {
               {[
                 { icon: ShieldCheck, text: "PayOS — kích hoạt tự động ~1 phút" },
                 { icon: Users, text: "2.300+ học viên đang học" },
-                { icon: CalendarClock, text: "DĐề mới cập nhạ" },
+                { icon: CalendarClock, text: "Đề mới cập nhật liên tục" },
               ].map(({ icon: Icon, text }) => (
                 <span
                   key={text}
