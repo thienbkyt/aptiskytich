@@ -142,7 +142,15 @@ Deno.serve(async (req) => {
       raw_response: payosJson.data,
     }).eq("order_code", orderCode);
 
-    return new Response(JSON.stringify({ checkoutUrl, orderCode }), {
+    return new Response(JSON.stringify({
+      checkoutUrl,
+      orderCode,
+      accountNumber: payosJson.data.accountNumber ?? null,
+      accountName: payosJson.data.accountName ?? null,
+      bin: payosJson.data.bin ?? null,
+      amount,
+      description,
+    }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
