@@ -194,12 +194,12 @@ export default function PricingPage() {
   };
 
   const allIncluded = [
-    `Toàn bộ ${stats?.de_thi ? stats.de_thi.toLocaleString("vi-VN") : "600+"} đề part lẻ`,
+    `Toàn bộ ${stats?.de_thi ? stats.de_thi.toLocaleString("vi-VN") : "600+"} đề`,
     "Luyện Full Part + Thi thử Full Test",
     "Đề Key Dự Đoán cập nhật hằng ngày",
-    "Marathon không giới hạn",
-    "Bài mẫu chuẩn band B1-C · dịch câu & tra từ inline",
-    "Dictation, sổ từ vựng, tiến độ chi tiết, hỗ trợ admin",
+    "Tính năng Marathon không giới hạn",
+    "Bài mẫu chuẩn band · dịch câu & tra từ ",
+    "Dictation, sổ từ vựng, tiến độ chi tiết",
   ];
 
   const PlanCard = ({
