@@ -57,6 +57,20 @@ function translateAuthError(msg: string): string {
   return "Không thể đổi mật khẩu. " + msg;
 }
 
+const PLAN_LABEL: Record<string, string> = {
+  day: "Gói 1 ngày",
+  week: "Gói 1 tuần",
+  month: "Gói 1 tháng",
+  quarter: "Gói 3 tháng",
+  half_year: "Gói 6 tháng",
+};
+
+const fmtDate = (iso: string | null | undefined): string | null => {
+  const d = parseDateSafe(iso ?? "");
+  if (!d) return null;
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+};
+
 const ProfileModal = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const { isPro, isPremium, proUntil } = useIsPro();
@@ -68,16 +82,61 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
   const [changingPwd, setChangingPwd] = useState(false);
   const [devices, setDevices] = useState<DeviceRow[]>([]);
   const [loadingDevices, setLoadingDevices] = useState(false);
+  const [planKey, setPlanKey] = useState<string | null>(null);
+  const [subUntil, setSubUntil] = useState<string | null>(null);
+  const [aiQuota, setAiQuota] = useState<{ used: number; remaining: number | null; tier: string } | null>(null);
   const myDeviceId = getDeviceId();
 
-  const proStatusText = (() => {
-    if (isPremium) return "Premium · Trọn đời";
-    if (!isPro) return "Bạn đang dùng gói Free";
-    if (!proUntil) return "Pro · Trọn đời";
-    const d = parseDateSafe(proUntil);
-    if (!d) return "Pro";
-    return `Pro · hết hạn ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  // Plan details + AI quota (read-only RPC, does not consume a credit)
+  useEffect(() => {
+    if (!open || !user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: sub } = await (supabase as any)
+        .from("user_subscriptions")
+        .select("plan_key, ai_daily_cap, pro_until")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setPlanKey((sub as any)?.plan_key ?? null);
+        setSubUntil((sub as any)?.pro_until ?? null);
+      }
+      const { data: q, error } = await (supabase as any).rpc("check_feature_access", {
+        p_key: "ai_grading_writing",
+        p_scope: null,
+      });
+      if (cancelled) return;
+      if (error || !q) {
+        setAiQuota(null);
+        return;
+      }
+      const r = (q as any).remaining;
+      setAiQuota({
+        used: Number((q as any).used ?? 0),
+        remaining: r === null || r === undefined ? null : Number(r),
+        tier: String((q as any).tier ?? "free"),
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, user]);
+
+  const expiryIso = subUntil ?? proUntil;
+
+  const planLabel = (() => {
+    if (planKey && PLAN_LABEL[planKey]) return PLAN_LABEL[planKey];
+    if (isPremium) return "Premium";
+    if (isPro) return "Pro";
+    return "Gói Free";
   })();
+
+  const proStatusText = (() => {
+    if (!isPro && !isPremium) return "Bạn đang dùng gói Free";
+    const d = isPremium ? null : fmtDate(expiryIso);
+    return d ? `${planLabel} · hết hạn ${d}` : `${planLabel} · không giới hạn`;
+  })();
+
 
   useEffect(() => {
     if (!open || !user) return;
