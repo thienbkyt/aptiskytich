@@ -78,6 +78,7 @@ export const useExamSets = (skill: string) => {
         .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until, question_count")
         .eq("skill", skill)
         .eq("is_published", true)
+        .is("clone_of", null)
         .order("created_at", { ascending: true });
 
       if (error || !data) return [];

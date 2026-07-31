@@ -98,9 +98,15 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                 <h3 className="text-xl font-heading font-bold text-foreground mb-2">
                   {set.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mb-3">
+                <p className="text-sm text-muted-foreground mb-1">
                   Full {skillName} • {set.partCount} Parts
                 </p>
+                {set.reusedParts && set.reusedParts.length > 0 && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Có Part dùng lại đề cũ: {set.reusedParts.join(", ")}
+                  </p>
+                )}
+                <div className="mb-2" />
                 <div className="mb-4">
                   {allDone ? (
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">
