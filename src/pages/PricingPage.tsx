@@ -174,61 +174,87 @@ export default function PricingPage() {
     return pct > 0 ? pct : null;
   };
 
-  const benefitsOf = (p: PricingPlan) => [
-    `${p.ai_daily_cap ?? 10} lượt chấm AI Writing + Speaking/ngày`,
+  const highlightsOf = (p: PricingPlan) => {
+    const out: string[] = [`${p.ai_daily_cap ?? 10} lượt chấm AI mỗi ngày`];
+    const pd = perDay(p);
+    if (pd != null) out.push(`Chỉ ${formatVnd(pd)}/ngày`);
+    const d = discountPct(p);
+    if (d != null && p.duration_days !== 1) out.push(`Tiết kiệm ${d}% so với mua lẻ`);
+    return out;
+  };
+
+  const commonBenefits = [
     `Toàn bộ ${stats?.de_thi ? stats.de_thi.toLocaleString("vi-VN") : "600+"} đề part lẻ`,
     "Luyện Full Part + Thi thử Full Test",
     "Đề Key Dự Đoán cập nhật hằng ngày",
     "Marathon không giới hạn",
     "Bài mẫu chuẩn band B1-C",
     "Dịch cả câu & tra từ inline",
-    "Dictation & sổ từ vựng",
-    "Theo dõi tiến độ chi tiết",
-    "Hỗ trợ Zalo/FB ưu tiên",
+    "Dictation, sổ từ vựng, theo dõi tiến độ, hỗ trợ Zalo/FB ưu tiên",
   ];
 
   const Benefits = ({ plan, hero }: { plan: PricingPlan; hero?: boolean }) => (
-    <ul className="mt-4 space-y-2">
-      {benefitsOf(plan).map((b) => (
-        <li key={b} className="flex items-start gap-2 text-[12px] leading-5 text-foreground text-left">
-          <span
-            className={cn(
-              "mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center",
-              hero ? "bg-[#CC1C01]/10" : "bg-muted",
-            )}
-          >
-            <Check className={cn("w-3 h-3", hero ? "text-[#CC1C01]" : "text-muted-foreground")} />
-          </span>
-          <span className="flex-1">{b}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="mt-4 text-left">
+      <ul className="space-y-2">
+        {highlightsOf(plan).map((b) => (
+          <li key={b} className="flex items-start gap-2 text-sm font-medium text-foreground">
+            <span
+              className={cn(
+                "mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center",
+                hero ? "bg-[#CC1C01]/10" : "bg-muted",
+              )}
+            >
+              <Check className={cn("w-3 h-3", hero ? "text-[#CC1C01]" : "text-foreground")} strokeWidth={3} />
+            </span>
+            <span className="flex-1">{b}</span>
+          </li>
+        ))}
+      </ul>
+
+      {hero && (
+        <p
+          className="mt-3 rounded-[var(--radius)] px-2.5 py-1.5 text-[12px] font-medium text-[#CC1C01]"
+          style={{ backgroundColor: "rgba(204,28,1,0.08)" }}
+        >
+          Lượt chấm AI cao nhất — gấp 3 gói 1 tháng
+        </p>
+      )}
+
+      <div className="mt-3 pt-3 border-t border-border">
+        <p className="text-[11px] text-muted-foreground mb-2">Và đầy đủ:</p>
+        <ul className="space-y-1.5">
+          {commonBenefits.map((b) => (
+            <li key={b} className="flex items-start gap-2 text-[12px] leading-5 text-muted-foreground">
+              <Check className="mt-[3px] flex-shrink-0 w-[13px] h-[13px] text-muted-foreground" />
+              <span className="flex-1">{b}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 
   const PriceBlock = ({ plan, hero }: { plan: PricingPlan; hero?: boolean }) => (
-    <>
-      <div className="mt-3 flex items-baseline gap-2 flex-wrap text-left">
-        {listPrice(plan) && (
-          <span className="text-[13px] text-muted-foreground line-through">{formatVnd(listPrice(plan)!)}</span>
-        )}
-        <span className={cn("font-medium tracking-tight text-foreground", hero ? "text-[26px]" : "text-[26px]")}>
-          {formatVnd(plan.price_vnd)}
-        </span>
-        {plan.duration_days && (
-          <span className="text-[12px] text-muted-foreground">/{plan.duration_days} ngày</span>
-        )}
-      </div>
-      {perDay(plan) != null && (
-        <p className={cn("mt-1 text-[12px] text-left", hero ? "text-[#CC1C01] font-medium" : "text-muted-foreground")}>
-          ≈ {formatVnd(perDay(plan)!)}/ngày
-        </p>
+    <div className="mt-3 flex items-baseline gap-2 flex-wrap text-left">
+      {listPrice(plan) && (
+        <span className="text-[13px] text-muted-foreground line-through">{formatVnd(listPrice(plan)!)}</span>
       )}
-    </>
+      <span className={cn("font-medium tracking-tight text-foreground", hero ? "text-[26px]" : "text-[26px]")}>
+        {formatVnd(plan.price_vnd)}
+      </span>
+      {plan.duration_days && (
+        <span className="text-[12px] text-muted-foreground">/{plan.duration_days} ngày</span>
+      )}
+    </div>
   );
 
-  const PlanHeader = ({ plan, extra }: { plan: PricingPlan; extra?: React.ReactNode }) => (
-    <div className="flex items-center justify-between gap-2 flex-wrap text-left">
-      <p className="text-[16px] font-medium text-foreground">{plan.label}</p>
+  const PlanHeader = ({
+    plan,
+    extra,
+    label,
+  }: { plan: PricingPlan; extra?: React.ReactNode; label?: string }) => (
+    <div className="flex items-center justify-between gap-2 text-left">
+      <p className="text-[16px] font-medium text-foreground">{label ?? plan.label}</p>
       {extra ??
         (discountPct(plan) != null && (
           <span
@@ -251,21 +277,24 @@ export default function PricingPage() {
       <PlanHeader plan={plan} />
       <PriceBlock plan={plan} />
       <Benefits plan={plan} />
-      <Button
-        variant="outline"
-        className="mt-auto w-full border-border text-foreground hover:bg-muted"
-        disabled={buying === plan.key}
-        onClick={() => onPick(plan)}
-      >
-        {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        Chọn gói
-      </Button>
+      <div className="mt-auto pt-4">
+        <Button
+          variant="outline"
+          className="w-full border-border text-foreground hover:bg-muted"
+          disabled={buying === plan.key}
+          onClick={() => onPick(plan)}
+        >
+          {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          Chọn gói
+        </Button>
+      </div>
     </div>
   );
 
+
   const statChips = stats
     ? [
-        { icon: Users, text: `${stats.hoc_vien.toLocaleString("vi-VN")} học viên đang luyện` },
+        { icon: Users, text: `${stats.hoc_vien.toLocaleString("vi-VN")} học viên đã đăng ký` },
         { icon: Wand2, text: `${stats.bai_cham_ai.toLocaleString("vi-VN")} bài đã chấm AI` },
         { icon: BookOpenCheck, text: `${stats.de_thi.toLocaleString("vi-VN")} đề thi` },
       ]
@@ -321,6 +350,7 @@ export default function PricingPage() {
                 <div className="order-4 lg:order-none h-full rounded-xl bg-card border-[0.5px] border-border p-5 flex flex-col text-left">
                   <PlanHeader
                     plan={shortPlan}
+                    label="Ngắn hạn"
                     extra={
                       <div className="inline-flex rounded-full bg-muted p-0.5">
                         {(["day", "week"] as const).map((k) => (
@@ -340,15 +370,17 @@ export default function PricingPage() {
                   />
                   <PriceBlock plan={shortPlan} />
                   <Benefits plan={shortPlan} />
-                  <Button
-                    variant="outline"
-                    className="mt-auto w-full border-border text-foreground hover:bg-muted"
-                    disabled={buying === shortPlan.key}
-                    onClick={() => onPick(shortPlan)}
-                  >
-                    {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Chọn gói
-                  </Button>
+                  <div className="mt-auto pt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full border-border text-foreground hover:bg-muted"
+                      disabled={buying === shortPlan.key}
+                      onClick={() => onPick(shortPlan)}
+                    >
+                      {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Chọn gói
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -368,14 +400,16 @@ export default function PricingPage() {
                     <PlanHeader plan={heroPlan} />
                     <PriceBlock plan={heroPlan} hero />
                     <Benefits plan={heroPlan} hero />
-                    <Button
-                      className="mt-auto w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
-                      disabled={buying === heroPlan.key}
-                      onClick={() => onPick(heroPlan)}
-                    >
-                      {buying === heroPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Bắt đầu {heroPlan.label}
-                    </Button>
+                    <div className="mt-auto pt-4">
+                      <Button
+                        className="w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
+                        disabled={buying === heroPlan.key}
+                        onClick={() => onPick(heroPlan)}
+                      >
+                        {buying === heroPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Bắt đầu {heroPlan.label}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
