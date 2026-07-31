@@ -159,7 +159,7 @@ export default function PricingPage() {
   const Cell = ({ v }: { v: string | boolean }) => {
     if (v === true) return <Check className="w-4 h-4 text-emerald-600 mx-auto" />;
     if (v === false) return <X className="w-4 h-4 text-muted-foreground/60 mx-auto" />;
-    return <span className="text-[11px] md:text-sm text-foreground">{v}</span>;
+    return <span className="text-[11px] md:text-sm text-foreground whitespace-pre-line">{v}</span>;
   };
 
   const perDay = (p: PricingPlan) =>
