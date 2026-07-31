@@ -332,7 +332,16 @@ export default function PricingPage() {
               {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {hero ? "Bắt đầu ngay" : "Chọn gói"}
             </Button>
+            <button
+              type="button"
+              className="mt-2 w-full text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+              disabled={buying === plan.key}
+              onClick={() => onPick(plan, true)}
+            >
+              Chuyển khoản thủ công / liên hệ admin
+            </button>
           </div>
+
 
           <ul className="mt-4 pt-4 border-t border-border space-y-2 flex-1 text-left">
             {planDiffs(plan).map((b) => (
