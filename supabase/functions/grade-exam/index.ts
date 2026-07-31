@@ -1200,6 +1200,13 @@ ${partsIn.formalText ?? ""}`;
       if (pt === "task1") {
         const items: any[] = Array.isArray(parsed.items) ? parsed.items.slice(0, 5) : [];
         while (items.length < 5) items.push({ correct: false, reason: "" });
+        // Guard: AI báo lỗi ngữ pháp/chính tả nhưng không liệt kê được lỗi nào → coi là đúng.
+        const noErrorsListed = grammarErrors.length === 0 && spellingErrors.length === 0;
+        if (noErrorsListed) {
+          for (const it of items) {
+            if (it?.reasonCode === "grammar" || it?.reasonCode === "spelling") it.correct = true;
+          }
+        }
         const correctCount = items.filter((it) => !!it.correct).length; // 0..5 → band
         bands = { tf: correctCount, gra: 0, vra: 0, cc: 0, reg: 0 }; // Part 1 chỉ dùng TF-aggregate
         rawPart = correctCount * 6; // 0..30
