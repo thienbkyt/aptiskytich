@@ -208,12 +208,14 @@ export default function PricingPage() {
     label,
     headerExtra,
     order,
+    topLabel,
   }: {
     plan: PricingPlan;
     hero?: boolean;
     label?: string;
     headerExtra?: React.ReactNode;
     order?: string;
+    topLabel?: string;
   }) => {
     const pd = perDay(plan);
     const lp = listPrice(plan);
@@ -221,87 +223,94 @@ export default function PricingPage() {
     const cheaper = hero ? cheaperThanMonthPct(plan) : null;
 
     return (
-      <div
-        className={cn(
-          "h-full rounded-xl bg-card p-5 flex flex-col text-left",
-          hero ? "border-2 border-[#CC1C01]" : "border-[0.5px] border-border",
-          order,
-        )}
-      >
-        <div className="flex items-center justify-between gap-2 min-h-[28px]">
-          <p className="text-[15px] font-semibold text-foreground">{label ?? plan.label}</p>
-          {headerExtra ??
-            (d != null && (
-              <span
-                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
-              >
-                -{d}%
-              </span>
+      <div className={cn("h-full flex flex-col", order)}>
+        <div className="h-7 flex items-center justify-center">
+          {topLabel && (
+            <span className="text-[12px] font-semibold text-[#CC1C01]">{topLabel}</span>
+          )}
+        </div>
+        <div
+          className={cn(
+            "flex-1 rounded-xl bg-card p-5 flex flex-col text-center",
+            hero ? "border-2 border-[#CC1C01]" : "border-[0.5px] border-border",
+          )}
+        >
+          <div className="flex flex-col items-center gap-2 min-h-[52px] justify-center">
+            <p className="text-[15px] font-semibold text-foreground">{label ?? plan.label}</p>
+            {headerExtra ??
+              (d != null && (
+                <span
+                  className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
+                >
+                  -{d}%
+                </span>
+              ))}
+          </div>
+
+          {/* Giá theo ngày — thông tin chính */}
+          <div className="mt-3 flex items-baseline gap-1.5 justify-center">
+            <span
+              className={cn(
+                "font-extrabold tracking-tight leading-none",
+                hero ? "text-[34px] text-[#CC1C01]" : "text-[30px] text-foreground",
+              )}
+            >
+              {pd != null ? formatVnd(pd) : formatVnd(plan.price_vnd)}
+            </span>
+            <span className="text-[13px] text-muted-foreground">/ngày</span>
+          </div>
+
+          <div className="mt-1.5 flex items-baseline gap-2 flex-wrap justify-center">
+            <span className="text-[13px] font-medium text-foreground">
+              {formatVnd(plan.price_vnd)}
+              {plan.duration_days ? ` cho ${plan.duration_days} ngày` : ""}
+            </span>
+            {lp && <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>}
+          </div>
+
+          {hero && cheaper != null && (
+            <p
+              className="mt-3 rounded-[var(--radius)] px-2.5 py-1.5 text-[12px] font-medium text-[#CC1C01]"
+              style={{ backgroundColor: "rgba(204,28,1,0.08)" }}
+            >
+              Rẻ hơn ~{cheaper}%/ngày so với gói 1 tháng — lượt chấm AI cao nhất
+            </p>
+          )}
+
+          <div className="mt-4">
+            <Button
+              variant={hero ? "default" : "outline"}
+              className={cn(
+                "w-full",
+                hero
+                  ? "bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground"
+                  : "border-border text-foreground hover:bg-muted",
+              )}
+              disabled={buying === plan.key}
+              onClick={() => onPick(plan)}
+            >
+              {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {hero ? "Bắt đầu ngay" : "Chọn gói"}
+            </Button>
+          </div>
+
+          <ul className="mt-4 pt-4 border-t border-border space-y-2 flex-1 text-left">
+            {planDiffs(plan).map((b) => (
+              <li key={b} className="flex items-start gap-2 text-[13px] text-foreground">
+                <Check
+                  className={cn("mt-[3px] flex-shrink-0 w-[14px] h-[14px]", hero ? "text-[#CC1C01]" : "text-foreground")}
+                  strokeWidth={3}
+                />
+                <span className="flex-1">{b}</span>
+              </li>
             ))}
+          </ul>
         </div>
-
-        {/* Giá theo ngày — thông tin chính */}
-        <div className="mt-3 flex items-baseline gap-1.5">
-          <span
-            className={cn(
-              "font-extrabold tracking-tight leading-none",
-              hero ? "text-[34px] text-[#CC1C01]" : "text-[30px] text-foreground",
-            )}
-          >
-            {pd != null ? formatVnd(pd) : formatVnd(plan.price_vnd)}
-          </span>
-          <span className="text-[13px] text-muted-foreground">/ngày</span>
-        </div>
-
-        <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
-          <span className="text-[13px] font-medium text-foreground">
-            {formatVnd(plan.price_vnd)}
-            {plan.duration_days ? ` cho ${plan.duration_days} ngày` : ""}
-          </span>
-          {lp && <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>}
-        </div>
-
-        {hero && cheaper != null && (
-          <p
-            className="mt-3 rounded-[var(--radius)] px-2.5 py-1.5 text-[12px] font-medium text-[#CC1C01]"
-            style={{ backgroundColor: "rgba(204,28,1,0.08)" }}
-          >
-            Rẻ hơn ~{cheaper}%/ngày so với gói 1 tháng — lượt chấm AI cao nhất
-          </p>
-        )}
-
-        <div className="mt-4">
-          <Button
-            variant={hero ? "default" : "outline"}
-            className={cn(
-              "w-full",
-              hero
-                ? "bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground"
-                : "border-border text-foreground hover:bg-muted",
-            )}
-            disabled={buying === plan.key}
-            onClick={() => onPick(plan)}
-          >
-            {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {hero ? "Bắt đầu ngay" : "Chọn gói"}
-          </Button>
-        </div>
-
-        <ul className="mt-4 pt-4 border-t border-border space-y-2 flex-1">
-          {planDiffs(plan).map((b) => (
-            <li key={b} className="flex items-start gap-2 text-[13px] text-foreground">
-              <Check
-                className={cn("mt-[3px] flex-shrink-0 w-[14px] h-[14px]", hero ? "text-[#CC1C01]" : "text-foreground")}
-                strokeWidth={3}
-              />
-              <span className="flex-1">{b}</span>
-            </li>
-          ))}
-        </ul>
       </div>
     );
   };
+
 
 
 
