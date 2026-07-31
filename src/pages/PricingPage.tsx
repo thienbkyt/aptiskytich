@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpenCheck, Check, Crown, Loader2, Sparkles, Users, Wand2, X } from "lucide-react";
+import { BookOpenCheck, Check, ChevronDown, Crown, Loader2, Sparkles, Users, Wand2, X } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
