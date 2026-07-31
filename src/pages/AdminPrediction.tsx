@@ -159,7 +159,7 @@ const AdminPrediction = () => {
       const term = `%${search.trim()}%`;
       const { data } = await supabase
         .from("exam_sets")
-        .select("id,title,skill,part")
+        .select("id,title,skill,part,clone_of")
         .or(`title.ilike.${term},skill.ilike.${term},part.ilike.${term}`)
         .order("created_at", { ascending: false })
         .limit(30);
