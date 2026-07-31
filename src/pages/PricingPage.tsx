@@ -41,17 +41,17 @@ function formatVnd(n: number) {
 type CompareRow = { label: string; free: string | boolean; paid: string | boolean };
 const COMPARE_ROWS: CompareRow[] = [
   { label: "Đề Key Dự Đoán", free: false, paid: true },
-  { label: "Kho đề part lẻ", free: "3 đề/part", paid: "Toàn bộ" },
+  { label: "Kho đề theo từng part", free: "3 đề/part", paid: "Toàn bộ" },
   { label: "Luyện Full Part", free: "3 đề", paid: "Toàn bộ" },
   { label: "Thi thử Full Test", free: "1 đề", paid: "Toàn bộ" },
-  { label: "Marathon", free: "2 lượt", paid: "Không giới hạn" },
+  { label: "Marathon (làm tất cả các đề của 1 part trong 1 lượt)", free: "2 lượt", paid: "Không giới hạn" },
   { label: "Chấm AI Writing + Speaking", free: "3 lượt trọn đời", paid: "10-30 lượt/ngày theo gói" },
   { label: "Bài mẫu chuẩn band B1-C", free: true, paid: true },
   { label: "Học từ vựng & flashcard", free: true, paid: true },
   { label: "Dịch cả câu & tra từ inline", free: true, paid: true },
   { label: "Dictation & sổ từ vựng", free: true, paid: true },
   { label: "Theo dõi tiến độ", free: "Cơ bản", paid: "Chi tiết" },
-  { label: "Hỗ trợ", free: "Cộng đồng", paid: "Admin hỗ trợ trực tiếp" },
+  { label: "Hỗ trợ", free: "Cộng đồng", paid: "Admin hỗ trợ\ntrực tiếp" },
 ];
 
 export default function PricingPage() {
@@ -159,7 +159,7 @@ export default function PricingPage() {
   const Cell = ({ v }: { v: string | boolean }) => {
     if (v === true) return <Check className="w-4 h-4 text-emerald-600 mx-auto" />;
     if (v === false) return <X className="w-4 h-4 text-muted-foreground/60 mx-auto" />;
-    return <span className="text-[11px] md:text-sm text-foreground">{v}</span>;
+    return <span className="text-[11px] md:text-sm text-foreground inline-block whitespace-pre-line leading-tight">{v}</span>;
   };
 
   const perDay = (p: PricingPlan) =>
