@@ -505,7 +505,10 @@ export default function PricingPage() {
                 </tbody>
               </table>
             </div>
+            </div>
+            )}
           </div>
+
 
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground">
