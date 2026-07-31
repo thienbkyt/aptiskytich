@@ -245,7 +245,9 @@ export default function PricingPage() {
           )}
         >
           <div className="flex flex-col items-center gap-2 min-h-[52px] justify-center">
-            <p className="text-[15px] font-semibold text-foreground">{label ?? plan.label}</p>
+            <p className="text-[15px] font-semibold text-foreground">
+              {label ?? (plan.label === "1 tháng" ? "1 Tháng" : plan.label === "3 tháng" ? "3 Tháng" : plan.label)}
+            </p>
             {headerExtra ??
               (d != null && (
                 <span
@@ -426,7 +428,7 @@ export default function PricingPage() {
             >
               <div className="text-center sm:text-left">
                 <p className="text-[13px] font-bold text-foreground">
-                  Ôn dài hơi hơn? <span className="text-[#CC1C01]">{halfYearPlan.label}</span> — chỉ{" "}
+                  Ôn dài hơi hơn? <span className="text-[#CC1C01]">6 Tháng</span> — chỉ{" "}
                   <span className="text-[#CC1C01]">{formatVnd(perDay(halfYearPlan) ?? 0)}/ngày</span>
                 </p>
                 <p className="text-[12px] text-muted-foreground mt-0.5">
