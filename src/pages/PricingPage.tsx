@@ -264,20 +264,29 @@ export default function PricingPage() {
             <span
               className={cn(
                 "font-extrabold tracking-tight leading-none",
-                hero ? "text-[34px] text-[#CC1C01]" : "text-[30px] text-foreground",
+                hero ? "text-[44px] text-[#CC1C01]" : "text-[38px] text-foreground",
               )}
             >
               {pd != null ? formatVnd(pd) : formatVnd(plan.price_vnd)}
             </span>
-            <span className="text-[13px] text-muted-foreground">/ngày</span>
+            <span className="text-[15px] font-semibold text-muted-foreground">/ngày</span>
           </div>
 
-          <div className="mt-1.5 flex items-baseline gap-2 flex-wrap justify-center">
-            <span className="text-[13px] font-medium text-foreground">
-              {formatVnd(plan.price_vnd)}
-              {plan.duration_days ? ` cho ${plan.duration_days} ngày` : ""}
-            </span>
-            {lp && <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>}
+          <div className="mt-2.5 flex items-center justify-center">
+            <div
+              className={cn(
+                "inline-flex items-baseline gap-2 rounded-full px-3 py-1.5",
+                hero ? "bg-[#CC1C01]/10" : "bg-muted",
+              )}
+            >
+              <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
+                {formatVnd(plan.price_vnd)}
+              </span>
+              <span className="text-[12px] text-muted-foreground">
+                {plan.duration_days ? `cho ${plan.duration_days} ngày` : ""}
+              </span>
+              {lp && <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>}
+            </div>
           </div>
 
           {hero && cheaper != null && (
