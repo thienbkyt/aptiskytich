@@ -31,7 +31,7 @@ export const useSkillFullSets = (skill: string) => {
       // Full Test section, not to per-skill Full Part practice.
       const { data, error } = await supabase
         .from("exam_sets")
-        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier, question_count, new_until")
+        .select("id, full_test_id, full_test_title, part, skill, full_test_category, access_tier, question_count, new_until, clone_source_label")
         .eq("skill", skill)
         .eq("is_published", true)
         .not("full_test_id", "is", null)
@@ -42,7 +42,7 @@ export const useSkillFullSets = (skill: string) => {
 
       // Group by full_test_id
       // Full Part requires user to access ALL constituent parts → gate by MOST restrictive tier.
-      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string; qc: number }[]; maxTier: "free" | "pro" | "premium"; isNew: boolean }>();
+      const grouped = new Map<string, { title: string; parts: Set<string>; ids: string[]; rows: { id: string; part: string; qc: number }[]; maxTier: "free" | "pro" | "premium"; isNew: boolean; reused: string[] }>();
       const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
       const now = Date.now();
       for (const row of data as any[]) {
@@ -55,12 +55,14 @@ export const useSkillFullSets = (skill: string) => {
             rows: [],
             maxTier: "free",
             isNew: false,
+            reused: [],
           });
         }
         const g = grouped.get(row.full_test_id)!;
         g.parts.add(row.part);
         g.ids.push(row.id);
         g.rows.push({ id: row.id, part: row.part, qc: Number(row.question_count) || 0 });
+        if (row.clone_source_label && !g.reused.includes(row.clone_source_label)) g.reused.push(row.clone_source_label);
         const rt = (row.access_tier === "free" || row.access_tier === "pro" || row.access_tier === "premium") ? row.access_tier : "pro";
         if (rankT(rt) > rankT(g.maxTier)) g.maxTier = rt;
         if (row.new_until && new Date(row.new_until).getTime() > now) g.isNew = true;
