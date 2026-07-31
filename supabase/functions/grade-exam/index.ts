@@ -896,6 +896,11 @@ RÀNG BUỘC CHẶT CHO grammarErrors VÀ spellingErrors:
 - KHÔNG đưa nhận xét về nội dung, ý tưởng, mức độ phù hợp ngữ cảnh, hay góp ý phong cách vào hai mảng này. Những góp ý đó thuộc phần nhận xét theo tiêu chí (criteriaAnalysis / feedback), không phải lỗi cụ thể.
 - KHÔNG đưa vào mảng những mục mà bản thân phần explanation nói rằng câu đã đúng, chỉ cần cải thiện, hoặc "không sai".
 
+PHẠM VI CHẤM (BẮT BUỘC):
+- CHỈ chấm phần văn bản do học viên viết. TUYỆT ĐỐI KHÔNG chấm, không sửa, không đưa vào grammarErrors hay spellingErrors bất kỳ lỗi nào nằm trong đề bài, câu hỏi, hay lời dẫn.
+- Nếu học viên trích lại hoặc chép lại một phần câu hỏi trong bài làm, phần trích đó KHÔNG được tính là lỗi của học viên, kể cả khi bản thân câu hỏi có lỗi.
+- Nếu phát hiện đề bài có lỗi, bỏ qua hoàn toàn, không nhắc trong feedback.
+
 
 FEEDBACK FORMAT (BẮT BUỘC, 100% TIẾNG VIỆT, KHÔNG trộn Anh-Việt trừ tên riêng):
 Chia feedback thành các mục, MỖI mục bắt đầu bằng nhãn in đậm trên DÒNG RIÊNG (đúng chuỗi ký tự Markdown), theo thứ tự và chỉ dùng các nhãn sau (bỏ mục không áp dụng cho part):
@@ -918,6 +923,12 @@ PHÂN LOẠI LỖI BẮT BUỘC:
 KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
 - Nếu câu trả lời đúng ngữ pháp và đúng nghĩa, chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
 - Không viết explanation kiểu "không sai", "vẫn đúng nhưng…", "chỉ là … hơn".
+
+PHẠM VI CHẤM (BẮT BUỘC):
+- CHỈ chấm phần văn bản do học viên viết. TUYỆT ĐỐI KHÔNG chấm, không sửa, không đưa vào grammarErrors hay spellingErrors bất kỳ lỗi nào nằm trong đề bài, câu hỏi, hay lời dẫn.
+- Nếu học viên trích lại hoặc chép lại một phần câu hỏi trong bài làm, phần trích đó KHÔNG được tính là lỗi của học viên, kể cả khi bản thân câu hỏi có lỗi.
+- Nếu phát hiện đề bài có lỗi, bỏ qua hoàn toàn, không nhắc trong feedback.
+
 
 FEEDBACK FORMAT (BẮT BUỘC, 100% TIẾNG VIỆT):
 Chia feedback thành đúng 3 mục, MỖI mục bắt đầu bằng nhãn in đậm trên DÒNG RIÊNG, theo thứ tự:
