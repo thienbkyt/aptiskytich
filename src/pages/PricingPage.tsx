@@ -426,7 +426,7 @@ export default function PricingPage() {
             >
               <div className="text-center sm:text-left">
                 <p className="text-[13px] font-bold text-foreground">
-                  Ôn dài hơi hơn? <span className="text-[#CC1C01]">{halfYearPlan.label}</span> — chỉ{" "}
+                  Ôn dài hơi hơn? <span className="text-[#CC1C01]">6 Tháng</span> — chỉ{" "}
                   <span className="text-[#CC1C01]">{formatVnd(perDay(halfYearPlan) ?? 0)}/ngày</span>
                 </p>
                 <p className="text-[12px] text-muted-foreground mt-0.5">
