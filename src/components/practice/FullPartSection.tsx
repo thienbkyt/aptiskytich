@@ -103,7 +103,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                 </p>
                 {set.reusedParts && set.reusedParts.length > 0 && (
                   <p className="text-xs text-muted-foreground mb-2">
-                    Có Part dùng lại đề cũ: {set.reusedParts.join(", ")}
+                    Có Part dùng lại đề cũ: {set.reusedParts.map((s) => s.replace("Dùng lại từ ", "")).join(", ")}
                   </p>
                 )}
                 <div className="mb-2" />
