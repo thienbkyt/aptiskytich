@@ -55,7 +55,7 @@ const COMPARE_ROWS: CompareRow[] = [
   { label: "Dịch cả câu & tra từ inline", free: true, paid: true },
   { label: "Dictation & sổ từ vựng", free: true, paid: true },
   { label: "Theo dõi tiến độ", free: "Cơ bản", paid: "Chi tiết" },
-  { label: "Hỗ trợ", free: "Cộng đồng", paid: "Zalo/FB ưu tiên" },
+  { label: "Hỗ trợ", free: "Cộng đồng", paid: "Admin hỗ trợ trực tiếp" },
 ];
 
 export default function PricingPage() {
