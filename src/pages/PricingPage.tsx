@@ -32,6 +32,21 @@ type PricingPlan = {
 
 type PublicStats = { hoc_vien: number; bai_cham_ai: number; de_thi: number };
 
+type PayInfo = {
+  checkoutUrl?: string | null;
+  orderCode?: number | null;
+  accountNumber?: string | null;
+  accountName?: string | null;
+  bin?: string | null;
+  amount?: number | null;
+  description?: string | null;
+};
+
+function bankNameFromBin(bin?: string | null) {
+  if (bin === "970452") return "KienLongBank (PayOS)";
+  return "Ngân hàng (PayOS)";
+}
+
 const BASE_DAY_PRICE = 25000;
 
 function formatVnd(n: number) {
@@ -58,6 +73,8 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [picked, setPicked] = useState<PricingPlan | null>(null);
+  const [payInfo, setPayInfo] = useState<PayInfo | null>(null);
+  const [copied, setCopied] = useState(false);
   const [buying, setBuying] = useState<string | null>(null);
   const [shortKey, setShortKey] = useState<"day" | "week">("day");
   const [showCompare, setShowCompare] = useState(false);
@@ -125,7 +142,7 @@ export default function PricingPage() {
   );
   const shortPlan = shortKey === "day" ? dayPlan : weekPlan;
 
-  const onPick = async (p: PricingPlan) => {
+  const onPick = async (p: PricingPlan, manual = false) => {
     if (!user) { navigate("/auth"); return; }
     setBuying(p.key);
     try {
@@ -136,23 +153,25 @@ export default function PricingPage() {
         toast.error("Không tạo được link thanh toán", {
           description: "Vui lòng thử lại hoặc liên hệ admin qua Zalo/Facebook.",
         });
+        setPayInfo(null);
         setPicked(p); // fallback to manual
+        return;
+      }
+      setPayInfo(data as PayInfo);
+      if (manual) {
+        setPicked(p);
         return;
       }
       window.location.href = data.checkoutUrl as string;
     } catch (e) {
       toast.error("Lỗi kết nối", { description: "Thử lại hoặc liên hệ admin." });
+      setPayInfo(null);
       setPicked(p);
     } finally {
       setBuying(null);
     }
   };
 
-  const bankInfo = useMemo(() => ({
-    bank: "Ngân hàng TMCP Kiên Long",
-    number: "10142607300684752",
-    name: "NGUYEN TRONG GIANG",
-  }), []);
 
   const tierLabel = isPremium ? "Premium" : isPro ? "Pro" : "Free";
 
@@ -313,7 +332,16 @@ export default function PricingPage() {
               {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {hero ? "Bắt đầu ngay" : "Chọn gói"}
             </Button>
+            <button
+              type="button"
+              className="mt-2 w-full text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+              disabled={buying === plan.key}
+              onClick={() => onPick(plan, true)}
+            >
+              Chuyển khoản thủ công / liên hệ admin
+            </button>
           </div>
+
 
           <ul className="mt-4 pt-4 border-t border-border space-y-2 flex-1 text-left">
             {planDiffs(plan).map((b) => (
@@ -556,52 +584,104 @@ export default function PricingPage() {
       <Footer />
 
       {/* Payment Modal */}
-      <Dialog open={!!picked} onOpenChange={(v) => !v && setPicked(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!picked} onOpenChange={(v) => { if (!v) { setPicked(null); setCopied(false); } }}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Crown className="w-5 h-5 text-[#CC1C01]" />
               Thanh toán gói {picked?.label}
             </DialogTitle>
             <DialogDescription>
-              Chuyển khoản theo thông tin dưới đây, sau đó nhắn Zalo / Facebook kèm email tài khoản để admin kích hoạt.
+              {payInfo?.accountNumber
+                ? "Chuyển khoản theo thông tin dưới đây, hệ thống tự kích hoạt."
+                : "Không tạo được đơn thanh toán. Vui lòng liên hệ admin."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-xl border-2 border-dashed border-[#CC1C01]/40 bg-[#CC1C01]/5 p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Ngân hàng</span>
-              <span className="font-semibold text-foreground">{bankInfo.bank}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Số tài khoản</span>
-              <span className="font-mono font-bold text-foreground">{bankInfo.number}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Chủ tài khoản</span>
-              <span className="font-semibold text-foreground">{bankInfo.name}</span>
-            </div>
-            <div className="flex justify-between text-sm pt-2 border-t border-[#CC1C01]/20">
-              <span className="text-muted-foreground">Số tiền</span>
-              <span className="font-extrabold text-[#CC1C01]">
-                {picked ? formatVnd(picked.price_vnd) : ""}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Nội dung CK</span>
-              <span className="font-mono text-xs font-semibold text-foreground">
-                PRO {picked?.key.toUpperCase()} {user?.email ?? ""}
-              </span>
-            </div>
-          </div>
+          {payInfo?.accountNumber ? (
+            <>
+              <div className="rounded-xl border-2 border-dashed border-[#CC1C01]/40 bg-[#CC1C01]/5 p-4 space-y-2">
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="text-muted-foreground shrink-0">Ngân hàng</span>
+                  <span className="font-semibold text-foreground text-right">{bankNameFromBin(payInfo.bin)}</span>
+                </div>
+                <div className="flex justify-between gap-3 text-sm items-center">
+                  <span className="text-muted-foreground shrink-0">Số tài khoản</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono font-bold text-foreground break-all text-right">{payInfo.accountNumber}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 shrink-0"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(String(payInfo.accountNumber));
+                        setCopied(true);
+                        toast.success("Đã copy số tài khoản");
+                      }}
+                    >
+                      {copied ? "Đã copy" : "Copy"}
+                    </Button>
+                  </span>
+                </div>
+                {payInfo.accountName && (
+                  <div className="flex justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground shrink-0">Chủ tài khoản</span>
+                    <span className="font-semibold text-foreground text-right">{payInfo.accountName}</span>
+                  </div>
+                )}
+                <div className="flex justify-between gap-3 text-sm pt-2 border-t border-[#CC1C01]/20">
+                  <span className="text-muted-foreground shrink-0">Số tiền (chuyển đúng số tiền)</span>
+                  <span className="font-extrabold text-[#CC1C01] text-right">
+                    {payInfo.amount != null ? formatVnd(Number(payInfo.amount)) : ""}
+                  </span>
+                </div>
+                {payInfo.description && (
+                  <div className="flex justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground shrink-0">Nội dung CK</span>
+                    <span className="font-mono text-xs font-semibold text-foreground text-right break-all">
+                      {payInfo.description}
+                    </span>
+                  </div>
+                )}
+              </div>
 
-          <p className="text-xs text-muted-foreground">
-            Sau khi chuyển khoản, nhắn Zalo kèm email <b>{user?.email}</b> để được kích hoạt trong ít phút.
-          </p>
+              {payInfo.bin && payInfo.accountNumber && (
+                <img
+                  src={
+                    "https://img.vietqr.io/image/" + payInfo.bin + "-" + payInfo.accountNumber +
+                    "-qr_only.png?amount=" + (payInfo.amount ?? "") +
+                    "&addInfo=" + encodeURIComponent(payInfo.description ?? "")
+                  }
+                  alt="Mã QR chuyển khoản"
+                  className="w-48 h-48 mx-auto rounded-lg border border-border bg-white"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Số tài khoản này tạo riêng cho đơn của bạn — chuyển đúng số tiền, hệ thống tự kích hoạt trong ~1 phút, không cần nhắn admin.
+              </p>
+
+              {payInfo.checkoutUrl && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => window.open(String(payInfo.checkoutUrl), "_blank", "noopener")}
+                >
+                  Hoặc mở trang thanh toán PayOS
+                </Button>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Hệ thống chưa tạo được đơn thanh toán. Vui lòng thử lại hoặc nhắn admin qua Zalo / Facebook kèm email <b>{user?.email}</b>.
+            </p>
+          )}
 
           <ContactAdminLinks />
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
