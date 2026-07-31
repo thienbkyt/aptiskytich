@@ -188,7 +188,7 @@ export default function PricingPage() {
       <div className="mt-2 min-h-[22px]"><SavingBadge p={plan} /></div>
       {plan.ai_daily_cap != null && (
         <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-          <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {plan.ai_daily_cap} lượt AI/ngày
+          <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {plan.ai_daily_cap} lượt chấm AI/ngày
         </p>
       )}
       <Button
@@ -266,7 +266,7 @@ export default function PricingPage() {
                     <div className="mt-2 min-h-[22px]"><SavingBadge p={shortPlan} /></div>
                     {shortPlan.ai_daily_cap != null && (
                       <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {shortPlan.ai_daily_cap} lượt AI/ngày
+                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {shortPlan.ai_daily_cap} lượt chấm AI/ngày
                       </p>
                     )}
                     <Button
@@ -302,7 +302,7 @@ export default function PricingPage() {
                     <div className="mt-2 min-h-[22px]"><SavingBadge p={heroPlan} /></div>
                     {heroPlan.ai_daily_cap != null && (
                       <p className="text-xs text-foreground font-medium mt-1.5 flex items-center gap-1">
-                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {heroPlan.ai_daily_cap} lượt AI/ngày — cao nhất
+                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {heroPlan.ai_daily_cap} lượt chấm AI/ngày — cao nhất
                       </p>
                     )}
                     <Button
