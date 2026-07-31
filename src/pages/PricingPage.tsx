@@ -350,6 +350,7 @@ export default function PricingPage() {
                 <div className="order-4 lg:order-none h-full rounded-xl bg-card border-[0.5px] border-border p-5 flex flex-col text-left">
                   <PlanHeader
                     plan={shortPlan}
+                    label="Ngắn hạn"
                     extra={
                       <div className="inline-flex rounded-full bg-muted p-0.5">
                         {(["day", "week"] as const).map((k) => (
@@ -369,15 +370,17 @@ export default function PricingPage() {
                   />
                   <PriceBlock plan={shortPlan} />
                   <Benefits plan={shortPlan} />
-                  <Button
-                    variant="outline"
-                    className="mt-auto w-full border-border text-foreground hover:bg-muted"
-                    disabled={buying === shortPlan.key}
-                    onClick={() => onPick(shortPlan)}
-                  >
-                    {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Chọn gói
-                  </Button>
+                  <div className="mt-auto pt-4">
+                    <Button
+                      variant="outline"
+                      className="w-full border-border text-foreground hover:bg-muted"
+                      disabled={buying === shortPlan.key}
+                      onClick={() => onPick(shortPlan)}
+                    >
+                      {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Chọn gói
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -397,14 +400,16 @@ export default function PricingPage() {
                     <PlanHeader plan={heroPlan} />
                     <PriceBlock plan={heroPlan} hero />
                     <Benefits plan={heroPlan} hero />
-                    <Button
-                      className="mt-auto w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
-                      disabled={buying === heroPlan.key}
-                      onClick={() => onPick(heroPlan)}
-                    >
-                      {buying === heroPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Bắt đầu {heroPlan.label}
-                    </Button>
+                    <div className="mt-auto pt-4">
+                      <Button
+                        className="w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
+                        disabled={buying === heroPlan.key}
+                        onClick={() => onPick(heroPlan)}
+                      >
+                        {buying === heroPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Bắt đầu {heroPlan.label}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
