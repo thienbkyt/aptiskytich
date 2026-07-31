@@ -90,6 +90,7 @@ export const useSkillFullSets = (skill: string) => {
           questionCount,
           access_tier: info.maxTier,
           isNew: info.isNew,
+          reusedParts: info.reused,
         });
       }
 
