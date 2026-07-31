@@ -311,7 +311,7 @@ export default function PricingPage() {
               <Sparkles className="w-3.5 h-3.5 mr-1" /> Bảng giá
             </Badge>
             <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground">
-              Tất cả mọi thứ học trong một tài khoản
+              Mọi thứ ôn tập trong một tài khoản
             </h1>
             <p className="text-muted-foreground mt-2">
               Mở khóa toàn bộ tính năng. Tối ưu thời gian ôn tập và đạt AIM cùng AI và bộ Key chuẩn
