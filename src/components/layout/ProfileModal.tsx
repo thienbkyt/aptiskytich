@@ -305,10 +305,10 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
           </div>
 
           {/* My plan */}
-          <div className="border-t border-border pt-4 space-y-2">
+          <div className="border-t border-border pt-4 space-y-2 w-full min-w-0">
             <Label>Gói của tôi</Label>
-            <div className="rounded-lg border border-border bg-card p-3 space-y-3">
-              <div className="flex items-center justify-between gap-2">
+            <div className="rounded-lg border border-border bg-card p-3 space-y-3 w-full min-w-0">
+              <div className="flex items-center justify-between gap-2 w-full min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isPro || isPremium ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white" : "bg-muted text-muted-foreground"}`}>
                     <Crown className="w-4 h-4" />
@@ -352,7 +352,7 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
           </div>
 
           {/* Thiết bị đang đăng nhập */}
-          <div className="border-t border-border pt-4 space-y-2">
+          <div className="border-t border-border pt-4 space-y-2 w-full min-w-0">
             <Label>Thiết bị đang đăng nhập</Label>
             <p className="text-xs text-muted-foreground">Mỗi tài khoản dùng trên 1 trình duyệt tại một thời điểm — đăng nhập nơi mới sẽ đăng xuất nơi cũ.</p>
 
@@ -366,7 +366,7 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
                   const Icon = d.device_type === "mobile" ? Smartphone : d.device_type === "tablet" ? Tablet : Monitor;
                   const isCurrent = d.device_id === myDeviceId;
                   return (
-                    <div key={d.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-3">
+                    <div key={d.id} className="flex items-center justify-between gap-2 w-full min-w-0 rounded-lg border border-border bg-card p-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                           <Icon className="w-4 h-4 text-foreground" />
@@ -391,13 +391,13 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
           </div>
 
           {/* Contact admin */}
-          <div className="border-t border-border pt-4 space-y-2">
+          <div className="border-t border-border pt-4 space-y-2 w-full min-w-0">
             <Label>Liên hệ hỗ trợ</Label>
-            <ContactAdminLinks />
+            <ContactAdminLinks className="w-full" />
           </div>
 
           {/* Logout */}
-          <div className="border-t border-border pt-4">
+          <div className="border-t border-border pt-4 w-full min-w-0">
             <Button variant="outline" className="w-full gap-2" onClick={() => { onOpenChange(false); signOut(); }}>
               <LogOut className="w-4 h-4" /> Đăng xuất
             </Button>
