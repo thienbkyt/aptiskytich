@@ -32,6 +32,7 @@ import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useExamPriorityLabels } from "@/hooks/useExamPriorityLabels";
 import PriorityBadge from "@/components/practice/PriorityBadge";
 import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
+import DoneFilter, { type DoneFilterValue } from "@/components/practice/DoneFilter";
 
 const TASKS = [
   { id: "full" as const, label: "Full Part", subtitle: "Tất cả các Part" },
@@ -92,6 +93,7 @@ const Speaking = () => {
   const [browsePriorityLabel, setBrowsePriorityLabel] = useState<PriorityFilterValue>("all");
   const { user: authUser, loading: authLoading } = useAuth();
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
+  const [doneFilter, setDoneFilter] = useState<DoneFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
 
   // Rehydrate engineData after remount.
@@ -141,9 +143,15 @@ const Speaking = () => {
   }, [partSets, priorityLabels]);
   const hasPriority = useMemo(() => partSets.some((s) => priorityLabels.get(s.id)?.label != null), [partSets, priorityLabels]);
   useEffect(() => { if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all"); }, [hasPriority, priorityFilter]);
+  const doneCounts = useMemo(() => {
+    const base = priorityFilter === "all" ? partSets : partSets.filter((s) => priorityLabels.get(s.id)?.label === priorityFilter);
+    const done = base.filter((s) => progress.has(s.id)).length;
+    return { all: base.length, done, undone: base.length - done };
+  }, [partSets, priorityFilter, priorityLabels, progress]);
   const filteredSets = useMemo(() => {
     let list = partSets;
     if (priorityFilter !== "all") list = list.filter((s) => priorityLabels.get(s.id)?.label === priorityFilter);
+    if (doneFilter !== "all") list = list.filter((s) => (doneFilter === "done" ? progress.has(s.id) : !progress.has(s.id)));
     const rank = (id: string) => { const l = priorityLabels.get(id)?.label; return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
     const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
     return [...list].sort((a, b) => {
@@ -156,7 +164,7 @@ const Speaking = () => {
       if (na !== nb) return na - nb;
       return (a.title || "").localeCompare(b.title || "");
     });
-  }, [partSets, priorityFilter, priorityLabels]);
+  }, [partSets, priorityFilter, priorityLabels, doneFilter, progress]);
 
   const browseSets = useMemo(() => {
     if (!browsePart) return [];
@@ -381,6 +389,9 @@ const Speaking = () => {
                   <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
                 </div>
               )}
+              <div className="mb-4">
+                <DoneFilter value={doneFilter} onChange={setDoneFilter} counts={doneCounts} />
+              </div>
 
               {loading || authLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

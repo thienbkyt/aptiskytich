@@ -22,6 +22,7 @@ import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useExamPriorityLabels, aggregatePriority } from "@/hooks/useExamPriorityLabels";
 import PriorityBadge from "@/components/practice/PriorityBadge";
 import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
+import DoneFilter, { type DoneFilterValue } from "@/components/practice/DoneFilter";
 
 interface FullPracticeState {
   active: boolean;
@@ -63,6 +64,7 @@ const GrammarVocabulary = () => {
   }, [searchParams, fullSets, fullLoading]);
 
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
+  const [doneFilter, setDoneFilter] = useState<DoneFilterValue>("all");
   const { labels: priorityLabels } = useExamPriorityLabels();
   const setPriority = useMemo(() => {
     const m = new Map<string, "high" | "medium" | "low">();
@@ -84,9 +86,16 @@ const GrammarVocabulary = () => {
   }, [searchedSets, setPriority]);
   const hasPriority = useMemo(() => searchedSets.some((s) => setPriority.get(s.fullTestId) != null), [searchedSets, setPriority]);
   useEffect(() => { if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all"); }, [hasPriority, priorityFilter]);
+  const isSetDone = (s: { examSetIds: string[] }) => s.examSetIds.length > 0 && s.examSetIds.every((id) => progress.has(id));
+  const doneCounts = useMemo(() => {
+    const base = priorityFilter === "all" ? searchedSets : searchedSets.filter((s) => setPriority.get(s.fullTestId) === priorityFilter);
+    const done = base.filter((s) => isSetDone(s)).length;
+    return { all: base.length, done, undone: base.length - done };
+  }, [searchedSets, priorityFilter, setPriority, progress]);
   const filteredSets = useMemo(() => {
     let list = searchedSets;
     if (priorityFilter !== "all") list = list.filter((s) => setPriority.get(s.fullTestId) === priorityFilter);
+    if (doneFilter !== "all") list = list.filter((s) => (doneFilter === "done" ? isSetDone(s) : !isSetDone(s)));
     const rank = (id: string) => { const l = setPriority.get(id); return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
     const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
     return [...list].sort((a, b) => {
@@ -99,7 +108,7 @@ const GrammarVocabulary = () => {
       if (na !== nb) return na - nb;
       return (a.title || "").localeCompare(b.title || "");
     });
-  }, [searchedSets, priorityFilter, setPriority]);
+  }, [searchedSets, priorityFilter, setPriority, doneFilter, progress]);
 
   const handleStartFullPractice = (set: SkillFullSetItem, skipIntro = false) => {
     setFullPractice({ active: true, fullTestId: set.fullTestId, title: set.title, skipIntro });
@@ -178,6 +187,10 @@ const GrammarVocabulary = () => {
               <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts as any} />
             </div>
           )}
+
+          <div className="mb-4">
+            <DoneFilter value={doneFilter} onChange={setDoneFilter} counts={doneCounts} />
+          </div>
 
           {fullLoading || authLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
