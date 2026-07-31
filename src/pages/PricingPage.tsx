@@ -245,7 +245,9 @@ export default function PricingPage() {
           )}
         >
           <div className="flex flex-col items-center gap-2 min-h-[52px] justify-center">
-            <p className="text-[15px] font-semibold text-foreground">{label ?? plan.label}</p>
+            <p className="text-[15px] font-semibold text-foreground">
+              {label ?? (plan.label === "1 tháng" ? "1 Tháng" : plan.label === "3 tháng" ? "3 Tháng" : plan.label)}
+            </p>
             {headerExtra ??
               (d != null && (
                 <span
