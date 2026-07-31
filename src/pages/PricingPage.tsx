@@ -366,7 +366,7 @@ export default function PricingPage() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.25fr] gap-5 items-stretch">
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
               {/* Card 1 — Ngắn hạn */}
               {shortPlan && (
                 <PlanCard
@@ -374,14 +374,16 @@ export default function PricingPage() {
                   label="Ngắn hạn"
                   order="order-3 lg:order-none"
                   headerExtra={
-                    <div className="inline-flex rounded-full bg-muted p-0.5">
+                    <div className="inline-flex rounded-full bg-muted p-1 border border-border">
                       {(["day", "week"] as const).map((k) => (
                         <button
                           key={k}
                           onClick={() => setShortKey(k)}
                           className={cn(
-                            "px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-colors",
-                            shortKey === k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                            "px-3.5 py-1 text-[12px] font-semibold rounded-full transition-colors",
+                            shortKey === k
+                              ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+                              : "text-muted-foreground hover:text-foreground",
                           )}
                         >
                           {k === "day" ? "1 ngày" : "1 tuần"}
@@ -397,33 +399,34 @@ export default function PricingPage() {
 
               {/* Card 3 — hero (3 tháng) */}
               {heroPlan && (
-                <div
-                  className="order-1 lg:order-none h-full rounded-2xl p-2 flex flex-col"
-                  style={{ backgroundColor: "rgba(204,28,1,0.06)" }}
-                >
-                  <p className="text-center text-[12px] font-semibold text-[#CC1C01] py-1.5">
-                    ★ Được lựa chọn nhiều nhất
-                  </p>
-                  <div className="flex-1 flex">
-                    <PlanCard plan={heroPlan} hero order="w-full" />
-                  </div>
-                </div>
+                <PlanCard
+                  plan={heroPlan}
+                  hero
+                  order="order-1 lg:order-none"
+                  topLabel="★ Được lựa chọn nhiều nhất"
+                />
               )}
             </div>
           )}
 
-          {/* Gói 6 tháng — dòng gọn */}
+          {/* Gói 6 tháng — dòng nổi bật */}
           {!loading && halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
-            <div className="mt-4 rounded-xl border-[0.5px] border-border bg-card px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <p className="text-[13px] text-foreground text-center sm:text-left">
-                Ôn dài hơi hơn? <span className="font-semibold">{halfYearPlan.label}</span> —{" "}
-                <span className="font-semibold">{formatVnd(halfYearPlan.price_vnd)}</span>, chỉ{" "}
-                <span className="font-semibold">{formatVnd(perDay(halfYearPlan) ?? 0)}/ngày</span>
-                {discountPct(halfYearPlan) != null && ` · tiết kiệm ${discountPct(halfYearPlan)}%`}
-              </p>
+            <div
+              className="mt-5 rounded-xl border border-[#CC1C01]/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              style={{ backgroundColor: "rgba(254,173,95,0.12)" }}
+            >
+              <div className="text-center sm:text-left">
+                <p className="text-[13px] font-bold text-foreground">
+                  Ôn dài hơi hơn? <span className="text-[#CC1C01]">{halfYearPlan.label}</span> — chỉ{" "}
+                  <span className="text-[#CC1C01]">{formatVnd(perDay(halfYearPlan) ?? 0)}/ngày</span>
+                </p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">
+                  {formatVnd(halfYearPlan.price_vnd)} cho {halfYearPlan.duration_days} ngày
+                  {discountPct(halfYearPlan) != null && ` · tiết kiệm ${discountPct(halfYearPlan)}%`}
+                </p>
+              </div>
               <Button
-                variant="outline"
-                className="border-border text-foreground hover:bg-muted shrink-0"
+                className="bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground shrink-0"
                 disabled={buying === halfYearPlan.key}
                 onClick={() => onPick(halfYearPlan)}
               >
@@ -432,6 +435,7 @@ export default function PricingPage() {
               </Button>
             </div>
           )}
+
 
           {/* Mọi gói đều có */}
           <div className="mt-6 rounded-xl bg-muted px-6 py-5">
