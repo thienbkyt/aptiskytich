@@ -125,7 +125,7 @@ export default function PricingPage() {
   );
   const shortPlan = shortKey === "day" ? dayPlan : weekPlan;
 
-  const onPick = async (p: PricingPlan) => {
+  const onPick = async (p: PricingPlan, manual = false) => {
     if (!user) { navigate("/auth"); return; }
     setBuying(p.key);
     try {
@@ -136,23 +136,25 @@ export default function PricingPage() {
         toast.error("Không tạo được link thanh toán", {
           description: "Vui lòng thử lại hoặc liên hệ admin qua Zalo/Facebook.",
         });
+        setPayInfo(null);
         setPicked(p); // fallback to manual
+        return;
+      }
+      setPayInfo(data as PayInfo);
+      if (manual) {
+        setPicked(p);
         return;
       }
       window.location.href = data.checkoutUrl as string;
     } catch (e) {
       toast.error("Lỗi kết nối", { description: "Thử lại hoặc liên hệ admin." });
+      setPayInfo(null);
       setPicked(p);
     } finally {
       setBuying(null);
     }
   };
 
-  const bankInfo = useMemo(() => ({
-    bank: "Ngân hàng TMCP Kiên Long",
-    number: "10142607300684752",
-    name: "NGUYEN TRONG GIANG",
-  }), []);
 
   const tierLabel = isPremium ? "Premium" : isPro ? "Pro" : "Free";
 
