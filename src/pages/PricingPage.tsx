@@ -216,7 +216,7 @@ export default function PricingPage() {
               <Sparkles className="w-3.5 h-3.5 mr-1" /> Bảng giá
             </Badge>
             <h1 className="text-3xl md:text-4xl font-heading font-extrabold text-foreground">
-              Càng ôn dài, mỗi ngày càng rẻ — lượt chấm AI càng nhiều
+              Toàn bộ lộ trình ôn Aptis trong một tài khoản
             </h1>
             <p className="text-muted-foreground mt-2">
               Mọi gói đều mở toàn bộ tính năng. Gói dài hơn: rẻ hơn mỗi ngày, nhiều lượt chấm AI hơn.
