@@ -533,6 +533,8 @@ export type Database = {
       exam_sets: {
         Row: {
           access_tier: string
+          clone_of: string | null
+          clone_source_label: string | null
           created_at: string
           description: string | null
           exam_type: string
@@ -552,6 +554,8 @@ export type Database = {
         }
         Insert: {
           access_tier?: string
+          clone_of?: string | null
+          clone_source_label?: string | null
           created_at?: string
           description?: string | null
           exam_type?: string
@@ -571,6 +575,8 @@ export type Database = {
         }
         Update: {
           access_tier?: string
+          clone_of?: string | null
+          clone_source_label?: string | null
           created_at?: string
           description?: string | null
           exam_type?: string
@@ -588,7 +594,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exam_sets_clone_of_fkey"
+            columns: ["clone_of"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feature_flags: {
         Row: {
