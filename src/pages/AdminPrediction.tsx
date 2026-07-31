@@ -65,6 +65,7 @@ interface ExamSetRow {
   title: string;
   skill: string | null;
   part: string | null;
+  clone_of?: string | null;
 }
 
 interface PredictionItem {
