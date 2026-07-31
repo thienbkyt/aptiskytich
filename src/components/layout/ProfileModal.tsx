@@ -245,33 +245,34 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md sm:max-w-lg max-h-[85vh] overflow-y-auto overflow-x-hidden p-6">
         <DialogHeader>
           <DialogTitle>Thông tin tài khoản</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="space-y-5 w-full min-w-0">
           {/* Display name */}
-          <div className="space-y-2">
+          <div className="space-y-2 w-full min-w-0">
             <Label htmlFor="profile-name">Tên hiển thị</Label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full min-w-0">
               <Input
                 id="profile-name"
+                className="flex-1 min-w-0"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder={loadingProfile ? "Đang tải..." : "Nhập tên hiển thị"}
                 disabled={loadingProfile}
               />
-              <Button onClick={saveName} disabled={savingName || loadingProfile}>
+              <Button className="shrink-0" onClick={saveName} disabled={savingName || loadingProfile}>
                 {savingName ? "Đang lưu..." : "Lưu"}
               </Button>
             </div>
           </div>
 
           {/* Email */}
-          <div className="space-y-2">
+          <div className="space-y-2 w-full min-w-0">
             <Label htmlFor="profile-email">Email</Label>
-            <Input id="profile-email" value={user?.email ?? ""} readOnly disabled />
+            <Input id="profile-email" className="w-full min-w-0" value={user?.email ?? ""} readOnly disabled />
             <p className="text-xs text-muted-foreground">Email không thể thay đổi.</p>
           </div>
 
