@@ -191,7 +191,7 @@ const UpdateFeedDock = () => {
           </div>
 
           <div className="px-5 py-3 text-center text-xs border-t border-[#F2E2D4]" style={{ color: "#8A6656" }}>
-            Kho đề được bổ sung mỗi ngày — key dự đoán cập nhật trước kỳ thi
+            Kho đề và key dự đoán được cập nhật mỗi ngày
           </div>
         </DialogContent>
       </Dialog>
