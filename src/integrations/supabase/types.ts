@@ -1007,54 +1007,6 @@ export type Database = {
         }
         Relationships: []
       }
-      plan_clone: {
-        Row: {
-          access_tier: string | null
-          description: string | null
-          exam_type: string | null
-          fid: string | null
-          grp: string | null
-          p: string | null
-          question_count: number | null
-          rn: number | null
-          skill: string | null
-          src_id: string | null
-          src_part: string | null
-          src_title: string | null
-          time_limit: number | null
-        }
-        Insert: {
-          access_tier?: string | null
-          description?: string | null
-          exam_type?: string | null
-          fid?: string | null
-          grp?: string | null
-          p?: string | null
-          question_count?: number | null
-          rn?: number | null
-          skill?: string | null
-          src_id?: string | null
-          src_part?: string | null
-          src_title?: string | null
-          time_limit?: number | null
-        }
-        Update: {
-          access_tier?: string | null
-          description?: string | null
-          exam_type?: string | null
-          fid?: string | null
-          grp?: string | null
-          p?: string | null
-          question_count?: number | null
-          rn?: number | null
-          skill?: string | null
-          src_id?: string | null
-          src_part?: string | null
-          src_title?: string | null
-          time_limit?: number | null
-        }
-        Relationships: []
-      }
       practice_history: {
         Row: {
           created_at: string

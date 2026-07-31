@@ -26,6 +26,7 @@ export default defineTool({
       .from("exam_sets")
       .select("id, title, skill, part, exam_type, time_limit, description, created_at")
       .eq("is_published", true)
+      .is("clone_of", null)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (skill) q = q.eq("skill", skill);
