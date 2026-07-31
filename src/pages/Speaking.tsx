@@ -331,14 +331,14 @@ const Speaking = () => {
                 <TabsTrigger
                   key={task.id}
                   value={task.id}
-                  className={`flex-1 min-w-[120px] text-xs sm:text-sm py-2.5 transition-all ${
+                  className={`flex-1 min-w-[120px] overflow-hidden text-xs sm:text-sm py-2.5 transition-all ${
                     task.id === "full"
                       ? "data-[state=active]:bg-[#CC1C01] data-[state=active]:text-white data-[state=active]:shadow-md"
                       : "data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-md"
                   }`}
                 >
                   <span className="font-semibold">{task.label}</span>
-                  <span className="hidden sm:inline ml-1 opacity-80">– {task.subtitle}</span>
+                  <span className="hidden lg:inline ml-1 opacity-80">– {task.subtitle}</span>
                 </TabsTrigger>
               ))}
             </TabsList>

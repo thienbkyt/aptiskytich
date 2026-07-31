@@ -471,14 +471,14 @@ const Reading = () => {
                 <TabsTrigger
                   key={part.id}
                   value={part.id}
-                  className={`flex-1 min-w-[120px] text-xs sm:text-sm py-2.5 transition-all ${
+                  className={`flex-1 min-w-[120px] overflow-hidden text-xs sm:text-sm py-2.5 transition-all ${
                     part.id === "full"
                       ? "data-[state=active]:bg-[#CC1C01] data-[state=active]:text-white data-[state=active]:shadow-md"
                       : "data-[state=active]:bg-accent data-[state=active]:text-white data-[state=active]:shadow-md"
                   }`}
                 >
                   <span className="font-semibold">{part.label}</span>
-                  <span className="hidden sm:inline ml-1 opacity-80">– {part.subtitle}</span>
+                  <span className="hidden lg:inline ml-1 opacity-80">– {part.subtitle}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
