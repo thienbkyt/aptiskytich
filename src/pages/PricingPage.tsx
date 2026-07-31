@@ -34,12 +34,12 @@ function formatVnd(n: number) {
 }
 
 const ALL_INCLUDED = [
-  "Toàn bộ 596+ đề",
-  "Key Dự Đoán hằng ngày",
-  "Full Part + Thi thử",
+  "Hơn 596+ đề",
+  "Key Dự Đoán update hằng ngày",
+  "Ôn tập Fulltest - Từng part",
   "Marathon không giới hạn",
-  "Chấm AI có band điểm",
-  "Dịch câu · tra từ · bài mẫu",
+  "Chấm AI theo band điểm chuẩn bài thi",
+  "Dịch câu · tra từ ngay trong bài",
 ];
 
 type CompareRow = { label: string; free: string | boolean; paid: string | boolean };
@@ -340,7 +340,7 @@ export default function PricingPage() {
             <div className="mt-6 flex flex-wrap justify-center items-center gap-2">
               {[
                 { icon: ShieldCheck, text: "PayOS — kích hoạt tự động ~1 phút" },
-                { icon: Users, text: "1.300+ học viên" },
+                { icon: Users, text: "1.300+ học viên đang học" },
                 { icon: CalendarClock, text: "Key cập nhật mỗi sáng" },
               ].map(({ icon: Icon, text }) => (
                 <span
