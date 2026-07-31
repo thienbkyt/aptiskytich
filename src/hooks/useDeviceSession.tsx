@@ -4,57 +4,79 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getDeviceId, getDeviceType, getDeviceLabel } from "@/lib/deviceInfo";
 
+const CHECK_INTERVAL_MS = 60_000;
+
 /**
- * Registers this browser as a device for the signed-in user, and listens
- * for realtime DELETE events. If THIS device row is removed (kicked by a
- * newer login of the same type), sign the user out.
+ * Registers this browser as the single active device for the signed-in user,
+ * then polls periodically (and when the tab regains focus). If this device's
+ * row is gone, the account was signed in elsewhere → sign this session out.
  */
 export function useDeviceSession() {
   const { user, signOut } = useAuth();
   const registeredForUser = useRef<string | null>(null);
+  const kickedRef = useRef(false);
 
   useEffect(() => {
     if (!user) {
       registeredForUser.current = null;
+      kickedRef.current = false;
       return;
     }
 
     const deviceId = getDeviceId();
     const deviceType = getDeviceType();
     const deviceLabel = getDeviceLabel();
+    let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval> | undefined;
 
-    // Register once per user session; RPC is idempotent (upsert + kick same-type)
-    if (registeredForUser.current !== user.id) {
+    const register = async () => {
+      if (registeredForUser.current === user.id) return;
       registeredForUser.current = user.id;
-      supabase.rpc("register_device", {
+      const { error } = await supabase.rpc("register_device", {
         p_device_id: deviceId,
         p_type: deviceType,
         p_label: deviceLabel,
       });
-    }
+      if (error) {
+        console.warn("register_device failed:", error.message);
+        // allow a retry on the next render/effect run
+        registeredForUser.current = null;
+      }
+    };
 
-    const channel = supabase
-      .channel(`user-devices-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "user_devices",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const oldRow = payload.old as { device_id?: string } | null;
-          if (oldRow?.device_id === deviceId) {
-            toast.error("Tài khoản đã đăng nhập trên thiết bị khác cùng loại. Bạn đã bị đăng xuất.");
-            signOut();
-          }
-        }
-      )
-      .subscribe();
+    const checkStillActive = async () => {
+      if (cancelled || kickedRef.current) return;
+      if (registeredForUser.current !== user.id) return;
+      const { data, error } = await supabase
+        .from("user_devices")
+        .select("id")
+        .eq("device_id", deviceId)
+        .limit(1);
+      // Network/timeout errors must never kick the user out.
+      if (error || cancelled || kickedRef.current) return;
+      if (Array.isArray(data) && data.length === 0) {
+        kickedRef.current = true;
+        if (intervalId) clearInterval(intervalId);
+        toast.error("Tài khoản của bạn vừa đăng nhập ở nơi khác. Phiên này đã bị đăng xuất.");
+        signOut();
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void checkStillActive();
+    };
+
+    void (async () => {
+      await register();
+      if (cancelled) return;
+      intervalId = setInterval(() => void checkStillActive(), CHECK_INTERVAL_MS);
+      document.addEventListener("visibilitychange", onVisibility);
+    })();
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (intervalId) clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [user, signOut]);
 }
