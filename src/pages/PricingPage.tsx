@@ -357,94 +357,103 @@ export default function PricingPage() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.1fr_1fr] gap-5 items-stretch">
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.25fr] gap-5 items-stretch">
               {/* Card 1 — Ngắn hạn */}
               {shortPlan && (
-                <div className="order-4 lg:order-none h-full rounded-xl bg-card border-[0.5px] border-border p-5 flex flex-col text-left">
-                  <PlanHeader
-                    plan={shortPlan}
-                    label="Ngắn hạn"
-                    extra={
-                      <div className="inline-flex rounded-full bg-muted p-0.5">
-                        {(["day", "week"] as const).map((k) => (
-                          <button
-                            key={k}
-                            onClick={() => setShortKey(k)}
-                            className={cn(
-                              "px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-colors",
-                              shortKey === k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
-                            )}
-                          >
-                            {k === "day" ? "1 ngày" : "1 tuần"}
-                          </button>
-                        ))}
-                      </div>
-                    }
-                  />
-                  <PriceBlock plan={shortPlan} />
-                  <Benefits plan={shortPlan} />
-                  <div className="mt-auto pt-4">
-                    <Button
-                      variant="outline"
-                      className="w-full border-border text-foreground hover:bg-muted"
-                      disabled={buying === shortPlan.key}
-                      onClick={() => onPick(shortPlan)}
-                    >
-                      {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Chọn gói
-                    </Button>
-                  </div>
-                </div>
+                <PlanCard
+                  plan={shortPlan}
+                  label="Ngắn hạn"
+                  order="order-3 lg:order-none"
+                  headerExtra={
+                    <div className="inline-flex rounded-full bg-muted p-0.5">
+                      {(["day", "week"] as const).map((k) => (
+                        <button
+                          key={k}
+                          onClick={() => setShortKey(k)}
+                          className={cn(
+                            "px-2.5 py-0.5 text-[11px] font-semibold rounded-full transition-colors",
+                            shortKey === k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                          )}
+                        >
+                          {k === "day" ? "1 ngày" : "1 tuần"}
+                        </button>
+                      ))}
+                    </div>
+                  }
+                />
               )}
 
               {/* Card 2 — 1 tháng */}
               {monthPlan && <PlanCard plan={monthPlan} order="order-2 lg:order-none" />}
 
-              {/* Card 3 — hero */}
+              {/* Card 3 — hero (3 tháng) */}
               {heroPlan && (
                 <div
                   className="order-1 lg:order-none h-full rounded-2xl p-2 flex flex-col"
                   style={{ backgroundColor: "rgba(204,28,1,0.06)" }}
                 >
-                  <p className="text-center text-[12px] font-medium text-[#CC1C01] py-1.5">
+                  <p className="text-center text-[12px] font-semibold text-[#CC1C01] py-1.5">
                     ★ Được lựa chọn nhiều nhất
                   </p>
-                  <div className="flex-1 rounded-xl bg-card border-2 border-[#CC1C01] p-5 flex flex-col text-left">
-                    <PlanHeader plan={heroPlan} />
-                    <PriceBlock plan={heroPlan} hero />
-                    <Benefits plan={heroPlan} hero />
-                    <div className="mt-auto pt-4">
-                      <Button
-                        className="w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
-                        disabled={buying === heroPlan.key}
-                        onClick={() => onPick(heroPlan)}
-                      >
-                        {buying === heroPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        Bắt đầu {heroPlan.label}
-                      </Button>
-                    </div>
+                  <div className="flex-1 flex">
+                    <PlanCard plan={heroPlan} hero order="w-full" />
                   </div>
                 </div>
-              )}
-
-              {/* Card 4 — 6 tháng */}
-              {halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
-                <PlanCard plan={halfYearPlan} order="order-3 lg:order-none" />
               )}
             </div>
           )}
 
-          {/* Closing strip */}
-          <div className="mt-6 rounded-xl bg-muted px-6 py-5 text-center">
-            <p className="text-sm font-semibold text-foreground">Gói 3 tháng là cách bắt đầu tốt nhất</p>
-            <p className="text-[13px] text-muted-foreground mt-1">
-              Đúng nhịp một lộ trình ôn Aptis — lượt chấm AI cao nhất, PayOS kích hoạt trong ~1 phút.
+          {/* Gói 6 tháng — dòng gọn */}
+          {!loading && halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
+            <div className="mt-4 rounded-xl border-[0.5px] border-border bg-card px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p className="text-[13px] text-foreground text-center sm:text-left">
+                Ôn dài hơi hơn? <span className="font-semibold">{halfYearPlan.label}</span> —{" "}
+                <span className="font-semibold">{formatVnd(halfYearPlan.price_vnd)}</span>, chỉ{" "}
+                <span className="font-semibold">{formatVnd(perDay(halfYearPlan) ?? 0)}/ngày</span>
+                {discountPct(halfYearPlan) != null && ` · tiết kiệm ${discountPct(halfYearPlan)}%`}
+              </p>
+              <Button
+                variant="outline"
+                className="border-border text-foreground hover:bg-muted shrink-0"
+                disabled={buying === halfYearPlan.key}
+                onClick={() => onPick(halfYearPlan)}
+              >
+                {buying === halfYearPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Chọn gói 6 tháng
+              </Button>
+            </div>
+          )}
+
+          {/* Mọi gói đều có */}
+          <div className="mt-6 rounded-xl bg-muted px-6 py-5">
+            <p className="text-center text-sm font-semibold text-foreground">Mọi gói đều có đầy đủ</p>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2.5">
+              {allIncluded.map((f) => (
+                <div key={f} className="flex items-start gap-2 text-[13px] text-muted-foreground">
+                  <Check className="mt-[3px] flex-shrink-0 w-[14px] h-[14px] text-[#CC1C01]" strokeWidth={3} />
+                  <span className="flex-1">{f}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-center text-[12px] text-muted-foreground">
+              Thanh toán PayOS — kích hoạt tự động trong ~1 phút.
             </p>
           </div>
 
-          {/* Compare table */}
-          <div className="mt-14">
-            <h2 className="text-xl font-heading font-bold text-foreground mb-4 text-center">So sánh chi tiết</h2>
+          {/* Compare table (thu gọn) */}
+          <div className="mt-10">
+            <div className="text-center">
+              <button
+                onClick={() => setShowCompare((v) => !v)}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground hover:text-[#CC1C01] transition-colors"
+              >
+                So sánh chi tiết Miễn phí vs Trả phí
+                <ChevronDown className={cn("w-4 h-4 transition-transform", showCompare && "rotate-180")} />
+              </button>
+            </div>
+            {showCompare && (
+            <div className="mt-5">
+
             <div className="max-w-3xl mx-auto overflow-x-auto">
               <table className="w-full border-separate border-spacing-0 text-sm">
                 <colgroup>
