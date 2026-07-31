@@ -412,7 +412,7 @@ export default function PricingPage() {
                   plan={heroPlan}
                   hero
                   order="order-1 lg:order-none"
-                  topLabel="★ Được lựa chọn nhiều nhất"
+                  topLabel="Được lựa chọn nhiều nhất"
                 />
               )}
             </div>
