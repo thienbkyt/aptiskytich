@@ -294,7 +294,7 @@ export default function PricingPage() {
 
   const statChips = stats
     ? [
-        { icon: Users, text: `${stats.hoc_vien.toLocaleString("vi-VN")} học viên đang luyện` },
+        { icon: Users, text: `${stats.hoc_vien.toLocaleString("vi-VN")} học viên đã đăng ký` },
         { icon: Wand2, text: `${stats.bai_cham_ai.toLocaleString("vi-VN")} bài đã chấm AI` },
         { icon: BookOpenCheck, text: `${stats.de_thi.toLocaleString("vi-VN")} đề thi` },
       ]
