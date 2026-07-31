@@ -449,7 +449,7 @@ export default function PricingPage() {
               ))}
             </div>
             <p className="mt-4 text-center text-[12px] text-muted-foreground">
-              Thanh toán PayOS — kích hoạt tự động trong ~1 phút.
+              Thanh toán — kích hoạt tự động trong ~1 phút.
             </p>
           </div>
 
