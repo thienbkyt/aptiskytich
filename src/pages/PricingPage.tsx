@@ -58,6 +58,8 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [picked, setPicked] = useState<PricingPlan | null>(null);
+  const [payInfo, setPayInfo] = useState<PayInfo | null>(null);
+  const [copied, setCopied] = useState(false);
   const [buying, setBuying] = useState<string | null>(null);
   const [shortKey, setShortKey] = useState<"day" | "week">("day");
   const [showCompare, setShowCompare] = useState(false);
