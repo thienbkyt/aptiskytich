@@ -1057,7 +1057,7 @@ ${partsIn.formalText ?? ""}`;
           properties: {
             items: {
               type: "array", minItems: 5, maxItems: 5,
-              items: { type: "object", additionalProperties: false, properties: { correct: { type: "boolean" }, reason: { type: "string" } }, required: ["correct", "reason"] },
+              items: { type: "object", additionalProperties: false, properties: { correct: { type: "boolean" }, reason: { type: "string" }, reasonCode: { type: "string", enum: ["ok", "wrong_content", "grammar", "spelling"] } }, required: ["correct", "reason", "reasonCode"] },
             },
             grammarErrors: { type: "array", items: errItem },
             spellingErrors: { type: "array", items: errItem },
