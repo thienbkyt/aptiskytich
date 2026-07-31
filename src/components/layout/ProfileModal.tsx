@@ -277,10 +277,11 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
           </div>
 
           {/* Change password */}
-          <div className="space-y-2 border-t border-border pt-4">
+          <div className="space-y-2 border-t border-border pt-4 w-full min-w-0">
             <Label>Đổi mật khẩu</Label>
             <Input
               type="password"
+              className="w-full min-w-0"
               placeholder="Mật khẩu mới"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -288,6 +289,7 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
             />
             <Input
               type="password"
+              className="w-full min-w-0"
               placeholder="Nhập lại mật khẩu"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
