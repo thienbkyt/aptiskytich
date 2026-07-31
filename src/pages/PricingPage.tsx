@@ -60,6 +60,7 @@ export default function PricingPage() {
   const [picked, setPicked] = useState<PricingPlan | null>(null);
   const [buying, setBuying] = useState<string | null>(null);
   const [shortKey, setShortKey] = useState<"day" | "week">("day");
+  const [showCompare, setShowCompare] = useState(false);
   const { user } = useAuth();
   const { isPro, isPremium, refetch } = useIsPro();
   const navigate = useNavigate();
