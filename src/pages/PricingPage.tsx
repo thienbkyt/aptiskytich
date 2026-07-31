@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CalendarClock, Check, Crown, Loader2, ShieldCheck, Sparkles, Users, X, Zap } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { BookOpenCheck, Check, Crown, Loader2, Sparkles, Users, Wand2, X } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -29,18 +30,13 @@ type PricingPlan = {
   ai_daily_cap?: number | null;
 };
 
+type PublicStats = { hoc_vien: number; bai_cham_ai: number; de_thi: number };
+
+const BASE_DAY_PRICE = 25000;
+
 function formatVnd(n: number) {
   return new Intl.NumberFormat("vi-VN").format(n) + "đ";
 }
-
-const ALL_INCLUDED = [
-  "Hơn 596+ đề",
-  "Key Dự Đoán update hằng ngày",
-  "Ôn tập Fulltest - Từng part",
-  "Marathon không giới hạn",
-  "Chấm AI theo band điểm chuẩn bài thi",
-  "Dịch câu · tra từ ngay trong bài",
-];
 
 type CompareRow = { label: string; free: string | boolean; paid: string | boolean };
 const COMPARE_ROWS: CompareRow[] = [
@@ -68,6 +64,16 @@ export default function PricingPage() {
   const { isPro, isPremium, refetch } = useIsPro();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+
+  const { data: stats } = useQuery<PublicStats>({
+    queryKey: ["public-stats"],
+    staleTime: 60 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("public_stats");
+      if (error) throw error;
+      return data as PublicStats;
+    },
+  });
 
   useEffect(() => {
     if (params.get("paid") === "1") {
@@ -118,12 +124,6 @@ export default function PricingPage() {
   );
   const shortPlan = shortKey === "day" ? dayPlan : weekPlan;
 
-  const savingOf = (p: PricingPlan): number | null => {
-    if (!dayPlan || !p.duration_days || p.key === "day") return null;
-    const pct = Math.round((1 - p.price_vnd / (dayPlan.price_vnd * p.duration_days)) * 100);
-    return pct > 0 ? pct : null;
-  };
-
   const onPick = async (p: PricingPlan) => {
     if (!user) { navigate("/auth"); return; }
     setBuying(p.key);
@@ -164,39 +164,98 @@ export default function PricingPage() {
   const perDay = (p: PricingPlan) =>
     p.duration_days ? Math.round(p.price_vnd / p.duration_days) : null;
 
-  const SavingBadge = ({ p }: { p: PricingPlan }) => {
-    const s = savingOf(p);
-    if (s == null) return null;
-    return (
-      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">
-        Tiết kiệm {s}%
-      </span>
-    );
+  const listPrice = (p: PricingPlan) =>
+    p.duration_days && p.duration_days > 1 ? BASE_DAY_PRICE * p.duration_days : null;
+
+  const discountPct = (p: PricingPlan) => {
+    const lp = listPrice(p);
+    if (!lp) return null;
+    const pct = Math.round((1 - p.price_vnd / lp) * 100);
+    return pct > 0 ? pct : null;
   };
 
-  const PlanCard = ({ plan, order }: { plan: PricingPlan; order: string }) => (
-    <div className={cn("rounded-2xl border border-border bg-card shadow-sm p-5 flex flex-col h-full", order)}>
-      <p className="text-sm font-semibold text-muted-foreground">{plan.label}</p>
-      <div className="mt-2">
-        <span className="text-2xl font-bold tracking-tight text-foreground">{formatVnd(plan.price_vnd)}</span>
+  const benefitsOf = (p: PricingPlan) => [
+    `${p.ai_daily_cap ?? 10} lượt chấm AI Writing + Speaking/ngày`,
+    `Toàn bộ ${stats?.de_thi ? stats.de_thi.toLocaleString("vi-VN") : "600+"} đề part lẻ`,
+    "Luyện Full Part + Thi thử Full Test",
+    "Đề Key Dự Đoán cập nhật hằng ngày",
+    "Marathon không giới hạn",
+    "Bài mẫu chuẩn band B1-C",
+    "Dịch cả câu & tra từ inline",
+    "Dictation & sổ từ vựng",
+    "Theo dõi tiến độ chi tiết",
+    "Hỗ trợ Zalo/FB ưu tiên",
+  ];
+
+  const Benefits = ({ plan, hero }: { plan: PricingPlan; hero?: boolean }) => (
+    <ul className="mt-4 space-y-2">
+      {benefitsOf(plan).map((b) => (
+        <li key={b} className="flex items-start gap-2 text-[12px] leading-5 text-foreground text-left">
+          <span
+            className={cn(
+              "mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center",
+              hero ? "bg-[#CC1C01]/10" : "bg-muted",
+            )}
+          >
+            <Check className={cn("w-3 h-3", hero ? "text-[#CC1C01]" : "text-muted-foreground")} />
+          </span>
+          <span className="flex-1">{b}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
+  const PriceBlock = ({ plan, hero }: { plan: PricingPlan; hero?: boolean }) => (
+    <>
+      <div className="mt-3 flex items-baseline gap-2 flex-wrap text-left">
+        {listPrice(plan) && (
+          <span className="text-[13px] text-muted-foreground line-through">{formatVnd(listPrice(plan)!)}</span>
+        )}
+        <span className={cn("font-medium tracking-tight text-foreground", hero ? "text-[26px]" : "text-[26px]")}>
+          {formatVnd(plan.price_vnd)}
+        </span>
+        {plan.duration_days && (
+          <span className="text-[12px] text-muted-foreground">/{plan.duration_days} ngày</span>
+        )}
       </div>
       {perDay(plan) != null && (
-        <p className="text-sm font-semibold text-[#CC1C01] mt-1.5">
-          {formatVnd(perDay(plan)!)}/ngày
+        <p className={cn("mt-1 text-[12px] text-left", hero ? "text-[#CC1C01] font-medium" : "text-muted-foreground")}>
+          ≈ {formatVnd(perDay(plan)!)}/ngày
         </p>
       )}
-      <div className="mt-2 min-h-[22px]"><SavingBadge p={plan} /></div>
-      {plan.ai_daily_cap != null && (
-        <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-          <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {plan.ai_daily_cap} lượt chấm AI/ngày
-        </p>
+    </>
+  );
+
+  const PlanHeader = ({ plan, extra }: { plan: PricingPlan; extra?: React.ReactNode }) => (
+    <div className="flex items-center justify-between gap-2 flex-wrap text-left">
+      <p className="text-[16px] font-medium text-foreground">{plan.label}</p>
+      {extra ??
+        (discountPct(plan) != null && (
+          <span
+            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
+          >
+            -{discountPct(plan)}%
+          </span>
+        ))}
+    </div>
+  );
+
+  const PlanCard = ({ plan, order }: { plan: PricingPlan; order?: string }) => (
+    <div
+      className={cn(
+        "h-full rounded-xl bg-card border-[0.5px] border-border p-5 flex flex-col text-left",
+        order,
       )}
+    >
+      <PlanHeader plan={plan} />
+      <PriceBlock plan={plan} />
+      <Benefits plan={plan} />
       <Button
         variant="outline"
         className="mt-auto w-full border-border text-foreground hover:bg-muted"
         disabled={buying === plan.key}
         onClick={() => onPick(plan)}
-
       >
         {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
         Chọn gói
@@ -204,6 +263,13 @@ export default function PricingPage() {
     </div>
   );
 
+  const statChips = stats
+    ? [
+        { icon: Users, text: `${stats.hoc_vien.toLocaleString("vi-VN")} học viên đang luyện` },
+        { icon: Wand2, text: `${stats.bai_cham_ai.toLocaleString("vi-VN")} bài đã chấm AI` },
+        { icon: BookOpenCheck, text: `${stats.de_thi.toLocaleString("vi-VN")} đề thi` },
+      ]
+    : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -211,7 +277,7 @@ export default function PricingPage() {
       <main className="pt-[144px] md:pt-24 pb-20">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Hero */}
-          <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="text-center">
             <Badge className="bg-[#FEAD5F]/20 text-[#CC1C01] border-0 mb-3">
               <Sparkles className="w-3.5 h-3.5 mr-1" /> Bảng giá
             </Badge>
@@ -228,18 +294,34 @@ export default function PricingPage() {
             )}
           </div>
 
-          <section className="mt-10 rounded-3xl bg-[#FFF8F5] dark:bg-muted/30 border border-border/60 p-5 sm:p-8 lg:p-10">
-            {loading ? (
-              <div className="flex justify-center py-20">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.22fr_1fr] gap-5 items-stretch">
-                {/* Card 1 — Ngắn hạn */}
-                {shortPlan && (
-                  <div className="order-4 lg:order-none rounded-2xl border border-border bg-card shadow-sm p-5 flex flex-col h-full">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-muted-foreground">Ngắn hạn</p>
+          {/* Stats strip */}
+          {statChips.length > 0 && (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {statChips.map(({ icon: Icon, text }) => (
+                <span
+                  key={text}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3 py-1.5 text-[12px] text-foreground"
+                >
+                  <Icon className="w-3.5 h-3.5 text-[#CC1C01]" />
+                  <span className="font-semibold">{text}</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Plans */}
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_1fr_1.1fr_1fr] gap-5 items-stretch">
+              {/* Card 1 — Ngắn hạn */}
+              {shortPlan && (
+                <div className="order-4 lg:order-none h-full rounded-xl bg-card border-[0.5px] border-border p-5 flex flex-col text-left">
+                  <PlanHeader
+                    plan={shortPlan}
+                    extra={
                       <div className="inline-flex rounded-full bg-muted p-0.5">
                         {(["day", "week"] as const).map((k) => (
                           <button
@@ -254,57 +336,38 @@ export default function PricingPage() {
                           </button>
                         ))}
                       </div>
-                    </div>
-                    <div className="mt-2">
-                      <span className="text-2xl font-bold tracking-tight text-foreground">{formatVnd(shortPlan.price_vnd)}</span>
-                    </div>
-                    {perDay(shortPlan) != null && (
-                      <p className="text-sm font-semibold text-[#CC1C01] mt-1.5">
-                        {formatVnd(perDay(shortPlan)!)}/ngày
-                      </p>
-                    )}
-                    <div className="mt-2 min-h-[22px]"><SavingBadge p={shortPlan} /></div>
-                    {shortPlan.ai_daily_cap != null && (
-                      <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {shortPlan.ai_daily_cap} lượt chấm AI/ngày
-                      </p>
-                    )}
-                    <Button
-                      variant="outline"
-                      className="mt-auto w-full border-border text-foreground hover:bg-muted"
-                      disabled={buying === shortPlan.key}
-                      onClick={() => onPick(shortPlan)}
-                    >
-                      {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Chọn gói
-                    </Button>
-                  </div>
-                )}
+                    }
+                  />
+                  <PriceBlock plan={shortPlan} />
+                  <Benefits plan={shortPlan} />
+                  <Button
+                    variant="outline"
+                    className="mt-auto w-full border-border text-foreground hover:bg-muted"
+                    disabled={buying === shortPlan.key}
+                    onClick={() => onPick(shortPlan)}
+                  >
+                    {buying === shortPlan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Chọn gói
+                  </Button>
+                </div>
+              )}
 
-                {/* Card 2 — 1 tháng */}
-                {monthPlan && <PlanCard plan={monthPlan} order="order-2 lg:order-none" />}
+              {/* Card 2 — 1 tháng */}
+              {monthPlan && <PlanCard plan={monthPlan} order="order-2 lg:order-none" />}
 
-                {/* Card 3 — hero */}
-                {heroPlan && (
-                  <div className="order-1 lg:order-none relative rounded-2xl bg-card p-6 lg:p-7 flex flex-col h-full border-2 border-[#CC1C01] shadow-md">
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#CC1C01] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                      Được lựa chọn nhiều nhất
-                    </span>
-                    <p className="text-sm font-semibold text-muted-foreground mt-1">{heroPlan.label}</p>
-                    <div className="mt-2">
-                      <span className="text-4xl font-extrabold tracking-tight text-foreground">{formatVnd(heroPlan.price_vnd)}</span>
-                    </div>
-                    {perDay(heroPlan) != null && (
-                      <p className="text-sm font-semibold text-[#CC1C01] mt-1.5">
-                        {formatVnd(perDay(heroPlan)!)}/ngày
-                      </p>
-                    )}
-                    <div className="mt-2 min-h-[22px]"><SavingBadge p={heroPlan} /></div>
-                    {heroPlan.ai_daily_cap != null && (
-                      <p className="text-xs text-foreground font-medium mt-1.5 flex items-center gap-1">
-                        <Zap className="w-3.5 h-3.5 text-[#FEAD5F]" /> {heroPlan.ai_daily_cap} lượt chấm AI/ngày — cao nhất
-                      </p>
-                    )}
+              {/* Card 3 — hero */}
+              {heroPlan && (
+                <div
+                  className="order-1 lg:order-none h-full rounded-2xl p-2 flex flex-col"
+                  style={{ backgroundColor: "rgba(204,28,1,0.06)" }}
+                >
+                  <p className="text-center text-[12px] font-medium text-[#CC1C01] py-1.5">
+                    ★ Được lựa chọn nhiều nhất
+                  </p>
+                  <div className="flex-1 rounded-xl bg-card border-2 border-[#CC1C01] p-5 flex flex-col text-left">
+                    <PlanHeader plan={heroPlan} />
+                    <PriceBlock plan={heroPlan} hero />
+                    <Benefits plan={heroPlan} hero />
                     <Button
                       className="mt-auto w-full bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"
                       disabled={buying === heroPlan.key}
@@ -314,54 +377,33 @@ export default function PricingPage() {
                       Bắt đầu {heroPlan.label}
                     </Button>
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Card 4 — 6 tháng */}
-                {halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
-                  <PlanCard plan={halfYearPlan} order="order-3 lg:order-none" />
-                )}
-              </div>
-            )}
-
-            {/* All plans include */}
-            <div className="mt-6 rounded-2xl bg-card border border-border shadow-sm p-6">
-              <h2 className="text-lg font-heading font-bold text-foreground mb-4">Tất cả các gói đều có</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {ALL_INCLUDED.map((f) => (
-                  <div key={f} className="flex items-start gap-2 text-sm text-foreground">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
+              {/* Card 4 — 6 tháng */}
+              {halfYearPlan && halfYearPlan.key !== heroPlan?.key && (
+                <PlanCard plan={halfYearPlan} order="order-3 lg:order-none" />
+              )}
             </div>
+          )}
 
-            {/* Trust row */}
-            <div className="mt-6 flex flex-wrap justify-center items-center gap-2">
-              {[
-                { icon: ShieldCheck, text: "PayOS — kích hoạt tự động ~1 phút" },
-                { icon: Users, text: "2.300+ học viên đang học" },
-                { icon: CalendarClock, text: "Đề mới cập nhật liên tục" },
-              ].map(({ icon: Icon, text }) => (
-                <span
-                  key={text}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3 py-1.5 text-[12px] text-muted-foreground"
-                >
-                  <Icon className="w-3.5 h-3.5" /> {text}
-                </span>
-              ))}
-            </div>
-          </section>
+          {/* Closing strip */}
+          <div className="mt-6 rounded-xl bg-muted px-6 py-5 text-center">
+            <p className="text-sm font-semibold text-foreground">Gói 3 tháng là cách bắt đầu tốt nhất</p>
+            <p className="text-[13px] text-muted-foreground mt-1">
+              Đúng nhịp một lộ trình ôn Aptis — lượt chấm AI cao nhất, PayOS kích hoạt trong ~1 phút.
+            </p>
+          </div>
 
           {/* Compare table */}
           <div className="mt-14">
             <h2 className="text-xl font-heading font-bold text-foreground mb-4 text-center">So sánh chi tiết</h2>
-            <div className="max-w-2xl mx-auto overflow-x-auto">
+            <div className="max-w-3xl mx-auto overflow-x-auto">
               <table className="w-full border-separate border-spacing-0 text-sm">
                 <colgroup>
                   <col />
-                  <col style={{ width: 150 }} />
-                  <col style={{ width: 150 }} />
+                  <col style={{ width: 160 }} />
+                  <col style={{ width: 160 }} />
                 </colgroup>
                 <thead>
                   <tr>
@@ -385,7 +427,7 @@ export default function PricingPage() {
                     const last = i === COMPARE_ROWS.length - 1;
                     return (
                       <tr key={row.label}>
-                        <td className="p-3 text-sm text-foreground border-t border-border">{row.label}</td>
+                        <td className="p-3 text-sm text-foreground border-t border-border text-left">{row.label}</td>
                         <td className="p-3 text-center border-t border-border">
                           <Cell v={row.free} />
                         </td>
@@ -409,12 +451,13 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <p className="text-center text-xs text-muted-foreground mt-12">
-            Cần tư vấn chọn gói? Admin trả lời trong ít phút.
-          </p>
-
-          <div className="max-w-md mx-auto mt-3">
-            <ContactAdminLinks />
+          <div className="mt-12 text-center">
+            <p className="text-xs text-muted-foreground">
+              Cần tư vấn chọn gói? Admin trả lời trong ít phút.
+            </p>
+            <div className="max-w-md mx-auto mt-3">
+              <ContactAdminLinks />
+            </div>
           </div>
         </div>
       </main>
