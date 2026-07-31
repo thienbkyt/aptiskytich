@@ -13,6 +13,8 @@ export interface SkillFullSetItem {
   access_tier?: "free" | "pro" | "premium";
   /** True if at least one constituent exam_set is currently within its new_until window. */
   isNew?: boolean;
+  /** Labels of parts reused from older exam sets (clone_source_label). */
+  reusedParts: string[];
 }
 
 
