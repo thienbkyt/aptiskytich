@@ -175,122 +175,134 @@ export default function PricingPage() {
     return pct > 0 ? pct : null;
   };
 
-  const highlightsOf = (p: PricingPlan) => {
-    const out: string[] = [`${p.ai_daily_cap ?? 10} lượt chấm AI mỗi ngày`];
-    const pd = perDay(p);
-    if (pd != null) out.push(`Chỉ ${formatVnd(pd)}/ngày`);
+  // Rẻ hơn bao nhiêu %/ngày so với gói 1 tháng
+  const cheaperThanMonthPct = (p: PricingPlan) => {
+    const base = monthPlan ? perDay(monthPlan) : null;
+    const cur = perDay(p);
+    if (!base || !cur || p.key === "month") return null;
+    const pct = Math.round((1 - cur / base) * 100);
+    return pct > 0 ? pct : null;
+  };
+
+  // 3 điểm khác biệt riêng của từng gói
+  const planDiffs = (p: PricingPlan) => {
+    const out: string[] = [`${p.ai_daily_cap ?? 10} lượt chấm AI Writing + Speaking mỗi ngày`];
+    if (p.duration_days) out.push(`Dùng trọn ${p.duration_days} ngày`);
     const d = discountPct(p);
-    if (d != null && p.duration_days !== 1) out.push(`Tiết kiệm ${d}% so với mua lẻ`);
+    if (d != null) out.push(`Tiết kiệm ${d}% so với mua theo ngày`);
     return out;
   };
 
-  const commonBenefits = [
+  const allIncluded = [
     `Toàn bộ ${stats?.de_thi ? stats.de_thi.toLocaleString("vi-VN") : "600+"} đề part lẻ`,
     "Luyện Full Part + Thi thử Full Test",
     "Đề Key Dự Đoán cập nhật hằng ngày",
     "Marathon không giới hạn",
-    "Bài mẫu chuẩn band B1-C",
-    "Dịch cả câu & tra từ inline",
-    "Dictation, sổ từ vựng, theo dõi tiến độ, hỗ trợ Zalo/FB ưu tiên",
+    "Bài mẫu chuẩn band B1-C · dịch câu & tra từ inline",
+    "Dictation, sổ từ vựng, tiến độ chi tiết, hỗ trợ admin",
   ];
 
-  const Benefits = ({ plan, hero }: { plan: PricingPlan; hero?: boolean }) => (
-    <div className="mt-4 text-left">
-      <ul className="space-y-2">
-        {highlightsOf(plan).map((b) => (
-          <li key={b} className="flex items-start gap-2 text-sm font-medium text-foreground">
-            <span
-              className={cn(
-                "mt-0.5 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center",
-                hero ? "bg-[#CC1C01]/10" : "bg-muted",
-              )}
-            >
-              <Check className={cn("w-3 h-3", hero ? "text-[#CC1C01]" : "text-foreground")} strokeWidth={3} />
-            </span>
-            <span className="flex-1">{b}</span>
-          </li>
-        ))}
-      </ul>
+  const PlanCard = ({
+    plan,
+    hero,
+    label,
+    headerExtra,
+    order,
+  }: {
+    plan: PricingPlan;
+    hero?: boolean;
+    label?: string;
+    headerExtra?: React.ReactNode;
+    order?: string;
+  }) => {
+    const pd = perDay(plan);
+    const lp = listPrice(plan);
+    const d = discountPct(plan);
+    const cheaper = hero ? cheaperThanMonthPct(plan) : null;
 
-      {hero && (
-        <p
-          className="mt-3 rounded-[var(--radius)] px-2.5 py-1.5 text-[12px] font-medium text-[#CC1C01]"
-          style={{ backgroundColor: "rgba(204,28,1,0.08)" }}
-        >
-          Lượt chấm AI cao nhất — gấp 3 gói 1 tháng
-        </p>
-      )}
+    return (
+      <div
+        className={cn(
+          "h-full rounded-xl bg-card p-5 flex flex-col text-left",
+          hero ? "border-2 border-[#CC1C01]" : "border-[0.5px] border-border",
+          order,
+        )}
+      >
+        <div className="flex items-center justify-between gap-2 min-h-[28px]">
+          <p className="text-[15px] font-semibold text-foreground">{label ?? plan.label}</p>
+          {headerExtra ??
+            (d != null && (
+              <span
+                className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
+              >
+                -{d}%
+              </span>
+            ))}
+        </div>
 
-      <div className="mt-3 pt-3 border-t border-border">
-        <p className="text-[11px] text-muted-foreground mb-2">Và đầy đủ:</p>
-        <ul className="space-y-1.5">
-          {commonBenefits.map((b) => (
-            <li key={b} className="flex items-start gap-2 text-[12px] leading-5 text-muted-foreground">
-              <Check className="mt-[3px] flex-shrink-0 w-[13px] h-[13px] text-muted-foreground" />
+        {/* Giá theo ngày — thông tin chính */}
+        <div className="mt-3 flex items-baseline gap-1.5">
+          <span
+            className={cn(
+              "font-extrabold tracking-tight leading-none",
+              hero ? "text-[34px] text-[#CC1C01]" : "text-[30px] text-foreground",
+            )}
+          >
+            {pd != null ? formatVnd(pd) : formatVnd(plan.price_vnd)}
+          </span>
+          <span className="text-[13px] text-muted-foreground">/ngày</span>
+        </div>
+
+        <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
+          <span className="text-[13px] font-medium text-foreground">
+            {formatVnd(plan.price_vnd)}
+            {plan.duration_days ? ` cho ${plan.duration_days} ngày` : ""}
+          </span>
+          {lp && <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>}
+        </div>
+
+        {hero && cheaper != null && (
+          <p
+            className="mt-3 rounded-[var(--radius)] px-2.5 py-1.5 text-[12px] font-medium text-[#CC1C01]"
+            style={{ backgroundColor: "rgba(204,28,1,0.08)" }}
+          >
+            Rẻ hơn ~{cheaper}%/ngày so với gói 1 tháng — lượt chấm AI cao nhất
+          </p>
+        )}
+
+        <div className="mt-4">
+          <Button
+            variant={hero ? "default" : "outline"}
+            className={cn(
+              "w-full",
+              hero
+                ? "bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground"
+                : "border-border text-foreground hover:bg-muted",
+            )}
+            disabled={buying === plan.key}
+            onClick={() => onPick(plan)}
+          >
+            {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {hero ? "Bắt đầu ngay" : "Chọn gói"}
+          </Button>
+        </div>
+
+        <ul className="mt-4 pt-4 border-t border-border space-y-2 flex-1">
+          {planDiffs(plan).map((b) => (
+            <li key={b} className="flex items-start gap-2 text-[13px] text-foreground">
+              <Check
+                className={cn("mt-[3px] flex-shrink-0 w-[14px] h-[14px]", hero ? "text-[#CC1C01]" : "text-foreground")}
+                strokeWidth={3}
+              />
               <span className="flex-1">{b}</span>
             </li>
           ))}
         </ul>
       </div>
-    </div>
-  );
+    );
+  };
 
-  const PriceBlock = ({ plan, hero }: { plan: PricingPlan; hero?: boolean }) => (
-    <div className="mt-3 flex items-baseline gap-2 flex-wrap text-left">
-      {listPrice(plan) && (
-        <span className="text-[13px] text-muted-foreground line-through">{formatVnd(listPrice(plan)!)}</span>
-      )}
-      <span className={cn("font-medium tracking-tight text-foreground", hero ? "text-[26px]" : "text-[26px]")}>
-        {formatVnd(plan.price_vnd)}
-      </span>
-      {plan.duration_days && (
-        <span className="text-[12px] text-muted-foreground">/{plan.duration_days} ngày</span>
-      )}
-    </div>
-  );
-
-  const PlanHeader = ({
-    plan,
-    extra,
-    label,
-  }: { plan: PricingPlan; extra?: React.ReactNode; label?: string }) => (
-    <div className="flex items-center justify-between gap-2 text-left">
-      <p className="text-[16px] font-medium text-foreground">{label ?? plan.label}</p>
-      {extra ??
-        (discountPct(plan) != null && (
-          <span
-            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
-          >
-            -{discountPct(plan)}%
-          </span>
-        ))}
-    </div>
-  );
-
-  const PlanCard = ({ plan, order }: { plan: PricingPlan; order?: string }) => (
-    <div
-      className={cn(
-        "h-full rounded-xl bg-card border-[0.5px] border-border p-5 flex flex-col text-left",
-        order,
-      )}
-    >
-      <PlanHeader plan={plan} />
-      <PriceBlock plan={plan} />
-      <Benefits plan={plan} />
-      <div className="mt-auto pt-4">
-        <Button
-          variant="outline"
-          className="w-full border-border text-foreground hover:bg-muted"
-          disabled={buying === plan.key}
-          onClick={() => onPick(plan)}
-        >
-          {buying === plan.key && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          Chọn gói
-        </Button>
-      </div>
-    </div>
-  );
 
 
   const statChips = stats
