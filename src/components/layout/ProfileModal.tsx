@@ -57,6 +57,20 @@ function translateAuthError(msg: string): string {
   return "Không thể đổi mật khẩu. " + msg;
 }
 
+const PLAN_LABEL: Record<string, string> = {
+  day: "Gói 1 ngày",
+  week: "Gói 1 tuần",
+  month: "Gói 1 tháng",
+  quarter: "Gói 3 tháng",
+  half_year: "Gói 6 tháng",
+};
+
+const fmtDate = (iso: string | null | undefined): string | null => {
+  const d = parseDateSafe(iso ?? "");
+  if (!d) return null;
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+};
+
 const ProfileModal = ({ open, onOpenChange }: Props) => {
   const { user, signOut } = useAuth();
   const { isPro, isPremium, proUntil } = useIsPro();
@@ -68,16 +82,61 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
   const [changingPwd, setChangingPwd] = useState(false);
   const [devices, setDevices] = useState<DeviceRow[]>([]);
   const [loadingDevices, setLoadingDevices] = useState(false);
+  const [planKey, setPlanKey] = useState<string | null>(null);
+  const [subUntil, setSubUntil] = useState<string | null>(null);
+  const [aiQuota, setAiQuota] = useState<{ used: number; remaining: number | null; tier: string } | null>(null);
   const myDeviceId = getDeviceId();
 
-  const proStatusText = (() => {
-    if (isPremium) return "Premium · Trọn đời";
-    if (!isPro) return "Bạn đang dùng gói Free";
-    if (!proUntil) return "Pro · Trọn đời";
-    const d = parseDateSafe(proUntil);
-    if (!d) return "Pro";
-    return `Pro · hết hạn ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  // Plan details + AI quota (read-only RPC, does not consume a credit)
+  useEffect(() => {
+    if (!open || !user) return;
+    let cancelled = false;
+    (async () => {
+      const { data: sub } = await (supabase as any)
+        .from("user_subscriptions")
+        .select("plan_key, ai_daily_cap, pro_until")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setPlanKey((sub as any)?.plan_key ?? null);
+        setSubUntil((sub as any)?.pro_until ?? null);
+      }
+      const { data: q, error } = await (supabase as any).rpc("check_feature_access", {
+        p_key: "ai_grading_writing",
+        p_scope: null,
+      });
+      if (cancelled) return;
+      if (error || !q) {
+        setAiQuota(null);
+        return;
+      }
+      const r = (q as any).remaining;
+      setAiQuota({
+        used: Number((q as any).used ?? 0),
+        remaining: r === null || r === undefined ? null : Number(r),
+        tier: String((q as any).tier ?? "free"),
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, user]);
+
+  const expiryIso = subUntil ?? proUntil;
+
+  const planLabel = (() => {
+    if (planKey && PLAN_LABEL[planKey]) return PLAN_LABEL[planKey];
+    if (isPremium) return "Premium";
+    if (isPro) return "Pro";
+    return "Gói Free";
   })();
+
+  const proStatusText = (() => {
+    if (!isPro && !isPremium) return "Bạn đang dùng gói Free";
+    const d = isPremium ? null : fmtDate(expiryIso);
+    return d ? `${planLabel} · hết hạn ${d}` : `${planLabel} · không giới hạn`;
+  })();
+
 
   useEffect(() => {
     if (!open || !user) return;
@@ -245,25 +304,55 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
           {/* My plan */}
           <div className="border-t border-border pt-4 space-y-2">
             <Label>Gói của tôi</Label>
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isPro ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white" : "bg-muted text-muted-foreground"}`}>
-                  <Crown className="w-4 h-4" />
-                </span>
-                <span className="text-sm font-semibold text-foreground truncate">{proStatusText}</span>
+            <div className="rounded-lg border border-border bg-card p-3 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isPro || isPremium ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white" : "bg-muted text-muted-foreground"}`}>
+                    <Crown className="w-4 h-4" />
+                  </span>
+                  <span className="text-sm font-semibold text-foreground truncate">{proStatusText}</span>
+                </div>
+                <Button
+                  asChild
+                  size="sm"
+                  variant={isPro || isPremium ? "outline" : "default"}
+                  className={isPro || isPremium ? "shrink-0" : "shrink-0 bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"}
+                >
+                  <Link to="/pricing" onClick={() => onOpenChange(false)}>
+                    {isPro || isPremium ? "Gia hạn / đổi gói" : "Nâng cấp gói"}
+                  </Link>
+                </Button>
               </div>
-              <Button asChild size="sm" variant={isPremium ? "outline" : isPro ? "outline" : "default"} className={isPremium || isPro ? "" : "bg-[#CC1C01] hover:bg-[#4D0D0D] text-white"}>
-                <Link to="/pricing" onClick={() => onOpenChange(false)}>
-                  {isPremium ? "Xem gói" : isPro ? "Nâng cấp Premium" : "Nâng cấp"}
-                </Link>
-              </Button>
+
+              {aiQuota && (
+                aiQuota.remaining === null ? (
+                  <p className="text-xs text-muted-foreground">Chấm AI: không giới hạn</p>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]"
+                        style={{
+                          width: `${Math.min(100, Math.round((aiQuota.used / Math.max(1, aiQuota.used + (aiQuota.remaining ?? 0))) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {aiQuota.tier === "free"
+                        ? `${aiQuota.used}/${aiQuota.used + (aiQuota.remaining ?? 0)} lượt (trọn đời)`
+                        : `Hôm nay đã chấm ${aiQuota.used}/${aiQuota.used + (aiQuota.remaining ?? 0)} lượt AI`}
+                    </p>
+                  </div>
+                )
+              )}
             </div>
           </div>
 
           {/* Thiết bị đang đăng nhập */}
           <div className="border-t border-border pt-4 space-y-2">
             <Label>Thiết bị đang đăng nhập</Label>
-            <p className="text-xs text-muted-foreground">Giới hạn 1 điện thoại, 1 máy tính bảng và 1 máy tính cùng lúc.</p>
+            <p className="text-xs text-muted-foreground">Mỗi tài khoản dùng trên 1 trình duyệt tại một thời điểm — đăng nhập nơi mới sẽ đăng xuất nơi cũ.</p>
+
             {loadingDevices ? (
               <p className="text-sm text-muted-foreground">Đang tải...</p>
             ) : devices.length === 0 ? (

@@ -306,21 +306,24 @@ const Navbar = () => {
                   className="inline-block h-8 w-20 rounded-full bg-muted/50 animate-pulse"
                 />
               ) : isPremium ? (
-                <span
-                  title="Bạn đang là thành viên Premium (trọn đời)"
-                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold"
+                <button
+                  type="button"
+                  onClick={() => setProfileOpen(true)}
+                  title="Bạn đang là thành viên Premium (trọn đời) — xem gói của tôi"
+                  className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold hover:brightness-110 transition"
                 >
                   <Crown className="w-3.5 h-3.5" /> Premium
-                </span>
+                </button>
               ) : isPro ? (
-                <Link to="/pricing" {...prefetchHandlers("/pricing")} title="Bạn đang là Pro — nâng cấp Premium để dùng trọn đời">
-                  <Button
-                    size="sm"
-                    className="rounded-full h-8 px-3 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0"
-                  >
-                    <Crown className="w-3.5 h-3.5" /> Lên Premium
-                  </Button>
-                </Link>
+                <Button
+                  size="sm"
+                  onClick={() => setProfileOpen(true)}
+                  title="Xem gói của tôi"
+                  className="rounded-full h-8 px-3 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0"
+                >
+                  <Crown className="w-3.5 h-3.5" /> Gói của tôi
+                </Button>
+
               ) : (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")}>
                   <Button
