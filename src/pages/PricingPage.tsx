@@ -224,9 +224,18 @@ export default function PricingPage() {
 
     return (
       <div className={cn("h-full flex flex-col", order)}>
-        <div className="h-7 flex items-center justify-center">
+        <div className="h-8 flex items-end justify-center pb-1">
           {topLabel && (
-            <span className="text-[12px] font-semibold text-[#CC1C01]">{topLabel}</span>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11.5px] font-bold uppercase tracking-wide text-white shadow-md"
+              style={{
+                background: "linear-gradient(135deg, #CC1C01 0%, #F0532F 100%)",
+                boxShadow: "0 6px 16px -6px rgba(204,28,1,0.6)",
+              }}
+            >
+              <Crown className="w-3.5 h-3.5" strokeWidth={2.5} />
+              {topLabel}
+            </span>
           )}
         </div>
         <div
