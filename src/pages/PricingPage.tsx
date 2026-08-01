@@ -79,6 +79,8 @@ export default function PricingPage() {
   const [buying, setBuying] = useState<string | null>(null);
   const [shortKey, setShortKey] = useState<"day" | "week">("day");
   const [showCompare, setShowCompare] = useState(false);
+  const [voucher, setVoucher] = useState<VoucherInfo | null>(null);
+  const [voucherExpired, setVoucherExpired] = useState<{ code: string; message: string } | null>(null);
   const { user } = useAuth();
   const { isPro, isPremium, refetch } = useIsPro();
   const navigate = useNavigate();
