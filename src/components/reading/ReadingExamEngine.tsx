@@ -289,7 +289,8 @@ const ReadingExamEngine = ({
   // True only when there is an actual user-supplied value (not null/undefined/empty).
   const isAnswered = (qi: number): boolean => {
     if (partType === "part1") {
-      const v = p1Answers[qi];
+      const gi = p1ScoredIdx[qi];
+      const v = gi === undefined ? null : p1Answers[gi];
       return v !== null && v !== undefined;
     }
     if (partType === "part3") {
