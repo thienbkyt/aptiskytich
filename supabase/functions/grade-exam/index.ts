@@ -419,7 +419,7 @@ ${studentText}`;
       }
 
       const isPart4 = partType === "part4";
-      const MIN_AUDIO_LEN = 100;
+      const MIN_AUDIO_LEN = 40000; // ~30KB nhị phân; dưới mức này là khoảng lặng, KHÔNG gửi cho AI
       // Treat very short / empty base64 strings as "silent" (no recording).
       const spokenMask: boolean[] = audios.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN);
       const anySpoken = spokenMask.some(Boolean);
