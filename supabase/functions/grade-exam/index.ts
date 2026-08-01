@@ -293,7 +293,7 @@ ${studentText}`;
       // Log a usage row so quota counts this call.
       try {
         await serviceClient.from("feature_usage").insert({
-          user_id: userId, feature_key: "ai_grading_writing", scope: `checklist:${pt}`,
+          user_id: userId, feature_key: "ai_grading_writing", scope: `checklist:${pt}`, ref_id: (body.gradingSessionId ?? null),
         });
       } catch (_) { /* noop */ }
 
