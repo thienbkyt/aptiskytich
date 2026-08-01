@@ -613,7 +613,7 @@ const ListeningExamEngine = ({
       {!submitted && !reviewMode && (
         <ExamReportButton
           examQuestionId={sourceQuestionIds?.[currentIndex] ?? sourceQuestionIds?.[0] ?? null}
-          examSetId={null}
+          examSetId={examSetId ?? null}
           skill="listening"
           partType={partType}
           questionNumber={currentIndex + 1}
