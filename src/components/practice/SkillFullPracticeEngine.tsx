@@ -4,6 +4,7 @@ import { useExitWarning } from "@/hooks/useExitWarning";
 import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
@@ -704,7 +705,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       };
       let scale50 = 0, cefr = "", greyZone = false, flagReview = false, rawTotal = 0;
       try {
-        const f = await finalizeSpeaking(rawParts, null);
+        const coreGV = await fetchCoreGVBand();
+        const f = await finalizeSpeaking(rawParts, coreGV);
         scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
       } catch (e) {
         console.warn("[SkillFullPractice V2] finalizeSpeaking failed", e);
@@ -1130,7 +1132,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
       if (allFour) {
         try {
-          const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
+          const coreGV = await fetchCoreGVBand();
+          const f = await finalizeWriting(rawParts, coreGV, anyForcedComplexity);
           scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
         } catch (e) {
           console.warn("[SkillFullPractice v2] finalizeWriting failed", e);

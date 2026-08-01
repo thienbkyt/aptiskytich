@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Bra
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, type ExamQuestionRow } from "@/hooks/useExamSets";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
@@ -782,7 +783,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         };
         let scale50 = 0, cefr = "", greyZone = false, flagReview = false, rawTotal = 0;
         try {
-          const f = await finalizeSpeaking(rawParts, null);
+          const coreGV = await fetchCoreGVBand({ fullTestSessionId: sessionIdRef.current });
+          const f = await finalizeSpeaking(rawParts, coreGV);
           scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone;
           flagReview = f.flagReview; rawTotal = f.rawTotal;
         } catch (e) {
@@ -1141,7 +1143,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
       if (allFour) {
         try {
-          const f = await finalizeWriting(rawParts, null, anyForcedComplexity);
+          const coreGV = await fetchCoreGVBand({ fullTestSessionId: sessionIdRef.current });
+          const f = await finalizeWriting(rawParts, coreGV, anyForcedComplexity);
           scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
         } catch (err) {
           console.warn("[FullTest v2] finalizeWriting failed", err);
