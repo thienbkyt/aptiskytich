@@ -52,10 +52,31 @@ export async function fetchCoreGVBand(opts?: {
       }
     }
 
-    const { data } = await base();
-    const row: any = data?.[0];
-    if (!row) return null;
-    return gvBandFromScore(Number(row.score ?? 0), Number(row.total ?? 0));
+    // Fallback: the user's BEST G&V attempt (ignoring abandoned 0-score rows),
+    // so one walk-away attempt can't strip the grey-zone bump.
+    const { data: history } = await supabase
+      .from("test_results")
+      .select("score,total,skill_scores,created_at")
+      .eq("user_id", user.id)
+      .eq("skill_scores->>skill", "grammar_vocab")
+      .gt("score", 0)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    let bestRatio = 0;
+    let bestRow: any = null;
+    for (const row of (history as any[]) || []) {
+      const score = Number(row.score ?? 0);
+      const total = Number(row.total ?? 0);
+      if (!(score > 0) || !(total > 0)) continue;
+      const ratio = score / total;
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
+        bestRow = row;
+      }
+    }
+    if (!bestRow) return null;
+    return gvBandFromScore(Number(bestRow.score ?? 0), Number(bestRow.total ?? 0));
   } catch (e) {
     console.warn("[fetchCoreGVBand] skipped:", e);
     return null;

@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCoreGVBand } from "@/lib/coreGV";
 import { safeText } from "@/lib/safeText";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
@@ -293,12 +294,13 @@ const SpeakingExamEngine = ({
         let greyOut = false;
         let flagOut = false;
         try {
+          const coreGV = await fetchCoreGVBand();
           const fin = await finalizeSpeaking({
             part1: finalResult.rawPart,
             part2: finalResult.rawPart,
             part3: finalResult.rawPart,
             part4: finalResult.rawPart,
-          });
+          }, coreGV);
           scale50Out = Number(fin.scale50 ?? scale50Out);
           cefrOut = fin.cefr || "";
           greyOut = !!fin.greyZone;
