@@ -627,11 +627,41 @@ const StudentHistoryPanel = ({ student }: { student: Student }) => {
   );
 };
 
+const formatBytes = (bytes?: number) => {
+  if (bytes == null) return "";
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
 const RecordingPlayer = ({ rec }: { rec: Recording }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [fileSize, setFileSize] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const lastSlash = rec.audio_url.lastIndexOf("/");
+      const folder = lastSlash >= 0 ? rec.audio_url.slice(0, lastSlash) : "";
+      const filename = lastSlash >= 0 ? rec.audio_url.slice(lastSlash + 1) : rec.audio_url;
+      const { data } = await supabase.storage
+        .from("speaking-recordings")
+        .list(folder, { search: filename, limit: 1 });
+      if (cancelled) return;
+      const meta = data?.[0]?.metadata;
+      if (meta && typeof meta.size === "number") {
+        setFileSize(meta.size);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rec.audio_url]);
 
   const handlePlay = async () => {
     if (audio) {
@@ -645,16 +675,36 @@ const RecordingPlayer = ({ rec }: { rec: Recording }) => {
       return;
     }
     setLoading(true);
-    const resolved = await resolveAudioUrl(rec.audio_url);
+    const { data, error } = await supabase.storage
+      .from("speaking-recordings")
+      .createSignedUrl(rec.audio_url, 3600);
     setLoading(false);
-    if (!resolved) return;
-    setUrl(resolved);
-    const a = new Audio(resolved);
+    if (error || !data?.signedUrl) {
+      toast.error("Không tải được file ghi âm", {
+        description: error?.message || "Không có URL",
+      });
+      return;
+    }
+    setUrl(data.signedUrl);
+    const a = new Audio(data.signedUrl);
     a.onended = () => setPlaying(false);
     a.onpause = () => setPlaying(false);
     a.onplay = () => setPlaying(true);
     setAudio(a);
     a.play();
+  };
+
+  const handleDownload = async () => {
+    const { data, error } = await supabase.storage
+      .from("speaking-recordings")
+      .createSignedUrl(rec.audio_url, 3600, { download: `${rec.part}.webm` });
+    if (error || !data?.signedUrl) {
+      toast.error("Không tải được file ghi âm", {
+        description: error?.message || "Không có URL",
+      });
+      return;
+    }
+    window.open(data.signedUrl, "_blank");
   };
 
   return (
@@ -674,7 +724,23 @@ const RecordingPlayer = ({ rec }: { rec: Recording }) => {
           <Play className="w-3.5 h-3.5" />
         )}
       </Button>
-      <span className="text-muted-foreground">Ghi âm – {rec.part}</span>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-7 w-7 p-0"
+        onClick={handleDownload}
+        title="Tải xuống"
+      >
+        <Download className="w-3.5 h-3.5" />
+      </Button>
+      <span className="text-muted-foreground">
+        Ghi âm – {rec.part}
+        {fileSize != null && (
+          <span className="ml-1.5 text-[10px] text-muted-foreground/70">
+            ({formatBytes(fileSize)})
+          </span>
+        )}
+      </span>
     </div>
   );
 };
