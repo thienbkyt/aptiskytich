@@ -32,6 +32,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { parseDateSafe, toTimeSafe } from "@/lib/safeDate";
@@ -1093,6 +1097,7 @@ const VouchersSection = () => {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<VoucherRow | null>(null);
+  const [editing, setEditing] = useState<VoucherRow | null>(null);
 
   // form
   const [fCode, setFCode] = useState("");
@@ -1290,6 +1295,13 @@ const VouchersSection = () => {
                               ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               : v.enabled ? "Tắt" : "Bật lại"}
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); setEditing(v); }}
+                          >
+                            Sửa
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1470,8 +1482,179 @@ const VouchersSection = () => {
             used={counts[selected.id] ?? 0}
           />
         )}
+
+        {editing && (
+          <VoucherEditDialog
+            voucher={editing}
+            used={counts[editing.id] ?? 0}
+            onClose={() => setEditing(null)}
+            onSaved={() => { setEditing(null); reload(); }}
+          />
+        )}
       </CardContent>
     </Card>
+  );
+};
+
+const VoucherEditDialog = ({
+  voucher, used, onClose, onSaved,
+}: {
+  voucher: VoucherRow;
+  used: number;
+  onClose: () => void;
+  onSaved: () => void;
+}) => {
+  const toDateInput = (iso: string | null) => {
+    const d = iso ? parseDateSafe(iso) : null;
+    return d ? format(d, "yyyy-MM-dd") : "";
+  };
+
+  const [expires, setExpires] = useState(toDateInput(voucher.expires_at));
+  const [maxUses, setMaxUses] = useState(
+    voucher.max_total_uses == null ? "" : String(voucher.max_total_uses),
+  );
+  const [note, setNote] = useState(voucher.note ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const nMax = maxUses.trim() === "" ? null : Number(maxUses);
+  const estCost = nMax != null ? nMax * voucher.gift_ai_credits * AI_UNIT_COST : null;
+  const overBudget = estCost != null && estCost > 500000;
+
+  const creditExpD = voucher.credit_expires_at ? parseDateSafe(voucher.credit_expires_at) : null;
+
+  const save = async () => {
+    if (nMax != null && nMax < used) {
+      toast.error(`Mã đã phát ${used} lượt, không thể đặt trần thấp hơn`);
+      return;
+    }
+    setSaving(true);
+    const { error } = await (supabase as any)
+      .from("voucher_codes")
+      .update({
+        expires_at: expires ? new Date(expires).toISOString() : null,
+        max_total_uses: nMax,
+        note: note.trim() || null,
+      })
+      .eq("id", voucher.id);
+    setSaving(false);
+    if (error) { toast.error("Lưu thất bại: " + error.message); return; }
+    toast.success(`Đã cập nhật mã ${voucher.code}`);
+    onSaved();
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Sửa mã {voucher.code}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Chỉ đọc */}
+          <div
+            className="bg-muted p-4 space-y-1.5 text-sm"
+            style={{ borderRadius: "var(--radius)" }}
+          >
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">Loại mã</span>
+              <span className="font-medium text-foreground">
+                {voucher.kind === "standalone" ? "Nhận ngay" : "Khi thanh toán"}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">Quà</span>
+              <span className="font-medium text-foreground text-right">
+                {[
+                  voucher.gift_days > 0 ? `+${voucher.gift_days} ngày` : null,
+                  voucher.gift_ai_credits > 0 ? `+${voucher.gift_ai_credits} lượt AI` : null,
+                ].filter(Boolean).join(" · ") || "—"}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">Gói áp dụng</span>
+              <span className="font-medium text-foreground text-right">
+                {voucher.applies_to_plans?.length
+                  ? voucher.applies_to_plans.join(", ")
+                  : "Mọi gói"}
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-muted-foreground">Hạn dùng lượt tặng</span>
+              <span className="font-medium text-foreground">
+                {creditExpD ? format(creditExpD, "dd/MM/yyyy") : "Theo hạn gói"}
+              </span>
+            </div>
+          </div>
+          <p className="text-[12px] text-muted-foreground">
+            Quà và điều kiện không sửa được sau khi tạo — người nhận trước và sau sẽ khác nhau,
+            không giải thích được với học viên. Muốn đổi quà thì tắt mã này rồi tạo mã mới.
+          </p>
+
+          {/* Sửa được */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Ngưng nhận từ</Label>
+              <Input type="date" value={expires} onChange={(e) => setExpires(e.target.value)} />
+              <p className="text-xs text-muted-foreground">Để trống = không giới hạn thời gian</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tối đa bao nhiêu người</Label>
+              <Input
+                type="number"
+                min={0}
+                value={maxUses}
+                onChange={(e) => setMaxUses(e.target.value)}
+                placeholder="Để trống = không giới hạn"
+              />
+              <p className="text-xs text-muted-foreground">Đã phát {used} lượt</p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Ghi chú</Label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+          </div>
+
+          {/* Ước tính chi phí */}
+          <div
+            className="rounded-lg border p-3 text-sm"
+            style={
+              estCost == null || overBudget
+                ? { background: "#FCEBEB", borderColor: "#F09595", color: "#791F1F" }
+                : { background: "#E1F5EE", borderColor: "#5DCAA5", color: "#085041" }
+            }
+          >
+            {estCost == null ? (
+              <p className="font-semibold">
+                Không giới hạn người nhận — không ước tính được trần chi phí
+              </p>
+            ) : (
+              <>
+                <p className="font-semibold">
+                  Ước tính chi phí AI: {estCost.toLocaleString("vi-VN")}đ
+                  {overBudget && " — số này khá lớn, kiểm lại trần người nhận"}
+                </p>
+                <p className="text-xs mt-0.5 opacity-90">
+                  {nMax} người × {voucher.gift_ai_credits} lượt × {AI_UNIT_COST}đ
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Huỷ</Button>
+          <Button
+            onClick={save}
+            disabled={saving}
+            className="gap-1.5 bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Lưu thay đổi
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
