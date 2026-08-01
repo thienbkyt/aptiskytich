@@ -1295,6 +1295,13 @@ const VouchersSection = () => {
                               ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               : v.enabled ? "Tắt" : "Bật lại"}
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => { e.stopPropagation(); setEditing(v); }}
+                          >
+                            Sửa
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
