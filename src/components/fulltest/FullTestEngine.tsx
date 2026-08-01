@@ -884,7 +884,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         {progressBar}
         {adminOverlay}
         <ListeningExamEngine
-          key="listening-full"
+          key={`listening-${partType}`}
           partType={partType}
           testTitle={`${testTitle} – Listening ${currentPart.part}`}
           timeLimit={SKILL_TIMES.listening}
@@ -895,6 +895,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           fullFlow
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
           onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
+          examSetId={currentPart.id}
           {...listeningProps}
         />
       </>
