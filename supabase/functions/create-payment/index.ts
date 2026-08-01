@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const planKey = String(body?.plan_key ?? "").trim();
+    const promoCode = String(body?.promo_code ?? "").trim().toUpperCase();
     if (!planKey) {
       return new Response(JSON.stringify({ error: "Missing plan_key" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -80,6 +81,26 @@ Deno.serve(async (req) => {
     const cancelUrl = `${appOrigin}/pricing?cancel=1`;
     const description = `${tier === "premium" ? "Premium" : "Pro"} ${planKey}`.slice(0, 25);
 
+    // Validate promo code server-side (never trust client). Invalid code = order
+    // still created, just without any gift attached.
+    let validVoucherCode: string | null = null;
+    if (promoCode) {
+      const { data: vc } = await admin
+        .from("voucher_codes")
+        .select("code_norm,kind,enabled,expires_at,applies_to_plans")
+        .eq("code_norm", promoCode)
+        .maybeSingle();
+      const nowIso = Date.now();
+      const notExpired = !vc?.expires_at || new Date(vc.expires_at as string).getTime() > nowIso;
+      const plans = (vc as any)?.applies_to_plans as string[] | null | undefined;
+      const planOk = !plans || plans.length === 0 || plans.includes(planKey);
+      if (vc && vc.enabled === true && notExpired && vc.kind === "checkout" && planOk) {
+        validVoucherCode = promoCode;
+      } else {
+        console.log("create-payment: promo code ignored", promoCode);
+      }
+    }
+
     // Insert pending payment first
     const { error: insertErr } = await admin.from("payments").insert({
       user_id: userId,
@@ -88,6 +109,7 @@ Deno.serve(async (req) => {
       amount_vnd: amount,
       order_code: orderCode,
       status: "pending",
+      voucher_code: validVoucherCode,
     });
     if (insertErr) {
       return new Response(JSON.stringify({ error: "Cannot create order" }), {

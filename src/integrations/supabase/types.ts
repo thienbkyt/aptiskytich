@@ -1012,6 +1012,7 @@ export type Database = {
           status: string
           tier: string | null
           user_id: string
+          voucher_code: string | null
         }
         Insert: {
           amount_vnd: number
@@ -1027,6 +1028,7 @@ export type Database = {
           status?: string
           tier?: string | null
           user_id: string
+          voucher_code?: string | null
         }
         Update: {
           amount_vnd?: number
@@ -1042,6 +1044,7 @@ export type Database = {
           status?: string
           tier?: string | null
           user_id?: string
+          voucher_code?: string | null
         }
         Relationships: []
       }
