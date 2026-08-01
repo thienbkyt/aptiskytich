@@ -236,7 +236,7 @@ const ReadingExamEngine = ({
     : lockedP4;
   useEffect(() => {
     if (!onLockedChange) return;
-    const totalQ = partType === "part1" ? (part1Question?.gaps.length || 0)
+    const totalQ = partType === "part1" ? p1ScoredIdx.length
       : partType === "part2" ? part2SectionCount
       : partType === "part3" ? (part3Question?.statements.length || 0)
       : (part4Question?.paragraphs?.length || part4Question?.questions.length || 0);
@@ -254,8 +254,17 @@ const ReadingExamEngine = ({
 
 
 
+  // Part 1: gap indices that the student must answer (first {n} is the given example).
+  const p1ScoredIdx = useMemo(() => {
+    if (partType !== "part1" || !part1Question) return [] as number[];
+    return [...part1Question.passage.matchAll(/\{(\d+)\}/g)]
+      .map((m) => Number(m[1]))
+      .filter((idx) => part1Question.gaps[idx])
+      .slice(1);
+  }, [partType, part1Question]);
+
   // Panel "questions": for part2 each section = 1 question; others = per item.
-  const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
+  const totalQuestions = partType === "part1" ? p1ScoredIdx.length
     : partType === "part2" ? part2SectionCount
     : partType === "part3" ? (part3Question?.statements.length || 0)
     : p4Total;
@@ -280,7 +289,8 @@ const ReadingExamEngine = ({
   // True only when there is an actual user-supplied value (not null/undefined/empty).
   const isAnswered = (qi: number): boolean => {
     if (partType === "part1") {
-      const v = p1Answers[qi];
+      const gi = p1ScoredIdx[qi];
+      const v = gi === undefined ? null : p1Answers[gi];
       return v !== null && v !== undefined;
     }
     if (partType === "part3") {
@@ -320,7 +330,8 @@ const ReadingExamEngine = ({
     if (phase !== "practice") return;
     if (partType === "part2") return; // part2 changes section, scroll naturally
     const id = window.requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-question-index="${currentIndex}"]`) as HTMLElement | null;
+      const domIdx = partType === "part1" ? (p1ScoredIdx[currentIndex] ?? currentIndex) : currentIndex;
+      const el = document.querySelector(`[data-question-index="${domIdx}"]`) as HTMLElement | null;
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => window.cancelAnimationFrame(id);
@@ -365,11 +376,8 @@ const ReadingExamEngine = ({
     let correct = 0;
     let scoredTotal = totalQuestions;
     if (partType === "part1" && part1Question) {
-      const usedGapIdx = [...part1Question.passage.matchAll(/\{(\d+)\}/g)]
-        .map(m => Number(m[1]))
-        .filter(idx => part1Question.gaps[idx]);
-      // First gap is the "done for you" example — exclude from scoring.
-      const scoredIdx = usedGapIdx.slice(1);
+      // First gap is the "done for you" example — excluded in p1ScoredIdx.
+      const scoredIdx = p1ScoredIdx;
       correct = scoredIdx.reduce((acc, i) => acc + (p1Answers[i] === part1Question.gaps[i].correct ? 1 : 0), 0);
       scoredTotal = scoredIdx.length;
     } else if (partType === "part2" && part2Question) {
@@ -414,7 +422,7 @@ const ReadingExamEngine = ({
       }];
     }
     onComplete?.(correct, scoredTotal, perQuestion);
-  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete, sourceQuestionIds]);
+  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, p1ScoredIdx, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
     setSubmitted(false);
