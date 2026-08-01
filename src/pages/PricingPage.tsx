@@ -203,7 +203,10 @@ export default function PricingPage() {
     setBuying(p.key);
     try {
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: { plan_key: p.key },
+        body: {
+          plan_key: p.key,
+          ...(voucher?.ok && planEligible(p) ? { promo_code: voucher.code } : {}),
+        },
       });
       if (error || !data?.checkoutUrl) {
         toast.error("Không tạo được link thanh toán", {
