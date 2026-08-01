@@ -43,13 +43,14 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideBottomNav?: boolean;
+  audioKeyPrefix?: string;
 }
 
 const ListeningPart2Match = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav,
+  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav, audioKeyPrefix,
 }: Props) => {
   const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
@@ -105,7 +106,7 @@ const ListeningPart2Match = ({
         >
           <p className="text-sm text-foreground mb-1">{q.questionText}</p>
           {audioSrc ? (
-            <LimitedAudioPlayer src={audioSrc} maxPlays={2} questionKey={q.id} />
+            <LimitedAudioPlayer src={audioSrc} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
           ) : (
             <MissingMediaNotice kind="audio" skill="listening" partType="part2" questionNumber={currentIndex + 1} />
           )}

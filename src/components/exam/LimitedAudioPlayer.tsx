@@ -74,6 +74,10 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
     if (src) {
       (async () => {
         const url = await resolveAudioUrl(src);
+        if (!url) {
+          console.error("[LimitedAudioPlayer] resolveAudioUrl returned null for:", src);
+          if (!cancelled) setErrorMsg("Không tải được audio");
+        }
         if (!cancelled) setResolvedSrc(url || src);
       })();
     }
@@ -168,6 +172,11 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
         )}
         <span>Play/Stop</span>
       </button>
+      {disabled && (
+        <p className="text-xs text-muted-foreground mt-1">
+          Đã dùng hết {maxPlays} lượt nghe cho câu này
+        </p>
+      )}
       {errorMsg && <p className="text-xs text-destructive mt-1">{errorMsg}</p>}
     </div>
   );

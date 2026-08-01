@@ -41,13 +41,14 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideBottomNav?: boolean;
+  audioKeyPrefix?: string;
 }
 
 const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav,
+  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav, audioKeyPrefix,
 }: Props) => {
   const reveal = submitted || !!revealAnswers;
   const clip = questions[currentIndex];
@@ -95,7 +96,7 @@ const ListeningPart4Monologue = ({
           className="flex-1"
         >
           {clip.audioUrl ? (
-            <LimitedAudioPlayer src={clip.audioUrl} maxPlays={2} questionKey={`part4-${clip.id}`} />
+            <LimitedAudioPlayer src={clip.audioUrl} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:part4-${clip.id}`} />
           ) : (
             <MissingMediaNotice kind="audio" skill="listening" partType="part4" questionNumber={currentIndex + 1} />
           )}

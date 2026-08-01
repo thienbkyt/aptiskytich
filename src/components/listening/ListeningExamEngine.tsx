@@ -240,7 +240,7 @@ const ListeningExamEngine = ({
       resetLimitedAudioPlays();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [examSetId]);
 
   useEffect(() => {
     if (!hasStarted || submitted || timeLeft <= 0) return;
@@ -649,6 +649,7 @@ const ListeningExamEngine = ({
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
             hideBottomNav={hideBottomNav}
+            audioKeyPrefix={examSetId ?? ""}
           />
         )}
 
@@ -671,6 +672,7 @@ const ListeningExamEngine = ({
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
             hideBottomNav={hideBottomNav}
+            audioKeyPrefix={examSetId ?? ""}
           />
         )}
 
@@ -693,6 +695,7 @@ const ListeningExamEngine = ({
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
             hideBottomNav={hideBottomNav}
+            audioKeyPrefix={examSetId ?? ""}
           />
         )}
 
@@ -715,6 +718,7 @@ const ListeningExamEngine = ({
             pageNumber={pageBase != null && pageTotal != null ? pageBase + 1 : undefined}
             pageTotal={pageTotal}
             hideBottomNav={hideBottomNav}
+            audioKeyPrefix={examSetId ?? ""}
           />
         )}
       </div>

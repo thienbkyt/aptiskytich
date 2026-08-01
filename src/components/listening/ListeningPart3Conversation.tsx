@@ -40,6 +40,7 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideBottomNav?: boolean;
+  audioKeyPrefix?: string;
 }
 
 const ANSWER_OPTIONS = [
@@ -52,7 +53,7 @@ const ListeningPart3Conversation = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav,
+  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav, audioKeyPrefix,
 }: Props) => {
   const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
@@ -94,7 +95,7 @@ const ListeningPart3Conversation = ({
         <p className="text-base text-foreground leading-relaxed mb-4">{q.questionText}</p>
 
         {q.audioUrl ? (
-          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
         ) : (
           <MissingMediaNotice kind="audio" skill="listening" partType="part3" questionNumber={currentIndex + 1} />
         )}
