@@ -114,6 +114,29 @@ const Dashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasPredictionToday, setHasPredictionToday] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: voucherStatus } = useQuery({
+    queryKey: ["voucher-campaign-status", user?.id],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("voucher_campaign_status");
+      if (error) throw error;
+      return data as { has_campaign: boolean; credits_balance: number; credits_expire_at: string | null };
+    },
+  });
+
+  const creditsBalance = Number(voucherStatus?.credits_balance ?? 0);
+  const hasCampaign = !!voucherStatus?.has_campaign;
+  const creditsExpireLabel = voucherStatus?.credits_expire_at
+    ? new Date(voucherStatus.credits_expire_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })
+    : null;
+  const onVoucherApplied = () => {
+    queryClient.invalidateQueries({ queryKey: ["voucher-campaign-status"] });
+  };
+
+
 
   useEffect(() => {
     let cancelled = false;
