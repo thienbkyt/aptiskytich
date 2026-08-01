@@ -1097,6 +1097,7 @@ const VouchersSection = () => {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<VoucherRow | null>(null);
+  const [editing, setEditing] = useState<VoucherRow | null>(null);
 
   // form
   const [fCode, setFCode] = useState("");
