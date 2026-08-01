@@ -485,6 +485,46 @@ export default function PricingPage() {
             </div>
           )}
 
+          {/* Voucher */}
+          {hasCampaign && (
+            <div className="mt-4 flex justify-center">
+              {voucher?.ok ? (
+                <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border-[0.5px] border-border bg-card px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-bold"
+                    style={{ backgroundColor: "#E1F5EE", color: "#085041" }}>
+                    <Ticket className="w-3.5 h-3.5" /> Đã áp mã {voucher.code}
+                  </span>
+                  <span className="text-[12px] text-muted-foreground">
+                    +{voucher.gift_days ?? 0} ngày · +{voucher.gift_ai_credits ?? 0} lượt chấm AI
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearVoucher}
+                    className="text-[12px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Bỏ mã
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-xl border-[0.5px] border-border bg-card px-4 py-3">
+                  {voucherExpired && (
+                    <p className="mb-2 text-[12px] font-medium text-[#B45309] dark:text-[#FEAD5F]">
+                      {voucherExpired.message}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
+                      <Ticket className="w-4 h-4 text-[#CC1C01]" /> Có mã ưu đãi?
+                    </span>
+                    <VoucherInput mode="preview" compact onApplied={applyVoucher} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+
+
           {/* Plans */}
           {loading ? (
             <div className="flex justify-center py-20">
