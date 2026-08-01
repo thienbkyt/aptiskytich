@@ -1458,7 +1458,7 @@ ${partsIn.formalText ?? ""}`;
           user_id: userId,
           feature_key: featureKey,
           scope: null,
-          ref_id: null,
+          ref_id: (body.gradingSessionId ?? null),
         });
       } catch (e) {
         console.warn("[grade-exam] feature_usage insert failed:", (e as any)?.message || e);
