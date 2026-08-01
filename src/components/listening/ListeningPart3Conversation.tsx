@@ -40,6 +40,7 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideBottomNav?: boolean;
+  audioKeyPrefix?: string;
 }
 
 const ANSWER_OPTIONS = [

@@ -41,6 +41,7 @@ interface Props {
   pageNumber?: number;
   pageTotal?: number;
   hideBottomNav?: boolean;
+  audioKeyPrefix?: string;
 }
 
 const ListeningPart1Word = ({
