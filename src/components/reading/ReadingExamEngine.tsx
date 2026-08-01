@@ -422,7 +422,7 @@ const ReadingExamEngine = ({
       }];
     }
     onComplete?.(correct, scoredTotal, perQuestion);
-  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, onComplete, sourceQuestionIds]);
+  }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, p1ScoredIdx, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
     setSubmitted(false);
