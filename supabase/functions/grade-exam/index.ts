@@ -29,6 +29,29 @@ interface GradingRequest {
   gradingSessionId?: string | null;
 }
 
+// Quyết định lượt này có trả bằng quỹ credit không.
+// LUẬT 1: quyết định MỘT LẦN cho mỗi phiên (ref_id), tại dòng đầu tiên.
+//   Dòng thứ hai của cùng phiên KẾ THỪA cờ của dòng đầu, không đánh giá lại.
+//   Thiếu luật này: phiên có part đầu nằm trong trần, part sau rơi ra ngoài
+//   sẽ bị trừ quỹ cho một phiên đã được tính miễn phí.
+// LUẬT 2: dòng sau của phiên đã trả bằng quỹ thì đi qua, kể cả khi số dư đã về 0.
+//   Thiếu luật này: học viên trả quỹ cho nửa phiên rồi bị chặn giữa chừng, mất bài.
+async function resolvePaidByCredit(
+  serviceClient: any, userId: string, sessionId: string | null, wouldUseCredit: boolean
+): Promise<boolean> {
+  if (!sessionId) return wouldUseCredit;
+  const { data: prior } = await serviceClient
+    .from("feature_usage")
+    .select("paid_by_credit")
+    .eq("user_id", userId)
+    .eq("ref_id", sessionId)
+    .in("feature_key", ["ai_grading_writing", "ai_grading_speaking"])
+    .limit(1);
+  if (prior && prior.length > 0) return !!prior[0].paid_by_credit;
+  return wouldUseCredit;
+}
+
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
