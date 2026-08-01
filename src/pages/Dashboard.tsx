@@ -590,6 +590,52 @@ const Dashboard = () => {
             </motion.div>
           )}
 
+          {/* VOUCHER / AI CREDITS CARD */}
+          {(creditsBalance > 0 || hasCampaign) && (
+            <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
+              {creditsBalance > 0 ? (
+                <>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#FEAD5F]/20 text-[#CC1C01] flex items-center justify-center shrink-0">
+                      <Gift className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-heading font-bold text-foreground text-base">Lượt chấm AI tặng</h3>
+                      <p className="text-sm mt-0.5 text-muted-foreground">
+                        Còn{" "}
+                        <span
+                          className="font-bold"
+                          style={creditsBalance <= 3 ? { color: "#CC1C01" } : undefined}
+                        >
+                          {creditsBalance} lượt
+                        </span>
+                        {creditsExpireLabel && ` · dùng đến hết ${creditsExpireLabel}`}
+                      </p>
+                      <p className="text-[12px] text-muted-foreground mt-1">
+                        Tự dùng khi bạn hết lượt chấm trong ngày.
+                      </p>
+                    </div>
+                  </div>
+                  {creditsBalance <= 3 && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <VoucherInput mode="redeem" onApplied={onVoucherApplied} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h3 className="font-heading font-bold text-foreground text-base">Nhập mã ưu đãi</h3>
+                  <p className="text-[13px] text-muted-foreground mt-0.5 mb-3">
+                    Có mã tặng lượt chấm AI? Nhập để nhận ngay.
+                  </p>
+                  <VoucherInput mode="redeem" onApplied={onVoucherApplied} />
+                </>
+              )}
+            </div>
+          )}
+
+
+
           {/* UPGRADE BANNER (free only) */}
           {!tierLoading && !isPro && (
             <motion.div
