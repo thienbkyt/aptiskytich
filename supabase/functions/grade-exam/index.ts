@@ -154,12 +154,14 @@ serve(async (req) => {
       }
 
       // Soft quota respect
+      let wouldUseCredit = false;
       if (userId && !isInternal) {
         try {
           const { data: access } = await supabaseClient.rpc("check_feature_access", {
             p_key: "ai_grading_writing", p_scope: null,
           });
           const a = (access ?? {}) as any;
+          wouldUseCredit = !!a?.would_use_credit;
           if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
             const userTier = (a.tier as string) ?? "free";
             const need = userTier === "pro" ? "premium" : "pro";
@@ -317,6 +319,7 @@ ${studentText}`;
       try {
         await serviceClient.from("feature_usage").insert({
           user_id: userId, feature_key: "ai_grading_writing", scope: `checklist:${pt}`, ref_id: (body.gradingSessionId ?? null),
+          paid_by_credit: await resolvePaidByCredit(serviceClient, userId, (body.gradingSessionId ?? null), wouldUseCredit),
         });
       } catch (_) { /* noop */ }
 
@@ -439,12 +442,14 @@ ${studentText}`;
 
       // Tier gate — reuse ai_grading_speaking quota. Skip for internal worker
       // retries (quota already consumed on the initial submission).
+      let wouldUseCredit = false;
       if (userId && !isInternal) {
         try {
           const { data: access } = await supabaseClient.rpc("check_feature_access", {
             p_key: "ai_grading_speaking", p_scope: null,
           });
           const a = (access ?? {}) as any;
+          wouldUseCredit = !!a?.would_use_credit;
           if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
             let blocked = true;
             const sid = typeof body.gradingSessionId === "string" ? body.gradingSessionId.trim() : "";
@@ -681,6 +686,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         if (userId) {
           await serviceClient.from("feature_usage").insert({
             user_id: userId, feature_key: "ai_grading_speaking", scope: null, ref_id: (body.gradingSessionId ?? null),
+            paid_by_credit: await resolvePaidByCredit(serviceClient, userId, (body.gradingSessionId ?? null), wouldUseCredit),
           });
         }
       } catch { /* ignore */ }
@@ -816,12 +822,14 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       }
 
       // Tier gate — skip on internal worker retries.
+      let wouldUseCredit = false;
       if (userId && !isInternal) {
         try {
           const { data: access } = await supabaseClient.rpc("check_feature_access", {
             p_key: "ai_grading_writing", p_scope: null,
           });
           const a = (access ?? {}) as any;
+          wouldUseCredit = !!a?.would_use_credit;
           if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
             let blocked = true;
             const sid = typeof body.gradingSessionId === "string" ? body.gradingSessionId.trim() : "";
@@ -1356,6 +1364,7 @@ ${partsIn.formalText ?? ""}`;
         try {
           await serviceClient.from("feature_usage").insert({
             user_id: userId, feature_key: "ai_grading_writing", scope: null, ref_id: (body.gradingSessionId ?? null),
+            paid_by_credit: await resolvePaidByCredit(serviceClient, userId, (body.gradingSessionId ?? null), wouldUseCredit),
           });
         } catch (e) {
           console.warn("[grade-exam writing_v2] feature_usage insert failed:", (e as any)?.message || e);
@@ -1444,6 +1453,7 @@ ${partsIn.formalText ?? ""}`;
     // premium → unlimited; pro → cap = pro_quota/month; free → cap = free_quota/month.
     // Skip on internal retries.
     const featureKey = type === "writing" ? "ai_grading_writing" : "ai_grading_speaking";
+    let wouldUseCredit = false;
     if (userId && !isInternal) {
       try {
         const { data: access } = await supabaseClient.rpc("check_feature_access", {
@@ -1451,6 +1461,7 @@ ${partsIn.formalText ?? ""}`;
           p_scope: null,
         });
         const a = (access ?? {}) as any;
+        wouldUseCredit = !!a?.would_use_credit;
         if (a && a.allowed === false && (a.reason === "quota_exceeded" || a.reason === "disabled")) {
           const userTier = (a.tier as string) ?? "free";
           // free out of quota → upgrade to pro; pro out of quota → upgrade to premium
@@ -1482,6 +1493,7 @@ ${partsIn.formalText ?? ""}`;
           feature_key: featureKey,
           scope: null,
           ref_id: (body.gradingSessionId ?? null),
+          paid_by_credit: await resolvePaidByCredit(serviceClient, userId, (body.gradingSessionId ?? null), wouldUseCredit),
         });
       } catch (e) {
         console.warn("[grade-exam] feature_usage insert failed:", (e as any)?.message || e);
