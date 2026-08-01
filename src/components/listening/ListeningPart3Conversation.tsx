@@ -53,7 +53,7 @@ const ListeningPart3Conversation = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
   isBookmarked = false, onToggleBookmark, onSubmitTest,
-  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav,
+  highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav, audioKeyPrefix,
 }: Props) => {
   const reveal = submitted || !!revealAnswers;
   const q = questions[currentIndex];
