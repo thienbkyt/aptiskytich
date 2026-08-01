@@ -254,8 +254,17 @@ const ReadingExamEngine = ({
 
 
 
+  // Part 1: gap indices that the student must answer (first {n} is the given example).
+  const p1ScoredIdx = useMemo(() => {
+    if (partType !== "part1" || !part1Question) return [] as number[];
+    return [...part1Question.passage.matchAll(/\{(\d+)\}/g)]
+      .map((m) => Number(m[1]))
+      .filter((idx) => part1Question.gaps[idx])
+      .slice(1);
+  }, [partType, part1Question]);
+
   // Panel "questions": for part2 each section = 1 question; others = per item.
-  const totalQuestions = partType === "part1" ? (part1Question?.gaps.length || 0)
+  const totalQuestions = partType === "part1" ? p1ScoredIdx.length
     : partType === "part2" ? part2SectionCount
     : partType === "part3" ? (part3Question?.statements.length || 0)
     : p4Total;
