@@ -2523,6 +2523,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      redeem_voucher: { Args: { p_code: string }; Returns: Json }
       register_device: {
         Args: { p_device_id: string; p_label: string; p_type: string }
         Returns: undefined
