@@ -170,10 +170,14 @@ Deno.serve(async (req) => {
         const currentCap = rawCurrentCap === null || rawCurrentCap === undefined
           ? null
           : Number(rawCurrentCap);
+        const rawUntil = (currentSub as any)?.pro_until;
+        // Chỉ bảo toàn trần cũ khi gói cũ CÒN HẠN. Gói đã hết hạn không được
+        // giữ quyền lợi sang gói mới rẻ hơn.
+        const stillActive = !!rawUntil && new Date(rawUntil) > now;
         subPayload.plan_key = (payment as any).plan_key;
-        subPayload.ai_daily_cap = currentCap === null
-          ? newCap
-          : Math.max(currentCap, newCap);
+        subPayload.ai_daily_cap = (stillActive && currentCap !== null)
+          ? Math.max(currentCap, newCap)
+          : newCap;
       }
     }
 
