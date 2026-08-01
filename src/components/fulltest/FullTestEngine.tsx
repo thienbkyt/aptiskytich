@@ -610,7 +610,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
           onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           skipIntro={currentPartIndex > 0}
-          examSetId={parts[0]?.id ?? null}
+          examSetId={partsForSkill[0]?.id ?? null}
         />
       </>
     );

@@ -620,7 +620,6 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             hideBottomNav
             onQuestionChange={setCurrentQ}
             {...engineData}
-            examSetId={sets[currentIndex]?.id ?? null}
 
           />
         )}
