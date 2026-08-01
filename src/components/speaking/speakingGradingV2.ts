@@ -119,7 +119,9 @@ export async function gradeSpeakingPartV2(
       // Quota is not a technical failure — never retry it through the queue.
       throw new QuotaExceededError({
         used: Number((data as any).used ?? 0),
-        cap: Number((data as any).freeQuota ?? (data as any).proQuota ?? 0),
+        cap:
+          Number((data as any).used ?? 0) + Number((data as any).remaining ?? 0) ||
+          Number((data as any).proQuota ?? (data as any).freeQuota ?? 0),
         tier: String((data as any).tier ?? "free"),
         need: "pro",
       });

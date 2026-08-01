@@ -60,7 +60,7 @@ function getCopy(
       : "Nâng cấp gói luyện thi để mở không giới hạn.";
     return {
       title: "Bạn đã hết lượt dùng",
-      desc: `${name} cho phép ${freeQuota ?? 0} lượt miễn phí. ${target}`,
+      desc: `${name} cho phép ${freeQuota ?? 0} lượt. ${target}`,
       cta: `Nâng cấp ${tName}`,
       showCTA: true,
     };
