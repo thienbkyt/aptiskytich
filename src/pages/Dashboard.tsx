@@ -136,6 +136,14 @@ const Dashboard = () => {
     queryClient.invalidateQueries({ queryKey: ["voucher-campaign-status"] });
   };
 
+  useEffect(() => {
+    const handler = () => queryClient.invalidateQueries({ queryKey: ["voucher-campaign-status"] });
+    window.addEventListener("exam-result-saved", handler);
+    return () => window.removeEventListener("exam-result-saved", handler);
+  }, [queryClient]);
+
+
+
 
 
   useEffect(() => {
@@ -616,11 +624,10 @@ const Dashboard = () => {
                       </p>
                     </div>
                   </div>
-                  {creditsBalance <= 3 && (
-                    <div className="mt-4 pt-4 border-t border-border">
-                      <VoucherInput mode="redeem" onApplied={onVoucherApplied} />
-                    </div>
-                  )}
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <p className="text-[13px] text-muted-foreground mb-2">Có mã khác? Nhập thêm tại đây</p>
+                    <VoucherInput mode="redeem" onApplied={onVoucherApplied} />
+                  </div>
                 </>
               ) : (
                 <>

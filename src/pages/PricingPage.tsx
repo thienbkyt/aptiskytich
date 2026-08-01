@@ -487,14 +487,17 @@ export default function PricingPage() {
 
           {/* Voucher */}
           {hasCampaign && (
-            <div className="mt-4 flex justify-center">
+            <div className="mt-4 mb-8 max-w-2xl mx-auto">
               {voucher?.ok ? (
-                <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border-[0.5px] border-border bg-card px-4 py-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-bold"
-                    style={{ backgroundColor: "#E1F5EE", color: "#085041" }}>
+                <div
+                  className="flex flex-wrap items-center gap-2 px-5 py-4"
+                  style={{ backgroundColor: "#E1F5EE", border: "1px solid #5DCAA5", borderRadius: 12 }}
+                >
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[12px] font-bold"
+                    style={{ color: "#085041" }}>
                     <Ticket className="w-3.5 h-3.5" /> Đã áp mã {voucher.code}
                   </span>
-                  <span className="text-[12px] text-muted-foreground">
+                  <span className="text-[13px] font-semibold" style={{ color: "#085041" }}>
                     +{voucher.gift_days ?? 0} ngày · +{voucher.gift_ai_credits ?? 0} lượt chấm AI
                   </span>
                   <button
@@ -506,18 +509,22 @@ export default function PricingPage() {
                   </button>
                 </div>
               ) : (
-                <div className="rounded-xl border-[0.5px] border-border bg-card px-4 py-3">
+                <div
+                  className="px-5 py-4"
+                  style={{ backgroundColor: "rgba(204,28,1,0.06)", border: "1px dashed #CC1C01", borderRadius: 12 }}
+                >
                   {voucherExpired && (
                     <p className="mb-2 text-[12px] font-medium text-[#B45309] dark:text-[#FEAD5F]">
                       {voucherExpired.message}
                     </p>
                   )}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
-                      <Ticket className="w-4 h-4 text-[#CC1C01]" /> Có mã ưu đãi?
-                    </span>
-                    <VoucherInput mode="preview" compact onApplied={applyVoucher} />
-                  </div>
+                  <p className="inline-flex items-center gap-1.5 text-[15px] font-bold text-foreground">
+                    <Ticket className="w-4 h-4 text-[#CC1C01]" /> Có mã ưu đãi?
+                  </p>
+                  <p className="text-[12px] text-muted-foreground mt-0.5 mb-3">
+                    Nhập mã trước khi chọn gói để được cộng thêm ngày và lượt chấm AI.
+                  </p>
+                  <VoucherInput mode="preview" compact onApplied={applyVoucher} />
                 </div>
               )}
             </div>
