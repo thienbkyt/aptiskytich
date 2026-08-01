@@ -80,10 +80,12 @@ export async function gradeSpeakingPartV2(
     }
   }
 
-  // Short-circuit: if NO audio was recorded at all, skip the edge call entirely.
-  const anySpoken = audios.some((a) => typeof a === "string" && a.length > 100);
+  // Short-circuit: if NO audible audio was recorded, skip the edge call entirely.
+  const MIN_AUDIO_BYTES = 30000;
+  const anySpoken = audioBlobs.some((b) => !!b && b.size >= MIN_AUDIO_BYTES);
   if (!anySpoken) {
     const count = Math.max(questions.length, 1);
+    const msg = "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.";
     return {
       bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
       rawPart: 0,
@@ -94,8 +96,8 @@ export async function gradeSpeakingPartV2(
         upgradeTips: "",
         questionText: "",
       })),
-      analysis: "Không có bài ghi âm.",
-      criteriaAnalysis: { tf: "Không có bài ghi âm.", gra: "Không có bài ghi âm.", vra: "Không có bài ghi âm.", pro: "Không có bài ghi âm.", fc: "Không có bài ghi âm." },
+      analysis: msg,
+      criteriaAnalysis: { tf: msg, gra: msg, vra: msg, pro: msg, fc: msg },
       improvedVersion: "",
     };
   }

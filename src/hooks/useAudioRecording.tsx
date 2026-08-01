@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 
 interface UseAudioRecordingOptions {
   maxDuration: number;
@@ -91,6 +92,12 @@ export const useAudioRecording = ({
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: mime || "audio/webm" });
+        if (blob.size < 30000) {
+          toast.warning("Không nhận được âm thanh", {
+            description: "Micro có vẻ không thu được tiếng. Kiểm tra micro rồi thu lại — bài không thu được tiếng sẽ không chấm được.",
+            duration: 8000,
+          });
+        }
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         onComplete(url);

@@ -419,7 +419,7 @@ ${studentText}`;
       }
 
       const isPart4 = partType === "part4";
-      const MIN_AUDIO_LEN = 100;
+      const MIN_AUDIO_LEN = 40000; // ~30KB nhị phân; dưới mức này là khoảng lặng, KHÔNG gửi cho AI
       // Treat very short / empty base64 strings as "silent" (no recording).
       const spokenMask: boolean[] = audios.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN);
       const anySpoken = spokenMask.some(Boolean);
@@ -435,8 +435,8 @@ ${studentText}`;
           rawPart: 0,
           raw_part: 0,
           perItem: emptyPerItem,
-          analysis: "Không có bài ghi âm.",
-          criteriaAnalysis: { tf: "Không có bài ghi âm.", gra: "Không có bài ghi âm.", vra: "Không có bài ghi âm.", pro: "Không có bài ghi âm.", fc: "Không có bài ghi âm." },
+          analysis: "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.",
+          criteriaAnalysis: { tf: "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.", gra: "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.", vra: "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.", pro: "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.", fc: "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại." },
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
