@@ -96,6 +96,59 @@ export default function PricingPage() {
     },
   });
 
+  const { data: voucherStatus } = useQuery({
+    queryKey: ["voucher-campaign-status", user?.id],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("voucher_campaign_status");
+      if (error) throw error;
+      return data as { has_campaign: boolean; credits_balance: number; credits_expire_at: string | null };
+    },
+  });
+  const hasCampaign = !!voucherStatus?.has_campaign;
+
+  // Khôi phục mã đã lưu và xác thực lại
+  useEffect(() => {
+    if (!user) return;
+    const saved = localStorage.getItem("voucher_code");
+    if (!saved) return;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc("check_voucher", { p_code: saved });
+      const info = data as any;
+      if (error || !info?.ok) {
+        localStorage.removeItem("voucher_code");
+        setVoucher(null);
+        const day = info?.expires_at
+          ? new Date(info.expires_at).toLocaleDateString("vi-VN")
+          : "trước đó";
+        setVoucherExpired({ code: saved, message: `Mã ${saved} đã hết hạn — ưu đãi kết thúc ${day}.` });
+        return;
+      }
+      setVoucher({ ...info, code: saved });
+      setVoucherExpired(null);
+    })();
+  }, [user]);
+
+  const applyVoucher = (info: VoucherInfo) => {
+    localStorage.setItem("voucher_code", info.code);
+    setVoucher(info);
+    setVoucherExpired(null);
+  };
+  const clearVoucher = () => {
+    localStorage.removeItem("voucher_code");
+    setVoucher(null);
+    setVoucherExpired(null);
+  };
+  const planEligible = (p: PricingPlan) => {
+    if (!voucher) return true;
+    const list = voucher.applies_to_plans;
+    if (!list || list.length === 0) return true;
+    return list.includes(p.key);
+  };
+
+
+
   useEffect(() => {
     if (params.get("paid") === "1") {
       toast.success("Đang xác nhận thanh toán...", { description: "Trạng thái gói sẽ tự cập nhật trong giây lát." });
