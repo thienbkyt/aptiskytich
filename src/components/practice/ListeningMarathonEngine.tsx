@@ -583,6 +583,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
         ) : (
           <ListeningExamEngine
             key={`${attempt}-${currentIndex}`}
+            examSetId={sets[currentIndex]?.id ?? null}
             partType={partType}
             testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
             timeLimit={HUGE_TIME}

@@ -565,6 +565,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
         ) : (
           <ReadingExamEngine
             key={`${attempt}-${currentIndex}`}
+            examSetId={sets[currentIndex]?.id ?? null}
             partType={partType}
             testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
             timeLimit={HUGE_TIME}
