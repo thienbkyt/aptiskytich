@@ -2064,6 +2064,7 @@ export type Database = {
       }
       voucher_codes: {
         Row: {
+          allow_existing_subscribers: boolean
           applies_to_plans: string[] | null
           code: string
           code_norm: string | null
@@ -2083,6 +2084,7 @@ export type Database = {
           requires_activity: boolean
         }
         Insert: {
+          allow_existing_subscribers?: boolean
           applies_to_plans?: string[] | null
           code: string
           code_norm?: string | null
@@ -2102,6 +2104,7 @@ export type Database = {
           requires_activity?: boolean
         }
         Update: {
+          allow_existing_subscribers?: boolean
           applies_to_plans?: string[] | null
           code?: string
           code_norm?: string | null
