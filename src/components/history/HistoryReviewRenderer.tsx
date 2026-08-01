@@ -250,6 +250,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
         showResultsOnSubmit={false}
         initialGroup={initialSection}
         onGroupCount={onPageCount}
+        examSetId={examSetId}
       />
     );
   }

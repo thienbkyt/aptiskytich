@@ -340,6 +340,7 @@ const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             onMarathonFinish={handleExit}
             initialAnswers={initialAnswers}
             onAnswersChange={(a) => { currentAnswersRef.current = a; }}
+            examSetId={sets[activeSetIndex]?.id ?? null}
             reviewMode={isReviewingSet}
             belowContent={<Checklist partType={partType} />}
             {...engineData}
