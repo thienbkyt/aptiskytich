@@ -330,7 +330,8 @@ const ReadingExamEngine = ({
     if (phase !== "practice") return;
     if (partType === "part2") return; // part2 changes section, scroll naturally
     const id = window.requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-question-index="${currentIndex}"]`) as HTMLElement | null;
+      const domIdx = partType === "part1" ? (p1ScoredIdx[currentIndex] ?? currentIndex) : currentIndex;
+      const el = document.querySelector(`[data-question-index="${domIdx}"]`) as HTMLElement | null;
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => window.cancelAnimationFrame(id);
