@@ -96,7 +96,7 @@ const ListeningPart4Monologue = ({
           className="flex-1"
         >
           {clip.audioUrl ? (
-            <LimitedAudioPlayer src={clip.audioUrl} maxPlays={2} questionKey={`part4-${clip.id}`} />
+            <LimitedAudioPlayer src={clip.audioUrl} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:part4-${clip.id}`} />
           ) : (
             <MissingMediaNotice kind="audio" skill="listening" partType="part4" questionNumber={currentIndex + 1} />
           )}

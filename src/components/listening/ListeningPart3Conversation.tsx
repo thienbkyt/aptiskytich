@@ -95,7 +95,7 @@ const ListeningPart3Conversation = ({
         <p className="text-base text-foreground leading-relaxed mb-4">{q.questionText}</p>
 
         {q.audioUrl ? (
-          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={q.id} />
+          <LimitedAudioPlayer src={q.audioUrl} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
         ) : (
           <MissingMediaNotice kind="audio" skill="listening" partType="part3" questionNumber={currentIndex + 1} />
         )}
