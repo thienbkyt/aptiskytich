@@ -293,12 +293,13 @@ const SpeakingExamEngine = ({
         let greyOut = false;
         let flagOut = false;
         try {
+          const coreGV = await fetchCoreGVBand();
           const fin = await finalizeSpeaking({
             part1: finalResult.rawPart,
             part2: finalResult.rawPart,
             part3: finalResult.rawPart,
             part4: finalResult.rawPart,
-          });
+          }, coreGV);
           scale50Out = Number(fin.scale50 ?? scale50Out);
           cefrOut = fin.cefr || "";
           greyOut = !!fin.greyZone;
