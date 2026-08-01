@@ -36,6 +36,7 @@ import {
   Loader2,
   Shield,
   ShieldOff,
+  Download,
 } from "lucide-react";
 import {
   AlertDialog,
