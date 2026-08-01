@@ -1,5 +1,8 @@
 import { Link, Navigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import VoucherInput from "@/components/voucher/VoucherInput";
+import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
@@ -111,6 +114,29 @@ const Dashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasPredictionToday, setHasPredictionToday] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: voucherStatus } = useQuery({
+    queryKey: ["voucher-campaign-status", user?.id],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("voucher_campaign_status");
+      if (error) throw error;
+      return data as { has_campaign: boolean; credits_balance: number; credits_expire_at: string | null };
+    },
+  });
+
+  const creditsBalance = Number(voucherStatus?.credits_balance ?? 0);
+  const hasCampaign = !!voucherStatus?.has_campaign;
+  const creditsExpireLabel = voucherStatus?.credits_expire_at
+    ? new Date(voucherStatus.credits_expire_at).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })
+    : null;
+  const onVoucherApplied = () => {
+    queryClient.invalidateQueries({ queryKey: ["voucher-campaign-status"] });
+  };
+
+
 
   useEffect(() => {
     let cancelled = false;
@@ -563,6 +589,52 @@ const Dashboard = () => {
               </div>
             </motion.div>
           )}
+
+          {/* VOUCHER / AI CREDITS CARD */}
+          {(creditsBalance > 0 || hasCampaign) && (
+            <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
+              {creditsBalance > 0 ? (
+                <>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#FEAD5F]/20 text-[#CC1C01] flex items-center justify-center shrink-0">
+                      <Gift className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-heading font-bold text-foreground text-base">Lượt chấm AI tặng</h3>
+                      <p className="text-sm mt-0.5 text-muted-foreground">
+                        Còn{" "}
+                        <span
+                          className="font-bold"
+                          style={creditsBalance <= 3 ? { color: "#CC1C01" } : undefined}
+                        >
+                          {creditsBalance} lượt
+                        </span>
+                        {creditsExpireLabel && ` · dùng đến hết ${creditsExpireLabel}`}
+                      </p>
+                      <p className="text-[12px] text-muted-foreground mt-1">
+                        Tự dùng khi bạn hết lượt chấm trong ngày.
+                      </p>
+                    </div>
+                  </div>
+                  {creditsBalance <= 3 && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <VoucherInput mode="redeem" onApplied={onVoucherApplied} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h3 className="font-heading font-bold text-foreground text-base">Nhập mã ưu đãi</h3>
+                  <p className="text-[13px] text-muted-foreground mt-0.5 mb-3">
+                    Có mã tặng lượt chấm AI? Nhập để nhận ngay.
+                  </p>
+                  <VoucherInput mode="redeem" onApplied={onVoucherApplied} />
+                </>
+              )}
+            </div>
+          )}
+
+
 
           {/* UPGRADE BANNER (free only) */}
           {!tierLoading && !isPro && (

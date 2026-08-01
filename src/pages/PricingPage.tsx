@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpenCheck, Check, ChevronDown, Crown, Loader2, Sparkles, Users, Wand2, X } from "lucide-react";
+import { BookOpenCheck, Check, ChevronDown, Crown, Loader2, Sparkles, Ticket, Users, Wand2, X } from "lucide-react";
+import VoucherInput, { type VoucherInfo } from "@/components/voucher/VoucherInput";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -78,6 +79,8 @@ export default function PricingPage() {
   const [buying, setBuying] = useState<string | null>(null);
   const [shortKey, setShortKey] = useState<"day" | "week">("day");
   const [showCompare, setShowCompare] = useState(false);
+  const [voucher, setVoucher] = useState<VoucherInfo | null>(null);
+  const [voucherExpired, setVoucherExpired] = useState<{ code: string; message: string } | null>(null);
   const { user } = useAuth();
   const { isPro, isPremium, refetch } = useIsPro();
   const navigate = useNavigate();
@@ -92,6 +95,59 @@ export default function PricingPage() {
       return data as PublicStats;
     },
   });
+
+  const { data: voucherStatus } = useQuery({
+    queryKey: ["voucher-campaign-status", user?.id],
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("voucher_campaign_status");
+      if (error) throw error;
+      return data as { has_campaign: boolean; credits_balance: number; credits_expire_at: string | null };
+    },
+  });
+  const hasCampaign = !!voucherStatus?.has_campaign;
+
+  // Khôi phục mã đã lưu và xác thực lại
+  useEffect(() => {
+    if (!user) return;
+    const saved = localStorage.getItem("voucher_code");
+    if (!saved) return;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc("check_voucher", { p_code: saved });
+      const info = data as any;
+      if (error || !info?.ok) {
+        localStorage.removeItem("voucher_code");
+        setVoucher(null);
+        const day = info?.expires_at
+          ? new Date(info.expires_at).toLocaleDateString("vi-VN")
+          : "trước đó";
+        setVoucherExpired({ code: saved, message: `Mã ${saved} đã hết hạn — ưu đãi kết thúc ${day}.` });
+        return;
+      }
+      setVoucher({ ...info, code: saved });
+      setVoucherExpired(null);
+    })();
+  }, [user]);
+
+  const applyVoucher = (info: VoucherInfo) => {
+    localStorage.setItem("voucher_code", info.code);
+    setVoucher(info);
+    setVoucherExpired(null);
+  };
+  const clearVoucher = () => {
+    localStorage.removeItem("voucher_code");
+    setVoucher(null);
+    setVoucherExpired(null);
+  };
+  const planEligible = (p: PricingPlan) => {
+    if (!voucher) return true;
+    const list = voucher.applies_to_plans;
+    if (!list || list.length === 0) return true;
+    return list.includes(p.key);
+  };
+
+
 
   useEffect(() => {
     if (params.get("paid") === "1") {
@@ -147,7 +203,10 @@ export default function PricingPage() {
     setBuying(p.key);
     try {
       const { data, error } = await supabase.functions.invoke("create-payment", {
-        body: { plan_key: p.key },
+        body: {
+          plan_key: p.key,
+          ...(voucher?.ok && planEligible(p) ? { promo_code: voucher.code } : {}),
+        },
       });
       if (error || !data?.checkoutUrl) {
         toast.error("Không tạo được link thanh toán", {
@@ -240,6 +299,8 @@ export default function PricingPage() {
     const lp = listPrice(plan);
     const d = discountPct(plan);
     const cheaper = hero ? cheaperThanMonthPct(plan) : null;
+    const voucherOn = !!voucher?.ok;
+    const eligible = planEligible(plan);
 
     return (
       <div className={cn("h-full flex flex-col", order)}>
@@ -262,11 +323,27 @@ export default function PricingPage() {
             "flex-1 rounded-xl bg-card p-5 flex flex-col text-center",
             hero ? "border-2 border-[#CC1C01]" : "border-[0.5px] border-border",
           )}
+          style={voucherOn && !eligible ? { opacity: 0.55 } : undefined}
         >
+          {voucherOn && (
+            <div className="mb-2 flex justify-center">
+              {eligible ? (
+                <span
+                  className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
+                >
+                  +{voucher?.gift_days ?? 0} ngày · +{voucher?.gift_ai_credits ?? 0} lượt
+                </span>
+              ) : (
+                <span className="text-[11px] text-muted-foreground">Mã không áp dụng</span>
+              )}
+            </div>
+          )}
           <div className="flex flex-col items-center gap-2 min-h-[52px] justify-center">
             <p className="text-[15px] font-semibold text-foreground">
               {label ?? (plan.label === "1 tháng" ? "1 Tháng" : plan.label === "3 tháng" ? "3 Tháng" : plan.label)}
             </p>
+
             {headerExtra ??
               (d != null && (
                 <span
@@ -407,6 +484,46 @@ export default function PricingPage() {
               ))}
             </div>
           )}
+
+          {/* Voucher */}
+          {hasCampaign && (
+            <div className="mt-4 flex justify-center">
+              {voucher?.ok ? (
+                <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border-[0.5px] border-border bg-card px-4 py-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-bold"
+                    style={{ backgroundColor: "#E1F5EE", color: "#085041" }}>
+                    <Ticket className="w-3.5 h-3.5" /> Đã áp mã {voucher.code}
+                  </span>
+                  <span className="text-[12px] text-muted-foreground">
+                    +{voucher.gift_days ?? 0} ngày · +{voucher.gift_ai_credits ?? 0} lượt chấm AI
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearVoucher}
+                    className="text-[12px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Bỏ mã
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-xl border-[0.5px] border-border bg-card px-4 py-3">
+                  {voucherExpired && (
+                    <p className="mb-2 text-[12px] font-medium text-[#B45309] dark:text-[#FEAD5F]">
+                      {voucherExpired.message}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
+                      <Ticket className="w-4 h-4 text-[#CC1C01]" /> Có mã ưu đãi?
+                    </span>
+                    <VoucherInput mode="preview" compact onApplied={applyVoucher} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+
 
           {/* Plans */}
           {loading ? (
