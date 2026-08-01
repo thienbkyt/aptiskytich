@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const planKey = String(body?.plan_key ?? "").trim();
+    const promoCode = String(body?.promo_code ?? "").trim().toUpperCase();
     if (!planKey) {
       return new Response(JSON.stringify({ error: "Missing plan_key" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
