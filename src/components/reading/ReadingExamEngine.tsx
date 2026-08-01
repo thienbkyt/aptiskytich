@@ -378,6 +378,8 @@ const ReadingExamEngine = ({
     if (partType === "part1" && part1Question) {
       // First gap is the "done for you" example — excluded in p1ScoredIdx.
       const scoredIdx = p1ScoredIdx;
+      correct = scoredIdx.reduce((acc, i) => acc + (p1Answers[i] === part1Question.gaps[i].correct ? 1 : 0), 0);
+      scoredTotal = scoredIdx.length;
     } else if (partType === "part2" && part2Question) {
       let p2correct = 0, p2total = 0;
       part2Question.sections.forEach((sec, sIdx) => {
