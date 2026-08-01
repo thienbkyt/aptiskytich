@@ -116,7 +116,9 @@ const AdminPro = () => {
           <PromoSection />
           <FeatureFlagsSection />
           <PricingPlansSection />
+          <VouchersSection />
           <ProUsersSection />
+
         </div>
       </div>
       <Footer />
@@ -1045,3 +1047,509 @@ const PricingPlansSection = () => {
   );
 };
 
+
+// ─────────────────────────────────────────────────────────────
+// 5. Mã ưu đãi (vouchers)
+// ─────────────────────────────────────────────────────────────
+type VoucherRow = {
+  id: string;
+  code: string;
+  kind: string;
+  gift_days: number;
+  gift_ai_credits: number;
+  gift_ai_cap: number | null;
+  credit_expires_at: string | null;
+  applies_to_plans: string[] | null;
+  requires_activity: boolean;
+  allow_existing_subscribers: boolean;
+  max_total_uses: number | null;
+  expires_at: string | null;
+  enabled: boolean;
+  note: string | null;
+  created_at: string;
+};
+
+type RedemptionRow = {
+  id: string;
+  user_id: string;
+  payment_id: string | null;
+  redeemed_at: string;
+};
+
+const PLAN_KEYS = ["month", "quarter", "half_year", "week", "day"];
+const AI_UNIT_COST = 11;
+
+const fmtVN = (iso: string) => {
+  const d = parseDateSafe(iso);
+  if (!d) return "—";
+  const vn = new Date(d.getTime() + 7 * 3600 * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(vn.getUTCDate())}/${p(vn.getUTCMonth() + 1)} ${p(vn.getUTCHours())}:${p(vn.getUTCMinutes())}`;
+};
+
+const VouchersSection = () => {
+  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState<VoucherRow[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<VoucherRow | null>(null);
+
+  // form
+  const [fCode, setFCode] = useState("");
+  const [fKind, setFKind] = useState<"standalone" | "checkout">("standalone");
+  const [fDays, setFDays] = useState("0");
+  const [fCredits, setFCredits] = useState("0");
+  const [fMaxUses, setFMaxUses] = useState("");
+  const [fExpires, setFExpires] = useState("");
+  const [advOpen, setAdvOpen] = useState(false);
+  const [fPlans, setFPlans] = useState<string[]>([]);
+  const [fCreditExpires, setFCreditExpires] = useState("");
+  const [fAiCap, setFAiCap] = useState("");
+  const [fRequiresActivity, setFRequiresActivity] = useState(false);
+  const [fAllowExisting, setFAllowExisting] = useState(false);
+  const [fNote, setFNote] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const reload = async () => {
+    setLoading(true);
+    const { data, error } = await (supabase as any)
+      .from("voucher_codes")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) toast.error("Không tải được danh sách mã");
+    const list = ((data as any) ?? []) as VoucherRow[];
+    setRows(list);
+
+    const { data: red } = await (supabase as any)
+      .from("voucher_redemptions")
+      .select("code_id");
+    const map: Record<string, number> = {};
+    ((red as any) ?? []).forEach((r: any) => {
+      map[r.code_id] = (map[r.code_id] ?? 0) + 1;
+    });
+    setCounts(map);
+    setLoading(false);
+  };
+
+  useEffect(() => { reload(); }, []);
+
+  const statusOf = (v: VoucherRow) => {
+    if (!v.enabled) return { label: "Đã tắt", tone: "off" as const };
+    const exp = v.expires_at ? toTimeSafe(v.expires_at) : 0;
+    if (exp && exp < Date.now()) return { label: "Hết hạn", tone: "off" as const };
+    return { label: "Đang chạy", tone: "on" as const };
+  };
+
+  const giftText = (v: { gift_days: number; gift_ai_credits: number }) => {
+    const parts: string[] = [];
+    if (v.gift_days > 0) parts.push(`+${v.gift_days} ngày`);
+    if (v.gift_ai_credits > 0) parts.push(`+${v.gift_ai_credits} lượt AI`);
+    return parts.length ? parts.join(" · ") : "—";
+  };
+
+  const toggleEnabled = async (v: VoucherRow) => {
+    setTogglingId(v.id);
+    const { error } = await (supabase as any)
+      .from("voucher_codes")
+      .update({ enabled: !v.enabled })
+      .eq("id", v.id);
+    setTogglingId(null);
+    if (error) { toast.error("Không đổi được trạng thái: " + error.message); return; }
+    setRows((list) => list.map((r) => (r.id === v.id ? { ...r, enabled: !v.enabled } : r)));
+    toast.success(v.enabled ? `Đã tắt mã ${v.code}` : `Đã bật lại mã ${v.code}`);
+  };
+
+  const resetForm = () => {
+    setFCode(""); setFKind("standalone"); setFDays("0"); setFCredits("0");
+    setFMaxUses(""); setFExpires(""); setFPlans([]); setFCreditExpires("");
+    setFAiCap(""); setFRequiresActivity(false); setFAllowExisting(false); setFNote("");
+    setAdvOpen(false);
+  };
+
+  const nCredits = Number(fCredits || 0);
+  const nDays = Number(fDays || 0);
+  const nMax = fMaxUses.trim() === "" ? null : Number(fMaxUses);
+  const estCost = nMax != null ? nMax * nCredits * AI_UNIT_COST : null;
+  const overBudget = estCost != null && estCost > 500000;
+
+  const create = async () => {
+    const code = fCode.trim().toUpperCase();
+    if (!code) { toast.error("Bạn chưa nhập mã"); return; }
+    if (nDays <= 0 && nCredits <= 0) {
+      toast.error("Mã phải tặng ít nhất ngày hoặc lượt chấm AI");
+      return;
+    }
+    setCreating(true);
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await (supabase as any).from("voucher_codes").insert({
+      code,
+      kind: fKind,
+      gift_days: nDays,
+      gift_ai_credits: nCredits,
+      gift_ai_cap: fAiCap.trim() === "" ? null : Number(fAiCap),
+      credit_expires_at: fCreditExpires ? new Date(fCreditExpires).toISOString() : null,
+      applies_to_plans: fPlans.length ? fPlans : null,
+      requires_activity: fRequiresActivity,
+      allow_existing_subscribers: fKind === "checkout" ? fAllowExisting : false,
+      max_total_uses: nMax,
+      expires_at: fExpires ? new Date(fExpires).toISOString() : null,
+      enabled: true,
+      note: fNote.trim() || null,
+      created_by: userData?.user?.id ?? null,
+    });
+    setCreating(false);
+    if (error) {
+      if ((error as any).code === "23505" || /duplicate|unique/i.test(error.message)) {
+        toast.error("Mã này đã tồn tại");
+      } else {
+        toast.error("Tạo mã thất bại: " + error.message);
+      }
+      return;
+    }
+    toast.success(`Đã tạo mã ${code}`);
+    resetForm();
+    reload();
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Mã ưu đãi</CardTitle>
+        <CardDescription>
+          Tạo mã tặng ngày dùng / lượt chấm AI. Mã đã phát ra ngoài thì không sửa được quà —
+          muốn đổi thì tắt mã cũ rồi tạo mã mới.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Khối 1 — danh sách */}
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+          </div>
+        ) : rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Chưa có mã nào.</p>
+        ) : (
+          <div className="rounded-lg border border-border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mã</TableHead>
+                  <TableHead>Quà</TableHead>
+                  <TableHead className="w-[120px]">Đã dùng</TableHead>
+                  <TableHead className="w-[120px]">Ngưng nhận</TableHead>
+                  <TableHead className="w-[200px]">Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((v) => {
+                  const st = statusOf(v);
+                  const used = counts[v.id] ?? 0;
+                  const expD = v.expires_at ? parseDateSafe(v.expires_at) : null;
+                  return (
+                    <TableRow
+                      key={v.id}
+                      onClick={() => setSelected(v)}
+                      className={cn(
+                        "cursor-pointer",
+                        selected?.id === v.id && "bg-[#FEAD5F]/10",
+                      )}
+                    >
+                      <TableCell>
+                        <div className="font-mono font-semibold">{v.code}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {v.kind === "standalone" ? "Nhận ngay" : "Khi thanh toán"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{giftText(v)}</TableCell>
+                      <TableCell className="text-sm">
+                        {used} / {v.max_total_uses ?? "∞"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {expD ? format(expD, "dd/MM") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "border",
+                              st.tone === "on"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-500/10 dark:text-emerald-400"
+                                : "bg-muted text-muted-foreground border-border",
+                            )}
+                          >
+                            {st.label}
+                          </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={togglingId === v.id}
+                            onClick={(e) => { e.stopPropagation(); toggleEnabled(v); }}
+                          >
+                            {togglingId === v.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : v.enabled ? "Tắt" : "Bật lại"}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {/* Khối 2 — tạo mã */}
+        <div className="rounded-lg border border-border p-4 space-y-4">
+          <h3 className="font-heading font-bold text-foreground">Tạo mã mới</h3>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Mã</Label>
+              <Input
+                value={fCode}
+                onChange={(e) => setFCode(e.target.value.toUpperCase())}
+                placeholder="VIDU10"
+                className="font-mono uppercase"
+                style={{ textTransform: "uppercase" }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Loại</Label>
+              <Select value={fKind} onValueChange={(v) => setFKind(v as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standalone">Nhận ngay (không cần mua)</SelectItem>
+                  <SelectItem value="checkout">Khi thanh toán</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tặng ngày</Label>
+              <Input type="number" min={0} value={fDays} onChange={(e) => setFDays(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tặng lượt chấm AI</Label>
+              <Input type="number" min={0} value={fCredits} onChange={(e) => setFCredits(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Tối đa bao nhiêu người</Label>
+              <Input
+                type="number"
+                min={0}
+                value={fMaxUses}
+                onChange={(e) => setFMaxUses(e.target.value)}
+                placeholder="Để trống = không giới hạn"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Ngưng nhận từ</Label>
+              <Input type="date" value={fExpires} onChange={(e) => setFExpires(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border">
+            <button
+              type="button"
+              onClick={() => setAdvOpen((o) => !o)}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm font-semibold text-foreground"
+            >
+              Tuỳ chọn nâng cao
+              <span className="text-muted-foreground text-xs">{advOpen ? "Thu gọn" : "Mở"}</span>
+            </button>
+            {advOpen && (
+              <div className="px-3 pb-4 pt-1 space-y-4 border-t border-border">
+                <div className="space-y-1.5">
+                  <Label>Chỉ áp cho gói</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {PLAN_KEYS.map((k) => {
+                      const on = fPlans.includes(k);
+                      return (
+                        <Button
+                          key={k}
+                          type="button"
+                          size="sm"
+                          variant={on ? "default" : "outline"}
+                          onClick={() =>
+                            setFPlans((p) => (on ? p.filter((x) => x !== k) : [...p, k]))
+                          }
+                        >
+                          {k}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Để trống = mọi gói</p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Hạn dùng lượt tặng</Label>
+                    <Input type="date" value={fCreditExpires} onChange={(e) => setFCreditExpires(e.target.value)} />
+                    <p className="text-xs text-muted-foreground">Để trống = theo hạn gói</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Trần AI/ngày kèm theo</Label>
+                    <Input type="number" min={0} value={fAiCap} onChange={(e) => setFAiCap(e.target.value)} />
+                    <p className="text-xs text-muted-foreground">Để trống = giữ trần hiện có</p>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 accent-[#CC1C01]"
+                    checked={fRequiresActivity}
+                    onChange={(e) => setFRequiresActivity(e.target.checked)}
+                  />
+                  Chỉ cho người đã làm bài
+                </label>
+
+                {fKind === "checkout" && (
+                  <label className="flex items-center gap-2 text-sm text-foreground">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 accent-[#CC1C01]"
+                      checked={fAllowExisting}
+                      onChange={(e) => setFAllowExisting(e.target.checked)}
+                    />
+                    Cho người đang có gói nhận trực tiếp
+                  </label>
+                )}
+
+                <div className="space-y-1.5">
+                  <Label>Ghi chú</Label>
+                  <Input value={fNote} onChange={(e) => setFNote(e.target.value)} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Ước tính chi phí */}
+          <div
+            className="rounded-lg border p-3 text-sm"
+            style={
+              estCost == null || overBudget
+                ? { background: "#FCEBEB", borderColor: "#F09595", color: "#791F1F" }
+                : { background: "#E1F5EE", borderColor: "#5DCAA5", color: "#085041" }
+            }
+          >
+            {estCost == null ? (
+              <p className="font-semibold">
+                Không giới hạn người nhận — không ước tính được trần chi phí
+              </p>
+            ) : (
+              <>
+                <p className="font-semibold">
+                  Ước tính chi phí AI: {estCost.toLocaleString("vi-VN")}đ
+                  {overBudget && " — số này khá lớn, kiểm lại trần người nhận"}
+                </p>
+                <p className="text-xs mt-0.5 opacity-90">
+                  {nMax} người × {nCredits} lượt × {AI_UNIT_COST}đ
+                  {nDays > 0 && ` · cộng thêm ${nDays} ngày sử dụng mỗi người`}
+                </p>
+              </>
+            )}
+          </div>
+
+          <Button
+            onClick={create}
+            disabled={creating}
+            className="gap-1.5 bg-[#CC1C01] hover:bg-[#4D0D0D] text-primary-foreground"
+          >
+            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            Tạo mã
+          </Button>
+        </div>
+
+        {/* Khối 3 — ai đã dùng */}
+        {selected && (
+          <VoucherRedemptions
+            voucher={selected}
+            used={counts[selected.id] ?? 0}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const VoucherRedemptions = ({ voucher, used }: { voucher: VoucherRow; used: number }) => {
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<RedemptionRow[]>([]);
+  const [emails, setEmails] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await (supabase as any)
+        .from("voucher_redemptions")
+        .select("id, user_id, payment_id, redeemed_at")
+        .eq("code_id", voucher.id)
+        .order("redeemed_at", { ascending: false })
+        .limit(100);
+      if (!alive) return;
+      if (error) toast.error("Không tải được danh sách người nhận");
+      const rows = ((data as any) ?? []) as RedemptionRow[];
+      setItems(rows);
+      const ids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+      if (ids.length > 0) {
+        const { data: eData } = await supabase.rpc("admin_emails_by_ids", { p_user_ids: ids });
+        if (!alive) return;
+        const m: Record<string, string> = {};
+        ((eData as any) ?? []).forEach((s: any) => { m[s.user_id] = s.email ?? ""; });
+        setEmails(m);
+      } else {
+        setEmails({});
+      }
+      setLoading(false);
+    })();
+    return () => { alive = false; };
+  }, [voucher.id]);
+
+  return (
+    <div className="rounded-lg border border-border p-4 space-y-3">
+      <div>
+        <h3 className="font-heading font-bold text-foreground">
+          Ai đã dùng — <span className="font-mono">{voucher.code}</span>
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          {used} / {voucher.max_total_uses ?? "∞"} lượt đã phát
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="w-4 h-4 animate-spin" /> Đang tải...
+        </div>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Chưa có ai nhận mã này.</p>
+      ) : (
+        <div className="rounded-lg border border-border overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Email</TableHead>
+                <TableHead className="w-[160px]">Thời điểm</TableHead>
+                <TableHead className="w-[160px]">Cách nhận</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell className="text-sm">{emails[r.user_id] || r.user_id}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{fmtVN(r.redeemed_at)}</TableCell>
+                  <TableCell className="text-sm">
+                    {r.payment_id ? "Qua đơn mua" : "Nhận trực tiếp"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  );
+};
