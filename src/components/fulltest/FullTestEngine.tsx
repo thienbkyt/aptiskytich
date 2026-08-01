@@ -610,6 +610,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
           onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
           skipIntro={currentPartIndex > 0}
+          examSetId={parts[0]?.id ?? null}
         />
       </>
     );
@@ -871,7 +872,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   if (currentSkill === "listening") {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
-    const listeningProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
+    const listeningProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id), examSetId: currentPart.id };
     switch (partType) {
       case "part1": listeningProps.part1Questions = toListeningPart1(currentPart.questions); break;
       case "part2": listeningProps.part2Questions = toListeningPart2(currentPart.questions); break;
@@ -902,7 +903,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   if (currentSkill === "reading") {
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
-    const readingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
+    const readingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id), examSetId: currentPart.id };
     switch (partType) {
       case "part1": readingProps.part1Question = toReadingPart1(currentPart.questions); break;
       case "part2": readingProps.part2Question = toReadingPart2(currentPart.questions); break;
@@ -936,7 +937,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     };
     const partType = partMap[partNorm];
     if (!partType) return null;
-    const writingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
+    const writingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id), examSetId: currentPart.id };
     switch (partType) {
       case "task1": writingProps.part1Data = toWritingPart1(currentPart.questions); break;
       case "task2": writingProps.part2Data = toWritingPart2(currentPart.questions); break;

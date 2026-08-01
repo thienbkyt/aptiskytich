@@ -406,6 +406,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         onPreviousPart={handleAdminPreviousPart}
         showResultsOnSubmit
         allowReveal
+        examSetId={parts[0]?.id ?? null}
       /></>
     );
   }
@@ -813,7 +814,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       );
     }
     const partType = partNorm as "part1" | "part2" | "part3" | "part4";
-    const listeningProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
+    const listeningProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id), examSetId: currentPart.id };
     switch (partType) {
       case "part1": listeningProps.part1Questions = toListeningPart1(currentPart.questions); break;
       case "part2": listeningProps.part2Questions = toListeningPart2(currentPart.questions); break;
@@ -952,7 +953,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     }
 
     const writingPartType = partNorm.replace("part", "task") as "task1" | "task2" | "task3" | "task4";
-    const writingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id) };
+    const writingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id), examSetId: currentPart.id };
     switch (partNorm) {
       case "part1": writingProps.part1Data = toWritingPart1(currentPart.questions); break;
       case "part2": writingProps.part2Data = toWritingPart2(currentPart.questions); break;

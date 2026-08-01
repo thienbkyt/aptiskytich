@@ -46,6 +46,8 @@ interface GrammarExamEngineProps {
   onGroupCount?: (n: number) => void;
   /** Practice-only: show "Hiện đáp án" button to reveal answers without submitting. Default false. */
   allowReveal?: boolean;
+  /** Exam set currently being taken — used for error reports. */
+  examSetId?: string | null;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -66,6 +68,7 @@ const GrammarExamEngine = ({
   initialGroup,
   onGroupCount,
   allowReveal = false,
+  examSetId,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -439,7 +442,7 @@ const GrammarExamEngine = ({
       {phase === "practice" && !submitted && !reviewMode && (
         <ExamReportButton
           examQuestionId={(questions[currentIndex] as any)?.id ?? null}
-          examSetId={null}
+          examSetId={examSetId ?? null}
           skill="grammar_vocab"
           partType={null}
           questionNumber={currentIndex + 1}

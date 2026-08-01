@@ -565,7 +565,7 @@ const WritingExamEngine = ({
         <>
           <ExamReportButton
             examQuestionId={sourceQuestionIds?.[0] ?? null}
-            examSetId={null}
+            examSetId={examSetId ?? null}
             skill="writing"
             partType={partType}
             questionNumber={1}

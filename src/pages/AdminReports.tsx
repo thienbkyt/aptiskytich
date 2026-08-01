@@ -117,6 +117,8 @@ const AdminReports = () => {
     Record<string, { setId: string | null; setTitle: string | null }>
   >({});
   const [reporterMap, setReporterMap] = useState<Record<string, ReporterInfo>>({});
+  // Map exam_set_id -> title (covers reports that only carry exam_set_id)
+  const [setTitleMap, setSetTitleMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -156,25 +158,42 @@ const AdminReports = () => {
       )
     );
 
+    const qMap: Record<string, { setId: string | null; setTitle: string | null }> = {};
     if (qIds.length > 0) {
       const { data: qData, error: qErr } = await supabase
         .from("exam_questions")
         .select("id, exam_set_id, exam_sets:exam_set_id ( id, title )")
         .in("id", qIds);
       if (!qErr && qData) {
-        const map: Record<string, { setId: string | null; setTitle: string | null }> = {};
         for (const row of qData as any[]) {
-          map[row.id] = {
+          qMap[row.id] = {
             setId: row.exam_set_id ?? row.exam_sets?.id ?? null,
             setTitle: row.exam_sets?.title ?? null,
           };
         }
-        setQuestionSetMap(map);
-      } else {
-        setQuestionSetMap({});
       }
+    }
+    setQuestionSetMap(qMap);
+
+    // Titles for sets referenced directly on the report (or resolved via question)
+    const setIds = Array.from(
+      new Set(
+        [
+          ...rows.map((r) => r.exam_set_id),
+          ...Object.values(qMap).map((v) => v.setId),
+        ].filter(Boolean) as string[]
+      )
+    );
+    if (setIds.length > 0) {
+      const { data: sets } = await supabase
+        .from("exam_sets")
+        .select("id, title")
+        .in("id", setIds);
+      const tMap: Record<string, string> = {};
+      for (const row of (sets || []) as any[]) tMap[row.id] = row.title;
+      setSetTitleMap(tMap);
     } else {
-      setQuestionSetMap({});
+      setSetTitleMap({});
     }
 
     // Load reporter emails for ONLY the ids present in these reports
@@ -329,7 +348,8 @@ const AdminReports = () => {
 
                 const lookup = r.exam_question_id ? questionSetMap[r.exam_question_id] : undefined;
                 const setIdForLink = lookup?.setId || r.exam_set_id;
-                const setTitle = lookup?.setTitle;
+                const setTitle =
+                  lookup?.setTitle ?? (setIdForLink ? setTitleMap[setIdForLink] : undefined);
 
                 const examUrl =
                   r.skill && SKILL_ROUTE[r.skill] && setIdForLink
