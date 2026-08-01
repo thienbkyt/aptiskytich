@@ -236,7 +236,7 @@ const ReadingExamEngine = ({
     : lockedP4;
   useEffect(() => {
     if (!onLockedChange) return;
-    const totalQ = partType === "part1" ? (part1Question?.gaps.length || 0)
+    const totalQ = partType === "part1" ? p1ScoredIdx.length
       : partType === "part2" ? part2SectionCount
       : partType === "part3" ? (part3Question?.statements.length || 0)
       : (part4Question?.paragraphs?.length || part4Question?.questions.length || 0);
