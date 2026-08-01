@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_credit_grants: {
+        Row: {
+          amount: number
+          expires_at: string | null
+          granted_at: string
+          id: string
+          source_code_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          source_code_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          source_code_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_grants_source_code_id_fkey"
+            columns: ["source_code_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_daily_quota: {
         Row: {
           action: string
@@ -647,6 +682,7 @@ export type Database = {
         Row: {
           feature_key: string
           id: string
+          paid_by_credit: boolean
           ref_id: string | null
           scope: string | null
           used_at: string
@@ -655,6 +691,7 @@ export type Database = {
         Insert: {
           feature_key: string
           id?: string
+          paid_by_credit?: boolean
           ref_id?: string | null
           scope?: string | null
           used_at?: string
@@ -663,6 +700,7 @@ export type Database = {
         Update: {
           feature_key?: string
           id?: string
+          paid_by_credit?: boolean
           ref_id?: string | null
           scope?: string | null
           used_at?: string
@@ -2020,6 +2058,105 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      voucher_codes: {
+        Row: {
+          applies_to_plans: string[] | null
+          code: string
+          code_norm: string | null
+          created_at: string
+          created_by: string | null
+          credit_expires_at: string | null
+          enabled: boolean
+          expires_at: string | null
+          gift_ai_cap: number | null
+          gift_ai_credits: number
+          gift_days: number
+          id: string
+          kind: string
+          max_per_user: number
+          max_total_uses: number | null
+          note: string | null
+          requires_activity: boolean
+        }
+        Insert: {
+          applies_to_plans?: string[] | null
+          code: string
+          code_norm?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_expires_at?: string | null
+          enabled?: boolean
+          expires_at?: string | null
+          gift_ai_cap?: number | null
+          gift_ai_credits?: number
+          gift_days?: number
+          id?: string
+          kind: string
+          max_per_user?: number
+          max_total_uses?: number | null
+          note?: string | null
+          requires_activity?: boolean
+        }
+        Update: {
+          applies_to_plans?: string[] | null
+          code?: string
+          code_norm?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_expires_at?: string | null
+          enabled?: boolean
+          expires_at?: string | null
+          gift_ai_cap?: number | null
+          gift_ai_credits?: number
+          gift_days?: number
+          id?: string
+          kind?: string
+          max_per_user?: number
+          max_total_uses?: number | null
+          note?: string | null
+          requires_activity?: boolean
+        }
+        Relationships: []
+      }
+      voucher_redemptions: {
+        Row: {
+          code_id: string
+          id: string
+          payment_id: string | null
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          id?: string
+          payment_id?: string | null
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          id?: string
+          payment_id?: string | null
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voucher_redemptions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       writing_question_gradings: {
         Row: {
