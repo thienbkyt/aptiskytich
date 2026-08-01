@@ -67,7 +67,7 @@ const ListeningPart4Monologue = ({
           <p className="text-sm font-heading font-bold text-foreground">Listening – Part 4</p>
           <p className="text-sm text-foreground">
             {pageNumber != null && pageTotal != null
-              ? `Đề ${pageNumber}/${pageTotal} · Câu ${currentIndex + 1}/${questions.length}`
+              ? `Đề ${pageNumber}/${pageTotal} · Bài nghe ${currentIndex + 1}/${questions.length}`
               : `Recording ${currentIndex + 1} of ${questions.length}`}
           </p>
         </div>
