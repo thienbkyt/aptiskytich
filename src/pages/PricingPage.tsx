@@ -299,6 +299,8 @@ export default function PricingPage() {
     const lp = listPrice(plan);
     const d = discountPct(plan);
     const cheaper = hero ? cheaperThanMonthPct(plan) : null;
+    const voucherOn = !!voucher?.ok;
+    const eligible = planEligible(plan);
 
     return (
       <div className={cn("h-full flex flex-col", order)}>
@@ -321,11 +323,27 @@ export default function PricingPage() {
             "flex-1 rounded-xl bg-card p-5 flex flex-col text-center",
             hero ? "border-2 border-[#CC1C01]" : "border-[0.5px] border-border",
           )}
+          style={voucherOn && !eligible ? { opacity: 0.55 } : undefined}
         >
+          {voucherOn && (
+            <div className="mb-2 flex justify-center">
+              {eligible ? (
+                <span
+                  className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
+                >
+                  +{voucher?.gift_days ?? 0} ngày · +{voucher?.gift_ai_credits ?? 0} lượt
+                </span>
+              ) : (
+                <span className="text-[11px] text-muted-foreground">Mã không áp dụng</span>
+              )}
+            </div>
+          )}
           <div className="flex flex-col items-center gap-2 min-h-[52px] justify-center">
             <p className="text-[15px] font-semibold text-foreground">
               {label ?? (plan.label === "1 tháng" ? "1 Tháng" : plan.label === "3 tháng" ? "3 Tháng" : plan.label)}
             </p>
+
             {headerExtra ??
               (d != null && (
                 <span
