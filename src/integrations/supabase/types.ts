@@ -2362,6 +2362,7 @@ export type Database = {
         Args: { p_key: string; p_scope?: string }
         Returns: Json
       }
+      check_voucher: { Args: { p_code: string }; Returns: Json }
       claim_grading_jobs: {
         Args: { _limit?: number; _reclaim_after?: string }
         Returns: {
@@ -2546,6 +2547,7 @@ export type Database = {
         Returns: Json
       }
       user_tier: { Args: { p_uid: string }; Returns: string }
+      voucher_campaign_status: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"
