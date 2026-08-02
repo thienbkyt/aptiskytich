@@ -312,6 +312,7 @@ const SpeakingReviewPage = ({
             items={items}
             analysis={v2Part.analysis}
             criteriaAnalysis={v2Part.criteriaAnalysis}
+            fullTranscript={safeText((v2Part as any)?.fullTranscript)}
             scale50={v2Scale}
             cefr={v2Cefr}
             partLabel={partLabel}

@@ -162,6 +162,7 @@ const SpeakingFullResultsV2 = ({
                 analysis={current.result.analysis}
                 criteriaAnalysis={current.result.criteriaAnalysis}
                 improvedVersion={current.result.improvedVersion}
+                fullTranscript={(current.result as any).fullTranscript}
                 partLabel={`Part ${current.partNumber}`}
               />
             )}
