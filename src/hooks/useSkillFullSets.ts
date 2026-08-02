@@ -72,15 +72,7 @@ export const useSkillFullSets = (skill: string) => {
       for (const [ftId, info] of grouped.entries()) {
         const partsArr = Array.from(info.parts).sort();
         if (partsArr.length < 2) continue;
-        let questionCount = 0;
-        if (skill === "grammar_vocab") {
-          const isVocab = (p: string) => /vocab/i.test(p);
-          const vocabPartCount = partsArr.filter(isVocab).length;
-          const grammarQ = info.rows.filter((r) => !isVocab(r.part)).reduce((sum, r) => sum + r.qc, 0);
-          questionCount = grammarQ + vocabPartCount;
-        } else {
-          questionCount = info.rows.reduce((sum, r) => sum + r.qc, 0);
-        }
+        const questionCount = info.rows.reduce((sum, r) => sum + r.qc, 0);
         result.push({
           fullTestId: ftId,
           title: info.title,
