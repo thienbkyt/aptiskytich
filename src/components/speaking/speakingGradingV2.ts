@@ -215,6 +215,7 @@ export type SaveSpeakingSkillResultArgs = {
       feedback?: string;
       improvedVersion?: string;
       rawPart?: number;
+      fullTranscript?: string | null;
     }
   >;
   rawTotal: number;

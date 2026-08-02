@@ -764,6 +764,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                 feedback: merged.feedback,
                 improvedVersion: merged.improvedVersion,
                 rawPart: merged.rawPart,
+                fullTranscript: (merged as any).fullTranscript ?? (r as any)?.fullTranscript ?? null,
               };
             } catch (e) {
               if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
