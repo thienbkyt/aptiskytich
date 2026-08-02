@@ -52,7 +52,7 @@ const BlogEditor = ({ postId, onDone }: Props) => {
     (async () => {
       const { data, error } = await supabase
         .from("blog_posts" as any)
-        .select("*")
+        .select("id, title, slug, excerpt, content, cover_image_url, category, tags, status, published_at, seo_title, seo_description, created_at, updated_at")
         .eq("id", postId)
         .maybeSingle();
       if (error || !data) {

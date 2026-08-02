@@ -32,7 +32,7 @@ const BlogList = ({ onCreate, onEdit }: Props) => {
     setLoading(true);
     const { data, error } = await supabase
       .from("blog_posts" as any)
-      .select("*")
+      .select("id, title, slug, excerpt, content, cover_image_url, category, tags, status, published_at, seo_title, seo_description, created_at, updated_at")
       .order("updated_at", { ascending: false });
     if (error) {
       toast.error("Không tải được danh sách bài viết");

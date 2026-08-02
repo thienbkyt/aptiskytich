@@ -293,7 +293,7 @@ const BlogPostPage = () => {
     window.scrollTo({ top: 0, behavior: "auto" });
     supabase
       .from("blog_posts" as any)
-      .select("*")
+      .select("id, title, slug, excerpt, content, cover_image_url, category, tags, status, published_at, seo_title, seo_description, created_at, updated_at")
       .eq("slug", slug)
       .eq("status", "published")
       .maybeSingle()
@@ -307,7 +307,7 @@ const BlogPostPage = () => {
         setPost(p);
         supabase
           .from("blog_posts" as any)
-          .select("*")
+          .select("id, title, slug, excerpt, content, cover_image_url, category, tags, status, published_at, seo_title, seo_description, created_at, updated_at")
           .eq("status", "published")
           .eq("category", p.category)
           .neq("id", p.id)
@@ -323,7 +323,7 @@ const BlogPostPage = () => {
             const excludeIds = [p.id, ...list.map((r) => r.id)];
             supabase
               .from("blog_posts" as any)
-              .select("*")
+              .select("id, title, slug, excerpt, content, cover_image_url, category, tags, status, published_at, seo_title, seo_description, created_at, updated_at")
               .eq("status", "published")
               .not("id", "in", `(${excludeIds.join(",")})`)
               .order("published_at", { ascending: false })
