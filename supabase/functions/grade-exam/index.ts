@@ -527,7 +527,7 @@ HOW TO APPLY:
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
 OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = upgraded English rewrite of THAT segment (you may put the full upgraded monologue in the FIRST item and leave the rest empty); upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
+- perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = upgraded English rewrite of THAT segment (ONLY improvedVersion — and nothing else — may be consolidated into the FIRST item with the rest left empty; this permission NEVER applies to transcript). transcript is MANDATORY for every item. Split the monologue into segments — one per sub-question — using content and the student's transition phrases (for example 'moving to the next question', 'as for the last one', 'regarding'). Only return an empty transcript when the monologue genuinely never addresses that sub-question. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
 - analysis: Vietnamese, 4-6 câu — phân tích tổng quan TRƯỚC khi cho band.
 - criteriaAnalysis: object với 5 trường tiếng Việt { tf, gra, vra, pro, fc }. MỖI tiêu chí 2-3 câu: VÌ SAO được band đó + cách CẢI THIỆN CỤ THỂ.
   • vra (Từ vựng): gợi ý từ TỰ NHIÊN, CHÍNH XÁC trong ngữ cảnh (không phải từ hiếm/kêu); tập trung sửa dùng sai + lặp từ (vd: "do a mistake → make a mistake", thay từ lặp bằng paraphrase tự nhiên).
@@ -582,6 +582,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                   required: ["transcript", "onTopic", "improvedVersion", "upgradeTips"],
                 },
               },
+              fullTranscript: { type: "string", description: "Verbatim transcription of the ENTIRE audio, uncut, before any segmentation." },
               analysis: { type: "string" },
               criteriaAnalysis: {
                 type: "object",
@@ -608,7 +609,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
             },
-            required: ["perItem", "analysis", "criteriaAnalysis", "bands"],
+            required: ["perItem", "fullTranscript", "analysis", "criteriaAnalysis", "bands"],
           },
         },
       };
@@ -714,8 +715,20 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       }
 
 
+      const fullTranscript = typeof parsed.fullTranscript === "string" ? parsed.fullTranscript : "";
+      // Part 4 safety-net: if the model only transcribed the first sub-question and
+      // left every later item empty, surface the whole monologue in item #1 so the
+      // student never loses their spoken content in the review screen.
+      if (isPart4 && fullTranscript.trim() && perItemOut.length > 1) {
+        const restEmpty = perItemOut.slice(1).every((it: any) => !String(it?.transcript ?? "").trim());
+        if (restEmpty) {
+          perItemOut[0] = { ...perItemOut[0], transcript: fullTranscript };
+        }
+      }
+
       const ca = parsed.criteriaAnalysis || {};
       return new Response(JSON.stringify({
+        fullTranscript,
         bands: { tf, gra, vra, pro, fc },
         rawPart: raw_part,
         raw_part,
