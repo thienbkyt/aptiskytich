@@ -326,6 +326,7 @@ const SpeakingExamEngine = ({
                 feedback: finalResult.feedback,
                 improvedVersion: finalResult.improvedVersion,
                 rawPart: finalResult.rawPart,
+                fullTranscript: (finalResult as any).fullTranscript ?? null,
               },
             },
             rawTotal: finalResult.rawPart || 0,

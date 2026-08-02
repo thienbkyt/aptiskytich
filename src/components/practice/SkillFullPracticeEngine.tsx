@@ -728,6 +728,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             feedback: entry.result.feedback,
             improvedVersion: entry.result.improvedVersion,
             rawPart: entry.result.rawPart,
+            fullTranscript: (entry.result as any).fullTranscript ?? null,
           };
         }
         await saveSpeakingSkillResult({
