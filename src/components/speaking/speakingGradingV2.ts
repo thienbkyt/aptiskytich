@@ -172,6 +172,7 @@ export async function gradeSpeakingPartV2(
     analysis: data.analysis ?? "",
     criteriaAnalysis: data.criteriaAnalysis ?? undefined,
     improvedVersion: data.improvedVersion ?? "",
+    fullTranscript: data.fullTranscript ?? "",
   };
 }
 
