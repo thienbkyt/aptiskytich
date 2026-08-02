@@ -36,7 +36,10 @@ export type SpeakingPartResultV2 = {
   criteriaAnalysis?: SpeakingCriteriaAnalysisV2;
   feedback?: string;
   improvedVersion: string;
+  /** Verbatim transcription of the whole recording (Part 4 monologue safety-net). */
+  fullTranscript?: string;
 };
+
 
 export type SpeakingFinalizeResultV2 = {
   rawTotal: number;
@@ -169,6 +172,7 @@ export async function gradeSpeakingPartV2(
     analysis: data.analysis ?? "",
     criteriaAnalysis: data.criteriaAnalysis ?? undefined,
     improvedVersion: data.improvedVersion ?? "",
+    fullTranscript: data.fullTranscript ?? "",
   };
 }
 

@@ -53,6 +53,8 @@ interface SpeakingProfileViewProps {
   scale50?: number | null;
   cefr?: string | null;
   partLabel?: string;
+  /** Verbatim transcription of the whole recording (Part 4 monologue). */
+  fullTranscript?: string;
 }
 
 const SpeakingProfileView = ({
@@ -63,6 +65,7 @@ const SpeakingProfileView = ({
   scale50 = null,
   cefr = null,
   partLabel,
+  fullTranscript,
 }: SpeakingProfileViewProps) => {
   const rows = useMemo(
     () =>
@@ -143,6 +146,17 @@ const SpeakingProfileView = ({
           </div>
         )}
       </div>
+
+      {!!safeText(fullTranscript).trim() && (
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+            Toàn bộ bài nói
+          </p>
+          <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+            {safeText(fullTranscript)}
+          </p>
+        </div>
+      )}
 
       <div className="space-y-4">
         {items.map((it, idx) => {
