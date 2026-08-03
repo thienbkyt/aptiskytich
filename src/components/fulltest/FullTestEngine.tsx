@@ -464,6 +464,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               <Loader2 className="w-3 h-3 animate-spin" /> AI Kỳ Tích đang chấm Speaking...
             </p>
           )}
+          {writingUngraded && (
+            <p className="text-xs text-muted-foreground mt-2 max-w-xl mx-auto">
+              {writingUngraded === "quota"
+                ? "Phần Writing chưa được chấm vì tài khoản đã hết lượt chấm AI. Bài viết của bạn vẫn được lưu đầy đủ trong phần Xem lại."
+                : "Phần Writing chưa chấm xong. Hệ thống sẽ tự chấm lại trong ít phút, bạn quay lại xem sau nhé."}
+            </p>
+          )}
+
         </div>
 
         {/* Aptis practice score report */}
