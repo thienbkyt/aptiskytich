@@ -626,6 +626,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
           },
           body: JSON.stringify({
             model: MODEL_V2,
+            temperature: 0,
             messages: [
               { role: "system", content: sysV2 },
               { role: "user", content: userParts },
