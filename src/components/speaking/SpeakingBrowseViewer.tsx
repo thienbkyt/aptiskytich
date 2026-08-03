@@ -185,21 +185,51 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
 
               {/* Part 4: single combined sample answer for the whole set */}
               {partType === "part4" && showSamples && (() => {
-                const combined =
-                  (questions[0]?.extra_data as any)?.sampleAnswer ||
-                  questions[0]?.explanation ||
-                  "";
+                const ed: any = questions[0]?.extra_data || {};
+                const legacy = ed.sampleAnswer || questions[0]?.explanation || "";
+                const basic = String(ed.sampleAnswerBasic || legacy || "").trim();
+                const advanced = String(ed.sampleAnswerAdvanced || legacy || "").trim();
+                const effectiveLevel =
+                  sampleLevel === "basic" && !basic && advanced
+                    ? "advanced"
+                    : sampleLevel === "advanced" && !advanced && basic
+                    ? "basic"
+                    : sampleLevel;
+                const combined = effectiveLevel === "advanced" ? advanced : basic;
+                const words = combined.trim().split(/\s+/).filter(Boolean).length;
+                const speakTime = Number(ed.speakTime) || 120;
+                const cardCls = (active: boolean) =>
+                  `flex-1 text-left rounded-xl border p-3 transition-colors ${
+                    active
+                      ? "bg-[#24085a] text-white border-[#24085a]"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                  }`;
                 return (
                   <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
-                    <div className="text-xs font-bold uppercase tracking-wide text-primary mb-2">
+                    <div className="text-xs font-bold uppercase tracking-wide text-primary mb-3">
                       Bài nói mẫu (trả lời cả 3 câu)
                     </div>
-                    {combined.trim() ? (
-                      <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-                        {combined}
-                      </p>
+                    <div className="flex gap-3 mb-4">
+                      <button type="button" onClick={() => setSampleLevel("basic")} className={cardCls(effectiveLevel === "basic")}>
+                        <span className="block text-sm font-bold">Bản dễ học</span>
+                        <span className="block text-[11px] mt-0.5 opacity-80">Phù hợp aim B1</span>
+                      </button>
+                      <button type="button" onClick={() => setSampleLevel("advanced")} className={cardCls(effectiveLevel === "advanced")}>
+                        <span className="block text-sm font-bold">Bản nâng cao</span>
+                        <span className="block text-[11px] mt-0.5 opacity-80">Phù hợp aim B2 trở lên · câu phong phú hơn</span>
+                      </button>
+                    </div>
+                    {combined ? (
+                      <>
+                        <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                          {combined}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {words} từ · nói vừa đủ {speakTime} giây
+                        </p>
+                      </>
                     ) : (
-                      <p className="text-sm text-muted-foreground italic">Chưa có bài nói mẫu.</p>
+                      <p className="text-sm text-muted-foreground italic">Chưa có bài nói mẫu cho bản này.</p>
                     )}
                   </div>
                 );
