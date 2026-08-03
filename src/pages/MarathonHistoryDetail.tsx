@@ -15,6 +15,7 @@ type PerSetEntry = {
   total: number;
   qResults: QResult[];
   answers?: any;
+  questions?: any[];
 };
 
 const MarathonHistoryDetail = () => {
@@ -159,6 +160,7 @@ const MarathonHistoryDetail = () => {
           pageBase={page.priorPages}
           pageTotal={pages.length}
           initialSection={page.section}
+          snapshotQuestions={Array.isArray(r.questions) && r.questions.length > 0 ? r.questions : null}
         />
       </ReviewErrorBoundary>
 
