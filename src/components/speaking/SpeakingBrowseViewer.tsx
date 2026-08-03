@@ -64,6 +64,27 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
   const firstRow = questions?.[0];
   const extra: any = firstRow?.extra_data || {};
 
+  const cardCls = (active: boolean) =>
+    `flex-1 text-left rounded-xl border p-3 transition-colors ${
+      active
+        ? "bg-[#24085a] text-white border-[#24085a]"
+        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+    }`;
+
+  const samplePairs = useMemo(() => {
+    return (questions || []).map((q) => {
+      const ed: any = q.extra_data || {};
+      const legacy = String(ed.sampleAnswer || q.explanation || "").trim();
+      return {
+        basic: String(ed.sampleAnswerBasic || legacy || "").trim(),
+        advanced: String(ed.sampleAnswerAdvanced || legacy || "").trim(),
+      };
+    });
+  }, [questions]);
+
+  const hasTwoVariants = samplePairs.some((p) => p.basic && p.advanced && p.basic !== p.advanced);
+
+
   // Resolve images per part
   const images = useMemo<string[]>(() => {
     if (!firstRow) return [];
@@ -154,10 +175,29 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                 </div>
               )}
 
+              {/* Sample level selector (Part 1/2/3) */}
+              {partType !== "part4" && showSamples && hasTwoVariants && (
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setSampleLevel("basic")} className={cardCls(sampleLevel === "basic")}>
+                    <span className="block text-sm font-bold">Bản dễ học</span>
+                    <span className="block text-[11px] mt-0.5 opacity-80">Phù hợp aim B1</span>
+                  </button>
+                  <button type="button" onClick={() => setSampleLevel("advanced")} className={cardCls(sampleLevel === "advanced")}>
+                    <span className="block text-sm font-bold">Bản nâng cao</span>
+                    <span className="block text-[11px] mt-0.5 opacity-80">Phù hợp aim B2 trở lên · câu phong phú hơn</span>
+                  </button>
+                </div>
+              )}
+
               {/* Questions + sample answers */}
               <div className="space-y-5">
                 {questions.map((q, qi) => {
-                  const sample = (q.extra_data as any)?.sampleAnswer || q.explanation || "";
+                  const pair = samplePairs[qi] || { basic: "", advanced: "" };
+                  const sample =
+                    sampleLevel === "advanced"
+                      ? pair.advanced || pair.basic
+                      : pair.basic || pair.advanced;
+                  const words = sample.trim().split(/\s+/).filter(Boolean).length;
                   const isPart4 = partType === "part4";
                   return (
                     <div key={q.id} className="rounded-xl border border-border bg-card p-5">
@@ -174,10 +214,13 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                           <div className="text-xs font-bold uppercase tracking-wide text-primary mb-2">
                             Bài nói mẫu
                           </div>
-                          {sample.trim() ? (
-                            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-                              {sample}
-                            </p>
+                          {sample ? (
+                            <>
+                              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                                {sample}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-2">{words} từ</p>
+                            </>
                           ) : (
                             <p className="text-sm text-muted-foreground italic">Chưa có bài nói mẫu.</p>
                           )}
@@ -187,6 +230,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
                   );
                 })}
               </div>
+
 
               {/* Part 4: single combined sample answer for the whole set */}
               {partType === "part4" && showSamples && (() => {
