@@ -1288,7 +1288,7 @@ const SpeakingExamEngine = ({
             {partType === "part4" && part4Data && (
               <div className="bg-gray-50 rounded-lg p-5 mb-4">
                 <p className="font-bold text-gray-900 mb-3">Topic: {part4Data.topic}</p>
-                {part4Data.imageUrl && (
+                {part4Data.imageUrl ? (
                   <div className="mb-4 rounded-lg overflow-hidden border border-gray-200 max-w-md">
                     <SignedImage
                       src={part4Data.imageUrl}
@@ -1296,6 +1296,14 @@ const SpeakingExamEngine = ({
                       className="w-full h-56 object-cover"
                     />
                   </div>
+                ) : (
+                  <MissingMediaNotice
+                    kind="image"
+                    skill="speaking"
+                    partType="part4"
+                    questionNumber={1}
+                    examSetId={examSetId ?? null}
+                  />
                 )}
                 <ul className="space-y-1.5 mb-3">
                   {part4Data.questions.map((q, i) => (

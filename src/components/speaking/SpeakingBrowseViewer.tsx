@@ -76,6 +76,10 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
       const u2 = extra.imageUrl2 ?? null;
       return [u1, u2].filter(Boolean) as string[];
     }
+    if (partType === "part4") {
+      const u = extra.imageUrl ?? firstRow.image_url ?? null;
+      return u ? [u] : [];
+    }
     return [];
   }, [firstRow, extra, partType]);
 
