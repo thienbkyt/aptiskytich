@@ -24,6 +24,9 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 const BATCH_LIMIT = 50;
 const MIN_AGE_MINUTES = 15;
 const MAX_AGE_HOURS = 24;
+// Ignore every attempt that predates this deploy — only sweep new submissions.
+const SWEEP_NOT_BEFORE = "2026-08-03T17:00:00Z";
+
 
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split(".");
