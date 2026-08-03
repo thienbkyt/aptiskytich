@@ -617,16 +617,27 @@ const parseSpeakingPart4 = (rows: any[]): ParseResult => {
   rows.forEach((r, i) => {
     const qt = r.question_text?.toString().trim();
     if (!qt) return;
+    const sa = r.sample_answer?.toString().trim() || "";
+    // New optional columns: "Bài mẫu B1" / "Bài mẫu B2"
+    const basic = (r["Bài mẫu B1"] ?? r.sample_answer_basic ?? "").toString().trim();
+    const advanced = (r["Bài mẫu B2"] ?? r.sample_answer_advanced ?? "").toString().trim();
     questions.push({
       order_index: i,
       question_text: qt,
       question_type: "speaking",
       options: [], correct_answer: 0,
-      explanation: r.sample_answer?.toString().trim() || "",
+      explanation: sa,
       audio_url: null,
       image_url: r.image_url?.toString().trim() || imageUrl,
       response_time: 120,
-      extra_data: { topic, prepTime: 60, speakTime: 120 },
+      extra_data: {
+        topic,
+        prepTime: 60,
+        speakTime: 120,
+        ...(sa ? { sampleAnswer: sa } : {}),
+        ...(basic ? { sampleAnswerBasic: basic } : {}),
+        ...(advanced ? { sampleAnswerAdvanced: advanced } : {}),
+      },
     });
   });
 
