@@ -126,7 +126,12 @@ Deno.serve(async (req) => {
           max_attempts: 3,
           payload: {
             ...(payload as any),
-            _meta: { examSetId: row.exam_set_id ?? null, fullTestSessionId: null },
+          _meta: {
+            examSetId: row.exam_set_id ?? null,
+            fullTestSessionId:
+              row.full_test_session_id ?? (payload as any).gradingSessionId ?? null,
+          },
+
           },
         } as any);
         if (insErr) {
