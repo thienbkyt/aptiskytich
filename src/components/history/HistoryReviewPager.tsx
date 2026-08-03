@@ -445,6 +445,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           userId={userId}
           attemptCreatedAt={current.attemptCreatedAt}
           testResultId={current.testResultId}
+          snapshotQuestions={pageData?.snapshotQuestions || null}
           onExit={onExit}
           initialSection={qIdx}
           pageBase={0}
