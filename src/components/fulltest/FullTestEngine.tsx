@@ -1169,10 +1169,18 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         );
       }
 
+      // Wait for speaking grading to finish so its score is included in the summary.
+      if (speakingGradingPromiseRef.current) {
+        setWaitingForSpeaking(true);
+        try { await speakingGradingPromiseRef.current; } catch {}
+        setWaitingForSpeaking(false);
+      }
+
       // Finalize → scale50 + CEFR + grey_zone + flag_review (+ appropriacy cap)
       // ONLY when all 4 writing parts graded. Partial attempts must not
       // produce an official CEFR — raw_total/120*50 would collapse to A1.
       const { hasAllFourWritingParts } = await import("@/components/writing/writingGradingV2");
+
       const allFour = hasAllFourWritingParts(rawParts) && failedParts === 0;
       let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
       if (allFour) {
