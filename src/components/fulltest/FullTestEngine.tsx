@@ -967,14 +967,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     };
 
     const runWritingFinalize = async () => {
-      // Wait for speaking grading to finish so its score is included in the summary.
-      if (speakingGradingPromiseRef.current) {
-        setWaitingForSpeaking(true);
-        try { await speakingGradingPromiseRef.current; } catch {}
-        setWaitingForSpeaking(false);
-      }
-
       const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
+
         .map((k) => parseInt(k, 10))
         .sort((a, b) => a - b);
       const orderedEntries = orderedIndices
