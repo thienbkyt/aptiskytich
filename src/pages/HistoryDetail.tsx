@@ -305,7 +305,7 @@ const HistoryDetail = () => {
                   )}
                 </div>
                 <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-4">
-                  {setInfo?.title || "Đề mẫu"}
+                  {setInfo?.title || (result.review_snapshot as any)?.testTitle || "Đề mẫu"}
                 </h1>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Stat label="Điểm số" value={`${result.score}/${result.total}`} />
