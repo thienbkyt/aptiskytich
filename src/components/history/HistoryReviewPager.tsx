@@ -31,6 +31,7 @@ interface QResult {
 interface PageData {
   qResults: QResult[];
   questions: ReviewQuestion[];
+  snapshotQuestions: any[] | null;
 }
 
 interface Props {
