@@ -127,17 +127,18 @@ Deno.serve(async (req) => {
     }
 
 
-    // Log Google TTS usage (chars)
+    // Log TTS usage (chars)
     logUsage({
-      service: "google_tts",
+      service: "lovable_ai_tts",
       event_type: "tts_synthesis",
       units: text.length,
       unit_type: "chars",
       source_function: "tts",
-      metadata: { lang, voice },
+      metadata: { lang, voice, model: "openai/gpt-4o-mini-tts" },
     }).catch(() => {});
 
-    const bytes = base64ToBytes(audioContent);
+    const bytes = new Uint8Array(audioBuffer);
+
     const { error: upErr } = await supabase.storage
       .from("tts-cache")
       .upload(path, bytes, {
