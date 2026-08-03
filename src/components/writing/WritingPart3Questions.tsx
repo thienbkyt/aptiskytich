@@ -3,6 +3,7 @@ import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import RichTextEditor from "@/components/writing/RichTextEditor";
+import { WRITING_WORD_LIMITS } from "@/lib/writingWordLimits";
 import type { WritingPart3Data } from "@/data/writingQuestions";
 
 interface Props {
@@ -70,8 +71,8 @@ const WritingPart3Questions = ({
               disabled={submitted}
               placeholder="Write your answer here (30-40 words)..."
               minHeight="100px"
-              wordLimit={data.wordLimit}
-              initialValue={answers[i] || ""}
+              wordLimit={WRITING_WORD_LIMITS.task3}
+              value={answers[i] || ""}
             />
             {showSample && (
               <div className="mt-3 bg-white rounded-xl shadow-sm p-4 border-l-4 border-[#24085a]">

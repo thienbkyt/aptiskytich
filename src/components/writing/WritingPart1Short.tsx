@@ -3,6 +3,7 @@ import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import RichTextEditor from "@/components/writing/RichTextEditor";
+import { WRITING_WORD_LIMITS } from "@/lib/writingWordLimits";
 import type { WritingPart1Data } from "@/data/writingQuestions";
 
 interface Props {
@@ -70,8 +71,8 @@ const WritingPart1Short = ({
               disabled={submitted}
               placeholder="Type your answer..."
               minHeight="60px"
-              wordLimit={5}
-              initialValue={answers[i] || ""}
+              wordLimit={WRITING_WORD_LIMITS.task1}
+              value={answers[i] || ""}
             />
             {showSample && (
               <p className="text-sm text-foreground mt-2">
