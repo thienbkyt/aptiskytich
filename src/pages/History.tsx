@@ -310,7 +310,7 @@ const History = () => {
           const isMarathon = mode === "marathon" || mode === "marathon-set";
           const title = isMarathon
             ? (ss.label || setInfo?.title || "Luyện nhanh (Marathon)")
-            : (setInfo?.title || "Đề mẫu");
+            : (setInfo?.title || (r.review_snapshot as any)?.testTitle || "Đề mẫu");
           const disp = computeDisplay(
             { skill, score: r.score, total: r.total, level: r.level },
             r.review_snapshot,
