@@ -237,8 +237,15 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
 };
 
 // ─── Speaking ───────────────────────────────────────────────
-const collectSampleAnswers = (rows: ExamQuestionRow[]): string[] =>
-  rows.map((r) => (r.extra_data as any)?.sampleAnswer || r.explanation || "");
+const collectSampleAnswers = (rows: ExamQuestionRow[]): SampleAnswerPair[] =>
+  rows.map((r) => {
+    const ed = (r.extra_data as any) || {};
+    const legacy = ed.sampleAnswer || r.explanation || "";
+    return {
+      basic: ed.sampleAnswerBasic || legacy,
+      advanced: ed.sampleAnswerAdvanced || legacy,
+    };
+  });
 
 export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {
   const first = rows[0];
