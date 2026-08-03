@@ -80,45 +80,52 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Not cached — call Google TTS
-    const apiKey = Deno.env.get("GOOGLE_TTS_API_KEY");
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "Missing GOOGLE_TTS_API_KEY" }), {
+    // Not cached — synthesize via Lovable AI (OpenAI-compatible /audio/speech)
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableKey) {
+      return new Response(JSON.stringify({ error: "Missing LOVABLE_API_KEY" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const ttsRes = await fetch(
-      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          input: { text },
-          voice: { languageCode: cfg.languageCode, name: voice },
-          audioConfig: { audioEncoding: "MP3", speakingRate: 0.95 },
-        }),
-      }
-    );
+    const ttsRes = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-4o-mini-tts",
+        input: text,
+        voice: "onyx",
+        response_format: "mp3",
+        speed: 0.95,
+        instructions:
+          lang === "vi"
+            ? "Speak in natural Vietnamese, clear and calm."
+            : "Speak in a clear British English accent, calm exam-instruction tone.",
+      }),
+    });
 
     if (!ttsRes.ok) {
-      const errText = await ttsRes.text();
-      console.error("Google TTS error:", ttsRes.status, errText);
-      return new Response(JSON.stringify({ error: "TTS service temporarily unavailable" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const errText = await ttsRes.text().catch(() => "");
+      console.error("Lovable AI TTS error:", ttsRes.status, errText);
+      const status = ttsRes.status === 429 || ttsRes.status === 402 ? ttsRes.status : 502;
+      return new Response(
+        JSON.stringify({ error: "TTS service temporarily unavailable", status: ttsRes.status, details: errText }),
+        { status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    const json = await ttsRes.json();
-    const audioContent = json.audioContent as string | undefined;
-    if (!audioContent) {
+    const audioBuffer = await ttsRes.arrayBuffer();
+    if (!audioBuffer.byteLength) {
       return new Response(JSON.stringify({ error: "No audio returned" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // Log Google TTS usage (chars)
     logUsage({
