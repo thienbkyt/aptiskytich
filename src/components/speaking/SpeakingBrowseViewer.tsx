@@ -27,6 +27,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
   const [questions, setQuestions] = useState<ExamQuestionRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSamples, setShowSamples] = useState(false);
+  const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
 
   const currentSet = sets[activeIdx];
 
