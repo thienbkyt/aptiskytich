@@ -986,6 +986,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       const partsPayload: Record<string, any> = {};
       let anyForcedComplexity = false;
       let failedParts = 0;
+      let quotaBlocked = false;
+
       let lastTestResultId: string | null = null;
       let lastExamSetId: string | null = null;
 
