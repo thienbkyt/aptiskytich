@@ -82,7 +82,12 @@ export function buildReadingItems(
 
   if (partType === "part1" && engineData?.part1Question) {
     const q = engineData.part1Question;
-    (q.gaps || []).forEach((g: any, gi: number) => {
+    const usedGapIdx = [...String(q.passage || "").matchAll(/\{(\d+)\}/g)]
+      .map((m) => Number(m[1]))
+      .filter((idx) => q.gaps?.[idx]);
+    const scoredGapIdx = usedGapIdx.slice(1);
+    scoredGapIdx.forEach((gi) => {
+      const g = q.gaps[gi];
       const userIdx = Array.isArray(answers) ? answers[gi] : null;
       items.push({
         questionText: translations[part1ItemId(gi)] || "",

@@ -220,8 +220,23 @@ const ReadingExamEngine = ({
 
   // When initialSection changes (review pager navigates pages), sync currentIndex.
   useEffect(() => {
-    if (initialSection != null) setCurrentIndex(initialSection);
-  }, [initialSection]);
+    if (initialSection == null) return;
+    if (partType === "part2" && part2Question) {
+      const sizes = (part2Question.sections || []).map((sec: any, i: number) =>
+        (sec.sentences || []).filter((s: any) => !(i === 0 && s.correctPosition === 1)).length
+      );
+      let acc = 0;
+      let target = 0;
+      for (let i = 0; i < sizes.length; i++) {
+        if (initialSection < acc + sizes[i]) { target = i; break; }
+        acc += sizes[i];
+        target = i;
+      }
+      setCurrentIndex(Math.max(0, Math.min(target, sizes.length - 1)));
+      return;
+    }
+    setCurrentIndex(initialSection);
+  }, [initialSection, partType, part2Question]);
 
   // Notify parent whenever the active section changes.
   useEffect(() => {
