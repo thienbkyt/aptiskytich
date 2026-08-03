@@ -130,6 +130,7 @@ const SpeakingExamEngine = ({
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
