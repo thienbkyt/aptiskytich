@@ -65,13 +65,15 @@ Deno.serve(async (req) => {
 
     const { data: rows, error } = await admin
       .from("test_results")
-      .select("id, user_id, exam_set_id, grade_payload, created_at")
+      .select("id, user_id, exam_set_id, full_test_session_id, grade_payload, created_at")
       .not("grade_payload", "is", null)
-      .eq("total", 1)
+      .eq("grade_payload->>type", "writing_v2")
       .lt("created_at", olderThan)
       .gt("created_at", newerThan)
+      .gt("created_at", SWEEP_NOT_BEFORE)
       .order("created_at", { ascending: true })
       .limit(BATCH_LIMIT);
+
 
     if (error) {
       console.error("[sweep-writing] select failed:", error.message);
