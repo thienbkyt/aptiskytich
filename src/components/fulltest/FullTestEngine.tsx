@@ -1045,15 +1045,40 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             fullTestSessionId: sessionIdRef.current,
           });
         } catch (err) {
-          if (err instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+          if (err instanceof QuotaExceededError) {
+            quotaBlocked = true;
+            toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+          }
           console.warn(`[FullTest v2] gradeWritingPartV2 ${e.partType} failed`, err);
 
         }
         if (!v2) {
           failedParts += 1;
           setWritingGradedCount(i + 1);
+          if (preTestResultId && !quotaBlocked) {
+            try {
+              const { enqueueGradingFallback } = await import("@/lib/gradingQueue");
+              await enqueueGradingFallback({
+                skill: "writing",
+                partType: e.partType,
+                testResultId: preTestResultId,
+                examSetId: e.partId ?? null,
+                fullTestSessionId: sessionIdRef.current,
+                payload: {
+                  type: "writing_v2",
+                  partType: e.partType,
+                  questions: e.questions,
+                  text: e.text,
+                  parts: partsInput,
+                  gradingSessionId: sessionIdRef.current,
+                },
+                lastError: "fullTestFinalize: part failed",
+              });
+            } catch (err) { console.warn("[FullTest v2] enqueue fallback failed", err); }
+          }
           continue;
         }
+
         rawParts[e.partType as keyof typeof rawParts] = v2.rawPart;
         if (v2.forcedComplexity) anyForcedComplexity = true;
         partsPayload[e.partType] = {
