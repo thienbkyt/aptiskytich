@@ -1221,9 +1221,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
       setScores((prev) => ({
         ...prev,
-        writing: { correct: scale50, total: 50 },
+        writing: allFour ? { correct: scale50, total: 50 } : { correct: 0, total: 0 },
       }));
+      if (!allFour) setWritingUngraded(quotaBlocked ? "quota" : "error");
       setPhase("completed");
+
     };
 
 
