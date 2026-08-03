@@ -31,6 +31,7 @@ interface QResult {
 interface PageData {
   qResults: QResult[];
   questions: ReviewQuestion[];
+  snapshotQuestions: any[] | null;
 }
 
 interface Props {
@@ -217,16 +218,27 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
     let cancelled = false;
     setLoadingPage(true);
     (async () => {
-      const { data: qr } = await supabase
-        .from("exam_question_results")
-        .select("exam_question_id,user_answer,is_correct")
-        .eq("test_result_id", current.testResultId);
+      const [{ data: qr }, { data: trRow }] = await Promise.all([
+        supabase
+          .from("exam_question_results")
+          .select("exam_question_id,user_answer,is_correct")
+          .eq("test_result_id", current.testResultId),
+        supabase
+          .from("test_results")
+          .select("review_snapshot")
+          .eq("id", current.testResultId)
+          .maybeSingle(),
+      ]);
       const qResults = (qr || []) as QResult[];
+      const snapQs = (trRow as any)?.review_snapshot?.raw?.questions;
+      const snapshotQuestions = Array.isArray(snapQs) && snapQs.length > 0 ? snapQs : null;
 
       // Fetch question metadata (text, options, correct answer, explanation) for the panel.
       const qIds = qResults.map((r) => r.exam_question_id);
-      let questions: ReviewQuestion[] = [];
-      if (qIds.length > 0) {
+      let questions: ReviewQuestion[] = snapshotQuestions
+        ? (snapshotQuestions as ReviewQuestion[])
+        : [];
+      if (!snapshotQuestions && qIds.length > 0) {
         const { data: qs } = await supabase
           .from("exam_questions")
           .select("id,question_text,options,correct_answer,explanation,order_index,question_type,extra_data")
@@ -236,7 +248,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
       if (cancelled) return;
       setDataByPage((prev) => ({
         ...prev,
-        [current.testResultId]: { qResults, questions },
+        [current.testResultId]: { qResults, questions, snapshotQuestions },
       }));
       setLoadingPage(false);
     })();
@@ -433,6 +445,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           userId={userId}
           attemptCreatedAt={current.attemptCreatedAt}
           testResultId={current.testResultId}
+          snapshotQuestions={pageData?.snapshotQuestions || null}
           onExit={onExit}
           initialSection={qIdx}
           pageBase={0}

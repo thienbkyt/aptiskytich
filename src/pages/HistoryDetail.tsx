@@ -22,6 +22,7 @@ interface ResultRow {
   time_spent: number | null;
   exam_set_id: string | null;
   skill_scores: any;
+  review_snapshot?: any;
 }
 
 interface QuestionDetail {
@@ -101,7 +102,7 @@ const HistoryDetail = () => {
       try {
         const { data: r } = await supabase
           .from("test_results")
-          .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores")
+          .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores,review_snapshot")
           .eq("id", id)
           .eq("user_id", user.id)
           .maybeSingle();
@@ -305,7 +306,7 @@ const HistoryDetail = () => {
                   )}
                 </div>
                 <h1 className="text-2xl md:text-3xl font-heading font-extrabold text-foreground mb-4">
-                  {setInfo?.title || "Đề mẫu"}
+                  {setInfo?.title || (result.review_snapshot as any)?.testTitle || "Đề mẫu"}
                 </h1>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Stat label="Điểm số" value={`${result.score}/${result.total}`} />

@@ -46,6 +46,12 @@ interface Props {
   hideBottomNav?: boolean;
   /** Marathon review: suppress the "← Quay lại kết quả" header button. */
   hideBackToResults?: boolean;
+  /**
+   * Verbatim questions captured at attempt time (review_snapshot.raw.questions).
+   * When present, these are used instead of re-fetching exam_questions so that
+   * later admin edits never change a past attempt's review.
+   */
+  snapshotQuestions?: ExamQuestionRow[] | null;
 }
 
 // Session-lived cache of resolved question rows keyed by cache-id.
@@ -54,12 +60,25 @@ interface Props {
 // remember the resolved full_test_id → rows mapping too.
 const reviewRowsCache = new Map<string, ExamQuestionRow[]>();
 
-const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, timeLimit, hideTimer, hideBottomNav, hideBackToResults }: Props) => {
-  const cacheKey = skill === "grammar" ? `grammar:${examSetId}` : examSetId;
+const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, onExit, userId, attemptCreatedAt, testResultId, pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, timeLimit, hideTimer, hideBottomNav, hideBackToResults, snapshotQuestions }: Props) => {
+  const hasSnapshot = Array.isArray(snapshotQuestions) && snapshotQuestions.length > 0;
+  const baseKey = skill === "grammar" ? `grammar:${examSetId}` : examSetId;
+  // Snapshot-backed rows must never share a cache slot with DB-fetched rows.
+  const cacheKey = hasSnapshot ? `snap:${testResultId || examSetId}:${baseKey}` : baseKey;
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(() => reviewRowsCache.get(cacheKey) ?? null);
   const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
 
   useEffect(() => {
+    // Snapshot-first: use the questions stored with the attempt itself.
+    if (hasSnapshot) {
+      const sorted = [...(snapshotQuestions as ExamQuestionRow[])].sort(
+        (a, b) => (Number((a as any).order_index) || 0) - (Number((b as any).order_index) || 0),
+      );
+      reviewRowsCache.set(cacheKey, sorted);
+      setRows(sorted);
+      return;
+    }
+
     // Fast path: already cached — no network, no spinner.
     const cached = reviewRowsCache.get(cacheKey);
     if (cached) { setRows(cached); return; }
@@ -82,8 +101,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
             .from("exam_sets")
             .select("id, part, skill")
             .eq("full_test_id", fullTestId)
-            .in("skill", ["grammar_vocab", "grammar", "grammar_vocabulary"])
-            .eq("is_published", true);
+            .in("skill", ["grammar_vocab", "grammar", "grammar_vocabulary"]);
           const list = (sets || []) as { id: string; part: string }[];
           // Match SkillFullPracticeEngine's ordering exactly.
           list.sort((a, b) => a.part.localeCompare(b.part));
@@ -105,7 +123,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       setRows(r);
     })();
     return () => { cancelled = true; };
-  }, [cacheKey, examSetId, skill]);
+  }, [cacheKey, examSetId, skill, hasSnapshot, snapshotQuestions]);
 
   // Report page count for the current part (drives outer pager).
   useEffect(() => {
