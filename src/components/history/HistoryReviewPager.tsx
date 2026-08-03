@@ -428,7 +428,8 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         attemptCreatedAt={current.attemptCreatedAt}
         testTitle={current.testTitle}
         partLabel={displayPart || "Speaking"}
-        testResultId={current.testResultId}
+          testResultId={current.testResultId}
+          snapshotQuestions={pageData?.snapshotQuestions || null}
         onExit={onExit}
         questionIndex={qIdx}
         onQuestionCount={setPartPageCount}
