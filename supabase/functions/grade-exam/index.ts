@@ -1638,6 +1638,7 @@ RÀNG BUỘC CHO grammarErrors VÀ spellingErrors:
 - Trường "corrected" phải là câu ĐÃ ÁP DỤNG sửa đổi rõ ràng; TUYỆT ĐỐI KHÔNG được chép lại nguyên câu gốc.
 - KHÔNG đưa nhận xét về nội dung, ý tưởng, mức độ phù hợp ngữ cảnh, hay góp ý phong cách vào hai mảng này. Những góp ý đó thuộc phần feedback/criteriaAnalysis, không phải lỗi cụ thể.
 - KHÔNG đưa vào mảng những mục mà bản thân phần explanation nói rằng câu đã đúng, chỉ cần cải thiện, hoặc "không sai".
+- CHẤP NHẬN CẢ chính tả Anh-Anh VÀ Anh-Mỹ. organise/organize, realise/realize, colour/color, favourite/favorite, centre/center, travelling/traveling, practise/practice (động từ), programme/program đều ĐÚNG. TUYỆT ĐỐI KHÔNG đưa khác biệt vùng miền vào spellingErrors hay grammarErrors, kể cả khi bài trộn lẫn hai hệ.
 
 FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
 - Bắt đầu bằng điểm mạnh thực sự của bài. Nếu một hạng mục đạt tối đa hãy khen rõ ràng.
