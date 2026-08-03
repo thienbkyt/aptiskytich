@@ -540,6 +540,8 @@ const parseSpeakingPart1 = (rows: any[]): ParseResult => {
     const rowNum = i + 2;
     const qt = r.question_text?.toString().trim();
     if (!qt) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu question_text` }); return; }
+    const basic = (r["Bài mẫu B1"] ?? r.sample_answer_basic ?? "").toString().trim();
+    const advanced = (r["Bài mẫu B2"] ?? r.sample_answer_advanced ?? "").toString().trim();
     questions.push({
       order_index: i,
       question_text: qt,
@@ -548,7 +550,12 @@ const parseSpeakingPart1 = (rows: any[]): ParseResult => {
       explanation: r.sample_answer?.toString().trim() || "",
       audio_url: null, image_url: null,
       response_time: 30,
-      extra_data: { prepTime: 0, speakTime: 30 },
+      extra_data: {
+        prepTime: 0,
+        speakTime: 30,
+        ...(basic ? { sampleAnswerBasic: basic } : {}),
+        ...(advanced ? { sampleAnswerAdvanced: advanced } : {}),
+      },
     });
   });
 
