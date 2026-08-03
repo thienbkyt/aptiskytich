@@ -264,6 +264,7 @@ ${studentText}`;
           },
           body: JSON.stringify({
             model,
+            temperature: 0,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userText },
@@ -626,6 +627,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
           },
           body: JSON.stringify({
             model: MODEL_V2,
+            temperature: 0,
             messages: [
               { role: "system", content: sysV2 },
               { role: "user", content: userParts },
@@ -929,6 +931,7 @@ Mỗi lỗi 1 mục {original, corrected, explanation}. explanation (tiếng Vi�
 PHÂN LOẠI BẮT BUỘC:
 - Lỗi SAI CHÍNH TẢ thuần túy (viết sai từ, thiếu/thừa chữ cái, sai hoa/thường của từ) LUÔN đưa vào spellingErrors, TUYỆT ĐỐI KHÔNG đưa vào grammarErrors. Ngược lại, spellingErrors chỉ chứa lỗi chính tả, không chứa lỗi ngữ pháp.
 - explanation trong grammarErrors KHÔNG được bắt đầu bằng "Lỗi chính tả".
+- CHẤP NHẬN CẢ chính tả Anh-Anh VÀ Anh-Mỹ. organise/organize, realise/realize, colour/color, favourite/favorite, centre/center, travelling/traveling, practise/practice (động từ), programme/program đều ĐÚNG. TUYỆT ĐỐI KHÔNG đưa khác biệt vùng miền vào spellingErrors hay grammarErrors, kể cả khi bài trộn lẫn hai hệ.
 
 KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
 - Nếu câu học viên ĐÚNG ngữ pháp, đúng nghĩa và chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
@@ -1197,6 +1200,7 @@ ${partsIn.formalText ?? ""}`;
           },
           body: JSON.stringify({
             model,
+            temperature: 0,
             messages: [
               { role: "system", content: systemPromptV2 },
               { role: "user", content: [{ type: "text", text: userText }] },
@@ -1638,6 +1642,7 @@ RÀNG BUỘC CHO grammarErrors VÀ spellingErrors:
 - Trường "corrected" phải là câu ĐÃ ÁP DỤNG sửa đổi rõ ràng; TUYỆT ĐỐI KHÔNG được chép lại nguyên câu gốc.
 - KHÔNG đưa nhận xét về nội dung, ý tưởng, mức độ phù hợp ngữ cảnh, hay góp ý phong cách vào hai mảng này. Những góp ý đó thuộc phần feedback/criteriaAnalysis, không phải lỗi cụ thể.
 - KHÔNG đưa vào mảng những mục mà bản thân phần explanation nói rằng câu đã đúng, chỉ cần cải thiện, hoặc "không sai".
+- CHẤP NHẬN CẢ chính tả Anh-Anh VÀ Anh-Mỹ. organise/organize, realise/realize, colour/color, favourite/favorite, centre/center, travelling/traveling, practise/practice (động từ), programme/program đều ĐÚNG. TUYỆT ĐỐI KHÔNG đưa khác biệt vùng miền vào spellingErrors hay grammarErrors, kể cả khi bài trộn lẫn hai hệ.
 
 FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
 - Bắt đầu bằng điểm mạnh thực sự của bài. Nếu một hạng mục đạt tối đa hãy khen rõ ràng.
