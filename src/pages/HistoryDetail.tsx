@@ -22,6 +22,7 @@ interface ResultRow {
   time_spent: number | null;
   exam_set_id: string | null;
   skill_scores: any;
+  review_snapshot?: any;
 }
 
 interface QuestionDetail {
@@ -101,7 +102,7 @@ const HistoryDetail = () => {
       try {
         const { data: r } = await supabase
           .from("test_results")
-          .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores")
+          .select("id,created_at,score,total,level,time_spent,exam_set_id,skill_scores,review_snapshot")
           .eq("id", id)
           .eq("user_id", user.id)
           .maybeSingle();
