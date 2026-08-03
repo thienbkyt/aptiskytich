@@ -24,6 +24,9 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 const BATCH_LIMIT = 50;
 const MIN_AGE_MINUTES = 15;
 const MAX_AGE_HOURS = 24;
+// Ignore every attempt that predates this deploy — only sweep new submissions.
+const SWEEP_NOT_BEFORE = "2026-08-03T17:00:00Z";
+
 
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split(".");
@@ -62,13 +65,15 @@ Deno.serve(async (req) => {
 
     const { data: rows, error } = await admin
       .from("test_results")
-      .select("id, user_id, exam_set_id, grade_payload, created_at")
+      .select("id, user_id, exam_set_id, full_test_session_id, grade_payload, created_at")
       .not("grade_payload", "is", null)
-      .eq("total", 1)
+      .eq("grade_payload->>type", "writing_v2")
       .lt("created_at", olderThan)
       .gt("created_at", newerThan)
+      .gt("created_at", SWEEP_NOT_BEFORE)
       .order("created_at", { ascending: true })
       .limit(BATCH_LIMIT);
+
 
     if (error) {
       console.error("[sweep-writing] select failed:", error.message);
@@ -121,7 +126,12 @@ Deno.serve(async (req) => {
           max_attempts: 3,
           payload: {
             ...(payload as any),
-            _meta: { examSetId: row.exam_set_id ?? null, fullTestSessionId: null },
+          _meta: {
+            examSetId: row.exam_set_id ?? null,
+            fullTestSessionId:
+              row.full_test_session_id ?? (payload as any).gradingSessionId ?? null,
+          },
+
           },
         } as any);
         if (insErr) {

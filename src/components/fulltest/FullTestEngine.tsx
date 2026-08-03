@@ -126,6 +126,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
+  const [writingUngraded, setWritingUngraded] = useState<null | "quota" | "error">(null);
+
   useExitWarning(phase !== "loading" && phase !== "completed" && phase !== "finalizing-writing");
   const { gradeExam } = useExamGrading();
 
@@ -462,6 +464,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               <Loader2 className="w-3 h-3 animate-spin" /> AI Kỳ Tích đang chấm Speaking...
             </p>
           )}
+          {writingUngraded && (
+            <p className="text-xs text-muted-foreground mt-2 max-w-xl mx-auto">
+              {writingUngraded === "quota"
+                ? "Phần Writing chưa được chấm vì tài khoản đã hết lượt chấm AI. Bài viết của bạn vẫn được lưu đầy đủ trong phần Xem lại."
+                : "Phần Writing chưa chấm xong. Hệ thống sẽ tự chấm lại trong ít phút, bạn quay lại xem sau nhé."}
+            </p>
+          )}
+
         </div>
 
         {/* Aptis practice score report */}
@@ -957,14 +967,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     };
 
     const runWritingFinalize = async () => {
-      // Wait for speaking grading to finish so its score is included in the summary.
-      if (speakingGradingPromiseRef.current) {
-        setWaitingForSpeaking(true);
-        try { await speakingGradingPromiseRef.current; } catch {}
-        setWaitingForSpeaking(false);
-      }
-
       const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
+
         .map((k) => parseInt(k, 10))
         .sort((a, b) => a - b);
       const orderedEntries = orderedIndices
@@ -982,6 +986,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       const partsPayload: Record<string, any> = {};
       let anyForcedComplexity = false;
       let failedParts = 0;
+      let quotaBlocked = false;
+
       let lastTestResultId: string | null = null;
       let lastExamSetId: string | null = null;
 
@@ -1039,15 +1045,40 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             fullTestSessionId: sessionIdRef.current,
           });
         } catch (err) {
-          if (err instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+          if (err instanceof QuotaExceededError) {
+            quotaBlocked = true;
+            toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+          }
           console.warn(`[FullTest v2] gradeWritingPartV2 ${e.partType} failed`, err);
 
         }
         if (!v2) {
           failedParts += 1;
           setWritingGradedCount(i + 1);
+          if (preTestResultId && !quotaBlocked) {
+            try {
+              const { enqueueGradingFallback } = await import("@/lib/gradingQueue");
+              await enqueueGradingFallback({
+                skill: "writing",
+                partType: e.partType,
+                testResultId: preTestResultId,
+                examSetId: e.partId ?? null,
+                fullTestSessionId: sessionIdRef.current,
+                payload: {
+                  type: "writing_v2",
+                  partType: e.partType,
+                  questions: e.questions,
+                  text: e.text,
+                  parts: partsInput,
+                  gradingSessionId: sessionIdRef.current,
+                },
+                lastError: "fullTestFinalize: part failed",
+              });
+            } catch (err) { console.warn("[FullTest v2] enqueue fallback failed", err); }
+          }
           continue;
         }
+
         rawParts[e.partType as keyof typeof rawParts] = v2.rawPart;
         if (v2.forcedComplexity) anyForcedComplexity = true;
         partsPayload[e.partType] = {
@@ -1138,10 +1169,18 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         );
       }
 
+      // Wait for speaking grading to finish so its score is included in the summary.
+      if (speakingGradingPromiseRef.current) {
+        setWaitingForSpeaking(true);
+        try { await speakingGradingPromiseRef.current; } catch {}
+        setWaitingForSpeaking(false);
+      }
+
       // Finalize → scale50 + CEFR + grey_zone + flag_review (+ appropriacy cap)
       // ONLY when all 4 writing parts graded. Partial attempts must not
       // produce an official CEFR — raw_total/120*50 would collapse to A1.
       const { hasAllFourWritingParts } = await import("@/components/writing/writingGradingV2");
+
       const allFour = hasAllFourWritingParts(rawParts) && failedParts === 0;
       let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
       if (allFour) {
@@ -1182,9 +1221,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
       setScores((prev) => ({
         ...prev,
-        writing: { correct: scale50, total: 50 },
+        writing: allFour ? { correct: scale50, total: 50 } : { correct: 0, total: 0 },
       }));
+      if (!allFour) setWritingUngraded(quotaBlocked ? "quota" : "error");
       setPhase("completed");
+
     };
 
 

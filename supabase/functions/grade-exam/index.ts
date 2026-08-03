@@ -1189,32 +1189,61 @@ ${partsIn.formalText ?? ""}`;
       };
 
       const model = "google/gemini-2.5-flash";
-      let resp: Response;
-      try {
-        resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          signal: AbortSignal.timeout(120_000),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model,
-            temperature: 0,
-            messages: [
-              { role: "system", content: systemPromptV2 },
-              { role: "user", content: [{ type: "text", text: userText }] },
-            ],
-            tools: [toolV2],
-            tool_choice: { type: "function", function: { name: "submit_writing_grading_v2" } },
-          }),
-        });
-      } catch (e) {
-        console.error("[grade-exam writing_v2] fetch failed/timeout", (e as any)?.message || e);
+      const callGatewayV2 = async (): Promise<Response> => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60_000);
+        try {
+          return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model,
+              temperature: 0,
+              messages: [
+                { role: "system", content: systemPromptV2 },
+                { role: "user", content: [{ type: "text", text: userText }] },
+              ],
+              tools: [toolV2],
+              tool_choice: { type: "function", function: { name: "submit_writing_grading_v2" } },
+            }),
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      };
+
+      let respOrNull: Response | null = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          respOrNull = await callGatewayV2();
+          // Retry only transient gateway errors (5xx). 4xx passes through.
+          if (respOrNull.status >= 500 && attempt === 0) {
+            console.warn(`[grade-exam writing_v2] gateway ${respOrNull.status} on attempt 1, retrying...`);
+            respOrNull = null;
+            continue;
+          }
+          break;
+        } catch (e) {
+          const isAbort = (e as any)?.name === "AbortError";
+          console.error(
+            `[grade-exam writing_v2] fetch failed on attempt ${attempt + 1}`,
+            isAbort ? "timeout" : (e as any)?.message || e,
+          );
+          if (attempt === 0) continue;
+        }
+      }
+
+      if (!respOrNull) {
         return new Response(JSON.stringify({ error: "AI timeout, thử lại.", notGraded: true }), {
           status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      const resp: Response = respOrNull;
+
 
       if (!resp.ok) {
         const errText = await resp.text().catch(() => "");
