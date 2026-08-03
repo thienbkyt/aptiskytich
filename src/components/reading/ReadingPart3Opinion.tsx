@@ -74,7 +74,7 @@ const ReadingPart3Opinion = ({
       </div>
 
       {/* Instruction */}
-      <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{question.instruction}</p>
+      <p className="text-sm md:text-base font-bold text-foreground mb-6 leading-relaxed">{question.instruction}</p>
 
       {reveal && reviewDataLoading && (
         <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
