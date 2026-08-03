@@ -2,6 +2,7 @@ import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import type { WritingPart2Data } from "@/data/writingQuestions";
+import { WRITING_WORD_LIMITS, clampWords } from "@/lib/writingWordLimits";
 
 interface Props {
   data: WritingPart2Data;
@@ -59,13 +60,20 @@ const WritingPart2Social = ({
         value={answer}
         disabled={submitted}
         placeholder="Type your answer here"
-        onChange={(e) => onAnswerChange(e.target.value)}
+        spellCheck={false}
+        autoCorrect="off"
+        autoCapitalize="off"
+        autoComplete="off"
+        data-gramm="false"
+        data-gramm_editor="false"
+        data-enable-grammarly="false"
+        onChange={(e) => onAnswerChange(clampWords(e.target.value, WRITING_WORD_LIMITS.task2))}
         className="min-h-[120px] w-full rounded-md border border-border bg-white p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground whitespace-pre-wrap resize-y disabled:opacity-70 disabled:cursor-not-allowed"
       />
 
       <div className="flex justify-end mt-1.5">
         <span className="text-xs text-muted-foreground">
-          Words <span className="font-semibold text-foreground">{wordCount}</span> / {data.wordLimit}
+          Words <span className={`font-semibold ${wordCount >= WRITING_WORD_LIMITS.task2 ? "text-destructive" : "text-foreground"}`}>{wordCount}</span> / {WRITING_WORD_LIMITS.task2}
         </span>
       </div>
 

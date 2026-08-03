@@ -2,6 +2,7 @@ import { Bookmark } from "lucide-react";
 import TimerDisplay from "@/components/reading/TimerDisplay";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import RichTextEditor from "@/components/writing/RichTextEditor";
+import { WRITING_WORD_LIMITS } from "@/lib/writingWordLimits";
 import type { WritingPart4Data } from "@/data/writingQuestions";
 
 interface Props {
@@ -77,8 +78,8 @@ const WritingPart4TwoEmails = ({
           disabled={submitted}
           placeholder="Type your answer here"
           minHeight="140px"
-          wordLimit={data.informalEmail.wordLimit}
-          initialValue={informalAnswer}
+          wordLimit={WRITING_WORD_LIMITS.task4Informal}
+          value={informalAnswer}
         />
         {showSample && informalSample && (
           <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
@@ -98,8 +99,8 @@ const WritingPart4TwoEmails = ({
           disabled={submitted}
           placeholder="Type your answer here"
           minHeight="220px"
-          wordLimit={data.formalEmail.wordLimit}
-          initialValue={formalAnswer}
+          wordLimit={WRITING_WORD_LIMITS.task4Formal}
+          value={formalAnswer}
         />
         {showSample && formalSample && (
           <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
