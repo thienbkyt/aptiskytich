@@ -1,11 +1,17 @@
 // Speaking question data types and mock data for Aptis Speaking (4 parts)
 
+/** Two sample-answer variants: an easy one (aim B1) and an advanced one (aim B2+). */
+export interface SampleAnswerPair {
+  basic: string;
+  advanced: string;
+}
+
 // Part 1: Personal Questions – Answer personal questions (30s prep, 45s speak)
 export interface SpeakingPart1Data {
   questions: string[];
   prepTime: number;   // seconds per question
   speakTime: number;  // seconds per question
-  sampleAnswers?: string[];
+  sampleAnswers?: SampleAnswerPair[];
 }
 
 // Part 2: Describe a Picture – Describe what you see (45s prep, 45s speak)
@@ -15,7 +21,7 @@ export interface SpeakingPart2Data {
   questions: string[];
   prepTime: number;
   speakTime: number;
-  sampleAnswers?: string[];
+  sampleAnswers?: SampleAnswerPair[];
 }
 
 // Part 3: Compare Pictures – Compare two images (45s prep, 60s speak)
@@ -26,7 +32,7 @@ export interface SpeakingPart3Data {
   questions: string[];
   prepTime: number;
   speakTime: number;
-  sampleAnswers?: string[];
+  sampleAnswers?: SampleAnswerPair[];
 }
 
 // Part 4: Opinion Questions – Discuss abstract topic (60s prep, 120s speak)
@@ -36,7 +42,7 @@ export interface SpeakingPart4Data {
   questions: string[];
   prepTime: number;
   speakTime: number;
-  sampleAnswers?: string[];
+  sampleAnswers?: SampleAnswerPair[];
 }
 
 export type SpeakingPartType = "part1" | "part2" | "part3" | "part4";

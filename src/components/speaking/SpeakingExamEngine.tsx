@@ -130,6 +130,7 @@ const SpeakingExamEngine = ({
   const [reviewDetail, setReviewDetail] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
@@ -1312,22 +1313,59 @@ const SpeakingExamEngine = ({
           </div>
 
           {allowReveal && revealed && (() => {
-            const sample = (() => {
-              if (partType === "part1") return part1Data?.sampleAnswers?.[currentIndex] || "";
-              if (partType === "part2") return part2Data?.sampleAnswers?.[currentIndex] || "";
-              if (partType === "part3") return part3Data?.sampleAnswers?.[currentIndex] || "";
-              if (partType === "part4") return part4Data?.sampleAnswers?.[0] || "";
-              return "";
+            const pair = (() => {
+              if (partType === "part1") return part1Data?.sampleAnswers?.[currentIndex];
+              if (partType === "part2") return part2Data?.sampleAnswers?.[currentIndex];
+              if (partType === "part3") return part3Data?.sampleAnswers?.[currentIndex];
+              if (partType === "part4") return part4Data?.sampleAnswers?.[0];
+              return undefined;
             })();
+            const basic = (pair?.basic || "").trim();
+            const advanced = (pair?.advanced || "").trim();
+            // Auto-fall back to the other variant when the selected one is empty.
+            const effectiveLevel =
+              sampleLevel === "basic" && !basic && advanced
+                ? "advanced"
+                : sampleLevel === "advanced" && !advanced && basic
+                ? "basic"
+                : sampleLevel;
+            const sample = effectiveLevel === "advanced" ? advanced : basic;
+            const words = sample.trim().split(/\s+/).filter(Boolean).length;
+            const speakTime =
+              partType === "part1" ? part1Data?.speakTime
+              : partType === "part2" ? part2Data?.speakTime
+              : partType === "part3" ? part3Data?.speakTime
+              : part4Data?.speakTime;
+            const cardCls = (active: boolean) =>
+              `flex-1 text-left rounded-xl border p-3 transition-colors ${
+                active
+                  ? "bg-[#24085a] text-white border-[#24085a]"
+                  : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+              }`;
             return (
               <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
-                <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-2">
+                <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide mb-3">
                   💡 Bài nói mẫu
                 </p>
+                <div className="flex gap-3 mb-4">
+                  <button type="button" onClick={() => setSampleLevel("basic")} className={cardCls(effectiveLevel === "basic")}>
+                    <span className="block text-sm font-bold">Bản dễ học</span>
+                    <span className="block text-[11px] mt-0.5 opacity-80">Phù hợp aim B1</span>
+                  </button>
+                  <button type="button" onClick={() => setSampleLevel("advanced")} className={cardCls(effectiveLevel === "advanced")}>
+                    <span className="block text-sm font-bold">Bản nâng cao</span>
+                    <span className="block text-[11px] mt-0.5 opacity-80">Phù hợp aim B2 trở lên · câu phong phú hơn</span>
+                  </button>
+                </div>
                 {sample ? (
-                  <p className="text-sm text-gray-900 font-medium whitespace-pre-line leading-relaxed">{sample}</p>
+                  <>
+                    <p className="text-sm text-gray-900 font-medium whitespace-pre-line leading-relaxed">{sample}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {words} từ · nói vừa đủ {speakTime ?? 120} giây
+                    </p>
+                  </>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">Chưa có bài nói mẫu.</p>
+                  <p className="text-sm text-gray-500 italic">Chưa có bài nói mẫu cho bản này.</p>
                 )}
               </div>
             );
