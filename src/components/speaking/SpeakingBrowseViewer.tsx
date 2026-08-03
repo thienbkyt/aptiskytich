@@ -64,6 +64,27 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
   const firstRow = questions?.[0];
   const extra: any = firstRow?.extra_data || {};
 
+  const cardCls = (active: boolean) =>
+    `flex-1 text-left rounded-xl border p-3 transition-colors ${
+      active
+        ? "bg-[#24085a] text-white border-[#24085a]"
+        : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+    }`;
+
+  const samplePairs = useMemo(() => {
+    return (questions || []).map((q) => {
+      const ed: any = q.extra_data || {};
+      const legacy = String(ed.sampleAnswer || q.explanation || "").trim();
+      return {
+        basic: String(ed.sampleAnswerBasic || legacy || "").trim(),
+        advanced: String(ed.sampleAnswerAdvanced || legacy || "").trim(),
+      };
+    });
+  }, [questions]);
+
+  const hasTwoVariants = samplePairs.some((p) => p.basic && p.advanced && p.basic !== p.advanced);
+
+
   // Resolve images per part
   const images = useMemo<string[]>(() => {
     if (!firstRow) return [];
