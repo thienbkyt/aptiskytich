@@ -1197,6 +1197,7 @@ ${partsIn.formalText ?? ""}`;
           },
           body: JSON.stringify({
             model,
+            temperature: 0,
             messages: [
               { role: "system", content: systemPromptV2 },
               { role: "user", content: [{ type: "text", text: userText }] },
