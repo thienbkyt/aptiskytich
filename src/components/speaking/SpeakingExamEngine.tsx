@@ -219,6 +219,13 @@ const SpeakingExamEngine = ({
     return 0;
   };
 
+  // Counts an exam image as settled (loaded OR failed) so the flow never blocks forever.
+  const markImageSettled = useCallback(() => {
+    imagesLoadedRef.current += 1;
+    setImagesLoadedCount((c) => c + 1);
+  }, []);
+
+
 
   const getCurrentQuestion = () => {
     if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
@@ -1293,6 +1300,8 @@ const SpeakingExamEngine = ({
                     src={part2Data.imageUrl}
                     alt="Describe this picture"
                     className="w-full max-w-md rounded-lg object-cover"
+                    onLoad={markImageSettled}
+                    onError={markImageSettled}
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part2" questionNumber={currentIndex + 1} />
@@ -1308,6 +1317,8 @@ const SpeakingExamEngine = ({
                     src={part3Data.imageUrl1}
                     alt="Picture 1"
                     className="w-full rounded-lg object-cover h-56"
+                    onLoad={markImageSettled}
+                    onError={markImageSettled}
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={1} />
@@ -1317,6 +1328,8 @@ const SpeakingExamEngine = ({
                     src={part3Data.imageUrl2}
                     alt="Picture 2"
                     className="w-full rounded-lg object-cover h-56"
+                    onLoad={markImageSettled}
+                    onError={markImageSettled}
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={2} />
@@ -1334,8 +1347,11 @@ const SpeakingExamEngine = ({
                       src={part4Data.imageUrl}
                       alt="Part 4 topic"
                       className="w-full h-56 object-cover"
+                      onLoad={markImageSettled}
+                      onError={markImageSettled}
                     />
                   </div>
+
                 ) : (
                   <MissingMediaNotice
                     kind="image"
