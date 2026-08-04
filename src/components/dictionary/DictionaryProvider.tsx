@@ -390,12 +390,13 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     const key = normalizeSentence(text);
     const x = translateBtn.x;
     const y = translateBtn.y;
+    const dockBottom = translateBtn.dockBottom;
     setTranslateBtn(null);
 
     const cached = sentenceCacheRef.current.get(key);
     if (cached) {
       setTranslatePopup({
-        x, y, source: text, translation: cached, loading: false, error: null, visible: true,
+        x, y, dockBottom, source: text, translation: cached, loading: false, error: null, visible: true,
       });
       return;
     }
@@ -403,7 +404,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     const now = Date.now();
     if (now - translateRateRef.current < 1500) {
       setTranslatePopup({
-        x, y, source: text, translation: null, loading: false,
+        x, y, dockBottom, source: text, translation: null, loading: false,
         error: "Vui lòng đợi vài giây rồi thử lại.", visible: true,
       });
       return;
@@ -411,7 +412,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     translateRateRef.current = now;
 
     setTranslatePopup({
-      x, y, source: text, translation: "", loading: true, error: null, visible: true,
+      x, y, dockBottom, source: text, translation: "", loading: true, error: null, visible: true,
     });
 
     try {
