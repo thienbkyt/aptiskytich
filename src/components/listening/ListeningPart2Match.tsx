@@ -106,7 +106,7 @@ const ListeningPart2Match = ({
         >
           <p className="text-sm text-foreground mb-1">{q.questionText}</p>
           {audioSrc ? (
-            <LimitedAudioPlayer src={audioSrc} src2={q.audioUrl2} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
+            <LimitedAudioPlayer src={audioSrc} src2={q.audioUrl2} introText="Listen to four people and match each person to the correct information." maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
           ) : (
             <MissingMediaNotice kind="audio" skill="listening" partType="part2" questionNumber={currentIndex + 1} />
           )}

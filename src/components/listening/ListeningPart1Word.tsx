@@ -94,7 +94,7 @@ const ListeningPart1Word = ({
             {q.questionText || "Which word do you hear?"}
           </p>
           {q.audioUrl ? (
-            <LimitedAudioPlayer src={q.audioUrl} src2={q.audioUrl2} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
+            <LimitedAudioPlayer src={q.audioUrl} src2={q.audioUrl2} introText={q.questionText} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
           ) : (
             <MissingMediaNotice
               kind="audio"
