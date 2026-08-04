@@ -118,6 +118,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     setIsPlaying(false);
     setErrorMsg("");
     retryCountRef.current = 0;
+    // Cancel any pending intro sequence for the previous question.
+    introTokenRef.current += 1;
+    stopTTS();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
