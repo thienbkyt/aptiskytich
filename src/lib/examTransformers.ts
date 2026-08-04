@@ -152,6 +152,7 @@ export const toListeningPart1 = (rows: ExamQuestionRow[]): ListeningPart1Questio
       return {
         id: i + 1,
         audioUrl: r.audio_url ?? null,
+        audioUrl2: (r.extra_data as any)?.audioUrl2 ?? undefined,
         questionText: r.question_text || "",
         options: r.options,
         correct: r.correct_answer as number,
@@ -175,6 +176,7 @@ export const toListeningPart2 = (rows: ExamQuestionRow[]): ListeningPart2Questio
   return [{
     id: 1,
     audioUrl: fallbackAudio,
+    audioUrl2: ed.audioUrl2 ?? undefined,
     questionText: first.question_text || "",
     persons,
     infoItems: ed.infoItems || [],
@@ -190,6 +192,7 @@ export const toListeningPart3 = (rows: ExamQuestionRow[]): ListeningPart3Questio
   return [{
     id: 1,
     audioUrl: first.audio_url ?? null,
+    audioUrl2: (first.extra_data as any)?.audioUrl2 ?? undefined,
     questionText: first.question_text || "",
     statements: rows.map((r) => ({
       text: r.question_text || "",
@@ -229,6 +232,7 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
     clips.push({
       id: clips.length + 1,
       audioUrl: a.audio_url ?? null,
+      audioUrl2: (a.extra_data as any)?.audioUrl2 ?? undefined,
       questions,
       script: a.explanation || "",
     });
