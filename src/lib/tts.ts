@@ -109,6 +109,12 @@ async function fetchUrl(text: string, lang: Lang): Promise<string | null> {
   const cached = urlCache.get(key);
   if (cached) return cached;
 
+  // The `tts` edge function requires an authenticated user. Without a session the
+  // client would send the anon key as the bearer token → 401. Skip straight to the
+  // browser voice fallback instead of firing a doomed request.
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return null;
+
   const { data, error } = await supabase.functions.invoke("tts", {
     body: { text, lang },
   });
