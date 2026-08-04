@@ -21,6 +21,8 @@ import {
   BookOpen,
   ChevronDown,
   FolderPlus,
+  RotateCcw,
+
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { speakWithTTS } from "@/lib/tts";
@@ -285,6 +287,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     error: string | null;
     visible: boolean;
   } | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+
   const translateRateRef = useRef(0);
   const sentenceCacheRef = useRef<Map<string, string>>(new Map());
 
@@ -528,7 +532,14 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         )}
       {translatePopup &&
         createPortal(
-          <SentenceTranslatePopup data={translatePopup} onClose={closeTranslatePopup} />,
+          <SentenceTranslatePopup
+            data={translatePopup}
+            onClose={closeTranslatePopup}
+            dragPos={dragPos}
+            onDragEnd={(p) => setDragPos(p)}
+            onResetPos={() => setDragPos(null)}
+          />,
+
           document.body
         )}
     </DictionaryContext.Provider>
@@ -550,42 +561,79 @@ interface SentencePopupData {
 const SentenceTranslatePopup: React.FC<{
   data: SentencePopupData;
   onClose: () => void;
-}> = ({ data, onClose }) => {
-  const dock = data.dockBottom;
+  dragPos: { x: number; y: number } | null;
+  onDragEnd: (p: { x: number; y: number }) => void;
+  onResetPos: () => void;
+}> = ({ data, onClose, dragPos, onDragEnd, onResetPos }) => {
   const width = 360;
+  const isDocked = data.dockBottom;
+  const [drag, setDrag] = useState<{ x: number; y: number } | null>(dragPos);
+  useEffect(() => {
+    setDrag(dragPos);
+  }, [dragPos]);
+
   const clampedX = Math.max(
     12,
     Math.min(data.x - width / 2, window.innerWidth - width - 12)
   );
   const spaceBelow = window.innerHeight - data.y;
-  const showAbove = spaceBelow < 240;
+  const showAbove = spaceBelow < 320;
 
   return (
     <div
       className={`sentence-translate-popup fixed z-[9999] transition-all duration-200 ${
-        dock ? "left-0 right-0 bottom-0 " : ""
+        isDocked ? "left-0 right-0 bottom-0 " : ""
       }${data.visible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
       style={
-        dock
+        isDocked
           ? { transformOrigin: "bottom center" }
-          : {
-              left: clampedX,
-              top: showAbove ? undefined : data.y,
-              bottom: showAbove ? window.innerHeight - data.y + 24 : undefined,
-              width,
-              transformOrigin: showAbove ? "bottom center" : "top center",
-            }
+          : drag
+            ? { left: drag.x, top: drag.y, width, transformOrigin: "top center" }
+            : {
+                left: clampedX,
+                top: showAbove ? undefined : data.y,
+                bottom: showAbove ? window.innerHeight - data.y + 24 : undefined,
+                width,
+                transformOrigin: showAbove ? "bottom center" : "top center",
+              }
       }
     >
       <div
         className={`bg-popover border border-border overflow-hidden ${
-          dock
+          isDocked
             ? "rounded-t-2xl rounded-b-none mx-auto w-full max-w-[640px] shadow-[0_-8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_-8px_40px_-8px_hsl(0_0%_0%/0.5)]"
             : "rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)]"
         }`}
       >
 
-        <div className="px-4 py-2.5 flex items-center justify-between border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
+        <div
+          className={`px-4 py-2.5 flex items-center justify-between border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)] ${
+            !isDocked ? "cursor-move select-none touch-none" : ""
+          }`}
+          onPointerDown={(e) => {
+            if (isDocked) return;
+            if ((e.target as HTMLElement).closest("button")) return;
+            const el = e.currentTarget.parentElement as HTMLElement;
+            const box = el.getBoundingClientRect();
+            const offX = e.clientX - box.left;
+            const offY = e.clientY - box.top;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+            const clamp = (cx: number, cy: number) => ({
+              x: Math.max(8, Math.min(cx - offX, window.innerWidth - width - 8)),
+              y: Math.max(8, Math.min(cy - offY, window.innerHeight - 80)),
+            });
+            const onMove = (ev: PointerEvent) => {
+              setDrag(clamp(ev.clientX, ev.clientY));
+            };
+            const onUp = (ev: PointerEvent) => {
+              window.removeEventListener("pointermove", onMove);
+              window.removeEventListener("pointerup", onUp);
+              onDragEnd(clamp(ev.clientX, ev.clientY));
+            };
+            window.addEventListener("pointermove", onMove);
+            window.addEventListener("pointerup", onUp);
+          }}
+        >
           <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-primary" />
             Dịch câu
@@ -603,6 +651,20 @@ const SentenceTranslatePopup: React.FC<{
             >
               <Volume2 className="w-3.5 h-3.5 text-primary" />
             </Button>
+            {!isDocked && drag !== null && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                title="Về vị trí mặc định"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResetPos();
+                }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -616,7 +678,8 @@ const SentenceTranslatePopup: React.FC<{
             </Button>
           </div>
         </div>
-        <div className={`px-4 py-3 space-y-2 overflow-y-auto ${dock ? "max-h-[40vh]" : "max-h-[300px]"}`}>
+
+        <div className={`px-4 py-3 space-y-2 overflow-y-auto ${isDocked ? "max-h-[40vh]" : "max-h-[300px]"}`}>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
               English
