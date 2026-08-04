@@ -668,7 +668,7 @@ const SentenceTranslatePopup: React.FC<{
           </div>
         </div>
 
-        <div className={`px-4 py-3 space-y-2 overflow-y-auto ${dock ? "max-h-[40vh]" : "max-h-[300px]"}`}>
+        <div className={`px-4 py-3 space-y-2 overflow-y-auto ${isDocked ? "max-h-[40vh]" : "max-h-[300px]"}`}>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
               English
