@@ -1445,6 +1445,51 @@ export type Database = {
         }
         Relationships: []
       }
+      speaking_grading_tickets: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          grammar_errors: Json
+          id: string
+          improved_version: string | null
+          max_points: number
+          part: string | null
+          part_score: number
+          pronunciation_errors: Json
+          transcript: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          grammar_errors?: Json
+          id?: string
+          improved_version?: string | null
+          max_points?: number
+          part?: string | null
+          part_score?: number
+          pronunciation_errors?: Json
+          transcript?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          grammar_errors?: Json
+          id?: string
+          improved_version?: string | null
+          max_points?: number
+          part?: string | null
+          part_score?: number
+          pronunciation_errors?: Json
+          transcript?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       speaking_question_gradings: {
         Row: {
           created_at: string
@@ -1460,6 +1505,7 @@ export type Database = {
           pronunciation_errors: Json
           question_text: string | null
           test_result_id: string | null
+          ticket_id: string | null
           transcript: string | null
           user_id: string
         }
@@ -1477,6 +1523,7 @@ export type Database = {
           pronunciation_errors?: Json
           question_text?: string | null
           test_result_id?: string | null
+          ticket_id?: string | null
           transcript?: string | null
           user_id: string
         }
@@ -1494,6 +1541,7 @@ export type Database = {
           pronunciation_errors?: Json
           question_text?: string | null
           test_result_id?: string | null
+          ticket_id?: string | null
           transcript?: string | null
           user_id?: string
         }
@@ -1503,6 +1551,13 @@ export type Database = {
             columns: ["test_result_id"]
             isOneToOne: false
             referencedRelation: "test_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "speaking_question_gradings_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "speaking_grading_tickets"
             referencedColumns: ["id"]
           },
         ]
