@@ -167,6 +167,10 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAud
           }
         } else if (!resolvedSrc) {
           await resolve(true);
+        } else if (resolvedSrc && audio.src !== resolvedSrc) {
+          // Restore the primary source (e.g. after a previous play used src2).
+          audio.src = resolvedSrc;
+          audio.load();
         }
       } catch (e) {
         console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
