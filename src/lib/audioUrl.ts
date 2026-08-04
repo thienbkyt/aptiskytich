@@ -10,6 +10,16 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const SIGN_TTL_SEC = 300;
 const CACHE_TTL_MS = 240 * 1000; // refresh a bit before expiry
+const SIGN_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(p: PromiseLike<T>, ms = SIGN_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    Promise.resolve(p),
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("createSignedUrl timeout")), ms)
+    ),
+  ]);
+}
 
 type Entry = { url: string; expiresAt: number };
 const cache = new Map<string, Entry>();
@@ -32,9 +42,9 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const { data, error } = await supabase.storage
-        .from("audio")
-        .createSignedUrl(audioUrl, SIGN_TTL_SEC);
+      const { data, error } = await withTimeout(
+        supabase.storage.from("audio").createSignedUrl(audioUrl, SIGN_TTL_SEC)
+      );
       if (!error && data?.signedUrl) {
         cache.set(audioUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
         return data.signedUrl;

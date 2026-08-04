@@ -76,6 +76,15 @@ const SignedImage = ({ src, alt = "", onError, ...rest }: SignedImageProps) => {
     return () => { cancelled = true; };
   }, [src, isHttp]);
 
+  // Hard cap: never stay stuck on "loading" forever
+  useEffect(() => {
+    if (status !== "loading") return;
+    const t = setTimeout(() => {
+      setStatus((s) => (s === "loading" ? "error" : s));
+    }, 20000);
+    return () => clearTimeout(t);
+  }, [status, src]);
+
   const handleError = useCallback(async (e: React.SyntheticEvent<HTMLImageElement>) => {
     if (retryRef.current < 2) {
       retryRef.current += 1;
