@@ -739,13 +739,24 @@ interface PopupProps {
   position: { x: number; y: number };
   visible: boolean;
   onClose: () => void;
+  dragPos: { x: number; y: number } | null;
+  onDragEnd: (p: { x: number; y: number }) => void;
+  onResetPos: () => void;
 }
 
 const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
-  ({ result, loading, error, position, visible, onClose }, ref) => {
+  (
+    { result, loading, error, position, visible, onClose, dragPos, onDragEnd, onResetPos },
+    ref
+  ) => {
     const { user } = useAuth();
     const [addOpen, setAddOpen] = useState(false);
     const [adding, setAdding] = useState(false);
+    const [drag, setDrag] = useState<{ x: number; y: number } | null>(dragPos);
+    useEffect(() => {
+      setDrag(dragPos);
+    }, [dragPos]);
+    const innerRef = useRef<HTMLDivElement | null>(null);
     const [userLists, setUserLists] = useState<{ id: string; name: string }[]>([]);
     const [listsLoaded, setListsLoaded] = useState(false);
     const [creatingNew, setCreatingNew] = useState(false);
