@@ -236,6 +236,33 @@ const SpeakingExamEngine = ({
   };
 
   // Image resolution is handled by <SignedImage /> directly.
+  // Tầng B: warm up signed URLs + browser cache while the student reads the part
+  // instructions, so the question screen shows the picture immediately.
+  useEffect(() => {
+    if (phase !== "prompt" && phase !== "instructions" && phase !== "start") return;
+    const paths = [
+      partType === "part2" ? part2Data?.imageUrl : null,
+      partType === "part3" ? part3Data?.imageUrl1 : null,
+      partType === "part3" ? part3Data?.imageUrl2 : null,
+      partType === "part4" ? part4Data?.imageUrl : null,
+    ].filter(Boolean) as string[];
+    if (paths.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      for (const p of paths) {
+        try {
+          const url = await resolveImageUrl(p);
+          if (cancelled || !url) continue;
+          const img = new Image();
+          img.src = url;
+        } catch {
+          /* prefetch is best-effort */
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [phase, partType, part2Data?.imageUrl, part3Data?.imageUrl1, part3Data?.imageUrl2, part4Data?.imageUrl]);
+
 
   useEffect(() => {
     document.body.classList.add("exam-active");
