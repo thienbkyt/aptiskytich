@@ -1486,7 +1486,11 @@ ${partsIn.formalText ?? ""}`;
             grammar_errors: p.grammarErrors ?? [],
             pronunciation_errors: p.pronunciationErrors ?? [],
             improved_version: p.improvedVersion ?? null,
-            feedback: p.feedback ?? null,
+            // Mirror the client's analysis+feedback encoding so the stored
+            // feedback (written by the trigger) keeps the AI analysis section.
+            feedback: (String(p.analysis ?? "").trim())
+              ? `<<<ANALYSIS>>>${String(p.analysis).trim()}<<<END_ANALYSIS>>>${p.feedback ?? ""}`
+              : (p.feedback ?? null),
           })
           .select("id")
           .single();
