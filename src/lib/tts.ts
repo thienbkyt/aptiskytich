@@ -109,20 +109,8 @@ async function fetchUrl(text: string, lang: Lang): Promise<string | null> {
   const cached = urlCache.get(key);
   if (cached) return cached;
 
-  // The `tts` edge function requires a server-validated user. A cached session can
-  // exist after its access token has become invalid, so getSession() alone is not
-  // sufficient and can still produce a noisy 401. Validate/refresh first, then
-  // pass the resulting access token explicitly to the function client.
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) return null;
-
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  const accessToken = sessionData.session?.access_token;
-  if (sessionError || !accessToken) return null;
-
   const { data, error } = await supabase.functions.invoke("tts", {
     body: { text, lang },
-    headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (error || !data?.url) {
     console.warn("[tts] invoke failed, falling back:", error || data);
