@@ -42,9 +42,9 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const { data, error } = await supabase.storage
-        .from("audio")
-        .createSignedUrl(audioUrl, SIGN_TTL_SEC);
+      const { data, error } = await withTimeout(
+        supabase.storage.from("audio").createSignedUrl(audioUrl, SIGN_TTL_SEC)
+      );
       if (!error && data?.signedUrl) {
         cache.set(audioUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
         return data.signedUrl;
