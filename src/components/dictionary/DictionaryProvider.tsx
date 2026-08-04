@@ -530,7 +530,14 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
         )}
       {translatePopup &&
         createPortal(
-          <SentenceTranslatePopup data={translatePopup} onClose={closeTranslatePopup} />,
+          <SentenceTranslatePopup
+            data={translatePopup}
+            onClose={closeTranslatePopup}
+            dragPos={dragPos}
+            onDragEnd={(p) => setDragPos(p)}
+            onResetPos={() => setDragPos(null)}
+          />,
+
           document.body
         )}
     </DictionaryContext.Provider>
