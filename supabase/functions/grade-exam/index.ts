@@ -1191,7 +1191,8 @@ ${partsIn.formalText ?? ""}`;
       const model = "google/gemini-2.5-flash";
       const callGatewayV2 = async (): Promise<Response> => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60_000);
+        const timeoutMsV2 = pt === "task4" ? 90_000 : 60_000;
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMsV2);
         try {
           return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
