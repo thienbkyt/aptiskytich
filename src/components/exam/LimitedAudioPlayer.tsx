@@ -161,13 +161,15 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
       try {
         await audio.play();
         setIsPlaying(true);
+        setErrorMsg("");
         setPlayCount((prev) => {
           const next = prev + 1;
           writeCount(storeKey(questionKey, src), next);
           return next;
         });
       } catch {
-        // First failure → re-sign and retry.
+        // First failure → show feedback immediately, then re-sign and retry.
+        setErrorMsg("Không phát được audio, đang thử lại...");
         await handleAudioError();
       }
     }
@@ -175,13 +177,15 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
 
   return (
     <div className="my-3">
-      <audio
-        ref={audioRef}
-        src={resolvedSrc}
-        onEnded={() => setIsPlaying(false)}
-        onError={handleAudioError}
-        preload="auto"
-      />
+      {resolvedSrc && (
+        <audio
+          ref={audioRef}
+          src={resolvedSrc}
+          onEnded={() => setIsPlaying(false)}
+          onError={handleAudioError}
+          preload="auto"
+        />
+      )}
       <button
         type="button"
         onClick={togglePlay}
@@ -204,7 +208,21 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
           Đã dùng hết {maxPlays} lượt nghe cho câu này
         </p>
       )}
-      {errorMsg && <p className="text-xs text-destructive mt-1">{errorMsg}</p>}
+      {!resolvedSrc && !errorMsg && (
+        <p className="text-xs text-muted-foreground mt-1">Đang tải audio...</p>
+      )}
+      {errorMsg && (
+        <p className="text-xs text-destructive mt-1 flex items-center gap-2">
+          <span>{errorMsg}</span>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="inline-flex items-center gap-1 underline underline-offset-2 text-foreground hover:text-primary"
+          >
+            <RefreshCw className="w-3 h-3" /> Thử lại
+          </button>
+        </p>
+      )}
     </div>
   );
 };
