@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.backup_try_open_item_def_20260804;

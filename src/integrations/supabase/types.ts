@@ -132,21 +132,6 @@ export type Database = {
         }
         Relationships: []
       }
-      backup_try_open_item_def_20260804: {
-        Row: {
-          def: string | null
-          luu_luc: string | null
-        }
-        Insert: {
-          def?: string | null
-          luu_luc?: string | null
-        }
-        Update: {
-          def?: string | null
-          luu_luc?: string | null
-        }
-        Relationships: []
-      }
       blog_posts: {
         Row: {
           author_id: string | null
