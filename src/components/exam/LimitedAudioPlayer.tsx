@@ -62,9 +62,19 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
     if (!src) return;
     if (force) bustAudioUrlCache(src);
     setErrorMsg("");
-    const url = await resolveAudioUrl(src);
-    // Always fall back to raw src so audio never goes silent if signing fails.
-    setResolvedSrc(url || src);
+    try {
+      const url = await resolveAudioUrl(src);
+      if (!url) {
+        setResolvedSrc(src);
+        setErrorMsg("Không tải được audio.");
+        return;
+      }
+      setResolvedSrc(url);
+    } catch (e) {
+      console.error("[LimitedAudioPlayer] resolve failed:", e);
+      setResolvedSrc(src);
+      setErrorMsg("Không tải được audio.");
+    }
   }, [src]);
 
   useEffect(() => {
@@ -73,12 +83,20 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
     retryCountRef.current = 0;
     if (src) {
       (async () => {
-        const url = await resolveAudioUrl(src);
-        if (!url) {
-          console.error("[LimitedAudioPlayer] resolveAudioUrl returned null for:", src);
-          if (!cancelled) setErrorMsg("Không tải được audio");
+        try {
+          const url = await resolveAudioUrl(src);
+          if (cancelled) return;
+          if (!url) {
+            console.error("[LimitedAudioPlayer] resolveAudioUrl returned null for:", src);
+            setErrorMsg("Không tải được audio.");
+          }
+          setResolvedSrc(url || src);
+        } catch (e) {
+          if (cancelled) return;
+          console.error("[LimitedAudioPlayer] resolveAudioUrl threw for:", src, e);
+          setErrorMsg("Không tải được audio.");
+          setResolvedSrc(src);
         }
-        if (!cancelled) setResolvedSrc(url || src);
       })();
     }
     return () => { cancelled = true; };
@@ -98,24 +116,33 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
   }, [questionKey, src]);
 
   const handleAudioError = useCallback(async () => {
-    // Signed URL likely expired / network blip — bust cache and retry once.
+    // Signed URL likely expired / network blip — bust cache and retry.
     if (retryCountRef.current >= 2) {
-      setErrorMsg("Không tải được audio. Vui lòng tải lại trang.");
+      setErrorMsg("Không tải được audio. Vui lòng bấm Thử lại hoặc tải lại trang.");
       setIsPlaying(false);
       return;
     }
     retryCountRef.current += 1;
+    setErrorMsg("Đang thử tải lại audio...");
     await resolve(true);
     // Auto-resume if user had pressed play
     if (isPlaying && audioRef.current) {
       try {
         audioRef.current.load();
         await audioRef.current.play();
+        setErrorMsg("");
       } catch {
         setIsPlaying(false);
+        setErrorMsg("Không phát được audio. Bấm Thử lại.");
       }
     }
   }, [resolve, isPlaying]);
+
+  const handleRetry = async () => {
+    retryCountRef.current = 0;
+    setErrorMsg("Đang thử tải lại audio...");
+    await resolve(true);
+  };
 
   const togglePlay = async () => {
     const audio = audioRef.current;
