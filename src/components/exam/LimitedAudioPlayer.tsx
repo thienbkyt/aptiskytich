@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { CircleDot, CirclePlay, RefreshCw } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
+import { speakAsync, stopTTS, unlockAudio } from "@/lib/tts";
 
 interface LimitedAudioPlayerProps {
   src: string;
@@ -9,6 +10,10 @@ interface LimitedAudioPlayerProps {
   src2?: string;
   maxPlays?: number;
   questionKey?: string | number;
+  /** Spoken prompt read aloud by TTS before the first play only. */
+  introText?: string;
+  /** Silence between the spoken prompt and the audio file (ms). */
+  introPauseMs?: number;
 }
 
 // Persistent across remounts within one tab session.
@@ -49,7 +54,7 @@ export const resetLimitedAudioPlays = () => {
   playCountStore.clear();
 };
 
-const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAudioPlayerProps) => {
+const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 2000 }: LimitedAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
@@ -58,6 +63,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAud
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const retryCountRef = useRef(0);
+  // Bumped on every stop / new play so a pending intro sequence can bail out.
+  const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
   const resolve = useCallback(async (force = false) => {
@@ -111,6 +118,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAud
     setIsPlaying(false);
     setErrorMsg("");
     retryCountRef.current = 0;
+    // Cancel any pending intro sequence for the previous question.
+    introTokenRef.current += 1;
+    stopTTS();
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -151,10 +161,34 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAud
     if (!audio) return;
 
     if (isPlaying) {
+      // Also cancels a spoken prompt / pause that is still in progress.
+      introTokenRef.current += 1;
+      stopTTS();
       audio.pause();
       setIsPlaying(false);
     } else {
       if (disabled) return;
+      const needIntro = playCount === 0 && !!introText?.trim();
+      // Must run synchronously inside the user gesture (mobile autoplay).
+      if (needIntro) unlockAudio();
+
+      const token = ++introTokenRef.current;
+      // Count this play once for the whole intro + audio sequence.
+      setIsPlaying(true);
+      setErrorMsg("");
+      setPlayCount((prev) => {
+        const next = prev + 1;
+        writeCount(storeKey(questionKey, src), next);
+        return next;
+      });
+
+      if (needIntro) {
+        await speakAsync(introText!.trim(), "en");
+        if (token !== introTokenRef.current) return;
+        await new Promise((r) => setTimeout(r, introPauseMs));
+        if (token !== introTokenRef.current) return;
+      }
+
       // Pick the source for this play: first play uses `src`, later plays use
       // `src2` when provided (falls back to `src`).
       const activeSrc = playCount >= 1 && src2 ? src2 : src;
@@ -175,16 +209,10 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAud
       } catch (e) {
         console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
       }
+      if (token !== introTokenRef.current) return;
       audio.currentTime = 0;
       try {
         await audio.play();
-        setIsPlaying(true);
-        setErrorMsg("");
-        setPlayCount((prev) => {
-          const next = prev + 1;
-          writeCount(storeKey(questionKey, src), next);
-          return next;
-        });
       } catch {
         // First failure → show feedback immediately, then re-sign and retry.
         setErrorMsg("Không phát được audio, đang thử lại...");
@@ -192,6 +220,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAud
       }
     }
   };
+
 
   return (
     <div className="my-3">
