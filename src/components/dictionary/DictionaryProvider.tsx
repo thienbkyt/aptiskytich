@@ -273,10 +273,12 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     x: number;
     y: number;
     text: string;
+    dockBottom: boolean;
   } | null>(null);
   const [translatePopup, setTranslatePopup] = useState<{
     x: number;
     y: number;
+    dockBottom: boolean;
     source: string;
     translation: string | null;
     loading: boolean;
@@ -359,7 +361,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
           window.innerWidth - 80
         );
         const y = rect.bottom + 6;
-        setTranslateBtn({ x, y, text });
+        const dockBottom = rect.height > 72 || window.innerWidth < 640;
+        setTranslateBtn({ x, y, text, dockBottom });
       }, 0);
     };
     document.addEventListener("mouseup", onMouseUp);
@@ -387,12 +390,13 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     const key = normalizeSentence(text);
     const x = translateBtn.x;
     const y = translateBtn.y;
+    const dockBottom = translateBtn.dockBottom;
     setTranslateBtn(null);
 
     const cached = sentenceCacheRef.current.get(key);
     if (cached) {
       setTranslatePopup({
-        x, y, source: text, translation: cached, loading: false, error: null, visible: true,
+        x, y, dockBottom, source: text, translation: cached, loading: false, error: null, visible: true,
       });
       return;
     }
@@ -400,7 +404,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     const now = Date.now();
     if (now - translateRateRef.current < 1500) {
       setTranslatePopup({
-        x, y, source: text, translation: null, loading: false,
+        x, y, dockBottom, source: text, translation: null, loading: false,
         error: "Vui lòng đợi vài giây rồi thử lại.", visible: true,
       });
       return;
@@ -408,7 +412,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     translateRateRef.current = now;
 
     setTranslatePopup({
-      x, y, source: text, translation: "", loading: true, error: null, visible: true,
+      x, y, dockBottom, source: text, translation: "", loading: true, error: null, visible: true,
     });
 
     try {
@@ -535,6 +539,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
 interface SentencePopupData {
   x: number;
   y: number;
+  dockBottom: boolean;
   source: string;
   translation: string | null;
   loading: boolean;
@@ -546,6 +551,7 @@ const SentenceTranslatePopup: React.FC<{
   data: SentencePopupData;
   onClose: () => void;
 }> = ({ data, onClose }) => {
+  const dock = data.dockBottom;
   const width = 360;
   const clampedX = Math.max(
     12,
@@ -557,17 +563,28 @@ const SentenceTranslatePopup: React.FC<{
   return (
     <div
       className={`sentence-translate-popup fixed z-[9999] transition-all duration-200 ${
-        data.visible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
-      }`}
-      style={{
-        left: clampedX,
-        top: showAbove ? undefined : data.y,
-        bottom: showAbove ? window.innerHeight - data.y + 24 : undefined,
-        width,
-        transformOrigin: showAbove ? "bottom center" : "top center",
-      }}
+        dock ? "left-0 right-0 bottom-0 " : ""
+      }${data.visible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
+      style={
+        dock
+          ? { transformOrigin: "bottom center" }
+          : {
+              left: clampedX,
+              top: showAbove ? undefined : data.y,
+              bottom: showAbove ? window.innerHeight - data.y + 24 : undefined,
+              width,
+              transformOrigin: showAbove ? "bottom center" : "top center",
+            }
+      }
     >
-      <div className="bg-popover border border-border rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)] overflow-hidden">
+      <div
+        className={`bg-popover border border-border overflow-hidden ${
+          dock
+            ? "rounded-t-2xl rounded-b-none mx-auto w-full max-w-[640px] shadow-[0_-8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_-8px_40px_-8px_hsl(0_0%_0%/0.5)]"
+            : "rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)]"
+        }`}
+      >
+
         <div className="px-4 py-2.5 flex items-center justify-between border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
           <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <BookOpen className="w-3.5 h-3.5 text-primary" />
@@ -599,7 +616,7 @@ const SentenceTranslatePopup: React.FC<{
             </Button>
           </div>
         </div>
-        <div className="px-4 py-3 space-y-2 max-h-[300px] overflow-y-auto">
+        <div className={`px-4 py-3 space-y-2 overflow-y-auto ${dock ? "max-h-[40vh]" : "max-h-[300px]"}`}>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-0.5">
               English
