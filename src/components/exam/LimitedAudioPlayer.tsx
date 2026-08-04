@@ -61,6 +61,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     () => readCount(storeKey(questionKey, src))
   );
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
+  const [introSpeaking, setIntroSpeaking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const retryCountRef = useRef(0);
   // Bumped on every stop / new play so a pending intro sequence can bail out.
@@ -117,6 +118,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     setPlayCount(readCount(storeKey(questionKey, src)));
     setIsPlaying(false);
     setErrorMsg("");
+    setIntroSpeaking(false);
     retryCountRef.current = 0;
     // Cancel any pending intro sequence for the previous question.
     introTokenRef.current += 1;
@@ -125,6 +127,18 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+  }, [questionKey, src]);
+
+  // Counts the current Play press exactly once (intro + audio + retries).
+  const countedRef = useRef(false);
+  const countThisPlay = useCallback(() => {
+    if (countedRef.current) return;
+    countedRef.current = true;
+    setPlayCount((prev) => {
+      const next = prev + 1;
+      writeCount(storeKey(questionKey, src), next);
+      return next;
+    });
   }, [questionKey, src]);
 
   const handleAudioError = useCallback(async () => {
@@ -143,12 +157,13 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         audioRef.current.load();
         await audioRef.current.play();
         setErrorMsg("");
+        countThisPlay();
       } catch {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
       }
     }
-  }, [resolve, isPlaying]);
+  }, [resolve, isPlaying, countThisPlay]);
 
   const handleRetry = async () => {
     retryCountRef.current = 0;
@@ -164,34 +179,42 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       // Also cancels a spoken prompt / pause that is still in progress.
       introTokenRef.current += 1;
       stopTTS();
+      setIntroSpeaking(false);
       audio.pause();
       setIsPlaying(false);
     } else {
       if (disabled) return;
-      const needIntro = playCount === 0 && !!introText?.trim();
+      const isFirstPlay = playCount === 0;
+      const needIntro = isFirstPlay && !!introText?.trim();
       // Must run synchronously inside the user gesture (mobile autoplay).
       if (needIntro) unlockAudio();
 
       const token = ++introTokenRef.current;
-      // Count this play once for the whole intro + audio sequence.
+      countedRef.current = false;
       setIsPlaying(true);
       setErrorMsg("");
-      setPlayCount((prev) => {
-        const next = prev + 1;
-        writeCount(storeKey(questionKey, src), next);
-        return next;
-      });
 
       if (needIntro) {
-        await speakAsync(introText!.trim(), "en");
+        setIntroSpeaking(true);
+        try {
+          // Intro is optional — never let it block the exam audio.
+          await Promise.race([
+            speakAsync(introText!.trim(), "en"),
+            new Promise((r) => setTimeout(r, 4000)),
+          ]);
+        } catch (e) {
+          console.error("[LimitedAudioPlayer] intro TTS failed:", e);
+        }
+        stopTTS();
         if (token !== introTokenRef.current) return;
         await new Promise((r) => setTimeout(r, introPauseMs));
+        setIntroSpeaking(false);
         if (token !== introTokenRef.current) return;
       }
 
       // Pick the source for this play: first play uses `src`, later plays use
       // `src2` when provided (falls back to `src`).
-      const activeSrc = playCount >= 1 && src2 ? src2 : src;
+      const activeSrc = !isFirstPlay && src2 ? src2 : src;
       try {
         if (activeSrc !== src) {
           const url = (await resolveAudioUrl(activeSrc)) || activeSrc;
@@ -213,6 +236,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       audio.currentTime = 0;
       try {
         await audio.play();
+        // Only now the student actually hears the audio → count the play.
+        countThisPlay();
       } catch {
         // First failure → show feedback immediately, then re-sign and retry.
         setErrorMsg("Không phát được audio, đang thử lại...");
@@ -220,6 +245,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       }
     }
   };
+
 
 
   return (
@@ -250,6 +276,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         )}
         <span>Play/Stop</span>
       </button>
+      {introSpeaking && (
+        <p className="text-xs text-muted-foreground mt-1">Đang đọc đề bài...</p>
+      )}
       {disabled && (
         <p className="text-xs text-muted-foreground mt-1">
           Đã dùng hết {maxPlays} lượt nghe cho câu này
