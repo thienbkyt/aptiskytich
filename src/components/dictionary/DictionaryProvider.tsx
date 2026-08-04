@@ -365,7 +365,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
           window.innerWidth - 80
         );
         const y = rect.bottom + 6;
-        const dockBottom = rect.height > 72 || window.innerWidth < 640;
+        const dockBottom = window.innerWidth < 640;
         setTranslateBtn({ x, y, text, dockBottom });
       }, 0);
     };
@@ -568,6 +568,7 @@ const SentenceTranslatePopup: React.FC<{
   const width = 360;
   const isDocked = data.dockBottom;
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(dragPos);
+  const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     setDrag(dragPos);
   }, [dragPos]);
@@ -576,11 +577,12 @@ const SentenceTranslatePopup: React.FC<{
     12,
     Math.min(data.x - width / 2, window.innerWidth - width - 12)
   );
-  const spaceBelow = window.innerHeight - data.y;
-  const showAbove = spaceBelow < 320;
+  const POPUP_H = 320;
+  const clampedY = Math.max(12, Math.min(data.y, window.innerHeight - POPUP_H - 12));
 
   return (
     <div
+      ref={rootRef}
       className={`sentence-translate-popup fixed z-[9999] transition-all duration-200 ${
         isDocked ? "left-0 right-0 bottom-0 " : ""
       }${data.visible ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
@@ -591,10 +593,9 @@ const SentenceTranslatePopup: React.FC<{
             ? { left: drag.x, top: drag.y, width, transformOrigin: "top center" }
             : {
                 left: clampedX,
-                top: showAbove ? undefined : data.y,
-                bottom: showAbove ? window.innerHeight - data.y + 24 : undefined,
+                top: clampedY,
                 width,
-                transformOrigin: showAbove ? "bottom center" : "top center",
+                transformOrigin: "top center",
               }
       }
     >
@@ -617,18 +618,31 @@ const SentenceTranslatePopup: React.FC<{
             const box = el.getBoundingClientRect();
             const offX = e.clientX - box.left;
             const offY = e.clientY - box.top;
+            const root = rootRef.current;
+            if (root) {
+              root.style.transition = "none";
+              root.style.bottom = "";
+              root.style.width = `${width}px`;
+            }
             (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
             const clamp = (cx: number, cy: number) => ({
               x: Math.max(8, Math.min(cx - offX, window.innerWidth - width - 8)),
               y: Math.max(8, Math.min(cy - offY, window.innerHeight - 80)),
             });
             const onMove = (ev: PointerEvent) => {
-              setDrag(clamp(ev.clientX, ev.clientY));
+              const p = clamp(ev.clientX, ev.clientY);
+              if (root) {
+                root.style.left = `${p.x}px`;
+                root.style.top = `${p.y}px`;
+              }
             };
             const onUp = (ev: PointerEvent) => {
               window.removeEventListener("pointermove", onMove);
               window.removeEventListener("pointerup", onUp);
-              onDragEnd(clamp(ev.clientX, ev.clientY));
+              if (root) root.style.transition = "";
+              const p = clamp(ev.clientX, ev.clientY);
+              setDrag(p);
+              onDragEnd(p);
             };
             window.addEventListener("pointermove", onMove);
             window.addEventListener("pointerup", onUp);
