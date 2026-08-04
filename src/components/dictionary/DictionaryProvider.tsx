@@ -884,7 +884,44 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
           {result && !loading && (
             <>
               {/* Header */}
-              <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-2 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
+              <div
+                className="px-5 pt-4 pb-3 flex items-start justify-between gap-2 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)] cursor-move select-none touch-none"
+                onPointerDown={(e) => {
+                  if ((e.target as HTMLElement).closest("button")) return;
+                  const el = e.currentTarget.parentElement as HTMLElement;
+                  const box = el.getBoundingClientRect();
+                  const offX = e.clientX - box.left;
+                  const offY = e.clientY - box.top;
+                  const root = innerRef.current;
+                  if (root) {
+                    root.style.transition = "none";
+                    root.style.bottom = "";
+                    root.style.width = `${popupWidth}px`;
+                  }
+                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                  const clamp = (cx: number, cy: number) => ({
+                    x: Math.max(8, Math.min(cx - offX, window.innerWidth - popupWidth - 8)),
+                    y: Math.max(8, Math.min(cy - offY, window.innerHeight - 80)),
+                  });
+                  const onMove = (ev: PointerEvent) => {
+                    const p = clamp(ev.clientX, ev.clientY);
+                    if (root) {
+                      root.style.left = `${p.x}px`;
+                      root.style.top = `${p.y}px`;
+                    }
+                  };
+                  const onUp = (ev: PointerEvent) => {
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                    if (root) root.style.transition = "";
+                    const p = clamp(ev.clientX, ev.clientY);
+                    setDrag(p);
+                    onDragEnd(p);
+                  };
+                  window.addEventListener("pointermove", onMove);
+                  window.addEventListener("pointerup", onUp);
+                }}
+              >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-heading font-bold text-foreground">
