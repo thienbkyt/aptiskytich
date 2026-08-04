@@ -2,14 +2,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Resolves an audio_url value to a playable URL.
- * The `audio` bucket is private → use signed URLs (TTL 1h) so only
- * authenticated users with a valid session can fetch files.
+ * The `audio` bucket is private → use signed URLs (TTL 5 phút — link ký copy ra ngoài sẽ nhanh hết hạn)
+ * so only authenticated users with a valid session can fetch files.
  *
  * - External http(s) URL → return as-is
  * - Storage file path → createSignedUrl (cached)
  */
-const SIGN_TTL_SEC = 3600;
-const CACHE_TTL_MS = 55 * 60 * 1000; // refresh a bit before expiry
+const SIGN_TTL_SEC = 300;
+const CACHE_TTL_MS = 240 * 1000; // refresh a bit before expiry
 
 type Entry = { url: string; expiresAt: number };
 const cache = new Map<string, Entry>();
