@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.backup_eq_listening_p2_20260804;
