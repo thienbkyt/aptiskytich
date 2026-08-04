@@ -158,6 +158,9 @@ const SpeakingExamEngine = ({
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
+  // Ref mirror of imagesLoadedCount (readable inside async flow) + "part images ready" latch.
+  const imagesLoadedRef = useRef(0);
+  const partImagesReadyRef = useRef(false);
   const adminNavLockedRef = useRef(false);
   const suppressRecordingSaveRef = useRef(false);
   // Guards to prevent doStopAndAdvance / handleFinish firing twice
