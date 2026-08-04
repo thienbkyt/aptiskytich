@@ -943,6 +943,20 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
                     {result.phonetic}
                   </p>
                 </div>
+                {drag !== null && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    title="Về vị trí mặc định"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onResetPos();
+                    }}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
