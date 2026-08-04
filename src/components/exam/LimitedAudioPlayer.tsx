@@ -5,6 +5,8 @@ import { safeSessionStorage } from "@/lib/safeStorage";
 
 interface LimitedAudioPlayerProps {
   src: string;
+  /** Optional second-play source (content only, without the spoken prompt). */
+  src2?: string;
   maxPlays?: number;
   questionKey?: string | number;
 }
@@ -47,7 +49,7 @@ export const resetLimitedAudioPlays = () => {
   playCountStore.clear();
 };
 
-const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlayerProps) => {
+const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey }: LimitedAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
@@ -153,9 +155,21 @@ const LimitedAudioPlayer = ({ src, maxPlays = 2, questionKey }: LimitedAudioPlay
       setIsPlaying(false);
     } else {
       if (disabled) return;
-      // Safety: if src missing, try to resolve once.
-      if (!resolvedSrc) {
-        await resolve(true);
+      // Pick the source for this play: first play uses `src`, later plays use
+      // `src2` when provided (falls back to `src`).
+      const activeSrc = playCount >= 1 && src2 ? src2 : src;
+      try {
+        if (activeSrc !== src) {
+          const url = (await resolveAudioUrl(activeSrc)) || activeSrc;
+          if (audio.src !== url) {
+            audio.src = url;
+            audio.load();
+          }
+        } else if (!resolvedSrc) {
+          await resolve(true);
+        }
+      } catch (e) {
+        console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
       }
       audio.currentTime = 0;
       try {

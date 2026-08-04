@@ -4,6 +4,7 @@
 export interface ListeningPart1Question {
   id: number;
   audioUrl: string | null;
+  audioUrl2?: string;
   questionText?: string;
   options: string[];
   correct: number;
@@ -24,6 +25,7 @@ export interface ListeningPart2InfoItem {
 export interface ListeningPart2Question {
   id: number;
   audioUrl: string | null;
+  audioUrl2?: string;
   questionText: string;
   persons: ListeningPart2Person[];
   infoItems: ListeningPart2InfoItem[];
@@ -39,6 +41,7 @@ export interface ListeningPart3Statement {
 export interface ListeningPart3Question {
   id: number;
   audioUrl: string | null;
+  audioUrl2?: string;
   questionText: string;
   statements: ListeningPart3Statement[];
   script?: string;
@@ -54,6 +57,7 @@ export interface ListeningPart4ClipQuestion {
 export interface ListeningPart4Clip {
   id: number;
   audioUrl: string | null;
+  audioUrl2?: string;
   questions: ListeningPart4ClipQuestion[];
   script?: string;
 }
