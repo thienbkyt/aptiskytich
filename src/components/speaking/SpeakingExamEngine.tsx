@@ -133,6 +133,9 @@ const SpeakingExamEngine = ({
   const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
+  // Number of exam images that finished loading (or errored) in this part.
+  const [imagesLoadedCount, setImagesLoadedCount] = useState<number>(0);
+  const [waitingImages, setWaitingImages] = useState(false);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
   const [v2Scale, setV2Scale] = useState<number | null>(null);
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
@@ -202,6 +205,17 @@ const SpeakingExamEngine = ({
     if (partType === "part4") return part4Data?.speakTime || 120;
     return 30;
   };
+
+  // How many <SignedImage /> elements must report load/error before the timer may start.
+  const getExpectedImageCount = () => {
+    if (partType === "part2") return part2Data?.imageUrl ? 1 : 0;
+    if (partType === "part3") {
+      return (part3Data?.imageUrl1 ? 1 : 0) + (part3Data?.imageUrl2 ? 1 : 0);
+    }
+    if (partType === "part4") return part4Data?.imageUrl ? 1 : 0;
+    return 0;
+  };
+
 
   const getCurrentQuestion = () => {
     if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
