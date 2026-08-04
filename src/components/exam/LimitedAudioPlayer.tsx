@@ -275,6 +275,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         )}
         <span>Play/Stop</span>
       </button>
+      {introSpeaking && (
+        <p className="text-xs text-muted-foreground mt-1">Đang đọc đề bài...</p>
+      )}
       {disabled && (
         <p className="text-xs text-muted-foreground mt-1">
           Đã dùng hết {maxPlays} lượt nghe cho câu này
