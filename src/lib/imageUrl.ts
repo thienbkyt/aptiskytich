@@ -31,15 +31,21 @@ export async function resolveImageUrl(imageUrl: string): Promise<string | null> 
   if (cached && cached.expiresAt > now) return cached.url;
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    const { data, error } = await supabase.storage
-      .from("exam-images")
-      .createSignedUrl(imageUrl, SIGN_TTL_SEC);
-    if (!error && data?.signedUrl) {
-      cache.set(imageUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
-      return data.signedUrl;
+    try {
+      const { data, error } = await supabase.storage
+        .from("exam-images")
+        .createSignedUrl(imageUrl, SIGN_TTL_SEC);
+      if (!error && data?.signedUrl) {
+        cache.set(imageUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
+        return data.signedUrl;
+      }
+      if (error) console.warn(`[resolveImageUrl] attempt ${attempt + 1} failed:`, error);
+    } catch (err) {
+      console.warn(`[resolveImageUrl] attempt ${attempt + 1} threw:`, err);
     }
     await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
   }
+
 
   return null;
 }
