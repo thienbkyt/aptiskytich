@@ -9,10 +9,14 @@ export interface NavItemStatus {
 
 export interface PageStatus {
   items: NavItemStatus[];
+  /** Optional override for navigator chips when the pager pages by a different
+   *  unit than scored questions (e.g. Reading Part 2 pages by section). */
+  navItems?: NavItemStatus[];
   band?: string | null;
   isAI: boolean;
   aiRaw?: number | null;
 }
+
 
 export interface SkillMeta {
   band?: string | null;
@@ -160,17 +164,19 @@ const ReviewNavigator = ({
                 {idxs.map((pi) => {
                   const p = pages[pi];
                   const st = statuses[pi];
-                  const items = st?.items || [];
+                  const scoreItems = st?.items || [];
+                  const items = st?.navItems || scoreItems;
                   const partLabel =
                     sk === "reading" ? readingPartLabel(p.part) : p.part || "—";
                   const showEmpty = items.length === 0;
                   let scoreSuffix: string | null = null;
                   if (st?.isAI) {
                     if (typeof st.aiRaw === "number") scoreSuffix = `(${st.aiRaw}/30)`;
-                  } else if (items.length > 0) {
-                    const correct = items.reduce((n, it) => n + (it.isCorrect === true ? 1 : 0), 0);
-                    scoreSuffix = `(${correct}/${items.length})`;
+                  } else if (scoreItems.length > 0) {
+                    const correct = scoreItems.reduce((n, it) => n + (it.isCorrect === true ? 1 : 0), 0);
+                    scoreSuffix = `(${correct}/${scoreItems.length})`;
                   }
+
                   return (
                     <div key={pi}>
                       <div className="text-[11px] text-muted-foreground mb-1">
