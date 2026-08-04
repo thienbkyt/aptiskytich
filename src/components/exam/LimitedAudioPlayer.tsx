@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { CircleDot, CirclePlay, RefreshCw } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
+import { speakAsync, stopTTS, unlockAudio } from "@/lib/tts";
 
 interface LimitedAudioPlayerProps {
   src: string;
@@ -9,6 +10,10 @@ interface LimitedAudioPlayerProps {
   src2?: string;
   maxPlays?: number;
   questionKey?: string | number;
+  /** Spoken prompt read aloud by TTS before the first play only. */
+  introText?: string;
+  /** Silence between the spoken prompt and the audio file (ms). */
+  introPauseMs?: number;
 }
 
 // Persistent across remounts within one tab session.
