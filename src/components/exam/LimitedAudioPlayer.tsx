@@ -61,6 +61,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     () => readCount(storeKey(questionKey, src))
   );
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
+  const [introSpeaking, setIntroSpeaking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const retryCountRef = useRef(0);
   // Bumped on every stop / new play so a pending intro sequence can bail out.
