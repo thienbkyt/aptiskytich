@@ -2311,7 +2311,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
     }
 
     await logFeatureUsageOnce();
-    return new Response(JSON.stringify(payload), {
+    const outPayload = await attachSpeakingTicket(payload);
+    return new Response(JSON.stringify(outPayload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
