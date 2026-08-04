@@ -7,10 +7,9 @@ interface SignedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "sr
 }
 
 /**
- * <img> wrapper that resolves Supabase Storage paths to signed URLs,
- * retries on transient signing failures, and re-signs once on <img onError>
- * (covers signed-URL expiry during long sessions).
- * On permanent failure it shows a visible placeholder + "Thử lại" button
+ * <img> wrapper that resolves Supabase Storage paths to public URLs.
+ * Resolution is synchronous, so no retry/timeout logic is needed.
+ * On a real broken file it shows a visible placeholder + "Thử lại" button
  * instead of an empty box.
  */
 const SignedImage = ({ src, alt = "", onError, ...rest }: SignedImageProps) => {
@@ -26,24 +25,20 @@ const SignedImage = ({ src, alt = "", onError, ...rest }: SignedImageProps) => {
     }
     if (force) bustImageUrlCache(src);
     setStatus("loading");
-    retryRef.current = 0;
-    for (let i = 0; i < 4; i++) {
-      try {
-        const url = await resolveImageUrl(src);
-        if (url) {
-          setResolved(url);
-          setStatus("ready");
-          return;
-        }
-        if (isHttp) {
-          setResolved(src);
-          setStatus("ready");
-          return;
-        }
-      } catch (e) {
-        console.error("[SignedImage] resolveImageUrl threw for:", src, e);
+    try {
+      const url = await resolveImageUrl(src);
+      if (url) {
+        setResolved(`${url}${force ? `${url.includes("?") ? "&" : "?"}r=${Date.now()}` : ""}`);
+        setStatus("ready");
+        return;
       }
-      await new Promise((r) => setTimeout(r, 1000));
+      if (isHttp) {
+        setResolved(src);
+        setStatus("ready");
+        return;
+      }
+    } catch (e) {
+      console.error("[SignedImage] resolveImageUrl threw for:", src, e);
     }
     setResolved("");
     setStatus("error");
@@ -59,34 +54,22 @@ const SignedImage = ({ src, alt = "", onError, ...rest }: SignedImageProps) => {
       return;
     }
     (async () => {
-      for (let i = 0; i < 4 && !cancelled; i++) {
-        try {
-          const url = await resolveImageUrl(src);
-          if (cancelled) return;
-          if (url) { setResolved(url); setStatus("ready"); return; }
-          if (isHttp) { setResolved(src); setStatus("ready"); return; }
-        } catch (e) {
-          if (cancelled) return;
-          console.error("[SignedImage] resolveImageUrl threw for:", src, e);
-        }
-        await new Promise((r) => setTimeout(r, 1000));
+      try {
+        const url = await resolveImageUrl(src);
+        if (cancelled) return;
+        if (url) { setResolved(url); setStatus("ready"); return; }
+        if (isHttp) { setResolved(src); setStatus("ready"); return; }
+      } catch (e) {
+        if (cancelled) return;
+        console.error("[SignedImage] resolveImageUrl threw for:", src, e);
       }
       if (!cancelled) setStatus("error");
     })();
     return () => { cancelled = true; };
   }, [src, isHttp]);
 
-  // Hard cap: never stay stuck on "loading" forever
-  useEffect(() => {
-    if (status !== "loading") return;
-    const t = setTimeout(() => {
-      setStatus((s) => (s === "loading" ? "error" : s));
-    }, 20000);
-    return () => clearTimeout(t);
-  }, [status, src]);
-
   const handleError = useCallback(async (e: React.SyntheticEvent<HTMLImageElement>) => {
-    if (retryRef.current < 2) {
+    if (retryRef.current < 1) {
       retryRef.current += 1;
       await load(true);
       return;
