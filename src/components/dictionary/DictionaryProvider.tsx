@@ -21,6 +21,8 @@ import {
   BookOpen,
   ChevronDown,
   FolderPlus,
+  RotateCcw,
+
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { speakWithTTS } from "@/lib/tts";
