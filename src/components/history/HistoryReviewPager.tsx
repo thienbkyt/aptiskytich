@@ -153,7 +153,28 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           const rows = eqrByTr[p.testResultId] || [];
           items = rows.map((v) => ({ isCorrect: v }));
         }
-        map[i] = { items, band, isAI, aiRaw };
+        // Reading Part 2 is paged by SECTION (đoạn), not by sentence. Collapse the
+        // per-sentence items into one nav entry per section so the navigator chips
+        // match the pager's page count. Scoring still uses `items`.
+        let navItems: PageStatus["items"] | undefined;
+        if (p.skill === "reading" && /2/.test(p.part || "") && items.length > 0) {
+          const secs = snap?.raw?.engineData?.part2Question?.sections;
+          if (Array.isArray(secs) && secs.length > 0) {
+            let cursor = 0;
+            navItems = secs.map((sec: any, sIdx: number) => {
+              const size = (sec?.sentences || []).filter(
+                (s: any) => !(sIdx === 0 && s?.correctPosition === 1),
+              ).length;
+              const slice = items.slice(cursor, cursor + size);
+              cursor += size;
+              const allCorrect = slice.length > 0 && slice.every((it) => it.isCorrect === true);
+              const anyWrong = slice.some((it) => it.isCorrect === false);
+              return { isCorrect: allCorrect ? true : anyWrong ? false : null };
+            });
+          }
+        }
+        map[i] = { items, band, isAI, aiRaw, ...(navItems ? { navItems } : {}) };
+
       });
       setStatuses(map);
 

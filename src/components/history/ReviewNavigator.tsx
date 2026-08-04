@@ -9,10 +9,14 @@ export interface NavItemStatus {
 
 export interface PageStatus {
   items: NavItemStatus[];
+  /** Optional override for navigator chips when the pager pages by a different
+   *  unit than scored questions (e.g. Reading Part 2 pages by section). */
+  navItems?: NavItemStatus[];
   band?: string | null;
   isAI: boolean;
   aiRaw?: number | null;
 }
+
 
 export interface SkillMeta {
   band?: string | null;
