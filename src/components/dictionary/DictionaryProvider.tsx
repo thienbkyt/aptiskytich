@@ -288,6 +288,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     visible: boolean;
   } | null>(null);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [dictDragPos, setDictDragPos] = useState<{ x: number; y: number } | null>(null);
 
   const translateRateRef = useRef(0);
   const sentenceCacheRef = useRef<Map<string, string>>(new Map());
@@ -506,6 +507,9 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
             position={position}
             visible={visible}
             onClose={close}
+            dragPos={dictDragPos}
+            onDragEnd={(p) => setDictDragPos(p)}
+            onResetPos={() => setDictDragPos(null)}
           />,
           document.body
         )}
@@ -735,13 +739,24 @@ interface PopupProps {
   position: { x: number; y: number };
   visible: boolean;
   onClose: () => void;
+  dragPos: { x: number; y: number } | null;
+  onDragEnd: (p: { x: number; y: number }) => void;
+  onResetPos: () => void;
 }
 
 const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
-  ({ result, loading, error, position, visible, onClose }, ref) => {
+  (
+    { result, loading, error, position, visible, onClose, dragPos, onDragEnd, onResetPos },
+    ref
+  ) => {
     const { user } = useAuth();
     const [addOpen, setAddOpen] = useState(false);
     const [adding, setAdding] = useState(false);
+    const [drag, setDrag] = useState<{ x: number; y: number } | null>(dragPos);
+    useEffect(() => {
+      setDrag(dragPos);
+    }, [dragPos]);
+    const innerRef = useRef<HTMLDivElement | null>(null);
     const [userLists, setUserLists] = useState<{ id: string; name: string }[]>([]);
     const [listsLoaded, setListsLoaded] = useState(false);
     const [creatingNew, setCreatingNew] = useState(false);
@@ -792,9 +807,9 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
       Math.min(position.x - popupWidth / 2, window.innerWidth - popupWidth - 12)
     );
 
-    // If popup would go below viewport, show above the word
-    const spaceBelow = window.innerHeight - position.y;
-    const showAbove = spaceBelow < 350;
+    // Keep popup inside the viewport instead of flipping above the word
+    const POPUP_H = 420;
+    const clampedY = Math.max(12, Math.min(position.y, window.innerHeight - POPUP_H - 12));
 
     const addToSet = async (setId: string, listName: string) => {
       if (!user || !result) return;
@@ -825,21 +840,21 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
 
     return (
       <div
-        ref={ref}
+        ref={(node) => {
+          innerRef.current = node;
+          if (typeof ref === "function") ref(node);
+          else if (ref) (ref as any).current = node;
+        }}
         className={`dictionary-popup fixed z-[9999] transition-all duration-200 ${
           visible
             ? "opacity-100 scale-100"
             : "opacity-0 scale-95 pointer-events-none"
         }`}
-        style={{
-          left: clampedX,
-          top: showAbove ? undefined : position.y,
-          bottom: showAbove
-            ? window.innerHeight - position.y + 24
-            : undefined,
-          width: popupWidth,
-          transformOrigin: showAbove ? "bottom center" : "top center",
-        }}
+        style={
+          drag
+            ? { left: drag.x, top: drag.y, width: popupWidth, transformOrigin: "top center" }
+            : { left: clampedX, top: clampedY, width: popupWidth, transformOrigin: "top center" }
+        }
       >
         <div className="bg-popover border border-border rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)] overflow-hidden">
           {/* ── Loading state ── */}
@@ -869,7 +884,44 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
           {result && !loading && (
             <>
               {/* Header */}
-              <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-2 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)]">
+              <div
+                className="px-5 pt-4 pb-3 flex items-start justify-between gap-2 border-b border-border bg-[hsl(170,50%,96%)] dark:bg-[hsl(170,25%,10%)] cursor-move select-none touch-none"
+                onPointerDown={(e) => {
+                  if ((e.target as HTMLElement).closest("button")) return;
+                  const el = e.currentTarget.parentElement as HTMLElement;
+                  const box = el.getBoundingClientRect();
+                  const offX = e.clientX - box.left;
+                  const offY = e.clientY - box.top;
+                  const root = innerRef.current;
+                  if (root) {
+                    root.style.transition = "none";
+                    root.style.bottom = "";
+                    root.style.width = `${popupWidth}px`;
+                  }
+                  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                  const clamp = (cx: number, cy: number) => ({
+                    x: Math.max(8, Math.min(cx - offX, window.innerWidth - popupWidth - 8)),
+                    y: Math.max(8, Math.min(cy - offY, window.innerHeight - 80)),
+                  });
+                  const onMove = (ev: PointerEvent) => {
+                    const p = clamp(ev.clientX, ev.clientY);
+                    if (root) {
+                      root.style.left = `${p.x}px`;
+                      root.style.top = `${p.y}px`;
+                    }
+                  };
+                  const onUp = (ev: PointerEvent) => {
+                    window.removeEventListener("pointermove", onMove);
+                    window.removeEventListener("pointerup", onUp);
+                    if (root) root.style.transition = "";
+                    const p = clamp(ev.clientX, ev.clientY);
+                    setDrag(p);
+                    onDragEnd(p);
+                  };
+                  window.addEventListener("pointermove", onMove);
+                  window.addEventListener("pointerup", onUp);
+                }}
+              >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-heading font-bold text-foreground">
@@ -891,6 +943,20 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
                     {result.phonetic}
                   </p>
                 </div>
+                {drag !== null && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0"
+                    title="Về vị trí mặc định"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onResetPos();
+                    }}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
