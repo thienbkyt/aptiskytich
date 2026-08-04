@@ -287,6 +287,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     error: string | null;
     visible: boolean;
   } | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+
   const translateRateRef = useRef(0);
   const sentenceCacheRef = useRef<Map<string, string>>(new Map());
 
