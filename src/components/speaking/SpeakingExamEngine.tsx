@@ -7,6 +7,7 @@ import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
+import { resolveImageUrl } from "@/lib/imageUrl";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import { playBeep } from "@/lib/beep";
 import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio } from "@/lib/tts";
