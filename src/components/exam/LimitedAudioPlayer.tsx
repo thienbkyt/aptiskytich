@@ -63,7 +63,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const retryCountRef = useRef(0);
-  // Bumped on every stop/новый play so a pending intro sequence can bail out.
+  // Bumped on every stop / new play so a pending intro sequence can bail out.
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
