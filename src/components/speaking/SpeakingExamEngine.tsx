@@ -7,6 +7,7 @@ import CircularTimer from "./CircularTimer";
 import SpeakingPromptScreen from "./SpeakingPromptScreen";
 import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
+import { resolveImageUrl } from "@/lib/imageUrl";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import { playBeep } from "@/lib/beep";
 import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio } from "@/lib/tts";
@@ -133,6 +134,9 @@ const SpeakingExamEngine = ({
   const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
+  // Number of exam images that finished loading (or errored) in this part.
+  const [imagesLoadedCount, setImagesLoadedCount] = useState<number>(0);
+  const [waitingImages, setWaitingImages] = useState(false);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
   const [v2Scale, setV2Scale] = useState<number | null>(null);
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
@@ -155,6 +159,9 @@ const SpeakingExamEngine = ({
   const streamRef = useRef<MediaStream | null>(null);
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
+  // Ref mirror of imagesLoadedCount (readable inside async flow) + "part images ready" latch.
+  const imagesLoadedRef = useRef(0);
+  const partImagesReadyRef = useRef(false);
   const adminNavLockedRef = useRef(false);
   const suppressRecordingSaveRef = useRef(false);
   // Guards to prevent doStopAndAdvance / handleFinish firing twice
@@ -203,6 +210,24 @@ const SpeakingExamEngine = ({
     return 30;
   };
 
+  // How many <SignedImage /> elements must report load/error before the timer may start.
+  const getExpectedImageCount = () => {
+    if (partType === "part2") return part2Data?.imageUrl ? 1 : 0;
+    if (partType === "part3") {
+      return (part3Data?.imageUrl1 ? 1 : 0) + (part3Data?.imageUrl2 ? 1 : 0);
+    }
+    if (partType === "part4") return part4Data?.imageUrl ? 1 : 0;
+    return 0;
+  };
+
+  // Counts an exam image as settled (loaded OR failed) so the flow never blocks forever.
+  const markImageSettled = useCallback(() => {
+    imagesLoadedRef.current += 1;
+    setImagesLoadedCount((c) => c + 1);
+  }, []);
+
+
+
   const getCurrentQuestion = () => {
     if (partType === "part1" && part1Data) return part1Data.questions[currentIndex];
     if (partType === "part2" && part2Data) return part2Data.questions?.[currentIndex] || part2Data.prompt;
@@ -212,6 +237,33 @@ const SpeakingExamEngine = ({
   };
 
   // Image resolution is handled by <SignedImage /> directly.
+  // Tầng B: warm up signed URLs + browser cache while the student reads the part
+  // instructions, so the question screen shows the picture immediately.
+  useEffect(() => {
+    if (phase !== "prompt" && phase !== "instructions" && phase !== "start") return;
+    const paths = [
+      partType === "part2" ? part2Data?.imageUrl : null,
+      partType === "part3" ? part3Data?.imageUrl1 : null,
+      partType === "part3" ? part3Data?.imageUrl2 : null,
+      partType === "part4" ? part4Data?.imageUrl : null,
+    ].filter(Boolean) as string[];
+    if (paths.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      for (const p of paths) {
+        try {
+          const url = await resolveImageUrl(p);
+          if (cancelled || !url) continue;
+          const img = new Image();
+          img.src = url;
+        } catch {
+          /* prefetch is best-effort */
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [phase, partType, part2Data?.imageUrl, part3Data?.imageUrl1, part3Data?.imageUrl2, part4Data?.imageUrl]);
+
 
   useEffect(() => {
     document.body.classList.add("exam-active");
@@ -407,8 +459,31 @@ const SpeakingExamEngine = ({
       return;
     }
 
+    // Wait for exam images before the beep/timer starts. Images are shared across the
+    // questions of a part (no remount => onLoad never fires again), so only the first
+    // question waits; afterwards the latch keeps the flow instant.
+    const expectedImages = getExpectedImageCount();
+    if (expectedImages > 0 && !partImagesReadyRef.current) {
+      setWaitingImages(true);
+      const deadline = Date.now() + 12000;
+      while (
+        imagesLoadedRef.current < expectedImages &&
+        Date.now() < deadline &&
+        token === flowTokenRef.current
+      ) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      setWaitingImages(false);
+      partImagesReadyRef.current = true;
+      if (token !== flowTokenRef.current) {
+        console.warn("[Speaking] flow aborted - stale token after image wait");
+        return;
+      }
+    }
+
     const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
+
     try {
       await withTimeout(playBeep(), 1000);
     } catch {
@@ -1253,6 +1328,8 @@ const SpeakingExamEngine = ({
                     src={part2Data.imageUrl}
                     alt="Describe this picture"
                     className="w-full max-w-md rounded-lg object-cover"
+                    onLoad={markImageSettled}
+                    onError={markImageSettled}
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part2" questionNumber={currentIndex + 1} />
@@ -1268,6 +1345,8 @@ const SpeakingExamEngine = ({
                     src={part3Data.imageUrl1}
                     alt="Picture 1"
                     className="w-full rounded-lg object-cover h-56"
+                    onLoad={markImageSettled}
+                    onError={markImageSettled}
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={1} />
@@ -1277,6 +1356,8 @@ const SpeakingExamEngine = ({
                     src={part3Data.imageUrl2}
                     alt="Picture 2"
                     className="w-full rounded-lg object-cover h-56"
+                    onLoad={markImageSettled}
+                    onError={markImageSettled}
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={2} />
@@ -1294,8 +1375,11 @@ const SpeakingExamEngine = ({
                       src={part4Data.imageUrl}
                       alt="Part 4 topic"
                       className="w-full h-56 object-cover"
+                      onLoad={markImageSettled}
+                      onError={markImageSettled}
                     />
                   </div>
+
                 ) : (
                   <MissingMediaNotice
                     kind="image"
@@ -1387,8 +1471,14 @@ const SpeakingExamEngine = ({
               <div className="w-16 h-16 rounded-full bg-[#24085a]/10 flex items-center justify-center mb-4 animate-pulse">
                 <span className="text-3xl">🔊</span>
               </div>
-              <p className="text-sm font-semibold text-[#24085a] text-center">Instructions...</p>
-              <p className="text-xs text-gray-500 text-center mt-2">Nghe xong sẽ có tiếng bíp rồi bắt đầu ghi âm</p>
+              <p className="text-sm font-semibold text-[#24085a] text-center">
+                {waitingImages ? "Đang tải hình ảnh..." : "Instructions..."}
+              </p>
+              <p className="text-xs text-gray-500 text-center mt-2">
+                {waitingImages
+                  ? "Bài thi sẽ bắt đầu ngay khi ảnh hiện xong"
+                  : "Nghe xong sẽ có tiếng bíp rồi bắt đầu ghi âm"}
+              </p>
             </div>
           ) : (
             <CircularTimer
