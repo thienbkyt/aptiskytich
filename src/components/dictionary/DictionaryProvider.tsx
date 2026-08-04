@@ -618,18 +618,31 @@ const SentenceTranslatePopup: React.FC<{
             const box = el.getBoundingClientRect();
             const offX = e.clientX - box.left;
             const offY = e.clientY - box.top;
+            const root = rootRef.current;
+            if (root) {
+              root.style.transition = "none";
+              root.style.bottom = "";
+              root.style.width = `${width}px`;
+            }
             (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
             const clamp = (cx: number, cy: number) => ({
               x: Math.max(8, Math.min(cx - offX, window.innerWidth - width - 8)),
               y: Math.max(8, Math.min(cy - offY, window.innerHeight - 80)),
             });
             const onMove = (ev: PointerEvent) => {
-              setDrag(clamp(ev.clientX, ev.clientY));
+              const p = clamp(ev.clientX, ev.clientY);
+              if (root) {
+                root.style.left = `${p.x}px`;
+                root.style.top = `${p.y}px`;
+              }
             };
             const onUp = (ev: PointerEvent) => {
               window.removeEventListener("pointermove", onMove);
               window.removeEventListener("pointerup", onUp);
-              onDragEnd(clamp(ev.clientX, ev.clientY));
+              if (root) root.style.transition = "";
+              const p = clamp(ev.clientX, ev.clientY);
+              setDrag(p);
+              onDragEnd(p);
             };
             window.addEventListener("pointermove", onMove);
             window.addEventListener("pointerup", onUp);
