@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ListChecks, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { readingPartLabel } from "@/hooks/useExamSets";
+import { toReadingPart2 } from "@/lib/examTransformers";
 import { getSkillBand, toScaledScore } from "@/data/questions";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
@@ -157,8 +158,20 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         // per-sentence items into one nav entry per section so the navigator chips
         // match the pager's page count. Scoring still uses `items`.
         let navItems: PageStatus["items"] | undefined;
-        if (p.skill === "reading" && /2/.test(p.part || "") && items.length > 0) {
-          const secs = snap?.raw?.engineData?.part2Question?.sections;
+        if (p.skill === "reading" && (p.part || "").trim().toLowerCase() === "part2" && items.length > 0) {
+          let secs = snap?.raw?.engineData?.part2Question?.sections;
+          if (!Array.isArray(secs) || secs.length === 0) {
+            // Full Part / Full Test flows don't persist engineData — rebuild the
+            // section layout from the saved raw questions instead.
+            const rawQs = snap?.raw?.questions;
+            if (Array.isArray(rawQs) && rawQs.length > 0) {
+              try {
+                secs = toReadingPart2(rawQs as any)?.sections;
+              } catch {
+                secs = undefined;
+              }
+            }
+          }
           if (Array.isArray(secs) && secs.length > 0) {
             let cursor = 0;
             navItems = secs.map((sec: any, sIdx: number) => {
@@ -303,7 +316,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
     const out: Array<{ pageIdx: number; qIdx: number }> = [];
     Object.entries(statuses).forEach(([pi, st]) => {
       if (!st || st.isAI) return;
-      st.items.forEach((it, qi) => {
+      (st.navItems || st.items).forEach((it, qi) => {
         if (it.isCorrect === false) out.push({ pageIdx: Number(pi), qIdx: qi });
       });
     });
