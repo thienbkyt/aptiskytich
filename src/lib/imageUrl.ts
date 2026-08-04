@@ -2,31 +2,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Resolves an image_url value to a displayable URL.
- * The `exam-images` bucket is private → use signed URLs (TTL 1h) so only
- * authenticated users with a valid session can fetch files.
+ * The `exam-images` bucket is public → use getPublicUrl (synchronous, no network
+ * call, no expiry) so exam images render instantly.
  *
  * - External http(s) URL → return as-is
- * - Storage file path → createSignedUrl (cached)
+ * - Storage file path → getPublicUrl
  */
-const SIGN_TTL_SEC = 3600;
-const CACHE_TTL_MS = 55 * 60 * 1000; // refresh a bit before expiry
-const SIGN_TIMEOUT_MS = 8000;
 
-function withTimeout<T>(p: PromiseLike<T>, ms = SIGN_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    Promise.resolve(p),
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error("createSignedUrl timeout")), ms)
-    ),
-  ]);
-}
-
-type Entry = { url: string; expiresAt: number };
-const cache = new Map<string, Entry>();
-
-export function bustImageUrlCache(key?: string) {
-  if (!key) { cache.clear(); return; }
-  cache.delete(key);
+/** Kept for backwards compatibility: there is no cache to bust anymore. */
+export function bustImageUrlCache(_key?: string) {
+  // no-op: public URLs never expire
 }
 
 export async function resolveImageUrl(imageUrl: string): Promise<string | null> {
@@ -36,26 +21,6 @@ export async function resolveImageUrl(imageUrl: string): Promise<string | null> 
     return imageUrl;
   }
 
-  const now = Date.now();
-  const cached = cache.get(imageUrl);
-  if (cached && cached.expiresAt > now) return cached.url;
-
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const { data, error } = await withTimeout(
-        supabase.storage.from("exam-images").createSignedUrl(imageUrl, SIGN_TTL_SEC)
-      );
-      if (!error && data?.signedUrl) {
-        cache.set(imageUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
-        return data.signedUrl;
-      }
-      if (error) console.warn(`[resolveImageUrl] attempt ${attempt + 1} failed:`, error);
-    } catch (err) {
-      console.warn(`[resolveImageUrl] attempt ${attempt + 1} threw:`, err);
-    }
-    await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
-  }
-
-
-  return null;
+  const { data } = supabase.storage.from("exam-images").getPublicUrl(imageUrl);
+  return data?.publicUrl ?? null;
 }
