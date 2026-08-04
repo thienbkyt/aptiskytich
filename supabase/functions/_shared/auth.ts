@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 export interface AuthResult {
   userId: string;
@@ -6,7 +6,8 @@ export interface AuthResult {
 }
 
 /**
- * Validates the incoming Authorization header (Bearer JWT) using Supabase.
+ * Validates the incoming Authorization header (Bearer JWT) against the active
+ * signing keys.
  * Returns { userId, token } on success, or a Response (401) to return immediately.
  */
 export async function requireUser(
@@ -26,8 +27,8 @@ export async function requireUser(
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } },
   );
-  const { data, error } = await client.auth.getUser(token);
-  const sub = data?.user?.id;
+  const { data, error } = await client.auth.getClaims(token);
+  const sub = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
   if (error || !sub) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
