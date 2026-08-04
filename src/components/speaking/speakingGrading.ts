@@ -31,6 +31,8 @@ export interface SpeakingItemGrading {
   analyses?: string[];
   usedConnectors?: boolean;
   connectorPenalty?: number;
+  /** One-time server-issued ticket proving these scores came from the AI grader. */
+  ticketId?: string;
 }
 
 const ANALYSIS_DELIM = "<<<ANALYSIS>>>";
