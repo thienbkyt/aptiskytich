@@ -12,6 +12,7 @@ import { upsertMarathonResult, saveExamResult } from "@/lib/saveExamResult";
 import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
+import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
 
 interface Props {
   sets: ExamSetRow[];
@@ -44,6 +45,14 @@ const HUGE_TIME = 24 * 60 * 60;
 
 const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet }: Props) => {
   const savedInit = resume && persist ? loadMarathonProgress("listening", partType) : null;
+  const openedRef = useRef(false);
+  useEffect(() => {
+    if (openedRef.current) return;
+    const ids = sets.map((s) => s.id).filter(Boolean);
+    if (ids.length === 0) return;
+    openedRef.current = true;
+    void recordMarathonOpenedSets("listening", partType, ids);
+  }, [sets, partType]);
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");

@@ -2552,6 +2552,7 @@ export type Database = {
         }
         Returns: Json
       }
+      user_can_access_set: { Args: { p_set: string }; Returns: boolean }
       user_tier: { Args: { p_uid: string }; Returns: string }
       voucher_campaign_status: { Args: never; Returns: Json }
     }
