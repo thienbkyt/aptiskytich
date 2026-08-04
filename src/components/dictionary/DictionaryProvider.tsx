@@ -807,9 +807,9 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
       Math.min(position.x - popupWidth / 2, window.innerWidth - popupWidth - 12)
     );
 
-    // If popup would go below viewport, show above the word
-    const spaceBelow = window.innerHeight - position.y;
-    const showAbove = spaceBelow < 350;
+    // Keep popup inside the viewport instead of flipping above the word
+    const POPUP_H = 420;
+    const clampedY = Math.max(12, Math.min(position.y, window.innerHeight - POPUP_H - 12));
 
     const addToSet = async (setId: string, listName: string) => {
       if (!user || !result) return;
@@ -840,21 +840,21 @@ const DictionaryPopup = React.forwardRef<HTMLDivElement, PopupProps>(
 
     return (
       <div
-        ref={ref}
+        ref={(node) => {
+          innerRef.current = node;
+          if (typeof ref === "function") ref(node);
+          else if (ref) (ref as any).current = node;
+        }}
         className={`dictionary-popup fixed z-[9999] transition-all duration-200 ${
           visible
             ? "opacity-100 scale-100"
             : "opacity-0 scale-95 pointer-events-none"
         }`}
-        style={{
-          left: clampedX,
-          top: showAbove ? undefined : position.y,
-          bottom: showAbove
-            ? window.innerHeight - position.y + 24
-            : undefined,
-          width: popupWidth,
-          transformOrigin: showAbove ? "bottom center" : "top center",
-        }}
+        style={
+          drag
+            ? { left: drag.x, top: drag.y, width: popupWidth, transformOrigin: "top center" }
+            : { left: clampedX, top: clampedY, width: popupWidth, transformOrigin: "top center" }
+        }
       >
         <div className="bg-popover border border-border rounded-2xl shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.25)] dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5)] overflow-hidden">
           {/* ── Loading state ── */}
