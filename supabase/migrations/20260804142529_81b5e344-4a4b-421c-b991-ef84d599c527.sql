@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.backup_eq_p2_truoc_tts_20260804;
