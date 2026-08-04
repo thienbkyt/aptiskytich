@@ -288,6 +288,7 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     visible: boolean;
   } | null>(null);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [dictDragPos, setDictDragPos] = useState<{ x: number; y: number } | null>(null);
 
   const translateRateRef = useRef(0);
   const sentenceCacheRef = useRef<Map<string, string>>(new Map());
@@ -506,6 +507,9 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
             position={position}
             visible={visible}
             onClose={close}
+            dragPos={dictDragPos}
+            onDragEnd={(p) => setDictDragPos(p)}
+            onResetPos={() => setDictDragPos(null)}
           />,
           document.body
         )}
