@@ -424,8 +424,31 @@ const SpeakingExamEngine = ({
       return;
     }
 
+    // Wait for exam images before the beep/timer starts. Images are shared across the
+    // questions of a part (no remount => onLoad never fires again), so only the first
+    // question waits; afterwards the latch keeps the flow instant.
+    const expectedImages = getExpectedImageCount();
+    if (expectedImages > 0 && !partImagesReadyRef.current) {
+      setWaitingImages(true);
+      const deadline = Date.now() + 12000;
+      while (
+        imagesLoadedRef.current < expectedImages &&
+        Date.now() < deadline &&
+        token === flowTokenRef.current
+      ) {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      setWaitingImages(false);
+      partImagesReadyRef.current = true;
+      if (token !== flowTokenRef.current) {
+        console.warn("[Speaking] flow aborted - stale token after image wait");
+        return;
+      }
+    }
+
     const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
+
     try {
       await withTimeout(playBeep(), 1000);
     } catch {
