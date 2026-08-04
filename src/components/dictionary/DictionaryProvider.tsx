@@ -273,10 +273,12 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
     x: number;
     y: number;
     text: string;
+    dockBottom: boolean;
   } | null>(null);
   const [translatePopup, setTranslatePopup] = useState<{
     x: number;
     y: number;
+    dockBottom: boolean;
     source: string;
     translation: string | null;
     loading: boolean;
@@ -359,7 +361,8 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
           window.innerWidth - 80
         );
         const y = rect.bottom + 6;
-        setTranslateBtn({ x, y, text });
+        const dockBottom = rect.height > 72 || window.innerWidth < 640;
+        setTranslateBtn({ x, y, text, dockBottom });
       }, 0);
     };
     document.addEventListener("mouseup", onMouseUp);
