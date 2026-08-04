@@ -1469,6 +1469,39 @@ ${partsIn.formalText ?? ""}`;
     const hashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(hashInput));
     const requestHash = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
 
+    // Speaking scores must never be trusted from the client. We persist the AI
+    // result as a one-time "ticket"; the DB trigger on speaking_question_gradings
+    // copies the authoritative values from it when the browser saves the row.
+    const attachSpeakingTicket = async (p: any) => {
+      if (type !== "speaking" || !userId || !p || p.error) return p;
+      try {
+        const { data: ticket, error: tErr } = await serviceClient
+          .from("speaking_grading_tickets")
+          .insert({
+            user_id: userId,
+            part: partType ?? null,
+            max_points: Number(p.maxPoints ?? 0),
+            part_score: Number(p.partScore ?? 0),
+            transcript: p.transcript ?? null,
+            grammar_errors: p.grammarErrors ?? [],
+            pronunciation_errors: p.pronunciationErrors ?? [],
+            improved_version: p.improvedVersion ?? null,
+            // Mirror the client's analysis+feedback encoding so the stored
+            // feedback (written by the trigger) keeps the AI analysis section.
+            feedback: (String(p.analysis ?? "").trim())
+              ? `<<<ANALYSIS>>>${String(p.analysis).trim()}<<<END_ANALYSIS>>>${p.feedback ?? ""}`
+              : (p.feedback ?? null),
+          })
+          .select("id")
+          .single();
+        if (tErr) throw tErr;
+        return { ...p, ticketId: ticket.id };
+      } catch (e) {
+        console.warn("[grade-exam] ticket issue failed:", (e as any)?.message || e);
+        return p;
+      }
+    };
+
     if (userId) {
       try {
         const { data: cachedRow } = await serviceClient
@@ -1479,7 +1512,8 @@ ${partsIn.formalText ?? ""}`;
           .maybeSingle();
         if (cachedRow?.response) {
           console.log("[grade-exam] cache hit, skipping AI call");
-          return new Response(JSON.stringify(cachedRow.response), {
+          const cachedPayload = await attachSpeakingTicket(cachedRow.response);
+          return new Response(JSON.stringify(cachedPayload), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
@@ -2281,7 +2315,8 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
     }
 
     await logFeatureUsageOnce();
-    return new Response(JSON.stringify(payload), {
+    const outPayload = await attachSpeakingTicket(payload);
+    return new Response(JSON.stringify(outPayload), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

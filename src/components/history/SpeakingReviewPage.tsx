@@ -254,7 +254,7 @@ const SpeakingReviewPage = ({
         next[gIdx] = r;
         return next;
       });
-      if (!("error" in r)) {
+      if (!("error" in r) && r.ticketId) {
         // Best-effort upsert into speaking_question_gradings (delete old + insert).
         try {
           let del = supabase
@@ -267,6 +267,7 @@ const SpeakingReviewPage = ({
           await del;
           await supabase.from("speaking_question_gradings").insert({
             user_id: userId,
+            ticket_id: r.ticketId,
             test_result_id: testResultId ?? null,
             exam_set_id: examSetId,
             part: partLabel,

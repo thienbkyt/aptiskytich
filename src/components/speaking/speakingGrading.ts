@@ -31,6 +31,8 @@ export interface SpeakingItemGrading {
   analyses?: string[];
   usedConnectors?: boolean;
   connectorPenalty?: number;
+  /** One-time server-issued ticket proving these scores came from the AI grader. */
+  ticketId?: string;
 }
 
 const ANALYSIS_DELIM = "<<<ANALYSIS>>>";
@@ -245,8 +247,15 @@ export async function saveSpeakingGradings(opts: {
     const rows = opts.gradings
       .map((g, i) => {
         if (!g || "error" in g) return null;
+        // Ticketless results can't be persisted: the DB requires a server-issued
+        // ticket so scores can never be forged client-side.
+        if (!g.ticketId) {
+          console.warn("[saveSpeakingGradings] missing ticketId, skipping item", i);
+          return null;
+        }
         return {
           user_id: user.id,
+          ticket_id: g.ticketId,
           test_result_id: opts.testResultId,
           exam_set_id: opts.examSetId ?? null,
           part: opts.partLabel,
@@ -262,6 +271,7 @@ export async function saveSpeakingGradings(opts: {
         };
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
+
     if (rows.length > 0) {
       await supabase.from("speaking_question_gradings").insert(rows as any);
     }
