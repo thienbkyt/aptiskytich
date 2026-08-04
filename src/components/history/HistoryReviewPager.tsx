@@ -316,7 +316,7 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
     const out: Array<{ pageIdx: number; qIdx: number }> = [];
     Object.entries(statuses).forEach(([pi, st]) => {
       if (!st || st.isAI) return;
-      st.items.forEach((it, qi) => {
+      (st.navItems || st.items).forEach((it, qi) => {
         if (it.isCorrect === false) out.push({ pageIdx: Number(pi), qIdx: qi });
       });
     });
