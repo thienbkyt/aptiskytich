@@ -38,7 +38,40 @@ import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGradin
 import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
+import { safeLocalStorage } from "@/lib/safeStorage";
 import { safeText } from "@/lib/safeText";
+
+/**
+ * Full Test session id must SURVIVE a reload / re-entry mid-attempt, otherwise
+ * a re-grade writes rows into an orphan session and the student's history shows
+ * the old (ungraded) session. A new id is minted only for a brand-new attempt
+ * (no stored id, or stored id older than the TTL, or previous attempt completed).
+ */
+const FT_SESSION_PREFIX = "full_test_session_v1:";
+const FT_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+
+function loadOrCreateFullTestSessionId(testId: string): string {
+  const key = FT_SESSION_PREFIX + testId;
+  try {
+    const raw = safeLocalStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id && Date.now() - Number(parsed.ts || 0) < FT_SESSION_TTL_MS) {
+        return String(parsed.id);
+      }
+    }
+  } catch { /* ignore */ }
+  const id = safeRandomId("full_test_session");
+  try {
+    safeLocalStorage.setItem(key, JSON.stringify({ id, ts: Date.now() }));
+  } catch { /* ignore */ }
+  return id;
+}
+
+function clearFullTestSessionId(testId: string) {
+  safeLocalStorage.removeItem(FT_SESSION_PREFIX + testId);
+}
+
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
@@ -107,9 +140,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const adminNavigationRef = useRef(false);
   const { isAdmin } = useAuth();
   // Unique id for this Full Test attempt — groups all 5 skills' rows in /history.
+  // Reused across reloads so re-grades land in the SAME session (no orphans).
   const sessionIdRef = useRef<string>(
-    safeRandomId("full_test_session")
+    loadOrCreateFullTestSessionId(testId)
   );
+
   const reportRef = useRef<PracticeScoreReportHandle>(null);
 
   // Background grading state for Speaking in Full Test
@@ -140,6 +175,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       document.body.classList.remove("exam-active");
     };
   }, []);
+
+  // Attempt finished → the stored session id must not be reused by the next attempt.
+  useEffect(() => {
+    if (phase === "completed") clearFullTestSessionId(testId);
+  }, [phase, testId]);
+
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
@@ -1005,8 +1046,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partsInput.formalText = raw.formalAnswer;
         }
 
-        // Pre-create a placeholder test_results row so the safety-net queue can
-        // link a failed grade back to this attempt (worker writes the score to it).
+        // Reuse (or pre-create) ONE test_results row per (session, exam set) so a
+        // re-grade after a reload never duplicates history rows. The safety-net
+        // queue links a failed grade back to this row.
         let preTestResultId: string | null = null;
         try {
           const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
@@ -1023,19 +1065,50 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             }],
             raw: { partType: e.partType, text: e.text, questions: e.questions, ai: null, notGraded: true },
           });
-          preTestResultId = await saveExamResult({
-            examSetId: e.partId ?? null,
-            skill: "writing",
-            correct: 0,
-            total: 30,
-            perQuestion: e.perQuestion,
-            fullTestSessionId: sessionIdRef.current,
-            fullTestId: testId,
-            reviewSnapshot: placeholderSnap,
-          });
+
+          // Existing row for this exact (session, exam set)? → reuse it.
+          try {
+            const q = (supabase as any)
+              .from("test_results")
+              .select("id, skill_scores")
+              .eq("full_test_session_id", sessionIdRef.current)
+              .order("created_at", { ascending: true });
+            const { data: existingRows } = e.partId
+              ? await q.eq("exam_set_id", e.partId)
+              : await q.is("exam_set_id", null);
+            const match = (existingRows || []).find(
+              (r: any) => r?.skill_scores?.skill === "writing",
+            );
+            if (match?.id) preTestResultId = match.id as string;
+          } catch (err) {
+            console.warn("[FullTest v2] lookup existing test_results failed", err);
+          }
+
+          if (preTestResultId) {
+            // Score updates must go through the finalize RPC (guard trigger).
+            await supabase.rpc("finalize_skill_test_result", {
+              p_test_result_id: preTestResultId,
+              p_score: 0,
+              p_total: 30,
+              p_correct_answers: 0,
+              p_review_snapshot: placeholderSnap as any,
+            } as any);
+          } else {
+            preTestResultId = await saveExamResult({
+              examSetId: e.partId ?? null,
+              skill: "writing",
+              correct: 0,
+              total: 30,
+              perQuestion: e.perQuestion,
+              fullTestSessionId: sessionIdRef.current,
+              fullTestId: testId,
+              reviewSnapshot: placeholderSnap,
+            });
+          }
         } catch (err) {
           console.warn("[FullTest v2] pre-create test_results failed", err);
         }
+
 
         let v2: Awaited<ReturnType<typeof gradeWritingPartV2>> | null = null;
         try {

@@ -117,6 +117,25 @@ async function persistWritingPart(job: any, body: any): Promise<{ rawPart: numbe
   }], { onConflict: "test_result_id,part,item_index" });
   if (upErr) throw new Error(`writing_question_gradings upsert failed: ${upErr.message}`);
 
+  // NEVER overwrite an already-finalized session score. If writing_skill_results
+  // exists for this session, the attempt is settled — keep the feedback we just
+  // wrote, but leave test_results alone.
+  const sessionId: string | null = meta.fullTestSessionId ?? null;
+  if (sessionId) {
+    const { data: settled } = await admin
+      .from("writing_skill_results")
+      .select("id")
+      .eq("user_id", job.user_id)
+      .eq("full_test_session_id", sessionId)
+      .maybeSingle();
+    if (settled?.id) {
+      console.info("[worker] session already finalized — skipping score patch", sessionId);
+      await admin.from("test_results").update({ grade_payload: null } as any)
+        .eq("id", job.test_result_id);
+      return { rawPart, alreadyFinalized: true } as any;
+    }
+  }
+
   const { error: trErr } = await admin.from("test_results").update({
     score: Math.round(rawPart),
     total: 30,
@@ -128,6 +147,7 @@ async function persistWritingPart(job: any, body: any): Promise<{ rawPart: numbe
 
   return { rawPart };
 }
+
 
 async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: number }> {
   const partType: string = String(job.part || body.partType);
@@ -189,6 +209,19 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
   const meta = job.payload?._meta || {};
   const sessionId: string | null = meta.fullTestSessionId ?? null;
   if (!sessionId || !job.test_result_id) return;
+
+  // Already settled for this session → do not recompute / overwrite.
+  {
+    const table = skill === "writing" ? "writing_skill_results" : "speaking_skill_results";
+    const { data: settled } = await admin
+      .from(table)
+      .select("id")
+      .eq("user_id", job.user_id)
+      .eq("full_test_session_id", sessionId)
+      .maybeSingle();
+    if (settled?.id) return;
+  }
+
 
   // test_results has no top-level `skill` column — the skill lives in the
   // `skill_scores` JSONB. Also match tolerantly on legacy rows where the
