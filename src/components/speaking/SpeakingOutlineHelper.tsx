@@ -57,7 +57,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2 }: Props) {
     }`;
 
   return (
-    <div className="mt-4 bg-white rounded-xl shadow-sm p-5 border-l-4 border-[#24085a]">
+    <div className="p-4">
       <div className="flex items-start justify-between gap-3 mb-3">
         <p className="text-xs font-bold text-[#24085a] uppercase tracking-wide">
           ✨ Dựng bài nhanh
