@@ -339,6 +339,30 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_sp4_outline_20260805: {
+        Row: {
+          backed_up_at: string | null
+          exam_set_id: string | null
+          extra_data: Json | null
+          id: string | null
+          order_index: number | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          order_index?: number | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          order_index?: number | null
+        }
+        Relationships: []
+      }
       backup_wsr_relink_20260805: {
         Row: {
           cefr: string | null
