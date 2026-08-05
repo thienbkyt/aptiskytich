@@ -136,6 +136,13 @@ const SpeakingExamEngine = ({
   const [reviewIndex, setReviewIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
+  const { isPro } = useIsPro();
+  const [outlineOpen, setOutlineOpen] = useState(false);
+  const [outlineUpgrade, setOutlineUpgrade] = useState(false);
+  const canUseOutline =
+    partType === "part4" && !!part4Data && !fullTestSessionId &&
+    !!(part4Data.outlineB1 || part4Data.outlineB2);
+
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
