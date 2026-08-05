@@ -140,9 +140,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const adminNavigationRef = useRef(false);
   const { isAdmin } = useAuth();
   // Unique id for this Full Test attempt — groups all 5 skills' rows in /history.
+  // Reused across reloads so re-grades land in the SAME session (no orphans).
   const sessionIdRef = useRef<string>(
-    safeRandomId("full_test_session")
+    loadOrCreateFullTestSessionId(testId)
   );
+
   const reportRef = useRef<PracticeScoreReportHandle>(null);
 
   // Background grading state for Speaking in Full Test
