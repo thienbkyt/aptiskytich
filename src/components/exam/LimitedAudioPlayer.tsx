@@ -262,9 +262,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       <button
         type="button"
         onClick={togglePlay}
-        disabled={disabled || !resolvedSrc}
+        disabled={disabled}
         className={`inline-flex items-center gap-1.5 text-sm underline underline-offset-2 transition-colors ${
-          disabled || !resolvedSrc
+          disabled
             ? "text-muted-foreground cursor-not-allowed no-underline"
             : "text-foreground hover:text-primary cursor-pointer"
         }`}
