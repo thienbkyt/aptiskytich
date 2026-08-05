@@ -38,7 +38,40 @@ import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGradin
 import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
+import { safeLocalStorage } from "@/lib/safeStorage";
 import { safeText } from "@/lib/safeText";
+
+/**
+ * Full Test session id must SURVIVE a reload / re-entry mid-attempt, otherwise
+ * a re-grade writes rows into an orphan session and the student's history shows
+ * the old (ungraded) session. A new id is minted only for a brand-new attempt
+ * (no stored id, or stored id older than the TTL, or previous attempt completed).
+ */
+const FT_SESSION_PREFIX = "full_test_session_v1:";
+const FT_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+
+function loadOrCreateFullTestSessionId(testId: string): string {
+  const key = FT_SESSION_PREFIX + testId;
+  try {
+    const raw = safeLocalStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.id && Date.now() - Number(parsed.ts || 0) < FT_SESSION_TTL_MS) {
+        return String(parsed.id);
+      }
+    }
+  } catch { /* ignore */ }
+  const id = safeRandomId("full_test_session");
+  try {
+    safeLocalStorage.setItem(key, JSON.stringify({ id, ts: Date.now() }));
+  } catch { /* ignore */ }
+  return id;
+}
+
+function clearFullTestSessionId(testId: string) {
+  safeLocalStorage.removeItem(FT_SESSION_PREFIX + testId);
+}
+
 
 type SkillStep = "speaking" | "listening" | "grammar" | "reading" | "writing";
 const SKILL_ORDER: SkillStep[] = ["speaking", "listening", "grammar", "reading", "writing"];
