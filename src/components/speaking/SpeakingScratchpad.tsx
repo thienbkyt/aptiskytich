@@ -22,7 +22,10 @@ interface Props {
 export default function SpeakingScratchpad({ outlineB1, outlineB2, note, onNoteChange, onClose }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [showOutline, setShowOutline] = useState(false);
-  const [size, setSize] = useState({ w: 380, h: 460 });
+  const [size, setSize] = useState(() => {
+    const vh = typeof window !== "undefined" ? window.innerHeight : 900;
+    return { w: 420, h: Math.max(320, Math.min(900, vh - 150)) };
+  });
   const [noteRatio, setNoteRatio] = useState(45);
 
   const hasOutline = !!(outlineB1 || outlineB2);
