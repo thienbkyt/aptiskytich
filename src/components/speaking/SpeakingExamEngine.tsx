@@ -1383,6 +1383,15 @@ const SpeakingExamEngine = ({
             {partType !== "part4" && <p className="text-sm text-gray-800 mt-4">{question}</p>}
           </div>
 
+          {canUseOutline && outlineOpen && isPro && (
+            <SpeakingOutlineHelper
+              outlineB1={part4Data?.outlineB1 ?? null}
+              outlineB2={part4Data?.outlineB2 ?? null}
+            />
+          )}
+
+
+
           {allowReveal && revealed && (() => {
             const pair = (() => {
               if (partType === "part1") return part1Data?.sampleAnswers?.[currentIndex];
