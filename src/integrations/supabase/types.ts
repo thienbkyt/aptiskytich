@@ -324,6 +324,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_key_policies_20260805: {
+        Row: {
+          cmd: string | null
+          policyname: unknown
+          qual: string | null
+          roles: string | null
+          saved_at: string | null
+          with_check: string | null
+        }
+        Insert: {
+          cmd?: string | null
+          policyname?: unknown
+          qual?: string | null
+          roles?: string | null
+          saved_at?: string | null
+          with_check?: string | null
+        }
+        Update: {
+          cmd?: string | null
+          policyname?: unknown
+          qual?: string | null
+          roles?: string | null
+          saved_at?: string | null
+          with_check?: string | null
+        }
+        Relationships: []
+      }
       backup_snapshot_truoc_doi_audio_20260805: {
         Row: {
           id: string | null
@@ -360,6 +387,108 @@ export type Database = {
           extra_data?: Json | null
           id?: string | null
           order_index?: number | null
+        }
+        Relationships: []
+      }
+      backup_sp4_outline_full_20260805: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_wsr_baochan_c5721b48: {
+        Row: {
+          cefr: string | null
+          created_at: string | null
+          exam_set_id: string | null
+          feedback: string | null
+          flag_review: boolean | null
+          full_test_session_id: string | null
+          grey_zone: boolean | null
+          id: string | null
+          parts: Json | null
+          raw_total: number | null
+          scale50: number | null
+          test_result_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cefr?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string | null
+          parts?: Json | null
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cefr?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string | null
+          parts?: Json | null
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
