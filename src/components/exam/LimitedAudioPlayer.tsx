@@ -198,21 +198,23 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
       if (needIntro) {
         setIntroSpeaking(true);
+        let timedOut = false;
         try {
-          // Intro is optional — never let it block the exam audio.
+          // Safety net only: guards against speechSynthesis never firing onend.
           await Promise.race([
             speakAsync(introText!.trim(), "en"),
-            new Promise((r) => setTimeout(r, 4000)),
+            new Promise<void>((r) => setTimeout(() => { timedOut = true; r(); }, 20000)),
           ]);
         } catch (e) {
           console.error("[LimitedAudioPlayer] intro TTS failed:", e);
         }
-        stopTTS();
+        if (timedOut) stopTTS();
         if (token !== introTokenRef.current) return;
         await new Promise((r) => setTimeout(r, introPauseMs));
         setIntroSpeaking(false);
         if (token !== introTokenRef.current) return;
       }
+
 
       // Pick the source for this play: first play uses `src`, later plays use
       // `src2` when provided (falls back to `src`).

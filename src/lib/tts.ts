@@ -109,9 +109,15 @@ async function fetchUrl(text: string, lang: Lang): Promise<string | null> {
   const cached = urlCache.get(key);
   if (cached) return cached;
 
-  const { data, error } = await supabase.functions.invoke("tts", {
-    body: { text, lang },
-  });
+  // Timeout belongs on the network step only — never on playback.
+  const invoke = supabase.functions.invoke("tts", { body: { text, lang } });
+  const raced = await Promise.race([
+    invoke.then((r) => r).catch((e) => ({ data: null, error: e })),
+    new Promise<{ data: null; error: string }>((r) =>
+      setTimeout(() => r({ data: null, error: "timeout" }), 4000),
+    ),
+  ]);
+  const { data, error } = raced as { data: { url?: string } | null; error: unknown };
   if (error || !data?.url) {
     console.warn("[tts] invoke failed, falling back:", error || data);
     return null;
