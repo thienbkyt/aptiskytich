@@ -15,7 +15,8 @@ interface Props {
  * Floating scratchpad ("Nháp") for Speaking Part 4 — anchored to the right edge,
  * resizable from the left edge, top edge, and top-left corner, plus a splitter
  * that re-divides the note area and the outline form.
- * Notes are intentionally NOT persisted: closing the panel discards them,
+ * Notes are NOT persisted to the database: they survive toggling the panel
+ * during the current exam session, but are lost when leaving the page,
  * like exam scratch paper being collected.
  */
 export default function SpeakingScratchpad({ outlineB1, outlineB2, note, onNoteChange, onClose }: Props) {
