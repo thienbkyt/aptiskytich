@@ -1,5 +1,6 @@
 import { QuotaExceededError } from "@/lib/quotaError";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy, Download } from "lucide-react";

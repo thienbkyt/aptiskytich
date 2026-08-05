@@ -1,5 +1,6 @@
 import { QuotaExceededError } from "@/lib/quotaError";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
