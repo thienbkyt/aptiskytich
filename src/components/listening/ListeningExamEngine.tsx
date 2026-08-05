@@ -126,6 +126,20 @@ const ListeningExamEngine = ({
     document.body.classList.add("exam-active");
     return () => document.body.classList.remove("exam-active");
   }, []);
+  // Batch-sign every audio file of this part in ONE storage request so the
+  // players (13 in Part 1) hit a warm cache instead of firing 13+ sign calls.
+  useEffect(() => {
+    const paths: (string | null | undefined)[] = [];
+    part1Questions?.forEach((q) => { paths.push(q.audioUrl, q.audioUrl2); });
+    part2Questions?.forEach((q) => {
+      paths.push(q.audioUrl, q.audioUrl2);
+      q.persons?.forEach((p) => paths.push(p.audioUrl));
+    });
+    part3Questions?.forEach((q) => { paths.push(q.audioUrl, q.audioUrl2); });
+    part4Questions?.forEach((c) => { paths.push(c.audioUrl, c.audioUrl2); });
+    if (paths.some(Boolean)) void resolveAudioUrls(paths);
+  }, [partType, part1Questions, part2Questions, part3Questions, part4Questions]);
+
   // Reset reveal whenever partType changes (engine instance reused in full-flow).
   useEffect(() => { setRevealedIdx(new Set()); }, [partType]);
   const isRevealedHere = allowReveal && !submitted && !reviewMode && revealedIdx.has(currentIndex);
