@@ -670,8 +670,11 @@ const parseSpeakingPart4 = (rows: any[]): ParseResult => {
         ...(sa ? { sampleAnswer: sa } : {}),
         ...(basic ? { sampleAnswerBasic: basic } : {}),
         ...(advanced ? { sampleAnswerAdvanced: advanced } : {}),
+        ...(i === 0 && outlineB1 ? { outlineB1 } : {}),
+        ...(i === 0 && outlineB2 ? { outlineB2 } : {}),
       },
     });
+
   });
 
   return { questions, errors };

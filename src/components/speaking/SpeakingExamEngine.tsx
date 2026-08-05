@@ -20,6 +20,10 @@ import { safeText } from "@/lib/safeText";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
+import OutlineBuilderButton from "@/components/speaking/OutlineBuilderButton";
+import SpeakingOutlineHelper from "@/components/speaking/SpeakingOutlineHelper";
+import { useIsPro } from "@/hooks/useIsPro";
+
 
 import type {
   SpeakingPartType,
