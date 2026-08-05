@@ -225,7 +225,17 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
             audio.load();
           }
         } else if (!resolvedSrc) {
-          await resolve(true);
+          // Not signed yet (batch prefetch pending / failed) → sign on demand now.
+          const url = await resolve(true);
+          if (url) {
+            audio.src = url;
+            audio.load();
+          } else {
+            setIsPlaying(false);
+            setErrorMsg("Không tải được audio. Bấm Thử lại.");
+            return;
+          }
+        } else if (resolvedSrc && audio.src !== resolvedSrc) {
         } else if (resolvedSrc && audio.src !== resolvedSrc) {
           // Restore the primary source (e.g. after a previous play used src2).
           audio.src = resolvedSrc;
