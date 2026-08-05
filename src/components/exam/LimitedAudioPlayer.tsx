@@ -21,6 +21,25 @@ interface LimitedAudioPlayerProps {
 // refreshing the page does not reset the play count. Closing the tab clears it.
 const SS_PREFIX = "limitedPlays:";
 const playCountStore = new Map<string, number>();
+
+// Module-level registry: only ONE audio element may play per page.
+// Must be module-level (not state) so we can pause a player whose component
+// never re-renders (e.g. all 13 Listening Part 1 players mounted at once).
+let currentlyPlaying: HTMLAudioElement | null = null;
+const stopOthers = (keep: HTMLAudioElement | null) => {
+  if (currentlyPlaying && currentlyPlaying !== keep) {
+    try {
+      currentlyPlaying.pause();
+      currentlyPlaying.currentTime = 0;
+    } catch {
+      /* noop */
+    }
+  }
+  currentlyPlaying = keep;
+};
+const releaseIfMine = (el: HTMLAudioElement | null) => {
+  if (el && currentlyPlaying === el) currentlyPlaying = null;
+};
 const storeKey = (qk: string | number | undefined, src: string) =>
   `${qk ?? "_"}::${src}`;
 
@@ -131,6 +150,22 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     }
   }, [questionKey, src]);
 
+  // Hard stop on unmount (e.g. navigating to the next question).
+  useEffect(() => {
+    const el = audioRef.current;
+    return () => {
+      introTokenRef.current += 1; // cancel any pending intro sequence
+      stopTTS();
+      try {
+        el?.pause();
+        if (el) el.currentTime = 0;
+      } catch {
+        /* noop */
+      }
+      releaseIfMine(el);
+    };
+  }, []);
+
   // Warm the TTS URL cache so pressing Play starts the intro almost instantly.
   useEffect(() => {
     const t = introText?.trim();
@@ -189,6 +224,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       stopTTS();
       setIntroSpeaking(false);
       audio.pause();
+      releaseIfMine(audio);
       setIsPlaying(false);
     } else {
       if (disabled) return;
@@ -254,6 +290,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (token !== introTokenRef.current) return;
       audio.currentTime = 0;
       try {
+        // Only one audio may sound at a time across the whole page.
+        stopOthers(audio);
         await audio.play();
         // Only now the student actually hears the audio → count the play.
         countThisPlay();
@@ -272,7 +310,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       <audio
         ref={audioRef}
         {...(resolvedSrc ? { src: resolvedSrc } : {})}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={() => { releaseIfMine(audioRef.current); setIsPlaying(false); }}
         onError={resolvedSrc ? handleAudioError : undefined}
         preload="auto"
       />
