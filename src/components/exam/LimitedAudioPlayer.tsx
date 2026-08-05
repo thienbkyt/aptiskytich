@@ -310,7 +310,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       <audio
         ref={audioRef}
         {...(resolvedSrc ? { src: resolvedSrc } : {})}
-        onEnded={() => setIsPlaying(false)}
+        onEnded={() => { releaseIfMine(audioRef.current); setIsPlaying(false); }}
         onError={resolvedSrc ? handleAudioError : undefined}
         preload="auto"
       />
