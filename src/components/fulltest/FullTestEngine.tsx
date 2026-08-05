@@ -176,6 +176,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     };
   }, []);
 
+  // Attempt finished → the stored session id must not be reused by the next attempt.
+  useEffect(() => {
+    if (phase === "completed") clearFullTestSessionId(testId);
+  }, [phase, testId]);
+
+
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
   // Load ALL skill data upfront
