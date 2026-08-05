@@ -1217,7 +1217,19 @@ ${partsIn.formalText ?? ""}`;
       };
 
       const model = "google/gemini-2.5-flash";
-      const callGatewayV2 = async (): Promise<Response> => {
+
+      // Original student text — used to detect truncated improvedVersion.
+      const originalText =
+        pt === "task4" ? `${partsIn.informalText ?? ""}\n${partsIn.formalText ?? ""}`
+        : pt === "task1" ? (partsIn.shortAnswers || []).join("\n")
+        : pt === "task3" ? (partsIn.threeAnswers || []).join("\n")
+        : String(studentText ?? "");
+      const originalLen = originalText.trim().length;
+
+      const BASE_MAX_TOKENS = pt === "task4" ? 12000 : 8000;
+      const RETRY_MAX_TOKENS = pt === "task4" ? 20000 : 14000;
+
+      const callGatewayV2 = async (maxTokens: number): Promise<Response> => {
         const controller = new AbortController();
         const timeoutMsV2 = pt === "task4" ? 90_000 : 60_000;
         const timeoutId = setTimeout(() => controller.abort(), timeoutMsV2);
@@ -1232,6 +1244,7 @@ ${partsIn.formalText ?? ""}`;
             body: JSON.stringify({
               model,
               temperature: 0,
+              max_tokens: maxTokens,
               messages: [
                 { role: "system", content: systemPromptV2 },
                 { role: "user", content: [{ type: "text", text: userText }] },
@@ -1245,53 +1258,96 @@ ${partsIn.formalText ?? ""}`;
         }
       };
 
-      let respOrNull: Response | null = null;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          respOrNull = await callGatewayV2();
-          // Retry only transient gateway errors (5xx). 4xx passes through.
-          if (respOrNull.status >= 500 && attempt === 0) {
-            console.warn(`[grade-exam writing_v2] gateway ${respOrNull.status} on attempt 1, retrying...`);
-            respOrNull = null;
-            continue;
+      type V2Attempt =
+        | { kind: "ok"; parsed: any }
+        | { kind: "truncated"; why: string }
+        | { kind: "error"; status: number; message: string };
+
+      const runV2Once = async (maxTokens: number): Promise<V2Attempt> => {
+        let respOrNull: Response | null = null;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            respOrNull = await callGatewayV2(maxTokens);
+            // Retry only transient gateway errors (5xx). 4xx passes through.
+            if (respOrNull.status >= 500 && attempt === 0) {
+              console.warn(`[grade-exam writing_v2] gateway ${respOrNull.status} on attempt 1, retrying...`);
+              respOrNull = null;
+              continue;
+            }
+            break;
+          } catch (e) {
+            const isAbort = (e as any)?.name === "AbortError";
+            console.error(
+              `[grade-exam writing_v2] fetch failed on attempt ${attempt + 1}`,
+              isAbort ? "timeout" : (e as any)?.message || e,
+            );
+            if (attempt === 0) continue;
           }
-          break;
-        } catch (e) {
-          const isAbort = (e as any)?.name === "AbortError";
-          console.error(
-            `[grade-exam writing_v2] fetch failed on attempt ${attempt + 1}`,
-            isAbort ? "timeout" : (e as any)?.message || e,
-          );
-          if (attempt === 0) continue;
         }
+
+        if (!respOrNull) return { kind: "error", status: 504, message: "AI timeout, thử lại." };
+        const resp: Response = respOrNull;
+
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => "");
+          console.error("[grade-exam writing_v2] gateway error", resp.status, errText.slice(0, 500));
+          return { kind: "error", status: 502, message: `AI gateway error: ${resp.status}` };
+        }
+
+        const rawData = await resp.json();
+        logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_v2", partType: pt } }).catch(() => {});
+
+        const choice = rawData.choices?.[0];
+        const finishReason = String(choice?.finish_reason ?? "");
+        if (finishReason === "length" || finishReason === "MAX_TOKENS") {
+          return { kind: "truncated", why: `finish_reason=${finishReason}` };
+        }
+
+        const tc = choice?.message?.tool_calls?.[0];
+        if (!tc?.function?.arguments) {
+          console.error("[grade-exam writing_v2] no tool call:", JSON.stringify(rawData).slice(0, 500));
+          return { kind: "error", status: 502, message: "AI did not return structured grading" };
+        }
+
+        // Strict parse only — a payload that needs patching to read is a truncated payload.
+        let parsedOnce: any;
+        try {
+          parsedOnce = JSON.parse(tc.function.arguments);
+        } catch (e) {
+          return { kind: "truncated", why: `json parse failed: ${(e as any)?.message || e}` };
+        }
+
+        const iv = String(parsedOnce?.improvedVersion ?? "").trim();
+        const fb = String(parsedOnce?.feedback ?? "").trim();
+        if (!iv || !fb) return { kind: "truncated", why: "missing improvedVersion/feedback" };
+        if (originalLen > 0 && iv.length < originalLen * 0.3) {
+          return { kind: "truncated", why: `improvedVersion too short (${iv.length} vs original ${originalLen})` };
+        }
+
+        return { kind: "ok", parsed: parsedOnce };
+      };
+
+      let v2 = await runV2Once(BASE_MAX_TOKENS);
+      if (v2.kind === "truncated") {
+        console.warn(`[grade-exam writing_v2] truncated output (${v2.why}) — retrying with higher cap`);
+        v2 = await runV2Once(RETRY_MAX_TOKENS);
       }
 
-      if (!respOrNull) {
-        return new Response(JSON.stringify({ error: "AI timeout, thử lại.", notGraded: true }), {
-          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (v2.kind === "truncated") {
+        console.error(`[grade-exam writing_v2] still truncated after retry (${v2.why}) — not saving`);
+        return new Response(JSON.stringify({
+          error: "AI trả kết quả chưa hoàn chỉnh, sẽ chấm lại.",
+          notGraded: true,
+        }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (v2.kind === "error") {
+        return new Response(JSON.stringify({ error: v2.message, notGraded: true }), {
+          status: v2.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const resp: Response = respOrNull;
 
+      const parsed = v2.parsed;
 
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => "");
-        console.error("[grade-exam writing_v2] gateway error", resp.status, errText.slice(0, 500));
-        return new Response(JSON.stringify({ error: `AI gateway error: ${resp.status}`, notGraded: true }), {
-          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const rawData = await resp.json();
-      logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_v2", partType: pt } }).catch(() => {});
-
-      const tc = rawData.choices?.[0]?.message?.tool_calls?.[0];
-      if (!tc?.function?.arguments) {
-        console.error("[grade-exam writing_v2] no tool call:", JSON.stringify(rawData).slice(0, 500));
-        return new Response(JSON.stringify({ error: "AI did not return structured grading", notGraded: true }), {
-          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const parsed = JSON.parse(tc.function.arguments);
       // --- Sanitize error lists ---
       // 1) Drop "style suggestion" items the AI mislabelled as errors.
       // 2) Move pure spelling items out of grammarErrors into spellingErrors.
