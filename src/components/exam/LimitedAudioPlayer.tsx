@@ -68,8 +68,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
-  const resolve = useCallback(async (force = false) => {
-    if (!src) return;
+  const resolve = useCallback(async (force = false): Promise<string | null> => {
+    if (!src) return null;
     if (force) bustAudioUrlCache(src);
     setErrorMsg("");
     try {
@@ -77,13 +77,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (!url) {
         setResolvedSrc(src);
         setErrorMsg("Không tải được audio.");
-        return;
+        return null;
       }
       setResolvedSrc(url);
+      return url;
     } catch (e) {
       console.error("[LimitedAudioPlayer] resolve failed:", e);
       setResolvedSrc(src);
       setErrorMsg("Không tải được audio.");
+      return null;
     }
   }, [src]);
 
