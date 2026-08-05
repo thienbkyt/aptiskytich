@@ -21,8 +21,8 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import OutlineBuilderButton from "@/components/speaking/OutlineBuilderButton";
-import SpeakingOutlineHelper from "@/components/speaking/SpeakingOutlineHelper";
-import { useIsPro } from "@/hooks/useIsPro";
+import SpeakingScratchpad from "@/components/speaking/SpeakingScratchpad";
+
 
 
 import type {
@@ -136,12 +136,9 @@ const SpeakingExamEngine = ({
   const [reviewIndex, setReviewIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
-  const { isPro } = useIsPro();
   const [outlineOpen, setOutlineOpen] = useState(false);
-  const [outlineUpgrade, setOutlineUpgrade] = useState(false);
-  const canUseOutline =
-    partType === "part4" && !!part4Data && !fullTestSessionId &&
-    !!(part4Data.outlineB1 || part4Data.outlineB2);
+  const canUseScratchpad = partType === "part4" && !!part4Data && !fullTestSessionId;
+
 
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
@@ -1277,25 +1274,20 @@ const SpeakingExamEngine = ({
       {allowReveal && (
         <RevealAnswerButton revealed={revealed} onToggle={() => setRevealed(v => !v)} />
       )}
-      {canUseOutline && (
+      {canUseScratchpad && (
         <OutlineBuilderButton
           open={outlineOpen}
-          onToggle={() => {
-            if (!isPro) setOutlineUpgrade(true);
-            else setOutlineOpen(v => !v);
-          }}
+          onToggle={() => setOutlineOpen(v => !v)}
         />
       )}
-      {outlineUpgrade && (
-        <UpgradeLock
-          asModal
-          open
-          onOpenChange={(v) => { if (!v) setOutlineUpgrade(false); }}
-          reason="pro"
-          need="pro"
-          featureLabel="Dựng bài nhanh Speaking Part 4"
+      {canUseScratchpad && outlineOpen && (
+        <SpeakingScratchpad
+          outlineB1={part4Data?.outlineB1 ?? null}
+          outlineB2={part4Data?.outlineB2 ?? null}
+          onClose={() => setOutlineOpen(false)}
         />
       )}
+
 
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
@@ -1383,12 +1375,8 @@ const SpeakingExamEngine = ({
             {partType !== "part4" && <p className="text-sm text-gray-800 mt-4">{question}</p>}
           </div>
 
-          {canUseOutline && outlineOpen && isPro && (
-            <SpeakingOutlineHelper
-              outlineB1={part4Data?.outlineB1 ?? null}
-              outlineB2={part4Data?.outlineB2 ?? null}
-            />
-          )}
+
+
 
 
 
