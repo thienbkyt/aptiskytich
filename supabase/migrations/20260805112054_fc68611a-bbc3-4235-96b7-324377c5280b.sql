@@ -1,0 +1,1 @@
+UPDATE public.grading_jobs SET status='pending', attempts=0, last_error=NULL WHERE id IN ('17fd7f84-44d6-41a1-ba7d-807e7005c9f8','44ff002f-6bff-4999-abef-7c77813115ac','c36d348a-acf9-490e-8bab-4f922a0176cf');

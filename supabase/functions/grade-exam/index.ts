@@ -1226,8 +1226,8 @@ ${partsIn.formalText ?? ""}`;
         : String(studentText ?? "");
       const originalLen = originalText.trim().length;
 
-      const BASE_MAX_TOKENS = pt === "task4" ? 12000 : 8000;
-      const RETRY_MAX_TOKENS = pt === "task4" ? 20000 : 14000;
+      const BASE_MAX_TOKENS = pt === "task4" ? 32000 : 16000;
+      const RETRY_MAX_TOKENS = pt === "task4" ? 48000 : 24000;
 
       const callGatewayV2 = async (maxTokens: number): Promise<Response> => {
         const controller = new AbortController();
@@ -1244,6 +1244,7 @@ ${partsIn.formalText ?? ""}`;
             body: JSON.stringify({
               model,
               temperature: 0,
+              reasoning_effort: "low",
               max_tokens: maxTokens,
               messages: [
                 { role: "system", content: systemPromptV2 },
