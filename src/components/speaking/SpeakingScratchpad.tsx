@@ -10,7 +10,9 @@ interface Props {
 }
 
 /**
- * Floating scratchpad ("Nháp") for Speaking Part 4 — draggable + resizable.
+ * Floating scratchpad ("Nháp") for Speaking Part 4 — anchored to the right edge,
+ * resizable from the left edge, top edge, and top-left corner, plus a splitter
+ * that re-divides the note area and the outline form.
  * Notes are intentionally NOT persisted: closing the panel discards them,
  * like exam scratch paper being collected.
  */
@@ -18,56 +20,56 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, onClose }: Pr
   const rootRef = useRef<HTMLDivElement>(null);
   const [note, setNote] = useState("");
   const [showOutline, setShowOutline] = useState(false);
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [size, setSize] = useState({ w: 380, h: 460 });
+  const [noteRatio, setNoteRatio] = useState(45);
 
   const hasOutline = !!(outlineB1 || outlineB2);
+
+  const startResize = (e: React.PointerEvent, dir: "left" | "top" | "corner") => {
+    e.preventDefault();
+    const root = rootRef.current;
+    if (!root) return;
+    const x0 = e.clientX, y0 = e.clientY;
+    const w0 = root.offsetWidth, h0 = root.offsetHeight;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const calc = (ev: PointerEvent) => ({
+      w: dir === "top" ? w0 : Math.max(300, Math.min(w0 + (x0 - ev.clientX), window.innerWidth - 48)),
+      h: dir === "left" ? h0 : Math.max(260, Math.min(h0 + (y0 - ev.clientY), window.innerHeight - 140)),
+    });
+    const onMove = (ev: PointerEvent) => {
+      const s = calc(ev);
+      root.style.width = `${s.w}px`;
+      root.style.height = `${s.h}px`;
+    };
+    const onUp = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      setSize(calc(ev));
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
 
   return (
     <div
       ref={rootRef}
       className="fixed z-[95] flex flex-col bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
-      style={{
-        width: 380,
-        height: 460,
-        resize: "both",
-        minWidth: 300,
-        minHeight: 260,
-        maxWidth: "90vw",
-        maxHeight: "85vh",
-        ...(pos ? { left: pos.x, top: pos.y } : { right: 24, top: 120 }),
-      }}
+      style={{ right: 24, bottom: 96, width: size.w, height: size.h }}
     >
       <div
-        className="shrink-0 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-gray-200 cursor-move select-none touch-none"
-        onPointerDown={(e) => {
-          if ((e.target as HTMLElement).closest("button")) return;
-          const root = rootRef.current;
-          if (!root) return;
-          const box = root.getBoundingClientRect();
-          const offX = e.clientX - box.left;
-          const offY = e.clientY - box.top;
-          root.style.transition = "none";
-          root.style.right = "";
-          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-          const clamp = (cx: number, cy: number) => ({
-            x: Math.max(8, Math.min(cx - offX, window.innerWidth - box.width - 8)),
-            y: Math.max(8, Math.min(cy - offY, window.innerHeight - 80)),
-          });
-          const onMove = (ev: PointerEvent) => {
-            const p = clamp(ev.clientX, ev.clientY);
-            root.style.left = `${p.x}px`;
-            root.style.top = `${p.y}px`;
-          };
-          const onUp = (ev: PointerEvent) => {
-            window.removeEventListener("pointermove", onMove);
-            window.removeEventListener("pointerup", onUp);
-            root.style.transition = "";
-            setPos(clamp(ev.clientX, ev.clientY));
-          };
-          window.addEventListener("pointermove", onMove);
-          window.addEventListener("pointerup", onUp);
-        }}
-      >
+        className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize touch-none hover:bg-[#24085a]/20"
+        onPointerDown={(e) => startResize(e, "left")}
+      />
+      <div
+        className="absolute top-0 left-0 right-0 h-1.5 cursor-ns-resize touch-none hover:bg-[#24085a]/20"
+        onPointerDown={(e) => startResize(e, "top")}
+      />
+      <div
+        className="absolute left-0 top-0 w-3 h-3 cursor-nwse-resize touch-none z-10"
+        onPointerDown={(e) => startResize(e, "corner")}
+      />
+
+      <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-gray-200">
         <span className="text-sm font-semibold text-[#24085a]">Nháp</span>
         <button
           type="button"
@@ -80,7 +82,8 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, onClose }: Pr
       </div>
 
       <textarea
-        className="w-full flex-1 resize-none border-0 outline-none px-4 py-3 text-sm leading-relaxed text-gray-900 placeholder:text-gray-400"
+        className="w-full shrink-0 resize-none border-0 outline-none px-4 py-3 text-sm leading-relaxed text-gray-900 placeholder:text-gray-400"
+        style={{ height: showOutline ? `${noteRatio}%` : "100%" }}
         placeholder="Gõ ý tưởng của bạn ở đây…"
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -88,9 +91,37 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, onClose }: Pr
       />
 
       {showOutline && (
-        <div className="border-t border-gray-200 overflow-y-auto max-h-[55%] bg-[#24085a]/5">
-          <SpeakingOutlineHelper outlineB1={outlineB1} outlineB2={outlineB2} />
-        </div>
+        <>
+          <div
+            className="shrink-0 h-2 cursor-ns-resize touch-none bg-gray-100 hover:bg-[#24085a]/20 flex items-center justify-center"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              const root = rootRef.current;
+              if (!root) return;
+              const y0 = e.clientY;
+              const r0 = noteRatio;
+              const H = root.offsetHeight;
+              (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+              const calc = (ev: PointerEvent) =>
+                Math.max(20, Math.min(80, r0 + ((ev.clientY - y0) / H) * 100));
+              const ta = root.querySelector("textarea") as HTMLElement | null;
+              const onMove = (ev: PointerEvent) => { if (ta) ta.style.height = `${calc(ev)}%`; };
+              const onUp = (ev: PointerEvent) => {
+                window.removeEventListener("pointermove", onMove);
+                window.removeEventListener("pointerup", onUp);
+                setNoteRatio(calc(ev));
+              };
+              window.addEventListener("pointermove", onMove);
+              window.addEventListener("pointerup", onUp);
+            }}
+          >
+            <div className="w-8 h-0.5 rounded-full bg-gray-400" />
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto border-t border-gray-200 bg-[#24085a]/5">
+            <SpeakingOutlineHelper outlineB1={outlineB1} outlineB2={outlineB2} />
+          </div>
+        </>
       )}
 
       {hasOutline && (
