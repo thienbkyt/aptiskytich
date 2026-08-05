@@ -224,6 +224,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       stopTTS();
       setIntroSpeaking(false);
       audio.pause();
+      releaseIfMine(audio);
       setIsPlaying(false);
     } else {
       if (disabled) return;
@@ -289,6 +290,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (token !== introTokenRef.current) return;
       audio.currentTime = 0;
       try {
+        // Only one audio may sound at a time across the whole page.
+        stopOthers(audio);
         await audio.play();
         // Only now the student actually hears the audio → count the play.
         countThisPlay();
