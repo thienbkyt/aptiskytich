@@ -1,5 +1,6 @@
 import { QuotaExceededError } from "@/lib/quotaError";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { Loader2, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ const SKILL_TIMES: Record<string, number> = {
   listening: 2400,
   grammar_vocab: 1500,
   reading: 2100,
-  writing: 3000,
+  writing: WRITING_TOTAL_TIME,
 };
 
 interface PartSet {

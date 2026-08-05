@@ -1,5 +1,6 @@
 import { QuotaExceededError } from "@/lib/quotaError";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy, Download } from "lucide-react";
@@ -94,7 +95,7 @@ const SKILL_TIMES: Record<SkillStep, number> = {
   listening: 2400,
   grammar: 1500,
   reading: 2100,
-  writing: 3000,
+  writing: WRITING_TOTAL_TIME,
 };
 
 interface FullTestEngineProps {

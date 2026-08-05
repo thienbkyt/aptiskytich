@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PenLine, Search, Clock, Shuffle, ArrowRight, ArrowLeft, RotateCcw, Loader2, Inbox, Infinity as InfinityIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { getWritingTime } from "@/lib/writingTime";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import WritingMarathonEngine from "@/components/practice/WritingMarathonEngine";
 import { loadMarathonProgress, clearMarathonProgress } from "@/lib/marathonProgress";
@@ -38,13 +39,6 @@ import DoneFilter, { type DoneFilterValue } from "@/components/practice/DoneFilt
 
 const partToTask: Record<string, WritingPartType> = {
   part1: "task1", part2: "task2", part3: "task3", part4: "task4",
-};
-
-const WRITING_TIME: Record<string, number> = {
-  task1: 360,
-  task2: 720,
-  task3: 1020,
-  task4: 900,
 };
 
 const TASKS = [
@@ -270,7 +264,7 @@ const Writing = () => {
 
     return (
       <WritingExamEngine
-        partType={exam.partType} testTitle={exam.testTitle} timeLimit={WRITING_TIME[exam.partType] ?? 3000}
+        partType={exam.partType} testTitle={exam.testTitle} timeLimit={getWritingTime(exam.partType)}
         examSetId={exam.examSetId ?? null}
         onExit={handleExit} onComplete={async (perQuestion) => {
           const timeSpent = exam.startedAt ? Math.floor((Date.now() - exam.startedAt) / 1000) : undefined;
