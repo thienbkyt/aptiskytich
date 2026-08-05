@@ -35,6 +35,11 @@ export interface SpeakingPart3Data {
   sampleAnswers?: SampleAnswerPair[];
 }
 
+/** "Dựng bài nhanh" outline: fill-in-the-blank template with alternatives. */
+export interface OutlineItem { no: number; label: string; text: string; options: string[]; }
+export interface OutlineGroup { question: string; seconds: number; items: OutlineItem[]; }
+export interface SpeakingOutline { targetWords?: string; groups: OutlineGroup[]; }
+
 // Part 4: Opinion Questions – Discuss abstract topic (60s prep, 120s speak)
 export interface SpeakingPart4Data {
   topic: string;
@@ -43,7 +48,10 @@ export interface SpeakingPart4Data {
   prepTime: number;
   speakTime: number;
   sampleAnswers?: SampleAnswerPair[];
+  outlineB1?: SpeakingOutline | null;
+  outlineB2?: SpeakingOutline | null;
 }
+
 
 export type SpeakingPartType = "part1" | "part2" | "part3" | "part4";
 

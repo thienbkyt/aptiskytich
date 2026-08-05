@@ -637,6 +637,15 @@ const parseSpeakingPart4 = (rows: any[]): ParseResult => {
   const errors: { row: number; message: string }[] = [];
   const topic = rows[0]?.topic?.toString().trim() || "";
   const imageUrl = rows[0]?.image_url?.toString().trim() || null;
+  const parseOutline = (v: any) => {
+    const s = (v ?? "").toString().trim();
+    if (!s) return null;
+    try { const o = JSON.parse(s); return o && Array.isArray(o.groups) ? o : null; }
+    catch { return null; }
+  };
+  const outlineB1 = parseOutline(rows[0]?.outline_b1);
+  const outlineB2 = parseOutline(rows[0]?.outline_b2);
+
 
   rows.forEach((r, i) => {
     const qt = r.question_text?.toString().trim();
