@@ -24,7 +24,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, note, onNoteC
   const [showOutline, setShowOutline] = useState(false);
   const [size, setSize] = useState(() => {
     const vh = typeof window !== "undefined" ? window.innerHeight : 900;
-    return { w: 420, h: Math.max(320, Math.min(900, vh - 150)) };
+    return { w: 420, h: Math.max(320, vh - 170) };
   });
   const [noteRatio, setNoteRatio] = useState(45);
 
