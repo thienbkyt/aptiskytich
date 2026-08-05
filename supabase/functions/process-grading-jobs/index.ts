@@ -210,6 +210,19 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
   const sessionId: string | null = meta.fullTestSessionId ?? null;
   if (!sessionId || !job.test_result_id) return;
 
+  // Already settled for this session → do not recompute / overwrite.
+  {
+    const table = skill === "writing" ? "writing_skill_results" : "speaking_skill_results";
+    const { data: settled } = await admin
+      .from(table)
+      .select("id")
+      .eq("user_id", job.user_id)
+      .eq("full_test_session_id", sessionId)
+      .maybeSingle();
+    if (settled?.id) return;
+  }
+
+
   // test_results has no top-level `skill` column — the skill lives in the
   // `skill_scores` JSONB. Also match tolerantly on legacy rows where the
   // session id is only present in skill_scores.fullPartSession/fullTestSession.
