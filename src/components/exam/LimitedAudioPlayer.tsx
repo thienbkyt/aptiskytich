@@ -250,15 +250,13 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
   return (
     <div className="my-3">
-      {resolvedSrc && (
-        <audio
-          ref={audioRef}
-          src={resolvedSrc}
-          onEnded={() => setIsPlaying(false)}
-          onError={handleAudioError}
-          preload="auto"
-        />
-      )}
+      <audio
+        ref={audioRef}
+        {...(resolvedSrc ? { src: resolvedSrc } : {})}
+        onEnded={() => setIsPlaying(false)}
+        onError={resolvedSrc ? handleAudioError : undefined}
+        preload="auto"
+      />
       <button
         type="button"
         onClick={togglePlay}
