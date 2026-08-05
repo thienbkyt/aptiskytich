@@ -1277,6 +1277,26 @@ const SpeakingExamEngine = ({
       {allowReveal && (
         <RevealAnswerButton revealed={revealed} onToggle={() => setRevealed(v => !v)} />
       )}
+      {canUseOutline && (
+        <OutlineBuilderButton
+          open={outlineOpen}
+          onToggle={() => {
+            if (!isPro) setOutlineUpgrade(true);
+            else setOutlineOpen(v => !v);
+          }}
+        />
+      )}
+      {outlineUpgrade && (
+        <UpgradeLock
+          asModal
+          open
+          onOpenChange={(v) => { if (!v) setOutlineUpgrade(false); }}
+          reason="pro"
+          need="pro"
+          featureLabel="Dựng bài nhanh Speaking Part 4"
+        />
+      )}
+
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}
