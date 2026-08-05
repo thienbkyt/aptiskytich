@@ -1046,8 +1046,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partsInput.formalText = raw.formalAnswer;
         }
 
-        // Pre-create a placeholder test_results row so the safety-net queue can
-        // link a failed grade back to this attempt (worker writes the score to it).
+        // Reuse (or pre-create) ONE test_results row per (session, exam set) so a
+        // re-grade after a reload never duplicates history rows. The safety-net
+        // queue links a failed grade back to this row.
         let preTestResultId: string | null = null;
         try {
           const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
@@ -1064,19 +1065,50 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             }],
             raw: { partType: e.partType, text: e.text, questions: e.questions, ai: null, notGraded: true },
           });
-          preTestResultId = await saveExamResult({
-            examSetId: e.partId ?? null,
-            skill: "writing",
-            correct: 0,
-            total: 30,
-            perQuestion: e.perQuestion,
-            fullTestSessionId: sessionIdRef.current,
-            fullTestId: testId,
-            reviewSnapshot: placeholderSnap,
-          });
+
+          // Existing row for this exact (session, exam set)? → reuse it.
+          try {
+            const q = (supabase as any)
+              .from("test_results")
+              .select("id, skill_scores")
+              .eq("full_test_session_id", sessionIdRef.current)
+              .order("created_at", { ascending: true });
+            const { data: existingRows } = e.partId
+              ? await q.eq("exam_set_id", e.partId)
+              : await q.is("exam_set_id", null);
+            const match = (existingRows || []).find(
+              (r: any) => r?.skill_scores?.skill === "writing",
+            );
+            if (match?.id) preTestResultId = match.id as string;
+          } catch (err) {
+            console.warn("[FullTest v2] lookup existing test_results failed", err);
+          }
+
+          if (preTestResultId) {
+            // Score updates must go through the finalize RPC (guard trigger).
+            await supabase.rpc("finalize_skill_test_result", {
+              p_test_result_id: preTestResultId,
+              p_score: 0,
+              p_total: 30,
+              p_correct_answers: 0,
+              p_review_snapshot: placeholderSnap as any,
+            } as any);
+          } else {
+            preTestResultId = await saveExamResult({
+              examSetId: e.partId ?? null,
+              skill: "writing",
+              correct: 0,
+              total: 30,
+              perQuestion: e.perQuestion,
+              fullTestSessionId: sessionIdRef.current,
+              fullTestId: testId,
+              reviewSnapshot: placeholderSnap,
+            });
+          }
         } catch (err) {
           console.warn("[FullTest v2] pre-create test_results failed", err);
         }
+
 
         let v2: Awaited<ReturnType<typeof gradeWritingPartV2>> | null = null;
         try {
