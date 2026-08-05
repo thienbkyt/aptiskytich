@@ -249,6 +249,16 @@ export function speakAsync(text: string, lang: Lang): Promise<void> {
   });
 }
 
+/**
+ * Warm the URL cache for a phrase so a later speak() starts almost instantly.
+ * Fire-and-forget; never plays audio and swallows all errors.
+ */
+export function prefetchTTS(text: string, lang: Lang): void {
+  const trimmed = text?.trim();
+  if (!trimmed) return;
+  void fetchUrl(trimmed, lang).catch(() => { /* noop */ });
+}
+
 /** Stop any TTS currently playing */
 export function stopTTS() {
   stopCurrent();

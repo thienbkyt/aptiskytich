@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { CircleDot, CirclePlay, RefreshCw } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
-import { speakAsync, stopTTS, unlockAudio } from "@/lib/tts";
+import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
 
 interface LimitedAudioPlayerProps {
   src: string;
@@ -54,7 +54,7 @@ export const resetLimitedAudioPlays = () => {
   playCountStore.clear();
 };
 
-const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 2000 }: LimitedAudioPlayerProps) => {
+const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 1000 }: LimitedAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
@@ -130,6 +130,12 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       audioRef.current.currentTime = 0;
     }
   }, [questionKey, src]);
+
+  // Warm the TTS URL cache so pressing Play starts the intro almost instantly.
+  useEffect(() => {
+    const t = introText?.trim();
+    if (t && playCount === 0) prefetchTTS(t, "en");
+  }, [introText, questionKey, playCount]);
 
   // Counts the current Play press exactly once (intro + audio + retries).
   const countedRef = useRef(false);
@@ -287,9 +293,6 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         )}
         <span>Play/Stop</span>
       </button>
-      {introSpeaking && (
-        <p className="text-xs text-muted-foreground mt-1">Đang đọc đề bài...</p>
-      )}
       {disabled && (
         <p className="text-xs text-muted-foreground mt-1">
           Đã dùng hết {maxPlays} lượt nghe cho câu này
