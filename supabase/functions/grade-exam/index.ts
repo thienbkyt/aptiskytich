@@ -616,31 +616,59 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       };
 
       const MODEL_V2 = "google/gemini-2.5-flash";
-      let aiResp: Response;
-      try {
-        aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          signal: AbortSignal.timeout(120_000),
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: MODEL_V2,
-            temperature: 0,
-            messages: [
-              { role: "system", content: sysV2 },
-              { role: "user", content: userParts },
-            ],
-            tools: [toolSchemaV2],
-            tool_choice: { type: "function", function: { name: "submit_speaking_v2" } },
-          }),
-        });
-      } catch (e) {
-        console.error("[grade-exam v2] fetch failed/timeout", (e as any)?.message || e);
-        return new Response(JSON.stringify({ error: "AI timeout, thử lại." }),
-          { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      const timeoutMsSpeak = isPart4 ? 170_000 : 140_000;
+      const callGatewaySpeak = async (): Promise<Response> => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMsSpeak);
+        try {
+          return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            signal: controller.signal,
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: MODEL_V2,
+              reasoning_effort: isPart4 ? "low" : "medium",
+              temperature: 0,
+              messages: [
+                { role: "system", content: sysV2 },
+                { role: "user", content: userParts },
+              ],
+              tools: [toolSchemaV2],
+              tool_choice: { type: "function", function: { name: "submit_speaking_v2" } },
+            }),
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      };
+
+      let speakResp: Response | null = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          speakResp = await callGatewaySpeak();
+          if (speakResp.status >= 500 && attempt === 0) {
+            console.warn(`[grade-exam v2] gateway ${speakResp.status} on attempt 1, retrying...`);
+            speakResp = null;
+            continue;
+          }
+          break;
+        } catch (e) {
+          const isAbort = (e as any)?.name === "AbortError";
+          console.error("[grade-exam v2] fetch failed", isAbort ? "timeout" : (e as any)?.message || e);
+          break;
+        }
       }
+      if (!speakResp) {
+        return new Response(JSON.stringify({ error: "AI timeout, thử lại.", notGraded: true }), {
+          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const aiResp: Response = speakResp;
+
 
       if (!aiResp.ok) {
         const txt = await aiResp.text().catch(() => "");
