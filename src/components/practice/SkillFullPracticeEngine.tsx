@@ -53,7 +53,7 @@ const SKILL_TIMES: Record<string, number> = {
   listening: 2400,
   grammar_vocab: 1500,
   reading: 2100,
-  writing: 3000,
+  writing: WRITING_TOTAL_TIME,
 };
 
 interface PartSet {

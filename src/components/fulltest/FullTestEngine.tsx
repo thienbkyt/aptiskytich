@@ -94,7 +94,7 @@ const SKILL_TIMES: Record<SkillStep, number> = {
   listening: 2400,
   grammar: 1500,
   reading: 2100,
-  writing: 3000,
+  writing: WRITING_TOTAL_TIME,
 };
 
 interface FullTestEngineProps {
