@@ -295,9 +295,6 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
           Đã dùng hết {maxPlays} lượt nghe cho câu này
         </p>
       )}
-      {!resolvedSrc && !errorMsg && (
-        <p className="text-xs text-muted-foreground mt-1">Đang tải audio...</p>
-      )}
       {errorMsg && (
         <p className="text-xs text-destructive mt-1 flex items-center gap-2">
           <span>{errorMsg}</span>

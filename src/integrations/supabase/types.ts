@@ -132,6 +132,30 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_audio_policies_20260805: {
+        Row: {
+          cmd: string | null
+          id: string
+          policyname: string
+          qual: string | null
+          saved_at: string
+        }
+        Insert: {
+          cmd?: string | null
+          id?: string
+          policyname: string
+          qual?: string | null
+          saved_at?: string
+        }
+        Update: {
+          cmd?: string | null
+          id?: string
+          policyname?: string
+          qual?: string | null
+          saved_at?: string
+        }
+        Relationships: []
+      }
       backup_eq_p3_truoc_v2_20260805: {
         Row: {
           audio_url: string | null
@@ -2521,6 +2545,7 @@ export type Database = {
         }[]
       }
       bump_learning_streak: { Args: never; Returns: undefined }
+      can_sign_audio: { Args: { p_name: string }; Returns: boolean }
       check_feature_access: {
         Args: { p_key: string; p_scope?: string }
         Returns: Json
