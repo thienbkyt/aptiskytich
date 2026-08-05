@@ -137,6 +137,7 @@ const SpeakingExamEngine = ({
   const [revealed, setRevealed] = useState(false);
   const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
   const [outlineOpen, setOutlineOpen] = useState(false);
+  const [scratchNote, setScratchNote] = useState("");
   const canUseScratchpad = partType === "part4" && !!part4Data && !fullTestSessionId;
 
 
@@ -1284,6 +1285,8 @@ const SpeakingExamEngine = ({
         <SpeakingScratchpad
           outlineB1={part4Data?.outlineB1 ?? null}
           outlineB2={part4Data?.outlineB2 ?? null}
+          note={scratchNote}
+          onNoteChange={setScratchNote}
           onClose={() => setOutlineOpen(false)}
         />
       )}

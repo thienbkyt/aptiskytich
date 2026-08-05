@@ -6,6 +6,8 @@ import SpeakingOutlineHelper from "@/components/speaking/SpeakingOutlineHelper";
 interface Props {
   outlineB1?: SpeakingOutline | null;
   outlineB2?: SpeakingOutline | null;
+  note: string;
+  onNoteChange: (v: string) => void;
   onClose: () => void;
 }
 
@@ -13,12 +15,12 @@ interface Props {
  * Floating scratchpad ("Nháp") for Speaking Part 4 — anchored to the right edge,
  * resizable from the left edge, top edge, and top-left corner, plus a splitter
  * that re-divides the note area and the outline form.
- * Notes are intentionally NOT persisted: closing the panel discards them,
+ * Notes are NOT persisted to the database: they survive toggling the panel
+ * during the current exam session, but are lost when leaving the page,
  * like exam scratch paper being collected.
  */
-export default function SpeakingScratchpad({ outlineB1, outlineB2, onClose }: Props) {
+export default function SpeakingScratchpad({ outlineB1, outlineB2, note, onNoteChange, onClose }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const [note, setNote] = useState("");
   const [showOutline, setShowOutline] = useState(false);
   const [size, setSize] = useState({ w: 380, h: 460 });
   const [noteRatio, setNoteRatio] = useState(45);
@@ -82,11 +84,11 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, onClose }: Pr
       </div>
 
       <textarea
-        className="w-full shrink-0 resize-none border-0 outline-none px-4 py-3 text-sm leading-relaxed text-gray-900 placeholder:text-gray-400"
-        style={{ height: showOutline ? `${noteRatio}%` : "100%" }}
+        className={`w-full min-h-0 resize-none border-0 outline-none px-4 py-3 text-sm leading-relaxed text-gray-900 placeholder:text-gray-400 ${showOutline ? "shrink-0" : "flex-1"}`}
+        style={showOutline ? { height: `${noteRatio}%` } : undefined}
         placeholder="Gõ ý tưởng của bạn ở đây…"
         value={note}
-        onChange={(e) => setNote(e.target.value)}
+        onChange={(e) => onNoteChange(e.target.value)}
         spellCheck={false}
       />
 
