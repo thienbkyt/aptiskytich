@@ -1244,6 +1244,7 @@ ${partsIn.formalText ?? ""}`;
             body: JSON.stringify({
               model,
               temperature: 0,
+              reasoning_effort: "low",
               max_tokens: maxTokens,
               messages: [
                 { role: "system", content: systemPromptV2 },
