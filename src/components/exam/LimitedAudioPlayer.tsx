@@ -68,8 +68,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
-  const resolve = useCallback(async (force = false) => {
-    if (!src) return;
+  const resolve = useCallback(async (force = false): Promise<string | null> => {
+    if (!src) return null;
     if (force) bustAudioUrlCache(src);
     setErrorMsg("");
     try {
@@ -77,13 +77,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (!url) {
         setResolvedSrc(src);
         setErrorMsg("Không tải được audio.");
-        return;
+        return null;
       }
       setResolvedSrc(url);
+      return url;
     } catch (e) {
       console.error("[LimitedAudioPlayer] resolve failed:", e);
       setResolvedSrc(src);
       setErrorMsg("Không tải được audio.");
+      return null;
     }
   }, [src]);
 
@@ -223,7 +225,16 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
             audio.load();
           }
         } else if (!resolvedSrc) {
-          await resolve(true);
+          // Not signed yet (batch prefetch pending / failed) → sign on demand now.
+          const url = await resolve(true);
+          if (url) {
+            audio.src = url;
+            audio.load();
+          } else {
+            setIsPlaying(false);
+            setErrorMsg("Không tải được audio. Bấm Thử lại.");
+            return;
+          }
         } else if (resolvedSrc && audio.src !== resolvedSrc) {
           // Restore the primary source (e.g. after a previous play used src2).
           audio.src = resolvedSrc;
@@ -250,21 +261,19 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
   return (
     <div className="my-3">
-      {resolvedSrc && (
-        <audio
-          ref={audioRef}
-          src={resolvedSrc}
-          onEnded={() => setIsPlaying(false)}
-          onError={handleAudioError}
-          preload="auto"
-        />
-      )}
+      <audio
+        ref={audioRef}
+        {...(resolvedSrc ? { src: resolvedSrc } : {})}
+        onEnded={() => setIsPlaying(false)}
+        onError={resolvedSrc ? handleAudioError : undefined}
+        preload="auto"
+      />
       <button
         type="button"
         onClick={togglePlay}
-        disabled={disabled || !resolvedSrc}
+        disabled={disabled}
         className={`inline-flex items-center gap-1.5 text-sm underline underline-offset-2 transition-colors ${
-          disabled || !resolvedSrc
+          disabled
             ? "text-muted-foreground cursor-not-allowed no-underline"
             : "text-foreground hover:text-primary cursor-pointer"
         }`}

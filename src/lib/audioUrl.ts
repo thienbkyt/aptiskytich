@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const SIGN_TTL_SEC = 300;
 const CACHE_TTL_MS = 240 * 1000; // refresh a bit before expiry
-const SIGN_TIMEOUT_MS = 8000;
+const SIGN_TIMEOUT_MS = 5000;
 
 function withTimeout<T>(p: PromiseLike<T>, ms = SIGN_TIMEOUT_MS): Promise<T> {
   return Promise.race([
@@ -28,6 +28,40 @@ export function bustAudioUrlCache(key?: string) {
   if (!key) { cache.clear(); return; }
   cache.delete(key);
 }
+
+/**
+ * Batch-signs a list of storage paths in ONE request and warms the shared cache.
+ * External http(s) URLs are ignored (they need no signing).
+ */
+export async function resolveAudioUrls(paths: (string | null | undefined)[]): Promise<void> {
+  const now = Date.now();
+  const todo = Array.from(
+    new Set(
+      paths.filter(
+        (p): p is string =>
+          !!p &&
+          !p.startsWith("http://") &&
+          !p.startsWith("https://") &&
+          !(cache.get(p) && cache.get(p)!.expiresAt > now)
+      )
+    )
+  );
+  if (todo.length === 0) return;
+
+  try {
+    const { data, error } = await withTimeout(
+      supabase.storage.from("audio").createSignedUrls(todo, SIGN_TTL_SEC)
+    );
+    if (error || !data) return;
+    const at = Date.now() + CACHE_TTL_MS;
+    for (const item of data) {
+      if (item?.signedUrl && item?.path) cache.set(item.path, { url: item.signedUrl, expiresAt: at });
+    }
+  } catch {
+    /* batch sign failed — individual players will fall back to single signing */
+  }
+}
+
 
 export async function resolveAudioUrl(audioUrl: string): Promise<string | null> {
   if (!audioUrl) return null;
