@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { getLevelColor } from "@/data/questions";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft, Eye, Loader2 } from "lucide-react";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
+import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
+import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
+
 import type {
   WritingPart1Data,
   WritingPart2Data,
@@ -37,6 +40,12 @@ interface WritingFullResultsProps {
   onExit: () => void;
   submissions?: Submission[];
   parts?: WritingFullReviewPart[];
+  /** Session id of the attempt — enables live grading-status polling. */
+  sessionId?: string | null;
+  /** test_results ids of the writing parts in this attempt. */
+  testResultIds?: (string | null | undefined)[];
+  /** Parts expected in this attempt (task1..task4). */
+  expectedParts?: string[];
 }
 
 const partLabel = (pt: string) => {
@@ -44,12 +53,38 @@ const partLabel = (pt: string) => {
   return m[pt] || pt;
 };
 
-const WritingFullResults = ({ results, score50, cefr, onExit, parts = [] }: WritingFullResultsProps) => {
+const WritingFullResults = ({
+  results,
+  score50,
+  cefr,
+  onExit,
+  parts = [],
+  sessionId,
+  testResultIds,
+  expectedParts,
+}: WritingFullResultsProps) => {
   const [view, setView] = useState<"summary" | "review">("summary");
   const [reviewIdx, setReviewIdx] = useState(0);
-  const total100 = results.reduce((s, r) => s + (r.partScore || 0), 0);
-  const band = cefr && cefr.length > 0 ? cefr : "—";
+
+  const expected = (expectedParts && expectedParts.length > 0
+    ? expectedParts
+    : results.map((r) => r.partType)) as string[];
+
+  const status = useWritingGradingStatus({
+    sessionId: sessionId ?? null,
+    testResultIds,
+    expectedParts: expected,
+    // Parts graded live in this session already have a score in `results`.
+    locallyGradedParts: results.filter((r) => typeof r.partScore === "number").map((r) => r.partType),
+    enabled: Boolean(sessionId || (testResultIds || []).filter(Boolean).length > 0),
+  });
+
+
+  const effScore50 = status.scale50 != null && status.scale50 > 0 ? status.scale50 : score50;
+  const effCefr = cefr && cefr.length > 0 ? cefr : status.cefr || "";
+  const band = effCefr && effCefr.length > 0 ? effCefr : "—";
   const bandColor = getLevelColor(band);
+  const stillGrading = status.isGrading;
 
   useEffect(() => {
     if (view === "review") {
@@ -57,6 +92,7 @@ const WritingFullResults = ({ results, score50, cefr, onExit, parts = [] }: Writ
       return () => document.body.classList.remove("history-review-mode");
     }
   }, [view]);
+
 
   // ── Summary view ──
   if (view === "summary") {
@@ -67,34 +103,58 @@ const WritingFullResults = ({ results, score50, cefr, onExit, parts = [] }: Writ
         </div>
         <h2 className="text-2xl font-heading font-bold text-foreground">Kết quả Writing</h2>
 
-        <div className="bg-card border border-border rounded-2xl p-8 space-y-4">
-          <div className="inline-block px-6 py-3 rounded-full text-3xl font-bold bg-primary/10 text-primary">
-            {score50}/50
-          </div>
-          <p className="text-sm text-muted-foreground">{"\n"}</p>
+        <WritingGradingStatusBanner
+          pendingParts={status.pendingParts}
+          failedParts={status.failedParts}
+          onRetry={status.retryPart}
+        />
 
-          <div className="pt-2">
-            <p className="text-sm text-muted-foreground mb-1">Trình độ</p>
-            <p className={`text-2xl font-bold ${bandColor}`}>{band}</p>
-          </div>
+        <div className="bg-card border border-border rounded-2xl p-8 space-y-4">
+          {stillGrading ? (
+            <div className="text-sm text-muted-foreground">
+              Điểm tổng sẽ hiện ngay khi tất cả các phần được chấm xong.
+            </div>
+          ) : (
+            <>
+              <div className="inline-block px-6 py-3 rounded-full text-3xl font-bold bg-primary/10 text-primary">
+                {effScore50}/50
+              </div>
+              <div className="pt-2">
+                <p className="text-sm text-muted-foreground mb-1">Trình độ</p>
+                <p className={`text-2xl font-bold ${bandColor}`}>{band}</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Chi tiết bài làm */}
         <div className="bg-card border border-border rounded-2xl p-6 text-left space-y-3">
           <h3 className="text-base font-heading font-bold text-foreground mb-3">Chi tiết bài làm</h3>
-          {results.map((r, i) => {
+          {expected.map((pt, i) => {
+            const st = status.statusByPart[pt];
+            const live = status.partScores[pt];
+            const local = results.find((r) => r.partType === pt);
+            const score = local?.partScore ?? live;
             return (
               <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-foreground font-medium">{partLabel(r.partType)}</span>
-                <span className="text-muted-foreground">
-                  Điểm: <span className="font-semibold text-foreground">{r.partScore}/{r.maxPoints}</span>
-                </span>
+                <span className="text-foreground font-medium">{partLabel(pt)}</span>
+                {st === "pending" && score === undefined ? (
+                  <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang chấm...
+                  </span>
+                ) : st === "failed" && score === undefined ? (
+                  <span className="text-destructive font-medium">Chấm không thành công</span>
+                ) : score !== undefined ? (
+                  <span className="text-muted-foreground">
+                    Điểm: <span className="font-semibold text-foreground">{Math.round(score)}/{local?.maxPoints ?? 30}</span>
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
               </div>
             );
           })}
-          <p className="text-xs text-muted-foreground pt-2 border-t border-border/50 mt-2 leading-relaxed">
-            {"\n"}
-          </p>
+
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">

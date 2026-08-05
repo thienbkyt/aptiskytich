@@ -941,7 +941,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           onExit={onExit}
           submissions={writingPartsRef.current}
           parts={reviewParts}
+          sessionId={fullPartSessionRef.current}
+          testResultIds={writingPartsRef.current.map((p: any) => p?.testResultId)}
+          expectedParts={orderedIndices
+            .map((idx) => parts[idx]?.partNorm?.replace("part", "task"))
+            .filter(Boolean) as string[]}
         />
+
       );
     }
     if (writingPhase === "grading") {
