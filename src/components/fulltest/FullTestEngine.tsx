@@ -37,6 +37,8 @@ import {
 import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
+import WritingGradingLiveStatus from "@/components/writing/WritingGradingLiveStatus";
+
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 import { safeLocalStorage } from "@/lib/safeStorage";
@@ -506,13 +508,27 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
               <Loader2 className="w-3 h-3 animate-spin" /> AI Kỳ Tích đang chấm Speaking...
             </p>
           )}
-          {writingUngraded && (
+          {writingUngraded === "quota" && (
             <p className="text-xs text-muted-foreground mt-2 max-w-xl mx-auto">
-              {writingUngraded === "quota"
-                ? "Phần Writing chưa được chấm vì tài khoản đã hết lượt chấm AI. Bài viết của bạn vẫn được lưu đầy đủ trong phần Xem lại."
-                : "Phần Writing chưa chấm xong. Hệ thống sẽ tự chấm lại trong ít phút, bạn quay lại xem sau nhé."}
+              Phần Writing chưa được chấm vì tài khoản đã hết lượt chấm AI. Bài viết của bạn vẫn được lưu đầy đủ trong phần Xem lại.
             </p>
           )}
+          {writingUngraded !== "quota" && (
+            <div className="max-w-xl mx-auto mt-3">
+              <WritingGradingLiveStatus
+                sessionId={sessionIdRef.current}
+                expectedParts={Object.values(writingSubmissionsByPartRef.current)
+                  .map((s: any) => s?.partType)
+                  .filter(Boolean) as string[]}
+                onResolved={(scale50, cefr) => {
+                  setWritingUngraded(null);
+                  setScores((prev) => ({ ...prev, writing: { correct: scale50, total: 50 } }));
+                  if (cefr) { /* band derives from score in the report */ }
+                }}
+              />
+            </div>
+          )}
+
 
         </div>
 

@@ -15,6 +15,9 @@ import ReadingExamEngine, { type ReadingPartType } from "@/components/reading/Re
 import ListeningExamEngine, { type ListeningPartType } from "@/components/listening/ListeningExamEngine";
 import WritingExamEngine, { type WritingPartType } from "@/components/writing/WritingExamEngine";
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
+import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
+import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
+
 
 interface QResult {
   exam_question_id: string;
@@ -67,6 +70,28 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
   const cacheKey = hasSnapshot ? `snap:${testResultId || examSetId}:${baseKey}` : baseKey;
   const [rows, setRows] = useState<ExamQuestionRow[] | null>(() => reviewRowsCache.get(cacheKey) ?? null);
   const [writingGrading, setWritingGrading] = useState<WritingGradingResult | null | undefined>(undefined);
+  const [writingRefetch, setWritingRefetch] = useState(0);
+
+  // Writing parts can still be in the AI grading queue minutes after submit.
+  // Display-only: poll while the grading for THIS part is missing.
+  const writingTaskKey = (() => {
+    const m = (part || "").match(/(\d)/);
+    return `task${m ? m[1] : 1}`;
+  })();
+  const writingStatus = useWritingGradingStatus({
+    sessionId: null,
+    testResultIds: [testResultId],
+    expectedParts: [writingTaskKey],
+    enabled: skill === "writing" && !!testResultId && writingGrading === null,
+  });
+  useEffect(() => {
+    if (skill !== "writing") return;
+    if (writingGrading === null && writingStatus.partScores[writingTaskKey] !== undefined) {
+      setWritingRefetch((n) => n + 1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [writingStatus.partScores, writingGrading, skill, writingTaskKey]);
+
 
   useEffect(() => {
     // Snapshot-first: use the questions stored with the attempt itself.
@@ -199,7 +224,7 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       }
     })();
     return () => { cancelled = true; };
-  }, [skill, userId, testResultId, part]);
+  }, [skill, userId, testResultId, part, writingRefetch]);
 
 
 
@@ -353,7 +378,21 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
     if (taskKey === "task2") props.part2Data = toWritingPart2(rows);
     if (taskKey === "task3") props.part3Data = toWritingPart3(rows);
     if (taskKey === "task4") props.part4Data = toWritingPart4(rows);
-    return <WritingExamEngine {...props} />;
+    return (
+      <>
+        {writingGrading === null && (
+          <div className="max-w-3xl mx-auto px-4 pt-4">
+            <WritingGradingStatusBanner
+              pendingParts={writingStatus.pendingParts}
+              failedParts={writingStatus.failedParts}
+              onRetry={writingStatus.retryPart}
+            />
+          </div>
+        )}
+        <WritingExamEngine {...props} />
+      </>
+    );
+
   }
 
   return null;
