@@ -303,7 +303,10 @@ export const toSpeakingPart4 = (rows: ExamQuestionRow[]): SpeakingPart4Data => {
     prepTime: ed.prepTime ?? 60,
     speakTime: ed.speakTime ?? 120,
     sampleAnswers: collectSampleAnswers(rows),
+    outlineB1: (ed.outlineB1 as any) ?? null,
+    outlineB2: (ed.outlineB2 as any) ?? null,
   };
+
 };
 
 // ─── Writing ────────────────────────────────────────────────
