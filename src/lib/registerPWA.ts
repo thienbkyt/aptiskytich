@@ -14,6 +14,10 @@ const DISMISS_KEY = "kt-pwa-update-dismissed";
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const LOCATION_EVENT = "kt-locationchange";
 
+// Real build id (injected by vite define). registration.waiting.scriptURL is
+// always "/sw.js", so it can't distinguish builds.
+const BUILD_ID = typeof __BUILD_ID__ !== "undefined" ? __BUILD_ID__ : "dev";
+
 function isDismissed(buildId: string) {
   try {
     const raw = safeLocalStorage.getItem(DISMISS_KEY);
@@ -61,32 +65,27 @@ export function registerPWA() {
 
   patchHistory();
 
+  let lastPathname = window.location.pathname;
+
   // Dynamic import so dev builds don't break on the virtual module
   import("virtual:pwa-register")
     .then(({ registerSW }) => {
-      let pendingBuildId: string | null = null;
-      let registrationRef: ServiceWorkerRegistration | null = null;
-
-      const buildIdOf = () =>
-        registrationRef?.waiting?.scriptURL ||
-        registrationRef?.installing?.scriptURL ||
-        "pending-update";
+      let updatePending = false;
 
       const showToast = () => {
-        if (!pendingBuildId) return;
+        if (!updatePending) return;
         if (isExamActive()) return;
-        if (isDismissed(pendingBuildId)) return;
-        const id = pendingBuildId;
+        if (isDismissed(BUILD_ID)) return;
         try {
           toast("Đã có bản cập nhật mới", {
             id: "pwa-update",
             duration: 15000,
             closeButton: true,
-            onDismiss: () => rememberDismiss(id),
+            onDismiss: () => rememberDismiss(BUILD_ID),
             action: {
               label: "Tải lại",
               onClick: () => {
-                pendingBuildId = null;
+                updatePending = false;
                 updateSW(true);
               },
             },
@@ -95,10 +94,16 @@ export function registerPWA() {
       };
 
       const applyWhenSafe = () => {
-        if (!pendingBuildId) return;
+        if (!updatePending) return;
         if (isExamActive()) return;
-        // Safe spot: not in an exam → update straight away, no question asked.
-        pendingBuildId = null;
+        // Only a real page change counts. Practice screens sync state via
+        // setSearchParams(replace), so query/hash-only changes must be ignored.
+        const pathname = window.location.pathname;
+        if (pathname === lastPathname) return;
+        lastPathname = pathname;
+        // Note: dismissing the toast only silences the toast — it never blocks
+        // this silent auto-update on navigation.
+        updatePending = false;
         toast.dismiss("pwa-update");
         updateSW(true);
       };
@@ -115,11 +120,10 @@ export function registerPWA() {
       const updateSW = registerSW({
         immediate: true,
         onNeedRefresh() {
-          pendingBuildId = buildIdOf();
+          updatePending = true;
           showToast();
         },
         onRegisteredSW(_swUrl, registration) {
-          registrationRef = registration ?? null;
           // Periodically check for updates (every 30 minutes)
           if (registration) {
             setInterval(() => {

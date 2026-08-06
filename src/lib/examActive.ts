@@ -1,21 +1,25 @@
 /**
  * Global "student is taking an exam" flag.
  *
- * Exam engines already toggled the body class "exam-active"; this helper keeps
- * that behaviour and additionally exposes window.__ktExamActive plus a change
- * event so non-React code (PWA update prompts, chunk-error banner) can stay
- * quiet while a test is in progress.
+ * Reference-counted: in a Full Test both the parent engine and the per-skill
+ * child engine mark the exam as active, and children unmount on every part
+ * change. A boolean would flip off mid-test; a counter keeps the flag on until
+ * the last engine has cleaned up.
  */
 export const EXAM_ACTIVE_EVENT = "kt-exam-active-change";
 
+let count = 0;
+
 export function isExamActive(): boolean {
   if (typeof window === "undefined") return false;
-  return !!(window as any).__ktExamActive;
+  return !!window.__ktExamActive;
 }
 
-function setFlag(active: boolean) {
+function sync() {
   if (typeof window === "undefined") return;
-  (window as any).__ktExamActive = active;
+  const active = count > 0;
+  if (window.__ktExamActive === active) return; // only emit on real transitions
+  window.__ktExamActive = active;
   try {
     document.body.classList.toggle("exam-active", active);
   } catch {
@@ -33,6 +37,13 @@ function setFlag(active: boolean) {
  *   useEffect(() => markExamActive(), []);
  */
 export function markExamActive(): () => void {
-  setFlag(true);
-  return () => setFlag(false);
+  count++;
+  sync();
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    count = Math.max(0, count - 1);
+    sync();
+  };
 }

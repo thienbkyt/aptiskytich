@@ -7,6 +7,10 @@ import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    // Unique id per build — used to scope PWA update-toast dismissals.
+    __BUILD_ID__: JSON.stringify(String(Date.now())),
+  },
   server: {
     host: "::",
     port: 8080,
