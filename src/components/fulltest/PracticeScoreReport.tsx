@@ -69,10 +69,22 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
   const testDate = useMemo(() => formatDate(new Date()), []);
   const refNumber = useMemo(() => refFromSession(sessionId), [sessionId]);
 
-  const skillHas = (sk: SkillKey) => scores[sk].total > 0;
-  const score50 = (sk: SkillKey) => toScaledScore(scores[sk].correct, scores[sk].total);
-  const bandOf = (sk: "listening" | "reading" | "speaking" | "writing") =>
-    skillHas(sk) ? getSkillBand(score50(sk), sk) : null;
+  const hasOverride = (sk: SkillKey) => {
+    const o = overrides?.[sk];
+    return !!o && Number.isFinite(o.scale50);
+  };
+  const skillHas = (sk: SkillKey) => hasOverride(sk) || scores[sk].total > 0;
+  const score50 = (sk: SkillKey) => {
+    const o = overrides?.[sk];
+    if (o && Number.isFinite(o.scale50)) return Math.round(o.scale50);
+    return toScaledScore(scores[sk].correct, scores[sk].total);
+  };
+  const bandOf = (sk: "listening" | "reading" | "speaking" | "writing") => {
+    // Stored `cefr` wins (it carries the official grey-zone lift); the
+    // threshold table is only a fallback when no band was saved.
+    if (hasOverride(sk)) return overrides![sk]!.cefr || getSkillBand(score50(sk), sk);
+    return scores[sk].total > 0 ? getSkillBand(score50(sk), sk) : null;
+  };
 
   const listening = skillHas("listening") ? score50("listening") : null;
   const reading = skillHas("reading") ? score50("reading") : null;
@@ -100,7 +112,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
       ]
     : null;
 
-  const showBand = (b: string | null) => (b ? BAND_LABEL[b] ?? b : "—");
+  const showBand = (b: string | null) => b || "—";
   const heightForBand = (b: string | null) => {
     if (!b) return 0;
     const n = BAND_TO_NUM[b] ?? 0; // 0..5
