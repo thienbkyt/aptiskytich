@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { splitWritingErrors } from "@/lib/writingErrorFilter";
 import { QuotaExceededError } from "@/lib/quotaError";
+import { getSkillBand } from "@/data/questions";
+
 
 
 
