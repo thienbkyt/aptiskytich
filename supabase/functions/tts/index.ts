@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
               ? "upstream"
               : "request";
             console.error(`[tts] ElevenLabs ${kind} failure (${elRes.status}) — falling back to OpenAI voice:`, errText);
-            logFallback(kind === "rate limit" ? "rate_limit" : kind, elRes.status);
+            logFallback(kind === "rate limit" ? "rate_limit" : kind, elRes.status, errText);
           }
         } catch (e) {
           console.error("[tts] ElevenLabs network failure — falling back to OpenAI voice:", e);
