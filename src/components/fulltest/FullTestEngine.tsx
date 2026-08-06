@@ -567,7 +567,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             ref={reportRef}
             scores={scores}
             sessionId={sessionIdRef.current}
+            overrides={skillOverrides}
           />
+
         </div>
 
 
