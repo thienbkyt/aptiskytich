@@ -1271,7 +1271,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         onTogglePause={togglePause}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
-        isLastPart={isLastPart}
+        isLastPart={isLastPart || timeUpRef.current}
         onExit={onExit}
         onPartAnswers={handleWritingPartAnswers}
         onComplete={handleWritingPartComplete}
