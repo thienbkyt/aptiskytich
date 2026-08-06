@@ -141,6 +141,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // One shared pause for the whole test clock so it stays frozen across parts.
   const [isPaused, setIsPaused] = useState(false);
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);
+  // Shared clock for a skill hit 0 → submit the current part and jump to the next
+  // skill instead of mounting the remaining parts with 0s left (chain auto-submit).
+  const timeUpRef = useRef(false);
+  /** Parts the student never reached because the skill clock ran out. */
+  const notAttemptedPartsRef = useRef<Set<string>>(new Set());
   // Prevent double-advancing if a child engine fires onComplete twice
   // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
   const completedKeysRef = useRef<Set<string>>(new Set());
@@ -337,8 +342,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
     // Check if there are more parts in this skill
     // For grammar, all parts are combined into one engine call, so always move to next skill
-    if (skill === "grammar" || currentPartIndex >= parts.length - 1) {
+    const skillTimeUp = timeUpRef.current;
+    if (skillTimeUp) {
+      // Remaining parts of this skill are never mounted → mark them not attempted.
+      for (let i = currentPartIndex + 1; i < parts.length; i++) {
+        notAttemptedPartsRef.current.add(`${skill}-${i}`);
+      }
+    }
+    if (skill === "grammar" || skillTimeUp || currentPartIndex >= parts.length - 1) {
       // Skill completed - auto advance to next skill or finish
+      timeUpRef.current = false;
       if (currentSkillIndex >= SKILL_ORDER.length - 1) {
         setPhase("completed");
       } else {
@@ -414,8 +427,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     setEngineKey((k) => k + 1);
     setPhase("exam");
     // Reset shared timers when switching into a skill that uses one
+    timeUpRef.current = false;
+    notAttemptedPartsRef.current.delete(`${sk}-${partIdx}`);
     if (sk === "listening") setListeningTimeLeft(SKILL_TIMES.listening);
     if (sk === "writing") setWritingTimeLeft(SKILL_TIMES.writing);
+    if (sk === "reading") setReadingTimeLeft(SKILL_TIMES.reading);
   };
 
   const handleAdminBackPart = () => {
@@ -965,7 +981,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           timeLimit={SKILL_TIMES.listening}
           onExit={handleExit}
           externalTimeLeft={listeningTimeLeft}
-          onTimeTick={setListeningTimeLeft}
+          onTimeTick={(t) => { setListeningTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
           isPaused={isPaused}
           onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
@@ -998,7 +1014,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Reading ${readingPartLabel(currentPart.part)}`}
           timeLimit={SKILL_TIMES.reading}
           initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
-          onTimeTick={(t) => setReadingTimeLeft(t)}
+          onTimeTick={(t) => { setReadingTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
           isPaused={isPaused}
           onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
@@ -1343,7 +1359,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         writingSubmissionsByPartRef.current[currentPartIndex] = { ...existing, perQuestion };
       }
 
-      if (!isLastWritingPart) {
+      if (!isLastWritingPart && !timeUpRef.current) {
         // Just advance to the next writing part — do NOT call handlePartComplete
         // (which would add 0 to scores.writing and clobber the AI total later).
         const key = `writing-${currentPartIndex}`;
@@ -1371,12 +1387,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Writing ${currentPart.part}`}
           timeLimit={SKILL_TIMES.writing}
           externalTimeLeft={writingTimeLeft}
-          onTimeTick={(t) => setWritingTimeLeft(t)}
+          onTimeTick={(t) => { setWritingTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
           isPaused={isPaused}
           onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
           fullFlow
-          isLastPart={isLastWritingPart}
+          isLastPart={isLastWritingPart || timeUpRef.current}
           onExit={handleExit}
           onPartAnswers={handleWritingPartAnswers}
           onComplete={handleWritingPartComplete}

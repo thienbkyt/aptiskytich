@@ -68,6 +68,17 @@ export function useCountdown({
     }
   }, [paused]);
 
+  // Re-anchor when the clock actually starts (false -> true), so the time the
+  // student spent on the instructions screen is not silently deducted.
+  const prevRunningRef = useRef(running);
+  useEffect(() => {
+    if (running && !prevRunningRef.current) {
+      endAtRef.current = Date.now() + timeLeftRef.current * 1000;
+      if (pausedAtRef.current != null) pausedAtRef.current = Date.now();
+    }
+    prevRunningRef.current = running;
+  }, [running]);
+
   useEffect(() => {
     if (!running || paused) return;
     const tick = () => {
