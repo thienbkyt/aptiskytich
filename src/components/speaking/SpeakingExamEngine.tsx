@@ -458,19 +458,7 @@ const SpeakingExamEngine = ({
     setPhase("reading-question");
     
     // Get the question text for current index
-    const questionText = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions[currentIndexRef.current];
-      if (partType === "part2" && part2Data) return part2Data.questions?.[currentIndexRef.current] || part2Data.prompt;
-      if (partType === "part3" && part3Data) return part3Data.questions?.[currentIndexRef.current] || part3Data.prompt;
-      if (partType === "part4" && part4Data) {
-        const parts: string[] = [];
-        if (part4Data.topic) parts.push(`Topic: ${part4Data.topic}.`);
-        if (part4Data.questions?.length) parts.push(part4Data.questions.join(" "));
-        parts.push("You now have one minute to think about your answers. You can make notes if you wish.");
-        return parts.join(" ");
-      }
-      return "";
-    })();
+    const questionText = getSpokenTextForIndex(currentIndexRef.current);
 
     if (questionText) {
       try {
