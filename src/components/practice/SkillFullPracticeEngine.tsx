@@ -356,12 +356,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       const built: ListeningFullPartResult[] = parts.map((pt, idx) => {
         const partType = pt.partNorm as ListeningPartType;
         const stored = listeningResultsByPartRef.current[idx];
-        const res = stored || { correct: 0, total: 0 };
+        const expected = expectedListeningTotal(partType, pt.questions);
+        const res = stored || { correct: 0, total: expected };
         const ans = listeningAnswersByPartRef.current[idx] || [];
         const entry: ListeningFullPartResult = {
           partType,
           correct: res.correct,
-          total: res.total,
+          total: stored ? res.total : expected,
           examSetId: pt.id,
           answers: ans,
           notAttempted: !stored,
@@ -373,6 +374,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         return entry;
       });
       const totalCorrect = built.reduce((s, p) => s + p.correct, 0);
+      // Denominator = every question in all 4 parts, including parts never reached.
       const totalQs = built.reduce((s, p) => s + p.total, 0);
       const score50 = totalQs > 0 ? Math.round((totalCorrect / totalQs) * 50) : 0;
       setListeningFullParts(built);
