@@ -57,6 +57,55 @@ const SKILL_TIMES: Record<string, number> = {
   writing: WRITING_TOTAL_TIME,
 };
 
+/**
+ * Number of scored questions a Reading part contains, derived from the exam data
+ * itself (not from a submitted result) so parts the student never reached still
+ * contribute to the /50 denominator.
+ */
+const expectedReadingTotal = (partType: string, rows: ExamQuestionRow[]): number => {
+  try {
+    if (partType === "part1") {
+      const q = toReadingPart1(rows);
+      if (!q) return 0;
+      return [...q.passage.matchAll(/\{(\d+)\}/g)]
+        .map((m) => Number(m[1]))
+        .filter((idx) => q.gaps[idx]).length;
+    }
+    if (partType === "part2") {
+      const q = toReadingPart2(rows);
+      if (!q) return 0;
+      let t = 0;
+      q.sections.forEach((sec, sIdx) => {
+        sec.sentences.forEach((s) => {
+          if (sIdx === 0 && s.correctPosition === 1) return;
+          t += 1;
+        });
+      });
+      return t;
+    }
+    if (partType === "part3") {
+      const q = toReadingPart3(rows);
+      return q ? q.statements.length : 0;
+    }
+    if (partType === "part4") {
+      const q = toReadingPart4(rows);
+      return q ? (q.paragraphs?.length || q.questions.length || 0) : 0;
+    }
+  } catch { /* noop */ }
+  return 0;
+};
+
+/** Same idea for Listening — mirrors ListeningExamEngine's `totalForScore`. */
+const expectedListeningTotal = (partType: string, rows: ExamQuestionRow[]): number => {
+  try {
+    if (partType === "part1") return toListeningPart1(rows).length;
+    if (partType === "part2") return toListeningPart2(rows).reduce((s, q) => s + q.persons.length, 0);
+    if (partType === "part3") return toListeningPart3(rows).reduce((s, q) => s + q.statements.length, 0);
+    if (partType === "part4") return toListeningPart4(rows).reduce((s, c) => s + c.questions.length, 0);
+  } catch { /* noop */ }
+  return 0;
+};
+
 interface PartSet {
   id: string;
   part: string;
