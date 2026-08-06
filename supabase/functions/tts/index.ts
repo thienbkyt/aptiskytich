@@ -91,14 +91,14 @@ Deno.serve(async (req) => {
     let audioBuffer: ArrayBuffer | null = null;
     let usedProvider = provider;
 
-    const logFallback = (reason: string, status?: number) => {
+    const logFallback = (reason: string, status?: number, detail?: string) => {
       logUsage({
         service: "elevenlabs_tts_fallback",
         event_type: "fallback",
         units: 0,
         unit_type: "chars",
         source_function: "tts",
-        metadata: { reason, status: status ?? null },
+        metadata: { reason, status: status ?? null, detail: detail ? String(detail).slice(0, 300) : null },
       }).catch(() => {});
     };
 
@@ -144,11 +144,12 @@ Deno.serve(async (req) => {
               ? "upstream"
               : "request";
             console.error(`[tts] ElevenLabs ${kind} failure (${elRes.status}) — falling back to OpenAI voice:`, errText);
-            logFallback(kind === "rate limit" ? "rate_limit" : kind, elRes.status);
+            logFallback(kind === "rate limit" ? "rate_limit" : kind, elRes.status, errText);
           }
         } catch (e) {
+          const errMessage = e instanceof Error ? e.message : String(e);
           console.error("[tts] ElevenLabs network failure — falling back to OpenAI voice:", e);
-          logFallback("network");
+          logFallback("network", undefined, errMessage);
         }
       }
       if (audioBuffer) {
