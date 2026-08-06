@@ -106,7 +106,9 @@ const WritingFullResults = ({
         <WritingGradingStatusBanner
           pendingParts={status.pendingParts}
           failedParts={status.failedParts}
+          recoverableParts={status.recoverableParts}
           onRetry={status.retryPart}
+          onRecover={status.recoverPart}
         />
 
         <div className="bg-card border border-border rounded-2xl p-8 space-y-4">
@@ -149,6 +151,8 @@ const WritingFullResults = ({
                   </span>
                 ) : st === "failed" && score === undefined ? (
                   <span className="text-destructive font-medium">Chấm không thành công</span>
+                ) : st === "recoverable" && score === undefined ? (
+                  <span className="text-destructive font-medium">Chấm chưa hoàn tất</span>
                 ) : score !== undefined ? (
                   <span className="text-muted-foreground">
                     Điểm: <span className="font-semibold text-foreground">{Math.round(score)}/{local?.maxPoints ?? 30}</span>

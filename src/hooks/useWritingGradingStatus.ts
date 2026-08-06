@@ -17,7 +17,7 @@ import { enqueueGradingFallback } from "@/lib/gradingQueue";
  * pipeline already persisted, and polls while something is still in flight.
  */
 
-export type WritingPartStatus = "graded" | "pending" | "failed";
+export type WritingPartStatus = "graded" | "pending" | "failed" | "recoverable";
 
 const POLL_MS = 15_000;
 const MAX_POLLS = 20; // ~5 minutes
@@ -28,6 +28,7 @@ export interface WritingGradingStatusResult {
   statusByPart: Record<string, WritingPartStatus>;
   pendingParts: string[];
   failedParts: string[];
+  recoverableParts: string[];
   /** Per-part raw score (0-30) when graded. */
   partScores: Record<string, number>;
   /** Official skill score from writing_skill_results, when finalized. */
@@ -38,6 +39,7 @@ export interface WritingGradingStatusResult {
   isGrading: boolean;
   refresh: () => void;
   retryPart: (part: string) => Promise<boolean>;
+  recoverPart: (part: string) => Promise<{ ok: boolean; upgrade?: boolean }>;
 }
 
 interface Options {
@@ -78,6 +80,7 @@ export function useWritingGradingStatus({
   const [tick, setTick] = useState(0);
 
   const failedJobsRef = useRef<Record<string, any>>({});
+  const resultIdByPartRef = useRef<Record<string, string>>({});
   const pollCountRef = useRef(0);
   const idsKey = (testResultIds || []).filter(Boolean).join(",");
   const partsKey = expectedParts.join(",");
@@ -127,7 +130,15 @@ export function useWritingGradingStatus({
               .in("test_result_id", ids)
           : Promise.resolve({ data: [] as any[] } as any);
 
-        const [gRes, wRes, jRes] = await Promise.all([gradingsP, wsrQ, jobsP]);
+        const answersP = ids.length
+          ? supabase.from("exam_question_results").select("test_result_id,user_answer").in("test_result_id", ids)
+          : Promise.resolve({ data: [] as any[] } as any);
+
+        const resultPartsP = ids.length
+          ? supabase.from("test_results").select("id,exam_sets(part)").in("id", ids)
+          : Promise.resolve({ data: [] as any[] } as any);
+
+        const [gRes, wRes, jRes, aRes, rRes] = await Promise.all([gradingsP, wsrQ, jobsP, answersP, resultPartsP]);
         if (cancelled) return;
 
         const scores: Record<string, number> = {};
@@ -149,6 +160,16 @@ export function useWritingGradingStatus({
           const k = normPart(j.part);
           if (k) (jobsByPart[k] ||= []).push(j);
         });
+        const submittedIds = new Set(
+          (((aRes as any).data || []) as any[])
+            .filter((row) => String(row.user_answer ?? "").trim().length > 0)
+            .map((row) => row.test_result_id),
+        );
+        const resultIdByPart: Record<string, string> = {};
+        (((rRes as any).data || []) as any[]).forEach((row) => {
+          const key = normPart(row.exam_sets?.part);
+          if (key) resultIdByPart[key] = row.id;
+        });
 
         const localSet = new Set((locallyGradedParts || []).map((p) => normPart(p) || p));
         const failedJobs: Record<string, any> = {};
@@ -161,6 +182,16 @@ export function useWritingGradingStatus({
           }
 
           const jobs = jobsByPart[k] || [];
+          const active = jobs.some((j) => j.status === "pending" || j.status === "processing");
+          if (active) {
+            map[k] = "pending";
+            return;
+          }
+          const resultId = resultIdByPart[k];
+          if (resultId && submittedIds.has(resultId)) {
+            map[k] = "recoverable";
+            return;
+          }
           const dead = jobs.find(
             (j) => j.status === "failed" && Number(j.attempts) >= Number(j.max_attempts),
           );
@@ -173,6 +204,7 @@ export function useWritingGradingStatus({
         });
 
         failedJobsRef.current = failedJobs;
+        resultIdByPartRef.current = resultIdByPart;
         setPartScores(scores);
         setStatusByPart(map);
         setScale50(typeof wsr?.scale50 === "number" ? wsr.scale50 : null);
@@ -195,6 +227,10 @@ export function useWritingGradingStatus({
     .sort();
   const failedParts = Object.entries(statusByPart)
     .filter(([, s]) => s === "failed")
+    .map(([k]) => k)
+    .sort();
+  const recoverableParts = Object.entries(statusByPart)
+    .filter(([, s]) => s === "recoverable")
     .map(([k]) => k)
     .sort();
 
@@ -241,11 +277,26 @@ export function useWritingGradingStatus({
     [sessionId, refresh],
   );
 
+  const recoverPart = useCallback(async (part: string): Promise<{ ok: boolean; upgrade?: boolean }> => {
+    const k = normPart(part) || part;
+    const testResultId = resultIdByPartRef.current[k];
+    if (!testResultId) return { ok: false };
+    const { data, error } = await supabase.functions.invoke("rebuild-writing-grade", {
+      body: { test_result_id: testResultId },
+    });
+    if (error || !data || data.error) return { ok: false, upgrade: Boolean(data?.upgrade) };
+    setStatusByPart((prev) => ({ ...prev, [k]: "pending" }));
+    pollCountRef.current = 0;
+    refresh();
+    return { ok: true };
+  }, [refresh]);
+
   return {
     loading,
     statusByPart,
     pendingParts,
     failedParts,
+    recoverableParts,
     partScores,
     scale50,
     cefr,
@@ -253,6 +304,7 @@ export function useWritingGradingStatus({
     isGrading: hasPending,
     refresh,
     retryPart,
+    recoverPart,
   };
 }
 
