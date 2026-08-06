@@ -46,9 +46,10 @@ export function unlockAudio() {
   } catch { /* noop */ }
 }
 
-function cacheKey(text: string, lang: Lang) {
-  return `${lang}::${text.trim().toLowerCase()}`;
+function cacheKey(text: string, lang: Lang, surface: Surface = "app") {
+  return `${surface}::${lang}::${text.trim().toLowerCase()}`;
 }
+
 
 /** Pick a male English voice from the browser's installed voices, if available. */
 function pickMaleVoice(lang: Lang): SpeechSynthesisVoice | null {
