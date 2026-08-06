@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import { playBeep } from "@/lib/beep";
-import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 
 interface SpeakingPromptScreenProps {
   partNumber: number;
