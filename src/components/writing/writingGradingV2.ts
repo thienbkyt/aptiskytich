@@ -146,6 +146,16 @@ export async function gradeWritingPartV2(
       // Quota is not a technical failure — never retry it through the queue.
       // Keep grade_payload intact so the submitted work remains recoverable
       // when the learner has quota again. Do not enqueue while quota-blocked.
+      if (opts?.testResultId) {
+        try {
+          await (supabase as any)
+            .from("test_results")
+            .update({ grade_payload: { ...gradePayload, _quotaBlocked: true } })
+            .eq("id", opts.testResultId);
+        } catch (e) {
+          console.warn("[gradeWritingPartV2] failed to mark quota-blocked payload:", e);
+        }
+      }
       throw new QuotaExceededError({
         used: Number((data as any).used ?? 0),
         cap:
