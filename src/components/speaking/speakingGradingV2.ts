@@ -192,14 +192,17 @@ export async function finalizeSpeaking(
   if (error) throw error;
   if (!data) throw new Error("Empty response from grade-exam (speaking_finalize)");
 
+  const scale50 = Number(data.scale50 ?? 0);
   return {
     rawTotal: Number(data.rawTotal ?? data.raw_total ?? 0),
-    scale50: Number(data.scale50 ?? 0),
-    cefr: data.cefr ?? "",
+    scale50,
+    // Single source of truth for CEFR: the official Aptis thresholds.
+    cefr: getSkillBand(scale50, "speaking"),
     greyZone: !!data.greyZone,
     flagReview: !!data.flagReview,
   };
 }
+
 
 export type SaveSpeakingSkillResultArgs = {
   testResultId?: string | null;
