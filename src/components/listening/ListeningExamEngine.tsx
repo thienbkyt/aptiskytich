@@ -263,7 +263,7 @@ const ListeningExamEngine = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examSetId]);
 
-  const { timeLeft, pausedMs } = useCountdown({
+  const { timeLeft, pausedMs, restart: restartTimer } = useCountdown({
     totalSeconds: timeLimit,
     initialLeft: externalTimeLeft,
     running: hasStarted && !submitted && !hideTimer,
@@ -382,7 +382,7 @@ const ListeningExamEngine = ({
     setResultStats(null);
     setPhase("practice");
     setCurrentIndex(0);
-    setTimeLeft(timeLimit);
+    restartTimer(timeLimit);
     setSeenQuestions(new Set());
     setBookmarked(new Set());
     setAnswers(new Array(totalQuestions).fill(null));

@@ -95,7 +95,7 @@ const GrammarExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(false);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
-  const { timeLeft, pausedMs } = useCountdown({
+  const { timeLeft, pausedMs, restart: restartTimer } = useCountdown({
     totalSeconds: timeLimit,
     running: hasStarted && !submitted && !hideTimer,
     paused: isPaused,
@@ -388,7 +388,7 @@ const GrammarExamEngine = ({
       setSubmitted(false);
       setPhase("practice");
       setCurrentIndex(0);
-      setTimeLeft(timeLimit);
+      restartTimer(timeLimit);
       setSeenQuestions(new Set());
       setBookmarked(new Set());
       setIsReviewing(false);

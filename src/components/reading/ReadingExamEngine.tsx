@@ -150,7 +150,7 @@ const ReadingExamEngine = ({
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
-  const { timeLeft, pausedMs } = useCountdown({
+  const { timeLeft, pausedMs, restart: restartTimer } = useCountdown({
     totalSeconds: timeLimit,
     initialLeft: initialTimeLeft,
     running: hasStarted && !submitted && !hideTimer,
@@ -437,7 +437,7 @@ const ReadingExamEngine = ({
     setResultStats(null);
     setPhase("practice");
     setCurrentIndex(0);
-    setTimeLeft(timeLimit);
+    restartTimer(timeLimit);
     setSeenQuestions(new Set());
     setBookmarked(new Set());
     setP1Answers(new Array(part1Question?.gaps.length || 0).fill(null));

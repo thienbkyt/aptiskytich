@@ -26,7 +26,7 @@ export function useCountdown({
   running,
   paused = false,
   onTick,
-}: UseCountdownOptions): { timeLeft: number; pausedMs: number } {
+}: UseCountdownOptions): { timeLeft: number; pausedMs: number; restart: (seconds?: number) => void } {
   const startLeft = Math.max(0, initialLeft ?? totalSeconds);
   const endAtRef = useRef<number>(Date.now() + startLeft * 1000);
   const pausedAtRef = useRef<number | null>(null);
@@ -81,7 +81,16 @@ export function useCountdown({
     return () => window.clearInterval(id);
   }, [running, paused]);
 
-  return { timeLeft, pausedMs };
+  const restart = (seconds?: number) => {
+    const left = Math.max(0, seconds ?? totalSeconds);
+    endAtRef.current = Date.now() + left * 1000;
+    pausedAtRef.current = paused ? Date.now() : null;
+    pausedMsRef.current = 0;
+    setPausedMs(0);
+    setTimeLeft(left);
+  };
+
+  return { timeLeft, pausedMs, restart };
 }
 
 export const formatPausedDuration = (ms: number) => {
