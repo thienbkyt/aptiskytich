@@ -463,10 +463,14 @@ const History = () => {
 
           if (official) {
             // Stored rubric-weighted score — display as saved, no recomputation.
+            // Skill result tồn tại = đã chốt điểm ⇒ không bao giờ gắn "Chấm chưa đủ",
+            // kể cả khi còn dòng test_results lẻ/hụt trong session.
+            g.ungradedCount = 0;
             g.displayScore = `${official.scale50}/50`;
             g.displayBand = official.cefr || getSkillBand(official.scale50, g.skill as any);
             return g;
           }
+
           const scaled = g.den > 0 ? Math.round((g.num / g.den) * 50) : null;
           g.displayScore = scaled != null ? `${scaled}/50` : "—";
           g.displayBand = scaled != null && !isGrammar ? getSkillBand(scaled, g.skill as any) : "—";
