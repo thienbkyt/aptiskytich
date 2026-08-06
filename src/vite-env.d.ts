@@ -8,3 +8,5 @@ declare global {
     __ktExamActive?: boolean;
   }
 }
+
+export {};
