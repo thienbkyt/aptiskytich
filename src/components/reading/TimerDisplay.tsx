@@ -75,9 +75,6 @@ const TimerDisplay = ({
       </div>
     </div>
   );
-
-    </div>
-  );
 };
 
 export default memo(TimerDisplay);
