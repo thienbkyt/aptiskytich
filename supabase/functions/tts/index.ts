@@ -91,10 +91,22 @@ Deno.serve(async (req) => {
     let audioBuffer: ArrayBuffer | null = null;
     let usedProvider = provider;
 
+    const logFallback = (reason: string, status?: number) => {
+      logUsage({
+        service: "elevenlabs_tts_fallback",
+        event_type: "fallback",
+        units: 0,
+        unit_type: "chars",
+        source_function: "tts",
+        metadata: { reason, status: status ?? null },
+      }).catch(() => {});
+    };
+
     if (surface === "exam") {
       const elevenKey = Deno.env.get("ELEVENLABS_API_KEY");
       if (!elevenKey) {
         console.error("[tts] ELEVENLABS_API_KEY missing — falling back to OpenAI voice");
+        logFallback("missing_key");
       } else {
         try {
           const elRes = await fetch(
@@ -132,9 +144,11 @@ Deno.serve(async (req) => {
               ? "upstream"
               : "request";
             console.error(`[tts] ElevenLabs ${kind} failure (${elRes.status}) — falling back to OpenAI voice:`, errText);
+            logFallback(kind === "rate limit" ? "rate_limit" : kind, elRes.status);
           }
         } catch (e) {
           console.error("[tts] ElevenLabs network failure — falling back to OpenAI voice:", e);
+          logFallback("network");
         }
       }
       if (audioBuffer) {
