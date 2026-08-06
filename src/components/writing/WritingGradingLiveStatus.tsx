@@ -33,7 +33,9 @@ const WritingGradingLiveStatus = ({ sessionId, expectedParts, onResolved, classN
     <WritingGradingStatusBanner
       pendingParts={status.pendingParts}
       failedParts={status.failedParts}
+      recoverableParts={status.recoverableParts}
       onRetry={status.retryPart}
+      onRecover={status.recoverPart}
       className={className}
     />
   );

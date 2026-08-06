@@ -385,7 +385,9 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
             <WritingGradingStatusBanner
               pendingParts={writingStatus.pendingParts}
               failedParts={writingStatus.failedParts}
+              recoverableParts={writingStatus.recoverableParts}
               onRetry={writingStatus.retryPart}
+              onRecover={writingStatus.recoverPart}
             />
           </div>
         )}

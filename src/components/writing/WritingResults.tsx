@@ -2,6 +2,8 @@ import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { Eye, Loader2 } from "lucide-react";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { splitWritingErrors } from "@/lib/writingErrorFilter";
+import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
+import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
 
 
 interface SubmissionPart {
@@ -19,9 +21,17 @@ interface WritingResultsProps {
   onReview?: () => void;
   /** When set, show UpgradeLock instead of grading details. */
   quotaExceeded?: { freeQuota: number; used: number; remaining: number; need?: "pro" | "premium" } | null;
+  testResultId?: string | null;
+  partType?: string;
 }
 
-const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quotaExceeded }: WritingResultsProps) => {
+const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quotaExceeded, testResultId, partType = "task1" }: WritingResultsProps) => {
+  const status = useWritingGradingStatus({
+    testResultIds: [testResultId],
+    expectedParts: [partType],
+    locallyGradedParts: grading ? [partType] : [],
+    enabled: Boolean(testResultId) && !grading && !isGrading,
+  });
   if (quotaExceeded) {
     return (
       <div className="max-w-2xl mx-auto space-y-4">
@@ -50,7 +60,24 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
     );
   }
 
-  if (!grading) return null;
+  if (!grading) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-4">
+        <WritingGradingStatusBanner
+          pendingParts={status.pendingParts}
+          failedParts={status.failedParts}
+          recoverableParts={status.recoverableParts}
+          onRetry={status.retryPart}
+          onRecover={status.recoverPart}
+        />
+        <div className="text-center">
+          <button onClick={onExit} className="bg-muted hover:bg-muted/80 text-foreground px-6 py-2.5 rounded-lg font-medium transition-colors">
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const clean = splitWritingErrors(grading.grammarErrors, grading.spellingErrors);
   const allErrors = [

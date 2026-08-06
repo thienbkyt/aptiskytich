@@ -152,6 +152,7 @@ const WritingExamEngine = ({
   const { grading, isGrading, gradeExam, quotaExceeded } = useExamGrading();
   const [v2Grading, setV2Grading] = useState<WritingGradingResult | null>(null);
   const [v2Loading, setV2Loading] = useState(false);
+  const [submittedTestResultId, setSubmittedTestResultId] = useState<string | null>(null);
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
 
   const effectiveGrading = (gradingResult ?? v2Grading ?? grading) as WritingGradingResult | null;
@@ -270,6 +271,7 @@ const WritingExamEngine = ({
 
     // Resolve test_result_id from parent's save so grading can be linked to this attempt.
     const trid = (await Promise.resolve(onComplete?.(perQuestion))) as string | null | void;
+    setSubmittedTestResultId(typeof trid === "string" ? trid : null);
 
     const { text, questions } = getTextAndQuestions();
 
@@ -509,6 +511,8 @@ const WritingExamEngine = ({
             submission={submission}
             onReview={!v2Loading && !isGrading && (v2Grading ?? grading) ? () => setIsReviewing(true) : undefined}
             quotaExceeded={quotaExceeded}
+            testResultId={submittedTestResultId}
+            partType={partType}
           />
         </div>
       </div>

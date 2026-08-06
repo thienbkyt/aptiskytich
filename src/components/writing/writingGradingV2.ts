@@ -144,14 +144,16 @@ export async function gradeWritingPartV2(
     const errCode = (data as any)?.error;
     if (errCode === "quota_exceeded" || errCode === "disabled") {
       // Quota is not a technical failure — never retry it through the queue.
+      // Keep grade_payload intact so the submitted work remains recoverable
+      // when the learner has quota again. Do not enqueue while quota-blocked.
       if (opts?.testResultId) {
         try {
           await (supabase as any)
             .from("test_results")
-            .update({ grade_payload: null })
+            .update({ grade_payload: { ...gradePayload, _quotaBlocked: true } })
             .eq("id", opts.testResultId);
         } catch (e) {
-          console.warn("[gradeWritingPartV2] failed to clear grade_payload:", e);
+          console.warn("[gradeWritingPartV2] failed to mark quota-blocked payload:", e);
         }
       }
       throw new QuotaExceededError({

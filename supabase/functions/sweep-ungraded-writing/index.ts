@@ -116,6 +116,10 @@ Deno.serve(async (req) => {
           console.warn(`[sweep-writing] row ${row.id}: invalid grade_payload, skipped`);
           continue;
         }
+        // Quota-blocked submissions remain recoverable, but must never enter
+        // the internal-bypass worker until the owner explicitly requests a
+        // new grade and passes check_feature_access again.
+        if ((payload as any)._quotaBlocked === true) continue;
         const { error: insErr } = await admin.from("grading_jobs").insert({
           user_id: row.user_id,
           test_result_id: row.id,
