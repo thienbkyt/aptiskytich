@@ -147,8 +147,9 @@ Deno.serve(async (req) => {
             logFallback(kind === "rate limit" ? "rate_limit" : kind, elRes.status, errText);
           }
         } catch (e) {
+          const errMessage = e instanceof Error ? e.message : String(e);
           console.error("[tts] ElevenLabs network failure — falling back to OpenAI voice:", e);
-          logFallback("network");
+          logFallback("network", undefined, errMessage);
         }
       }
       if (audioBuffer) {
