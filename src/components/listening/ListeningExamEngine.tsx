@@ -51,6 +51,7 @@ interface ListeningExamEngineProps {
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   isPaused?: boolean;
+  allowPause?: boolean;
   onTogglePause?: () => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
@@ -104,7 +105,7 @@ const PART_LABELS: Record<ListeningPartType, string> = {
 const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
-  onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, isPaused: isPausedProp, onTogglePause: onTogglePauseProp, skipIntro, fullFlow,
+  onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, isPaused: isPausedProp, allowPause = true, onTogglePause: onTogglePauseProp, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
   hideBottomNav = false, onQuestionChange,
@@ -121,8 +122,8 @@ const ListeningExamEngine = ({
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [isPausedInternal, setIsPausedInternal] = useState(false);
-  const isPaused = isPausedProp ?? isPausedInternal;
-  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
+  const isPaused = allowPause === false ? false : (isPausedProp ?? isPausedInternal);
+  const togglePause = allowPause === false ? undefined : (onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p)));
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);

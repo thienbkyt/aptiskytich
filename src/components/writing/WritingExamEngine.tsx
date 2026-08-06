@@ -49,6 +49,7 @@ interface WritingExamEngineProps {
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
   isPaused?: boolean;
+  allowPause?: boolean;
   onTogglePause?: () => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
@@ -107,7 +108,7 @@ const PART_LABELS: Record<WritingPartType, string> = {
 const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  externalTimeLeft, onTimeTick, isPaused: isPausedProp, onTogglePause: onTogglePauseProp, skipIntro, fullFlow, isLastPart,
+  externalTimeLeft, onTimeTick, isPaused: isPausedProp, allowPause = true, onTogglePause: onTogglePauseProp, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious, sourceQuestionIds, examSetId,
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
@@ -122,8 +123,8 @@ const WritingExamEngine = ({
     return () => document.body.classList.remove("exam-active");
   }, []);
   const [isPausedInternal, setIsPausedInternal] = useState(false);
-  const isPaused = isPausedProp ?? isPausedInternal;
-  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
+  const isPaused = allowPause === false ? false : (isPausedProp ?? isPausedInternal);
+  const togglePause = allowPause === false ? undefined : (onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p)));
   const [submitted, setSubmitted] = useState(!!reviewMode);
   useExitWarning(hasStarted && !submitted && !reviewMode);
   const [isReviewing, setIsReviewing] = useState(false);

@@ -51,6 +51,7 @@ interface GrammarExamEngineProps {
   /** Exam set currently being taken — used for error reports. */
   examSetId?: string | null;
   isPaused?: boolean;
+  allowPause?: boolean;
   onTogglePause?: () => void;
   hideTimer?: boolean;
 }
@@ -74,7 +75,7 @@ const GrammarExamEngine = ({
   onGroupCount,
   allowReveal = false,
   examSetId,
-  isPaused: isPausedProp,
+  isPaused: isPausedProp, allowPause = true,
   onTogglePause: onTogglePauseProp,
   hideTimer = false,
 }: GrammarExamEngineProps) => {
@@ -88,8 +89,8 @@ const GrammarExamEngine = ({
   );
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [isPausedInternal, setIsPausedInternal] = useState(false);
-  const isPaused = isPausedProp ?? isPausedInternal;
-  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
+  const isPaused = allowPause === false ? false : (isPausedProp ?? isPausedInternal);
+  const togglePause = allowPause === false ? undefined : (onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p)));
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [isReviewing, setIsReviewing] = useState(false);
