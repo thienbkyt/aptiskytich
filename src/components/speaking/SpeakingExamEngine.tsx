@@ -259,6 +259,14 @@ const SpeakingExamEngine = ({
     if (firstText) void warmTTS(firstText, "en", "exam");
   }, [phase, getSpokenTextForIndex]);
 
+  // Warm the PART PROMPT (first audio of every part) before the prompt screen.
+  useEffect(() => {
+    if (phase !== "start" && phase !== "instructions") return;
+    const promptText = PART_PROMPTS[partType];
+    if (promptText) void warmTTS(promptText, "en", "exam");
+  }, [phase, partType]);
+
+
 
 
   // Image resolution is handled by <SignedImage /> directly.

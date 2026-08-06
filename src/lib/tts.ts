@@ -107,29 +107,46 @@ function browserFallback(text: string, lang: Lang, token: number): Promise<void>
   });
 }
 
+// In-flight de-duplication: keyed the same as urlCache, so concurrent warms of
+// the same phrase share one edge-function call (no duplicate ElevenLabs cost).
+const pending = new Map<string, Promise<string | null>>();
+
 async function fetchUrl(text: string, lang: Lang, surface: Surface = "app"): Promise<string | null> {
   const key = cacheKey(text, lang, surface);
   const cached = urlCache.get(key);
   if (cached) return cached;
 
-  // Timeout belongs on the network step only — never on playback.
-  // ElevenLabs first-time synthesis takes 1-3s, so exam voices get more room.
-  const timeoutMs = surface === "exam" ? 12000 : 4000;
-  const invoke = supabase.functions.invoke("tts", { body: { text, lang, surface } });
-  const raced = await Promise.race([
-    invoke.then((r) => r).catch((e) => ({ data: null, error: e })),
-    new Promise<{ data: null; error: string }>((r) =>
-      setTimeout(() => r({ data: null, error: "timeout" }), timeoutMs),
-    ),
-  ]);
-  const { data, error } = raced as { data: { url?: string } | null; error: unknown };
-  if (error || !data?.url) {
-    console.warn("[tts] invoke failed, falling back:", error || data);
-    return null;
+  const inflight = pending.get(key);
+  if (inflight) return inflight;
+
+  const run = (async () => {
+    // Timeout belongs on the network step only — never on playback.
+    // ElevenLabs first-time synthesis takes 1-3s, so exam voices get more room.
+    const timeoutMs = surface === "exam" ? 12000 : 4000;
+    const invoke = supabase.functions.invoke("tts", { body: { text, lang, surface } });
+    const raced = await Promise.race([
+      invoke.then((r) => r).catch((e) => ({ data: null, error: e })),
+      new Promise<{ data: null; error: string }>((r) =>
+        setTimeout(() => r({ data: null, error: "timeout" }), timeoutMs),
+      ),
+    ]);
+    const { data, error } = raced as { data: { url?: string } | null; error: unknown };
+    if (error || !data?.url) {
+      console.warn("[tts] invoke failed, falling back:", error || data);
+      return null;
+    }
+    urlCache.set(key, data.url as string);
+    return data.url as string;
+  })();
+
+  pending.set(key, run);
+  try {
+    return await run;
+  } finally {
+    pending.delete(key);
   }
-  urlCache.set(key, data.url as string);
-  return data.url as string;
 }
+
 
 
 function stopCurrent() {
