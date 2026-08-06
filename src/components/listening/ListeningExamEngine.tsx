@@ -13,6 +13,7 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import TimerDisplay from "@/components/reading/TimerDisplay";
+import { TimerProvider } from "@/components/reading/TimerContext";
 import PausedTimeNotice from "@/components/exam/PausedTimeNotice";
 import { useCountdown } from "@/hooks/useCountdown";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
@@ -625,6 +626,7 @@ const ListeningExamEngine = ({
   const safeIndex = Math.min(Math.max(currentIndex, 0), Math.max(0, totalQuestions - 1));
 
   return (
+    <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       <RotateDeviceOverlay />
       {adminControls}
@@ -741,6 +743,7 @@ const ListeningExamEngine = ({
         )}
       </div>
     </div>
+    </TimerProvider>
   );
 };
 

@@ -668,7 +668,7 @@ const ReadingExamEngine = ({
   }
 
   return (
-    <TimerProvider timeLeft={timeLeft} totalTime={timeLimit}>
+    <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       <RotateDeviceOverlay />
       {adminControls}
