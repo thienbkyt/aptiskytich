@@ -95,7 +95,7 @@ const ListeningPart3Conversation = ({
         <p className="text-base text-foreground leading-relaxed mb-4">{q.questionText}</p>
 
         {q.audioUrl ? (
-          <LimitedAudioPlayer src={q.audioUrl} src2={q.audioUrl2} introText="You will hear a conversation between a man and a woman. Decide whether each opinion is expressed by the man, the woman, or both." maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
+          <LimitedAudioPlayer src={q.audioUrl} src2={q.audioUrl2} introText="You will hear a conversation between a man and a woman. Decide whether each opinion is expressed by the man, the woman, or both." reviewMode={reveal} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:${q.id}`} />
         ) : (
           <MissingMediaNotice kind="audio" skill="listening" partType="part3" questionNumber={currentIndex + 1} />
         )}
