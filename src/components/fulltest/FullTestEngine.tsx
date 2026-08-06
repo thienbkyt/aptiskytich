@@ -1359,7 +1359,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         writingSubmissionsByPartRef.current[currentPartIndex] = { ...existing, perQuestion };
       }
 
-      if (!isLastWritingPart) {
+      if (!isLastWritingPart && !timeUpRef.current) {
         // Just advance to the next writing part — do NOT call handlePartComplete
         // (which would add 0 to scores.writing and clobber the AI total later).
         const key = `writing-${currentPartIndex}`;
