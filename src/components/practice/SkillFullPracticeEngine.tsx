@@ -873,6 +873,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             setScores({ correct: 0, total: 0 });
             setListeningTimeLeft(SKILL_TIMES.listening);
             timeUpRef.current = false;
+            setIsPaused(false);
             lastNavDirectionRef.current = "forward";
             setCurrentPartIndex(0);
             setEngineKey((k) => k + 1);
