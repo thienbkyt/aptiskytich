@@ -441,6 +441,27 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_speaking_p2p3_extra_20260806: {
+        Row: {
+          backed_up_at: string | null
+          exam_set_id: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_wsr_baochan_c5721b48: {
         Row: {
           cefr: string | null
