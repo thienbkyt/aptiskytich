@@ -9,6 +9,7 @@ import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
+  collectSampleAnswers,
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
   toGrammarQuestions,
