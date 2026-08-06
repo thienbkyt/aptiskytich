@@ -168,14 +168,14 @@ function ensureShared(): HTMLAudioElement {
 /**
  * Fire-and-forget speak. Replaces previous browser `speak()` helpers.
  */
-export async function speakWithTTS(text: string, lang: Lang): Promise<void> {
+export async function speakWithTTS(text: string, lang: Lang, opts?: { surface?: Surface }): Promise<void> {
   const trimmed = text?.trim();
   if (!trimmed) return;
   stopCurrent();
   const token = playToken;
 
   try {
-    const url = await fetchUrl(trimmed, lang);
+    const url = await fetchUrl(trimmed, lang, opts?.surface);
     if (token !== playToken) return; // a newer speak request superseded us
 
     if (!url) {
@@ -199,7 +199,7 @@ export async function speakWithTTS(text: string, lang: Lang): Promise<void> {
 /**
  * Awaitable speak — resolves when audio finishes (or fails / is superseded).
  */
-export function speakAsync(text: string, lang: Lang): Promise<void> {
+export function speakAsync(text: string, lang: Lang, opts?: { surface?: Surface }): Promise<void> {
   const trimmed = text?.trim();
   if (!trimmed) return Promise.resolve();
   stopCurrent();
@@ -214,7 +214,7 @@ export function speakAsync(text: string, lang: Lang): Promise<void> {
     };
 
     try {
-      const url = await fetchUrl(trimmed, lang);
+      const url = await fetchUrl(trimmed, lang, opts?.surface);
       if (token !== playToken) {
         // We were superseded while fetching the URL — bail out cleanly.
         finish();
@@ -259,10 +259,24 @@ export function speakAsync(text: string, lang: Lang): Promise<void> {
  * Warm the URL cache for a phrase so a later speak() starts almost instantly.
  * Fire-and-forget; never plays audio and swallows all errors.
  */
-export function prefetchTTS(text: string, lang: Lang): void {
+export function prefetchTTS(text: string, lang: Lang, surface: Surface = "app"): void {
   const trimmed = text?.trim();
   if (!trimmed) return;
-  void fetchUrl(trimmed, lang).catch(() => { /* noop */ });
+  void fetchUrl(trimmed, lang, surface).catch(() => { /* noop */ });
+}
+
+/**
+ * Warm the server-side + URL cache for a phrase without playing any audio.
+ * Never throws.
+ */
+export async function warmTTS(text: string, lang: Lang, surface: Surface = "app"): Promise<void> {
+  const trimmed = text?.trim();
+  if (!trimmed) return;
+  try {
+    await fetchUrl(trimmed, lang, surface);
+  } catch {
+    /* noop */
+  }
 }
 
 /** Stop any TTS currently playing */
