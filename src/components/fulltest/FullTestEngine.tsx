@@ -137,6 +137,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [engineKey, setEngineKey] = useState(0);
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
+  const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(SKILL_TIMES.reading);
   // Prevent double-advancing if a child engine fires onComplete twice
   // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
   const completedKeysRef = useRef<Set<string>>(new Set());
@@ -989,6 +990,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partType={partType}
           testTitle={`${testTitle} – Reading ${readingPartLabel(currentPart.part)}`}
           timeLimit={SKILL_TIMES.reading}
+          initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
+          onTimeTick={(t) => setReadingTimeLeft(t)}
           skipIntro={currentPartIndex > 0}
           fullFlow
           onExit={handleExit}

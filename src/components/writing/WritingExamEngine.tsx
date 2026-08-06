@@ -161,6 +161,7 @@ const WritingExamEngine = ({
 
 
   useEffect(() => {
+    if (hideTimer) return;
     if (!hasStarted || submitted || timeLeft <= 0) return;
     const t = setInterval(() => {
       const next = Math.max(0, timeLeft - 1);
@@ -170,11 +171,12 @@ const WritingExamEngine = ({
       }
     }, 1000);
     return () => clearInterval(t);
-  }, [hasStarted, submitted, timeLeft, externalTimeLeft, onTimeTick]);
+  }, [hideTimer, hasStarted, submitted, timeLeft, externalTimeLeft, onTimeTick]);
 
   useEffect(() => {
+    if (hideTimer) return;
     if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
-  }, [hasStarted, submitted, timeLeft]);
+  }, [hideTimer, hasStarted, submitted, timeLeft]);
 
   // Note: engine is remounted per part (key changes), so we no longer reset
   // answers on partType change — that would clobber restored initialAnswers.
