@@ -742,6 +742,7 @@ const ListeningExamEngine = ({
         )}
       </div>
     </div>
+    </TimerProvider>
   );
 };
 
