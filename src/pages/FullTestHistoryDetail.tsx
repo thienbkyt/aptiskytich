@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getLevel, getLevelColor } from "@/data/questions";
+import { getLevelColor, getSkillBand } from "@/data/questions";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import FullTestScoreTable from "@/components/fulltest/FullTestScoreTable";
