@@ -427,8 +427,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
     setEngineKey((k) => k + 1);
     setPhase("exam");
     // Reset shared timers when switching into a skill that uses one
+    timeUpRef.current = false;
+    notAttemptedPartsRef.current.delete(`${sk}-${partIdx}`);
     if (sk === "listening") setListeningTimeLeft(SKILL_TIMES.listening);
     if (sk === "writing") setWritingTimeLeft(SKILL_TIMES.writing);
+    if (sk === "reading") setReadingTimeLeft(SKILL_TIMES.reading);
   };
 
   const handleAdminBackPart = () => {
