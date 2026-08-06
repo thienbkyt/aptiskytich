@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import ExamHeader from "@/components/exam/ExamHeader";
 import TimerDisplay from "@/components/reading/TimerDisplay";
+import { TimerProvider } from "@/components/reading/TimerContext";
 import PausedTimeNotice from "@/components/exam/PausedTimeNotice";
 import { useCountdown } from "@/hooks/useCountdown";
 import ExamInstructions from "@/components/exam/ExamInstructions";
