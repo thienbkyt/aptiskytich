@@ -97,16 +97,30 @@ serve(async (req) => {
         { global: { headers: { Authorization: authHeader } } }
       );
 
-      const token = authHeader.replace("Bearer ", "");
-      const { data: claims, error: claimsError } =
-        await supabaseClient.auth.getClaims(token);
-      if (claimsError || !claims?.claims) {
+      const token = authHeader.replace("Bearer ", "").trim();
+
+      // Try claim verification first (fast, local for asymmetric keys),
+      // then fall back to a server-side user lookup (works for legacy HS256
+      // tokens and when the JWKS is unavailable).
+      let resolvedUserId = "";
+      try {
+        const { data: claims } = await supabaseClient.auth.getClaims(token);
+        resolvedUserId = String((claims as any)?.claims?.sub || "");
+      } catch (_e) {
+        resolvedUserId = "";
+      }
+      if (!resolvedUserId) {
+        const { data: userData } = await supabaseClient.auth.getUser(token);
+        resolvedUserId = String(userData?.user?.id || "");
+      }
+      if (!resolvedUserId) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      userId = String((claims.claims as any).sub || "");
+      userId = resolvedUserId;
+
     }
 
     // Service-role client for cache + quota writes (bypasses RLS).
