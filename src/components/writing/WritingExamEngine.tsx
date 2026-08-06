@@ -542,6 +542,7 @@ const WritingExamEngine = ({
 
   const isLast = isLastPart ?? true;
   return (
+    <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
     <div className={`bg-[#F3F3F3] flex flex-col ${reviewMode ? "" : "min-h-screen"}`}>
       {quotaModal && (
         <UpgradeLock
