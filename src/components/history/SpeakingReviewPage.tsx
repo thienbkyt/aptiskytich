@@ -290,6 +290,14 @@ const SpeakingReviewPage = ({
     }
   };
 
+  // Sample answers come straight from the exam set (study material — no snapshot
+  // needed), already loaded into the part data via the transformers.
+  const samplesForPart =
+    partType === "part1" ? part1Data?.sampleAnswers
+    : partType === "part2" ? part2Data?.sampleAnswers
+    : partType === "part3" ? part3Data?.sampleAnswers
+    : part4Data?.sampleAnswers;
+
   if (v2Part) {
     const rawItems: any[] = Array.isArray(v2Part.items) ? v2Part.items : [];
     // Defensive coercion: some legacy rows stored text fields as objects
@@ -317,6 +325,8 @@ const SpeakingReviewPage = ({
             scale50={v2Scale}
             cefr={v2Cefr}
             partLabel={partLabel}
+            sampleAnswers={samplesForPart}
+            sharedSample={partType === "part4"}
           />
         </div>
       </div>
@@ -339,6 +349,7 @@ const SpeakingReviewPage = ({
           onChangeIndex={setReviewIndex}
           onBack={onExit}
           hidePager={questionIndex !== undefined}
+          sampleAnswers={samplesForPart}
           onRegrade={handleRegrade}
         />
       </div>
