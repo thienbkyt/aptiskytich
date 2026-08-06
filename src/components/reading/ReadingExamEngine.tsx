@@ -56,6 +56,7 @@ interface ReadingExamEngineProps {
   onTimeTick?: (t: number) => void;
   /** Pause state controlled by a parent (shared clock across parts). */
   isPaused?: boolean;
+  allowPause?: boolean;
   onTogglePause?: () => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
@@ -118,7 +119,7 @@ const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
-  initialTimeLeft, onTimeTick, isPaused: isPausedProp, onTogglePause: onTogglePauseProp, skipIntro, fullFlow, showResultsOnSubmit = false,
+  initialTimeLeft, onTimeTick, isPaused: isPausedProp, allowPause = true, onTogglePause: onTogglePauseProp, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
   pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, allowReveal = false,
@@ -142,8 +143,8 @@ const ReadingExamEngine = ({
     : undefined;
   const [submitted, setSubmitted] = useState(!!reviewMode);
   const [isPausedInternal, setIsPausedInternal] = useState(false);
-  const isPaused = isPausedProp ?? isPausedInternal;
-  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
+  const isPaused = allowPause === false ? false : (isPausedProp ?? isPausedInternal);
+  const togglePause = allowPause === false ? undefined : (onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p)));
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
