@@ -230,17 +230,34 @@ const SpeakingExamEngine = ({
     return "";
   };
 
+  // Single source of truth for the text that is read aloud for a given question index.
+  const getSpokenTextForIndex = useCallback((i: number): string => {
+    if (partType === "part1" && part1Data) return part1Data.questions?.[i] || "";
+    if (partType === "part2" && part2Data) return part2Data.questions?.[i] || part2Data.prompt || "";
+    if (partType === "part3" && part3Data) return part3Data.questions?.[i] || part3Data.prompt || "";
+    if (partType === "part4" && part4Data) {
+      const parts: string[] = [];
+      if (part4Data.topic) parts.push(`Topic: ${part4Data.topic}.`);
+      if (part4Data.questions?.length) parts.push(part4Data.questions.join(" "));
+      parts.push("You now have one minute to think about your answers. You can make notes if you wish.");
+      return parts.join(" ");
+    }
+    return "";
+  }, [partType, part1Data, part2Data, part3Data, part4Data]);
+
   // Warm the exam voice for the NEXT question so its playback starts instantly.
   useEffect(() => {
-    const nextText = (() => {
-      const i = currentIndex + 1;
-      if (partType === "part1" && part1Data) return part1Data.questions?.[i];
-      if (partType === "part2" && part2Data) return part2Data.questions?.[i];
-      if (partType === "part3" && part3Data) return part3Data.questions?.[i];
-      return "";
-    })();
+    if (partType === "part4") return; // part4 has a single combined text, warmed at the prompt screen
+    const nextText = getSpokenTextForIndex(currentIndex + 1);
     if (nextText) void warmTTS(nextText, "en", "exam");
-  }, [currentIndex, partType, part1Data, part2Data, part3Data]);
+  }, [currentIndex, partType, getSpokenTextForIndex]);
+
+  // Warm the FIRST question while the student is still on the instructions screen.
+  useEffect(() => {
+    if (phase !== "prompt" && phase !== "instructions" && phase !== "start") return;
+    const firstText = getSpokenTextForIndex(0);
+    if (firstText) void warmTTS(firstText, "en", "exam");
+  }, [phase, getSpokenTextForIndex]);
 
 
 
