@@ -326,12 +326,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       const built: ReadingFullPartResult[] = parts.map((pt, idx) => {
         const partType = pt.partNorm as "part1" | "part2" | "part3" | "part4";
         const stored = readingResultsByPartRef.current[idx];
-        const res = stored || { correct: 0, total: 0 };
+        const expected = expectedReadingTotal(partType, pt.questions);
+        const res = stored || { correct: 0, total: expected };
         const ans = readingAnswersByPartRef.current[idx] || { p1: [], p2: [], p3: [], p4: [] };
         const entry: ReadingFullPartResult = {
           partType,
           correct: res.correct,
-          total: res.total,
+          total: stored ? res.total : expected,
           examSetId: pt.id,
           answers: ans,
           notAttempted: !stored,
@@ -343,6 +344,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         return entry;
       });
       const totalCorrect = built.reduce((s, p) => s + p.correct, 0);
+      // Denominator = every question in all 4 parts, including parts never reached.
       const totalQs = built.reduce((s, p) => s + p.total, 0);
       const score50 = totalQs > 0 ? Math.round((totalCorrect / totalQs) * 50) : 0;
       setReadingFullParts(built);
