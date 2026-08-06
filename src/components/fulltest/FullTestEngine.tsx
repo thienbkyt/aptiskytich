@@ -141,6 +141,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // One shared pause for the whole test clock so it stays frozen across parts.
   const [isPaused, setIsPaused] = useState(false);
   const togglePause = useCallback(() => setIsPaused((p) => !p), []);
+  // Shared clock for a skill hit 0 → submit the current part and jump to the next
+  // skill instead of mounting the remaining parts with 0s left (chain auto-submit).
+  const timeUpRef = useRef(false);
+  /** Parts the student never reached because the skill clock ran out. */
+  const notAttemptedPartsRef = useRef<Set<string>>(new Set());
   // Prevent double-advancing if a child engine fires onComplete twice
   // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
   const completedKeysRef = useRef<Set<string>>(new Set());
