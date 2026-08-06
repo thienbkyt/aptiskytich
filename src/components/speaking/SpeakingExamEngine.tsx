@@ -721,6 +721,32 @@ const SpeakingExamEngine = ({
     }
   }, [partType]);
 
+  // Coming back to a hidden tab: recompute the remaining time immediately from
+  // the real deadline. If it already elapsed, stop the recording right away so
+  // no over-length audio is ever graded.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (speakEndAtRef.current != null) {
+        const remaining = Math.max(0, Math.ceil((speakEndAtRef.current - now) / 1000));
+        setSpeakTimeLeft(remaining);
+        if (remaining <= 0) {
+          if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+          speakEndAtRef.current = null;
+          doStopAndAdvance();
+        }
+        return;
+      }
+      if (prepEndAtRef.current != null) {
+        const remaining = Math.max(0, Math.ceil((prepEndAtRef.current - now) / 1000));
+        setPrepTimeLeft(remaining);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [doStopAndAdvance]);
+
   const handleFinishRecording = useCallback(() => {
     if (!canFinish) return;
     doStopAndAdvance();
