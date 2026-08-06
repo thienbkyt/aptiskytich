@@ -1348,6 +1348,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         ...prev,
         writing: allFour ? { correct: scale50, total: 50 } : { correct: 0, total: 0 },
       }));
+      if (allFour) {
+        setSkillOverrides((prev) => ({ ...prev, writing: { scale50, cefr: cefr || null } }));
+      }
       if (!allFour) setWritingUngraded(quotaBlocked ? "quota" : "error");
       setPhase("completed");
 
