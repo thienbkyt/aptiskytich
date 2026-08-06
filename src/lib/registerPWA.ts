@@ -115,6 +115,7 @@ export function registerPWA() {
       // Navigated somewhere outside the exam → apply silently.
       window.addEventListener(LOCATION_EVENT, () => {
         applyWhenSafe();
+        lastPathname = window.location.pathname;
       });
 
       const updateSW = registerSW({
