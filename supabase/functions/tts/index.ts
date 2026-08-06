@@ -8,10 +8,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const ELEVENLABS_VOICE_ID = "ET1Y16dAzb7BWkm9Bmxh";
+
 const VOICE_CONFIG = {
   en: { languageCode: "en-US", name: "en-US-Neural2-J" },
   vi: { languageCode: "vi-VN", name: "vi-VN-Neural2-A" },
 } as const;
+
 
 // Simple stable hash (FNV-1a 32-bit) — fine for cache key
 function hash(str: string): string {
