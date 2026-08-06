@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { markExamActive } from "@/lib/examActive";
 import ExamHeader from "@/components/exam/ExamHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import { resetLimitedAudioPlays } from "@/components/exam/LimitedAudioPlayer";
@@ -28,7 +29,6 @@ import type { ListeningHighlightData } from "@/lib/listeningReview";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
-import { markExamActive } from "@/lib/examActive";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 

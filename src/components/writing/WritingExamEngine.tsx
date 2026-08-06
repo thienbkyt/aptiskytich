@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { markExamActive } from "@/lib/examActive";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import ExamHeader from "@/components/exam/ExamHeader";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -24,7 +25,6 @@ import UpgradeLock from "@/components/pro/UpgradeLock";
 import { toast } from "sonner";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 import type {
-import { markExamActive } from "@/lib/examActive";
   WritingPart1Data,
   WritingPart2Data,
   WritingPart3Data,

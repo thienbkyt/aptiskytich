@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { markExamActive } from "@/lib/examActive";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
@@ -24,7 +25,6 @@ import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
-import { markExamActive } from "@/lib/examActive";
 
 interface GrammarExamEngineProps {
   questions: Question[];

@@ -1,4 +1,5 @@
 import { QuotaExceededError } from "@/lib/quotaError";
+import { markExamActive } from "@/lib/examActive";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
@@ -43,7 +44,6 @@ import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { safeText } from "@/lib/safeText";
-import { markExamActive } from "@/lib/examActive";
 
 /**
  * Full Test session id must SURVIVE a reload / re-entry mid-attempt, otherwise

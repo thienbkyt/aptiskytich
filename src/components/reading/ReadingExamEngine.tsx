@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { markExamActive } from "@/lib/examActive";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -25,7 +26,6 @@ import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
-import { markExamActive } from "@/lib/examActive";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 

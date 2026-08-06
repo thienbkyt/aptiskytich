@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { markExamActive } from "@/lib/examActive";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -54,7 +55,6 @@ import UpgradeLock from "@/components/pro/UpgradeLock";
 
 import SpeakingProfileView from "./SpeakingProfileView";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
-import { markExamActive } from "@/lib/examActive";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
