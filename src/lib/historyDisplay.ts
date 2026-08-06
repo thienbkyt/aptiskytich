@@ -68,13 +68,15 @@ export const computeHistoryDisplay = (
 
         displayScore: `${snapScaled}/50`,
 
-        displayBand: snapBand || getSkillBand(snapScaled, skill as any),
+        // Always recompute from the /50 score (stored bands may be legacy/wrong).
+        displayBand: getSkillBand(snapScaled, skill as any),
 
         scorePct: snapScaled / 50,
 
       };
 
     }
+
 
     return { displayScore: "—", displayBand: "—", scorePct: null };
 
