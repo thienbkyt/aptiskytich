@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import ExamHeader from "@/components/exam/ExamHeader";
 import TimerDisplay from "@/components/reading/TimerDisplay";
+import PausedTimeNotice from "@/components/exam/PausedTimeNotice";
+import { useCountdown } from "@/hooks/useCountdown";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import WritingPart1Short from "@/components/writing/WritingPart1Short";
 import WritingPart2Social from "@/components/writing/WritingPart2Social";
@@ -45,6 +47,8 @@ interface WritingExamEngineProps {
   part4Data?: WritingPart4Data;
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
+  isPaused?: boolean;
+  onTogglePause?: () => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
   isLastPart?: boolean;
@@ -102,7 +106,7 @@ const PART_LABELS: Record<WritingPartType, string> = {
 const WritingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
-  externalTimeLeft, onTimeTick, skipIntro, fullFlow, isLastPart,
+  externalTimeLeft, onTimeTick, isPaused: isPausedProp, onTogglePause: onTogglePauseProp, skipIntro, fullFlow, isLastPart,
   onExit, onComplete, onPrevious, sourceQuestionIds, examSetId,
   showResultsOnSubmit, onPartAnswers,
   reviewMode, gradingResult, initialAnswers, onAnswersChange, enterAtLastQuestion,
@@ -116,8 +120,9 @@ const WritingExamEngine = ({
     document.body.classList.add("exam-active");
     return () => document.body.classList.remove("exam-active");
   }, []);
-  const [internalTimeLeft, setInternalTimeLeft] = useState(externalTimeLeft ?? timeLimit);
-  const timeLeft = externalTimeLeft ?? internalTimeLeft;
+  const [isPausedInternal, setIsPausedInternal] = useState(false);
+  const isPaused = isPausedProp ?? isPausedInternal;
+  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
   const [submitted, setSubmitted] = useState(!!reviewMode);
   useExitWarning(hasStarted && !submitted && !reviewMode);
   const [isReviewing, setIsReviewing] = useState(false);
@@ -160,18 +165,13 @@ const WritingExamEngine = ({
   }, [reviewMode]);
 
 
-  useEffect(() => {
-    if (hideTimer) return;
-    if (!hasStarted || submitted || timeLeft <= 0) return;
-    const t = setInterval(() => {
-      const next = Math.max(0, timeLeft - 1);
-      if (onTimeTick) onTimeTick(next);
-      if (externalTimeLeft === undefined) {
-        setInternalTimeLeft((p) => Math.max(0, p - 1));
-      }
-    }, 1000);
-    return () => clearInterval(t);
-  }, [hideTimer, hasStarted, submitted, timeLeft, externalTimeLeft, onTimeTick]);
+  const { timeLeft, pausedMs } = useCountdown({
+    totalSeconds: timeLimit,
+    initialLeft: externalTimeLeft,
+    running: hasStarted && !submitted && !hideTimer,
+    paused: isPaused,
+    onTick: onTimeTick,
+  });
 
   useEffect(() => {
     if (hideTimer) return;
@@ -413,7 +413,7 @@ const WritingExamEngine = ({
         {adminControls}
         {hasStarted && (
           <div className="pr-10 pb-3">
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
         <p className="text-sm text-gray-700 mb-2">Aptis General Practice Test</p>
@@ -447,7 +447,7 @@ const WritingExamEngine = ({
         <ExamHeader skillLabel="Writing" partLabel="Aptis General Writing Instructions" onExit={onExit} />
         {hasStarted && (
           <div className="px-6 pt-3">
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
         <div className="flex-1 bg-white pl-[80px] pt-[40px] font-sans text-black">

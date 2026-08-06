@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import TimerDisplay from "@/components/reading/TimerDisplay";
+import PausedTimeNotice from "@/components/exam/PausedTimeNotice";
+import { useCountdown } from "@/hooks/useCountdown";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
@@ -48,6 +50,9 @@ interface GrammarExamEngineProps {
   allowReveal?: boolean;
   /** Exam set currently being taken — used for error reports. */
   examSetId?: string | null;
+  isPaused?: boolean;
+  onTogglePause?: () => void;
+  hideTimer?: boolean;
 }
 
 type Phase = "instructions" | "grammar_intro" | "practice" | "review";
@@ -69,6 +74,9 @@ const GrammarExamEngine = ({
   onGroupCount,
   allowReveal = false,
   examSetId,
+  isPaused: isPausedProp,
+  onTogglePause: onTogglePauseProp,
+  hideTimer = false,
 }: GrammarExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -79,12 +87,19 @@ const GrammarExamEngine = ({
     reviewMode && initialFillAnswers ? initialFillAnswers : new Array(questions.length).fill("")
   );
   const [submitted, setSubmitted] = useState(!!reviewMode);
-  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [isPausedInternal, setIsPausedInternal] = useState(false);
+  const isPaused = isPausedProp ?? isPausedInternal;
+  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [isReviewing, setIsReviewing] = useState(false);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  const { timeLeft, pausedMs } = useCountdown({
+    totalSeconds: timeLimit,
+    running: hasStarted && !submitted && !hideTimer,
+    paused: isPaused,
+  });
   useEffect(() => {
     document.body.classList.add("exam-active");
     return () => document.body.classList.remove("exam-active");
@@ -170,14 +185,7 @@ const GrammarExamEngine = ({
   }, [phase, currentGroupIdx]);
 
   useEffect(() => {
-    if (!hasStarted || submitted || timeLeft <= 0) return;
-    const t = setInterval(() => {
-      setTimeLeft((p) => Math.max(0, p - 1));
-    }, 1000);
-    return () => clearInterval(t);
-  }, [hasStarted, submitted, timeLeft]);
-
-  useEffect(() => {
+    if (hideTimer) return;
     if (hasStarted && !submitted && timeLeft <= 0) handleSubmit();
   }, [hasStarted, submitted, timeLeft]);
 
@@ -317,7 +325,7 @@ const GrammarExamEngine = ({
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
         {hasStarted && (
           <div className="px-6 pt-3">
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
         <div className="flex-1 w-full pb-20">
@@ -350,7 +358,7 @@ const GrammarExamEngine = ({
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
         {hasStarted && (
           <div className="px-6 pt-3">
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
@@ -485,7 +493,7 @@ const GrammarExamEngine = ({
                 />
                 Bookmark
               </button>
-              <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+              <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
             </div>
           </div>
 

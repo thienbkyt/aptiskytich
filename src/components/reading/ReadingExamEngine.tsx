@@ -12,6 +12,8 @@ import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { TimerProvider } from "@/components/reading/TimerContext";
 import TimerDisplay from "@/components/reading/TimerDisplay";
+import PausedTimeNotice from "@/components/exam/PausedTimeNotice";
+import { useCountdown } from "@/hooks/useCountdown";
 import type {
   ReadingSentenceQuestion,
   ReadingCohesionQuestion,
@@ -52,6 +54,9 @@ interface ReadingExamEngineProps {
   onPreviousPart?: () => void;
   initialTimeLeft?: number;
   onTimeTick?: (t: number) => void;
+  /** Pause state controlled by a parent (shared clock across parts). */
+  isPaused?: boolean;
+  onTogglePause?: () => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
   /** When true, render ReadingResults after submission instead of the locked review UI. */
@@ -113,7 +118,7 @@ const ReadingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Question, part2Question, part3Question, part4Question,
   onExit, onComplete, onPreviousPart,
-  initialTimeLeft, onTimeTick, skipIntro, fullFlow, showResultsOnSubmit = false,
+  initialTimeLeft, onTimeTick, isPaused: isPausedProp, onTogglePause: onTogglePauseProp, skipIntro, fullFlow, showResultsOnSubmit = false,
   sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange, enterAtLastQuestion,
   reviewData, reviewDataLoading, examSetId, totalForScore, hideTimer = false,
   pageBase, pageTotal, pageLabelPrefix, initialSection, onPageCount, allowReveal = false,
@@ -136,13 +141,22 @@ const ReadingExamEngine = ({
     ? pageBase + (partType === "part2" ? currentIndex : 0) + 1
     : undefined;
   const [submitted, setSubmitted] = useState(!!reviewMode);
-  const [timeLeft, setTimeLeft] = useState(initialTimeLeft ?? timeLimit);
+  const [isPausedInternal, setIsPausedInternal] = useState(false);
+  const isPaused = isPausedProp ?? isPausedInternal;
+  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
   const [isReviewing, setIsReviewing] = useState(!!reviewMode);
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
+  const { timeLeft, pausedMs } = useCountdown({
+    totalSeconds: timeLimit,
+    initialLeft: initialTimeLeft,
+    running: hasStarted && !submitted && !hideTimer,
+    paused: isPaused,
+    onTick: onTimeTick,
+  });
   useEffect(() => {
     document.body.classList.add("exam-active");
     return () => document.body.classList.remove("exam-active");
@@ -343,19 +357,6 @@ const ReadingExamEngine = ({
     });
     return () => window.cancelAnimationFrame(id);
   }, [phase, currentIndex, partType]);
-
-  useEffect(() => {
-    if (hideTimer) return;
-    if (!hasStarted || submitted || timeLeft <= 0) return;
-    const t = setInterval(() => {
-      setTimeLeft((p) => {
-        const next = Math.max(0, p - 1);
-        onTimeTick?.(next);
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [hasStarted, submitted, timeLeft, hideTimer]);
 
   useEffect(() => {
     if (hideTimer) return;
@@ -579,7 +580,7 @@ const ReadingExamEngine = ({
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
           <div className="px-6 pt-3">
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
         <div className="flex-1 w-full pb-20">
@@ -606,7 +607,7 @@ const ReadingExamEngine = ({
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
           <div className="px-6 pt-3">
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
         <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
@@ -642,6 +643,7 @@ const ReadingExamEngine = ({
         <RotateDeviceOverlay />
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
+          <PausedTimeNotice pausedMs={pausedMs} />
           <ReadingResults
             correct={resultStats.correct}
             total={resultStats.total}

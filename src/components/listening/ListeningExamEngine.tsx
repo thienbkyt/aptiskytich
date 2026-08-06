@@ -13,6 +13,8 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import TimerDisplay from "@/components/reading/TimerDisplay";
+import PausedTimeNotice from "@/components/exam/PausedTimeNotice";
+import { useCountdown } from "@/hooks/useCountdown";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
 import type {
   ListeningPart1Question,
@@ -47,6 +49,8 @@ interface ListeningExamEngineProps {
   onPreviousPart?: () => void;
   externalTimeLeft?: number;
   onTimeTick?: (t: number) => void;
+  isPaused?: boolean;
+  onTogglePause?: () => void;
   skipIntro?: boolean;
   fullFlow?: boolean;
   /** When true, render ListeningResults after submission instead of locked review. */
@@ -99,7 +103,7 @@ const PART_LABELS: Record<ListeningPartType, string> = {
 const ListeningExamEngine = ({
   partType, testTitle, timeLimit,
   part1Questions, part2Questions, part3Questions, part4Questions,
-  onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, skipIntro, fullFlow,
+  onExit, onComplete, onPreviousPart, externalTimeLeft, onTimeTick, isPaused: isPausedProp, onTogglePause: onTogglePauseProp, skipIntro, fullFlow,
   showResultsOnSubmit = false, sourceQuestionIds, reviewMode, initialAnswers, onAnswersChange,
   highlightData, highlightLoading, examSetId, hideTimer = false, pageBase, pageTotal, initialQuestion, onQuestionCount,
   hideBottomNav = false, onQuestionChange,
@@ -115,7 +119,9 @@ const ListeningExamEngine = ({
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
   const [submitted, setSubmitted] = useState(!!reviewMode);
-  const [timeLeft, setTimeLeft] = useState(externalTimeLeft ?? timeLimit);
+  const [isPausedInternal, setIsPausedInternal] = useState(false);
+  const isPaused = isPausedProp ?? isPausedInternal;
+  const togglePause = onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p));
   const [seenQuestions, setSeenQuestions] = useState<Set<number>>(new Set());
   const [bookmarked, setBookmarked] = useState<Set<number>>(new Set());
   const [resultStats, setResultStats] = useState<{ correct: number; total: number } | null>(null);
@@ -257,17 +263,13 @@ const ListeningExamEngine = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examSetId]);
 
-  useEffect(() => {
-    if (!hasStarted || submitted || timeLeft <= 0) return;
-    const t = setInterval(() => {
-      setTimeLeft((p) => {
-        const next = Math.max(0, p - 1);
-        onTimeTick?.(next);
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [hasStarted, submitted, timeLeft]);
+  const { timeLeft, pausedMs } = useCountdown({
+    totalSeconds: timeLimit,
+    initialLeft: externalTimeLeft,
+    running: hasStarted && !submitted && !hideTimer,
+    paused: isPaused,
+    onTick: onTimeTick,
+  });
 
   useEffect(() => {
     if (hideTimer) return;
@@ -543,7 +545,7 @@ const ListeningExamEngine = ({
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         {hasStarted && !hideTimer && (
           <div className="px-6 pt-3 flex justify-end">
-            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />
+            <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
         <ExamInstructions
@@ -566,7 +568,7 @@ const ListeningExamEngine = ({
         <div className="flex-1 bg-white pl-[80px] pr-[80px] pt-[40px] font-sans text-black">
           <div className="flex items-start justify-between mb-4">
             <h1 className="text-xl">Aptis General Listening Instructions</h1>
-            {hasStarted && !hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} />}
+            {hasStarted && !hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />}
           </div>
           <p className="font-bold mb-2">Listening</p>
           {fullFlow && (
