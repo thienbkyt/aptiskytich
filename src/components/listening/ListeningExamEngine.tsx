@@ -13,6 +13,7 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import TimerDisplay from "@/components/reading/TimerDisplay";
+import { TimerProvider } from "@/components/reading/TimerContext";
 import PausedTimeNotice from "@/components/exam/PausedTimeNotice";
 import { useCountdown } from "@/hooks/useCountdown";
 // Render dedicated results screen after submission when showResultsOnSubmit is true.
