@@ -157,6 +157,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   const reportRef = useRef<PracticeScoreReportHandle>(null);
 
+  /** Điểm /50 + CEFR thật (có vùng xám) từ AI chấm — nguồn sự thật để hiển thị. */
+  const [skillOverrides, setSkillOverrides] = useState<
+    Partial<Record<"speaking" | "listening" | "grammar" | "reading" | "writing", { scale50: number; cefr?: string | null }>>
+  >({});
+
   // Background grading state for Speaking in Full Test
   const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
   const [speakingGradingPending, setSpeakingGradingPending] = useState(false);
