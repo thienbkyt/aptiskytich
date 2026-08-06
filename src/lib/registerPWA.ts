@@ -14,6 +14,10 @@ const DISMISS_KEY = "kt-pwa-update-dismissed";
 const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const LOCATION_EVENT = "kt-locationchange";
 
+// Real build id (injected by vite define). registration.waiting.scriptURL is
+// always "/sw.js", so it can't distinguish builds.
+const BUILD_ID = typeof __BUILD_ID__ !== "undefined" ? __BUILD_ID__ : "dev";
+
 function isDismissed(buildId: string) {
   try {
     const raw = safeLocalStorage.getItem(DISMISS_KEY);
