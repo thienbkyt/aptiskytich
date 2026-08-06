@@ -135,10 +135,15 @@ const WritingFullResults = ({
             const live = status.partScores[pt];
             const local = results.find((r) => r.partType === pt);
             const score = local?.partScore ?? live;
+            const notAttempted =
+              (local as any)?.notAttempted === true ||
+              !!local?.feedback?.startsWith("Chưa làm bài");
             return (
               <div key={i} className="flex items-center justify-between text-sm">
                 <span className="text-foreground font-medium">{partLabel(pt)}</span>
-                {st === "pending" && score === undefined ? (
+                {notAttempted ? (
+                  <span className="text-muted-foreground font-medium">Chưa làm</span>
+                ) : st === "pending" && score === undefined ? (
                   <span className="text-muted-foreground inline-flex items-center gap-1.5">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang chấm...
                   </span>
