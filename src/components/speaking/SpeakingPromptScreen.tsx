@@ -15,7 +15,7 @@ interface SpeakingPromptScreenProps {
 
 /** Speak text using Google Cloud TTS (from src/lib/tts.ts) */
 function speakAsync(text: string): Promise<void> {
-  return ttsSpeakAsync(text, "en");
+  return ttsSpeakAsync(text, "en", { surface: "exam" });
 }
 
 const withTimeout = <T,>(p: Promise<T>, ms: number) =>

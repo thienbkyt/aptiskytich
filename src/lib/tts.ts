@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 type Lang = "en" | "vi";
+export type Surface = "exam" | "app";
+
 
 // In-memory URL cache to avoid re-invoking the function for the same text
 const urlCache = new Map<string, string>();
@@ -44,9 +46,10 @@ export function unlockAudio() {
   } catch { /* noop */ }
 }
 
-function cacheKey(text: string, lang: Lang) {
-  return `${lang}::${text.trim().toLowerCase()}`;
+function cacheKey(text: string, lang: Lang, surface: Surface = "app") {
+  return `${surface}::${lang}::${text.trim().toLowerCase()}`;
 }
+
 
 /** Pick a male English voice from the browser's installed voices, if available. */
 function pickMaleVoice(lang: Lang): SpeechSynthesisVoice | null {
@@ -104,17 +107,19 @@ function browserFallback(text: string, lang: Lang, token: number): Promise<void>
   });
 }
 
-async function fetchUrl(text: string, lang: Lang): Promise<string | null> {
-  const key = cacheKey(text, lang);
+async function fetchUrl(text: string, lang: Lang, surface: Surface = "app"): Promise<string | null> {
+  const key = cacheKey(text, lang, surface);
   const cached = urlCache.get(key);
   if (cached) return cached;
 
   // Timeout belongs on the network step only — never on playback.
-  const invoke = supabase.functions.invoke("tts", { body: { text, lang } });
+  // ElevenLabs first-time synthesis takes 1-3s, so exam voices get more room.
+  const timeoutMs = surface === "exam" ? 12000 : 4000;
+  const invoke = supabase.functions.invoke("tts", { body: { text, lang, surface } });
   const raced = await Promise.race([
     invoke.then((r) => r).catch((e) => ({ data: null, error: e })),
     new Promise<{ data: null; error: string }>((r) =>
-      setTimeout(() => r({ data: null, error: "timeout" }), 4000),
+      setTimeout(() => r({ data: null, error: "timeout" }), timeoutMs),
     ),
   ]);
   const { data, error } = raced as { data: { url?: string } | null; error: unknown };
@@ -125,6 +130,7 @@ async function fetchUrl(text: string, lang: Lang): Promise<string | null> {
   urlCache.set(key, data.url as string);
   return data.url as string;
 }
+
 
 function stopCurrent() {
   // Bump token so any pending callbacks/awaiters know they're stale.
@@ -162,14 +168,14 @@ function ensureShared(): HTMLAudioElement {
 /**
  * Fire-and-forget speak. Replaces previous browser `speak()` helpers.
  */
-export async function speakWithTTS(text: string, lang: Lang): Promise<void> {
+export async function speakWithTTS(text: string, lang: Lang, opts?: { surface?: Surface }): Promise<void> {
   const trimmed = text?.trim();
   if (!trimmed) return;
   stopCurrent();
   const token = playToken;
 
   try {
-    const url = await fetchUrl(trimmed, lang);
+    const url = await fetchUrl(trimmed, lang, opts?.surface);
     if (token !== playToken) return; // a newer speak request superseded us
 
     if (!url) {
@@ -193,7 +199,7 @@ export async function speakWithTTS(text: string, lang: Lang): Promise<void> {
 /**
  * Awaitable speak — resolves when audio finishes (or fails / is superseded).
  */
-export function speakAsync(text: string, lang: Lang): Promise<void> {
+export function speakAsync(text: string, lang: Lang, opts?: { surface?: Surface }): Promise<void> {
   const trimmed = text?.trim();
   if (!trimmed) return Promise.resolve();
   stopCurrent();
@@ -208,7 +214,7 @@ export function speakAsync(text: string, lang: Lang): Promise<void> {
     };
 
     try {
-      const url = await fetchUrl(trimmed, lang);
+      const url = await fetchUrl(trimmed, lang, opts?.surface);
       if (token !== playToken) {
         // We were superseded while fetching the URL — bail out cleanly.
         finish();
@@ -253,10 +259,24 @@ export function speakAsync(text: string, lang: Lang): Promise<void> {
  * Warm the URL cache for a phrase so a later speak() starts almost instantly.
  * Fire-and-forget; never plays audio and swallows all errors.
  */
-export function prefetchTTS(text: string, lang: Lang): void {
+export function prefetchTTS(text: string, lang: Lang, surface: Surface = "app"): void {
   const trimmed = text?.trim();
   if (!trimmed) return;
-  void fetchUrl(trimmed, lang).catch(() => { /* noop */ });
+  void fetchUrl(trimmed, lang, surface).catch(() => { /* noop */ });
+}
+
+/**
+ * Warm the server-side + URL cache for a phrase without playing any audio.
+ * Never throws.
+ */
+export async function warmTTS(text: string, lang: Lang, surface: Surface = "app"): Promise<void> {
+  const trimmed = text?.trim();
+  if (!trimmed) return;
+  try {
+    await fetchUrl(trimmed, lang, surface);
+  } catch {
+    /* noop */
+  }
 }
 
 /** Stop any TTS currently playing */

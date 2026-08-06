@@ -10,7 +10,7 @@ import SignedImage from "@/components/exam/SignedImage";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import { playBeep } from "@/lib/beep";
-import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio, warmTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
@@ -97,7 +97,7 @@ type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-questi
 
 /** Speak text using Google Cloud TTS (from src/lib/tts.ts) */
 function speakAsync(text: string): Promise<void> {
-  return ttsSpeakAsync(text, "en");
+  return ttsSpeakAsync(text, "en", { surface: "exam" });
 }
 
 const withTimeout = <T,>(p: Promise<T>, ms: number) =>
@@ -225,6 +225,20 @@ const SpeakingExamEngine = ({
     if (partType === "part4" && part4Data) return part4Data.topic;
     return "";
   };
+
+  // Warm the exam voice for the NEXT question so its playback starts instantly.
+  useEffect(() => {
+    const nextText = (() => {
+      const i = currentIndex + 1;
+      if (partType === "part1" && part1Data) return part1Data.questions?.[i];
+      if (partType === "part2" && part2Data) return part2Data.questions?.[i];
+      if (partType === "part3" && part3Data) return part3Data.questions?.[i];
+      return "";
+    })();
+    if (nextText) void warmTTS(nextText, "en", "exam");
+  }, [currentIndex, partType, part1Data, part2Data, part3Data]);
+
+
 
   // Image resolution is handled by <SignedImage /> directly.
   // Tầng B: warm up signed URLs + browser cache while the student reads the part

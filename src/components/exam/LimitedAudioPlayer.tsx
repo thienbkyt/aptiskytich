@@ -14,6 +14,8 @@ interface LimitedAudioPlayerProps {
   introText?: string;
   /** Silence between the spoken prompt and the audio file (ms). */
   introPauseMs?: number;
+  /** Review / after-submit: never read the spoken prompt aloud. */
+  reviewMode?: boolean;
 }
 
 // Persistent across remounts within one tab session.
@@ -73,7 +75,7 @@ export const resetLimitedAudioPlays = () => {
   playCountStore.clear();
 };
 
-const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 1000 }: LimitedAudioPlayerProps) => {
+const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 1000, reviewMode = false }: LimitedAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
@@ -169,8 +171,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   // Warm the TTS URL cache so pressing Play starts the intro almost instantly.
   useEffect(() => {
     const t = introText?.trim();
-    if (t && playCount === 0) prefetchTTS(t, "en");
-  }, [introText, questionKey, playCount]);
+    if (t && playCount === 0 && !reviewMode) prefetchTTS(t, "en", "exam");
+  }, [introText, questionKey, playCount, reviewMode]);
 
   // Counts the current Play press exactly once (intro + audio + retries).
   const countedRef = useRef(false);
@@ -229,7 +231,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     } else {
       if (disabled) return;
       const isFirstPlay = playCount === 0;
-      const needIntro = isFirstPlay && !!introText?.trim();
+      const needIntro = isFirstPlay && !!introText?.trim() && !reviewMode;
       // Must run synchronously inside the user gesture (mobile autoplay).
       if (needIntro) unlockAudio();
 
@@ -244,7 +246,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         try {
           // Safety net only: guards against speechSynthesis never firing onend.
           await Promise.race([
-            speakAsync(introText!.trim(), "en"),
+            speakAsync(introText!.trim(), "en", { surface: "exam" }),
             new Promise<void>((r) => setTimeout(() => { timedOut = true; r(); }, 20000)),
           ]);
         } catch (e) {
