@@ -96,42 +96,45 @@ Deno.serve(async (req) => {
       if (!elevenKey) {
         console.error("[tts] ELEVENLABS_API_KEY missing — falling back to OpenAI voice");
       } else {
-        const elRes = await fetch(
-          `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
-          {
-            method: "POST",
-            headers: {
-              "xi-api-key": elevenKey,
-              "Content-Type": "application/json",
-              Accept: "audio/mpeg",
+        try {
+          const elRes = await fetch(
+            `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
+            {
+              method: "POST",
+              headers: {
+                "xi-api-key": elevenKey,
+                "Content-Type": "application/json",
+                Accept: "audio/mpeg",
+              },
+              body: JSON.stringify({
+                text,
+                model_id: "eleven_multilingual_v2",
+                voice_settings: {
+                  stability: 0.5,
+                  similarity_boost: 0.75,
+                  style: 0,
+                  use_speaker_boost: true,
+                },
+              }),
             },
-            body: JSON.stringify({
-              text,
-              model_id: "eleven_multilingual_v2",
-              voice_settings: {
-                stability: 0.5,
-                similarity_boost: 0.75,
-                style: 0,
-                use_speaker_boost: true,
-              },
-            }),
-          },
-        );
-        if (elRes.ok) {
-          audioBuffer = await elRes.arrayBuffer();
-        } else {
-          const errText = await elRes.text().catch(() => "");
-          console.error("[tts] ElevenLabs error:", elRes.status, errText);
-          if (elRes.status !== 401 && elRes.status !== 402) {
-            return new Response(
-              JSON.stringify({ error: "TTS service temporarily unavailable", status: elRes.status, details: errText }),
-              {
-                status: elRes.status === 429 ? 429 : 502,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-              },
-            );
+          );
+          if (elRes.ok) {
+            audioBuffer = await elRes.arrayBuffer();
+          } else {
+            const errText = await elRes.text().catch(() => "");
+            const kind = elRes.status === 401 || elRes.status === 403
+              ? "auth"
+              : elRes.status === 402
+              ? "credit"
+              : elRes.status === 429
+              ? "rate limit"
+              : elRes.status >= 500
+              ? "upstream"
+              : "request";
+            console.error(`[tts] ElevenLabs ${kind} failure (${elRes.status}) — falling back to OpenAI voice:`, errText);
           }
-          console.error("[tts] ElevenLabs auth/credit failure — falling back to OpenAI voice");
+        } catch (e) {
+          console.error("[tts] ElevenLabs network failure — falling back to OpenAI voice:", e);
         }
       }
       if (audioBuffer) {
