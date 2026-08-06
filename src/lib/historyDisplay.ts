@@ -29,7 +29,7 @@ export const computeHistoryDisplay = (
 
   const snapScaled = snapshot && typeof snapshot.scaled50 === "number" ? snapshot.scaled50 : null;
 
-  const snapBand = snapshot && typeof snapshot.band === "string" ? snapshot.band : null;
+  // NOTE: snapshot.band is intentionally ignored — bands are recomputed below.
 
   if (isAI) {
 
