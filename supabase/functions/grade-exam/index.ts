@@ -1245,7 +1245,9 @@ ${partsIn.formalText ?? ""}`;
 
       const callGatewayV2 = async (maxTokens: number): Promise<Response> => {
         const controller = new AbortController();
-        const timeoutMsV2 = pt === "task4" ? 90_000 : 60_000;
+        // Edge function wall-clock ceiling is ~150s, so task4 stops at 140s to
+        // leave room for response serialisation instead of dying mid-write.
+        const timeoutMsV2 = pt === "task4" ? 140_000 : 120_000;
         const timeoutId = setTimeout(() => controller.abort(), timeoutMsV2);
         try {
           return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
