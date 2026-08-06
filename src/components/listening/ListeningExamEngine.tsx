@@ -602,6 +602,7 @@ const ListeningExamEngine = ({
         <RotateDeviceOverlay />
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
+          <PausedTimeNotice pausedMs={pausedMs} />
           <ListeningResults
             correct={resultStats.correct}
             total={resultStats.total}

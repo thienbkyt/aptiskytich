@@ -398,6 +398,7 @@ const GrammarExamEngine = ({
         <RotateDeviceOverlay />
         <ExamHeader skillLabel="Grammar & Vocabulary" partLabel={testTitle} onExit={onExit} />
         <main className="flex-1 py-10 px-4">
+          <PausedTimeNotice pausedMs={pausedMs} />
           <GrammarResults
             questions={questions}
             answers={answers}

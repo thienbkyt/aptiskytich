@@ -501,6 +501,7 @@ const WritingExamEngine = ({
         <RotateDeviceOverlay />
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
+          <PausedTimeNotice pausedMs={pausedMs} />
           <WritingResults
             isGrading={v2Loading || isGrading}
             grading={(v2Grading ?? grading) as import("@/hooks/useExamGrading").WritingGradingResult | null}
