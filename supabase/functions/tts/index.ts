@@ -91,14 +91,14 @@ Deno.serve(async (req) => {
     let audioBuffer: ArrayBuffer | null = null;
     let usedProvider = provider;
 
-    const logFallback = (reason: string, status?: number) => {
+    const logFallback = (reason: string, status?: number, detail?: string) => {
       logUsage({
         service: "elevenlabs_tts_fallback",
         event_type: "fallback",
         units: 0,
         unit_type: "chars",
         source_function: "tts",
-        metadata: { reason, status: status ?? null },
+        metadata: { reason, status: status ?? null, detail: detail ? String(detail).slice(0, 300) : null },
       }).catch(() => {});
     };
 
