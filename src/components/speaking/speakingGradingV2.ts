@@ -198,8 +198,8 @@ export async function finalizeSpeaking(
   return {
     rawTotal: Number(data.rawTotal ?? data.raw_total ?? 0),
     scale50,
-    // Single source of truth for CEFR: the official Aptis thresholds.
-    cefr: getSkillBand(scale50, "speaking"),
+    // CEFR from the grading service is authoritative (includes grey-zone lift).
+    cefr: data.cefr ?? "",
     greyZone: !!data.greyZone,
     flagReview: !!data.flagReview,
   };

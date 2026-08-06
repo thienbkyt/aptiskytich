@@ -29,7 +29,7 @@ export const computeHistoryDisplay = (
 
   const snapScaled = snapshot && typeof snapshot.scaled50 === "number" ? snapshot.scaled50 : null;
 
-  // NOTE: snapshot.band is intentionally ignored — bands are recomputed below.
+  const snapBand = snapshot && typeof snapshot.band === "string" && snapshot.band ? snapshot.band : null;
 
   if (isAI) {
 
@@ -68,8 +68,8 @@ export const computeHistoryDisplay = (
 
         displayScore: `${snapScaled}/50`,
 
-        // Always recompute from the /50 score (stored bands may be legacy/wrong).
-        displayBand: getSkillBand(snapScaled, skill as any),
+        // Saved band wins (grey-zone aware); thresholds are fallback only.
+        displayBand: snapBand || getSkillBand(snapScaled, skill as any),
 
         scorePct: snapScaled / 50,
 

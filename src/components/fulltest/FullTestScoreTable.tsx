@@ -29,10 +29,10 @@ const FullTestScoreTable = ({ scores, overrides }: Props) => {
   const total200 = listening + reading + speaking + writing;
 
   const bandFor = (sk: "listening" | "reading" | "speaking" | "writing") => {
-    // Band is ALWAYS derived from the /50 score via the official Aptis
-    // thresholds — stored `cefr` values from older attempts are unreliable.
+    // Stored `cefr` wins (it carries the official grey-zone lift); the
+    // threshold table is only a fallback when no band was saved.
     const o = overrides?.[sk];
-    if (o && Number.isFinite(o.scale50)) return getSkillBand(score50(sk), sk);
+    if (o && Number.isFinite(o.scale50)) return o.cefr || getSkillBand(score50(sk), sk);
     return scores[sk].total > 0 ? getSkillBand(score50(sk), sk) : null;
   };
 

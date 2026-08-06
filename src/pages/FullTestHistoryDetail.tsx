@@ -185,6 +185,7 @@ const FullTestHistoryDetail = () => {
     const bands = (["listening", "reading", "speaking", "writing"] as const)
       .map((sk) => {
         const o = officialSkill[sk as SkillKey];
+        if (o?.cefr) return o.cefr;
         const s50 = o ? o.scale50 : (skillAgg[sk as SkillKey].total > 0
           ? toScore50(skillAgg[sk as SkillKey].correct, skillAgg[sk as SkillKey].total)
           : null);
