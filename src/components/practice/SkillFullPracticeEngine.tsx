@@ -709,6 +709,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             partNumber: sub.partNumber,
             result: merged,
             recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+            sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         } catch (e) {
           if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
@@ -731,6 +732,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             partNumber: sub.partNumber,
             result: empty,
             recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+            sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         }
 

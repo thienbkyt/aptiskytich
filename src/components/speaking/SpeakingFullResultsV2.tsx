@@ -3,12 +3,15 @@ import { Sparkles, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import SpeakingHeader from "./SpeakingHeader";
 import SpeakingProfileView from "./SpeakingProfileView";
 import type { SpeakingPartResultV2 } from "./speakingGradingV2";
+import type { SampleAnswerPair } from "@/data/speakingQuestions";
 
 export interface SpeakingV2PartEntry {
   partType: "part1" | "part2" | "part3" | "part4";
   partNumber: number;
   result: SpeakingPartResultV2;
   recordingUrls: (string | null)[];
+  /** Reference sample answers per question (Part 4: index 0 only). */
+  sampleAnswers?: (SampleAnswerPair | undefined)[];
 }
 
 interface Props {
@@ -164,6 +167,8 @@ const SpeakingFullResultsV2 = ({
                 improvedVersion={current.result.improvedVersion}
                 fullTranscript={(current.result as any).fullTranscript}
                 partLabel={`Part ${current.partNumber}`}
+                sampleAnswers={current.sampleAnswers}
+                sharedSample={current.partType === "part4"}
               />
             )}
           </div>
