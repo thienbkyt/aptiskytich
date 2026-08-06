@@ -9,6 +9,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { SpeakingPartResultV2, SpeakingCriteriaAnalysisV2 } from "./speakingGradingV2";
+import SpeakingSampleAnswerBlock from "./SpeakingSampleAnswerBlock";
+import type { SampleAnswerPair } from "@/data/speakingQuestions";
 import { safeText } from "@/lib/safeText";
 
 const CRITERIA: Array<{ key: keyof SpeakingPartResultV2["bands"]; vi: string }> = [
@@ -55,6 +57,10 @@ interface SpeakingProfileViewProps {
   partLabel?: string;
   /** Verbatim transcription of the whole recording (Part 4 monologue). */
   fullTranscript?: string;
+  /** Reference sample answers per question (from exam_questions.extra_data). */
+  sampleAnswers?: (SampleAnswerPair | undefined)[];
+  /** Part 4: one shared sample answer for all questions → single block at end. */
+  sharedSample?: boolean;
 }
 
 const SpeakingProfileView = ({
@@ -66,6 +72,8 @@ const SpeakingProfileView = ({
   cefr = null,
   partLabel,
   fullTranscript,
+  sampleAnswers,
+  sharedSample = false,
 }: SpeakingProfileViewProps) => {
   const rows = useMemo(
     () =>
@@ -243,10 +251,18 @@ const SpeakingProfileView = ({
                 )}
               </div>
             )}
+
+            {!sharedSample && (
+              <SpeakingSampleAnswerBlock pair={sampleAnswers?.[idx]} />
+            )}
           </div>
           );
         })}
       </div>
+
+      {sharedSample && (
+        <SpeakingSampleAnswerBlock pair={sampleAnswers?.[0]} note="cho cả phần này" />
+      )}
 
     </div>
   );
