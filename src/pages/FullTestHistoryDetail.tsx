@@ -177,10 +177,25 @@ const FullTestHistoryDetail = () => {
       }).filter((v): v is number => v != null),
     [skillAgg, officialSkill]
   );
-  const avgScore50 = skillScore50s.length
-    ? skillScore50s.reduce((a, b) => a + b, 0) / skillScore50s.length
-    : 0;
-  const overallLevel = skillScore50s.length > 0 ? getLevel(Math.round(avgScore50), 50) : "—";
+  // Overall CEFR = average of the four skill bands (Aptis thresholds), never a
+  // percent-based level.
+  const overallLevel = useMemo(() => {
+    const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
+    const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
+    const bands = (["listening", "reading", "speaking", "writing"] as const)
+      .map((sk) => {
+        const o = officialSkill[sk as SkillKey];
+        const s50 = o ? o.scale50 : (skillAgg[sk as SkillKey].total > 0
+          ? toScore50(skillAgg[sk as SkillKey].correct, skillAgg[sk as SkillKey].total)
+          : null);
+        return s50 == null ? null : getSkillBand(s50, sk);
+      })
+      .filter((b): b is string => !!b);
+    if (bands.length === 0) return "—";
+    const avg = Math.round(bands.reduce((s, b) => s + (BAND_TO_NUM[b] ?? 0), 0) / bands.length);
+    return NUM_TO_BAND[Math.max(0, Math.min(5, avg))];
+  }, [skillAgg, officialSkill]);
+
 
 
   // Speaking in full-test stores ONE aggregate test_results row covering all parts,
