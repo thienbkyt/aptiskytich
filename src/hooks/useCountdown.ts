@@ -36,20 +36,22 @@ export function useCountdown({
   const onTickRef = useRef(onTick);
   onTickRef.current = onTick;
 
+  const timeLeftRef = useRef(startLeft);
+  timeLeftRef.current = timeLeft;
+
   // Re-anchor when the caller hands us a materially different remaining time
   // (new part on a shared clock, parent-driven clock while `running` is false).
   // Self-ticks stay within ~1s of our own value, so they never re-anchor.
   useEffect(() => {
     if (initialLeft == null) return;
     const target = Math.max(0, initialLeft);
-    setTimeLeft((cur) => {
-      if (Math.abs(cur - target) <= (running ? 1.5 : 0)) return cur;
-      endAtRef.current = Date.now() + target * 1000 + (pausedAtRef.current ? 0 : 0);
-      if (pausedAtRef.current != null) pausedAtRef.current = Date.now();
-      return target;
-    });
+    if (Math.abs(timeLeftRef.current - target) <= (running ? 1.5 : 0)) return;
+    endAtRef.current = Date.now() + target * 1000;
+    if (pausedAtRef.current != null) pausedAtRef.current = Date.now();
+    setTimeLeft(target);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialLeft]);
+
 
   // Pause / resume: push the deadline forward by the paused duration.
   useEffect(() => {
