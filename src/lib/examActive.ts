@@ -10,16 +10,19 @@ export const EXAM_ACTIVE_EVENT = "kt-exam-active-change";
 
 let count = 0;
 
+type ExamWindow = Window & { __ktExamActive?: boolean };
+
 export function isExamActive(): boolean {
   if (typeof window === "undefined") return false;
-  return !!window.__ktExamActive;
+  return !!(window as ExamWindow).__ktExamActive;
 }
 
 function sync() {
   if (typeof window === "undefined") return;
   const active = count > 0;
-  if (window.__ktExamActive === active) return; // only emit on real transitions
-  window.__ktExamActive = active;
+  const w = window as ExamWindow;
+  if (w.__ktExamActive === active) return; // only emit on real transitions
+  w.__ktExamActive = active;
   try {
     document.body.classList.toggle("exam-active", active);
   } catch {
