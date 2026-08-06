@@ -1095,16 +1095,46 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           perQuestion: perQuestion || [],
         },
       });
-      const trid = await saveExamResult({
-        examSetId: currentPart.id,
-        skill: "writing",
-        correct: 0,
-        total: perQuestion?.length || 0,
-        perQuestion,
-        reviewSnapshot: snap,
-        fullTestSessionId: fullPartSessionRef.current,
-        extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
-      });
+      // Reuse ONE test_results row per (session, exam set) — tránh sinh dòng trùng
+      // khi lần lưu đầu hụt rồi lưu lại (giống dedupe của FullTestEngine).
+      let trid: string | null = null;
+      try {
+        const { data: existingRows } = await (supabase as any)
+          .from("test_results")
+          .select("id, skill_scores")
+          .eq("full_test_session_id", fullPartSessionRef.current)
+          .eq("exam_set_id", currentPart.id)
+          .order("created_at", { ascending: true });
+        const match = (existingRows || []).find(
+          (r: any) => r?.skill_scores?.skill === "writing",
+        );
+        if (match?.id) trid = match.id as string;
+      } catch (err) {
+        console.warn("[FullPart writing] lookup existing test_results failed", err);
+      }
+      if (trid) {
+        // Score updates must go through the finalize RPC (guard trigger).
+        const { error: finErr } = await (supabase as any).rpc("finalize_skill_test_result", {
+          p_test_result_id: trid,
+          p_score: 0,
+          p_total: perQuestion?.length || 0,
+          p_correct_answers: 0,
+          p_review_snapshot: snap as any,
+        });
+        if (finErr) console.warn("[FullPart writing] finalize reuse failed", finErr);
+      } else {
+        trid = await saveExamResult({
+          examSetId: currentPart.id,
+          skill: "writing",
+          correct: 0,
+          total: perQuestion?.length || 0,
+          perQuestion,
+          reviewSnapshot: snap,
+          fullTestSessionId: fullPartSessionRef.current,
+          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
+        });
+      }
+
       const existing = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
       writingSubmissionsByPartRef.current[currentPartIndex] = {
         ...existing,
