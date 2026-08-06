@@ -259,6 +259,8 @@ export const toSpeakingPart1 = (rows: ExamQuestionRow[]): SpeakingPart1Data => {
     prepTime: ed.prepTime ?? 0,
     speakTime: ed.speakTime ?? 30,
     sampleAnswers: collectSampleAnswers(rows),
+    outlineB1: (ed.outlineB1 as any) ?? null,
+    outlineB2: (ed.outlineB2 as any) ?? null,
   };
 };
 
@@ -273,6 +275,8 @@ export const toSpeakingPart2 = (rows: ExamQuestionRow[]): SpeakingPart2Data => {
     prepTime: ed.prepTime ?? 45,
     speakTime: ed.speakTime ?? 45,
     sampleAnswers: collectSampleAnswers(rows),
+    outlineB1: (ed.outlineB1 as any) ?? null,
+    outlineB2: (ed.outlineB2 as any) ?? null,
   };
 };
 
@@ -290,6 +294,8 @@ export const toSpeakingPart3 = (rows: ExamQuestionRow[]): SpeakingPart3Data => {
     prepTime: ed.prepTime ?? 45,
     speakTime: ed.speakTime ?? 60,
     sampleAnswers: collectSampleAnswers(rows),
+    outlineB1: (ed.outlineB1 as any) ?? null,
+    outlineB2: (ed.outlineB2 as any) ?? null,
   };
 };
 

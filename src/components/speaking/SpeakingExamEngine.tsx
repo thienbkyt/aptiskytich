@@ -138,7 +138,11 @@ const SpeakingExamEngine = ({
   const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [scratchNote, setScratchNote] = useState("");
-  const canUseScratchpad = partType === "part4" && !!part4Data && !fullTestSessionId;
+  const activeOutline = partType === "part1" ? part1Data
+    : partType === "part2" ? part2Data
+    : partType === "part3" ? part3Data : part4Data;
+  const canUseScratchpad = !fullTestSessionId
+    && !!(activeOutline?.outlineB1 || activeOutline?.outlineB2);
 
 
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
@@ -1331,8 +1335,8 @@ const SpeakingExamEngine = ({
       )}
       {canUseScratchpad && outlineOpen && (
         <SpeakingScratchpad
-          outlineB1={part4Data?.outlineB1 ?? null}
-          outlineB2={part4Data?.outlineB2 ?? null}
+          outlineB1={activeOutline?.outlineB1 ?? null}
+          outlineB2={activeOutline?.outlineB2 ?? null}
           note={scratchNote}
           onNoteChange={setScratchNote}
           onClose={() => setOutlineOpen(false)}
