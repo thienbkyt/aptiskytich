@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { markExamActive } from "@/lib/examActive";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -298,10 +299,7 @@ const SpeakingExamEngine = ({
   }, [phase, partType, part2Data?.imageUrl, part3Data?.imageUrl1, part3Data?.imageUrl2, part4Data?.imageUrl]);
 
 
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
 
   // Initialize recordings array
   useEffect(() => {

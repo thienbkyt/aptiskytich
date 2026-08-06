@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { markExamActive } from "@/lib/examActive";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import ExamHeader from "@/components/exam/ExamHeader";
 import TimerDisplay from "@/components/reading/TimerDisplay";
@@ -118,10 +119,7 @@ const WritingExamEngine = ({
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   const [isPausedInternal, setIsPausedInternal] = useState(false);
   const isPaused = allowPause === false ? false : (isPausedProp ?? isPausedInternal);
   const togglePause = allowPause === false ? undefined : (onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p)));

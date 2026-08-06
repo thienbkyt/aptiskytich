@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { markExamActive } from "@/lib/examActive";
 import ExamHeader from "@/components/exam/ExamHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import { resetLimitedAudioPlays } from "@/components/exam/LimitedAudioPlayer";
@@ -131,10 +132,7 @@ const ListeningExamEngine = ({
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
   const [lockedIdx, setLockedIdx] = useState<Set<number>>(new Set());
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   // Batch-sign every audio file of this part in ONE storage request so the
   // players (13 in Part 1) hit a warm cache instead of firing 13+ sign calls.
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { markExamActive } from "@/lib/examActive";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bookmark, CheckCircle2, XCircle } from "lucide-react";
@@ -101,10 +102,7 @@ const GrammarExamEngine = ({
     running: hasStarted && !submitted && !hideTimer,
     paused: isPaused,
   });
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   useExitWarning(hasStarted && !submitted && !reviewMode);
   // Reveal-on-demand for practice mode (keyed by group index).
   const [revealedGroups, setRevealedGroups] = useState<Set<number>>(new Set());

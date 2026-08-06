@@ -1,4 +1,5 @@
 import { QuotaExceededError } from "@/lib/quotaError";
+import { markExamActive } from "@/lib/examActive";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
@@ -184,10 +185,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // Disable dictionary lookup & sentence translation while in Full Test
   useEffect(() => {
     document.body.classList.add("full-test-active");
-    document.body.classList.add("exam-active");
+    const clearExamFlag = markExamActive();
     return () => {
       document.body.classList.remove("full-test-active");
-      document.body.classList.remove("exam-active");
+      clearExamFlag();
     };
   }, []);
 

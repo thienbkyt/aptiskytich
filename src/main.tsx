@@ -32,9 +32,24 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 // Show a small update banner on chunk load errors (usually after a new deploy).
 // Do NOT auto-reload — user may be mid-exam. Only reload when they click.
+// While an exam is running the banner stays hidden and appears once the student
+// leaves the exam screen.
 let updateBanner: HTMLDivElement | null = null;
+let bannerQueued = false;
 function showUpdateBanner() {
   if (updateBanner) return;
+  if ((window as any).__ktExamActive) {
+    if (bannerQueued) return;
+    bannerQueued = true;
+    const onChange = () => {
+      if ((window as any).__ktExamActive) return;
+      window.removeEventListener("kt-exam-active-change", onChange);
+      bannerQueued = false;
+      showUpdateBanner();
+    };
+    window.addEventListener("kt-exam-active-change", onChange);
+    return;
+  }
   try {
     const el = document.createElement("div");
     updateBanner = el;
@@ -70,14 +85,32 @@ function showUpdateBanner() {
       cursor: "pointer",
     } as Partial<CSSStyleDeclaration> as any);
     btn.onclick = () => window.location.reload();
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "×";
+    closeBtn.setAttribute("aria-label", "Đóng");
+    Object.assign(closeBtn.style, {
+      background: "transparent",
+      color: "#0F0F10",
+      border: "none",
+      fontSize: "22px",
+      lineHeight: "1",
+      padding: "0 4px",
+      cursor: "pointer",
+    } as Partial<CSSStyleDeclaration> as any);
+    closeBtn.onclick = () => {
+      el.remove();
+      updateBanner = null;
+    };
     el.appendChild(msg);
     el.appendChild(btn);
+    el.appendChild(closeBtn);
     if (document.body) document.body.appendChild(el);
     else document.addEventListener("DOMContentLoaded", () => document.body.appendChild(el));
   } catch {
     /* ignore */
   }
 }
+
 // vite:preloadError là sự kiện chính thức Vite bắn ra khi một dynamic import chunk
 // tải thất bại (thường do deploy mới đè bundle). Xử lý: tự tải lại trang để lấy
 // bundle mới — bài làm dở được các cơ chế lưu hiện có giữ lại. Chốt sessionStorage

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { markExamActive } from "@/lib/examActive";
 import ExamHeader from "@/components/exam/ExamHeader";
 import ExamInstructions from "@/components/exam/ExamInstructions";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -158,10 +159,7 @@ const ReadingExamEngine = ({
     paused: isPaused,
     onTick: onTimeTick,
   });
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   useExitWarning(hasStarted && !submitted && !reviewMode && !marathonLock);
 
   // Reveal-on-demand for practice mode (per page key).
