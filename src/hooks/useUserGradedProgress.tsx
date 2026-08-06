@@ -47,7 +47,7 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
           if (keys.every((k) => p && p[k] !== undefined && p[k] !== null)) {
             val = Math.round(Number(p.task4?.rawPart) || 0);
           }
-          const derived = getSkillBand(Number(r.scale50) || 0, "writing");
+          const derived = cefr;
           if (CEFR_RANK[derived] !== undefined) {
             const prevBand = bestBand.get(sid);
             if (!prevBand || CEFR_RANK[derived] > (CEFR_RANK[prevBand] ?? -1)) bestBand.set(sid, derived);
@@ -78,9 +78,9 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
         if (raw > (bestRaw.get(sid) ?? -1)) bestRaw.set(sid, raw);
       }
       if (cefr) {
-        const derived = getSkillBand(s50, "speaking");
+        const derived = cefr;
         const prevBand = bestBand.get(sid);
-        if (!prevBand || CEFR_RANK[derived] > (CEFR_RANK[prevBand] ?? -1)) {
+        if (!prevBand || (CEFR_RANK[derived] ?? -1) > (CEFR_RANK[prevBand] ?? -1)) {
           bestBand.set(sid, derived);
         }
       }
