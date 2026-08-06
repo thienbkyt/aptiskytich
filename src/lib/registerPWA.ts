@@ -132,16 +132,6 @@ export function registerPWA() {
           }
         },
       });
-        onRegisteredSW(_swUrl, registration) {
-          registrationRef = registration ?? null;
-          // Periodically check for updates (every 30 minutes)
-          if (registration) {
-            setInterval(() => {
-              registration.update().catch(() => {});
-            }, 30 * 60 * 1000);
-          }
-        },
-      });
     })
     .catch(() => {
       /* ignore if virtual module not available */
