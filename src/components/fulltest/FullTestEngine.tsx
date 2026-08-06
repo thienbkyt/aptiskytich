@@ -138,6 +138,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(SKILL_TIMES.reading);
+  // One shared pause for the whole test clock so it stays frozen across parts.
+  const [isPaused, setIsPaused] = useState(false);
+  const togglePause = useCallback(() => setIsPaused((p) => !p), []);
   // Prevent double-advancing if a child engine fires onComplete twice
   // (e.g. timer + finish-button race). Keyed by `${skill}-${partIndex}`.
   const completedKeysRef = useRef<Set<string>>(new Set());
@@ -675,6 +678,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           questions={grammarQuestions}
           testTitle={`${testTitle} – Grammar & Vocabulary`}
           timeLimit={SKILL_TIMES.grammar}
+          isPaused={isPaused}
+          onTogglePause={togglePause}
           onExit={handleExit}
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
           onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
@@ -961,6 +966,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onExit={handleExit}
           externalTimeLeft={listeningTimeLeft}
           onTimeTick={setListeningTimeLeft}
+          isPaused={isPaused}
+          onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
           fullFlow
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
@@ -992,6 +999,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           timeLimit={SKILL_TIMES.reading}
           initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
           onTimeTick={(t) => setReadingTimeLeft(t)}
+          isPaused={isPaused}
+          onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
           fullFlow
           onExit={handleExit}
@@ -1363,6 +1372,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           timeLimit={SKILL_TIMES.writing}
           externalTimeLeft={writingTimeLeft}
           onTimeTick={(t) => setWritingTimeLeft(t)}
+          isPaused={isPaused}
+          onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
           fullFlow
           isLastPart={isLastWritingPart}
