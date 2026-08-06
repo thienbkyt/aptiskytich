@@ -10,7 +10,7 @@ import SignedImage from "@/components/exam/SignedImage";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
 import { playBeep } from "@/lib/beep";
-import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio, warmTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
@@ -97,7 +97,7 @@ type Phase = "start" | "mic-check" | "instructions" | "prompt" | "reading-questi
 
 /** Speak text using Google Cloud TTS (from src/lib/tts.ts) */
 function speakAsync(text: string): Promise<void> {
-  return ttsSpeakAsync(text, "en");
+  return ttsSpeakAsync(text, "en", { surface: "exam" });
 }
 
 const withTimeout = <T,>(p: Promise<T>, ms: number) =>
