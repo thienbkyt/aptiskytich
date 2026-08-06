@@ -1014,7 +1014,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Reading ${readingPartLabel(currentPart.part)}`}
           timeLimit={SKILL_TIMES.reading}
           initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
-          onTimeTick={(t) => setReadingTimeLeft(t)}
+          onTimeTick={(t) => { setReadingTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
           isPaused={isPaused}
           onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
