@@ -342,8 +342,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
     // Check if there are more parts in this skill
     // For grammar, all parts are combined into one engine call, so always move to next skill
-    if (skill === "grammar" || currentPartIndex >= parts.length - 1) {
+    const skillTimeUp = timeUpRef.current;
+    if (skillTimeUp) {
+      // Remaining parts of this skill are never mounted → mark them not attempted.
+      for (let i = currentPartIndex + 1; i < parts.length; i++) {
+        notAttemptedPartsRef.current.add(`${skill}-${i}`);
+      }
+    }
+    if (skill === "grammar" || skillTimeUp || currentPartIndex >= parts.length - 1) {
       // Skill completed - auto advance to next skill or finish
+      timeUpRef.current = false;
       if (currentSkillIndex >= SKILL_ORDER.length - 1) {
         setPhase("completed");
       } else {
