@@ -7,10 +7,13 @@ import logoAsset from "@/assets/aptis-kytich-logo.png.asset.json";
 
 type SkillKey = "speaking" | "listening" | "grammar" | "reading" | "writing";
 type Scores = Record<SkillKey, { correct: number; total: number }>;
+/** Điểm /50 + CEFR đã lưu sẵn (Writing/Speaking) — hiển thị nguyên, không tính lại. */
+type Overrides = Partial<Record<SkillKey, { scale50: number; cefr?: string | null }>>;
 
 interface Props {
   scores: Scores;
   sessionId: string;
+  overrides?: Overrides;
 }
 
 export interface PracticeScoreReportHandle {
@@ -19,8 +22,8 @@ export interface PracticeScoreReportHandle {
 
 const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
 const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
-const BAND_LABEL: Record<string, string> = { A0: "A0", A1: "A1", A2: "A2", B1: "B1", B2: "B2", C: "C1" };
-const Y_LEVELS = ["C1", "B2", "B1", "A2", "A1", "A0"]; // top → bottom
+const Y_LEVELS = ["C", "B2", "B1", "A2", "A1", "A0"]; // top → bottom
+
 
 const BRAND_RED = "#CC1C01";
 const BRAND_NAVY = "#002F5F";
@@ -37,7 +40,7 @@ const refFromSession = (sid: string) => {
   return (hex.slice(0, 10) || sid.slice(-10)).toUpperCase();
 };
 
-const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scores, sessionId }, ref) => {
+const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scores, sessionId, overrides }, ref) => {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState<string>("");
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -66,10 +69,22 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
   const testDate = useMemo(() => formatDate(new Date()), []);
   const refNumber = useMemo(() => refFromSession(sessionId), [sessionId]);
 
-  const skillHas = (sk: SkillKey) => scores[sk].total > 0;
-  const score50 = (sk: SkillKey) => toScaledScore(scores[sk].correct, scores[sk].total);
-  const bandOf = (sk: "listening" | "reading" | "speaking" | "writing") =>
-    skillHas(sk) ? getSkillBand(score50(sk), sk) : null;
+  const hasOverride = (sk: SkillKey) => {
+    const o = overrides?.[sk];
+    return !!o && Number.isFinite(o.scale50);
+  };
+  const skillHas = (sk: SkillKey) => hasOverride(sk) || scores[sk].total > 0;
+  const score50 = (sk: SkillKey) => {
+    const o = overrides?.[sk];
+    if (o && Number.isFinite(o.scale50)) return Math.round(o.scale50);
+    return toScaledScore(scores[sk].correct, scores[sk].total);
+  };
+  const bandOf = (sk: "listening" | "reading" | "speaking" | "writing") => {
+    // Stored `cefr` wins (it carries the official grey-zone lift); the
+    // threshold table is only a fallback when no band was saved.
+    if (hasOverride(sk)) return overrides![sk]!.cefr || getSkillBand(score50(sk), sk);
+    return scores[sk].total > 0 ? getSkillBand(score50(sk), sk) : null;
+  };
 
   const listening = skillHas("listening") ? score50("listening") : null;
   const reading = skillHas("reading") ? score50("reading") : null;
@@ -97,7 +112,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
       ]
     : null;
 
-  const showBand = (b: string | null) => (b ? BAND_LABEL[b] ?? b : "—");
+  const showBand = (b: string | null) => b || "—";
   const heightForBand = (b: string | null) => {
     if (!b) return 0;
     const n = BAND_TO_NUM[b] ?? 0; // 0..5

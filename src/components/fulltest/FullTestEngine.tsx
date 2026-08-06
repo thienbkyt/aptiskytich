@@ -157,6 +157,11 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
 
   const reportRef = useRef<PracticeScoreReportHandle>(null);
 
+  /** Điểm /50 + CEFR thật (có vùng xám) từ AI chấm — nguồn sự thật để hiển thị. */
+  const [skillOverrides, setSkillOverrides] = useState<
+    Partial<Record<"speaking" | "listening" | "grammar" | "reading" | "writing", { scale50: number; cefr?: string | null }>>
+  >({});
+
   // Background grading state for Speaking in Full Test
   const speakingDataByPartRef = useRef<Record<number, { sub: SpeakingPartSubmission; partId: string | null; partLabel: string }>>({});
   const [speakingGradingPending, setSpeakingGradingPending] = useState(false);
@@ -547,7 +552,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                 onResolved={(scale50, cefr) => {
                   setWritingUngraded(null);
                   setScores((prev) => ({ ...prev, writing: { correct: scale50, total: 50 } }));
-                  if (cefr) { /* band derives from score in the report */ }
+                  setSkillOverrides((prev) => ({ ...prev, writing: { scale50, cefr: cefr || null } }));
                 }}
               />
             </div>
@@ -562,7 +567,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             ref={reportRef}
             scores={scores}
             sessionId={sessionIdRef.current}
+            overrides={skillOverrides}
           />
+
         </div>
 
 
@@ -921,6 +928,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           ...prev,
           speaking: { correct: scale50, total: 50 },
         }));
+        setSkillOverrides((prev) => ({ ...prev, speaking: { scale50, cefr: cefr || null } }));
       } catch (e) {
         console.warn("[FullTestEngine] speaking grading failed", e);
       } finally {
@@ -1342,6 +1350,9 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         ...prev,
         writing: allFour ? { correct: scale50, total: 50 } : { correct: 0, total: 0 },
       }));
+      if (allFour) {
+        setSkillOverrides((prev) => ({ ...prev, writing: { scale50, cefr: cefr || null } }));
+      }
       if (!allFour) setWritingUngraded(quotaBlocked ? "quota" : "error");
       setPhase("completed");
 
