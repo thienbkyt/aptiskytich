@@ -72,7 +72,19 @@ Deno.serve(async (req) => {
   const raw = String(answerRows?.find((row) => String(row.user_answer ?? "").trim())?.user_answer ?? "");
   if (!partType || !raw.trim() || !questionRows?.length) return json({ error: "submission_not_rebuildable" }, 400);
 
-  const questions = questionRows.map((row) => String(row.question_text ?? "")).filter(Boolean);
+  const first = questionRows[0] as Record<string, unknown> | undefined;
+  const extra = (first?.extra_data ?? {}) as Record<string, any>;
+  let questions = questionRows.map((row) => String(row.question_text ?? "")).filter(Boolean);
+  if (partType === "task2") {
+    questions = [String(extra.instruction ?? first?.question_text ?? ""), String(extra.question ?? "")].filter(Boolean);
+  }
+  if (partType === "task4") {
+    questions = [
+      `SCENARIO (bối cảnh chung cho cả 2 email): ${String(extra.scenarioIntro ?? extra.scenario_intro ?? "")}\n${String(extra.scenarioEmail ?? extra.scenario_email ?? first?.question_text ?? "")}`,
+      `Email 1 (Informal) instruction: ${String(extra.informalEmail?.instruction ?? extra.informal_email?.instruction ?? "")}`,
+      `Email 2 (Formal) instruction: ${String(extra.formalEmail?.instruction ?? extra.formal_email?.instruction ?? "")}`,
+    ].filter((value) => value.replace(/^[^:]+:\s*/, "").trim().length > 0);
+  }
   let parts: Record<string, unknown> | undefined;
   if (partType === "task1") parts = { shortAnswers: parseAnswers(raw) };
   if (partType === "task3") parts = { threeAnswers: parseAnswers(raw) };
@@ -85,13 +97,17 @@ Deno.serve(async (req) => {
   const gradingSessionId = result.full_test_session_id ?? result.id;
   const payload = { type: "writing_v2", partType, questions, text: raw, parts, gradingSessionId };
 
+  const { data: priorUsage } = await admin.from("feature_usage").select("id")
+    .eq("user_id", authData.user.id).eq("feature_key", "ai_grading_writing")
+    .eq("ref_id", gradingSessionId).limit(1);
+
   const { data: access, error: accessError } = await userClient.rpc("check_feature_access", {
     p_key: "ai_grading_writing",
     p_scope: null,
   });
   if (accessError) return json({ error: "access_check_failed" }, 503);
   const gate = (access ?? {}) as Record<string, unknown>;
-  if (gate.allowed === false) {
+  if (gate.allowed === false && !priorUsage?.length) {
     return json({
       error: gate.reason === "disabled" ? "disabled" : "quota_exceeded",
       upgrade: true,
@@ -101,10 +117,6 @@ Deno.serve(async (req) => {
       remaining: gate.remaining ?? 0,
     });
   }
-
-  const { data: priorUsage } = await admin.from("feature_usage").select("id")
-    .eq("user_id", authData.user.id).eq("feature_key", "ai_grading_writing")
-    .eq("ref_id", gradingSessionId).limit(1);
 
   const { data: job, error: jobError } = await admin.from("grading_jobs").insert({
     user_id: authData.user.id,

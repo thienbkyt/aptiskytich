@@ -135,7 +135,7 @@ export function useWritingGradingStatus({
           : Promise.resolve({ data: [] as any[] } as any);
 
         const resultPartsP = ids.length
-          ? supabase.from("test_results").select("id,exam_sets(part)").in("id", ids)
+          ? supabase.from("test_results").select("id,exam_set_id").in("id", ids)
           : Promise.resolve({ data: [] as any[] } as any);
 
         const [gRes, wRes, jRes, aRes, rRes] = await Promise.all([gradingsP, wsrQ, jobsP, answersP, resultPartsP]);
@@ -165,9 +165,15 @@ export function useWritingGradingStatus({
             .filter((row) => String(row.user_answer ?? "").trim().length > 0)
             .map((row) => row.test_result_id),
         );
+        const resultRows = (((rRes as any).data || []) as any[]);
+        const examSetIds = resultRows.map((row) => row.exam_set_id).filter(Boolean);
+        const { data: setRows } = examSetIds.length
+          ? await supabase.from("exam_sets").select("id,part").in("id", examSetIds)
+          : { data: [] as any[] };
+        const partBySet = new Map(((setRows || []) as any[]).map((row) => [row.id, row.part]));
         const resultIdByPart: Record<string, string> = {};
-        (((rRes as any).data || []) as any[]).forEach((row) => {
-          const key = normPart(row.exam_sets?.part);
+        resultRows.forEach((row) => {
+          const key = normPart(partBySet.get(row.exam_set_id));
           if (key) resultIdByPart[key] = row.id;
         });
 
