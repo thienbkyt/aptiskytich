@@ -1387,7 +1387,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           testTitle={`${testTitle} – Writing ${currentPart.part}`}
           timeLimit={SKILL_TIMES.writing}
           externalTimeLeft={writingTimeLeft}
-          onTimeTick={(t) => setWritingTimeLeft(t)}
+          onTimeTick={(t) => { setWritingTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
+
           isPaused={isPaused}
           onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
