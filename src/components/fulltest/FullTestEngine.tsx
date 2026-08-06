@@ -290,7 +290,13 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           buildGrammarItems, buildReadingItems, buildListeningItems, computeScaleAndBand,
         } = await import("@/lib/reviewItemsBuilder");
         const partNorm = parts[currentPartIndex]?.partNorm ?? null;
-        const partQuestions = parts[currentPartIndex]?.questions ?? [];
+        // Grammar & Vocabulary merges ALL sets (25 Grammar + 5 Vocab parts) into
+        // one engine call, so the snapshot must carry all 50 questions.
+        const partQuestions =
+          skill === "grammar"
+            ? parts.flatMap((p) => p.questions)
+            : (parts[currentPartIndex]?.questions ?? []);
+
         let items: any[] = [];
         try {
           if (skill === "grammar") {
