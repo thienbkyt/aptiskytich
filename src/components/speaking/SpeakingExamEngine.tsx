@@ -329,7 +329,17 @@ const SpeakingExamEngine = ({
       if (timerRef.current) clearInterval(timerRef.current);
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
       if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      // Stop the exam voice (ElevenLabs/OpenAI audio element) as well as browser TTS.
+      try { stopTTS(); } catch { /* noop */ }
+      // Drop any in-progress recording: it must NOT be graded or counted as a submission.
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        suppressRecordingSaveRef.current = true;
+        try { mediaRecorderRef.current.stop(); } catch { /* noop */ }
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
       window.speechSynthesis?.cancel();
     };
   }, []);
@@ -946,12 +956,14 @@ const SpeakingExamEngine = ({
   };
 
   const handleConfirmExit = () => {
+    flowTokenRef.current += 1;
     try { stopTTS(); } catch { /* noop */ }
     try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
     if (transitionTimeoutRef.current) { clearTimeout(transitionTimeoutRef.current); transitionTimeoutRef.current = null; }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      suppressRecordingSaveRef.current = true;
       try { mediaRecorderRef.current.stop(); } catch { /* noop */ }
     }
     if (streamRef.current) {

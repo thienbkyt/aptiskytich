@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import { playBeep } from "@/lib/beep";
-import { speakAsync as ttsSpeakAsync } from "@/lib/tts";
+import { speakAsync as ttsSpeakAsync, stopTTS } from "@/lib/tts";
 
 interface SpeakingPromptScreenProps {
   partNumber: number;
@@ -30,6 +30,7 @@ const SPOKEN_TTL_MS = 60_000;
 
 const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onNext, onExit }: SpeakingPromptScreenProps) => {
   const hasStarted = useRef(false);
+  const advancedRef = useRef(false);
 
   useEffect(() => {
     if (hasStarted.current) return;
@@ -50,12 +51,16 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
       } catch {
         /* Always advance, even if mobile audio is blocked. */
       }
+      advancedRef.current = true;
       onNext();
     };
     run();
-    // NOTE: do NOT call stopTTS() on unmount — onNext() triggers parent to
-    // start the question TTS immediately; cleanup would bump the play token
-    // and silently cancel that new audio.
+    // Only stop TTS if we unmount BEFORE handing off to the parent (i.e. the
+    // student exited mid-instructions). After onNext() the parent immediately
+    // starts the question TTS — stopping there would kill that new audio.
+    return () => {
+      if (!advancedRef.current) stopTTS();
+    };
   }, []);
 
 
