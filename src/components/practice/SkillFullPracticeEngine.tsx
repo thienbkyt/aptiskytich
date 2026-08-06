@@ -9,6 +9,7 @@ import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
+  collectSampleAnswers,
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
   toGrammarQuestions,
@@ -709,6 +710,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             partNumber: sub.partNumber,
             result: merged,
             recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+            sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         } catch (e) {
           if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
@@ -731,6 +733,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             partNumber: sub.partNumber,
             result: empty,
             recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+            sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         }
 

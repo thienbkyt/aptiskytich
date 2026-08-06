@@ -1284,6 +1284,13 @@ const SpeakingExamEngine = ({
                 scale50={v2Scale}
                 cefr={v2Cefr}
                 partLabel={`Part ${partNumber}`}
+                sampleAnswers={
+                  partType === "part1" ? part1Data?.sampleAnswers
+                  : partType === "part2" ? part2Data?.sampleAnswers
+                  : partType === "part3" ? part3Data?.sampleAnswers
+                  : part4Data?.sampleAnswers
+                }
+                sharedSample={partType === "part4"}
 
               />
             )}

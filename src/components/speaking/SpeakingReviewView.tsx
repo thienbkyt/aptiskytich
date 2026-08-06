@@ -10,6 +10,8 @@ import type {
 } from "@/data/speakingQuestions";
 import type { SpeakingGradingResult } from "./speakingGrading";
 import { safeText } from "@/lib/safeText";
+import SpeakingSampleAnswerBlock from "./SpeakingSampleAnswerBlock";
+import type { SampleAnswerPair } from "@/data/speakingQuestions";
 
 const PART_NUMBERS: Record<SpeakingPartType, number> = {
   part1: 1, part2: 2, part3: 3, part4: 4,
@@ -34,6 +36,8 @@ export interface SpeakingReviewViewProps {
   /** Re-grade a single question (the one currently shown). The parent is
    *  responsible for actually calling the grader and persisting the result. */
   onRegrade?: (gradingIndex: number) => Promise<void>;
+  /** Reference sample answers per question (Part 4: index 0 only). */
+  sampleAnswers?: (SampleAnswerPair | undefined)[];
 }
 
 /**
@@ -44,7 +48,7 @@ export interface SpeakingReviewViewProps {
 const SpeakingReviewView = ({
   partType, part1Data, part2Data, part3Data, part4Data,
   recordings, gradings, reviewIndex, onChangeIndex, onBack, onExit,
-  totalParts = 4, hidePager = false, onRegrade,
+  totalParts = 4, hidePager = false, onRegrade, sampleAnswers,
 }: SpeakingReviewViewProps) => {
   const [regradingIdx, setRegradingIdx] = useState<number | null>(null);
   const partNumber = PART_NUMBERS[partType];
@@ -265,6 +269,11 @@ const SpeakingReviewView = ({
 
             </>
           )}
+
+          <SpeakingSampleAnswerBlock
+            pair={sampleAnswers?.[isPart4 ? 0 : rIdx]}
+            note={isPart4 ? "cho cả phần này" : undefined}
+          />
         </div>
       </div>
     </div>

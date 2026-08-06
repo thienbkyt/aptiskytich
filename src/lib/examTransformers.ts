@@ -241,7 +241,7 @@ export const toListeningPart4 = (rows: ExamQuestionRow[]): ListeningPart4Clip[] 
 };
 
 // ─── Speaking ───────────────────────────────────────────────
-const collectSampleAnswers = (rows: ExamQuestionRow[]): SampleAnswerPair[] =>
+export const collectSampleAnswers = (rows: ExamQuestionRow[]): SampleAnswerPair[] =>
   rows.map((r) => {
     const ed = (r.extra_data as any) || {};
     const legacy = ed.sampleAnswer || r.explanation || "";
