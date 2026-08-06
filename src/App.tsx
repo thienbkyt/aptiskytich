@@ -65,7 +65,6 @@ const MarathonHistoryDetail = lazy(() => import("./pages/MarathonHistoryDetail")
 const FullPartHistoryDetail = lazy(() => import("./pages/FullPartHistoryDetail"));
 const ProgressPage = lazy(() => import("./pages/Progress"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
-const Connect = lazy(() => import("./pages/Connect"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Dictation = lazy(() => import("./pages/Dictation"));
@@ -154,7 +153,6 @@ const App = () => (
                       <Route path="/history/:id" element={<HistoryDetail />} />
                       <Route path="/progress" element={<ProgressPage />} />
                       <Route path="/pricing" element={<PricingPage />} />
-                      <Route path="/connect" element={<Connect />} />
                       <Route path="/meo-thi-aptis" element={<Blog />} />
                       <Route path="/meo-thi-aptis/:slug" element={<BlogPost />} />
                       <Route path="/blog" element={<Navigate to="/meo-thi-aptis" replace />} />
