@@ -374,6 +374,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Overlap guard: NOT needed at this layer. claim_grading_jobs() is already
+    // atomic — it only selects status='pending' rows with FOR UPDATE SKIP LOCKED
+    // and flips them to 'processing' in the same statement, so two concurrent
+    // runs (cron now fires every minute) can never claim the same job. Stuck
+    // 'processing' rows are reclaimed only after _reclaim_after (10 minutes).
     const { data: jobs, error } = await admin.rpc("claim_grading_jobs", {
       _limit: 5,
       _reclaim_after: "10 minutes",
