@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 type Lang = "en" | "vi";
+export type Surface = "exam" | "app";
+
 
 // In-memory URL cache to avoid re-invoking the function for the same text
 const urlCache = new Map<string, string>();
