@@ -981,7 +981,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           timeLimit={SKILL_TIMES.listening}
           onExit={handleExit}
           externalTimeLeft={listeningTimeLeft}
-          onTimeTick={setListeningTimeLeft}
+          onTimeTick={(t) => { setListeningTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
           isPaused={isPaused}
           onTogglePause={togglePause}
           skipIntro={currentPartIndex > 0}
