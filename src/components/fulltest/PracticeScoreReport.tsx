@@ -7,10 +7,13 @@ import logoAsset from "@/assets/aptis-kytich-logo.png.asset.json";
 
 type SkillKey = "speaking" | "listening" | "grammar" | "reading" | "writing";
 type Scores = Record<SkillKey, { correct: number; total: number }>;
+/** Điểm /50 + CEFR đã lưu sẵn (Writing/Speaking) — hiển thị nguyên, không tính lại. */
+type Overrides = Partial<Record<SkillKey, { scale50: number; cefr?: string | null }>>;
 
 interface Props {
   scores: Scores;
   sessionId: string;
+  overrides?: Overrides;
 }
 
 export interface PracticeScoreReportHandle {
@@ -19,8 +22,8 @@ export interface PracticeScoreReportHandle {
 
 const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
 const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
-const BAND_LABEL: Record<string, string> = { A0: "A0", A1: "A1", A2: "A2", B1: "B1", B2: "B2", C: "C1" };
-const Y_LEVELS = ["C1", "B2", "B1", "A2", "A1", "A0"]; // top → bottom
+const Y_LEVELS = ["C", "B2", "B1", "A2", "A1", "A0"]; // top → bottom
+
 
 const BRAND_RED = "#CC1C01";
 const BRAND_NAVY = "#002F5F";
