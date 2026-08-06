@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { splitWritingErrors } from "@/lib/writingErrorFilter";
 import { QuotaExceededError } from "@/lib/quotaError";
+import { getSkillBand } from "@/data/questions";
+
 
 
 
@@ -226,13 +228,16 @@ export async function finalizeWriting(
   if (error) throw error;
   if (!data) throw new Error("Empty response from grade-exam (writing_finalize)");
 
+  const scale50 = Number(data.scale50 ?? 0);
   return {
     rawTotal: Number(data.rawTotal ?? data.raw_total ?? 0),
-    scale50: Number(data.scale50 ?? 0),
-    cefr: data.cefr ?? "A0",
+    scale50,
+    // Single source of truth for CEFR: the official Aptis thresholds.
+    cefr: getSkillBand(scale50, "writing"),
     greyZone: !!data.greyZone,
     flagReview: !!data.flagReview,
   };
+
 }
 
 export type SaveWritingSkillResultArgs = {

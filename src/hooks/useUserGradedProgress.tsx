@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { ExamProgressMap } from "@/hooks/useUserExamProgress";
+import { getSkillBand } from "@/data/questions";
+
 
 const CEFR_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
 
@@ -27,6 +29,9 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
     const bestBand = new Map<string, string>();
     const map: ExamProgressMap = new Map();
 
+    // Bands are ALWAYS recomputed from scale50 with the official Aptis
+    // thresholds; the stored `cefr` column is only used to detect whether the
+    // attempt was a complete (4-part) one.
     if (skill === "writing") {
       const best30 = new Map<string, number>();
       ((data || []) as any[]).forEach((r) => {
@@ -42,9 +47,10 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
           if (keys.every((k) => p && p[k] !== undefined && p[k] !== null)) {
             val = Math.round(Number(p.task4?.rawPart) || 0);
           }
-          if (CEFR_RANK[cefr] !== undefined) {
+          const derived = getSkillBand(Number(r.scale50) || 0, "writing");
+          if (CEFR_RANK[derived] !== undefined) {
             const prevBand = bestBand.get(sid);
-            if (!prevBand || CEFR_RANK[cefr] > (CEFR_RANK[prevBand] ?? -1)) bestBand.set(sid, cefr);
+            if (!prevBand || CEFR_RANK[derived] > (CEFR_RANK[prevBand] ?? -1)) bestBand.set(sid, derived);
           }
         }
         if (val != null && val > (best30.get(sid) ?? -1)) best30.set(sid, val);
@@ -71,13 +77,15 @@ export const useUserGradedProgress = (skill: "writing" | "speaking") => {
         const raw = Number(r.raw_total) || 0;
         if (raw > (bestRaw.get(sid) ?? -1)) bestRaw.set(sid, raw);
       }
-      if (cefr && CEFR_RANK[cefr] !== undefined) {
+      if (cefr) {
+        const derived = getSkillBand(s50, "speaking");
         const prevBand = bestBand.get(sid);
-        if (!prevBand || CEFR_RANK[cefr] > (CEFR_RANK[prevBand] ?? -1)) {
-          bestBand.set(sid, cefr);
+        if (!prevBand || CEFR_RANK[derived] > (CEFR_RANK[prevBand] ?? -1)) {
+          bestBand.set(sid, derived);
         }
       }
     });
+
     bestScore.forEach((s50, sid) => {
       if (!bestBand.has(sid) && bestRaw.has(sid)) {
         const raw = bestRaw.get(sid) as number;

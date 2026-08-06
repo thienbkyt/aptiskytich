@@ -274,10 +274,16 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           buildGrammarItems, buildReadingItems, buildListeningItems, computeScaleAndBand,
         } = await import("@/lib/reviewItemsBuilder");
         const partNorm = parts[currentPartIndex]?.partNorm ?? null;
-        const partQuestions = parts[currentPartIndex]?.questions ?? [];
+        // Grammar & Vocabulary merges ALL sets (25 Grammar + 5 Vocab parts) into
+        // one engine call, so the snapshot must carry all 50 questions.
+        const partQuestions =
+          skill === "grammar_vocab"
+            ? parts.flatMap((p) => p.questions)
+            : (parts[currentPartIndex]?.questions ?? []);
         let items: any[] = [];
         if (skill === "grammar_vocab") {
           items = buildGrammarItems(partQuestions, perQuestion || []);
+
         } else if (skill === "reading" && partNorm) {
           // Need engineData for reading items. Use what's stored on the part.
           const engineData: any = {};

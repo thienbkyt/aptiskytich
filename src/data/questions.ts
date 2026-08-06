@@ -105,7 +105,12 @@ export const sampleQuestions: Question[] = [
 export const getQuestionsBySkill = (skill: Question["skill"]) =>
   sampleQuestions.filter((q) => q.skill === skill);
 
+/**
+ * @deprecated Percent-based rough level — NOT an Aptis CEFR band.
+ * Never use for Listening/Reading/Writing/Speaking bands: use `getSkillBand`.
+ */
 export const getLevel = (score: number, total: number): string => {
+
   const pct = (score / total) * 100;
   if (pct >= 90) return "C1";
   if (pct >= 75) return "B2";
