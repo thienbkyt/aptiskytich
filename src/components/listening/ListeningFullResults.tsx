@@ -14,6 +14,8 @@ import type {
 export interface ListeningFullPartResult {
   partType: ListeningPartType;
   correct: number;
+  /** True when the shared clock ran out before the student reached this part. */
+  notAttempted?: boolean;
   total: number;
   examSetId?: string | null;
   part1Questions?: ListeningPart1Question[];
@@ -164,9 +166,13 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
                     {partLabel(p.partType)}
                   </span>
                   <div className="flex items-center gap-4 text-sm">
+                    {p.notAttempted ? (
+                      <span className="text-muted-foreground font-medium">Chưa làm</span>
+                    ) : (
                     <span className="text-muted-foreground">
                       Số câu đúng: <span className="font-semibold text-foreground">{p.correct}/{p.total}</span>
                     </span>
+                    )}
                     <span className="text-muted-foreground">
                       Điểm: <span className="font-semibold text-primary">{partScore}/{partMax}</span>
                     </span>

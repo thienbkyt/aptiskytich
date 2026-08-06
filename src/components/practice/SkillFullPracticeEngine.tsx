@@ -83,6 +83,12 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [writingTimeLeft, setWritingTimeLeft] = useState(SKILL_TIMES.writing);
   const [listeningTimeLeft, setListeningTimeLeft] = useState(SKILL_TIMES.listening);
   const [readingTimeLeft, setReadingTimeLeft] = useState<number | null>(null);
+  // Shared pause for the whole skill clock so it stays frozen across parts.
+  const [isPaused, setIsPaused] = useState(false);
+  const togglePause = useCallback(() => setIsPaused((p) => !p), []);
+  // Set when the shared clock hits 0: the running part submits, then we go
+  // straight to the summary instead of mounting the remaining parts.
+  const timeUpRef = useRef(false);
   const adminNavigationRef = useRef(false);
   const lastNavDirectionRef = useRef<"forward" | "back">("forward");
   const fullPartSessionRef = useRef<string>(
@@ -265,12 +271,13 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     }
 
     const isGrammar = skill === "grammar_vocab";
-    const isLast = currentPartIndex >= parts.length - 1;
+    const isLast = currentPartIndex >= parts.length - 1 || timeUpRef.current;
     if (skill === "reading" && isLast) {
       // Build per-part snapshot for the full-results screen
       const built: ReadingFullPartResult[] = parts.map((pt, idx) => {
         const partType = pt.partNorm as "part1" | "part2" | "part3" | "part4";
-        const res = readingResultsByPartRef.current[idx] || { correct: 0, total: 0 };
+        const stored = readingResultsByPartRef.current[idx];
+        const res = stored || { correct: 0, total: 0 };
         const ans = readingAnswersByPartRef.current[idx] || { p1: [], p2: [], p3: [], p4: [] };
         const entry: ReadingFullPartResult = {
           partType,
@@ -278,6 +285,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           total: res.total,
           examSetId: pt.id,
           answers: ans,
+          notAttempted: !stored,
         };
         if (partType === "part1") entry.part1Question = toReadingPart1(pt.questions);
         else if (partType === "part2") entry.part2Question = toReadingPart2(pt.questions);
@@ -296,7 +304,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     if (skill === "listening" && isLast) {
       const built: ListeningFullPartResult[] = parts.map((pt, idx) => {
         const partType = pt.partNorm as ListeningPartType;
-        const res = listeningResultsByPartRef.current[idx] || { correct: 0, total: 0 };
+        const stored = listeningResultsByPartRef.current[idx];
+        const res = stored || { correct: 0, total: 0 };
         const ans = listeningAnswersByPartRef.current[idx] || [];
         const entry: ListeningFullPartResult = {
           partType,
@@ -304,6 +313,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           total: res.total,
           examSetId: pt.id,
           answers: ans,
+          notAttempted: !stored,
         };
         if (partType === "part1") entry.part1Questions = toListeningPart1(pt.questions);
         else if (partType === "part2") entry.part2Questions = toListeningPart2(pt.questions);
@@ -407,6 +417,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         onPreviousPart={handleAdminPreviousPart}
         showResultsOnSubmit
         allowReveal
+        isPaused={isPaused}
+        onTogglePause={togglePause}
         examSetId={parts[0]?.id ?? null}
       /></>
     );
@@ -781,7 +793,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         examSetId={currentPart.id}
         onExit={onExit}
         fullFlow
-        isLastPart={isLastPart}
+        isLastPart={isLastPart || timeUpRef.current}
         onPartSubmissions={handleSpeakingPartSubmissions}
         onComplete={handleSpeakingPartComplete}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
@@ -807,6 +819,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             setListeningScore50(0);
             setScores({ correct: 0, total: 0 });
             setListeningTimeLeft(SKILL_TIMES.listening);
+            timeUpRef.current = false;
             lastNavDirectionRef.current = "forward";
             setCurrentPartIndex(0);
             setEngineKey((k) => k + 1);
@@ -831,7 +844,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         testTitle={headerTitle}
         timeLimit={timeLimit}
         externalTimeLeft={listeningTimeLeft}
-        onTimeTick={(t) => setListeningTimeLeft(t)}
+        onTimeTick={(t) => { setListeningTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
+        isPaused={isPaused}
+        onTogglePause={togglePause}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
         allowReveal
@@ -862,6 +877,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             setReadingScore50(0);
             setScores({ correct: 0, total: 0 });
             setReadingTimeLeft(SKILL_TIMES.reading);
+            timeUpRef.current = false;
             lastNavDirectionRef.current = "forward";
             setCurrentPartIndex(0);
             setEngineKey((k) => k + 1);
@@ -892,7 +908,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         testTitle={headerTitle}
         timeLimit={timeLimit}
         initialTimeLeft={readingTimeLeft ?? SKILL_TIMES.reading}
-        onTimeTick={(t) => setReadingTimeLeft(t)}
+        onTimeTick={(t) => { setReadingTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
+        isPaused={isPaused}
+        onTogglePause={togglePause}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
         allowReveal
@@ -1195,7 +1213,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         testTitle={headerTitle}
         timeLimit={timeLimit}
         externalTimeLeft={writingTimeLeft}
-        onTimeTick={(t) => setWritingTimeLeft(t)}
+        onTimeTick={(t) => { setWritingTimeLeft(t); if (t <= 0) timeUpRef.current = true; }}
+        isPaused={isPaused}
+        onTogglePause={togglePause}
         skipIntro={skipFirstIntro || currentPartIndex > 0}
         fullFlow
         isLastPart={isLastPart}
