@@ -34,17 +34,32 @@ const MediaLibrary = () => {
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const fileRef = useRef<HTMLInputElement>(null);
+  const loadTokenRef = useRef(0);
 
   const handleDeleteAll = async () => {
     if (files.length === 0) return;
     setDeletingAll(true);
-    const names = files.map((f) => f.name);
-    const { error } = await supabase.storage.from(activeBucket).remove(names);
-    if (error) {
-      toast({ title: "Lỗi xóa", description: error.message, variant: "destructive" });
+
+    const groups = files.reduce<Record<string, string[]>>((acc, f) => {
+      (acc[f.bucket] ||= []).push(f.name);
+      return acc;
+    }, {});
+
+    const errors: string[] = [];
+    let removed = 0;
+    for (const [bucket, names] of Object.entries(groups)) {
+      const { error } = await supabase.storage.from(bucket).remove(names);
+      if (error) errors.push(`${bucket}: ${error.message}`);
+      else removed += names.length;
+    }
+
+    if (errors.length) {
+      toast({ title: "Lỗi xóa", description: errors.join("\n"), variant: "destructive" });
+      loadFiles(activeBucket);
     } else {
-      toast({ title: `Đã xóa ${names.length} file` });
+      toast({ title: `Đã xóa ${removed} file` });
       setFiles([]);
     }
     setDeletingAll(false);
@@ -52,8 +67,10 @@ const MediaLibrary = () => {
   };
 
   const loadFiles = async (bucket: BucketType) => {
+    const token = ++loadTokenRef.current;
     setLoading(true);
-    const { data, error } = await supabase.storage.from(bucket).list("", { limit: 200, sortBy: { column: "created_at", order: "desc" } });
+    const { data, error } = await supabase.storage.from(bucket).list("", { limit: 1000, sortBy: { column: "updated_at", order: "desc" } });
+    if (token !== loadTokenRef.current) return;
     if (!error && data) {
       const items: FileItem[] = data
         .filter((f) => f.name !== ".emptyFolderPlaceholder")
@@ -67,8 +84,10 @@ const MediaLibrary = () => {
             url: urlData.publicUrl,
           };
         });
+      if (token !== loadTokenRef.current) return;
       setFiles(items);
     }
+    if (token !== loadTokenRef.current) return;
     setLoading(false);
   };
 
@@ -77,26 +96,45 @@ const MediaLibrary = () => {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadFiles = e.target.files;
     if (!uploadFiles) return;
+    const list = Array.from(uploadFiles);
+    if (list.length === 0) return;
+
     setUploading(true);
+    setUploadProgress({ done: 0, total: list.length });
 
+    const failures: string[] = [];
     let successCount = 0;
-    for (const file of Array.from(uploadFiles)) {
-      const path = file.name.replace(/\s+/g, "_");
-      const { error } = await supabase.storage.from(activeBucket).upload(path, file, { upsert: true });
-      if (error) {
-        toast({ title: `Lỗi upload ${file.name}`, description: error.message, variant: "destructive" });
-      } else {
-        successCount++;
-      }
-    }
+    let cursor = 0;
 
+    const worker = async () => {
+      while (cursor < list.length) {
+        const file = list[cursor++];
+        const path = file.name.replace(/\s+/g, "_");
+        const { error } = await supabase.storage.from(activeBucket).upload(path, file, { upsert: true });
+        if (error) failures.push(`${file.name}: ${error.message}`);
+        else successCount++;
+        setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
+
+    if (failures.length) {
+      toast({
+        title: `Lỗi upload ${failures.length} file`,
+        description: failures.join("\n"),
+        variant: "destructive",
+      });
+    }
     if (successCount > 0) {
       toast({ title: `Đã upload ${successCount} file` });
-      loadFiles(activeBucket);
     }
+    loadFiles(activeBucket);
     setUploading(false);
+    setUploadProgress({ done: 0, total: 0 });
     if (fileRef.current) fileRef.current.value = "";
   };
+
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -144,8 +182,9 @@ const MediaLibrary = () => {
       <div className="flex gap-3">
         <Button onClick={() => fileRef.current?.click()} variant="outline" className="gap-2" disabled={uploading}>
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-          {uploading ? "Đang upload..." : "Upload file"}
+          {uploading ? `Đang upload ${uploadProgress.done}/${uploadProgress.total}` : "Upload file"}
         </Button>
+
         <input ref={fileRef} type="file" accept={currentBucket.accept} multiple onChange={handleUpload} className="hidden" />
         <Badge variant="outline" className="self-center">{files.length} file</Badge>
         {files.length > 0 && (
