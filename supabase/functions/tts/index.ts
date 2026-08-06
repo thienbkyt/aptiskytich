@@ -163,6 +163,18 @@ Deno.serve(async (req) => {
     }
 
 
+    // OpenAI branch: surface "app", or ElevenLabs auth/credit failure fallback.
+    const oaPath = `${lang}/openai_onyx/${buildCacheKey(text, lang, "openai|onyx")}.mp3`;
+    const oaUrl = supabase.storage.from("tts-cache").getPublicUrl(oaPath).data.publicUrl;
+    if (oaPath !== path) {
+      const oaHead = await fetch(oaUrl, { method: "HEAD" });
+      if (oaHead.ok) {
+        return new Response(JSON.stringify({ url: oaUrl, cached: true, provider: "openai" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Not cached — synthesize via Lovable AI (OpenAI-compatible /audio/speech)
     const lovableKey = Deno.env.get("LOVABLE_API_KEY");
     if (!lovableKey) {
@@ -201,8 +213,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const audioBuffer = await ttsRes.arrayBuffer();
-    if (!audioBuffer.byteLength) {
+    const oaBuffer = await ttsRes.arrayBuffer();
+    if (!oaBuffer.byteLength) {
       return new Response(JSON.stringify({ error: "No audio returned" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -220,11 +232,11 @@ Deno.serve(async (req) => {
       metadata: { lang, voice, model: "openai/gpt-4o-mini-tts" },
     }).catch(() => {});
 
-    const bytes = new Uint8Array(audioBuffer);
+    const bytes = new Uint8Array(oaBuffer);
 
     const { error: upErr } = await supabase.storage
       .from("tts-cache")
-      .upload(path, bytes, {
+      .upload(oaPath, bytes, {
         contentType: "audio/mpeg",
         upsert: true,
         cacheControl: "31536000",
@@ -239,9 +251,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ url, cached: false }), {
+    return new Response(JSON.stringify({ url: oaUrl, cached: false, provider: "openai" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (e: any) {
     console.error("tts function error:", e);
     return new Response(JSON.stringify({ error: e.message || "Unknown error" }), {
