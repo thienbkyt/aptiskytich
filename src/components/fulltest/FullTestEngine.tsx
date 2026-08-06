@@ -926,6 +926,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           ...prev,
           speaking: { correct: scale50, total: 50 },
         }));
+        setSkillOverrides((prev) => ({ ...prev, speaking: { scale50, cefr: cefr || null } }));
       } catch (e) {
         console.warn("[FullTestEngine] speaking grading failed", e);
       } finally {
