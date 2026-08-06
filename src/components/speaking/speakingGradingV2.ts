@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { uploadSpeakingBlobs } from "@/lib/speakingUpload";
 import { QuotaExceededError } from "@/lib/quotaError";
+import { getSkillBand } from "@/data/questions";
+
 
 
 export type SpeakingBandsV2 = {
