@@ -12,6 +12,8 @@ export interface SpeakingPart1Data {
   prepTime: number;   // seconds per question
   speakTime: number;  // seconds per question
   sampleAnswers?: SampleAnswerPair[];
+  outlineB1?: SpeakingOutline | null;
+  outlineB2?: SpeakingOutline | null;
 }
 
 // Part 2: Describe a Picture – Describe what you see (45s prep, 45s speak)
@@ -22,6 +24,8 @@ export interface SpeakingPart2Data {
   prepTime: number;
   speakTime: number;
   sampleAnswers?: SampleAnswerPair[];
+  outlineB1?: SpeakingOutline | null;
+  outlineB2?: SpeakingOutline | null;
 }
 
 // Part 3: Compare Pictures – Compare two images (45s prep, 60s speak)
@@ -33,6 +37,8 @@ export interface SpeakingPart3Data {
   prepTime: number;
   speakTime: number;
   sampleAnswers?: SampleAnswerPair[];
+  outlineB1?: SpeakingOutline | null;
+  outlineB2?: SpeakingOutline | null;
 }
 
 /** "Dựng bài nhanh" outline: fill-in-the-blank template with alternatives. */
