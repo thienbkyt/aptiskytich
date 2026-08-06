@@ -48,7 +48,13 @@ export type WritingPartResultV2 = {
   spellingErrors: WritingErrorItemV2[];
   improvedVersion?: string;
   forcedComplexity?: boolean;
+  /** True when the student left the part blank — no AI call, no quota consumed. */
+  notAttempted?: boolean;
 };
+
+/** Prefix used so display surfaces can recognise a blank (ungraded) part. */
+export const WRITING_NOT_ATTEMPTED_FEEDBACK =
+  "Chưa làm bài — phần này không được chấm và không bị trừ lượt chấm AI.";
 
 export type WritingFinalizeResultV2 = {
   rawTotal: number;
