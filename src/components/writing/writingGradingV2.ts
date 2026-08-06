@@ -79,6 +79,41 @@ export async function gradeWritingPartV2(
   },
   opts?: { testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null }
 ): Promise<WritingPartResultV2> {
+  // Short-circuit: blank submission → no AI call, no quota burn, no retry queue.
+  const MIN_WRITTEN_CHARS = 10;
+  const stripHtml = (s: string) =>
+    String(s || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ");
+  const combined = [
+    text,
+    parts?.informalText,
+    parts?.formalText,
+    ...(parts?.shortAnswers ?? []),
+    ...(parts?.threeAnswers ?? []),
+  ]
+    .map((s) => stripHtml(s as string))
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const anyWritten = combined.length >= MIN_WRITTEN_CHARS;
+  if (!anyWritten) {
+    const count = Math.max(questions.length, 1);
+    return {
+      partType,
+      bands: { tf: "0", gra: "0", vra: "0", cc: "0", reg: "0" },
+      rawPart: 0,
+      perItem: Array.from({ length: count }, (_, i) => ({
+        questionText: questions[i] ?? "",
+        userAnswer: "",
+      })),
+      analysis: WRITING_NOT_ATTEMPTED_FEEDBACK,
+      feedback: WRITING_NOT_ATTEMPTED_FEEDBACK,
+      grammarErrors: [],
+      spellingErrors: [],
+      improvedVersion: "",
+      notAttempted: true,
+    };
+  }
+
   const gradePayload = {
     type: "writing_v2",
     partType,
