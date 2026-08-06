@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { safeText } from "@/lib/safeText";
+import { markExamActive } from "@/lib/examActive";
 
 /**
  * Full Test session id must SURVIVE a reload / re-entry mid-attempt, otherwise
@@ -184,10 +185,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // Disable dictionary lookup & sentence translation while in Full Test
   useEffect(() => {
     document.body.classList.add("full-test-active");
-    document.body.classList.add("exam-active");
+    const clearExamFlag = markExamActive();
     return () => {
       document.body.classList.remove("full-test-active");
-      document.body.classList.remove("exam-active");
+      clearExamFlag();
     };
   }, []);
 

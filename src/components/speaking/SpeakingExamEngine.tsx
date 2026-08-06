@@ -54,6 +54,7 @@ import UpgradeLock from "@/components/pro/UpgradeLock";
 
 import SpeakingProfileView from "./SpeakingProfileView";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import { markExamActive } from "@/lib/examActive";
 
 /** Payload passed to parent in fullFlow mode (full-skill practice). */
 export interface SpeakingPartSubmissionItem {
@@ -298,10 +299,7 @@ const SpeakingExamEngine = ({
   }, [phase, partType, part2Data?.imageUrl, part3Data?.imageUrl1, part3Data?.imageUrl2, part4Data?.imageUrl]);
 
 
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
 
   // Initialize recordings array
   useEffect(() => {

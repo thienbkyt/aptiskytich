@@ -28,6 +28,7 @@ import type { ListeningHighlightData } from "@/lib/listeningReview";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import { markExamActive } from "@/lib/examActive";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -131,10 +132,7 @@ const ListeningExamEngine = ({
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   const [revealedIdx, setRevealedIdx] = useState<Set<number>>(new Set());
   const [lockedIdx, setLockedIdx] = useState<Set<number>>(new Set());
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   // Batch-sign every audio file of this part in ONE storage request so the
   // players (13 in Part 1) hit a warm cache instead of firing 13+ sign calls.
   useEffect(() => {

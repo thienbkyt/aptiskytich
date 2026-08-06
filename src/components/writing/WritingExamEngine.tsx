@@ -24,6 +24,7 @@ import UpgradeLock from "@/components/pro/UpgradeLock";
 import { toast } from "sonner";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
 import type {
+import { markExamActive } from "@/lib/examActive";
   WritingPart1Data,
   WritingPart2Data,
   WritingPart3Data,
@@ -118,10 +119,7 @@ const WritingExamEngine = ({
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [hasStarted, setHasStarted] = useState<boolean>(skipIntro || !!reviewMode || !!enterAtLastQuestion);
   useEffect(() => { if (phase === "practice") setHasStarted(true); }, [phase]);
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   const [isPausedInternal, setIsPausedInternal] = useState(false);
   const isPaused = allowPause === false ? false : (isPausedProp ?? isPausedInternal);
   const togglePause = allowPause === false ? undefined : (onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p)));

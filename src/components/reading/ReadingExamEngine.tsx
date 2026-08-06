@@ -25,6 +25,7 @@ import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import { markExamActive } from "@/lib/examActive";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -158,10 +159,7 @@ const ReadingExamEngine = ({
     paused: isPaused,
     onTick: onTimeTick,
   });
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   useExitWarning(hasStarted && !submitted && !reviewMode && !marathonLock);
 
   // Reveal-on-demand for practice mode (per page key).

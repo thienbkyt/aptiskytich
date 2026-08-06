@@ -24,6 +24,7 @@ import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import { markExamActive } from "@/lib/examActive";
 
 interface GrammarExamEngineProps {
   questions: Question[];
@@ -101,10 +102,7 @@ const GrammarExamEngine = ({
     running: hasStarted && !submitted && !hideTimer,
     paused: isPaused,
   });
-  useEffect(() => {
-    document.body.classList.add("exam-active");
-    return () => document.body.classList.remove("exam-active");
-  }, []);
+  useEffect(() => markExamActive(), []);
   useExitWarning(hasStarted && !submitted && !reviewMode);
   // Reveal-on-demand for practice mode (keyed by group index).
   const [revealedGroups, setRevealedGroups] = useState<Set<number>>(new Set());
