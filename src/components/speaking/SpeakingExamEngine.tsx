@@ -177,6 +177,9 @@ const SpeakingExamEngine = ({
   const durationsRef = useRef<(number | null)[]>([]);
   // Timestamp (ms) when current recording started, for duration calc.
   const recordingStartRef = useRef<number | null>(null);
+  // Absolute deadlines for prep / recording so real elapsed time always wins.
+  const prepEndAtRef = useRef<number | null>(null);
+  const speakEndAtRef = useRef<number | null>(null);
   // When true, the next onstop should trigger handleFinish after writing the blob.
   const finishAfterStopRef = useRef(false);
   // When non-null, onstop should advance to this question index after writing the blob.
@@ -473,22 +476,24 @@ const SpeakingExamEngine = ({
     setPhase("prep");
     
     if (timerRef.current) clearInterval(timerRef.current);
+    // Wall-clock prep countdown: hidden tabs throttle intervals, so remaining
+    // time must always be derived from a real deadline, never decremented.
+    const prepEndAt = Date.now() + prepTime * 1000;
+    prepEndAtRef.current = prepEndAt;
     timerRef.current = setInterval(() => {
-      setPrepTimeLeft(prev => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          timerRef.current = null;
-          // Beep right before recording starts (prep just ended)
-          withTimeout(playBeep(), 1000)
-            .catch(() => undefined)
-            .then(() => {
-              startRecording();
-            });
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      const remaining = Math.max(0, Math.ceil((prepEndAt - Date.now()) / 1000));
+      setPrepTimeLeft(remaining);
+      if (remaining <= 0) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+        prepEndAtRef.current = null;
+        withTimeout(playBeep(), 1000)
+          .catch(() => undefined)
+          .then(() => {
+            startRecording();
+          });
+      }
+    }, 250);
   }, [partType, part1Data, part2Data, part3Data, part4Data]);
 
   // Start recording
@@ -629,17 +634,20 @@ const SpeakingExamEngine = ({
 
       // Countdown timer
       if (timerRef.current) clearInterval(timerRef.current);
+      // Wall-clock recording countdown. MediaRecorder keeps running while the
+      // tab is hidden, so a decrementing interval would let the clip overrun.
+      const recEndAt = (recordingStartRef.current ?? Date.now()) + speakTime * 1000;
+      speakEndAtRef.current = recEndAt;
       timerRef.current = setInterval(() => {
-        setSpeakTimeLeft(prev => {
-          if (prev <= 1) {
-            if (timerRef.current) clearInterval(timerRef.current);
-            timerRef.current = null;
-            doStopAndAdvance();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        const remaining = Math.max(0, Math.ceil((recEndAt - Date.now()) / 1000));
+        setSpeakTimeLeft(remaining);
+        if (remaining <= 0) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = null;
+          speakEndAtRef.current = null;
+          doStopAndAdvance();
+        }
+      }, 250);
 
     } catch (err) {
       console.error("Mic error:", err);
