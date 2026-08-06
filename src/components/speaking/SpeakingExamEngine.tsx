@@ -226,6 +226,20 @@ const SpeakingExamEngine = ({
     return "";
   };
 
+  // Warm the exam voice for the NEXT question so its playback starts instantly.
+  useEffect(() => {
+    const nextText = (() => {
+      const i = currentIndex + 1;
+      if (partType === "part1" && part1Data) return part1Data.questions?.[i];
+      if (partType === "part2" && part2Data) return part2Data.questions?.[i];
+      if (partType === "part3" && part3Data) return part3Data.questions?.[i];
+      return "";
+    })();
+    if (nextText) void warmTTS(nextText, "en", "exam");
+  }, [currentIndex, partType, part1Data, part2Data, part3Data]);
+
+
+
   // Image resolution is handled by <SignedImage /> directly.
   // Tầng B: warm up signed URLs + browser cache while the student reads the part
   // instructions, so the question screen shows the picture immediately.
