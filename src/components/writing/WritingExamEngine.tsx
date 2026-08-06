@@ -791,6 +791,7 @@ const WritingExamEngine = ({
         })()}
       </div>
     </div>
+    </TimerProvider>
   );
 };
 
