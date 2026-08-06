@@ -625,6 +625,7 @@ const ListeningExamEngine = ({
   const safeIndex = Math.min(Math.max(currentIndex, 0), Math.max(0, totalQuestions - 1));
 
   return (
+    <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       <RotateDeviceOverlay />
       {adminControls}
