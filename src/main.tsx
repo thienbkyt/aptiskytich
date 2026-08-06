@@ -38,11 +38,11 @@ let updateBanner: HTMLDivElement | null = null;
 let bannerQueued = false;
 function showUpdateBanner() {
   if (updateBanner) return;
-  if (window.__ktExamActive) {
+  if ((window as Window & { __ktExamActive?: boolean }).__ktExamActive) {
     if (bannerQueued) return;
     bannerQueued = true;
     const onChange = () => {
-      if (window.__ktExamActive) return;
+      if ((window as Window & { __ktExamActive?: boolean }).__ktExamActive) return;
       window.removeEventListener("kt-exam-active-change", onChange);
       bannerQueued = false;
       showUpdateBanner();
