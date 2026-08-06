@@ -552,7 +552,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
                 onResolved={(scale50, cefr) => {
                   setWritingUngraded(null);
                   setScores((prev) => ({ ...prev, writing: { correct: scale50, total: 50 } }));
-                  if (cefr) { /* band derives from score in the report */ }
+                  setSkillOverrides((prev) => ({ ...prev, writing: { scale50, cefr: cefr || null } }));
                 }}
               />
             </div>
