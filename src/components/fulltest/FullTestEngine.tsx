@@ -1036,6 +1036,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onExit={handleExit}
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
           onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
+          initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
+          onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
           {...readingProps}
         />
       </>
