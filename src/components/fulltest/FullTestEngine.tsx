@@ -40,6 +40,7 @@ import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGradin
 import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
 import WritingGradingLiveStatus from "@/components/writing/WritingGradingLiveStatus";
 
+import { gradableGrammarQuestions } from "@/lib/grammarGroups";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 import { safeLocalStorage } from "@/lib/safeStorage";
@@ -312,7 +313,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         let items: any[] = [];
         try {
           if (skill === "grammar") {
-            items = buildGrammarItems(partQuestions, perQuestion || []);
+            // The engine drops rows with a missing correct_answer and reports
+            // results in ITS order — align the snapshot to perQuestion ids so
+            // review chips / correctness never drift from the rendered question.
+            const byId = new Map(partQuestions.map((q: any) => [q.id, q]));
+            const orderedQs = (perQuestion || []).length
+              ? (perQuestion || []).map((p) => byId.get(p.exam_question_id)).filter(Boolean)
+              : gradableGrammarQuestions(partQuestions as any);
+            items = buildGrammarItems(orderedQs as any[], perQuestion || []);
           } else if (skill === "reading" && partNorm) {
             const { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } = await import("@/lib/examTransformers");
             const ed: any = {};
