@@ -1066,6 +1066,82 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       };
     };
 
+    /**
+     * Persist ONE test_results row for a submitted writing part immediately
+     * (before any AI grading). Called on every part submit so a mid-Writing exit,
+     * crash or network failure can never wipe the student's answers. Idempotent:
+     * caches the row id per part and reuses any existing row for
+     * (session, exam_set) instead of inserting a duplicate.
+     */
+    const ensureWritingPartRow = async (origIdx: number): Promise<string | null> => {
+      const cached = writingRowIdByPartRef.current[origIdx];
+      if (cached) return cached;
+      const e = writingSubmissionsByPartRef.current[origIdx];
+      if (!e) return null;
+      try {
+        const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
+        const placeholderSnap = buildSnap({
+          skill: "writing",
+          part: e.partType,
+          testTitle: e.partLabel ?? null,
+          score: 0, total: 30, scaled50: 0, band: "",
+          items: [{
+            questionText: (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType),
+            userAnswer: e.text || (e.perQuestion?.[0]?.user_answer ?? ""),
+            isCorrect: false,
+            ai: null,
+          }],
+          raw: { partType: e.partType, text: e.text, questions: e.questions, ai: null, notGraded: true },
+        });
+
+        // Existing row for this exact (session, exam set)? → reuse it.
+        let rowId: string | null = null;
+        try {
+          const q = (supabase as any)
+            .from("test_results")
+            .select("id, skill_scores")
+            .eq("full_test_session_id", sessionIdRef.current)
+            .order("created_at", { ascending: true });
+          const { data: existingRows } = e.partId
+            ? await q.eq("exam_set_id", e.partId)
+            : await q.is("exam_set_id", null);
+          const match = (existingRows || []).find(
+            (r: any) => r?.skill_scores?.skill === "writing",
+          );
+          if (match?.id) rowId = match.id as string;
+        } catch (err) {
+          console.warn("[FullTest v2] lookup existing test_results failed", err);
+        }
+
+        if (rowId) {
+          // Score updates must go through the finalize RPC (guard trigger).
+          await supabase.rpc("finalize_skill_test_result", {
+            p_test_result_id: rowId,
+            p_score: 0,
+            p_total: 30,
+            p_correct_answers: 0,
+            p_review_snapshot: placeholderSnap as any,
+          } as any);
+        } else {
+          rowId = await saveExamResult({
+            examSetId: e.partId ?? null,
+            skill: "writing",
+            correct: 0,
+            total: 30,
+            perQuestion: e.perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: placeholderSnap,
+          });
+        }
+        if (rowId) writingRowIdByPartRef.current[origIdx] = rowId;
+        return rowId;
+      } catch (err) {
+        console.warn("[FullTest v2] persist writing part failed", err);
+        return null;
+      }
+    };
+
     const runWritingFinalize = async () => {
       const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
 
