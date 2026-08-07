@@ -37,6 +37,7 @@ import WritingFullResults from "@/components/writing/WritingFullResults";
 import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
+import { gradableGrammarQuestions } from "@/lib/grammarGroups";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 
@@ -283,7 +284,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             : (parts[currentPartIndex]?.questions ?? []);
         let items: any[] = [];
         if (skill === "grammar_vocab") {
-          items = buildGrammarItems(partQuestions, perQuestion || []);
+          const byId = new Map(partQuestions.map((q: any) => [q.id, q]));
+          const orderedQs = (perQuestion || []).length
+            ? (perQuestion || []).map((p: any) => byId.get(p.exam_question_id)).filter(Boolean)
+            : gradableGrammarQuestions(partQuestions as any);
+          items = buildGrammarItems(orderedQs as any[], perQuestion || []);
 
         } else if (skill === "reading" && partNorm) {
           // Need engineData for reading items. Use what's stored on the part.

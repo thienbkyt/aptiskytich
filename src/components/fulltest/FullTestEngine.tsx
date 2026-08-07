@@ -40,6 +40,7 @@ import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGradin
 import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
 import WritingGradingLiveStatus from "@/components/writing/WritingGradingLiveStatus";
 
+import { gradableGrammarQuestions } from "@/lib/grammarGroups";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 import { safeLocalStorage } from "@/lib/safeStorage";
@@ -174,6 +175,12 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const writingRawAnswersByPartRef = useRef<Record<number, {
     shortAnswers: string[]; textAnswer: string; part3Answers: string[]; informalAnswer: string; formalAnswer: string;
   }>>({});
+  /** test_results row id already persisted for each writing part index (avoids duplicates). */
+  const writingRowIdByPartRef = useRef<Record<number, string>>({});
+  /** test_results row id per completed skill-part (prevents duplicates on re-submit). */
+  const savedRowIdRef = useRef<Record<string, string>>({});
+  /** Reading answers kept per part so navigating back/forward doesn't lose them. */
+  const readingAnswersByPartRef = useRef<Record<number, any>>({});
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
@@ -306,7 +313,14 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         let items: any[] = [];
         try {
           if (skill === "grammar") {
-            items = buildGrammarItems(partQuestions, perQuestion || []);
+            // The engine drops rows with a missing correct_answer and reports
+            // results in ITS order — align the snapshot to perQuestion ids so
+            // review chips / correctness never drift from the rendered question.
+            const byId = new Map(partQuestions.map((q: any) => [q.id, q]));
+            const orderedQs = (perQuestion || []).length
+              ? (perQuestion || []).map((p) => byId.get(p.exam_question_id)).filter(Boolean)
+              : gradableGrammarQuestions(partQuestions as any);
+            items = buildGrammarItems(orderedQs as any[], perQuestion || []);
           } else if (skill === "reading" && partNorm) {
             const { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } = await import("@/lib/examTransformers");
             const ed: any = {};
@@ -338,15 +352,30 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             perQuestion: perQuestion || [],
           },
         });
-        saveExamResult({
-          examSetId,
-          skill: skill === "grammar" ? "grammar_vocab" : skill,
-          correct, total,
-          perQuestion,
-          fullTestSessionId: sessionIdRef.current,
-          fullTestId: testId,
-          reviewSnapshot: snap,
-        });
+        // Re-submitting a part (e.g. student went back a part) must UPDATE the
+        // existing history row, not insert a duplicate.
+        const rowKey = `${skill}-${currentPartIndex}`;
+        const existingRowId = savedRowIdRef.current[rowKey];
+        if (existingRowId) {
+          await supabase.rpc("finalize_skill_test_result", {
+            p_test_result_id: existingRowId,
+            p_score: correct,
+            p_total: total || 1,
+            p_correct_answers: correct,
+            p_review_snapshot: snap as any,
+          } as any);
+        } else {
+          const newId = await saveExamResult({
+            examSetId,
+            skill: skill === "grammar" ? "grammar_vocab" : skill,
+            correct, total,
+            perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: snap,
+          });
+          if (newId) savedRowIdRef.current[rowKey] = newId;
+        }
       })();
     }
 
@@ -1032,6 +1061,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           onExit={handleExit}
           onComplete={(correct, total, perQuestion) => handlePartComplete(correct, total, perQuestion)}
           onPreviousPart={canGoBackPart ? handleAdminBackPart : undefined}
+          initialAnswers={readingAnswersByPartRef.current[currentPartIndex]}
+          onAnswersChange={(a) => { readingAnswersByPartRef.current[currentPartIndex] = a; }}
           {...readingProps}
         />
       </>
@@ -1060,6 +1091,82 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
         partId: currentPart.id ?? null,
         partLabel: currentPart.part,
       };
+    };
+
+    /**
+     * Persist ONE test_results row for a submitted writing part immediately
+     * (before any AI grading). Called on every part submit so a mid-Writing exit,
+     * crash or network failure can never wipe the student's answers. Idempotent:
+     * caches the row id per part and reuses any existing row for
+     * (session, exam_set) instead of inserting a duplicate.
+     */
+    const ensureWritingPartRow = async (origIdx: number): Promise<string | null> => {
+      const cached = writingRowIdByPartRef.current[origIdx];
+      if (cached) return cached;
+      const e = writingSubmissionsByPartRef.current[origIdx];
+      if (!e) return null;
+      try {
+        const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
+        const placeholderSnap = buildSnap({
+          skill: "writing",
+          part: e.partType,
+          testTitle: e.partLabel ?? null,
+          score: 0, total: 30, scaled50: 0, band: "",
+          items: [{
+            questionText: (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType),
+            userAnswer: e.text || (e.perQuestion?.[0]?.user_answer ?? ""),
+            isCorrect: false,
+            ai: null,
+          }],
+          raw: { partType: e.partType, text: e.text, questions: e.questions, ai: null, notGraded: true },
+        });
+
+        // Existing row for this exact (session, exam set)? → reuse it.
+        let rowId: string | null = null;
+        try {
+          const q = (supabase as any)
+            .from("test_results")
+            .select("id, skill_scores")
+            .eq("full_test_session_id", sessionIdRef.current)
+            .order("created_at", { ascending: true });
+          const { data: existingRows } = e.partId
+            ? await q.eq("exam_set_id", e.partId)
+            : await q.is("exam_set_id", null);
+          const match = (existingRows || []).find(
+            (r: any) => r?.skill_scores?.skill === "writing",
+          );
+          if (match?.id) rowId = match.id as string;
+        } catch (err) {
+          console.warn("[FullTest v2] lookup existing test_results failed", err);
+        }
+
+        if (rowId) {
+          // Score updates must go through the finalize RPC (guard trigger).
+          await supabase.rpc("finalize_skill_test_result", {
+            p_test_result_id: rowId,
+            p_score: 0,
+            p_total: 30,
+            p_correct_answers: 0,
+            p_review_snapshot: placeholderSnap as any,
+          } as any);
+        } else {
+          rowId = await saveExamResult({
+            examSetId: e.partId ?? null,
+            skill: "writing",
+            correct: 0,
+            total: 30,
+            perQuestion: e.perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: placeholderSnap,
+          });
+        }
+        if (rowId) writingRowIdByPartRef.current[origIdx] = rowId;
+        return rowId;
+      } catch (err) {
+        console.warn("[FullTest v2] persist writing part failed", err);
+        return null;
+      }
     };
 
     const runWritingFinalize = async () => {
@@ -1101,68 +1208,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           partsInput.formalText = raw.formalAnswer;
         }
 
-        // Reuse (or pre-create) ONE test_results row per (session, exam set) so a
-        // re-grade after a reload never duplicates history rows. The safety-net
-        // queue links a failed grade back to this row.
-        let preTestResultId: string | null = null;
-        try {
-          const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
-          const placeholderSnap = buildSnap({
-            skill: "writing",
-            part: e.partType,
-            testTitle: e.partLabel ?? null,
-            score: 0, total: 30, scaled50: 0, band: "",
-            items: [{
-              questionText: (e.questions || []).join("\n\n") || (e.partLabel ?? e.partType),
-              userAnswer: e.text || (e.perQuestion?.[0]?.user_answer ?? ""),
-              isCorrect: false,
-              ai: null,
-            }],
-            raw: { partType: e.partType, text: e.text, questions: e.questions, ai: null, notGraded: true },
-          });
+        // Reuse the row already persisted when the part was submitted (or create
+        // it now) so a re-grade after a reload never duplicates history rows.
+        const preTestResultId: string | null = await ensureWritingPartRow(origIdx);
 
-          // Existing row for this exact (session, exam set)? → reuse it.
-          try {
-            const q = (supabase as any)
-              .from("test_results")
-              .select("id, skill_scores")
-              .eq("full_test_session_id", sessionIdRef.current)
-              .order("created_at", { ascending: true });
-            const { data: existingRows } = e.partId
-              ? await q.eq("exam_set_id", e.partId)
-              : await q.is("exam_set_id", null);
-            const match = (existingRows || []).find(
-              (r: any) => r?.skill_scores?.skill === "writing",
-            );
-            if (match?.id) preTestResultId = match.id as string;
-          } catch (err) {
-            console.warn("[FullTest v2] lookup existing test_results failed", err);
-          }
-
-          if (preTestResultId) {
-            // Score updates must go through the finalize RPC (guard trigger).
-            await supabase.rpc("finalize_skill_test_result", {
-              p_test_result_id: preTestResultId,
-              p_score: 0,
-              p_total: 30,
-              p_correct_answers: 0,
-              p_review_snapshot: placeholderSnap as any,
-            } as any);
-          } else {
-            preTestResultId = await saveExamResult({
-              examSetId: e.partId ?? null,
-              skill: "writing",
-              correct: 0,
-              total: 30,
-              perQuestion: e.perQuestion,
-              fullTestSessionId: sessionIdRef.current,
-              fullTestId: testId,
-              reviewSnapshot: placeholderSnap,
-            });
-          }
-        } catch (err) {
-          console.warn("[FullTest v2] pre-create test_results failed", err);
-        }
 
 
         let v2: Awaited<ReturnType<typeof gradeWritingPartV2>> | null = null;
@@ -1366,11 +1415,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       if (adminNavigationRef.current) return;
 
       // Attach perQuestion (text answers) to the stored submission for this part.
-      // No test_results row is created here — grading + persistence happen in runWritingFinalize.
+      // Persist this part's answers to test_results RIGHT NOW (before AI grading),
+      // so exiting/crashing mid-Writing can never lose the student's work.
       const existing = writingSubmissionsByPartRef.current[currentPartIndex];
       if (existing) {
         writingSubmissionsByPartRef.current[currentPartIndex] = { ...existing, perQuestion };
       }
+      const savingIdx = currentPartIndex;
+      void ensureWritingPartRow(savingIdx);
+
+
 
       if (!isLastWritingPart && !timeUpRef.current) {
         // Just advance to the next writing part — do NOT call handlePartComplete

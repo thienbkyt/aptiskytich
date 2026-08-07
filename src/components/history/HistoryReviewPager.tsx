@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
 import { toReadingPart2 } from "@/lib/examTransformers";
+import { grammarGroupIndices } from "@/lib/grammarGroups";
 import { getSkillBand, toScaledScore } from "@/data/questions";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
@@ -184,6 +185,23 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
               const anyWrong = slice.some((it) => it.isCorrect === false);
               return { isCorrect: allCorrect ? true : anyWrong ? false : null };
             });
+          }
+        }
+        // Grammar & Vocabulary is paged by GROUP (consecutive vocab_matching
+        // questions of the same type share one page) — collapse per-question
+        // items into one nav entry per page so chips match what's rendered.
+        if (p.skill === "grammar" && items.length > 0) {
+          const rawQs = snap?.raw?.questions;
+          if (Array.isArray(rawQs) && rawQs.length > 0) {
+            const groups = grammarGroupIndices(rawQs as any);
+            if (groups.length > 0 && groups.length !== items.length) {
+              navItems = groups.map((idxs) => {
+                const slice = idxs.map((ix) => items[ix]).filter(Boolean);
+                const allCorrect = slice.length > 0 && slice.every((it) => it.isCorrect === true);
+                const anyWrong = slice.some((it) => it.isCorrect === false);
+                return { isCorrect: allCorrect ? true : anyWrong ? false : null };
+              });
+            }
           }
         }
         map[i] = { items, band, isAI, aiRaw, ...(navItems ? { navItems } : {}) };
