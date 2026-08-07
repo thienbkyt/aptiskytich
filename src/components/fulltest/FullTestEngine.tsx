@@ -1388,11 +1388,16 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
       if (adminNavigationRef.current) return;
 
       // Attach perQuestion (text answers) to the stored submission for this part.
-      // No test_results row is created here — grading + persistence happen in runWritingFinalize.
+      // Persist this part's answers to test_results RIGHT NOW (before AI grading),
+      // so exiting/crashing mid-Writing can never lose the student's work.
       const existing = writingSubmissionsByPartRef.current[currentPartIndex];
       if (existing) {
         writingSubmissionsByPartRef.current[currentPartIndex] = { ...existing, perQuestion };
       }
+      const savingIdx = currentPartIndex;
+      void ensureWritingPartRow(savingIdx);
+
+
 
       if (!isLastWritingPart && !timeUpRef.current) {
         // Just advance to the next writing part — do NOT call handlePartComplete
