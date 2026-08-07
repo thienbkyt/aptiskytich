@@ -176,6 +176,8 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   }>>({});
   /** test_results row id already persisted for each writing part index (avoids duplicates). */
   const writingRowIdByPartRef = useRef<Record<number, string>>({});
+  /** test_results row id per completed skill-part (prevents duplicates on re-submit). */
+  const savedRowIdRef = useRef<Record<string, string>>({});
   /** Reading answers kept per part so navigating back/forward doesn't lose them. */
   const readingAnswersByPartRef = useRef<Record<number, any>>({});
   const [writingGradedCount, setWritingGradedCount] = useState(0);
@@ -351,7 +353,6 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             p_test_result_id: existingRowId,
             p_score: correct,
             p_total: total || 1,
-            p_level: level,
             p_correct_answers: correct,
             p_review_snapshot: snap as any,
           } as any);
