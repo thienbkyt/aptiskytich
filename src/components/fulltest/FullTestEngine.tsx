@@ -342,15 +342,31 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
             perQuestion: perQuestion || [],
           },
         });
-        saveExamResult({
-          examSetId,
-          skill: skill === "grammar" ? "grammar_vocab" : skill,
-          correct, total,
-          perQuestion,
-          fullTestSessionId: sessionIdRef.current,
-          fullTestId: testId,
-          reviewSnapshot: snap,
-        });
+        // Re-submitting a part (e.g. student went back a part) must UPDATE the
+        // existing history row, not insert a duplicate.
+        const rowKey = `${skill}-${currentPartIndex}`;
+        const existingRowId = savedRowIdRef.current[rowKey];
+        if (existingRowId) {
+          await supabase.rpc("finalize_skill_test_result", {
+            p_test_result_id: existingRowId,
+            p_score: correct,
+            p_total: total || 1,
+            p_level: level,
+            p_correct_answers: correct,
+            p_review_snapshot: snap as any,
+          } as any);
+        } else {
+          const newId = await saveExamResult({
+            examSetId,
+            skill: skill === "grammar" ? "grammar_vocab" : skill,
+            correct, total,
+            perQuestion,
+            fullTestSessionId: sessionIdRef.current,
+            fullTestId: testId,
+            reviewSnapshot: snap,
+          });
+          if (newId) savedRowIdRef.current[rowKey] = newId;
+        }
       })();
     }
 
