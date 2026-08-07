@@ -174,6 +174,10 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   const writingRawAnswersByPartRef = useRef<Record<number, {
     shortAnswers: string[]; textAnswer: string; part3Answers: string[]; informalAnswer: string; formalAnswer: string;
   }>>({});
+  /** test_results row id already persisted for each writing part index (avoids duplicates). */
+  const writingRowIdByPartRef = useRef<Record<number, string>>({});
+  /** Reading answers kept per part so navigating back/forward doesn't lose them. */
+  const readingAnswersByPartRef = useRef<Record<number, any>>({});
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
