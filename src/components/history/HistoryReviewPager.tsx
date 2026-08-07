@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
 import { toReadingPart2 } from "@/lib/examTransformers";
+import { grammarGroupIndices } from "@/lib/grammarGroups";
 import { getSkillBand, toScaledScore } from "@/data/questions";
 import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import SpeakingReviewPage from "@/components/history/SpeakingReviewPage";
