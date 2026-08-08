@@ -10,6 +10,7 @@
 // is unambiguous.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { mapWritingRowsToParts, resolveWritingRawParts } from "../_shared/writingFinalize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
