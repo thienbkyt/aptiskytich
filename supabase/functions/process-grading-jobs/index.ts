@@ -10,6 +10,7 @@
 // is unambiguous.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { mapWritingRowsToParts, resolveWritingRawParts } from "../_shared/writingFinalize.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -228,11 +229,12 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
   // session id is only present in skill_scores.fullPartSession/fullTestSession.
   const { data: rows, error } = await admin
     .from("test_results")
-    .select("id, score, total, level, skill_scores, exam_set_id, full_test_session_id")
+    .select("id, score, total, level, skill_scores, exam_set_id, full_test_session_id, review_snapshot, created_at")
     .eq("user_id", job.user_id)
     .or(
       `full_test_session_id.eq.${sessionId},skill_scores->>fullPartSession.eq.${sessionId},skill_scores->>fullTestSession.eq.${sessionId}`,
-    );
+    )
+    .order("created_at", { ascending: true });
   if (error || !rows) return;
 
   const partRows = rows.filter((r: any) => {
@@ -254,14 +256,25 @@ async function tryFinalizeSession(job: any, skill: "writing" | "speaking") {
     .in("test_result_id", trids)
     .eq("item_index", 0);
 
-  if (!gradings || gradings.length < 4) return;
-
   // Canonical part keys — client + worker both write them post-migration.
-  const rawParts: Record<string, number> = {};
-  for (const g of gradings as any[]) {
-    if (partKeys.includes(g.part)) rawParts[g.part] = Number(g.part_score || 0);
+  let rawParts: Record<string, number> | null = null;
+  if (skill === "writing") {
+    // Mixed attempts: some parts are graded straight from the client (no
+    // writing_question_gradings row — rawPart lives on test_results.score).
+    rawParts = resolveWritingRawParts(
+      (gradings || []) as any[],
+      mapWritingRowsToParts(partRows as any[]),
+    );
+  } else {
+    if (!gradings || gradings.length < 4) return;
+    const acc: Record<string, number> = {};
+    for (const g of gradings as any[]) {
+      if (partKeys.includes(g.part)) acc[g.part] = Number(g.part_score || 0);
+    }
+    rawParts = partKeys.every((k) => Number.isFinite(acc[k])) ? acc : null;
   }
-  if (!partKeys.every((k) => typeof rawParts[k] === "number")) return;
+  if (!rawParts) return;
+
 
   // ── Aggregate finalize inputs across the whole session ──
   // forcedComplexity: true if ANY graded job in the session flagged it.

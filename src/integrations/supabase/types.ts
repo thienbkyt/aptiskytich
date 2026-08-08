@@ -402,6 +402,132 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_rp2_singer_techfair_20260806: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_rp2_toankho_20260806: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_sample10de_20260807: {
+        Row: {
+          backed_up_at: string | null
+          exam_set_id: string | null
+          extra_data: Json | null
+          id: string | null
+          order_index: number | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          order_index?: number | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          order_index?: number | null
+        }
+        Relationships: []
+      }
       backup_snapshot_truoc_doi_audio_20260805: {
         Row: {
           id: string | null
@@ -2330,6 +2456,18 @@ export type Database = {
           time_limit?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tmp_p10: {
+        Row: {
+          j: Json | null
+        }
+        Insert: {
+          j?: Json | null
+        }
+        Update: {
+          j?: Json | null
         }
         Relationships: []
       }
