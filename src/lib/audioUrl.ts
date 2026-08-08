@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
  * - Storage file path → createSignedUrl (cached)
  */
 const SIGN_TTL_SEC = 300;
-const CACHE_TTL_MS = 240 * 1000; // refresh a bit before expiry
+const CACHE_TTL_MS = 120 * 1000; // die well before the 5-min TTL
 const SIGN_TIMEOUT_MS = 5000;
 
 function withTimeout<T>(p: PromiseLike<T>, ms = SIGN_TIMEOUT_MS): Promise<T> {
