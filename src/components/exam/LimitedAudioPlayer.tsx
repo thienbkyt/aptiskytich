@@ -424,15 +424,26 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       {errorMsg && (
         <p className="text-xs text-destructive mt-1 flex items-center gap-2">
           <span>{errorMsg}</span>
-          <button
-            type="button"
-            onClick={handleRetry}
-            className="inline-flex items-center gap-1 underline underline-offset-2 text-foreground hover:text-primary"
-          >
-            <RefreshCw className="w-3 h-3" /> Thử lại
-          </button>
+          {blocked ? (
+            <button
+              type="button"
+              onClick={handlePlayNow}
+              className="inline-flex items-center gap-1 rounded px-2 py-0.5 border border-primary text-primary hover:bg-primary/10"
+            >
+              <CirclePlay className="w-3 h-3" /> Nghe ngay
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-1 underline underline-offset-2 text-foreground hover:text-primary"
+            >
+              <RefreshCw className="w-3 h-3" /> Thử lại
+            </button>
+          )}
         </p>
       )}
+
     </div>
   );
 };
