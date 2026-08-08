@@ -256,29 +256,25 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // Pick the source for this play: first play uses `src`, later plays use
     // `src2` when provided (falls back to `src`).
     const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    // Always re-sign right before playing: signed URLs live only 5 minutes, and
+    // a student may replay long after the part was batch-signed. The cache in
+    // audioUrl.ts makes this free when the URL is still fresh.
     try {
-      if (activeSrc !== src) {
-        const url = (await resolveAudioUrl(activeSrc)) || activeSrc;
-        if (audio.src !== url) {
-          audio.src = url;
-          audio.load();
-        }
-      } else if (!resolvedSrc) {
-        // Not signed yet (batch prefetch pending / failed) → sign on demand now.
-        const url = await resolve(true);
-        if (url) {
-          audio.src = url;
-          audio.load();
-        } else {
-          return "error";
-        }
-      } else if (resolvedSrc && audio.src !== resolvedSrc) {
-        // Restore the primary source (e.g. after a previous play used src2).
-        audio.src = resolvedSrc;
+      let url = await resolveAudioUrl(activeSrc);
+      if (!url) {
+        // Bust cache and try once more (expired / transient failure).
+        bustAudioUrlCache(activeSrc);
+        url = await resolveAudioUrl(activeSrc);
+      }
+      if (!url) return "error";
+      if (activeSrc === src) setResolvedSrc(url);
+      if (audio.src !== url) {
+        audio.src = url;
         audio.load();
       }
     } catch (e) {
       console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
+      return "error";
     }
     if (token !== undefined && token !== introTokenRef.current) return "stale";
     audio.muted = false;
