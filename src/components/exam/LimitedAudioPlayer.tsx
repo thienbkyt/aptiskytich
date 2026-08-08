@@ -84,6 +84,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [introSpeaking, setIntroSpeaking] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [blocked, setBlocked] = useState(false);
   const retryCountRef = useRef(0);
   // Bumped on every stop / new play so a pending intro sequence can bail out.
   const introTokenRef = useRef(0);
@@ -141,6 +142,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     setPlayCount(readCount(storeKey(questionKey, src)));
     setIsPlaying(false);
     setErrorMsg("");
+    setBlocked(false);
     setIntroSpeaking(false);
     retryCountRef.current = 0;
     // Cancel any pending intro sequence for the previous question.
@@ -216,6 +218,83 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     await resolve(true);
   };
 
+  /**
+   * Marks the exam <audio> element as user-activated. MUST run synchronously
+   * inside the click handler, before any `await`, otherwise Chrome/Safari treat
+   * the later play() as autoplay and block it.
+   */
+  const primeExamAudio = (audio: HTMLAudioElement) => {
+    try {
+      audio.muted = true;
+      const p = audio.play();
+      if (p && typeof p.then === "function") {
+        p.then(() => {
+          try {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.muted = false;
+          } catch { /* noop */ }
+        }).catch(() => {
+          try { audio.muted = false; } catch { /* noop */ }
+        });
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+      }
+    } catch {
+      try { audio.muted = false; } catch { /* noop */ }
+    }
+  };
+
+  /** Resolves + plays the right source. Returns "ok" | "blocked" | "error". */
+  const playActiveSource = async (
+    audio: HTMLAudioElement,
+    isFirstPlay: boolean,
+    token?: number,
+  ): Promise<"ok" | "blocked" | "error" | "stale"> => {
+    // Pick the source for this play: first play uses `src`, later plays use
+    // `src2` when provided (falls back to `src`).
+    const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    try {
+      if (activeSrc !== src) {
+        const url = (await resolveAudioUrl(activeSrc)) || activeSrc;
+        if (audio.src !== url) {
+          audio.src = url;
+          audio.load();
+        }
+      } else if (!resolvedSrc) {
+        // Not signed yet (batch prefetch pending / failed) → sign on demand now.
+        const url = await resolve(true);
+        if (url) {
+          audio.src = url;
+          audio.load();
+        } else {
+          return "error";
+        }
+      } else if (resolvedSrc && audio.src !== resolvedSrc) {
+        // Restore the primary source (e.g. after a previous play used src2).
+        audio.src = resolvedSrc;
+        audio.load();
+      }
+    } catch (e) {
+      console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
+    }
+    if (token !== undefined && token !== introTokenRef.current) return "stale";
+    audio.muted = false;
+    audio.currentTime = 0;
+    try {
+      // Only one audio may sound at a time across the whole page.
+      stopOthers(audio);
+      await audio.play();
+      return "ok";
+    } catch (e) {
+      const name = (e as { name?: string } | null)?.name;
+      if (name === "NotAllowedError" || name === "SecurityError") return "blocked";
+      return "error";
+    }
+  };
+
   const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -234,11 +313,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       const needIntro = isFirstPlay && !!introText?.trim() && !reviewMode;
       // Must run synchronously inside the user gesture (mobile autoplay).
       if (needIntro) unlockAudio();
+      // Prime the exam audio element too — the TTS intro sits between the click
+      // and audio.play(), which otherwise loses user activation.
+      primeExamAudio(audio);
 
       const token = ++introTokenRef.current;
       countedRef.current = false;
       setIsPlaying(true);
       setErrorMsg("");
+      setBlocked(false);
 
       if (needIntro) {
         setIntroSpeaking(true);
@@ -259,51 +342,52 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         if (token !== introTokenRef.current) return;
       }
 
-
-      // Pick the source for this play: first play uses `src`, later plays use
-      // `src2` when provided (falls back to `src`).
-      const activeSrc = !isFirstPlay && src2 ? src2 : src;
-      try {
-        if (activeSrc !== src) {
-          const url = (await resolveAudioUrl(activeSrc)) || activeSrc;
-          if (audio.src !== url) {
-            audio.src = url;
-            audio.load();
-          }
-        } else if (!resolvedSrc) {
-          // Not signed yet (batch prefetch pending / failed) → sign on demand now.
-          const url = await resolve(true);
-          if (url) {
-            audio.src = url;
-            audio.load();
-          } else {
-            setIsPlaying(false);
-            setErrorMsg("Không tải được audio. Bấm Thử lại.");
-            return;
-          }
-        } else if (resolvedSrc && audio.src !== resolvedSrc) {
-          // Restore the primary source (e.g. after a previous play used src2).
-          audio.src = resolvedSrc;
-          audio.load();
-        }
-      } catch (e) {
-        console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
-      }
-      if (token !== introTokenRef.current) return;
-      audio.currentTime = 0;
-      try {
-        // Only one audio may sound at a time across the whole page.
-        stopOthers(audio);
-        await audio.play();
+      const outcome = await playActiveSource(audio, isFirstPlay, token);
+      if (outcome === "stale") return;
+      if (outcome === "ok") {
         // Only now the student actually hears the audio → count the play.
         countThisPlay();
-      } catch {
-        // First failure → show feedback immediately, then re-sign and retry.
-        setErrorMsg("Không phát được audio, đang thử lại...");
-        await handleAudioError();
+        return;
       }
+      if (outcome === "blocked") {
+        // Autoplay blocked → no audio was heard, so do NOT spend a play.
+        setIsPlaying(false);
+        setBlocked(true);
+        setErrorMsg("Trình duyệt chặn phát tự động — bấm Nghe ngay");
+        return;
+      }
+      // Load/network failure → re-sign and retry.
+      setErrorMsg("Không phát được audio, đang thử lại...");
+      await handleAudioError();
     }
   };
+
+  /** Direct play from a fresh user gesture after an autoplay block. */
+  const handlePlayNow = async () => {
+    const audio = audioRef.current;
+    if (!audio || disabled) return;
+    const token = ++introTokenRef.current;
+    stopTTS();
+    setIntroSpeaking(false);
+    countedRef.current = false;
+    setBlocked(false);
+    setErrorMsg("");
+    setIsPlaying(true);
+    const outcome = await playActiveSource(audio, playCount === 0, token);
+    if (outcome === "stale") return;
+    if (outcome === "ok") {
+      countThisPlay();
+      return;
+    }
+    setIsPlaying(false);
+    if (outcome === "blocked") {
+      setBlocked(true);
+      setErrorMsg("Trình duyệt chặn phát tự động — bấm Nghe ngay");
+    } else {
+      setErrorMsg("Không tải được audio. Bấm Thử lại.");
+    }
+  };
+
 
 
 
@@ -341,15 +425,26 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       {errorMsg && (
         <p className="text-xs text-destructive mt-1 flex items-center gap-2">
           <span>{errorMsg}</span>
-          <button
-            type="button"
-            onClick={handleRetry}
-            className="inline-flex items-center gap-1 underline underline-offset-2 text-foreground hover:text-primary"
-          >
-            <RefreshCw className="w-3 h-3" /> Thử lại
-          </button>
+          {blocked ? (
+            <button
+              type="button"
+              onClick={handlePlayNow}
+              className="inline-flex items-center gap-1 rounded px-2 py-0.5 border border-primary text-primary hover:bg-primary/10"
+            >
+              <CirclePlay className="w-3 h-3" /> Nghe ngay
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-1 underline underline-offset-2 text-foreground hover:text-primary"
+            >
+              <RefreshCw className="w-3 h-3" /> Thử lại
+            </button>
+          )}
         </p>
       )}
+
     </div>
   );
 };
