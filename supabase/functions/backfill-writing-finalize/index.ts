@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     // Candidate writing rows in scope.
     let q = admin
       .from("test_results")
-      .select("id, user_id, score, level, exam_set_id, review_snapshot, created_at, full_test_session_id, skill_scores")
+      .select("id, user_id, score, total, level, exam_set_id, review_snapshot, created_at, full_test_session_id, skill_scores")
       .eq("skill_scores->>skill", "writing")
       .not("full_test_session_id", "is", null)
       .gte("created_at", since)

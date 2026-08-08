@@ -22,6 +22,7 @@ type InvokeGradeExam = (
 export type WritingRow = {
   id: string;
   score: number | null;
+  total?: number | null;
   level: string | null;
   exam_set_id: string | null;
   review_snapshot: any;
@@ -105,6 +106,9 @@ export function resolveWritingRawParts(
     if (Number.isFinite(rawParts[k])) continue;
     const row = rowsByPart[k];
     if (!rowHasAiFeedback(row)) continue;
+    // `score` is only a rawPart (/30) on un-patched part rows. A row already
+    // patched with the session scale50 (total 50) must not be read as rawPart.
+    if (Number(row?.total) !== 30) continue;
     const v = Number(row?.score);
     if (Number.isFinite(v)) rawParts[k] = v;
   }
