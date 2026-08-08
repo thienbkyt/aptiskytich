@@ -142,6 +142,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     setPlayCount(readCount(storeKey(questionKey, src)));
     setIsPlaying(false);
     setErrorMsg("");
+    setBlocked(false);
     setIntroSpeaking(false);
     retryCountRef.current = 0;
     // Cancel any pending intro sequence for the previous question.
