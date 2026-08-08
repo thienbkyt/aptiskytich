@@ -58,9 +58,21 @@ export function mapWritingRowsToParts(rows: WritingRow[]): Record<string, Writin
 
 /**
  * Resolve rawPart (/30) per part, preferring writing_question_gradings and
- * falling back to the score already stored on the part's test_results row.
- * Returns null when any of the 4 parts still has no score from either source.
+ * falling back to the score already stored on the part's test_results row —
+ * but ONLY when that row carries real AI feedback in its review snapshot.
+ * Ungraded placeholder rows (score 0, no AI) must never be treated as a score,
+ * otherwise a pending attempt would be settled at 0.
+ * Returns null when any of the 4 parts still has no graded score.
  */
+function rowHasAiFeedback(row: WritingRow | undefined): boolean {
+  const snap: any = row?.review_snapshot;
+  if (!snap) return false;
+  if (snap?.raw?.notGraded === true) return false;
+  if (snap?.raw?.ai != null) return true;
+  const items = Array.isArray(snap?.items) ? snap.items : [];
+  return items.some((it: any) => it?.ai != null);
+}
+
 export function resolveWritingRawParts(
   gradings: Array<{ part: string; part_score: number | null; item_index?: number }>,
   rowsByPart: Record<string, WritingRow>,
@@ -74,16 +86,33 @@ export function resolveWritingRawParts(
     if (Number.isFinite(v)) rawParts[g.part] = v;
   }
 
+  // Parts whose grading row lives under a non-canonical label are matched via
+  // the test_result_id → part mapping instead.
+  const rowIdToPart = new Map<string, string>();
+  for (const k of WRITING_PART_KEYS) {
+    const id = rowsByPart[k]?.id;
+    if (id) rowIdToPart.set(id, k);
+  }
+  for (const g of (gradings || []) as any[]) {
+    const k = rowIdToPart.get(String(g.test_result_id ?? ""));
+    if (!k || Number.isFinite(rawParts[k])) continue;
+    if (g.item_index != null && g.item_index !== 0) continue;
+    const v = Number(g.part_score);
+    if (Number.isFinite(v)) rawParts[k] = v;
+  }
+
   for (const k of WRITING_PART_KEYS) {
     if (Number.isFinite(rawParts[k])) continue;
     const row = rowsByPart[k];
+    if (!rowHasAiFeedback(row)) continue;
     const v = Number(row?.score);
-    if (row && Number.isFinite(v)) rawParts[k] = v;
+    if (Number.isFinite(v)) rawParts[k] = v;
   }
 
   if (!WRITING_PART_KEYS.every((k) => Number.isFinite(rawParts[k]))) return null;
   return rawParts;
 }
+
 
 /**
  * Compute scale50/CEFR via grade-exam's writing_finalize and upsert
