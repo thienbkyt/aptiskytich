@@ -189,6 +189,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   }, [questionKey, src]);
 
   const handleAudioError = useCallback(async () => {
+    // Ignore errors raised by the silent priming play — the main play flow owns recovery.
+    if (primingRef.current) return;
     // Signed URL likely expired / network blip — bust cache and retry.
     if (retryCountRef.current >= 2) {
       setErrorMsg("Không tải được audio. Vui lòng bấm Thử lại hoặc tải lại trang.");
@@ -223,29 +225,41 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
    * inside the click handler, before any `await`, otherwise Chrome/Safari treat
    * the later play() as autoplay and block it.
    */
+  const primingRef = useRef(false);
   const primeExamAudio = (audio: HTMLAudioElement) => {
+    primingRef.current = true;
+    const finish = () => { primingRef.current = false; };
     try {
       audio.muted = true;
       const p = audio.play();
       if (p && typeof p.then === "function") {
         p.then(() => {
           try {
-            audio.pause();
-            audio.currentTime = 0;
-            audio.muted = false;
+            // If the real playback already took over (it sets muted=false),
+            // do NOT pause — that would silence the actual audio.
+            if (audio.muted) {
+              audio.pause();
+              audio.currentTime = 0;
+              audio.muted = false;
+            }
           } catch { /* noop */ }
+          finish();
         }).catch(() => {
           try { audio.muted = false; } catch { /* noop */ }
+          finish();
         });
       } else {
         audio.pause();
         audio.currentTime = 0;
         audio.muted = false;
+        finish();
       }
     } catch {
       try { audio.muted = false; } catch { /* noop */ }
+      finish();
     }
   };
+
 
   /** Resolves + plays the right source. Returns "ok" | "blocked" | "error". */
   const playActiveSource = async (
