@@ -1107,9 +1107,12 @@ const VouchersSection = () => {
   const [fKind, setFKind] = useState<"standalone" | "checkout">("standalone");
   const [fDays, setFDays] = useState("0");
   const [fCredits, setFCredits] = useState("0");
+  const [fDiscount, setFDiscount] = useState("0");
+  const [fDiscountMax, setFDiscountMax] = useState("");
   const [fMaxUses, setFMaxUses] = useState("");
   const [fExpires, setFExpires] = useState("");
   const [advOpen, setAdvOpen] = useState(false);
+
   const [fPlans, setFPlans] = useState<string[]>([]);
   const [fCreditExpires, setFCreditExpires] = useState("");
   const [fAiCap, setFAiCap] = useState("");
