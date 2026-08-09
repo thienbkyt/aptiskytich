@@ -2765,6 +2765,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           credit_expires_at: string | null
+          discount_max_vnd: number | null
+          discount_percent: number
           enabled: boolean
           expires_at: string | null
           gift_ai_cap: number | null
@@ -2785,6 +2787,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           credit_expires_at?: string | null
+          discount_max_vnd?: number | null
+          discount_percent?: number
           enabled?: boolean
           expires_at?: string | null
           gift_ai_cap?: number | null
@@ -2805,6 +2809,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           credit_expires_at?: string | null
+          discount_max_vnd?: number | null
+          discount_percent?: number
           enabled?: boolean
           expires_at?: string | null
           gift_ai_cap?: number | null
