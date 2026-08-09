@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         orderCode,
-        amount,
+        amount: finalAmount,
         description,
         returnUrl,
         cancelUrl,
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       accountNumber: payosJson.data.accountNumber ?? null,
       accountName: payosJson.data.accountName ?? null,
       bin: payosJson.data.bin ?? null,
-      amount,
+      amount: finalAmount,
       description,
     }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
