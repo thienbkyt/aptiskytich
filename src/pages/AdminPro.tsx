@@ -1062,6 +1062,9 @@ type VoucherRow = {
   gift_days: number;
   gift_ai_credits: number;
   gift_ai_cap: number | null;
+  discount_percent: number;
+  discount_max_vnd: number | null;
+
   credit_expires_at: string | null;
   applies_to_plans: string[] | null;
   requires_activity: boolean;
@@ -1145,12 +1148,14 @@ const VouchersSection = () => {
     return { label: "Đang chạy", tone: "on" as const };
   };
 
-  const giftText = (v: { gift_days: number; gift_ai_credits: number }) => {
+  const giftText = (v: { gift_days: number; gift_ai_credits: number; discount_percent?: number }) => {
     const parts: string[] = [];
+    if ((v.discount_percent ?? 0) > 0) parts.push(`-${v.discount_percent}%`);
     if (v.gift_days > 0) parts.push(`+${v.gift_days} ngày`);
     if (v.gift_ai_credits > 0) parts.push(`+${v.gift_ai_credits} lượt AI`);
     return parts.length ? parts.join(" · ") : "—";
   };
+
 
   const toggleEnabled = async (v: VoucherRow) => {
     setTogglingId(v.id);
@@ -1345,6 +1350,31 @@ const VouchersSection = () => {
               <Label>Tặng lượt chấm AI</Label>
               <Input type="number" min={0} value={fCredits} onChange={(e) => setFCredits(e.target.value)} />
             </div>
+            {fKind === "checkout" && (
+              <>
+                <div className="space-y-1.5">
+                  <Label>Giảm giá (%)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={fDiscount}
+                    onChange={(e) => setFDiscount(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Giảm tối đa (đ)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={fDiscountMax}
+                    onChange={(e) => setFDiscountMax(e.target.value)}
+                    placeholder="Để trống = không giới hạn"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="space-y-1.5">
               <Label>Tối đa bao nhiêu người</Label>
               <Input
