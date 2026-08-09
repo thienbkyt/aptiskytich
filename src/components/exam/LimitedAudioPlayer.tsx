@@ -322,13 +322,17 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       const isFirstPlay = playCount === 0;
       const needIntro = isFirstPlay && !!introText?.trim() && !reviewMode;
       // Must run synchronously inside the user gesture (mobile autoplay).
-      if (needIntro) unlockAudio();
-      // Prime the exam audio element too — the TTS intro sits between the click
-      // and audio.play(), which otherwise loses user activation.
-      primeExamAudio(audio);
+      // Prime ONLY when a TTS intro will sit between the click and audio.play()
+      // — otherwise the real play() is already inside the gesture and priming
+      // would race with it (pausing the audio that just started).
+      if (needIntro) {
+        unlockAudio();
+        primeExamAudio(audio);
+      }
 
       const token = ++introTokenRef.current;
       countedRef.current = false;
+      retryCountRef.current = 0;
       setIsPlaying(true);
       setErrorMsg("");
       setBlocked(false);
