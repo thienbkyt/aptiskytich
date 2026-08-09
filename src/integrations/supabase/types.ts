@@ -156,6 +156,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_eq_dauhoi_doc_20260809: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       backup_eq_de06_16_p4_20260807: {
         Row: {
           audio_url: string | null
@@ -2747,6 +2765,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           credit_expires_at: string | null
+          discount_max_vnd: number | null
+          discount_percent: number
           enabled: boolean
           expires_at: string | null
           gift_ai_cap: number | null
@@ -2767,6 +2787,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           credit_expires_at?: string | null
+          discount_max_vnd?: number | null
+          discount_percent?: number
           enabled?: boolean
           expires_at?: string | null
           gift_ai_cap?: number | null
@@ -2787,6 +2809,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           credit_expires_at?: string | null
+          discount_max_vnd?: number | null
+          discount_percent?: number
           enabled?: boolean
           expires_at?: string | null
           gift_ai_cap?: number | null

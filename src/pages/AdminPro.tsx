@@ -1062,6 +1062,9 @@ type VoucherRow = {
   gift_days: number;
   gift_ai_credits: number;
   gift_ai_cap: number | null;
+  discount_percent: number;
+  discount_max_vnd: number | null;
+
   credit_expires_at: string | null;
   applies_to_plans: string[] | null;
   requires_activity: boolean;
@@ -1104,9 +1107,12 @@ const VouchersSection = () => {
   const [fKind, setFKind] = useState<"standalone" | "checkout">("standalone");
   const [fDays, setFDays] = useState("0");
   const [fCredits, setFCredits] = useState("0");
+  const [fDiscount, setFDiscount] = useState("0");
+  const [fDiscountMax, setFDiscountMax] = useState("");
   const [fMaxUses, setFMaxUses] = useState("");
   const [fExpires, setFExpires] = useState("");
   const [advOpen, setAdvOpen] = useState(false);
+
   const [fPlans, setFPlans] = useState<string[]>([]);
   const [fCreditExpires, setFCreditExpires] = useState("");
   const [fAiCap, setFAiCap] = useState("");
@@ -1145,12 +1151,14 @@ const VouchersSection = () => {
     return { label: "Đang chạy", tone: "on" as const };
   };
 
-  const giftText = (v: { gift_days: number; gift_ai_credits: number }) => {
+  const giftText = (v: { gift_days: number; gift_ai_credits: number; discount_percent?: number }) => {
     const parts: string[] = [];
+    if ((v.discount_percent ?? 0) > 0) parts.push(`-${v.discount_percent}%`);
     if (v.gift_days > 0) parts.push(`+${v.gift_days} ngày`);
     if (v.gift_ai_credits > 0) parts.push(`+${v.gift_ai_credits} lượt AI`);
     return parts.length ? parts.join(" · ") : "—";
   };
+
 
   const toggleEnabled = async (v: VoucherRow) => {
     setTogglingId(v.id);
@@ -1166,6 +1174,7 @@ const VouchersSection = () => {
 
   const resetForm = () => {
     setFCode(""); setFKind("standalone"); setFDays("0"); setFCredits("0");
+    setFDiscount("0"); setFDiscountMax("");
     setFMaxUses(""); setFExpires(""); setFPlans([]); setFCreditExpires("");
     setFAiCap(""); setFRequiresActivity(false); setFAllowExisting(false); setFNote("");
     setAdvOpen(false);
@@ -1173,6 +1182,12 @@ const VouchersSection = () => {
 
   const nCredits = Number(fCredits || 0);
   const nDays = Number(fDays || 0);
+  const nDiscount = fKind === "checkout"
+    ? Math.max(0, Math.min(100, Number(fDiscount || 0)))
+    : 0;
+  const nDiscountMax = fKind === "checkout" && fDiscountMax.trim() !== ""
+    ? Number(fDiscountMax)
+    : null;
   const nMax = fMaxUses.trim() === "" ? null : Number(fMaxUses);
   const estCost = nMax != null ? nMax * nCredits * AI_UNIT_COST : null;
   const overBudget = estCost != null && estCost > 500000;
@@ -1180,8 +1195,8 @@ const VouchersSection = () => {
   const create = async () => {
     const code = fCode.trim().toUpperCase();
     if (!code) { toast.error("Bạn chưa nhập mã"); return; }
-    if (nDays <= 0 && nCredits <= 0) {
-      toast.error("Mã phải tặng ít nhất ngày hoặc lượt chấm AI");
+    if (nDays <= 0 && nCredits <= 0 && nDiscount <= 0) {
+      toast.error("Mã phải tặng ngày, lượt chấm AI hoặc giảm giá");
       return;
     }
     setCreating(true);
@@ -1189,7 +1204,10 @@ const VouchersSection = () => {
     const { error } = await (supabase as any).from("voucher_codes").insert({
       code,
       kind: fKind,
+      discount_percent: nDiscount,
+      discount_max_vnd: nDiscountMax,
       gift_days: nDays,
+
       gift_ai_credits: nCredits,
       gift_ai_cap: fAiCap.trim() === "" ? null : Number(fAiCap),
       credit_expires_at: fCreditExpires ? new Date(fCreditExpires).toISOString() : null,
@@ -1345,6 +1363,31 @@ const VouchersSection = () => {
               <Label>Tặng lượt chấm AI</Label>
               <Input type="number" min={0} value={fCredits} onChange={(e) => setFCredits(e.target.value)} />
             </div>
+            {fKind === "checkout" && (
+              <>
+                <div className="space-y-1.5">
+                  <Label>Giảm giá (%)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={fDiscount}
+                    onChange={(e) => setFDiscount(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Giảm tối đa (đ)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={fDiscountMax}
+                    onChange={(e) => setFDiscountMax(e.target.value)}
+                    placeholder="Để trống = không giới hạn"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="space-y-1.5">
               <Label>Tối đa bao nhiêu người</Label>
               <Input

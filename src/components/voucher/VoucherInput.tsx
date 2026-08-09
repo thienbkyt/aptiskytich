@@ -12,6 +12,9 @@ export type VoucherInfo = {
   kind?: string | null;
   gift_days?: number | null;
   gift_ai_credits?: number | null;
+  discount_percent?: number | null;
+  discount_max_vnd?: number | null;
+
   applies_to_plans?: string[] | null;
   message?: string | null;
   code: string;

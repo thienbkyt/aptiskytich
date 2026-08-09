@@ -302,6 +302,15 @@ export default function PricingPage() {
     const voucherOn = !!voucher?.ok;
     const eligible = planEligible(plan);
 
+    const vPct = voucherOn && eligible ? Number(voucher?.discount_percent ?? 0) : 0;
+    const vCap = voucher?.discount_max_vnd ?? null;
+    const voucherPrice = (() => {
+      if (vPct <= 0) return null;
+      const off = Math.floor((plan.price_vnd * vPct) / 100);
+      const capped = vCap ? Math.min(off, vCap) : off;
+      return Math.max(1000, plan.price_vnd - capped);
+    })();
+
     return (
       <div className={cn("h-full flex flex-col", order)}>
         <div className="h-8 flex items-end justify-center pb-1">
@@ -332,6 +341,7 @@ export default function PricingPage() {
                   className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
                 >
+                  {vPct > 0 && `-${vPct}% · `}
                   +{voucher?.gift_days ?? 0} ngày · +{voucher?.gift_ai_credits ?? 0} lượt
                 </span>
               ) : (
@@ -339,6 +349,7 @@ export default function PricingPage() {
               )}
             </div>
           )}
+
           <div className="flex flex-col items-center gap-2 min-h-[52px] justify-center">
             <p className="text-[15px] font-semibold text-foreground">
               {label ?? (plan.label === "1 tháng" ? "1 Tháng" : plan.label === "3 tháng" ? "3 Tháng" : plan.label)}
@@ -368,22 +379,41 @@ export default function PricingPage() {
             <span className="text-[15px] font-semibold text-muted-foreground">/ngày</span>
           </div>
 
-          <div className="mt-2.5 flex items-center justify-center">
+          <div className="mt-2.5 flex flex-col items-center justify-center gap-1">
             <div
               className={cn(
                 "inline-flex items-baseline gap-2 rounded-full px-3 py-1.5",
                 hero ? "bg-[#CC1C01]/10" : "bg-muted",
               )}
             >
-              <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
-                {formatVnd(plan.price_vnd)}
-              </span>
+              {voucherPrice != null ? (
+                <>
+                  <span className="text-[12px] text-muted-foreground line-through">
+                    {formatVnd(plan.price_vnd)}
+                  </span>
+                  <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
+                    {formatVnd(voucherPrice)}
+                  </span>
+                </>
+              ) : (
+                <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
+                  {formatVnd(plan.price_vnd)}
+                </span>
+              )}
               <span className="text-[12px] text-muted-foreground">
                 {plan.duration_days ? `cho ${plan.duration_days} ngày` : ""}
               </span>
-              {lp && <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>}
+              {lp && voucherPrice == null && (
+                <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>
+              )}
             </div>
+            {voucherPrice != null && (
+              <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                Đã giảm {vPct}%
+              </p>
+            )}
           </div>
+
 
           {hero && cheaper != null && (
             <p
@@ -498,8 +528,10 @@ export default function PricingPage() {
                     <Ticket className="w-3.5 h-3.5" /> Đã áp mã {voucher.code}
                   </span>
                   <span className="text-[13px] font-semibold" style={{ color: "#085041" }}>
+                    {Number(voucher.discount_percent ?? 0) > 0 && `Giảm ${voucher.discount_percent}% · `}
                     +{voucher.gift_days ?? 0} ngày · +{voucher.gift_ai_credits ?? 0} lượt chấm AI
                   </span>
+
                   <button
                     type="button"
                     onClick={clearVoucher}
