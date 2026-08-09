@@ -156,6 +156,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_eq_dauhoi_doc_20260809: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       backup_eq_de06_16_p4_20260807: {
         Row: {
           audio_url: string | null
