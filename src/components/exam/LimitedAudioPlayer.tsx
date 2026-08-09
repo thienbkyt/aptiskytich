@@ -189,6 +189,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   }, [questionKey, src]);
 
   const handleAudioError = useCallback(async () => {
+    // Ignore errors raised by the silent priming play — the main play flow owns recovery.
+    if (primingRef.current) return;
     // Signed URL likely expired / network blip — bust cache and retry.
     if (retryCountRef.current >= 2) {
       setErrorMsg("Không tải được audio. Vui lòng bấm Thử lại hoặc tải lại trang.");
@@ -223,29 +225,41 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
    * inside the click handler, before any `await`, otherwise Chrome/Safari treat
    * the later play() as autoplay and block it.
    */
+  const primingRef = useRef(false);
   const primeExamAudio = (audio: HTMLAudioElement) => {
+    primingRef.current = true;
+    const finish = () => { primingRef.current = false; };
     try {
       audio.muted = true;
       const p = audio.play();
       if (p && typeof p.then === "function") {
         p.then(() => {
           try {
-            audio.pause();
-            audio.currentTime = 0;
-            audio.muted = false;
+            // If the real playback already took over (it sets muted=false),
+            // do NOT pause — that would silence the actual audio.
+            if (audio.muted) {
+              audio.pause();
+              audio.currentTime = 0;
+              audio.muted = false;
+            }
           } catch { /* noop */ }
+          finish();
         }).catch(() => {
           try { audio.muted = false; } catch { /* noop */ }
+          finish();
         });
       } else {
         audio.pause();
         audio.currentTime = 0;
         audio.muted = false;
+        finish();
       }
     } catch {
       try { audio.muted = false; } catch { /* noop */ }
+      finish();
     }
   };
+
 
   /** Resolves + plays the right source. Returns "ok" | "blocked" | "error". */
   const playActiveSource = async (
@@ -308,13 +322,17 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       const isFirstPlay = playCount === 0;
       const needIntro = isFirstPlay && !!introText?.trim() && !reviewMode;
       // Must run synchronously inside the user gesture (mobile autoplay).
-      if (needIntro) unlockAudio();
-      // Prime the exam audio element too — the TTS intro sits between the click
-      // and audio.play(), which otherwise loses user activation.
-      primeExamAudio(audio);
+      // Prime ONLY when a TTS intro will sit between the click and audio.play()
+      // — otherwise the real play() is already inside the gesture and priming
+      // would race with it (pausing the audio that just started).
+      if (needIntro) {
+        unlockAudio();
+        primeExamAudio(audio);
+      }
 
       const token = ++introTokenRef.current;
       countedRef.current = false;
+      retryCountRef.current = 0;
       setIsPlaying(true);
       setErrorMsg("");
       setBlocked(false);
