@@ -82,12 +82,13 @@ Deno.serve(async (req) => {
     const description = `${tier === "premium" ? "Premium" : "Pro"} ${planKey}`.slice(0, 25);
 
     // Validate promo code server-side (never trust client). Invalid code = order
-    // still created, just without any gift attached.
+    // still created, just without any gift/discount attached.
     let validVoucherCode: string | null = null;
+    let finalAmount = amount;
     if (promoCode) {
       const { data: vc } = await admin
         .from("voucher_codes")
-        .select("code_norm,kind,enabled,expires_at,applies_to_plans")
+        .select("code_norm,kind,enabled,expires_at,applies_to_plans,discount_percent,discount_max_vnd")
         .eq("code_norm", promoCode)
         .maybeSingle();
       const nowIso = Date.now();
@@ -96,6 +97,13 @@ Deno.serve(async (req) => {
       const planOk = !plans || plans.length === 0 || plans.includes(planKey);
       if (vc && vc.enabled === true && notExpired && vc.kind === "checkout" && planOk) {
         validVoucherCode = promoCode;
+        const pct = Number((vc as any).discount_percent ?? 0);
+        const capVnd = (vc as any).discount_max_vnd as number | null;
+        if (pct > 0) {
+          const off = Math.floor((amount * pct) / 100);
+          const capped = capVnd ? Math.min(off, capVnd) : off;
+          finalAmount = Math.max(1000, amount - capped); // sàn 1000đ, payOS không nhận 0
+        }
       } else {
         console.log("create-payment: promo code ignored", promoCode);
       }
@@ -106,7 +114,7 @@ Deno.serve(async (req) => {
       user_id: userId,
       plan_key: planKey,
       tier,
-      amount_vnd: amount,
+      amount_vnd: finalAmount,
       order_code: orderCode,
       status: "pending",
       voucher_code: validVoucherCode,
@@ -119,12 +127,13 @@ Deno.serve(async (req) => {
 
     // Sign and call payOS
     const signature = signPayload({
-      amount,
+      amount: finalAmount,
       cancelUrl,
       description,
       orderCode,
       returnUrl,
     });
+
 
     const payosRes = await fetch("https://api-merchant.payos.vn/v2/payment-requests", {
       method: "POST",
