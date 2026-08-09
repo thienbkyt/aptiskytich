@@ -528,8 +528,10 @@ export default function PricingPage() {
                     <Ticket className="w-3.5 h-3.5" /> Đã áp mã {voucher.code}
                   </span>
                   <span className="text-[13px] font-semibold" style={{ color: "#085041" }}>
+                    {Number(voucher.discount_percent ?? 0) > 0 && `Giảm ${voucher.discount_percent}% · `}
                     +{voucher.gift_days ?? 0} ngày · +{voucher.gift_ai_credits ?? 0} lượt chấm AI
                   </span>
+
                   <button
                     type="button"
                     onClick={clearVoucher}
