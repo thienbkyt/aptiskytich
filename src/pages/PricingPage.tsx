@@ -302,6 +302,15 @@ export default function PricingPage() {
     const voucherOn = !!voucher?.ok;
     const eligible = planEligible(plan);
 
+    const vPct = voucherOn && eligible ? Number(voucher?.discount_percent ?? 0) : 0;
+    const vCap = voucher?.discount_max_vnd ?? null;
+    const voucherPrice = (() => {
+      if (vPct <= 0) return null;
+      const off = Math.floor((plan.price_vnd * vPct) / 100);
+      const capped = vCap ? Math.min(off, vCap) : off;
+      return Math.max(1000, plan.price_vnd - capped);
+    })();
+
     return (
       <div className={cn("h-full flex flex-col", order)}>
         <div className="h-8 flex items-end justify-center pb-1">
@@ -332,6 +341,7 @@ export default function PricingPage() {
                   className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: "#E1F5EE", color: "#085041" }}
                 >
+                  {vPct > 0 && `-${vPct}% · `}
                   +{voucher?.gift_days ?? 0} ngày · +{voucher?.gift_ai_credits ?? 0} lượt
                 </span>
               ) : (
@@ -339,6 +349,7 @@ export default function PricingPage() {
               )}
             </div>
           )}
+
           <div className="flex flex-col items-center gap-2 min-h-[52px] justify-center">
             <p className="text-[15px] font-semibold text-foreground">
               {label ?? (plan.label === "1 tháng" ? "1 Tháng" : plan.label === "3 tháng" ? "3 Tháng" : plan.label)}
