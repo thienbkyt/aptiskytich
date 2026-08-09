@@ -379,22 +379,41 @@ export default function PricingPage() {
             <span className="text-[15px] font-semibold text-muted-foreground">/ngày</span>
           </div>
 
-          <div className="mt-2.5 flex items-center justify-center">
+          <div className="mt-2.5 flex flex-col items-center justify-center gap-1">
             <div
               className={cn(
                 "inline-flex items-baseline gap-2 rounded-full px-3 py-1.5",
                 hero ? "bg-[#CC1C01]/10" : "bg-muted",
               )}
             >
-              <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
-                {formatVnd(plan.price_vnd)}
-              </span>
+              {voucherPrice != null ? (
+                <>
+                  <span className="text-[12px] text-muted-foreground line-through">
+                    {formatVnd(plan.price_vnd)}
+                  </span>
+                  <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
+                    {formatVnd(voucherPrice)}
+                  </span>
+                </>
+              ) : (
+                <span className={cn("text-[14px] font-bold", hero ? "text-[#CC1C01]" : "text-foreground")}>
+                  {formatVnd(plan.price_vnd)}
+                </span>
+              )}
               <span className="text-[12px] text-muted-foreground">
                 {plan.duration_days ? `cho ${plan.duration_days} ngày` : ""}
               </span>
-              {lp && <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>}
+              {lp && voucherPrice == null && (
+                <span className="text-[12px] text-muted-foreground line-through">{formatVnd(lp)}</span>
+              )}
             </div>
+            {voucherPrice != null && (
+              <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                Đã giảm {vPct}%
+              </p>
+            )}
           </div>
+
 
           {hero && cheaper != null && (
             <p
