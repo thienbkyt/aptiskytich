@@ -1174,6 +1174,7 @@ const VouchersSection = () => {
 
   const resetForm = () => {
     setFCode(""); setFKind("standalone"); setFDays("0"); setFCredits("0");
+    setFDiscount("0"); setFDiscountMax("");
     setFMaxUses(""); setFExpires(""); setFPlans([]); setFCreditExpires("");
     setFAiCap(""); setFRequiresActivity(false); setFAllowExisting(false); setFNote("");
     setAdvOpen(false);
@@ -1181,6 +1182,12 @@ const VouchersSection = () => {
 
   const nCredits = Number(fCredits || 0);
   const nDays = Number(fDays || 0);
+  const nDiscount = fKind === "checkout"
+    ? Math.max(0, Math.min(100, Number(fDiscount || 0)))
+    : 0;
+  const nDiscountMax = fKind === "checkout" && fDiscountMax.trim() !== ""
+    ? Number(fDiscountMax)
+    : null;
   const nMax = fMaxUses.trim() === "" ? null : Number(fMaxUses);
   const estCost = nMax != null ? nMax * nCredits * AI_UNIT_COST : null;
   const overBudget = estCost != null && estCost > 500000;
@@ -1188,8 +1195,8 @@ const VouchersSection = () => {
   const create = async () => {
     const code = fCode.trim().toUpperCase();
     if (!code) { toast.error("Bạn chưa nhập mã"); return; }
-    if (nDays <= 0 && nCredits <= 0) {
-      toast.error("Mã phải tặng ít nhất ngày hoặc lượt chấm AI");
+    if (nDays <= 0 && nCredits <= 0 && nDiscount <= 0) {
+      toast.error("Mã phải tặng ngày, lượt chấm AI hoặc giảm giá");
       return;
     }
     setCreating(true);
@@ -1197,7 +1204,10 @@ const VouchersSection = () => {
     const { error } = await (supabase as any).from("voucher_codes").insert({
       code,
       kind: fKind,
+      discount_percent: nDiscount,
+      discount_max_vnd: nDiscountMax,
       gift_days: nDays,
+
       gift_ai_credits: nCredits,
       gift_ai_cap: fAiCap.trim() === "" ? null : Number(fAiCap),
       credit_expires_at: fCreditExpires ? new Date(fCreditExpires).toISOString() : null,
