@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain } from "lucide-react";
+import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
