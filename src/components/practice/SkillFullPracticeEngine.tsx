@@ -121,11 +121,13 @@ interface SkillFullPracticeEngineProps {
   testTitle: string;
   onExit: () => void;
   skipFirstIntro?: boolean;
+  /** When set, parts come from the user's custom set instead of full_test_id. */
+  customSetId?: string;
 }
 
 type FlowPhase = "loading" | "exam" | "completed";
 
-const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFirstIntro }: SkillFullPracticeEngineProps) => {
+const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFirstIntro, customSetId }: SkillFullPracticeEngineProps) => {
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [parts, setParts] = useState<PartSet[]>([]);
   const [currentPartIndex, setCurrentPartIndex] = useState(0);
@@ -206,18 +208,41 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
   useEffect(() => {
     loadData();
-  }, [fullTestId, skill]);
+  }, [fullTestId, skill, customSetId]);
 
   const loadData = async () => {
     setPhase("loading");
 
-    const { data: sets } = await supabase
-      .from("exam_sets")
-      .select("id, part, skill")
-      .eq("full_test_id", fullTestId)
-      .eq("skill", skill)
-      .eq("is_published", true)
-      .order("part", { ascending: true });
+    let sets: any[] | null = null;
+    let orderMap: Record<string, number> | null = null;
+
+    if (customSetId) {
+      const { data: members } = await supabase
+        .from("custom_set_members")
+        .select("exam_set_id, position")
+        .eq("custom_set_id", customSetId)
+        .order("position", { ascending: true });
+      const ids = (members || []).map((m: any) => m.exam_set_id);
+      orderMap = Object.fromEntries((members || []).map((m: any) => [m.exam_set_id, m.position]));
+      if (ids.length) {
+        const { data } = await supabase
+          .from("exam_sets")
+          .select("id, part, skill")
+          .in("id", ids)
+          .eq("skill", skill)
+          .eq("is_published", true);
+        sets = data as any[] | null;
+      }
+    } else {
+      const { data } = await supabase
+        .from("exam_sets")
+        .select("id, part, skill")
+        .eq("full_test_id", fullTestId)
+        .eq("skill", skill)
+        .eq("is_published", true)
+        .order("part", { ascending: true });
+      sets = data as any[] | null;
+    }
 
     if (!sets || sets.length === 0) {
       setPhase("completed");
@@ -231,8 +256,14 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       })
     );
 
-    // Sort by part
-    setsWithQuestions.sort((a, b) => a.part.localeCompare(b.part));
+    // Sort by custom-set position when provided, otherwise by part label
+    if (orderMap) {
+      const om = orderMap;
+      setsWithQuestions.sort((a, b) => (om[a.id] ?? 0) - (om[b.id] ?? 0));
+    } else {
+      setsWithQuestions.sort((a, b) => a.part.localeCompare(b.part));
+    }
+
 
     setParts(setsWithQuestions);
     if (skill === "reading") setReadingTimeLeft(SKILL_TIMES.reading);

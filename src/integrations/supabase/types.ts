@@ -222,6 +222,72 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_set_members: {
+        Row: {
+          custom_set_id: string
+          exam_set_id: string
+          id: string
+          position: number
+        }
+        Insert: {
+          custom_set_id: string
+          exam_set_id: string
+          id?: string
+          position?: number
+        }
+        Update: {
+          custom_set_id?: string
+          exam_set_id?: string
+          id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_set_members_custom_set_id_fkey"
+            columns: ["custom_set_id"]
+            isOneToOne: false
+            referencedRelation: "custom_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_set_members_exam_set_id_fkey"
+            columns: ["exam_set_id"]
+            isOneToOne: false
+            referencedRelation: "exam_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_sets: {
+        Row: {
+          created_at: string
+          id: string
+          last_played_at: string | null
+          mode: string
+          skill: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_played_at?: string | null
+          mode: string
+          skill?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_played_at?: string | null
+          mode?: string
+          skill?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       dictation_progress: {
         Row: {
           best_accuracy: number
@@ -2471,6 +2537,15 @@ export type Database = {
       }
       consume_ai_quota: {
         Args: { _action: string; _limit: number; _user_id: string }
+        Returns: Json
+      }
+      create_custom_set: {
+        Args: {
+          p_exam_set_ids: string[]
+          p_mode: string
+          p_skill: string
+          p_title: string
+        }
         Returns: Json
       }
       current_user_is_pro: { Args: never; Returns: boolean }

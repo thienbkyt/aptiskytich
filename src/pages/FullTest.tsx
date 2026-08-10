@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain } from "lucide-react";
+import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain, Layers } from "lucide-react";
 import { motion } from "framer-motion";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
@@ -80,7 +80,13 @@ const FullTest = () => {
                   <Clock className="w-3 h-3" />
                   162 phút
                 </Badge>
+                <Button asChild variant="outline" size="sm" className="gap-2 ml-auto">
+                  <Link to="/my-sets">
+                    <Layers className="w-4 h-4" /> Bộ đề của tôi
+                  </Link>
+                </Button>
               </div>
+
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
                 Làm bài thi thử Aptis
               </h1>

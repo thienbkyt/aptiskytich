@@ -68,6 +68,7 @@ const PricingPage = lazy(() => import("./pages/PricingPage"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Dictation = lazy(() => import("./pages/Dictation"));
+const MySets = lazy(() => import("./pages/MySets"));
 
 
 const queryClient = new QueryClient({
@@ -145,6 +146,7 @@ const App = () => (
                       <Route path="/nghe-chep" element={<Dictation />} />
                       <Route path="/nghe-chep/:setId" element={<Dictation />} />
                       <Route path="/thi-thu" element={<WithDict><FullTest /></WithDict>} />
+                      <Route path="/my-sets" element={<WithDict><MySets /></WithDict>} />
                       <Route path="/key-du-doan" element={<WithDict><KeyPrediction /></WithDict>} />
                       <Route path="/history" element={<History />} />
                       <Route path="/history/full-test/:sessionId" element={<WithDict><FullTestHistoryDetail /></WithDict>} />

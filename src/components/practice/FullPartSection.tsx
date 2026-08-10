@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Layers, CheckCircle2, Lock } from "lucide-react";
@@ -31,14 +32,22 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-lg font-heading font-semibold text-foreground">
-          Luyện tập full part kỹ năng {skillName}
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Hoàn thành tất cả các Part của kỹ năng này trong một lượt thi liên tục để đánh giá năng lực chính xác nhất.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-heading font-semibold text-foreground">
+            Luyện tập full part kỹ năng {skillName}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Hoàn thành tất cả các Part của kỹ năng này trong một lượt thi liên tục để đánh giá năng lực chính xác nhất.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm" className="gap-2">
+          <Link to="/my-sets">
+            <Layers className="w-4 h-4" /> Bộ đề của tôi
+          </Link>
+        </Button>
       </div>
+
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
