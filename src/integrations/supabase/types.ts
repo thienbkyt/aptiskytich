@@ -132,6 +132,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_abuse_0c6905fe_20260809: {
+        Row: {
+          loai: string | null
+          row_id: string | null
+          v1: string | null
+          v2: string | null
+          v3: string | null
+          v4: string | null
+        }
+        Insert: {
+          loai?: string | null
+          row_id?: string | null
+          v1?: string | null
+          v2?: string | null
+          v3?: string | null
+          v4?: string | null
+        }
+        Update: {
+          loai?: string | null
+          row_id?: string | null
+          v1?: string | null
+          v2?: string | null
+          v3?: string | null
+          v4?: string | null
+        }
+        Relationships: []
+      }
       backup_audio_policies_20260805: {
         Row: {
           cmd: string | null
@@ -2477,6 +2504,36 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_key11: {
+        Row: {
+          diem: number | null
+          id: string | null
+          part: string | null
+          rn: number | null
+          skill: string | null
+          tier: string | null
+          title: string | null
+        }
+        Insert: {
+          diem?: number | null
+          id?: string | null
+          part?: string | null
+          rn?: number | null
+          skill?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Update: {
+          diem?: number | null
+          id?: string | null
+          part?: string | null
+          rn?: number | null
+          skill?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       tmp_p10: {
         Row: {
           j: Json | null
@@ -2486,6 +2543,24 @@ export type Database = {
         }
         Update: {
           j?: Json | null
+        }
+        Relationships: []
+      }
+      tmp_rathi_1008: {
+        Row: {
+          part: string | null
+          skill: string | null
+          ten: string | null
+        }
+        Insert: {
+          part?: string | null
+          skill?: string | null
+          ten?: string | null
+        }
+        Update: {
+          part?: string | null
+          skill?: string | null
+          ten?: string | null
         }
         Relationships: []
       }
