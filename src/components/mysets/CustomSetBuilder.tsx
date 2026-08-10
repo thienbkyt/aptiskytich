@@ -12,13 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, Circle, Loader2, Sparkles, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Lock, Sparkles, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { useIsPro } from "@/hooks/useIsPro";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { useExamPriorityLabels } from "@/hooks/useExamPriorityLabels";
 import {
   createCustomSet,
   updateCustomSet,
+  CUSTOM_SET_ERROR_MESSAGES,
   fetchCustomSetMemberIds,
   REQUIRED_PARTS,
   SKILL_EST_SECONDS,
@@ -33,6 +37,7 @@ interface ExamSetOption {
   skill: string;
   part: string;
   key_date: string | null;
+  access_tier: string | null;
 }
 
 type GroupFilter = "all" | "key" | "high" | "undone";
@@ -62,6 +67,7 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
+  const { isPro } = useIsPro();
   const { progress } = useUserExamProgress();
   const { labels } = useExamPriorityLabels();
 
@@ -71,7 +77,7 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
     queryFn: async (): Promise<ExamSetOption[]> => {
       const { data } = await supabase
         .from("exam_sets")
-        .select("id, title, skill, part, key_date")
+        .select("id, title, skill, part, key_date, access_tier")
         .eq("is_published", true)
         .is("clone_of", null)
         .order("skill", { ascending: true })
@@ -88,6 +94,9 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
   }, [editing?.id]);
 
   const byId = useMemo(() => new Map(options.map((o) => [o.id, o])), [options]);
+
+  /** Tài khoản miễn phí không được đưa đề Pro vào bộ đề. */
+  const isLocked = (o: ExamSetOption) => !isPro && (o.access_tier ?? "pro") !== "free";
 
   const relevantSkills = mode === "full_part" ? [skill] : SKILLS;
 
@@ -127,6 +136,11 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
   );
 
   const toggle = (id: string) => {
+    const o = byId.get(id);
+    if (o && isLocked(o)) {
+      toast.error("Nâng cấp để dùng đề này");
+      return;
+    }
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
@@ -135,7 +149,7 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
     const picked: string[] = [];
     const seen = new Set<string>();
     options
-      .filter((o) => o.key_date === t && (mode !== "full_part" || o.skill === skill))
+      .filter((o) => o.key_date === t && !isLocked(o) && (mode !== "full_part" || o.skill === skill))
       .forEach((o) => {
         const key = `${o.skill}|${o.part}`;
         if (seen.has(key)) return;
@@ -167,14 +181,19 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
           examSetIds: selected,
         });
         if (!res.ok) {
-          if (res.reason === "free_limit") {
-            toast.error("Tài khoản miễn phí chỉ được tạo 1 bộ đề. Nâng cấp để tạo không giới hạn.");
+          if (res.reason === "tier_locked") {
+            toast.error("Bộ này có đề dành cho tài khoản Pro", {
+              description: "Nâng cấp để dùng các đề Pro trong bộ đề tự tạo.",
+              action: { label: "Nâng cấp", onClick: () => { window.location.href = "/pricing"; } },
+            });
+          } else if (res.reason === "free_limit") {
+            toast.error(CUSTOM_SET_ERROR_MESSAGES.free_limit);
           } else if (res.reason === "missing_parts") {
             toast.error(`Chưa đủ part: ${(res.missing || []).map((s) => SKILL_LABELS_VI[s] ?? s).join(", ")}`);
           } else if (res.reason === "duplicate_part") {
             toast.error("Mỗi part chỉ được chọn 1 đề");
           } else {
-            toast.error("Không tạo được bộ đề");
+            toast.error(CUSTOM_SET_ERROR_MESSAGES[res.reason || ""] || "Không tạo được bộ đề");
           }
           return;
         }
@@ -275,12 +294,18 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
           ) : (
             visible.map((o) => {
               const checked = selected.includes(o.id);
+              const locked = isLocked(o);
               return (
                 <label
                   key={o.id}
-                  className="flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                  className={`flex items-start gap-3 p-3 transition-colors ${locked ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:bg-muted/50"}`}
                 >
-                  <Checkbox checked={checked} onCheckedChange={() => toggle(o.id)} className="mt-0.5" />
+                  <Checkbox
+                    checked={checked}
+                    disabled={locked}
+                    onCheckedChange={() => toggle(o.id)}
+                    className="mt-0.5"
+                  />
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-foreground truncate">{o.title}</div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-1">
@@ -294,6 +319,18 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
                       )}
                       {progress.has(o.id) && (
                         <Badge variant="outline" className="text-[10px] text-muted-foreground">đã làm</Badge>
+                      )}
+                      {locked && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-[10px] gap-1 border-primary text-primary">
+                                <Lock className="w-3 h-3" /> Pro
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Nâng cấp để dùng đề này</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                   </div>
@@ -340,6 +377,12 @@ const CustomSetBuilder = ({ editing, onDone, onCancel }: Props) => {
           </div>
         </div>
 
+        {!isPro && (
+          <p className="text-xs text-muted-foreground">
+            Tài khoản miễn phí chỉ ghép được đề miễn phí.{" "}
+            <Link to="/pricing" className="text-primary underline">Nâng cấp</Link> để dùng toàn bộ kho đề.
+          </p>
+        )}
         {duplicatePart && (
           <p className="text-xs text-destructive">Mỗi part chỉ được chọn 1 đề — bạn đang chọn trùng part.</p>
         )}
