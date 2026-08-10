@@ -106,6 +106,8 @@ interface FullTestEngineProps {
   testId: string;
   testTitle: string;
   onExit: () => void;
+  /** When set, member exam sets come from the user's custom set instead of full_test_members. */
+  customSetId?: string;
 }
 
 interface PartSet {
