@@ -100,6 +100,19 @@ export const fetchCustomSetMemberIds = async (id: string): Promise<string[]> => 
   return (data || []).map((m: any) => m.exam_set_id);
 };
 
+/** Thông báo lỗi tiếng Việt theo `reason` trả về từ RPC create_custom_set. */
+export const CUSTOM_SET_ERROR_MESSAGES: Record<string, string> = {
+  unauthorized: "Bạn cần đăng nhập để tạo bộ đề",
+  bad_mode: "Loại bộ đề không hợp lệ",
+  bad_skill: "Kỹ năng không hợp lệ",
+  empty: "Bạn chưa chọn đề nào",
+  free_limit: "Tài khoản miễn phí chỉ được tạo 1 bộ đề. Nâng cấp để tạo không giới hạn.",
+  invalid_sets: "Có đề không tồn tại hoặc chưa được phát hành",
+  duplicate_part: "Mỗi part chỉ được chọn 1 đề",
+  wrong_skill: "Có đề không thuộc kỹ năng đã chọn",
+  tier_locked: "Bộ này có đề dành cho tài khoản Pro",
+};
+
 export interface CreateCustomSetResult {
   ok: boolean;
   id?: string;
