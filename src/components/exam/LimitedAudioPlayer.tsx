@@ -273,6 +273,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // Always re-sign right before playing: signed URLs live only 5 minutes, and
     // a student may replay long after the part was batch-signed. The cache in
     // audioUrl.ts makes this free when the URL is still fresh.
+    let reloaded = false;
     try {
       let url = await resolveAudioUrl(activeSrc);
       if (!url) {
@@ -282,7 +283,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       }
       if (!url) return "error";
       if (activeSrc === src) setResolvedSrc(url);
-      if (audio.src !== url) {
+      reloaded = audio.src !== url;
+      if (reloaded) {
         audio.src = url;
         audio.load();
       }
@@ -292,7 +294,33 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     }
     if (token !== undefined && token !== introTokenRef.current) return "stale";
     audio.muted = false;
-    audio.currentTime = 0;
+    // After load() the browser already resets currentTime; touching it while
+    // readyState === 0 throws InvalidStateError.
+    if (!reloaded) {
+      try {
+        audio.currentTime = 0;
+      } catch {
+        /* noop */
+      }
+    } else {
+      // Wait until the freshly signed source has data, else play() may fail.
+      await new Promise<void>((resolve) => {
+        if (audio.readyState >= 2) return resolve();
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          clearTimeout(t);
+          audio.removeEventListener("loadeddata", finish);
+          audio.removeEventListener("canplay", finish);
+          resolve();
+        };
+        const t = setTimeout(finish, 8000);
+        audio.addEventListener("loadeddata", finish);
+        audio.addEventListener("canplay", finish);
+      });
+      if (token !== undefined && token !== introTokenRef.current) return "stale";
+    }
     try {
       // Only one audio may sound at a time across the whole page.
       stopOthers(audio);
