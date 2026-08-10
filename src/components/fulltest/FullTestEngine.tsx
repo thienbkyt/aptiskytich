@@ -121,7 +121,7 @@ type SkillData = Record<SkillStep, PartSet[]>;
 
 type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "finalizing-writing" | "completed";
 
-const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
+const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngineProps) => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [skillData, setSkillData] = useState<SkillData>({
@@ -212,18 +212,24 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
   // Load ALL skill data upfront
   useEffect(() => {
     loadAllData();
-  }, [testId]);
+  }, [testId, customSetId]);
 
   const loadAllData = async () => {
     setPhase("loading");
 
-    // Full Test → resolve member exam_set_ids via full_test_members join table.
-    const { data: members } = await supabase
-      .from("full_test_members")
-      .select("exam_set_id")
-      .eq("full_test_id", testId);
+    // Member exam_set_ids: custom set (user-built) or official full_test_members.
+    const { data: members } = customSetId
+      ? await supabase
+          .from("custom_set_members")
+          .select("exam_set_id, position")
+          .eq("custom_set_id", customSetId)
+          .order("position", { ascending: true })
+      : await supabase
+          .from("full_test_members")
+          .select("exam_set_id")
+          .eq("full_test_id", testId);
 
-    const memberIds = (members || []).map((m) => m.exam_set_id);
+    const memberIds = (members || []).map((m: any) => m.exam_set_id);
     const { data: sets } = memberIds.length
       ? await supabase
           .from("exam_sets")
@@ -232,6 +238,7 @@ const FullTestEngine = ({ testId, testTitle, onExit }: FullTestEngineProps) => {
           .eq("is_published", true)
           .order("created_at", { ascending: true })
       : { data: [] as any[] };
+
 
     if (!sets || sets.length === 0) {
       setPhase("completed");

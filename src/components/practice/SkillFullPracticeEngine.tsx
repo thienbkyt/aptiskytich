@@ -121,11 +121,13 @@ interface SkillFullPracticeEngineProps {
   testTitle: string;
   onExit: () => void;
   skipFirstIntro?: boolean;
+  /** When set, parts come from the user's custom set instead of full_test_id. */
+  customSetId?: string;
 }
 
 type FlowPhase = "loading" | "exam" | "completed";
 
-const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFirstIntro }: SkillFullPracticeEngineProps) => {
+const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFirstIntro, customSetId }: SkillFullPracticeEngineProps) => {
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [parts, setParts] = useState<PartSet[]>([]);
   const [currentPartIndex, setCurrentPartIndex] = useState(0);
