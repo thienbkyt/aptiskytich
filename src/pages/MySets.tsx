@@ -20,7 +20,7 @@ import {
   SKILL_LABELS_VI,
   type CustomSetRow,
 } from "@/hooks/useCustomSets";
-import { safeFormatDateTime } from "@/lib/safeDate";
+import { parseDateSafe } from "@/lib/safeDate";
 
 type View = { kind: "list" } | { kind: "create" } | { kind: "edit"; set: CustomSetRow } | { kind: "play"; set: CustomSetRow };
 
@@ -144,7 +144,7 @@ const MySets = () => {
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
                           {s.last_played_at
-                            ? `Làm gần nhất: ${safeFormatDateTime(s.last_played_at)}`
+                            ? `Làm gần nhất: ${parseDateSafe(s.last_played_at)?.toLocaleString("vi-VN") ?? "—"}`
                             : "Chưa làm lần nào"}
                         </p>
                       </div>
