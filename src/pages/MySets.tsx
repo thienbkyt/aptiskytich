@@ -155,22 +155,14 @@ const MySets = () => {
                         <Button size="sm" variant="outline" onClick={() => setView({ kind: "edit", set: s })}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
-                        <Button
+                        <DeleteCustomSetButton
+                          setId={s.id}
+                          title={s.title}
+                          onDeleted={invalidate}
                           size="sm"
                           variant="outline"
-                          onClick={async () => {
-                            if (!confirm(`Xoá bộ đề "${s.title}"?`)) return;
-                            try {
-                              await deleteCustomSet(s.id);
-                              toast.success("Đã xoá bộ đề");
-                              invalidate();
-                            } catch {
-                              toast.error("Không xoá được bộ đề");
-                            }
-                          }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                        </Button>
+                          iconClassName="w-3.5 h-3.5"
+                        />
                       </div>
                     </div>
                   ))}
