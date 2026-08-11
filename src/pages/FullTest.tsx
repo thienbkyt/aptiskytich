@@ -316,6 +316,7 @@ const FullTest = () => {
                       <Button variant="outline" size="icon" onClick={() => setOverlay({ kind: "edit", set: s })}>
                         <Pencil className="w-4 h-4" />
                       </Button>
+                      <DeleteCustomSetButton setId={s.id} title={s.title} onDeleted={invalidate} />
                     </div>
                   </div>
                 ))}
