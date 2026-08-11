@@ -9,6 +9,7 @@
 // Legacy stuck rows (grade_payload NULL) are intentionally out of scope.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { buildWritingPayloadFromDb } from "../_shared/writingPayloadRebuild.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,10 +23,11 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
 const BATCH_LIMIT = 50;
-const MIN_AGE_MINUTES = 15;
+const MIN_AGE_MINUTES = 5;
 const MAX_AGE_HOURS = 24;
 // Ignore every attempt that predates this deploy — only sweep new submissions.
 const SWEEP_NOT_BEFORE = "2026-08-03T17:00:00Z";
+
 
 
 function parseJwtClaims(token: string): Record<string, unknown> | null {
