@@ -65,7 +65,7 @@ const PRIORITY_CHIPS: { key: PriorityFilter; label: string }[] = [
   { key: "high", label: "Cao" },
   { key: "medium", label: "Vừa" },
   { key: "low", label: "Thấp" },
-  { key: "backup", label: "Dự phòng" },
+  { key: "backup", label: "Back up" },
 ];
 
 const DONE_CHIPS: { key: DoneFilter; label: string }[] = [
@@ -85,7 +85,7 @@ const PRIORITY_BADGE: Record<string, { label: string; className: string }> = {
   high: { label: "Cao", className: "bg-[#CC1C01] text-white border-0" },
   medium: { label: "Vừa", className: "bg-[#FEAD5F] text-[#4D0D0D] border-0" },
   low: { label: "Thấp", className: "bg-emerald-600 text-white border-0" },
-  backup: { label: "Dự phòng", className: "bg-muted text-muted-foreground border-0" },
+  backup: { label: "Back up", className: "bg-muted text-muted-foreground border-0" },
 };
 
 const ChipRow = ({
