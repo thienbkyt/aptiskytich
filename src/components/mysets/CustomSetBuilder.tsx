@@ -390,13 +390,24 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
     );
   }
 
-  /* ---------- Bước 3: form chọn đề ---------- */
+  /* ---------- Bước 3: wizard chọn đề theo từng part ---------- */
+  const stepIdx = Math.min(wizardIdx, Math.max(steps.length - 1, 0));
+  const current = steps[stepIdx];
+  const currentItems = current ? itemsForStep(current) : [];
+  const currentChosen = current ? chosenOfStep(current) : null;
+
+  const goto = (i: number) => setWizardIdx(Math.max(0, Math.min(steps.length - 1, i)));
+  const advance = () => {
+    const next = steps.findIndex((s, i) => i > stepIdx && !chosenOfStep(s));
+    goto(next >= 0 ? next : stepIdx + 1);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           {!editing && !initialMode && (
-            <Button variant="outline" size="sm" onClick={() => { setStep("type"); setSelected([]); }}>
+            <Button variant="outline" size="sm" onClick={() => { setStep("type"); setSelected([]); setWizardIdx(0); }}>
               Đổi loại
             </Button>
           )}
@@ -405,124 +416,146 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
           </Badge>
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-muted-foreground">Tên bộ đề</label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bộ luyện key 10/08" />
-        </div>
-
         <div className="space-y-2">
           <ChipRow label="Ưu tiên:" chips={PRIORITY_CHIPS} value={priorityFilter} onChange={setPriorityFilter} />
           <ChipRow label="Trạng thái:" chips={DONE_CHIPS} value={doneFilter} onChange={setDoneFilter} />
-        </div>
-
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[180px]">
-            <label className="text-xs font-medium text-muted-foreground">Tìm đề</label>
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên đề..." />
-          </div>
-          <div>
-            <Button type="button" variant="secondary" onClick={randomPick} className="gap-2">
-              <Dices className="w-4 h-4" /> Bốc ngẫu nhiên
-            </Button>
-            <p className="text-[11px] text-muted-foreground mt-1">bốc trong {poolCount} đề đang lọc</p>
-          </div>
-          <Button type="button" variant="ghost" onClick={() => setSelected([])} className="gap-2">
-            <XCircle className="w-4 h-4" /> Bỏ chọn hết
-          </Button>
         </div>
 
         {isLoading ? (
           <div className="p-6 flex items-center gap-2 text-sm text-muted-foreground border border-border rounded-xl">
             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải danh sách đề...
           </div>
+        ) : !current ? (
+          <div className="p-6 text-sm text-muted-foreground border border-border rounded-xl">
+            Không tìm thấy đề nào cho kỹ năng này.
+          </div>
         ) : (
-          <div className="space-y-5 max-h-[62vh] overflow-y-auto pr-1">
-            {grouped.map((g) => (
-              <div key={g.skill} className="space-y-3">
-                {mode === "full_test" && (
-                  <h3 className="text-sm font-heading font-bold text-foreground">
-                    {SKILL_LABELS_VI[g.skill] ?? g.skill}
-                  </h3>
-                )}
-                {g.parts.map((p) => {
-                  const chosenId = selectedIdFor(g.skill, p.part);
-                  const chosen = chosenId ? byId.get(chosenId) : undefined;
+          <>
+            {/* Thanh tiến trình */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1">
+                {steps.map((s, i) => {
+                  const done = !!chosenOfStep(s);
                   return (
-                    <div
-                      key={`${g.skill}-${p.part}`}
-                      className={`border rounded-xl overflow-hidden ${chosen ? "border-primary" : "border-border"}`}
-                    >
-                      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-muted/40">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {chosen ? (
-                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
-                          )}
-                          <span className="text-sm font-semibold text-foreground truncate">{p.part}</span>
-                          <span className="text-xs text-muted-foreground">({p.items.length} đề)</span>
-                        </div>
-                        {chosen && (
-                          <Button size="sm" variant="outline" onClick={() => clearPart(g.skill, p.part)}>
-                            Đổi
-                          </Button>
-                        )}
-                      </div>
-
-                      {chosen ? (
-                        <div className="px-3 py-2.5 text-sm font-medium text-foreground truncate">
-                          {chosen.title}
-                        </div>
-                      ) : p.items.length === 0 ? (
-                        <div className="px-3 py-3 text-xs text-muted-foreground">
-                          Không có đề nào khớp bộ lọc. Nới bộ lọc để chọn part này.
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-border">
-                          {p.items.map((o) => {
-                            const locked = isLocked(o);
-                            const pr = PRIORITY_BADGE[priorityOf(o.id)];
-                            return (
-                              <button
-                                key={o.id}
-                                type="button"
-                                onClick={() => pick(o)}
-                                className={`w-full text-left px-3 py-2.5 flex flex-wrap items-center gap-2 transition-colors ${
-                                  locked ? "opacity-60" : "hover:bg-muted/50"
-                                }`}
-                              >
-                                <span className="text-sm font-medium text-foreground truncate max-w-full">
-                                  {o.title}
-                                </span>
-                                <Badge className={`text-[10px] ${pr.className}`}>{pr.label}</Badge>
-                                {progress.has(o.id) && (
-                                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                                    đã làm
-                                  </Badge>
-                                )}
-                                {locked && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge variant="outline" className="text-[10px] gap-1 border-primary text-primary">
-                                          <Lock className="w-3 h-3" /> Pro
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Nâng cấp để dùng đề này</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      key={s.id}
+                      type="button"
+                      title={`${SKILL_LABELS_VI[s.skill] ?? s.skill} · ${s.label}`}
+                      onClick={() => goto(i)}
+                      className={`h-1.5 flex-1 rounded-full transition-colors ${
+                        i === stepIdx
+                          ? "bg-primary h-2.5"
+                          : done
+                            ? "bg-emerald-500"
+                            : "bg-muted"
+                      }`}
+                    />
                   );
                 })}
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {relevantSkills
+                  .filter((sk) => steps.some((s) => s.skill === sk))
+                  .map((sk) => (
+                    <span
+                      key={sk}
+                      className={`text-[11px] ${
+                        current.skill === sk ? "font-bold text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {SKILL_LABELS_VI[sk] ?? sk}
+                    </span>
+                  ))}
+              </div>
+            </div>
+
+            {/* Tiêu đề bước */}
+            <div>
+              <h3 className="text-base font-heading font-bold text-foreground">
+                {SKILL_LABELS_VI[current.skill] ?? current.skill} · {current.label}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {current.kind === "grammar"
+                  ? "Chọn một đề full (gồm 6 part) cho Grammar & Vocabulary"
+                  : "Chọn một đề cho part này"}{" "}
+                — bước {stepIdx + 1}/{steps.length}
+              </p>
+            </div>
+
+            {/* Danh sách đề của bước hiện tại */}
+            {currentItems.length === 0 ? (
+              <div className="px-4 py-6 text-sm text-muted-foreground border border-dashed border-border rounded-xl">
+                Không có đề nào khớp bộ lọc. Nới bộ lọc để chọn part này.
+              </div>
+            ) : (
+              <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
+                {currentItems.map((it) => {
+                  const active = currentChosen === it.key;
+                  const pr = PRIORITY_BADGE[it.priority];
+                  return (
+                    <button
+                      key={it.key}
+                      type="button"
+                      onClick={() => { if (pickItem(it)) advance(); }}
+                      className={`w-full text-left px-3 py-3 flex flex-wrap items-center gap-2 transition-colors ${
+                        it.locked ? "opacity-60" : "hover:bg-muted/50"
+                      } ${active ? "bg-primary/5" : ""}`}
+                    >
+                      {active ? (
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
+                      )}
+                      <span className="text-sm font-medium text-foreground truncate max-w-full">{it.title}</span>
+                      <Badge className={`text-[10px] ${pr.className}`}>{pr.label}</Badge>
+                      {it.done && (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">đã làm</Badge>
+                      )}
+                      {it.locked && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-[10px] gap-1 border-primary text-primary">
+                                <Lock className="w-3 h-3" /> Pro
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Nâng cấp để dùng đề này</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Điều hướng + bốc ngẫu nhiên */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" disabled={stepIdx === 0} onClick={() => goto(stepIdx - 1)} className="gap-1">
+                <ChevronLeft className="w-4 h-4" /> Part trước
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={stepIdx >= steps.length - 1}
+                onClick={() => goto(stepIdx + 1)}
+                className="gap-1"
+              >
+                Part sau <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button variant="secondary" size="sm" onClick={randomCurrent} className="gap-1.5">
+                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên part này
+              </Button>
+              <Button variant="secondary" size="sm" onClick={randomAll} className="gap-1.5">
+                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên tất cả các part
+              </Button>
+              {currentChosen && (
+                <Button variant="ghost" size="sm" onClick={() => clearStep(current)} className="gap-1">
+                  <XCircle className="w-4 h-4" /> Bỏ chọn part này
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
@@ -553,13 +586,20 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
         </div>
         <div className="pt-2 border-t border-border text-sm space-y-1">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Tổng số đề</span>
-            <span className="font-medium">{selected.length}</span>
+            <span className="text-muted-foreground">Số bước đã chọn</span>
+            <span className="font-medium">
+              {steps.filter((s) => !!chosenOfStep(s)).length}/{steps.length}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Thời lượng ước tính</span>
             <span className="font-medium">{fmtMinutes(estSeconds)}</span>
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Tên bộ đề</label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bộ luyện key 10/08" />
         </div>
 
         {!isPro && (
@@ -571,9 +611,10 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
         {duplicatePart && (
           <p className="text-xs text-destructive">Mỗi part chỉ được chọn 1 đề — bạn đang chọn trùng part.</p>
         )}
-        {missingSkills.length > 0 && (
+        {steps.length > 0 && steps.filter((s) => !!chosenOfStep(s)).length < steps.length && (
           <p className="text-xs text-destructive">
-            Còn thiếu part của: {missingSkills.map((s) => SKILL_LABELS_VI[s] ?? s).join(", ")}
+            Còn thiếu {steps.length - steps.filter((s) => !!chosenOfStep(s)).length} part
+            {missingSkills.length > 0 && <> ({missingSkills.map((s) => SKILL_LABELS_VI[s] ?? s).join(", ")})</>}
           </p>
         )}
 
