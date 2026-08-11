@@ -123,6 +123,8 @@ type FlowPhase = "loading" | "skill-intro" | "exam" | "skill-transition" | "fina
 
 const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngineProps) => {
   const navigate = useNavigate();
+  /** Gắn phiên làm bài với bộ đề tự tạo (không đổi schema: ghi vào skill_scores). */
+  const customSetExtra = customSetId ? { customSetId, customSetTitle: testTitle } : undefined;
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [skillData, setSkillData] = useState<SkillData>({
     speaking: [], listening: [], grammar: [], reading: [], writing: [],
@@ -382,6 +384,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
             fullTestSessionId: sessionIdRef.current,
             fullTestId: testId,
             reviewSnapshot: snap,
+            extraSkillScores: customSetExtra,
           });
           if (newId) savedRowIdRef.current[rowKey] = newId;
         }
@@ -837,6 +840,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           fullTestSessionId: sessionIdRef.current,
           fullTestId: testId,
           reviewSnapshot: initialSnap,
+          extraSkillScores: customSetExtra,
         });
 
         // 2) Upload recordings immediately, independent of grading.
@@ -1168,6 +1172,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
             fullTestSessionId: sessionIdRef.current,
             fullTestId: testId,
             reviewSnapshot: placeholderSnap,
+            extraSkillScores: customSetExtra,
           });
         }
         if (rowId) writingRowIdByPartRef.current[origIdx] = rowId;
@@ -1324,6 +1329,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
             fullTestSessionId: sessionIdRef.current,
             fullTestId: testId,
             reviewSnapshot: writingSnap,
+            extraSkillScores: customSetExtra,
           });
         }
         lastTestResultId = testResultId;

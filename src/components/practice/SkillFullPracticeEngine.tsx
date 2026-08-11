@@ -357,7 +357,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           perQuestion,
           reviewSnapshot: snap,
           fullTestSessionId: fullPartSessionRef.current,
-          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
+          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
         });
       })();
     }
@@ -633,7 +633,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         perQuestion,
         reviewSnapshot: snap,
         fullTestSessionId: fullPartSessionRef.current,
-        extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
+        extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
@@ -1170,7 +1170,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           perQuestion,
           reviewSnapshot: snap,
           fullTestSessionId: fullPartSessionRef.current,
-          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
+          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
         });
       }
 
