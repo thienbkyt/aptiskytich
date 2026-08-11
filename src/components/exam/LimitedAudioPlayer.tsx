@@ -459,7 +459,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       const token = ++introTokenRef.current;
       countedRef.current = false;
       resumeCountRef.current = 0;
-    lastTimeUpdateRef.current = Date.now();
+      lastTimeUpdateRef.current = Date.now();
       retryCountRef.current = 0;
       setIsPlaying(true);
       setErrorMsg("");
