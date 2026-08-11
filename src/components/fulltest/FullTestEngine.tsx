@@ -1220,6 +1220,10 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           partType: writingSubmissionsByPartRef.current[origIdx]?.partType ?? null,
         });
         return null;
+      }
+    };
+
+
 
 
     const runWritingFinalize = async () => {
