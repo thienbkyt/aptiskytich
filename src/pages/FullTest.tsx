@@ -211,8 +211,91 @@ const FullTest = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {tests.map((test, index) => {
+            <>
+              {/* Filters */}
+              <div className="space-y-2 mb-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Trạng thái:</span>
+                  {([["all", "Tất cả", doneCounts.all], ["undone", "Chưa làm", doneCounts.undone], ["done", "Đã làm", doneCounts.done]] as const).map(
+                    ([k, label, n]) => (
+                      <button key={k} type="button" onClick={() => setDoneFilter(k as any)} className={chip(doneFilter === k)}>
+                        {label} <span className="opacity-70">({n})</span>
+                      </button>
+                    ),
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Nguồn:</span>
+                  {([["all", "Tất cả", sourceCounts.all], ["official", "Đề chính thức", sourceCounts.official], ["mine", "Bộ đề của tôi", sourceCounts.mine]] as const).map(
+                    ([k, label, n]) => (
+                      <button key={k} type="button" onClick={() => setSourceFilter(k as any)} className={chip(sourceFilter === k)}>
+                        {label} <span className="opacity-70">({n})</span>
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                {showCreateCard && (
+                  <button
+                    type="button"
+                    onClick={() => setOverlay({ kind: "create" })}
+                    className="text-left bg-card border-2 border-dashed border-primary rounded-xl p-5 flex flex-col h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                      <Plus className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-2">Tạo bộ đề của bạn</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Tự ghép các đề lẻ thành một bài thi thử đủ 5 kỹ năng — vẫn được AI chấm và lưu lịch sử.
+                    </p>
+                    <div className="flex-1" />
+                    <span className="text-sm font-semibold text-primary inline-flex items-center gap-1 mt-4">
+                      Bắt đầu tạo <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </button>
+                )}
+
+                {mineVisible.map((s) => (
+                  <div key={s.id} className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
+                        Bộ của tôi
+                      </Badge>
+                    </div>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-2">{s.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Full test • {s.memberCount} Parts • tự tạo
+                    </p>
+                    <div className="mb-4">
+                      {playedIds.has(s.id) ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>
+                      )}
+                    </div>
+                    <div className="flex-1" />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => {
+                          touchCustomSetPlayed(s.id).then(invalidate);
+                          setOverlay({ kind: "play", set: s });
+                        }}
+                        className="flex-1 bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
+                      >
+                        Bắt đầu thi thử <ArrowRight className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => setOverlay({ kind: "edit", set: s })}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {officialVisible.map((test, index) => {
                 const locked = isLocked(test as any);
                 return (
                 <motion.div
@@ -258,7 +341,8 @@ const FullTest = () => {
                 </motion.div>
                 );
               })}
-            </div>
+              </div>
+            </>
           )}
         </section>
       </main>
