@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain, Layers } from "lucide-react";
+import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain, Plus, Pencil, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
+import CustomSetBuilder from "@/components/mysets/CustomSetBuilder";
+import { useCustomSets, useCustomSetPlays, touchCustomSetPlayed, type CustomSetRow } from "@/hooks/useCustomSets";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -42,6 +44,68 @@ const FullTest = () => {
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
   const { guard, isLocked, LockModal } = useExamAccessGate();
 
+  const { sets: allCustomSets, invalidate } = useCustomSets();
+  const { playedIds } = useCustomSetPlays();
+  const [doneFilter, setDoneFilter] = useState<"all" | "undone" | "done">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "official" | "mine">("all");
+  const [overlay, setOverlay] = useState<
+    { kind: "create" } | { kind: "edit"; set: CustomSetRow } | { kind: "play"; set: CustomSetRow } | null
+  >(null);
+
+  const mySets = useMemo(
+    () => allCustomSets.filter((s) => s.mode === "full_test"),
+    [allCustomSets],
+  );
+  const officialDone = (t: FullTestItem) => !!bands.get(t.fullTestId);
+
+  const officialVisible = useMemo(
+    () =>
+      tests.filter((t) => {
+        if (sourceFilter === "mine") return false;
+        if (doneFilter === "done") return officialDone(t);
+        if (doneFilter === "undone") return !officialDone(t);
+        return true;
+      }),
+    [tests, sourceFilter, doneFilter, bands],
+  );
+  const mineVisible = useMemo(
+    () =>
+      mySets.filter((s) => {
+        if (sourceFilter === "official") return false;
+        const done = playedIds.has(s.id);
+        if (doneFilter === "done") return done;
+        if (doneFilter === "undone") return !done;
+        return true;
+      }),
+    [mySets, sourceFilter, doneFilter, playedIds],
+  );
+  const doneCounts = useMemo(() => {
+    const off = sourceFilter === "mine" ? [] : tests;
+    const mine = sourceFilter === "official" ? [] : mySets;
+    const done = off.filter(officialDone).length + mine.filter((s) => playedIds.has(s.id)).length;
+    const total = off.length + mine.length;
+    return { all: total, done, undone: total - done };
+  }, [tests, mySets, sourceFilter, bands, playedIds]);
+  const sourceCounts = useMemo(() => {
+    const off = tests.filter((t) =>
+      doneFilter === "done" ? officialDone(t) : doneFilter === "undone" ? !officialDone(t) : true,
+    ).length;
+    const mine = mySets.filter((s) => {
+      const d = playedIds.has(s.id);
+      return doneFilter === "done" ? d : doneFilter === "undone" ? !d : true;
+    }).length;
+    return { all: off + mine, official: off, mine };
+  }, [tests, mySets, doneFilter, bands, playedIds]);
+
+  const showCreateCard = doneFilter !== "done" && sourceFilter !== "official";
+
+  const chip = (active: boolean) =>
+    `text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+      active
+        ? "bg-primary text-primary-foreground border-primary"
+        : "bg-card text-foreground border-border hover:bg-muted"
+    }`;
+
   const handleStartTest = (test: FullTestItem) => {
     setActiveTest(test);
   };
@@ -49,6 +113,19 @@ const FullTest = () => {
   const handleExit = () => {
     setActiveTest(null);
   };
+
+  // Custom set play mode
+  if (overlay?.kind === "play") {
+    const set = overlay.set;
+    return (
+      <FullTestEngine
+        testId={set.id}
+        testTitle={set.title}
+        customSetId={set.id}
+        onExit={() => { setOverlay(null); invalidate(); }}
+      />
+    );
+  }
 
   // Full test engine mode
   if (activeTest) {
@@ -60,6 +137,31 @@ const FullTest = () => {
       />
     );
   }
+
+  // Custom set builder mode
+  if (overlay?.kind === "create" || overlay?.kind === "edit") {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-[112px] md:pt-16">
+          <section className="section-container py-8">
+            <h1 className="text-2xl font-heading font-bold text-foreground mb-5">
+              {overlay.kind === "edit" ? "Sửa bộ đề của tôi" : "Tạo bộ đề của bạn"}
+            </h1>
+            <CustomSetBuilder
+              editing={overlay.kind === "edit" ? overlay.set : null}
+              initialMode="full_test"
+              onDone={() => { invalidate(); setOverlay(null); }}
+              onCancel={() => setOverlay(null)}
+            />
+          </section>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -80,11 +182,6 @@ const FullTest = () => {
                   <Clock className="w-3 h-3" />
                   162 phút
                 </Badge>
-                <Button asChild variant="outline" size="sm" className="gap-2 ml-auto">
-                  <Link to="/my-sets">
-                    <Layers className="w-4 h-4" /> Bộ đề của tôi
-                  </Link>
-                </Button>
               </div>
 
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
@@ -139,8 +236,91 @@ const FullTest = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-              {tests.map((test, index) => {
+            <>
+              {/* Filters */}
+              <div className="space-y-2 mb-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Trạng thái:</span>
+                  {([["all", "Tất cả", doneCounts.all], ["undone", "Chưa làm", doneCounts.undone], ["done", "Đã làm", doneCounts.done]] as const).map(
+                    ([k, label, n]) => (
+                      <button key={k} type="button" onClick={() => setDoneFilter(k as any)} className={chip(doneFilter === k)}>
+                        {label} <span className="opacity-70">({n})</span>
+                      </button>
+                    ),
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Nguồn:</span>
+                  {([["all", "Tất cả", sourceCounts.all], ["official", "Đề chính thức", sourceCounts.official], ["mine", "Bộ đề của tôi", sourceCounts.mine]] as const).map(
+                    ([k, label, n]) => (
+                      <button key={k} type="button" onClick={() => setSourceFilter(k as any)} className={chip(sourceFilter === k)}>
+                        {label} <span className="opacity-70">({n})</span>
+                      </button>
+                    ),
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                {showCreateCard && (
+                  <button
+                    type="button"
+                    onClick={() => setOverlay({ kind: "create" })}
+                    className="text-left bg-card border-2 border-dashed border-primary rounded-xl p-5 flex flex-col h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                      <Plus className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-2">Tạo bộ đề của bạn</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Tự ghép các đề lẻ thành một bài thi thử đủ 5 kỹ năng — vẫn được AI chấm và lưu lịch sử.
+                    </p>
+                    <div className="flex-1" />
+                    <span className="text-sm font-semibold text-primary inline-flex items-center gap-1 mt-4">
+                      Bắt đầu tạo <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </button>
+                )}
+
+                {mineVisible.map((s) => (
+                  <div key={s.id} className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
+                        Bộ của tôi
+                      </Badge>
+                    </div>
+                    <h3 className="text-xl font-heading font-bold text-foreground mb-2">{s.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Full test • {s.memberCount} Parts • tự tạo
+                    </p>
+                    <div className="mb-4">
+                      {playedIds.has(s.id) ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>
+                      )}
+                    </div>
+                    <div className="flex-1" />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => {
+                          touchCustomSetPlayed(s.id).then(invalidate);
+                          setOverlay({ kind: "play", set: s });
+                        }}
+                        className="flex-1 bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
+                      >
+                        Bắt đầu thi thử <ArrowRight className="w-4 h-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" onClick={() => setOverlay({ kind: "edit", set: s })}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {officialVisible.map((test, index) => {
                 const locked = isLocked(test as any);
                 return (
                 <motion.div
@@ -186,7 +366,8 @@ const FullTest = () => {
                 </motion.div>
                 );
               })}
-            </div>
+              </div>
+            </>
           )}
         </section>
       </main>

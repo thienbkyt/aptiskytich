@@ -128,6 +128,8 @@ interface SkillFullPracticeEngineProps {
 type FlowPhase = "loading" | "exam" | "completed";
 
 const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFirstIntro, customSetId }: SkillFullPracticeEngineProps) => {
+  /** Gắn phiên làm bài với bộ đề tự tạo (không đổi schema: ghi vào skill_scores). */
+  const customSetExtra = customSetId ? { customSetId, customSetTitle: testTitle } : {};
   const [phase, setPhase] = useState<FlowPhase>("loading");
   const [parts, setParts] = useState<PartSet[]>([]);
   const [currentPartIndex, setCurrentPartIndex] = useState(0);
@@ -357,7 +359,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           perQuestion,
           reviewSnapshot: snap,
           fullTestSessionId: fullPartSessionRef.current,
-          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
+          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
         });
       })();
     }
@@ -633,7 +635,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         perQuestion,
         reviewSnapshot: snap,
         fullTestSessionId: fullPartSessionRef.current,
-        extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
+        extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
       });
       speakingTestResultIdByPartRef.current[currentPartIndex] = _trId ?? null;
 
@@ -1170,7 +1172,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           perQuestion,
           reviewSnapshot: snap,
           fullTestSessionId: fullPartSessionRef.current,
-          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle },
+          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
         });
       }
 

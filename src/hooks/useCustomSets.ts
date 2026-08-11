@@ -79,6 +79,35 @@ export const useCustomSets = () => {
   return { sets: data ?? [], loading: enabled ? isLoading : authLoading, refetch, invalidate };
 };
 
+/**
+ * Tập id các bộ đề tự tạo mà người dùng ĐÃ làm ít nhất một lần.
+ * Lấy từ test_results.skill_scores->>'customSetId' (không đổi schema).
+ */
+export const useCustomSetPlays = () => {
+  const { user, loading: authLoading } = useAuth();
+  const enabled = !authLoading && !!user;
+
+  const { data } = useQuery({
+    queryKey: ["customSetPlays", user?.id],
+    enabled,
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<Set<string>> => {
+      const { data } = await supabase
+        .from("test_results")
+        .select("skill_scores")
+        .not("skill_scores->>customSetId", "is", null);
+      const out = new Set<string>();
+      (data || []).forEach((r: any) => {
+        const id = r?.skill_scores?.customSetId;
+        if (typeof id === "string" && id) out.add(id);
+      });
+      return out;
+    },
+  });
+
+  return { playedIds: data ?? new Set<string>() };
+};
+
 export const deleteCustomSet = async (id: string) => {
   const { error } = await supabase.from("custom_sets").delete().eq("id", id);
   if (error) throw error;
