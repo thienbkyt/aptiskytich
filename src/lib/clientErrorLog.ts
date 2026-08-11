@@ -14,7 +14,7 @@ export function logClientError(
     const anyErr = err as any;
     const payload = {
       context,
-      error_name: String(anyErr?.name ?? typeof err ?? "unknown").slice(0, 200),
+      error_name: String(anyErr?.name || typeof err).slice(0, 200),
       error_message: String(anyErr?.message ?? anyErr ?? "").slice(0, 2000),
       meta: (meta ?? {}) as any,
     };
