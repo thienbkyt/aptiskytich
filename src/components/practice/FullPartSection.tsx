@@ -172,7 +172,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground mr-1">Nguồn:</span>
-          {([["all", "Tất cả", sourceCounts.all], ["official", "Đề chính thức", sourceCounts.official], ["mine", "Bộ đề của tôi", sourceCounts.mine]] as const).map(
+          {([["all", "Tất cả", sourceCounts.all], ["official", "Đề web", sourceCounts.official], ["mine", "Bộ đề của tôi", sourceCounts.mine]] as const).map(
             ([k, label, n]) => (
               <button key={k} type="button" onClick={() => setSourceFilter(k as SourceFilter)} className={chip(sourceFilter === k)}>
                 {label} <span className="opacity-70">({n})</span>
