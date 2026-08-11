@@ -16,7 +16,6 @@ import FullTestEngine from "@/components/fulltest/FullTestEngine";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import {
   useCustomSets,
-  deleteCustomSet,
   touchCustomSetPlayed,
   SKILL_LABELS_VI,
   type CustomSetRow,
