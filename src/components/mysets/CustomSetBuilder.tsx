@@ -187,23 +187,6 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
     return true;
   };
 
-  /** Cấu trúc: kỹ năng > part > danh sách đề khớp lọc */
-  const grouped = useMemo(() => {
-    return relevantSkills.map((sk) => {
-      const skillSets = options.filter((o) => o.skill === sk);
-      const parts = Array.from(new Set(skillSets.map((o) => o.part))).sort(
-        (a, b) => partSortKey(a) - partSortKey(b),
-      );
-      return {
-        skill: sk,
-        parts: parts.map((part) => ({
-          part,
-          items: skillSets.filter((o) => o.part === part && matchesFilters(o)),
-        })),
-      };
-    });
-  }, [options, relevantSkills.join("|"), priorityFilter, doneFilter, search, labels, progress, isPro]);
-
   const selectedSets = selected.map((id) => byId.get(id)).filter(Boolean) as ExamSetOption[];
 
   const partsBySkill = useMemo(() => {
@@ -227,62 +210,159 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
     0,
   );
 
-  const selectedIdFor = (sk: string, part: string) =>
-    selected.find((id) => {
-      const o = byId.get(id);
-      return o?.skill === sk && o.part === part;
+  /* ---------- Các bước của wizard ---------- */
+  const steps = useMemo<WizStep[]>(() => {
+    const out: WizStep[] = [];
+    SKILL_STEP_ORDER.filter((sk) => relevantSkills.includes(sk)).forEach((sk) => {
+      const skillSets = options.filter((o) => o.skill === sk);
+      if (!skillSets.length) return;
+      if (sk === "grammar_vocab") {
+        out.push({ id: "grammar_vocab", skill: sk, kind: "grammar", label: "Đề full (6 part)" });
+        return;
+      }
+      Array.from(new Set(skillSets.map((o) => o.part)))
+        .sort((a, b) => partSortKey(a) - partSortKey(b))
+        .forEach((part) => out.push({ id: `${sk}-${part}`, skill: sk, kind: "part", part, label: part }));
     });
+    return out;
+  }, [options, relevantSkills.join("|")]);
 
-  const pick = (o: ExamSetOption) => {
-    if (isLocked(o)) {
-      toast.error("Nâng cấp để dùng đề này");
-      return;
+  const [wizardIdx, setWizardIdx] = useState(0);
+
+  /** Nhóm Grammar & Vocabulary theo tiền tố trước dấu " - " đầu tiên (VD "Đề 01"). */
+  const grammarGroups = useMemo(() => {
+    const m = new Map<string, ExamSetOption[]>();
+    options
+      .filter((o) => o.skill === "grammar_vocab")
+      .forEach((o) => {
+        const key = (o.title.split(" - ")[0] || o.title).trim();
+        if (!m.has(key)) m.set(key, []);
+        m.get(key)!.push(o);
+      });
+    return Array.from(m.entries())
+      .map(([key, items]) => ({
+        key,
+        items: [...items].sort((a, b) => partSortKey(a.part) - partSortKey(b.part)),
+      }))
+      .sort((a, b) => a.key.localeCompare(b.key, "vi"));
+  }, [options]);
+
+  const priorityRank = (p: PriorityFilter) => ["high", "medium", "low", "backup"].indexOf(p);
+
+  const itemsForStep = (s: WizStep): StepItem[] => {
+    if (s.kind === "grammar") {
+      return grammarGroups
+        .map((g) => {
+          const priority = g.items
+            .map((o) => priorityOf(o.id))
+            .sort((a, b) => priorityRank(a) - priorityRank(b))[0] ?? "backup";
+          const done = g.items.some((o) => progress.has(o.id));
+          return {
+            key: g.key,
+            title: `${g.key} · ${g.items.length} part`,
+            ids: g.items.map((o) => o.id),
+            locked: g.items.some((o) => isLocked(o)),
+            done,
+            priority,
+          } as StepItem;
+        })
+        .filter((it) => {
+          if (priorityFilter !== "all" && it.priority !== priorityFilter) return false;
+          if (doneFilter === "undone" && it.done) return false;
+          if (doneFilter === "done" && !it.done) return false;
+          return true;
+        });
     }
-    setSelected((prev) => [
-      ...prev.filter((id) => {
-        const x = byId.get(id);
-        return !(x && x.skill === o.skill && x.part === o.part);
-      }),
-      o.id,
-    ]);
+    return options
+      .filter((o) => o.skill === s.skill && o.part === s.part && matchesFilters(o))
+      .map((o) => ({
+        key: o.id,
+        title: o.title,
+        ids: [o.id],
+        locked: isLocked(o),
+        done: progress.has(o.id),
+        priority: priorityOf(o.id),
+      }));
   };
 
-  const clearPart = (sk: string, part: string) => {
+  const chosenOfStep = (s: WizStep): string | null => {
+    if (s.kind === "grammar") {
+      const g = grammarGroups.find((gr) => gr.items.some((o) => selected.includes(o.id)));
+      return g ? g.key : null;
+    }
+    const id = selected.find((x) => {
+      const o = byId.get(x);
+      return o?.skill === s.skill && o.part === s.part;
+    });
+    return id ?? null;
+  };
+
+  const clearStep = (s: WizStep) => {
     setSelected((prev) =>
       prev.filter((id) => {
-        const x = byId.get(id);
-        return !(x && x.skill === sk && x.part === part);
+        const o = byId.get(id);
+        if (!o) return false;
+        if (s.kind === "grammar") return o.skill !== "grammar_vocab";
+        return !(o.skill === s.skill && o.part === s.part);
       }),
     );
   };
 
-  /** Số đề đang khớp lọc và dùng được (dùng cho dòng "bốc trong N đề"). */
-  const poolCount = useMemo(
-    () =>
-      grouped.reduce(
-        (n, g) => n + g.parts.reduce((m, p) => m + p.items.filter((o) => !isLocked(o)).length, 0),
-        0,
-      ),
-    [grouped, isPro],
-  );
-
-  const randomPick = () => {
-    const additions: string[] = [];
-    grouped.forEach((g) => {
-      g.parts.forEach((p) => {
-        if (selectedIdFor(g.skill, p.part)) return;
-        const pool = p.items.filter((o) => !isLocked(o));
-        if (!pool.length) return;
-        additions.push(pool[Math.floor(Math.random() * pool.length)].id);
+  /** Chọn một dòng ở bước hiện tại. Trả về true nếu chọn thành công. */
+  const pickItem = (it: StepItem, s: WizStep = steps[stepIdxRef.current]): boolean => {
+    if (it.locked) {
+      toast.error("Nâng cấp để dùng đề này");
+      return false;
+    }
+    setSelected((prev) => {
+      const kept = prev.filter((id) => {
+        const o = byId.get(id);
+        if (!o) return false;
+        if (s.kind === "grammar") return o.skill !== "grammar_vocab";
+        return !(o.skill === s.skill && o.part === s.part);
       });
+      return [...kept, ...it.ids];
+    });
+    return true;
+  };
+
+  const randomOf = (s: WizStep) => {
+    const pool = itemsForStep(s).filter((it) => !it.locked);
+    if (!pool.length) return null;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  const randomCurrent = () => {
+    const s = steps[stepIdxRef.current];
+    if (!s) return;
+    const it = randomOf(s);
+    if (!it) {
+      toast.error("Không có đề nào khớp bộ lọc ở part này");
+      return;
+    }
+    pickItem(it, s);
+    const next = steps.findIndex((x, i) => i > stepIdxRef.current && !chosenOfStep(x));
+    setWizardIdx(next >= 0 ? next : Math.min(stepIdxRef.current + 1, steps.length - 1));
+  };
+
+  const randomAll = () => {
+    const additions: string[] = [];
+    const usedGrammar = !!chosenOfStep({ id: "g", skill: "grammar_vocab", kind: "grammar", label: "" });
+    steps.forEach((s) => {
+      if (chosenOfStep(s)) return;
+      if (s.kind === "grammar" && usedGrammar) return;
+      const it = randomOf(s);
+      if (!it) return;
+      additions.push(...it.ids);
     });
     if (!additions.length) {
       toast.error("Không còn part trống nào có đề khớp bộ lọc");
       return;
     }
     setSelected((prev) => [...prev, ...additions]);
-    toast.success(`Đã bốc ${additions.length} đề`);
+    toast.success("Đã bốc ngẫu nhiên các part còn trống");
   };
+
 
   const canSave = !!title.trim() && missingSkills.length === 0 && !duplicatePart && !saving;
 
