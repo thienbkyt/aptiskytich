@@ -277,6 +277,7 @@ export default function PricingPage() {
     "Luyện Full Part + Thi thử Full Test",
     "Đề Key Dự Đoán cập nhật hằng ngày",
     "Tính năng Marathon không giới hạn",
+    "Tự tạo bộ đề Full Test / Full Part riêng",
     "Bài mẫu chuẩn band · dịch câu & tra từ ",
     "Dictation, sổ từ vựng, tiến độ chi tiết",
   ];
