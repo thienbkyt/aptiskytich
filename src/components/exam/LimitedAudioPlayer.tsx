@@ -458,6 +458,10 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
       const token = ++introTokenRef.current;
       countedRef.current = false;
+      resumeCountRef.current = 0;
+      lastTimeUpdateRef.current = Date.now();
+    resumeCountRef.current = 0;
+    lastTimeUpdateRef.current = Date.now();
       retryCountRef.current = 0;
       setIsPlaying(true);
       setErrorMsg("");
@@ -510,6 +514,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     stopTTS();
     setIntroSpeaking(false);
     countedRef.current = false;
+    resumeCountRef.current = 0;
+    lastTimeUpdateRef.current = Date.now();
     setBlocked(false);
     setErrorMsg("");
     setIsPlaying(true);
@@ -537,6 +543,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         ref={audioRef}
         {...(resolvedSrc ? { src: resolvedSrc } : {})}
         onEnded={() => { releaseIfMine(audioRef.current); setIsPlaying(false); }}
+        onTimeUpdate={() => { lastTimeUpdateRef.current = Date.now(); }}
         onError={resolvedSrc ? handleAudioError : undefined}
         preload="auto"
       />
