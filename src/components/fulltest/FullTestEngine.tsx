@@ -1214,9 +1214,13 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
       } catch (err) {
         console.warn("[FullTest v2] persist writing part failed", err);
+        const { logClientError } = await import("@/lib/clientErrorLog");
+        logClientError("writing_grade_kickoff", err, {
+          step: "fulltest_ensure_writing_row_failed",
+          partType: writingSubmissionsByPartRef.current[origIdx]?.partType ?? null,
+        });
         return null;
-      }
-    };
+
 
     const runWritingFinalize = async () => {
       const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
