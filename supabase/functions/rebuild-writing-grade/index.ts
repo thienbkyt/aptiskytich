@@ -12,13 +12,8 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
   headers: { ...corsHeaders, "Content-Type": "application/json" },
 });
 
-const taskFromPart = (part: string): "task1" | "task2" | "task3" | "task4" | null => {
-  const match = part.match(/([1-4])/);
-  return match ? (`task${match[1]}` as "task1" | "task2" | "task3" | "task4") : null;
-};
+// Payload rebuilding is shared with sweep-ungraded-writing.
 
-const parseAnswers = (raw: string): string[] =>
-  [...raw.matchAll(/A:\s*([\s\S]*?)(?=\n\s*\nQ\d+:|$)/g)].map((m) => m[1].trim());
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
