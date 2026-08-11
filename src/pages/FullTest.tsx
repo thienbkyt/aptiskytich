@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain, Layers } from "lucide-react";
+import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain, Plus, Pencil, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useExamAccessGate, ExamTierBadge } from "@/hooks/useExamAccessGate";
 import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
+import CustomSetBuilder from "@/components/mysets/CustomSetBuilder";
+import { useCustomSets, useCustomSetPlays, touchCustomSetPlayed, type CustomSetRow } from "@/hooks/useCustomSets";
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
