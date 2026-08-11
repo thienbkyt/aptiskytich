@@ -132,6 +132,54 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_wp1_homeliving_20260811: {
+        Row: {
+          backed_up_at: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
+      backup_wp1_mau_lech_20260811: {
+        Row: {
+          backed_up_at: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -1916,6 +1964,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_key12: {
+        Row: {
+          diem: number | null
+          id: string | null
+          part: string | null
+          skill: string | null
+          tier: string | null
+          title: string | null
+        }
+        Insert: {
+          diem?: number | null
+          id?: string | null
+          part?: string | null
+          skill?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Update: {
+          diem?: number | null
+          id?: string | null
+          part?: string | null
+          skill?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       tmp_p10: {
         Row: {
           j: Json | null
@@ -1925,6 +2000,24 @@ export type Database = {
         }
         Update: {
           j?: Json | null
+        }
+        Relationships: []
+      }
+      tmp_rathi_1108: {
+        Row: {
+          part: string | null
+          skill: string | null
+          ten: string | null
+        }
+        Insert: {
+          part?: string | null
+          skill?: string | null
+          ten?: string | null
+        }
+        Update: {
+          part?: string | null
+          skill?: string | null
+          ten?: string | null
         }
         Relationships: []
       }

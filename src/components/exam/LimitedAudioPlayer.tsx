@@ -188,9 +188,90 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     });
   }, [questionKey, src]);
 
+  // Which source is currently loaded in the element (src vs src2).
+  const activeSrcRef = useRef<string>(src);
+  // Max 2 in-place resumes per play press.
+  const resumeCountRef = useRef(0);
+  const resumingRef = useRef(false);
+  const lastTimeUpdateRef = useRef(0);
+
+  /** Waits until the element has data (or 8s). Same pattern as playActiveSource. */
+  const waitForReady = (audio: HTMLAudioElement) =>
+    new Promise<void>((resolve) => {
+      if (audio.readyState >= 2) return resolve();
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(t);
+        audio.removeEventListener("loadeddata", finish);
+        audio.removeEventListener("canplay", finish);
+        resolve();
+      };
+      const t = setTimeout(finish, 8000);
+      audio.addEventListener("loadeddata", finish);
+      audio.addEventListener("canplay", finish);
+    });
+
+  /**
+   * Re-signs the URL and continues playback from the exact position.
+   * Used when the signed URL dies mid-playback (stall or media error).
+   * Never counts a play — this is the same listen, not a new one.
+   */
+  const resumeAtPosition = useCallback(async (audio: HTMLAudioElement): Promise<boolean> => {
+    if (resumingRef.current) return true;
+    resumingRef.current = true;
+    try {
+      if (resumeCountRef.current >= 2) {
+        setIsPlaying(false);
+        setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        return false;
+      }
+      resumeCountRef.current += 1;
+      const pos = audio.currentTime;
+      const activeSrc = activeSrcRef.current || src;
+      setErrorMsg("Đang nối lại audio...");
+      bustAudioUrlCache(activeSrc);
+      const url = await resolveAudioUrl(activeSrc);
+      if (!url) {
+        setIsPlaying(false);
+        setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        return false;
+      }
+      if (activeSrc === src) setResolvedSrc(url);
+      audio.src = url;
+      audio.load();
+      await waitForReady(audio);
+      try {
+        audio.currentTime = pos;
+      } catch {
+        /* noop */
+      }
+      try {
+        stopOthers(audio);
+        await audio.play();
+        lastTimeUpdateRef.current = Date.now();
+        setErrorMsg("");
+        return true;
+      } catch {
+        setIsPlaying(false);
+        setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        return false;
+      }
+    } finally {
+      resumingRef.current = false;
+    }
+  }, [src]);
+
   const handleAudioError = useCallback(async () => {
     // Ignore errors raised by the silent priming play — the main play flow owns recovery.
     if (primingRef.current) return;
+    const el = audioRef.current;
+    // Mid-playback failure → resume in place instead of restarting the file.
+    if (isPlaying && el && el.currentTime > 1) {
+      await resumeAtPosition(el);
+      return;
+    }
     // Signed URL likely expired / network blip — bust cache and retry.
     if (retryCountRef.current >= 2) {
       setErrorMsg("Không tải được audio. Vui lòng bấm Thử lại hoặc tải lại trang.");
@@ -212,7 +293,23 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
       }
     }
-  }, [resolve, isPlaying, countThisPlay]);
+  }, [resolve, isPlaying, countThisPlay, resumeAtPosition]);
+
+  // Watchdog: playback that goes 5s without a timeupdate is stalled.
+  useEffect(() => {
+    if (!isPlaying) return;
+    lastTimeUpdateRef.current = Date.now();
+    const id = setInterval(() => {
+      const el = audioRef.current;
+      if (!el || el.paused || el.ended || resumingRef.current) return;
+      if (el.currentTime <= 1) return;
+      if (Date.now() - lastTimeUpdateRef.current < 5000) return;
+      lastTimeUpdateRef.current = Date.now();
+      void resumeAtPosition(el);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isPlaying, resumeAtPosition]);
+
 
   const handleRetry = async () => {
     retryCountRef.current = 0;
@@ -270,6 +367,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // Pick the source for this play: first play uses `src`, later plays use
     // `src2` when provided (falls back to `src`).
     const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    activeSrcRef.current = activeSrc;
     // Always re-sign right before playing: signed URLs live only 5 minutes, and
     // a student may replay long after the part was batch-signed. The cache in
     // audioUrl.ts makes this free when the URL is still fresh.
@@ -360,6 +458,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
       const token = ++introTokenRef.current;
       countedRef.current = false;
+      resumeCountRef.current = 0;
+      lastTimeUpdateRef.current = Date.now();
       retryCountRef.current = 0;
       setIsPlaying(true);
       setErrorMsg("");
@@ -412,6 +512,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     stopTTS();
     setIntroSpeaking(false);
     countedRef.current = false;
+    resumeCountRef.current = 0;
+    lastTimeUpdateRef.current = Date.now();
     setBlocked(false);
     setErrorMsg("");
     setIsPlaying(true);
@@ -439,6 +541,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         ref={audioRef}
         {...(resolvedSrc ? { src: resolvedSrc } : {})}
         onEnded={() => { releaseIfMine(audioRef.current); setIsPlaying(false); }}
+        onTimeUpdate={() => { lastTimeUpdateRef.current = Date.now(); }}
         onError={resolvedSrc ? handleAudioError : undefined}
         preload="auto"
       />
