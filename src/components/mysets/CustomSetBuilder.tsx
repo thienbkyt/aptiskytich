@@ -518,11 +518,6 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
           </Badge>
         </div>
 
-        <div className="space-y-2">
-          <ChipRow label="Ưu tiên:" chips={PRIORITY_CHIPS} value={priorityFilter} onChange={setPriorityFilter} />
-          <ChipRow label="Trạng thái:" chips={DONE_CHIPS} value={doneFilter} onChange={setDoneFilter} />
-        </div>
-
         {isLoading ? (
           <div className="p-6 flex items-center gap-2 text-sm text-muted-foreground border border-border rounded-xl">
             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải danh sách đề...
