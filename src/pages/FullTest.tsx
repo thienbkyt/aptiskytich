@@ -82,11 +82,6 @@ const FullTest = () => {
                   <Clock className="w-3 h-3" />
                   162 phút
                 </Badge>
-                <Button asChild variant="outline" size="sm" className="gap-2 ml-auto">
-                  <Link to="/my-sets">
-                    <Layers className="w-4 h-4" /> Bộ đề của tôi
-                  </Link>
-                </Button>
               </div>
 
               <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
