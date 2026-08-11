@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Circle,
   ClipboardCheck,
   Dices,
@@ -51,6 +53,26 @@ type DoneFilter = "all" | "undone" | "done";
 type Step = "type" | "skill" | "form";
 
 const SKILLS = ["reading", "listening", "writing", "speaking", "grammar_vocab"];
+
+/** Thứ tự các bước theo đúng bài thi thật. */
+const SKILL_STEP_ORDER = ["speaking", "listening", "grammar_vocab", "reading", "writing"];
+
+interface WizStep {
+  id: string;
+  skill: string;
+  kind: "part" | "grammar";
+  part?: string;
+  label: string;
+}
+
+interface StepItem {
+  key: string;
+  title: string;
+  ids: string[];
+  locked: boolean;
+  done: boolean;
+  priority: PriorityFilter;
+}
 
 const SKILL_ICON: Record<string, any> = {
   reading: BookOpen,
@@ -228,6 +250,7 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
   }, [options, relevantSkills.join("|")]);
 
   const [wizardIdx, setWizardIdx] = useState(0);
+  const stepIdx = Math.min(wizardIdx, Math.max(steps.length - 1, 0));
 
   /** Nhóm Grammar & Vocabulary theo tiền tố trước dấu " - " đầu tiên (VD "Đề 01"). */
   const grammarGroups = useMemo(() => {
@@ -309,7 +332,7 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
   };
 
   /** Chọn một dòng ở bước hiện tại. Trả về true nếu chọn thành công. */
-  const pickItem = (it: StepItem, s: WizStep = steps[stepIdxRef.current]): boolean => {
+  const pickItem = (it: StepItem, s: WizStep = steps[stepIdx]): boolean => {
     if (it.locked) {
       toast.error("Nâng cấp để dùng đề này");
       return false;
@@ -333,7 +356,7 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
   };
 
   const randomCurrent = () => {
-    const s = steps[stepIdxRef.current];
+    const s = steps[stepIdx];
     if (!s) return;
     const it = randomOf(s);
     if (!it) {
@@ -341,8 +364,8 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
       return;
     }
     pickItem(it, s);
-    const next = steps.findIndex((x, i) => i > stepIdxRef.current && !chosenOfStep(x));
-    setWizardIdx(next >= 0 ? next : Math.min(stepIdxRef.current + 1, steps.length - 1));
+    const next = steps.findIndex((x, i) => i > stepIdx && !chosenOfStep(x));
+    setWizardIdx(next >= 0 ? next : Math.min(stepIdx + 1, steps.length - 1));
   };
 
   const randomAll = () => {
@@ -471,7 +494,6 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
   }
 
   /* ---------- Bước 3: wizard chọn đề theo từng part ---------- */
-  const stepIdx = Math.min(wizardIdx, Math.max(steps.length - 1, 0));
   const current = steps[stepIdx];
   const currentItems = current ? itemsForStep(current) : [];
   const currentChosen = current ? chosenOfStep(current) : null;
