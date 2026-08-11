@@ -247,6 +247,13 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
+                  <DeleteCustomSetButton
+                    setId={s.id}
+                    title={s.title}
+                    onDeleted={invalidate}
+                    size="sm"
+                    variant="ghost"
+                  />
                   <Button
                     variant="ghost"
                     size="sm"
