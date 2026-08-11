@@ -1176,7 +1176,42 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           });
         }
         if (rowId) writingRowIdByPartRef.current[origIdx] = rowId;
+        // Ghi grade_payload NGAY khi nộp (cùng thao tác tạo/cập nhật row) để
+        // server luôn cứu được bài dù client chết trước khi chấm xong.
+        if (rowId) {
+          try {
+            const raw = writingRawAnswersByPartRef.current[origIdx] || ({} as any);
+            const pInput: any = {};
+            if (e.partType === "task1") pInput.shortAnswers = raw.shortAnswers;
+            else if (e.partType === "task3") pInput.threeAnswers = raw.part3Answers;
+            else if (e.partType === "task4") {
+              pInput.informalText = raw.informalAnswer;
+              pInput.formalText = raw.formalAnswer;
+            }
+            const { buildWritingGradePayload, persistWritingGradePayload } = await import(
+              "@/components/writing/writingGradingV2"
+            );
+            await persistWritingGradePayload(
+              rowId,
+              buildWritingGradePayload(
+                e.partType as any,
+                e.questions || [],
+                e.text || "",
+                pInput,
+                sessionIdRef.current,
+              ),
+            );
+          } catch (err) {
+            const { logClientError } = await import("@/lib/clientErrorLog");
+            logClientError("writing_grade_kickoff", err, {
+              step: "fulltest_persist_payload_on_submit",
+              testResultId: rowId,
+              partType: e.partType,
+            });
+          }
+        }
         return rowId;
+
       } catch (err) {
         console.warn("[FullTest v2] persist writing part failed", err);
         return null;
