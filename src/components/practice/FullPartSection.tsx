@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useIsPro } from "@/hooks/useIsPro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Layers, CheckCircle2, Lock, Plus, Pencil } from "lucide-react";
