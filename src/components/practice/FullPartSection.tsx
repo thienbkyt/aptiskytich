@@ -10,6 +10,7 @@ import { toScaledScore, getSkillBand } from "@/data/questions";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { ExamTierBadge } from "@/hooks/useExamAccessGate";
 import CustomSetBuilder from "@/components/mysets/CustomSetBuilder";
+import DeleteCustomSetButton from "@/components/mysets/DeleteCustomSetButton";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import {
   useCustomSets,
