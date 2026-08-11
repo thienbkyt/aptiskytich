@@ -211,8 +211,15 @@ export async function gradeWritingPartV2(
         need: "pro",
       });
     }
+    const lastError = (error as any)?.message || (data as any)?.error || "unknown";
+    logClientError("writing_grade_kickoff", error ?? new Error(String(lastError)), {
+      step: "grade_exam_failed",
+      testResultId: opts?.testResultId ?? null,
+      examSetId: opts?.examSetId ?? null,
+      partType,
+    });
     // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
-    await enqueueGradingFallback({
+    const queued = await enqueueGradingFallback({
       skill: "writing",
       partType,
 
@@ -220,8 +227,16 @@ export async function gradeWritingPartV2(
       examSetId: opts?.examSetId ?? null,
       fullTestSessionId: opts?.fullTestSessionId ?? null,
       payload: gradePayload,
-      lastError: (error as any)?.message || (data as any)?.error || "unknown",
+      lastError,
     });
+    if (!queued?.id) {
+      logClientError("writing_grade_kickoff", new Error("enqueue_failed"), {
+        step: "enqueue_grading_job_failed",
+        testResultId: opts?.testResultId ?? null,
+        partType,
+      });
+    }
+
     if (error) throw error;
     if ((data as any)?.error) throw new Error((data as any).error);
     throw new Error("Empty response from grade-exam (writing_v2)");
