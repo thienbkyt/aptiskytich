@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardCheck, Clock, ArrowRight, Mic, Headphones, BookOpen, PenLine, Brain, Plus, Pencil, CheckCircle2 } from "lucide-react";
+import DeleteCustomSetButton from "@/components/mysets/DeleteCustomSetButton";
 import { motion } from "framer-motion";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import FullTestEngine from "@/components/fulltest/FullTestEngine";
@@ -316,6 +317,7 @@ const FullTest = () => {
                       <Button variant="outline" size="icon" onClick={() => setOverlay({ kind: "edit", set: s })}>
                         <Pencil className="w-4 h-4" />
                       </Button>
+                      <DeleteCustomSetButton setId={s.id} title={s.title} onDeleted={invalidate} />
                     </div>
                   </div>
                 ))}

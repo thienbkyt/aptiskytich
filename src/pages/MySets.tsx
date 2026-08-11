@@ -6,7 +6,8 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Layers, Plus, Play, Pencil, Trash2, Crown } from "lucide-react";
+import { Layers, Plus, Play, Pencil, Crown } from "lucide-react";
+import DeleteCustomSetButton from "@/components/mysets/DeleteCustomSetButton";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
@@ -15,7 +16,6 @@ import FullTestEngine from "@/components/fulltest/FullTestEngine";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import {
   useCustomSets,
-  deleteCustomSet,
   touchCustomSetPlayed,
   SKILL_LABELS_VI,
   type CustomSetRow,
@@ -155,22 +155,14 @@ const MySets = () => {
                         <Button size="sm" variant="outline" onClick={() => setView({ kind: "edit", set: s })}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
-                        <Button
+                        <DeleteCustomSetButton
+                          setId={s.id}
+                          title={s.title}
+                          onDeleted={invalidate}
                           size="sm"
                           variant="outline"
-                          onClick={async () => {
-                            if (!confirm(`Xoá bộ đề "${s.title}"?`)) return;
-                            try {
-                              await deleteCustomSet(s.id);
-                              toast.success("Đã xoá bộ đề");
-                              invalidate();
-                            } catch {
-                              toast.error("Không xoá được bộ đề");
-                            }
-                          }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                        </Button>
+                          iconClassName="w-3.5 h-3.5"
+                        />
                       </div>
                     </div>
                   ))}

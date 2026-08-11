@@ -10,6 +10,7 @@ import { toScaledScore, getSkillBand } from "@/data/questions";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { ExamTierBadge } from "@/hooks/useExamAccessGate";
 import CustomSetBuilder from "@/components/mysets/CustomSetBuilder";
+import DeleteCustomSetButton from "@/components/mysets/DeleteCustomSetButton";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import {
   useCustomSets,
@@ -247,6 +248,13 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
+                  <DeleteCustomSetButton
+                    setId={s.id}
+                    title={s.title}
+                    onDeleted={invalidate}
+                    size="sm"
+                    variant="ghost"
+                  />
                   <Button
                     variant="ghost"
                     size="sm"
