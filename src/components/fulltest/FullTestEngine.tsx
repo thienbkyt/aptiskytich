@@ -384,7 +384,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
             fullTestSessionId: sessionIdRef.current,
             fullTestId: testId,
             reviewSnapshot: snap,
-            extraSkillScores: customSetExtra,
+            extraSkillScores: { ...customSetExtra, customSetTitle: testTitle },
           });
           if (newId) savedRowIdRef.current[rowKey] = newId;
         }

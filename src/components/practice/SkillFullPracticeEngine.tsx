@@ -359,7 +359,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           perQuestion,
           reviewSnapshot: snap,
           fullTestSessionId: fullPartSessionRef.current,
-          extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
+            extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, customSetTitle: testTitle, ...customSetExtra },
         });
       })();
     }
