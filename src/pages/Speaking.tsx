@@ -67,6 +67,7 @@ interface FullPracticeState {
   active: boolean;
   fullTestId: string;
   title: string;
+  customSetId?: string | null;
 }
 
 const Speaking = () => {
@@ -232,11 +233,15 @@ const Speaking = () => {
   };
 
   const handleStartFullPractice = (set: SkillFullSetItem) => {
-    setFullPractice({ active: true, fullTestId: set.fullTestId, title: set.title });
+    setFullPractice({ active: true, fullTestId: set.fullTestId, title: set.title, customSetId: null });
+  };
+
+  const handleStartCustomSet = (s: { id: string; title: string }) => {
+    setFullPractice({ active: true, fullTestId: s.id, customSetId: s.id, title: s.title });
   };
 
   const handleExitFullPractice = () => {
-    setFullPractice({ active: false, fullTestId: "", title: "" });
+    setFullPractice({ active: false, fullTestId: "", title: "", customSetId: null });
   };
 
   // Full practice mode
@@ -244,6 +249,7 @@ const Speaking = () => {
     return (
       <SkillFullPracticeEngine
         fullTestId={fullPractice.fullTestId}
+        customSetId={fullPractice.customSetId ?? undefined}
         skill="speaking"
         testTitle={fullPractice.title}
         onExit={handleExitFullPractice}
@@ -359,6 +365,7 @@ const Speaking = () => {
               </div>
             ) : (
               <FullPartSection
+                onStartCustom={handleStartCustomSet}
                 progress={progress}
                 bandBySetId={speakingBandBySetId}
                 skillKey="speaking"
