@@ -31,31 +31,26 @@ export async function enqueueGradingFallback(args: {
       },
     };
 
-    const { data, error } = await (supabase as any)
-      .from("grading_jobs")
-      .insert({
-        user_id: user.id,
-        test_result_id: args.testResultId ?? null,
-        skill: args.skill,
-        part: args.partType,
-        status: "pending",
-        attempts: 0,
-        max_attempts: 3,
-        payload: enrichedPayload,
-        last_error: args.lastError ?? null,
-      })
-      .select("id")
-      .maybeSingle();
+    // Quota + ownership are enforced server-side by this SECURITY DEFINER RPC.
+    // Direct inserts into grading_jobs are no longer permitted for clients.
+    const { data, error } = await (supabase as any).rpc("enqueue_grading_job", {
+      p_skill: args.skill,
+      p_part: args.partType,
+      p_payload: enrichedPayload,
+      p_test_result_id: args.testResultId ?? null,
+      p_last_error: args.lastError ?? null,
+    });
 
     if (error) {
-      console.warn("[enqueueGradingFallback] insert failed:", error);
+      console.warn("[enqueueGradingFallback] enqueue rpc failed:", error);
       return { id: null };
     }
 
     // Best-effort: kick the worker immediately (cron is the guaranteed path).
     supabase.functions.invoke("process-grading-jobs", { body: {} }).catch(() => {});
 
-    return { id: data?.id ?? null };
+    return { id: (data as string) ?? null };
+
   } catch (e) {
     console.warn("[enqueueGradingFallback] unexpected error:", e);
     return { id: null };

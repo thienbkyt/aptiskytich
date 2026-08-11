@@ -2682,6 +2682,16 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      enqueue_grading_job: {
+        Args: {
+          p_last_error?: string
+          p_part: string
+          p_payload: Json
+          p_skill: string
+          p_test_result_id?: string
+        }
+        Returns: string
+      }
       exam_priority_counts: {
         Args: { p_window?: number }
         Returns: {
