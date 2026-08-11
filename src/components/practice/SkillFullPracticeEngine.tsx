@@ -1176,7 +1176,44 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         });
       }
 
+      // Ghi grade_payload NGAY khi nộp — server luôn "thấy" bài này để cứu
+      // (sweeper / worker) dù tab đóng trước khi chấm xong.
+      if (trid) {
+        try {
+          const ans = writingAnswersByPartRef.current[currentPartIndex] || ({} as any);
+          const pType = String(sub.partType || currentPart.partNorm || "").replace("part", "task");
+          const pInput: any = {};
+          if (pType === "task1") pInput.shortAnswers = ans.shortAnswers;
+          else if (pType === "task3") pInput.threeAnswers = ans.part3Answers;
+          else if (pType === "task4") {
+            pInput.informalText = ans.informalAnswer;
+            pInput.formalText = ans.formalAnswer;
+          }
+          const { buildWritingGradePayload, persistWritingGradePayload } = await import(
+            "@/components/writing/writingGradingV2"
+          );
+          await persistWritingGradePayload(
+            trid,
+            buildWritingGradePayload(
+              pType as any,
+              sub.questions || [],
+              userText,
+              pInput,
+              fullPartSessionRef.current,
+            ),
+          );
+        } catch (e) {
+          const { logClientError } = await import("@/lib/clientErrorLog");
+          logClientError("writing_grade_kickoff", e, {
+            step: "fullpart_persist_payload_on_submit",
+            testResultId: trid,
+            partType: currentPart.partNorm,
+          });
+        }
+      }
+
       const existing = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
+
       writingSubmissionsByPartRef.current[currentPartIndex] = {
         ...existing,
         partId: currentPart.id,
