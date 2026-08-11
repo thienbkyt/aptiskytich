@@ -267,20 +267,25 @@ const FullTest = () => {
                   <button
                     type="button"
                     onClick={() => setOverlay({ kind: "create" })}
-                    className="text-left bg-card border-2 border-dashed border-primary rounded-xl p-5 flex flex-col h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                    className="relative text-left bg-[#CC1C01]/5 border-2 border-[#CC1C01] rounded-xl p-5 flex flex-col h-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                      <Plus className="w-5 h-5 text-primary" />
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-flex items-center gap-1 select-none text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#CC1C01] text-white">
+                        <Plus className="w-3 h-3" /> Tự tạo
+                      </span>
                     </div>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">Tạo bộ đề của bạn</h3>
                     <p className="text-sm text-muted-foreground">
                       Tự ghép các đề lẻ thành một bài thi thử đủ 5 kỹ năng — vẫn được AI chấm và lưu lịch sử.
                     </p>
                     <div className="flex-1" />
-                    <span className="text-sm font-semibold text-primary inline-flex items-center gap-1 mt-4">
-                      Bắt đầu tạo <ArrowRight className="w-4 h-4" />
-                    </span>
+                    <div className="flex justify-end mt-4">
+                      <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full bg-[#CC1C01] text-white">
+                        Tạo bộ đề <ArrowRight className="w-4 h-4" />
+                      </span>
+                    </div>
                   </button>
+
                 )}
 
                 {mineVisible.map((s) => (
