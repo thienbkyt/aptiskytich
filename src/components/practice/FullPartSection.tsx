@@ -109,22 +109,8 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
   const showCreateCard = doneFilter !== "done" && sourceFilter !== "official";
 
   /* ---------- overlays ---------- */
-  if (overlay?.kind === "play" && skillKey) {
-    const set = overlay.set;
-    return (
-      <div className="fixed inset-0 z-[70] bg-background overflow-y-auto">
-        <SkillFullPracticeEngine
-          fullTestId={set.id}
-          customSetId={set.id}
-          skill={skillKey as any}
-          testTitle={set.title}
-          onExit={() => { setOverlay(null); invalidate(); }}
-        />
-      </div>
-    );
-  }
-
   if (overlay?.kind === "create" || overlay?.kind === "edit") {
+
     return (
       <div className="fixed inset-0 z-[70] bg-background overflow-y-auto">
         <div className="section-container py-8">
