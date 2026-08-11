@@ -2,7 +2,49 @@ import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { splitWritingErrors } from "@/lib/writingErrorFilter";
 import { QuotaExceededError } from "@/lib/quotaError";
+import { logClientError } from "@/lib/clientErrorLog";
 import { getSkillBand } from "@/data/questions";
+
+/** Canonical writing_v2 grading payload — shared by live grading and by the
+ *  submit-time persistence so the server can always rescue the attempt. */
+export function buildWritingGradePayload(
+  partType: "task1" | "task2" | "task3" | "task4",
+  questions: string[],
+  text: string,
+  parts?: Record<string, unknown>,
+  fullTestSessionId?: string | null,
+) {
+  return {
+    type: "writing_v2",
+    partType,
+    questions,
+    text,
+    parts,
+    gradingSessionId: fullTestSessionId ?? null,
+  } as Record<string, unknown>;
+}
+
+/** Writes grade_payload onto the attempt row. Never throws. */
+export async function persistWritingGradePayload(
+  testResultId: string,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const { error } = await (supabase as any)
+      .from("test_results")
+      .update({ grade_payload: payload })
+      .eq("id", testResultId);
+    if (error) throw error;
+  } catch (e) {
+    console.warn("[persistWritingGradePayload] failed:", e);
+    logClientError("writing_grade_kickoff", e, {
+      step: "persist_grade_payload",
+      testResultId,
+      partType: (payload as any)?.partType ?? null,
+    });
+  }
+}
+
 
 
 
