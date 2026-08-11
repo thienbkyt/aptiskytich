@@ -281,9 +281,31 @@ const WritingExamEngine = ({
       : partType === "task4" ? { informalText: informalAnswer, formalText: formalAnswer }
       : undefined;
 
+    // Ghi grade_payload NGAY khi nộp, TRƯỚC khi chấm trực tiếp — nếu client
+    // chết (đóng tab / mất mạng) thì sweeper/worker vẫn cứu được bài.
+    if (typeof trid === "string" && trid) {
+      try {
+        const { buildWritingGradePayload, persistWritingGradePayload } = await import(
+          "@/components/writing/writingGradingV2"
+        );
+        await persistWritingGradePayload(
+          trid,
+          buildWritingGradePayload(partType, questions, text, partsArg, null),
+        );
+      } catch (e) {
+        const { logClientError } = await import("@/lib/clientErrorLog");
+        logClientError("writing_grade_kickoff", e, {
+          step: "single_part_persist_payload_on_submit",
+          testResultId: trid,
+          partType,
+        });
+      }
+    }
+
     let result: WritingGradingResult | null = null;
     let quotaHit: QuotaInfo | null = null;
     setV2Loading(true);
+
 
     try {
       const v2 = await gradeWritingPartV2(partType, questions, text, partsArg, {
