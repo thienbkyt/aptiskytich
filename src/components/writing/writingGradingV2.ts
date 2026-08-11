@@ -116,30 +116,34 @@ export async function gradeWritingPartV2(
     };
   }
 
-  const gradePayload = {
-    type: "writing_v2",
+  const gradePayload = buildWritingGradePayload(
     partType,
     questions,
     text,
     parts,
-    gradingSessionId: opts?.fullTestSessionId ?? null,
-  };
+    opts?.fullTestSessionId ?? null,
+  );
   // Persist the exact grading payload BEFORE calling the AI, so a closed tab /
   // dropped connection can be re-graded faithfully later. Never blocks grading.
   if (opts?.testResultId) {
-    try {
-      await (supabase as any)
-        .from("test_results")
-        .update({ grade_payload: gradePayload })
-        .eq("id", opts.testResultId);
-    } catch (e) {
-      console.warn("[gradeWritingPartV2] failed to persist grade_payload:", e);
-    }
+    await persistWritingGradePayload(opts.testResultId, gradePayload);
   }
 
-  const { data, error } = await supabase.functions.invoke("grade-exam", {
-    body: gradePayload,
-  });
+  let data: any = null;
+  let error: any = null;
+  try {
+    const res = await supabase.functions.invoke("grade-exam", { body: gradePayload });
+    data = res.data;
+    error = res.error;
+  } catch (e) {
+    error = e;
+    logClientError("writing_grade_kickoff", e, {
+      step: "invoke_grade_exam_threw",
+      testResultId: opts?.testResultId ?? null,
+      partType,
+    });
+  }
+
   if (error || !data || (data as any).error) {
     const errCode = (data as any)?.error;
     if (errCode === "quota_exceeded" || errCode === "disabled") {
