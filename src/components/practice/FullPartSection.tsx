@@ -11,7 +11,6 @@ import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { ExamTierBadge } from "@/hooks/useExamAccessGate";
 import CustomSetBuilder from "@/components/mysets/CustomSetBuilder";
 import DeleteCustomSetButton from "@/components/mysets/DeleteCustomSetButton";
-import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import {
   useCustomSets,
   useCustomSetPlays,
@@ -33,6 +32,8 @@ interface FullPartSectionProps {
    *  the badge is hidden. Used by writing/speaking where progress values are not
    *  raw scores. Reading/Listening keep the legacy score-based band calculation. */
   bandBySetId?: Map<string, string>;
+  /** Called when user starts a self-made (custom) set; parent renders the engine at page level. */
+  onStartCustom?: (set: CustomSetRow) => void;
 }
 
 const CEFR_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
@@ -40,13 +41,12 @@ const CEFR_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C
 type DoneFilter = "all" | "undone" | "done";
 type SourceFilter = "all" | "official" | "mine";
 
-const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick, bandBySetId }: FullPartSectionProps) => {
+const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick, bandBySetId, onStartCustom }: FullPartSectionProps) => {
   const [doneFilter, setDoneFilter] = useState<DoneFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [overlay, setOverlay] = useState<
     | { kind: "create" }
     | { kind: "edit"; set: CustomSetRow }
-    | { kind: "play"; set: CustomSetRow }
     | null
   >(null);
 
@@ -109,21 +109,6 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
   const showCreateCard = doneFilter !== "done" && sourceFilter !== "official";
 
   /* ---------- overlays ---------- */
-  if (overlay?.kind === "play" && skillKey) {
-    const set = overlay.set;
-    return (
-      <div className="fixed inset-0 z-[70] bg-background overflow-y-auto">
-        <SkillFullPracticeEngine
-          fullTestId={set.id}
-          customSetId={set.id}
-          skill={skillKey as any}
-          testTitle={set.title}
-          onExit={() => { setOverlay(null); invalidate(); }}
-        />
-      </div>
-    );
-  }
-
   if (overlay?.kind === "create" || overlay?.kind === "edit") {
     return (
       <div className="fixed inset-0 z-[70] bg-background overflow-y-auto">
@@ -262,7 +247,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                     size="sm"
                     onClick={() => {
                       touchCustomSetPlayed(s.id).then(invalidate);
-                      setOverlay({ kind: "play", set: s });
+                      onStartCustom?.(s);
                     }}
                     className="text-[#CC1C01] hover:text-[#CC1C01] hover:bg-[#CC1C01]/10 font-semibold gap-1 group-hover:gap-2 transition-all"
                   >
