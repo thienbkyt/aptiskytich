@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Circle,
   ClipboardCheck,
   Dices,
@@ -51,6 +53,26 @@ type DoneFilter = "all" | "undone" | "done";
 type Step = "type" | "skill" | "form";
 
 const SKILLS = ["reading", "listening", "writing", "speaking", "grammar_vocab"];
+
+/** Thứ tự các bước theo đúng bài thi thật. */
+const SKILL_STEP_ORDER = ["speaking", "listening", "grammar_vocab", "reading", "writing"];
+
+interface WizStep {
+  id: string;
+  skill: string;
+  kind: "part" | "grammar";
+  part?: string;
+  label: string;
+}
+
+interface StepItem {
+  key: string;
+  title: string;
+  ids: string[];
+  locked: boolean;
+  done: boolean;
+  priority: PriorityFilter;
+}
 
 const SKILL_ICON: Record<string, any> = {
   reading: BookOpen,
@@ -187,23 +209,6 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
     return true;
   };
 
-  /** Cấu trúc: kỹ năng > part > danh sách đề khớp lọc */
-  const grouped = useMemo(() => {
-    return relevantSkills.map((sk) => {
-      const skillSets = options.filter((o) => o.skill === sk);
-      const parts = Array.from(new Set(skillSets.map((o) => o.part))).sort(
-        (a, b) => partSortKey(a) - partSortKey(b),
-      );
-      return {
-        skill: sk,
-        parts: parts.map((part) => ({
-          part,
-          items: skillSets.filter((o) => o.part === part && matchesFilters(o)),
-        })),
-      };
-    });
-  }, [options, relevantSkills.join("|"), priorityFilter, doneFilter, search, labels, progress, isPro]);
-
   const selectedSets = selected.map((id) => byId.get(id)).filter(Boolean) as ExamSetOption[];
 
   const partsBySkill = useMemo(() => {
@@ -227,62 +232,160 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
     0,
   );
 
-  const selectedIdFor = (sk: string, part: string) =>
-    selected.find((id) => {
-      const o = byId.get(id);
-      return o?.skill === sk && o.part === part;
+  /* ---------- Các bước của wizard ---------- */
+  const steps = useMemo<WizStep[]>(() => {
+    const out: WizStep[] = [];
+    SKILL_STEP_ORDER.filter((sk) => relevantSkills.includes(sk)).forEach((sk) => {
+      const skillSets = options.filter((o) => o.skill === sk);
+      if (!skillSets.length) return;
+      if (sk === "grammar_vocab") {
+        out.push({ id: "grammar_vocab", skill: sk, kind: "grammar", label: "Đề full (6 part)" });
+        return;
+      }
+      Array.from(new Set(skillSets.map((o) => o.part)))
+        .sort((a, b) => partSortKey(a) - partSortKey(b))
+        .forEach((part) => out.push({ id: `${sk}-${part}`, skill: sk, kind: "part", part, label: part }));
     });
+    return out;
+  }, [options, relevantSkills.join("|")]);
 
-  const pick = (o: ExamSetOption) => {
-    if (isLocked(o)) {
-      toast.error("Nâng cấp để dùng đề này");
-      return;
+  const [wizardIdx, setWizardIdx] = useState(0);
+  const stepIdx = Math.min(wizardIdx, Math.max(steps.length - 1, 0));
+
+  /** Nhóm Grammar & Vocabulary theo tiền tố trước dấu " - " đầu tiên (VD "Đề 01"). */
+  const grammarGroups = useMemo(() => {
+    const m = new Map<string, ExamSetOption[]>();
+    options
+      .filter((o) => o.skill === "grammar_vocab")
+      .forEach((o) => {
+        const key = (o.title.split(" - ")[0] || o.title).trim();
+        if (!m.has(key)) m.set(key, []);
+        m.get(key)!.push(o);
+      });
+    return Array.from(m.entries())
+      .map(([key, items]) => ({
+        key,
+        items: [...items].sort((a, b) => partSortKey(a.part) - partSortKey(b.part)),
+      }))
+      .sort((a, b) => a.key.localeCompare(b.key, "vi"));
+  }, [options]);
+
+  const priorityRank = (p: PriorityFilter) => ["high", "medium", "low", "backup"].indexOf(p);
+
+  const itemsForStep = (s: WizStep): StepItem[] => {
+    if (s.kind === "grammar") {
+      return grammarGroups
+        .map((g) => {
+          const priority = g.items
+            .map((o) => priorityOf(o.id))
+            .sort((a, b) => priorityRank(a) - priorityRank(b))[0] ?? "backup";
+          const done = g.items.some((o) => progress.has(o.id));
+          return {
+            key: g.key,
+            title: `${g.key} · ${g.items.length} part`,
+            ids: g.items.map((o) => o.id),
+            locked: g.items.some((o) => isLocked(o)),
+            done,
+            priority,
+          } as StepItem;
+        })
+        .filter((it) => {
+          if (priorityFilter !== "all" && it.priority !== priorityFilter) return false;
+          if (doneFilter === "undone" && it.done) return false;
+          if (doneFilter === "done" && !it.done) return false;
+          return true;
+        });
     }
-    setSelected((prev) => [
-      ...prev.filter((id) => {
-        const x = byId.get(id);
-        return !(x && x.skill === o.skill && x.part === o.part);
-      }),
-      o.id,
-    ]);
+    return options
+      .filter((o) => o.skill === s.skill && o.part === s.part && matchesFilters(o))
+      .map((o) => ({
+        key: o.id,
+        title: o.title,
+        ids: [o.id],
+        locked: isLocked(o),
+        done: progress.has(o.id),
+        priority: priorityOf(o.id),
+      }));
   };
 
-  const clearPart = (sk: string, part: string) => {
+  const chosenOfStep = (s: WizStep): string | null => {
+    if (s.kind === "grammar") {
+      const g = grammarGroups.find((gr) => gr.items.some((o) => selected.includes(o.id)));
+      return g ? g.key : null;
+    }
+    const id = selected.find((x) => {
+      const o = byId.get(x);
+      return o?.skill === s.skill && o.part === s.part;
+    });
+    return id ?? null;
+  };
+
+  const clearStep = (s: WizStep) => {
     setSelected((prev) =>
       prev.filter((id) => {
-        const x = byId.get(id);
-        return !(x && x.skill === sk && x.part === part);
+        const o = byId.get(id);
+        if (!o) return false;
+        if (s.kind === "grammar") return o.skill !== "grammar_vocab";
+        return !(o.skill === s.skill && o.part === s.part);
       }),
     );
   };
 
-  /** Số đề đang khớp lọc và dùng được (dùng cho dòng "bốc trong N đề"). */
-  const poolCount = useMemo(
-    () =>
-      grouped.reduce(
-        (n, g) => n + g.parts.reduce((m, p) => m + p.items.filter((o) => !isLocked(o)).length, 0),
-        0,
-      ),
-    [grouped, isPro],
-  );
-
-  const randomPick = () => {
-    const additions: string[] = [];
-    grouped.forEach((g) => {
-      g.parts.forEach((p) => {
-        if (selectedIdFor(g.skill, p.part)) return;
-        const pool = p.items.filter((o) => !isLocked(o));
-        if (!pool.length) return;
-        additions.push(pool[Math.floor(Math.random() * pool.length)].id);
+  /** Chọn một dòng ở bước hiện tại. Trả về true nếu chọn thành công. */
+  const pickItem = (it: StepItem, s: WizStep = steps[stepIdx]): boolean => {
+    if (it.locked) {
+      toast.error("Nâng cấp để dùng đề này");
+      return false;
+    }
+    setSelected((prev) => {
+      const kept = prev.filter((id) => {
+        const o = byId.get(id);
+        if (!o) return false;
+        if (s.kind === "grammar") return o.skill !== "grammar_vocab";
+        return !(o.skill === s.skill && o.part === s.part);
       });
+      return [...kept, ...it.ids];
+    });
+    return true;
+  };
+
+  const randomOf = (s: WizStep) => {
+    const pool = itemsForStep(s).filter((it) => !it.locked);
+    if (!pool.length) return null;
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  const randomCurrent = () => {
+    const s = steps[stepIdx];
+    if (!s) return;
+    const it = randomOf(s);
+    if (!it) {
+      toast.error("Không có đề nào khớp bộ lọc ở part này");
+      return;
+    }
+    pickItem(it, s);
+    const next = steps.findIndex((x, i) => i > stepIdx && !chosenOfStep(x));
+    setWizardIdx(next >= 0 ? next : Math.min(stepIdx + 1, steps.length - 1));
+  };
+
+  const randomAll = () => {
+    const additions: string[] = [];
+    const usedGrammar = !!chosenOfStep({ id: "g", skill: "grammar_vocab", kind: "grammar", label: "" });
+    steps.forEach((s) => {
+      if (chosenOfStep(s)) return;
+      if (s.kind === "grammar" && usedGrammar) return;
+      const it = randomOf(s);
+      if (!it) return;
+      additions.push(...it.ids);
     });
     if (!additions.length) {
       toast.error("Không còn part trống nào có đề khớp bộ lọc");
       return;
     }
     setSelected((prev) => [...prev, ...additions]);
-    toast.success(`Đã bốc ${additions.length} đề`);
+    toast.success("Đã bốc ngẫu nhiên các part còn trống");
   };
+
 
   const canSave = !!title.trim() && missingSkills.length === 0 && !duplicatePart && !saving;
 
@@ -390,13 +493,23 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
     );
   }
 
-  /* ---------- Bước 3: form chọn đề ---------- */
+  /* ---------- Bước 3: wizard chọn đề theo từng part ---------- */
+  const current = steps[stepIdx];
+  const currentItems = current ? itemsForStep(current) : [];
+  const currentChosen = current ? chosenOfStep(current) : null;
+
+  const goto = (i: number) => setWizardIdx(Math.max(0, Math.min(steps.length - 1, i)));
+  const advance = () => {
+    const next = steps.findIndex((s, i) => i > stepIdx && !chosenOfStep(s));
+    goto(next >= 0 ? next : stepIdx + 1);
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           {!editing && !initialMode && (
-            <Button variant="outline" size="sm" onClick={() => { setStep("type"); setSelected([]); }}>
+            <Button variant="outline" size="sm" onClick={() => { setStep("type"); setSelected([]); setWizardIdx(0); }}>
               Đổi loại
             </Button>
           )}
@@ -405,124 +518,146 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
           </Badge>
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-muted-foreground">Tên bộ đề</label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bộ luyện key 10/08" />
-        </div>
-
         <div className="space-y-2">
           <ChipRow label="Ưu tiên:" chips={PRIORITY_CHIPS} value={priorityFilter} onChange={setPriorityFilter} />
           <ChipRow label="Trạng thái:" chips={DONE_CHIPS} value={doneFilter} onChange={setDoneFilter} />
-        </div>
-
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[180px]">
-            <label className="text-xs font-medium text-muted-foreground">Tìm đề</label>
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tên đề..." />
-          </div>
-          <div>
-            <Button type="button" variant="secondary" onClick={randomPick} className="gap-2">
-              <Dices className="w-4 h-4" /> Bốc ngẫu nhiên
-            </Button>
-            <p className="text-[11px] text-muted-foreground mt-1">bốc trong {poolCount} đề đang lọc</p>
-          </div>
-          <Button type="button" variant="ghost" onClick={() => setSelected([])} className="gap-2">
-            <XCircle className="w-4 h-4" /> Bỏ chọn hết
-          </Button>
         </div>
 
         {isLoading ? (
           <div className="p-6 flex items-center gap-2 text-sm text-muted-foreground border border-border rounded-xl">
             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải danh sách đề...
           </div>
+        ) : !current ? (
+          <div className="p-6 text-sm text-muted-foreground border border-border rounded-xl">
+            Không tìm thấy đề nào cho kỹ năng này.
+          </div>
         ) : (
-          <div className="space-y-5 max-h-[62vh] overflow-y-auto pr-1">
-            {grouped.map((g) => (
-              <div key={g.skill} className="space-y-3">
-                {mode === "full_test" && (
-                  <h3 className="text-sm font-heading font-bold text-foreground">
-                    {SKILL_LABELS_VI[g.skill] ?? g.skill}
-                  </h3>
-                )}
-                {g.parts.map((p) => {
-                  const chosenId = selectedIdFor(g.skill, p.part);
-                  const chosen = chosenId ? byId.get(chosenId) : undefined;
+          <>
+            {/* Thanh tiến trình */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1">
+                {steps.map((s, i) => {
+                  const done = !!chosenOfStep(s);
                   return (
-                    <div
-                      key={`${g.skill}-${p.part}`}
-                      className={`border rounded-xl overflow-hidden ${chosen ? "border-primary" : "border-border"}`}
-                    >
-                      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-muted/40">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {chosen ? (
-                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                          ) : (
-                            <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
-                          )}
-                          <span className="text-sm font-semibold text-foreground truncate">{p.part}</span>
-                          <span className="text-xs text-muted-foreground">({p.items.length} đề)</span>
-                        </div>
-                        {chosen && (
-                          <Button size="sm" variant="outline" onClick={() => clearPart(g.skill, p.part)}>
-                            Đổi
-                          </Button>
-                        )}
-                      </div>
-
-                      {chosen ? (
-                        <div className="px-3 py-2.5 text-sm font-medium text-foreground truncate">
-                          {chosen.title}
-                        </div>
-                      ) : p.items.length === 0 ? (
-                        <div className="px-3 py-3 text-xs text-muted-foreground">
-                          Không có đề nào khớp bộ lọc. Nới bộ lọc để chọn part này.
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-border">
-                          {p.items.map((o) => {
-                            const locked = isLocked(o);
-                            const pr = PRIORITY_BADGE[priorityOf(o.id)];
-                            return (
-                              <button
-                                key={o.id}
-                                type="button"
-                                onClick={() => pick(o)}
-                                className={`w-full text-left px-3 py-2.5 flex flex-wrap items-center gap-2 transition-colors ${
-                                  locked ? "opacity-60" : "hover:bg-muted/50"
-                                }`}
-                              >
-                                <span className="text-sm font-medium text-foreground truncate max-w-full">
-                                  {o.title}
-                                </span>
-                                <Badge className={`text-[10px] ${pr.className}`}>{pr.label}</Badge>
-                                {progress.has(o.id) && (
-                                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                                    đã làm
-                                  </Badge>
-                                )}
-                                {locked && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge variant="outline" className="text-[10px] gap-1 border-primary text-primary">
-                                          <Lock className="w-3 h-3" /> Pro
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent>Nâng cấp để dùng đề này</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      key={s.id}
+                      type="button"
+                      title={`${SKILL_LABELS_VI[s.skill] ?? s.skill} · ${s.label}`}
+                      onClick={() => goto(i)}
+                      className={`h-1.5 flex-1 rounded-full transition-colors ${
+                        i === stepIdx
+                          ? "bg-primary h-2.5"
+                          : done
+                            ? "bg-emerald-500"
+                            : "bg-muted"
+                      }`}
+                    />
                   );
                 })}
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {relevantSkills
+                  .filter((sk) => steps.some((s) => s.skill === sk))
+                  .map((sk) => (
+                    <span
+                      key={sk}
+                      className={`text-[11px] ${
+                        current.skill === sk ? "font-bold text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {SKILL_LABELS_VI[sk] ?? sk}
+                    </span>
+                  ))}
+              </div>
+            </div>
+
+            {/* Tiêu đề bước */}
+            <div>
+              <h3 className="text-base font-heading font-bold text-foreground">
+                {SKILL_LABELS_VI[current.skill] ?? current.skill} · {current.label}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {current.kind === "grammar"
+                  ? "Chọn một đề full (gồm 6 part) cho Grammar & Vocabulary"
+                  : "Chọn một đề cho part này"}{" "}
+                — bước {stepIdx + 1}/{steps.length}
+              </p>
+            </div>
+
+            {/* Danh sách đề của bước hiện tại */}
+            {currentItems.length === 0 ? (
+              <div className="px-4 py-6 text-sm text-muted-foreground border border-dashed border-border rounded-xl">
+                Không có đề nào khớp bộ lọc. Nới bộ lọc để chọn part này.
+              </div>
+            ) : (
+              <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
+                {currentItems.map((it) => {
+                  const active = currentChosen === it.key;
+                  const pr = PRIORITY_BADGE[it.priority];
+                  return (
+                    <button
+                      key={it.key}
+                      type="button"
+                      onClick={() => { if (pickItem(it)) advance(); }}
+                      className={`w-full text-left px-3 py-3 flex flex-wrap items-center gap-2 transition-colors ${
+                        it.locked ? "opacity-60" : "hover:bg-muted/50"
+                      } ${active ? "bg-primary/5" : ""}`}
+                    >
+                      {active ? (
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      ) : (
+                        <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
+                      )}
+                      <span className="text-sm font-medium text-foreground truncate max-w-full">{it.title}</span>
+                      <Badge className={`text-[10px] ${pr.className}`}>{pr.label}</Badge>
+                      {it.done && (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">đã làm</Badge>
+                      )}
+                      {it.locked && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="outline" className="text-[10px] gap-1 border-primary text-primary">
+                                <Lock className="w-3 h-3" /> Pro
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Nâng cấp để dùng đề này</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Điều hướng + bốc ngẫu nhiên */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" disabled={stepIdx === 0} onClick={() => goto(stepIdx - 1)} className="gap-1">
+                <ChevronLeft className="w-4 h-4" /> Part trước
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={stepIdx >= steps.length - 1}
+                onClick={() => goto(stepIdx + 1)}
+                className="gap-1"
+              >
+                Part sau <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button variant="secondary" size="sm" onClick={randomCurrent} className="gap-1.5">
+                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên part này
+              </Button>
+              <Button variant="secondary" size="sm" onClick={randomAll} className="gap-1.5">
+                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên tất cả các part
+              </Button>
+              {currentChosen && (
+                <Button variant="ghost" size="sm" onClick={() => clearStep(current)} className="gap-1">
+                  <XCircle className="w-4 h-4" /> Bỏ chọn part này
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
@@ -553,13 +688,20 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
         </div>
         <div className="pt-2 border-t border-border text-sm space-y-1">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Tổng số đề</span>
-            <span className="font-medium">{selected.length}</span>
+            <span className="text-muted-foreground">Số bước đã chọn</span>
+            <span className="font-medium">
+              {steps.filter((s) => !!chosenOfStep(s)).length}/{steps.length}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Thời lượng ước tính</span>
             <span className="font-medium">{fmtMinutes(estSeconds)}</span>
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Tên bộ đề</label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bộ luyện key 10/08" />
         </div>
 
         {!isPro && (
@@ -571,9 +713,10 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
         {duplicatePart && (
           <p className="text-xs text-destructive">Mỗi part chỉ được chọn 1 đề — bạn đang chọn trùng part.</p>
         )}
-        {missingSkills.length > 0 && (
+        {steps.length > 0 && steps.filter((s) => !!chosenOfStep(s)).length < steps.length && (
           <p className="text-xs text-destructive">
-            Còn thiếu part của: {missingSkills.map((s) => SKILL_LABELS_VI[s] ?? s).join(", ")}
+            Còn thiếu {steps.length - steps.filter((s) => !!chosenOfStep(s)).length} part
+            {missingSkills.length > 0 && <> ({missingSkills.map((s) => SKILL_LABELS_VI[s] ?? s).join(", ")})</>}
           </p>
         )}
 
