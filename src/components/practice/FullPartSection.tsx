@@ -42,6 +42,8 @@ type DoneFilter = "all" | "undone" | "done";
 type SourceFilter = "all" | "official" | "mine";
 
 const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey, isLocked, onLockedClick, bandBySetId, onStartCustom }: FullPartSectionProps) => {
+  const navigate = useNavigate();
+  const { isPro } = useIsPro();
   const [doneFilter, setDoneFilter] = useState<DoneFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
   const [overlay, setOverlay] = useState<
