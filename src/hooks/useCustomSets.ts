@@ -135,7 +135,7 @@ export const CUSTOM_SET_ERROR_MESSAGES: Record<string, string> = {
   bad_mode: "Loại bộ đề không hợp lệ",
   bad_skill: "Kỹ năng không hợp lệ",
   empty: "Bạn chưa chọn đề nào",
-  free_limit: "Tài khoản miễn phí chỉ được tạo 1 bộ đề. Nâng cấp để tạo không giới hạn.",
+  pro_only: "Tạo bộ đề là tính năng dành cho tài khoản Pro",
   invalid_sets: "Có đề không tồn tại hoặc chưa được phát hành",
   duplicate_part: "Mỗi part chỉ được chọn 1 đề",
   wrong_skill: "Có đề không thuộc kỹ năng đã chọn",

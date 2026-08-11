@@ -409,8 +409,10 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
               description: "Nâng cấp để dùng các đề Pro trong bộ đề tự tạo.",
               action: { label: "Nâng cấp", onClick: () => { window.location.href = "/pricing"; } },
             });
-          } else if (res.reason === "free_limit") {
-            toast.error(CUSTOM_SET_ERROR_MESSAGES.free_limit);
+          } else if (res.reason === "pro_only") {
+            toast.error("Tạo bộ đề là tính năng dành cho tài khoản Pro", {
+              action: { label: "Nâng cấp", onClick: () => { window.location.href = "/pricing"; } },
+            });
           } else if (res.reason === "missing_parts") {
             toast.error(`Chưa đủ part: ${(res.missing || []).map((s) => SKILL_LABELS_VI[s] ?? s).join(", ")}`);
           } else if (res.reason === "duplicate_part") {
