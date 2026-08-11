@@ -367,6 +367,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // Pick the source for this play: first play uses `src`, later plays use
     // `src2` when provided (falls back to `src`).
     const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    activeSrcRef.current = activeSrc;
     // Always re-sign right before playing: signed URLs live only 5 minutes, and
     // a student may replay long after the part was batch-signed. The cache in
     // audioUrl.ts makes this free when the URL is still fresh.
