@@ -9,6 +9,7 @@
 // Legacy stuck rows (grade_payload NULL) are intentionally out of scope.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { buildWritingPayloadFromDb } from "../_shared/writingPayloadRebuild.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,10 +23,11 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
 const BATCH_LIMIT = 50;
-const MIN_AGE_MINUTES = 15;
+const MIN_AGE_MINUTES = 5;
 const MAX_AGE_HOURS = 24;
 // Ignore every attempt that predates this deploy — only sweep new submissions.
 const SWEEP_NOT_BEFORE = "2026-08-03T17:00:00Z";
+
 
 
 function parseJwtClaims(token: string): Record<string, unknown> | null {
@@ -84,75 +86,126 @@ Deno.serve(async (req) => {
 
     const candidates = (rows || []) as any[];
     console.log(`[sweep-writing] candidates: ${candidates.length}`);
-    if (candidates.length === 0) {
-      return new Response(JSON.stringify({ enqueued: 0, candidates: 0 }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    // Second guard against duplicates: skip any row that already has a job
-    // (any status).
-    const ids = candidates.map((r) => r.id);
-    const { data: existing, error: exErr } = await admin
-      .from("grading_jobs")
-      .select("test_result_id")
-      .in("test_result_id", ids);
-    if (exErr) {
-      console.error("[sweep-writing] existing-jobs lookup failed:", exErr.message);
-      return new Response(JSON.stringify({ error: exErr.message }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const alreadyQueued = new Set(
-      ((existing || []) as any[]).map((j) => j.test_result_id).filter(Boolean),
-    );
+    const queuedFor = async (ids: string[]) => {
+      if (ids.length === 0) return new Set<string>();
+      const { data, error: exErr } = await admin
+        .from("grading_jobs")
+        .select("test_result_id")
+        .in("test_result_id", ids);
+      if (exErr) throw new Error(exErr.message);
+      return new Set(((data || []) as any[]).map((j) => j.test_result_id).filter(Boolean));
+    };
 
-    let enqueued = 0;
-    for (const row of candidates) {
-      if (alreadyQueued.has(row.id)) continue;
-      try {
-        const payload = row.grade_payload;
-        if (!payload || typeof payload !== "object") {
-          console.warn(`[sweep-writing] row ${row.id}: invalid grade_payload, skipped`);
-          continue;
-        }
-        // Quota-blocked submissions remain recoverable, but must never enter
-        // the internal-bypass worker until the owner explicitly requests a
-        // new grade and passes check_feature_access again.
-        if ((payload as any)._quotaBlocked === true) continue;
-        const { error: insErr } = await admin.from("grading_jobs").insert({
-          user_id: row.user_id,
-          test_result_id: row.id,
-          skill: "writing",
-          part: (payload as any).partType ?? null,
-          status: "pending",
-          attempts: 0,
-          max_attempts: 3,
-          payload: {
-            ...(payload as any),
+    const enqueueRow = async (row: any, payload: any) => {
+      // Quota-blocked submissions remain recoverable, but must never enter
+      // the internal-bypass worker until the owner explicitly requests a
+      // new grade and passes check_feature_access again.
+      if (payload?._quotaBlocked === true) return false;
+      const { error: insErr } = await admin.from("grading_jobs").insert({
+        user_id: row.user_id,
+        test_result_id: row.id,
+        skill: "writing",
+        part: payload?.partType ?? null,
+        status: "pending",
+        attempts: 0,
+        max_attempts: 3,
+        payload: {
+          ...payload,
           _meta: {
             examSetId: row.exam_set_id ?? null,
             fullTestSessionId:
-              row.full_test_session_id ?? (payload as any).gradingSessionId ?? null,
+              row.full_test_session_id ?? payload?.gradingSessionId ?? null,
           },
+        },
+      } as any);
+      if (insErr) {
+        console.error(`[sweep-writing] enqueue failed for ${row.id}:`, insErr.message);
+        return false;
+      }
+      return true;
+    };
 
-          },
-        } as any);
-        if (insErr) {
-          console.error(`[sweep-writing] enqueue failed for ${row.id}:`, insErr.message);
-          continue;
+    let enqueued = 0;
+
+    // ---- Branch 1: attempts that DID persist grade_payload ----
+    if (candidates.length > 0) {
+      const alreadyQueued = await queuedFor(candidates.map((r) => r.id));
+      for (const row of candidates) {
+        if (alreadyQueued.has(row.id)) continue;
+        try {
+          const payload = row.grade_payload;
+          if (!payload || typeof payload !== "object") {
+            console.warn(`[sweep-writing] row ${row.id}: invalid grade_payload, skipped`);
+            continue;
+          }
+          if (await enqueueRow(row, payload)) enqueued++;
+        } catch (e: any) {
+          console.error(`[sweep-writing] row ${row.id} error:`, e?.message || e);
         }
-        enqueued++;
-      } catch (e: any) {
-        console.error(`[sweep-writing] row ${row.id} error:`, e?.message || e);
       }
     }
 
-    console.log(`[sweep-writing] enqueued ${enqueued}/${candidates.length}`);
+    // ---- Branch 2: attempts whose client died BEFORE writing grade_payload ----
+    // Rebuild the payload from the persisted answers so the worker can grade it.
+    let rebuiltEnqueued = 0;
+    let orphanCount = 0;
+    try {
+      const { data: writingSets } = await admin
+        .from("exam_sets").select("id").eq("skill", "writing");
+      const writingSetIds = ((writingSets || []) as any[]).map((s) => s.id);
+      if (writingSetIds.length > 0) {
+        const { data: orphanRows, error: orphanErr } = await admin
+          .from("test_results")
+          .select("id, user_id, exam_set_id, full_test_session_id, created_at")
+          .is("grade_payload", null)
+          .in("exam_set_id", writingSetIds)
+          .lt("created_at", olderThan)
+          .gt("created_at", newerThan)
+          .gt("created_at", SWEEP_NOT_BEFORE)
+          .order("created_at", { ascending: true })
+          .limit(BATCH_LIMIT);
+        if (orphanErr) throw new Error(orphanErr.message);
+
+        const orphans = (orphanRows || []) as any[];
+        orphanCount = orphans.length;
+        if (orphans.length > 0) {
+          const ids = orphans.map((r) => r.id);
+          const alreadyQueued = await queuedFor(ids);
+          const { data: gradedRows } = await admin
+            .from("writing_skill_results").select("test_result_id").in("test_result_id", ids);
+          const alreadyGraded = new Set(
+            ((gradedRows || []) as any[]).map((r) => r.test_result_id).filter(Boolean),
+          );
+          for (const row of orphans) {
+            if (alreadyQueued.has(row.id) || alreadyGraded.has(row.id)) continue;
+            try {
+              const rebuilt = await buildWritingPayloadFromDb(admin, row);
+              if (!rebuilt) continue;
+              if (await enqueueRow(row, rebuilt.payload)) rebuiltEnqueued++;
+            } catch (e: any) {
+              console.error(`[sweep-writing] rebuild ${row.id} failed:`, e?.message || e);
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      console.error("[sweep-writing] orphan branch failed:", e?.message || e);
+    }
+
+    console.log(
+      `[sweep-writing] enqueued ${enqueued}/${candidates.length}, rebuilt ${rebuiltEnqueued}/${orphanCount}`,
+    );
     return new Response(
-      JSON.stringify({ enqueued, candidates: candidates.length }),
+      JSON.stringify({
+        enqueued,
+        candidates: candidates.length,
+        rebuilt: rebuiltEnqueued,
+        orphans: orphanCount,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e: any) {
     console.error("[sweep-writing] unexpected error:", e?.message || e);
     return new Response(JSON.stringify({ error: e?.message || String(e) }), {

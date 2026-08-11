@@ -234,6 +234,36 @@ export type Database = {
         }
         Relationships: []
       }
+      client_error_logs: {
+        Row: {
+          context: string | null
+          created_at: string
+          error_message: string | null
+          error_name: string | null
+          id: string
+          meta: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          error_message?: string | null
+          error_name?: string | null
+          id?: string
+          meta?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          error_message?: string | null
+          error_name?: string | null
+          id?: string
+          meta?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cost_records: {
         Row: {
           amount: number

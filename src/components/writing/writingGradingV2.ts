@@ -2,7 +2,49 @@ import { supabase } from "@/integrations/supabase/client";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { splitWritingErrors } from "@/lib/writingErrorFilter";
 import { QuotaExceededError } from "@/lib/quotaError";
+import { logClientError } from "@/lib/clientErrorLog";
 import { getSkillBand } from "@/data/questions";
+
+/** Canonical writing_v2 grading payload — shared by live grading and by the
+ *  submit-time persistence so the server can always rescue the attempt. */
+export function buildWritingGradePayload(
+  partType: "task1" | "task2" | "task3" | "task4",
+  questions: string[],
+  text: string,
+  parts?: Record<string, unknown>,
+  fullTestSessionId?: string | null,
+) {
+  return {
+    type: "writing_v2",
+    partType,
+    questions,
+    text,
+    parts,
+    gradingSessionId: fullTestSessionId ?? null,
+  } as Record<string, unknown>;
+}
+
+/** Writes grade_payload onto the attempt row. Never throws. */
+export async function persistWritingGradePayload(
+  testResultId: string,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const { error } = await (supabase as any)
+      .from("test_results")
+      .update({ grade_payload: payload })
+      .eq("id", testResultId);
+    if (error) throw error;
+  } catch (e) {
+    console.warn("[persistWritingGradePayload] failed:", e);
+    logClientError("writing_grade_kickoff", e, {
+      step: "persist_grade_payload",
+      testResultId,
+      partType: (payload as any)?.partType ?? null,
+    });
+  }
+}
+
 
 
 
@@ -116,30 +158,34 @@ export async function gradeWritingPartV2(
     };
   }
 
-  const gradePayload = {
-    type: "writing_v2",
+  const gradePayload = buildWritingGradePayload(
     partType,
     questions,
     text,
     parts,
-    gradingSessionId: opts?.fullTestSessionId ?? null,
-  };
+    opts?.fullTestSessionId ?? null,
+  );
   // Persist the exact grading payload BEFORE calling the AI, so a closed tab /
   // dropped connection can be re-graded faithfully later. Never blocks grading.
   if (opts?.testResultId) {
-    try {
-      await (supabase as any)
-        .from("test_results")
-        .update({ grade_payload: gradePayload })
-        .eq("id", opts.testResultId);
-    } catch (e) {
-      console.warn("[gradeWritingPartV2] failed to persist grade_payload:", e);
-    }
+    await persistWritingGradePayload(opts.testResultId, gradePayload);
   }
 
-  const { data, error } = await supabase.functions.invoke("grade-exam", {
-    body: gradePayload,
-  });
+  let data: any = null;
+  let error: any = null;
+  try {
+    const res = await supabase.functions.invoke("grade-exam", { body: gradePayload });
+    data = res.data;
+    error = res.error;
+  } catch (e) {
+    error = e;
+    logClientError("writing_grade_kickoff", e, {
+      step: "invoke_grade_exam_threw",
+      testResultId: opts?.testResultId ?? null,
+      partType,
+    });
+  }
+
   if (error || !data || (data as any).error) {
     const errCode = (data as any)?.error;
     if (errCode === "quota_exceeded" || errCode === "disabled") {
@@ -165,8 +211,15 @@ export async function gradeWritingPartV2(
         need: "pro",
       });
     }
+    const lastError = (error as any)?.message || (data as any)?.error || "unknown";
+    logClientError("writing_grade_kickoff", error ?? new Error(String(lastError)), {
+      step: "grade_exam_failed",
+      testResultId: opts?.testResultId ?? null,
+      examSetId: opts?.examSetId ?? null,
+      partType,
+    });
     // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
-    await enqueueGradingFallback({
+    const queued = await enqueueGradingFallback({
       skill: "writing",
       partType,
 
@@ -174,8 +227,16 @@ export async function gradeWritingPartV2(
       examSetId: opts?.examSetId ?? null,
       fullTestSessionId: opts?.fullTestSessionId ?? null,
       payload: gradePayload,
-      lastError: (error as any)?.message || (data as any)?.error || "unknown",
+      lastError,
     });
+    if (!queued?.id) {
+      logClientError("writing_grade_kickoff", new Error("enqueue_failed"), {
+        step: "enqueue_grading_job_failed",
+        testResultId: opts?.testResultId ?? null,
+        partType,
+      });
+    }
+
     if (error) throw error;
     if ((data as any)?.error) throw new Error((data as any).error);
     throw new Error("Empty response from grade-exam (writing_v2)");
