@@ -46,6 +46,8 @@ const FullTest = () => {
   const { bands } = useUserFullTestBands();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
   const { guard, isLocked, LockModal } = useExamAccessGate();
+  const navigate = useNavigate();
+  const { isPro } = useIsPro();
 
   const { sets: allCustomSets, invalidate } = useCustomSets();
   const { playedIds } = useCustomSetPlays();
