@@ -518,11 +518,6 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
           </Badge>
         </div>
 
-        <div className="space-y-2">
-          <ChipRow label="Ưu tiên:" chips={PRIORITY_CHIPS} value={priorityFilter} onChange={setPriorityFilter} />
-          <ChipRow label="Trạng thái:" chips={DONE_CHIPS} value={doneFilter} onChange={setDoneFilter} />
-        </div>
-
         {isLoading ? (
           <div className="p-6 flex items-center gap-2 text-sm text-muted-foreground border border-border rounded-xl">
             <Loader2 className="w-4 h-4 animate-spin" /> Đang tải danh sách đề...
@@ -584,6 +579,39 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
               </p>
             </div>
 
+            {/* Điều hướng + bốc ngẫu nhiên */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" disabled={stepIdx === 0} onClick={() => goto(stepIdx - 1)} className="gap-1">
+                <ChevronLeft className="w-4 h-4" /> Part trước
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={stepIdx >= steps.length - 1}
+                onClick={() => goto(stepIdx + 1)}
+                className="gap-1"
+              >
+                Part sau <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button variant="secondary" size="sm" onClick={randomCurrent} className="gap-1.5">
+                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên part này
+              </Button>
+              <Button variant="secondary" size="sm" onClick={randomAll} className="gap-1.5">
+                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên tất cả các part
+              </Button>
+              {currentChosen && (
+                <Button variant="ghost" size="sm" onClick={() => clearStep(current)} className="gap-1">
+                  <XCircle className="w-4 h-4" /> Bỏ chọn part này
+                </Button>
+              )}
+            </div>
+
+            {/* Bộ lọc */}
+            <div className="space-y-2">
+              <ChipRow label="Ưu tiên:" chips={PRIORITY_CHIPS} value={priorityFilter} onChange={setPriorityFilter} />
+              <ChipRow label="Trạng thái:" chips={DONE_CHIPS} value={doneFilter} onChange={setDoneFilter} />
+            </div>
+
             {/* Danh sách đề của bước hiện tại */}
             {currentItems.length === 0 ? (
               <div className="px-4 py-6 text-sm text-muted-foreground border border-dashed border-border rounded-xl">
@@ -631,32 +659,6 @@ const CustomSetBuilder = ({ editing, onDone, onCancel, initialMode, initialSkill
               </div>
             )}
 
-            {/* Điều hướng + bốc ngẫu nhiên */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" size="sm" disabled={stepIdx === 0} onClick={() => goto(stepIdx - 1)} className="gap-1">
-                <ChevronLeft className="w-4 h-4" /> Part trước
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={stepIdx >= steps.length - 1}
-                onClick={() => goto(stepIdx + 1)}
-                className="gap-1"
-              >
-                Part sau <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button variant="secondary" size="sm" onClick={randomCurrent} className="gap-1.5">
-                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên part này
-              </Button>
-              <Button variant="secondary" size="sm" onClick={randomAll} className="gap-1.5">
-                <Dices className="w-4 h-4" /> Bốc ngẫu nhiên tất cả các part
-              </Button>
-              {currentChosen && (
-                <Button variant="ghost" size="sm" onClick={() => clearStep(current)} className="gap-1">
-                  <XCircle className="w-4 h-4" /> Bỏ chọn part này
-                </Button>
-              )}
-            </div>
           </>
         )}
       </div>
