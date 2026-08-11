@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams, useNavigate } from "react-router-dom";
+import { useIsPro } from "@/hooks/useIsPro";
+import { Lock } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
