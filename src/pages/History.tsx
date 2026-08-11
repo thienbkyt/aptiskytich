@@ -44,6 +44,8 @@ interface HistoryRow {
   marathonPartType: string | null;
   marathonLabel: string | null;
   fullPartSession: string | null;
+  customSetId: string | null;
+  customSetTitle: string | null;
   review_snapshot: any;
   // computed display
   displayScore: string;     // e.g. "12/25" or "8/10" or "—"
@@ -62,11 +64,13 @@ interface FullTestGroup {
   skillCount: number;
   gvScaled: number | null;
   skillAgg: Record<string, { num: number; den: number }>;
+  customSetTitle: string | null;
 }
 
 interface FullPartGroup {
   sessionId: string;
   skill: string;
+  customSetTitle?: string | null;
   created_at: string;
   partCount: number;
   num: number;
@@ -339,6 +343,8 @@ const History = () => {
             })(),
             marathonLabel: typeof ss.label === "string" ? ss.label : null,
             fullPartSession: ss.fullPartSession ?? null,
+            customSetId: typeof ss.customSetId === "string" ? ss.customSetId : null,
+            customSetTitle: typeof ss.customSetTitle === "string" ? ss.customSetTitle : null,
             review_snapshot: r.review_snapshot ?? null,
             ...disp,
           };
@@ -356,7 +362,7 @@ const History = () => {
             g = {
               sessionId: r.full_test_session_id,
               fullTestId: r.full_test_id,
-              title: (r.full_test_id && ftMap[r.full_test_id]) || "Bài thi thử Aptis",
+              title: r.customSetTitle || (r.full_test_id && ftMap[r.full_test_id]) || "Bài thi thử Aptis",
               created_at: r.created_at,
               rows: [],
               totalScaled: 0,
@@ -364,6 +370,7 @@ const History = () => {
               skillCount: 0,
               gvScaled: null,
               skillAgg: {},
+              customSetTitle: r.customSetTitle,
             };
             sessionMap.set(r.full_test_session_id, g);
           }
@@ -420,6 +427,7 @@ const History = () => {
             g = {
               sessionId: r.fullPartSession,
               skill: r.skill,
+              customSetTitle: r.customSetTitle,
               created_at: r.created_at,
               partCount: 0,
               num: 0,
@@ -711,7 +719,9 @@ const History = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Badge className="bg-primary/10 text-primary border-0 gap-1"><Trophy className="w-3 h-3" />Full Test</Badge>
+                            <Badge className="bg-primary/10 text-primary border-0 gap-1">
+                              <Trophy className="w-3 h-3" />{g.customSetTitle ? "Bộ của tôi" : "Full Test"}
+                            </Badge>
                             <span className="font-medium text-foreground truncate">{g.title}</span>
                           </div>
                         </TableCell>
@@ -775,8 +785,12 @@ const History = () => {
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-medium text-foreground truncate">{SKILL_LABELS[g.skill] || g.skill}</span>
-                                  <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Full Part</Badge>
+                                  <span className="font-medium text-foreground truncate">
+                                    {g.customSetTitle || SKILL_LABELS[g.skill] || g.skill}
+                                  </span>
+                                  <Badge className="bg-primary/10 text-primary border-0 text-[10px]">
+                                    {g.customSetTitle ? "Bộ của tôi" : "Full Part"}
+                                  </Badge>
                                   {g.ungradedCount > 0 && (
                                     <span
                                       className="inline-flex items-center select-none text-[10px] font-bold px-2 py-0.5 rounded-full"
