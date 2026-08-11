@@ -44,6 +44,68 @@ const FullTest = () => {
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
   const { guard, isLocked, LockModal } = useExamAccessGate();
 
+  const { sets: allCustomSets, invalidate } = useCustomSets();
+  const { playedIds } = useCustomSetPlays();
+  const [doneFilter, setDoneFilter] = useState<"all" | "undone" | "done">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "official" | "mine">("all");
+  const [overlay, setOverlay] = useState<
+    { kind: "create" } | { kind: "edit"; set: CustomSetRow } | { kind: "play"; set: CustomSetRow } | null
+  >(null);
+
+  const mySets = useMemo(
+    () => allCustomSets.filter((s) => s.mode === "full_test"),
+    [allCustomSets],
+  );
+  const officialDone = (t: FullTestItem) => !!bands.get(t.fullTestId);
+
+  const officialVisible = useMemo(
+    () =>
+      tests.filter((t) => {
+        if (sourceFilter === "mine") return false;
+        if (doneFilter === "done") return officialDone(t);
+        if (doneFilter === "undone") return !officialDone(t);
+        return true;
+      }),
+    [tests, sourceFilter, doneFilter, bands],
+  );
+  const mineVisible = useMemo(
+    () =>
+      mySets.filter((s) => {
+        if (sourceFilter === "official") return false;
+        const done = playedIds.has(s.id);
+        if (doneFilter === "done") return done;
+        if (doneFilter === "undone") return !done;
+        return true;
+      }),
+    [mySets, sourceFilter, doneFilter, playedIds],
+  );
+  const doneCounts = useMemo(() => {
+    const off = sourceFilter === "mine" ? [] : tests;
+    const mine = sourceFilter === "official" ? [] : mySets;
+    const done = off.filter(officialDone).length + mine.filter((s) => playedIds.has(s.id)).length;
+    const total = off.length + mine.length;
+    return { all: total, done, undone: total - done };
+  }, [tests, mySets, sourceFilter, bands, playedIds]);
+  const sourceCounts = useMemo(() => {
+    const off = tests.filter((t) =>
+      doneFilter === "done" ? officialDone(t) : doneFilter === "undone" ? !officialDone(t) : true,
+    ).length;
+    const mine = mySets.filter((s) => {
+      const d = playedIds.has(s.id);
+      return doneFilter === "done" ? d : doneFilter === "undone" ? !d : true;
+    }).length;
+    return { all: off + mine, official: off, mine };
+  }, [tests, mySets, doneFilter, bands, playedIds]);
+
+  const showCreateCard = doneFilter !== "done" && sourceFilter !== "official";
+
+  const chip = (active: boolean) =>
+    `text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+      active
+        ? "bg-primary text-primary-foreground border-primary"
+        : "bg-card text-foreground border-border hover:bg-muted"
+    }`;
+
   const handleStartTest = (test: FullTestItem) => {
     setActiveTest(test);
   };
@@ -51,6 +113,19 @@ const FullTest = () => {
   const handleExit = () => {
     setActiveTest(null);
   };
+
+  // Custom set play mode
+  if (overlay?.kind === "play") {
+    const set = overlay.set;
+    return (
+      <FullTestEngine
+        testId={set.id}
+        testTitle={set.title}
+        customSetId={set.id}
+        onExit={() => { setOverlay(null); invalidate(); }}
+      />
+    );
+  }
 
   // Full test engine mode
   if (activeTest) {
