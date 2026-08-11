@@ -61,6 +61,7 @@ const COMPARE_ROWS: CompareRow[] = [
   { label: "Luyện Full Part", free: "3 đề", paid: "Toàn bộ" },
   { label: "Thi thử Full Test", free: "1 đề", paid: "Toàn bộ" },
   { label: "Marathon (làm tất cả các đề của 1 part trong 1 lượt)", free: "2 lượt", paid: "Không giới hạn" },
+  { label: "Tự tạo bộ đề riêng", free: false, paid: "Không giới hạn" },
   { label: "Chấm AI Writing + Speaking", free: "3 lượt trọn đời", paid: "10-30 lượt/ngày theo gói" },
   { label: "Bài mẫu chuẩn band B1-C", free: true, paid: true },
   { label: "Học từ vựng & flashcard", free: true, paid: true },
