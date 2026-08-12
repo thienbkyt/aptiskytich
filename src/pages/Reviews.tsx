@@ -34,6 +34,62 @@ const SKILLS: { key: SkillKey; label: string; parts: string[] }[] = [
 const skillLabel = (k: string) => SKILLS.find((s) => s.key === k)?.label || k;
 const partsOf = (k: SkillKey) => SKILLS.find((s) => s.key === k)?.parts || ["Part 1"];
 
+/* 18 ô nhập trải sẵn, gom theo 5 khối kỹ năng */
+const SLOT_GROUPS: { skill: SkillKey; label: string; slots: { part: string; label: string }[] }[] = [
+  {
+    skill: "speaking",
+    label: "Speaking",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Personal" },
+      { part: "Part 2", label: "Part 2 — Describe a picture" },
+      { part: "Part 3", label: "Part 3 — Compare pictures" },
+      { part: "Part 4", label: "Part 4 — Opinion" },
+    ],
+  },
+  {
+    skill: "listening",
+    label: "Listening",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Word recognition" },
+      { part: "Part 2", label: "Part 2 — Matching" },
+      { part: "Part 3", label: "Part 3 — Conversations" },
+      { part: "Part 4", label: "Part 4 — Monologues" },
+    ],
+  },
+  {
+    skill: "grammar_vocab",
+    label: "Grammar & Vocabulary",
+    slots: [
+      { part: "Grammar", label: "Grammar" },
+      { part: "Vocabulary", label: "Vocabulary" },
+    ],
+  },
+  {
+    skill: "reading",
+    label: "Reading",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Sentence" },
+      { part: "Part 2", label: "Part 2 — Cohesion" },
+      { part: "Part 3", label: "Part 3 — Gap fill" },
+      { part: "Part 4", label: "Part 4 — Long text" },
+    ],
+  },
+  {
+    skill: "writing",
+    label: "Writing",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Short answers" },
+      { part: "Part 2", label: "Part 2 — Social media" },
+      { part: "Part 3", label: "Part 3 — Three questions" },
+      { part: "Part 4", label: "Part 4 — Emails" },
+    ],
+  },
+];
+
+const slotKey = (skill: string, part: string) => `${skill}|${part}`;
+const emptySlots = (): Record<string, string> => ({});
+
+
 type Item = { id?: string; skill: SkillKey; part: string; topic: string };
 type ReviewRow = {
   id: string;
