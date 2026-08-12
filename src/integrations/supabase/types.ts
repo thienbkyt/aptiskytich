@@ -697,6 +697,8 @@ export type Database = {
         Row: {
           created_at: string
           exam_date: string
+          exam_location: string | null
+          exam_session: string | null
           hidden_at: string | null
           hidden_by: string | null
           hidden_reason: string | null
@@ -707,6 +709,8 @@ export type Database = {
         Insert: {
           created_at?: string
           exam_date: string
+          exam_location?: string | null
+          exam_session?: string | null
           hidden_at?: string | null
           hidden_by?: string | null
           hidden_reason?: string | null
@@ -717,6 +721,8 @@ export type Database = {
         Update: {
           created_at?: string
           exam_date?: string
+          exam_location?: string | null
+          exam_session?: string | null
           hidden_at?: string | null
           hidden_by?: string | null
           hidden_reason?: string | null
@@ -2841,6 +2847,8 @@ export type Database = {
           author_name: string
           created_at: string
           exam_date: string
+          exam_location: string
+          exam_session: string
           hidden_at: string
           hidden_reason: string
           id: string
