@@ -266,12 +266,12 @@ const ReviewsPage = () => {
                   </h1>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-                  Học viên chia sẻ lại sau khi thi về để giúp các bạn thi sau ôn đúng hướng. Nội dung do
-                  học viên tự ghi, chỉ hiển thị cho thành viên đã đăng nhập.
+                  Học viên chia sẻ lại sau khi thi về để giúp các bạn thi sau ôn đúng hướng. Admin sẽ tổng
+                  hợp lại và làm dự đoán đề free cho tất cả mọi người kể cả không ôn luyện tại web.
                 </p>
               </div>
               <Button className="gap-2" onClick={openCreate}>
-                <Plus className="w-4 h-4" /> Tôi vừa thi về — chia sẻ đề
+                <Plus className="w-4 h-4" /> Review tích đức
               </Button>
             </div>
 
