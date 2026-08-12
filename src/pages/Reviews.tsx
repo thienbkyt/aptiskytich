@@ -383,7 +383,7 @@ const ReviewsPage = () => {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Sửa review của bạn" : "Chia sẻ lại sau khi thi"}</DialogTitle>
+            <DialogTitle>{editingId ? "Sửa review của bạn" : "Review tích đức"}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
