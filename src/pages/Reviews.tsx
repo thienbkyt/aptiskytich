@@ -98,6 +98,8 @@ type ReviewRow = {
   created_at: string;
   user_id: string;
   author_name: string | null;
+  hidden_at?: string | null;
+  hidden_reason?: string | null;
   items: Item[];
 };
 
