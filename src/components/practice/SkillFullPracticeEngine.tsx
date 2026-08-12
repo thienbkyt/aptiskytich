@@ -1,4 +1,6 @@
-import { QuotaExceededError } from "@/lib/quotaError";
+import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
+import UpgradeLock from "@/components/pro/UpgradeLock";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
@@ -203,6 +205,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingV2RawTotal, setSpeakingV2RawTotal] = useState(0);
   const [speakingV2Message, setSpeakingV2Message] = useState("");
   useExitWarning(phase !== "loading" && phase !== "completed");
+  const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
 
 
   const skillLabel = SKILL_LABELS[skill] || skill;
@@ -538,17 +541,33 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   if (skill === "speaking") {
     if (speakingPhase === "results") {
       return (
-        <SpeakingFullResultsV2
-          parts={speakingV2Parts}
-          scale50={speakingV2Scale}
-          cefr={speakingV2Cefr}
-          greyZone={speakingV2GreyZone}
-          flagReview={speakingV2FlagReview}
-          rawTotal={speakingV2RawTotal}
-          onExit={onExit}
-        />
+        <>
+          {quotaModal && (
+            <UpgradeLock
+              asModal
+              open
+              onOpenChange={(v) => { if (!v) setQuotaModal(null); }}
+              reason="quota_exceeded"
+              need="pro"
+              featureLabel="Chấm bài bằng AI"
+              freeQuota={quotaModal.cap}
+              remaining={0}
+              resetNote="Bài của bạn đã được lưu — nâng cấp để chấm."
+            />
+          )}
+          <SpeakingFullResultsV2
+            parts={speakingV2Parts}
+            scale50={speakingV2Scale}
+            cefr={speakingV2Cefr}
+            greyZone={speakingV2GreyZone}
+            flagReview={speakingV2FlagReview}
+            rawTotal={speakingV2RawTotal}
+            onExit={onExit}
+          />
+        </>
       );
     }
+
     if (speakingPhase === "grading") {
       return (
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
@@ -667,13 +686,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         if (sub && !speakingV2PromisesByPartRef.current[currentPartIndex]) {
           const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
           const blobs = sub.items.map((it) => it.blob ?? null);
-          speakingV2PromisesByPartRef.current[currentPartIndex] =
-            gradeSpeakingPartV2(sub.partType, questions, blobs, {
-              sessionId: fullPartSessionRef.current,
-              fullTestSessionId: fullPartSessionRef.current,
-              testResultId: speakingTestResultIdByPartRef.current[currentPartIndex] ?? null,
-            });
+          const p = gradeSpeakingPartV2(sub.partType, questions, blobs, {
+            sessionId: fullPartSessionRef.current,
+            fullTestSessionId: fullPartSessionRef.current,
+            testResultId: speakingTestResultIdByPartRef.current[currentPartIndex] ?? null,
+          });
+          // Attach a no-op handler so a rejection here (e.g. quota exhausted)
+          // never surfaces as an unhandled promise rejection before the
+          // last-part flow awaits this promise and handles it properly.
+          p.catch((e) => {
+            if (e instanceof QuotaExceededError) setQuotaModal(e.info);
+          });
+          speakingV2PromisesByPartRef.current[currentPartIndex] = p;
         }
+
       } catch (e) {
         console.warn("[SkillFullPractice V2] background kick failed", e);
       }
@@ -757,7 +783,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         } catch (e) {
-          if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+          if (e instanceof QuotaExceededError) { setQuotaModal(e.info); toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm."); }
+
           console.warn(`[SkillFullPractice V2] gradeSpeakingPartV2 ${sub.partType} failed`, e);
 
           const empty: SpeakingPartResultV2 = {
