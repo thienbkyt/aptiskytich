@@ -125,7 +125,7 @@ const ReviewsPage = () => {
     noindex: true,
   });
 
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [skillFilter, setSkillFilter] = useState<"all" | SkillKey>("all");
@@ -139,6 +139,12 @@ const ReviewsPage = () => {
   const [freeText, setFreeText] = useState("");
   const [slots, setSlots] = useState<Record<string, string>>(emptySlots());
   const [saving, setSaving] = useState(false);
+
+  /* Admin moderation state */
+  const [hideTarget, setHideTarget] = useState<ReviewRow | null>(null);
+  const [hideReason, setHideReason] = useState("");
+  const [delTarget, setDelTarget] = useState<ReviewRow | null>(null);
+  const [modBusy, setModBusy] = useState(false);
 
 
   const load = useCallback(async () => {
