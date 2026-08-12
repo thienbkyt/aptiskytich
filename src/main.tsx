@@ -198,8 +198,17 @@ window.addEventListener("unhandledrejection", (e) => {
     showUpdateBanner();
     return;
   }
+  // Quota exhaustion is a product state, not a crash: never show the red overlay.
+  if (reason?.name === "QuotaExceededError" || msg.includes("quota_exceeded")) {
+    e.preventDefault?.();
+    import("sonner")
+      .then(({ toast }) => toast.error("Bạn đã hết lượt chấm AI. Nâng cấp Pro để tiếp tục."))
+      .catch(() => { /* ignore */ });
+    return;
+  }
   pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`);
 });
+
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

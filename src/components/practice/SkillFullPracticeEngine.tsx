@@ -783,7 +783,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         } catch (e) {
-          if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+          if (e instanceof QuotaExceededError) { setQuotaModal(e.info); toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm."); }
+
           console.warn(`[SkillFullPractice V2] gradeSpeakingPartV2 ${sub.partType} failed`, e);
 
           const empty: SpeakingPartResultV2 = {
