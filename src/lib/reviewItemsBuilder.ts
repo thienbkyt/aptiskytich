@@ -36,6 +36,8 @@ export function computeScaleAndBand(
 export function buildGrammarItems(
   questions: any[],
   perQuestion: Array<{ user_answer: string | null; is_correct: boolean }> = [],
+  /** Optional map exam_question_id → part key ("grammar" | "vocab1".."vocab5"). */
+  partByQuestionId: Record<string, string> = {},
 ): ReviewSnapshotItem[] {
   return (questions || []).map((q, i) => {
     const pr = perQuestion[i];
@@ -49,8 +51,10 @@ export function buildGrammarItems(
       const idx = Number(userRaw);
       userAnswer = Number.isFinite(idx) ? idx : userRaw;
     }
+    const qid = q?.id ?? (q?.extra_data as any)?._eqId ?? null;
     return {
       questionText: q.question_text ?? q.questionText ?? "",
+      part: (qid && partByQuestionId[String(qid)]) || null,
       options,
       correctAnswer: q.correct_answer ?? q.correct ?? null,
       explanation: q.explanation ?? null,
@@ -59,6 +63,7 @@ export function buildGrammarItems(
     };
   });
 }
+
 
 // ---------------- Reading ----------------
 function parseReadingAnswers(perQuestion: any[]): any {
