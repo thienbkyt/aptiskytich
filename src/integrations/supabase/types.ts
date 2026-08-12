@@ -697,6 +697,9 @@ export type Database = {
         Row: {
           created_at: string
           exam_date: string
+          hidden_at: string | null
+          hidden_by: string | null
+          hidden_reason: string | null
           id: string
           note: string | null
           user_id: string
@@ -704,6 +707,9 @@ export type Database = {
         Insert: {
           created_at?: string
           exam_date: string
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
           id?: string
           note?: string | null
           user_id: string
@@ -711,6 +717,9 @@ export type Database = {
         Update: {
           created_at?: string
           exam_date?: string
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
           id?: string
           note?: string | null
           user_id?: string
@@ -2617,6 +2626,7 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
+      admin_delete_review: { Args: { p_review_id: string }; Returns: undefined }
       admin_emails_by_ids: {
         Args: { p_user_ids: string[] }
         Returns: {
@@ -2641,6 +2651,10 @@ export type Database = {
           email: string
           user_id: string
         }[]
+      }
+      admin_set_review_hidden: {
+        Args: { p_hidden: boolean; p_reason?: string; p_review_id: string }
+        Returns: undefined
       }
       admin_streak_distribution: {
         Args: never
@@ -2818,6 +2832,7 @@ export type Database = {
           skill: string
         }[]
       }
+      is_admin: { Args: { _uid: string }; Returns: boolean }
       is_premium: { Args: { p_uid: string }; Returns: boolean }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
       list_exam_reviews: {
@@ -2826,6 +2841,8 @@ export type Database = {
           author_name: string
           created_at: string
           exam_date: string
+          hidden_at: string
+          hidden_reason: string
           id: string
           items: Json
           note: string
