@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { HeartHandshake, Plus, Trash2, Pencil, Flag, Loader2, Search } from "lucide-react";
+import { HeartHandshake, Plus, Trash2, Pencil, Flag, Loader2, Search, EyeOff, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -98,6 +98,8 @@ type ReviewRow = {
   created_at: string;
   user_id: string;
   author_name: string | null;
+  hidden_at?: string | null;
+  hidden_reason?: string | null;
   items: Item[];
 };
 
@@ -123,7 +125,7 @@ const ReviewsPage = () => {
     noindex: true,
   });
 
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [skillFilter, setSkillFilter] = useState<"all" | SkillKey>("all");
@@ -137,6 +139,12 @@ const ReviewsPage = () => {
   const [freeText, setFreeText] = useState("");
   const [slots, setSlots] = useState<Record<string, string>>(emptySlots());
   const [saving, setSaving] = useState(false);
+
+  /* Admin moderation state */
+  const [hideTarget, setHideTarget] = useState<ReviewRow | null>(null);
+  const [hideReason, setHideReason] = useState("");
+  const [delTarget, setDelTarget] = useState<ReviewRow | null>(null);
+  const [modBusy, setModBusy] = useState(false);
 
 
   const load = useCallback(async () => {
@@ -289,6 +297,33 @@ const ReviewsPage = () => {
     toast.success("Đã gửi báo cáo, đội ngũ sẽ kiểm tra.");
   };
 
+  const applyHidden = async (r: ReviewRow, hidden: boolean, reason?: string) => {
+    setModBusy(true);
+    const { error } = await supabase.rpc("admin_set_review_hidden", {
+      p_review_id: r.id,
+      p_hidden: hidden,
+      p_reason: reason?.trim() || null,
+    });
+    setModBusy(false);
+    if (error) return toast.error(error.message || "Không thực hiện được.");
+    toast.success(hidden ? "Đã ẩn review." : "Đã bỏ ẩn review.");
+    setHideTarget(null);
+    setHideReason("");
+    load();
+  };
+
+  const adminDelete = async (r: ReviewRow) => {
+    setModBusy(true);
+    const { error } = await supabase.rpc("admin_delete_review", { p_review_id: r.id });
+    setModBusy(false);
+    if (error) return toast.error(error.message || "Không xoá được.");
+    toast.success("Đã xoá vĩnh viễn review.");
+    setDelTarget(null);
+    load();
+  };
+
+
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows
@@ -410,12 +445,21 @@ const ReviewsPage = () => {
                   {list.map((r) => (
                     <article key={r.id} className="rounded-xl border border-border bg-card p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="text-sm">
+                        <div className="text-sm flex flex-wrap items-center gap-2">
                           <span className="font-semibold text-foreground">{r.author_name || "Học viên"}</span>
-                          <span className="text-muted-foreground"> · gửi lúc {formatTime(r.created_at)}</span>
+                          <span className="text-muted-foreground">· gửi lúc {formatTime(r.created_at)}</span>
+                          {r.hidden_at && (
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">
+                              {r.user_id === user?.id && !isAdmin
+                                ? "Đang ẩn - chỉ mình bạn thấy"
+                                : r.hidden_reason
+                                  ? `Đang ẩn · ${r.hidden_reason}`
+                                  : "Đang ẩn"}
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
-                          {r.user_id === user?.id ? (
+                          {r.user_id === user?.id && (
                             <>
                               <Button size="sm" variant="outline" className="gap-1" onClick={() => openEdit(r)}>
                                 <Pencil className="w-3.5 h-3.5" /> Sửa
@@ -424,13 +468,39 @@ const ReviewsPage = () => {
                                 <Trash2 className="w-3.5 h-3.5" /> Xoá
                               </Button>
                             </>
-                          ) : (
+                          )}
+                          {r.user_id !== user?.id && (
                             <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={() => report(r)}>
                               <Flag className="w-3.5 h-3.5" /> Báo cáo nội dung
                             </Button>
                           )}
+                          {isAdmin && (
+                            <>
+                              {r.hidden_at ? (
+                                <Button size="sm" variant="outline" className="gap-1" disabled={modBusy} onClick={() => applyHidden(r, false)}>
+                                  <Eye className="w-3.5 h-3.5" /> Bỏ ẩn
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1"
+                                  onClick={() => {
+                                    setHideReason("");
+                                    setHideTarget(r);
+                                  }}
+                                >
+                                  <EyeOff className="w-3.5 h-3.5" /> Ẩn
+                                </Button>
+                              )}
+                              <Button size="sm" variant="outline" className="gap-1 text-primary" onClick={() => setDelTarget(r)}>
+                                <Trash2 className="w-3.5 h-3.5" /> Xoá
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
+
 
                       {r.items && r.items.length > 0 && (
                         <div className="mt-4 overflow-x-auto">
@@ -569,7 +639,61 @@ const ReviewsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Admin: ẩn review */}
+      <Dialog open={!!hideTarget} onOpenChange={(o) => !o && setHideTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ẩn review này?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Sau khi ẩn, chỉ bạn (admin) và chính chủ nhìn thấy review này.
+          </p>
+          <div>
+            <div className="text-sm font-medium mb-2">Lý do (không bắt buộc)</div>
+            <Textarea
+              rows={3}
+              value={hideReason}
+              onChange={(e) => setHideReason(e.target.value)}
+              placeholder="VD: nội dung không liên quan, spam…"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHideTarget(null)} disabled={modBusy}>
+              Huỷ
+            </Button>
+            <Button
+              className="gap-2"
+              disabled={modBusy}
+              onClick={() => hideTarget && applyHidden(hideTarget, true, hideReason)}
+            >
+              {modBusy && <Loader2 className="w-4 h-4 animate-spin" />} Ẩn review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin: xoá vĩnh viễn */}
+      <Dialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xoá review này?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Xoá vĩnh viễn, không khôi phục được. Toàn bộ nội dung theo part của review cũng bị xoá.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDelTarget(null)} disabled={modBusy}>
+              Huỷ
+            </Button>
+            <Button className="gap-2" disabled={modBusy} onClick={() => delTarget && adminDelete(delTarget)}>
+              {modBusy && <Loader2 className="w-4 h-4 animate-spin" />} Xoá vĩnh viễn
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
 
