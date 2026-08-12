@@ -319,6 +319,8 @@ export function writingSpecsFromEngine(
 // ---------------- Speaking ----------------
 export interface SpeakingItemSpec {
   questionText: string;
+  /** "part1".."part4" — lets the review index group a multi-part attempt. */
+  part?: string | null;
   recordingPath?: string | null;
   ai?: ReviewSnapshotAI | null;
 }
@@ -326,6 +328,7 @@ export interface SpeakingItemSpec {
 export function buildSpeakingItems(specs: SpeakingItemSpec[]): ReviewSnapshotItem[] {
   return specs.map((s) => ({
     questionText: s.questionText,
+    part: s.part ?? null,
     userAnswer: s.recordingPath ? "(recorded)" : null,
     isCorrect: false,
     ai: {
@@ -334,6 +337,7 @@ export function buildSpeakingItems(specs: SpeakingItemSpec[]): ReviewSnapshotIte
     },
   }));
 }
+
 
 export function speakingQuestionsFromPart(
   partType: "part1" | "part2" | "part3" | "part4",
