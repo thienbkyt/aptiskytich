@@ -769,6 +769,7 @@ const Navbar = () => {
         )}
       </AnimatePresence>
       <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
+      <FeatureSuggestionModal open={suggestOpen} onOpenChange={setSuggestOpen} />
     </nav>
   );
 };
