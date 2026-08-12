@@ -432,26 +432,29 @@ const ReviewsPage = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-xs uppercase text-muted-foreground">
-                              <th className="py-2 pr-4 font-medium">Kỹ năng</th>
-                              <th className="py-2 pr-4 font-medium">Part</th>
-                              <th className="py-2 font-medium">Topic</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {r.items.map((i, idx) => (
-                              <tr key={i.id || idx} className="border-t border-border/60">
-                                <td className="py-2 pr-4 whitespace-nowrap">{skillLabel(i.skill)}</td>
-                                <td className="py-2 pr-4 whitespace-nowrap">{i.part}</td>
-                                <td className="py-2">{i.topic}</td>
+                      {r.items && r.items.length > 0 && (
+                        <div className="mt-4 overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-xs uppercase text-muted-foreground">
+                                <th className="py-2 pr-4 font-medium">Kỹ năng</th>
+                                <th className="py-2 pr-4 font-medium">Part</th>
+                                <th className="py-2 font-medium">Topic</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {r.items.map((i, idx) => (
+                                <tr key={i.id || idx} className="border-t border-border/60">
+                                  <td className="py-2 pr-4 whitespace-nowrap">{skillLabel(i.skill)}</td>
+                                  <td className="py-2 pr-4 whitespace-nowrap">{i.part}</td>
+                                  <td className="py-2">{i.topic}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
 
                       {r.note && (
                         <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap border-t border-border/60 pt-3">
