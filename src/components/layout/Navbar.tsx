@@ -6,6 +6,7 @@ import {
   BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
+  MoreHorizontal, Lightbulb, MessageSquare, Star, Newspaper,
   type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
@@ -18,6 +19,7 @@ import { prefetchHandlers } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
 import NotificationBell from "@/components/layout/NotificationBell";
 import { FEATURES } from "@/config/features";
+import FeatureSuggestionModal from "@/components/suggestions/FeatureSuggestionModal";
 
 /* ── Nav data ── */
 const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
@@ -33,6 +35,12 @@ const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }
   { label: "Nghe chép chính tả", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe & chép lại câu" },
 ];
 
+const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
+  { label: "Feedback", path: "/feedback", icon: MessageSquare, desc: "Góp ý cho Aptis Kỳ Tích" },
+  { label: "Review tích đức", path: "/reviews", icon: Star, desc: "Đánh giá từ học viên" },
+  { label: "Blog", path: "/blog", icon: Newspaper, desc: "Mẹo & kinh nghiệm thi Aptis" },
+];
+
 const adminLinks = [
   { label: "Import Center", path: "/admin", desc: "Quản lý đề thi & dữ liệu", icon: FileSpreadsheet },
   { label: "Người dùng", path: "/admin/students", desc: "Xem lịch sử người dùng", icon: Users },
@@ -44,12 +52,16 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillOpen, setSkillOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
   const [mobileSkillOpen, setMobileSkillOpen] = useState(false);
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const moreHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
   const { isPro, isPremium, tier, loading: tierLoading } = useIsPro();
@@ -60,12 +72,14 @@ const Navbar = () => {
   const isAdminActive = isActive("/admin") || isActive("/admin/report") || isActive("/admin/students") || isActive("/admin/pro");
   const isKeyActive = isActive("/key-du-doan");
   const isHistoryActive = isActive("/history");
+  const isMoreActive = moreLinks.some((l) => isActive(l.path));
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
     setMobileSkillOpen(false);
     setMobileAdminOpen(false);
+    setMobileMoreOpen(false);
   }, [location.pathname]);
 
   // Smooth sticky header: subtle background change on scroll
@@ -83,6 +97,15 @@ const Navbar = () => {
   };
   const handleSkillLeave = () => {
     hoverTimeout.current = setTimeout(() => setSkillOpen(false), 150);
+  };
+  const handleMoreEnter = () => {
+    if (moreHoverTimeout.current) clearTimeout(moreHoverTimeout.current);
+    setMoreOpen(true);
+    setSkillOpen(false);
+    setAdminOpen(false);
+  };
+  const handleMoreLeave = () => {
+    moreHoverTimeout.current = setTimeout(() => setMoreOpen(false), 150);
   };
   const handleAdminEnter = () => {
     if (adminHoverTimeout.current) clearTimeout(adminHoverTimeout.current);
@@ -240,6 +263,73 @@ const Navbar = () => {
             <History className="w-4 h-4" />
             Lịch sử học tập
           </Link>
+
+          {/* More dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={handleMoreEnter}
+            onMouseLeave={handleMoreLeave}
+            onFocus={handleMoreEnter}
+          >
+            <button
+              className={`group flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
+                isMoreActive || moreOpen
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground hover:bg-muted"
+              }`}
+            >
+              <MoreHorizontal className="w-4 h-4" />
+              More
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${moreOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+              {moreOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 pt-2 z-50"
+                >
+                  <div className="w-64 bg-popover border border-border rounded-xl shadow-lg p-2">
+                    <button
+                      type="button"
+                      onClick={() => { setMoreOpen(false); setSuggestOpen(true); }}
+                      className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-foreground hover:bg-muted"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Lightbulb className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold leading-tight">Đề xuất tính năng</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Gửi ý tưởng cho đội ngũ</p>
+                      </div>
+                    </button>
+                    {moreLinks.map((link) => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive(link.path)
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <link.icon className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold leading-tight">{link.label}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{link.desc}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* ── Desktop right actions ── */}
@@ -524,6 +614,56 @@ const Navbar = () => {
                 <History className="w-4 h-4 text-primary" />
                 Lịch sử học tập
               </Link>
+
+              {/* More accordion */}
+              <button
+                onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
+                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  isMoreActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <MoreHorizontal className="w-4 h-4 text-primary" />
+                  More
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileMoreOpen ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {mobileMoreOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pl-6 space-y-0.5">
+                      <button
+                        type="button"
+                        onClick={() => { setMobileOpen(false); setSuggestOpen(true); }}
+                        className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <Lightbulb className="w-4 h-4" />
+                        Đề xuất tính năng
+                      </button>
+                      {moreLinks.map((link) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-colors ${
+                            isActive(link.path)
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <link.icon className="w-4 h-4" />
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {isAdmin && (
                 <>
