@@ -133,8 +133,11 @@ const ReviewsPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [examDate, setExamDate] = useState(todayISO());
   const [note, setNote] = useState("");
-  const [items, setItems] = useState<Item[]>([{ skill: "speaking", part: "Part 1", topic: "" }]);
+  const [mode, setMode] = useState<"free" | "parts">("free");
+  const [freeText, setFreeText] = useState("");
+  const [slots, setSlots] = useState<Record<string, string>>(emptySlots());
   const [saving, setSaving] = useState(false);
+
 
   const load = useCallback(async () => {
     if (!user) {
