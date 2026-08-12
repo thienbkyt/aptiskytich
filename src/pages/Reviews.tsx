@@ -639,7 +639,61 @@ const ReviewsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Admin: ẩn review */}
+      <Dialog open={!!hideTarget} onOpenChange={(o) => !o && setHideTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ẩn review này?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Sau khi ẩn, chỉ bạn (admin) và chính chủ nhìn thấy review này.
+          </p>
+          <div>
+            <div className="text-sm font-medium mb-2">Lý do (không bắt buộc)</div>
+            <Textarea
+              rows={3}
+              value={hideReason}
+              onChange={(e) => setHideReason(e.target.value)}
+              placeholder="VD: nội dung không liên quan, spam…"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHideTarget(null)} disabled={modBusy}>
+              Huỷ
+            </Button>
+            <Button
+              className="gap-2"
+              disabled={modBusy}
+              onClick={() => hideTarget && applyHidden(hideTarget, true, hideReason)}
+            >
+              {modBusy && <Loader2 className="w-4 h-4 animate-spin" />} Ẩn review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Admin: xoá vĩnh viễn */}
+      <Dialog open={!!delTarget} onOpenChange={(o) => !o && setDelTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xoá review này?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Xoá vĩnh viễn, không khôi phục được. Toàn bộ nội dung theo part của review cũng bị xoá.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDelTarget(null)} disabled={modBusy}>
+              Huỷ
+            </Button>
+            <Button className="gap-2" disabled={modBusy} onClick={() => delTarget && adminDelete(delTarget)}>
+              {modBusy && <Loader2 className="w-4 h-4 animate-spin" />} Xoá vĩnh viễn
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
 
