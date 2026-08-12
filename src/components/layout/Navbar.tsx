@@ -6,7 +6,7 @@ import {
   BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
-  MoreHorizontal, Lightbulb, MessageSquare, Star, Newspaper,
+  MoreHorizontal, Lightbulb, Star, Newspaper,
   type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
@@ -36,9 +36,8 @@ const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }
 ];
 
 const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
-  { label: "Feedback", path: "/feedback", icon: MessageSquare, desc: "Góp ý cho Aptis Kỳ Tích" },
-  { label: "Review tích đức", path: "/reviews", icon: Star, desc: "Đánh giá từ học viên" },
-  { label: "Blog", path: "/blog", icon: Newspaper, desc: "Mẹo & kinh nghiệm thi Aptis" },
+  { label: "Mẹo thi Aptis", path: "/meo-thi-aptis", icon: Newspaper, desc: "Blog mẹo & kinh nghiệm thi" },
+  { label: "Bảng giá", path: "/pricing", icon: Star, desc: "Các gói Pro và ưu đãi" },
 ];
 
 const adminLinks = [
