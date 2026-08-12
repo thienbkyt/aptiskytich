@@ -132,6 +132,42 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_colloc_de01_20260812: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          options: Json | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          options?: Json | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          options?: Json | null
+        }
+        Relationships: []
+      }
+      backup_vocab_de01_20260812: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          options: Json | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          options?: Json | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          options?: Json | null
+        }
+        Relationships: []
+      }
       backup_wp1_homeliving_20260811: {
         Row: {
           backed_up_at: string | null

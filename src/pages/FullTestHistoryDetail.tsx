@@ -203,22 +203,46 @@ const FullTestHistoryDetail = () => {
   // but for review we want one page per speaking exam_set. Resolve member sets.
   const [speakingSets, setSpeakingSets] = useState<Array<{ id: string; part: string; title?: string }>>([]);
   useEffect(() => {
-    if (!fullTestId) return;
     let cancelled = false;
     (async () => {
-      const { data: members } = await supabase
-        .from("full_test_members").select("exam_set_id").eq("full_test_id", fullTestId);
-      const ids = (members || []).map((m: any) => m.exam_set_id).filter(Boolean);
-      if (ids.length === 0) return;
-      const { data: sets } = await supabase
-        .from("exam_sets").select("id,part,skill,title").in("id", ids).eq("skill", "speaking");
-      if (cancelled) return;
-      const sk = (sets || []) as any[];
-      sk.sort((a, b) => (a.part || "").localeCompare(b.part || ""));
-      setSpeakingSets(sk.map((s) => ({ id: s.id, part: s.part, title: s.title })));
+      let resolved: Array<{ id: string; part: string; title?: string }> = [];
+      if (fullTestId) {
+        const { data: members } = await supabase
+          .from("full_test_members").select("exam_set_id").eq("full_test_id", fullTestId);
+        const ids = (members || []).map((m: any) => m.exam_set_id).filter(Boolean);
+        if (ids.length > 0) {
+          const { data: sets } = await supabase
+            .from("exam_sets").select("id,part,skill,title").in("id", ids).eq("skill", "speaking");
+          const sk = (sets || []) as any[];
+          sk.sort((a, b) => (a.part || "").localeCompare(b.part || ""));
+          resolved = sk.map((s) => ({ id: s.id, part: s.part, title: s.title }));
+        }
+      }
+
+      // Fallback (custom sets / merged tests without full_test_members): derive the
+      // 4 speaking parts from the aggregate attempt's own snapshot, so review shows
+      // Part 1..4 instead of collapsing everything into Part 1.
+      if (resolved.length <= 1) {
+        const aggRow = rows.find((r) => r.skill === "speaking");
+        if (aggRow) {
+          const { data: tr } = await supabase
+            .from("test_results").select("review_snapshot").eq("id", aggRow.id).maybeSingle();
+          const snap: any = (tr as any)?.review_snapshot;
+          const perPart: any[] = Array.isArray(snap?.raw?.perPart) ? snap.raw.perPart : [];
+          const fromSnap = perPart
+            .filter((p) => p?.partType)
+            .map((p) => ({ id: String(p.partId || aggRow.exam_set_id || ""), part: String(p.partType) }))
+            .filter((p) => p.id);
+          if (fromSnap.length > resolved.length) resolved = fromSnap;
+        }
+      }
+
+      if (cancelled || resolved.length === 0) return;
+      setSpeakingSets(resolved);
     })();
     return () => { cancelled = true; };
-  }, [fullTestId]);
+  }, [fullTestId, rows]);
+
 
   // Build cross-skill pages ordered: Speaking -> Listening -> Grammar -> Reading -> Writing,
   // and within each skill by part number.

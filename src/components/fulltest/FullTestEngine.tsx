@@ -328,10 +328,16 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
             // results in ITS order — align the snapshot to perQuestion ids so
             // review chips / correctness never drift from the rendered question.
             const byId = new Map(partQuestions.map((q: any) => [q.id, q]));
+            const partByQid: Record<string, string> = {};
+            parts.forEach((p: any, pi: number) => {
+              const key = pi === 0 ? "grammar" : `vocab${pi}`;
+              (p.questions || []).forEach((q: any) => { partByQid[String(q.id)] = key; });
+            });
             const orderedQs = (perQuestion || []).length
               ? (perQuestion || []).map((p) => byId.get(p.exam_question_id)).filter(Boolean)
               : gradableGrammarQuestions(partQuestions as any);
-            items = buildGrammarItems(orderedQs as any[], perQuestion || []);
+            items = buildGrammarItems(orderedQs as any[], perQuestion || [], partByQid);
+
           } else if (skill === "reading" && partNorm) {
             const { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } = await import("@/lib/examTransformers");
             const ed: any = {};
@@ -811,11 +817,13 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           e.sub.items.forEach((it, itIdx) => {
             speakingItemSpecsInitial.push({
               questionText: it.spec.questionText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
+              part: e.sub.partType,
               recordingPath: null,
               ai: null,
             });
           });
         });
+
         const initialSnap = buildReviewSnapshot({
           skill: "speaking",
           part: null,

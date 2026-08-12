@@ -10,6 +10,13 @@
 export interface ReviewSnapshotItem {
   /** Question prompt as shown to the user. */
   questionText?: string;
+  /**
+   * Which part this item belongs to, when one snapshot spans several parts
+   * (e.g. Speaking full test = "part1".."part4", G&V = "grammar" / "vocab1"..).
+   * Optional: legacy snapshots don't have it.
+   */
+  part?: string | null;
+
   /** Multiple-choice options, in display order. */
   options?: string[];
   /** Correct answer (index for MCQ, free-form string otherwise). */

@@ -36,6 +36,8 @@ export function computeScaleAndBand(
 export function buildGrammarItems(
   questions: any[],
   perQuestion: Array<{ user_answer: string | null; is_correct: boolean }> = [],
+  /** Optional map exam_question_id → part key ("grammar" | "vocab1".."vocab5"). */
+  partByQuestionId: Record<string, string> = {},
 ): ReviewSnapshotItem[] {
   return (questions || []).map((q, i) => {
     const pr = perQuestion[i];
@@ -49,8 +51,10 @@ export function buildGrammarItems(
       const idx = Number(userRaw);
       userAnswer = Number.isFinite(idx) ? idx : userRaw;
     }
+    const qid = q?.id ?? (q?.extra_data as any)?._eqId ?? null;
     return {
       questionText: q.question_text ?? q.questionText ?? "",
+      part: (qid && partByQuestionId[String(qid)]) || null,
       options,
       correctAnswer: q.correct_answer ?? q.correct ?? null,
       explanation: q.explanation ?? null,
@@ -59,6 +63,7 @@ export function buildGrammarItems(
     };
   });
 }
+
 
 // ---------------- Reading ----------------
 function parseReadingAnswers(perQuestion: any[]): any {
@@ -314,6 +319,8 @@ export function writingSpecsFromEngine(
 // ---------------- Speaking ----------------
 export interface SpeakingItemSpec {
   questionText: string;
+  /** "part1".."part4" — lets the review index group a multi-part attempt. */
+  part?: string | null;
   recordingPath?: string | null;
   ai?: ReviewSnapshotAI | null;
 }
@@ -321,6 +328,7 @@ export interface SpeakingItemSpec {
 export function buildSpeakingItems(specs: SpeakingItemSpec[]): ReviewSnapshotItem[] {
   return specs.map((s) => ({
     questionText: s.questionText,
+    part: s.part ?? null,
     userAnswer: s.recordingPath ? "(recorded)" : null,
     isCorrect: false,
     ai: {
@@ -329,6 +337,7 @@ export function buildSpeakingItems(specs: SpeakingItemSpec[]): ReviewSnapshotIte
     },
   }));
 }
+
 
 export function speakingQuestionsFromPart(
   partType: "part1" | "part2" | "part3" | "part4",

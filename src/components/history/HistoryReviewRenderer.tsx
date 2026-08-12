@@ -95,14 +95,19 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
 
   useEffect(() => {
     // Snapshot-first: use the questions stored with the attempt itself.
+    // IMPORTANT: keep the captured order verbatim. Snapshot rows are already
+    // stored in the exact order the engine rendered them at attempt time
+    // (for Grammar & Vocabulary that means set-by-set: Grammar, Vocab 1..5).
+    // Re-sorting globally by order_index would interleave sibling exam_sets and
+    // desync question numbering from `review_snapshot.items`.
     if (hasSnapshot) {
-      const sorted = [...(snapshotQuestions as ExamQuestionRow[])].sort(
-        (a, b) => (Number((a as any).order_index) || 0) - (Number((b as any).order_index) || 0),
-      );
-      reviewRowsCache.set(cacheKey, sorted);
-      setRows(sorted);
+      const captured = [...(snapshotQuestions as ExamQuestionRow[])];
+      reviewRowsCache.set(cacheKey, captured);
+      setRows(captured);
       return;
     }
+
+
 
     // Fast path: already cached — no network, no spinner.
     const cached = reviewRowsCache.get(cacheKey);
