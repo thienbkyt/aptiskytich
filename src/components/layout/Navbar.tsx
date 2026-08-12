@@ -20,6 +20,7 @@ import ProfileModal from "@/components/layout/ProfileModal";
 import NotificationBell from "@/components/layout/NotificationBell";
 import { FEATURES } from "@/config/features";
 import FeatureSuggestionModal from "@/components/suggestions/FeatureSuggestionModal";
+import FeedbackModal from "@/components/feedback/FeedbackModal";
 
 /* ── Nav data ── */
 const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
@@ -36,7 +37,6 @@ const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }
 ];
 
 const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
-  { label: "Feedback", path: "/feedback", icon: MessageSquare, desc: "Cảm nhận của học viên" },
   { label: "Review tích đức", path: "/reviews", icon: Star, desc: "Đề thi các bạn chia sẻ lại" },
   { label: "Mẹo thi Aptis", path: "/blog", icon: Newspaper, desc: "Blog mẹo & kinh nghiệm thi" },
 ];
@@ -52,6 +52,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillOpen, setSkillOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
@@ -304,6 +305,19 @@ const Navbar = () => {
                       <div>
                         <p className="text-sm font-semibold leading-tight">Đề xuất tính năng</p>
                         <p className="text-xs text-muted-foreground mt-0.5">Gửi ý tưởng cho đội ngũ</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }}
+                      className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-foreground hover:bg-muted"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <MessageSquare className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold leading-tight">Feedback</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Cảm nhận của học viên</p>
                       </div>
                     </button>
                     {moreLinks.map((link) => (
@@ -646,6 +660,14 @@ const Navbar = () => {
                         <Lightbulb className="w-4 h-4" />
                         Đề xuất tính năng
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => { setMobileOpen(false); setFeedbackOpen(true); }}
+                        className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        Feedback
+                      </button>
                       {moreLinks.map((link) => (
                         <Link
                           key={link.path}
@@ -770,6 +792,7 @@ const Navbar = () => {
       </AnimatePresence>
       <ProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
       <FeatureSuggestionModal open={suggestOpen} onOpenChange={setSuggestOpen} />
+      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </nav>
   );
 };
