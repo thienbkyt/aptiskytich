@@ -41,6 +41,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminReport = lazy(() => import("./pages/AdminReport"));
 const AdminReports = lazy(() => import("./pages/AdminReports"));
+const AdminInbox = lazy(() => import("./pages/AdminInbox"));
 const AdminReportPricing = lazy(() => import("./pages/AdminReportPricing"));
 const AdminStudents = lazy(() => import("./pages/AdminStudents"));
 const AdminNotifications = lazy(() => import("./pages/AdminNotifications"));
