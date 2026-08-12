@@ -336,6 +336,8 @@ const ReviewsPage = () => {
 
 
 
+  const filterActive = skillFilter !== "all" || query.trim().length > 0;
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows
@@ -347,7 +349,14 @@ const ReviewsPage = () => {
             (!q || i.topic.toLowerCase().includes(q)),
         ),
       }))
-      .filter((r) => r.items.length > 0 || (skillFilter === "all" && !q));
+      .filter((r) => {
+        if (skillFilter === "all" && !q) return true;
+        if (r.items.length > 0) return true;
+        if (q && skillFilter === "all") {
+          return (r.exam_location || "").toLowerCase().includes(q);
+        }
+        return false;
+      });
   }, [rows, skillFilter, query]);
 
   const groups = useMemo(() => {
