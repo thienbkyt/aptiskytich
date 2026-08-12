@@ -445,12 +445,21 @@ const ReviewsPage = () => {
                   {list.map((r) => (
                     <article key={r.id} className="rounded-xl border border-border bg-card p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="text-sm">
+                        <div className="text-sm flex flex-wrap items-center gap-2">
                           <span className="font-semibold text-foreground">{r.author_name || "Học viên"}</span>
-                          <span className="text-muted-foreground"> · gửi lúc {formatTime(r.created_at)}</span>
+                          <span className="text-muted-foreground">· gửi lúc {formatTime(r.created_at)}</span>
+                          {r.hidden_at && (
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">
+                              {r.user_id === user?.id && !isAdmin
+                                ? "Đang ẩn - chỉ mình bạn thấy"
+                                : r.hidden_reason
+                                  ? `Đang ẩn · ${r.hidden_reason}`
+                                  : "Đang ẩn"}
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
-                          {r.user_id === user?.id ? (
+                          {r.user_id === user?.id && (
                             <>
                               <Button size="sm" variant="outline" className="gap-1" onClick={() => openEdit(r)}>
                                 <Pencil className="w-3.5 h-3.5" /> Sửa
@@ -459,13 +468,39 @@ const ReviewsPage = () => {
                                 <Trash2 className="w-3.5 h-3.5" /> Xoá
                               </Button>
                             </>
-                          ) : (
+                          )}
+                          {r.user_id !== user?.id && (
                             <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={() => report(r)}>
                               <Flag className="w-3.5 h-3.5" /> Báo cáo nội dung
                             </Button>
                           )}
+                          {isAdmin && (
+                            <>
+                              {r.hidden_at ? (
+                                <Button size="sm" variant="outline" className="gap-1" disabled={modBusy} onClick={() => applyHidden(r, false)}>
+                                  <Eye className="w-3.5 h-3.5" /> Bỏ ẩn
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1"
+                                  onClick={() => {
+                                    setHideReason("");
+                                    setHideTarget(r);
+                                  }}
+                                >
+                                  <EyeOff className="w-3.5 h-3.5" /> Ẩn
+                                </Button>
+                              )}
+                              <Button size="sm" variant="outline" className="gap-1 text-primary" onClick={() => setDelTarget(r)}>
+                                <Trash2 className="w-3.5 h-3.5" /> Xoá
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
+
 
                       {r.items && r.items.length > 0 && (
                         <div className="mt-4 overflow-x-auto">
