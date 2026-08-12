@@ -161,48 +161,74 @@ const ReviewsPage = () => {
     [rows, user, examDate],
   );
 
+  const hydrate = useCallback((r: ReviewRow) => {
+    const nextSlots = emptySlots();
+    (r.items || []).forEach((i) => {
+      if (i.topic?.trim()) nextSlots[slotKey(i.skill, i.part)] = i.topic;
+    });
+    setSlots(nextSlots);
+    if ((r.items || []).length > 0) {
+      setMode("parts");
+      setFreeText("");
+      setNote(r.note || "");
+    } else {
+      setMode("free");
+      setFreeText(r.note || "");
+      setNote("");
+    }
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     if (existingForDate && editingId !== existingForDate.id) {
       setEditingId(existingForDate.id);
-      setNote(existingForDate.note || "");
-      setItems(
-        existingForDate.items.length
-          ? existingForDate.items.map((i) => ({ skill: i.skill, part: i.part, topic: i.topic }))
-          : [{ skill: "speaking", part: "Part 1", topic: "" }],
-      );
+      hydrate(existingForDate);
     } else if (!existingForDate && editingId) {
       setEditingId(null);
     }
-  }, [open, existingForDate, editingId]);
+  }, [open, existingForDate, editingId, hydrate]);
 
   const openCreate = () => {
     setExamDate(todayISO());
     setEditingId(null);
     setNote("");
-    setItems([{ skill: "speaking", part: "Part 1", topic: "" }]);
+    setMode("free");
+    setFreeText("");
+    setSlots(emptySlots());
     setOpen(true);
   };
 
   const openEdit = (r: ReviewRow) => {
     setExamDate(r.exam_date);
     setEditingId(r.id);
-    setNote(r.note || "");
-    setItems(
-      r.items.length
-        ? r.items.map((i) => ({ skill: i.skill, part: i.part, topic: i.topic }))
-        : [{ skill: "speaking", part: "Part 1", topic: "" }],
-    );
+    hydrate(r);
     setOpen(true);
   };
 
+  const filledSlots = useMemo(
+    () =>
+      SLOT_GROUPS.flatMap((g) =>
+        g.slots.map((s) => ({ skill: g.skill, part: s.part, topic: (slots[slotKey(g.skill, s.part)] || "").trim() })),
+      ).filter((s) => s.topic.length > 0),
+    [slots],
+  );
+
+  const canSubmit = mode === "free" ? freeText.trim().length > 0 : filledSlots.length > 0;
+
   const save = async () => {
     if (!user) return;
-    const clean = items
-      .map((i) => ({ ...i, topic: i.topic.trim() }))
-      .filter((i) => i.topic.length > 0);
-    if (!clean.length) {
-      toast.error("Cần ít nhất một dòng có topic.");
+    const clean: Item[] = mode === "parts" ? (filledSlots as Item[]) : [];
+    const finalNote =
+      mode === "free"
+        ? [freeText.trim(), note.trim()].filter(Boolean).join("\n\n")
+        : note.trim();
+
+    if (mode === "free" && !freeText.trim()) {
+      toast.error("Bạn hãy gõ lại nội dung đề bạn còn nhớ nhé.");
+      return;
+    }
+    if (mode === "parts" && !clean.length) {
+      toast.error("Cần điền ít nhất một part.");
       return;
     }
     setSaving(true);
@@ -211,23 +237,25 @@ const ReviewsPage = () => {
       if (reviewId) {
         const { error } = await supabase
           .from("exam_reviews")
-          .update({ note: note.trim() || null })
+          .update({ note: finalNote || null })
           .eq("id", reviewId);
         if (error) throw error;
         await supabase.from("exam_review_items").delete().eq("review_id", reviewId);
       } else {
         const { data, error } = await supabase
           .from("exam_reviews")
-          .insert({ user_id: user.id, exam_date: examDate, note: note.trim() || null })
+          .insert({ user_id: user.id, exam_date: examDate, note: finalNote || null })
           .select("id")
           .single();
         if (error) throw error;
         reviewId = data.id;
       }
-      const { error: itemsErr } = await supabase
-        .from("exam_review_items")
-        .insert(clean.map((i) => ({ review_id: reviewId, skill: i.skill, part: i.part, topic: i.topic })));
-      if (itemsErr) throw itemsErr;
+      if (clean.length) {
+        const { error: itemsErr } = await supabase
+          .from("exam_review_items")
+          .insert(clean.map((i) => ({ review_id: reviewId, skill: i.skill, part: i.part, topic: i.topic })));
+        if (itemsErr) throw itemsErr;
+      }
       toast.success(editingId ? "Đã cập nhật review của bạn." : "Đã chia sẻ, cảm ơn bạn nhiều!");
       setOpen(false);
       load();
@@ -237,6 +265,7 @@ const ReviewsPage = () => {
       setSaving(false);
     }
   };
+
 
   const remove = async (r: ReviewRow) => {
     if (!confirm("Xoá review này?")) return;
