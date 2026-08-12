@@ -787,6 +787,62 @@ export type Database = {
           },
         ]
       }
+      exam_review_items: {
+        Row: {
+          id: string
+          part: string
+          review_id: string
+          skill: string
+          topic: string
+        }
+        Insert: {
+          id?: string
+          part: string
+          review_id: string
+          skill: string
+          topic: string
+        }
+        Update: {
+          id?: string
+          part?: string
+          review_id?: string
+          skill?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_review_items_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "exam_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_reviews: {
+        Row: {
+          created_at: string
+          exam_date: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       exam_sets: {
         Row: {
           access_tier: string
@@ -1902,6 +1958,42 @@ export type Database = {
           raw_total?: number | null
           scale50?: number | null
           test_result_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      student_feedback: {
+        Row: {
+          approved_at: string | null
+          content: string
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_approved: boolean
+          rating: number
+          score_image_url: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_approved?: boolean
+          rating: number
+          score_image_url?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_approved?: boolean
+          rating?: number
+          score_image_url?: string | null
           user_id?: string
         }
         Relationships: []
