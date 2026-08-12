@@ -34,6 +34,62 @@ const SKILLS: { key: SkillKey; label: string; parts: string[] }[] = [
 const skillLabel = (k: string) => SKILLS.find((s) => s.key === k)?.label || k;
 const partsOf = (k: SkillKey) => SKILLS.find((s) => s.key === k)?.parts || ["Part 1"];
 
+/* 18 ô nhập trải sẵn, gom theo 5 khối kỹ năng */
+const SLOT_GROUPS: { skill: SkillKey; label: string; slots: { part: string; label: string }[] }[] = [
+  {
+    skill: "speaking",
+    label: "Speaking",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Personal" },
+      { part: "Part 2", label: "Part 2 — Describe a picture" },
+      { part: "Part 3", label: "Part 3 — Compare pictures" },
+      { part: "Part 4", label: "Part 4 — Opinion" },
+    ],
+  },
+  {
+    skill: "listening",
+    label: "Listening",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Word recognition" },
+      { part: "Part 2", label: "Part 2 — Matching" },
+      { part: "Part 3", label: "Part 3 — Conversations" },
+      { part: "Part 4", label: "Part 4 — Monologues" },
+    ],
+  },
+  {
+    skill: "grammar_vocab",
+    label: "Grammar & Vocabulary",
+    slots: [
+      { part: "Grammar", label: "Grammar" },
+      { part: "Vocabulary", label: "Vocabulary" },
+    ],
+  },
+  {
+    skill: "reading",
+    label: "Reading",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Sentence" },
+      { part: "Part 2", label: "Part 2 — Cohesion" },
+      { part: "Part 3", label: "Part 3 — Gap fill" },
+      { part: "Part 4", label: "Part 4 — Long text" },
+    ],
+  },
+  {
+    skill: "writing",
+    label: "Writing",
+    slots: [
+      { part: "Part 1", label: "Part 1 — Short answers" },
+      { part: "Part 2", label: "Part 2 — Social media" },
+      { part: "Part 3", label: "Part 3 — Three questions" },
+      { part: "Part 4", label: "Part 4 — Emails" },
+    ],
+  },
+];
+
+const slotKey = (skill: string, part: string) => `${skill}|${part}`;
+const emptySlots = (): Record<string, string> => ({});
+
+
 type Item = { id?: string; skill: SkillKey; part: string; topic: string };
 type ReviewRow = {
   id: string;
@@ -77,8 +133,11 @@ const ReviewsPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [examDate, setExamDate] = useState(todayISO());
   const [note, setNote] = useState("");
-  const [items, setItems] = useState<Item[]>([{ skill: "speaking", part: "Part 1", topic: "" }]);
+  const [mode, setMode] = useState<"free" | "parts">("free");
+  const [freeText, setFreeText] = useState("");
+  const [slots, setSlots] = useState<Record<string, string>>(emptySlots());
   const [saving, setSaving] = useState(false);
+
 
   const load = useCallback(async () => {
     if (!user) {
@@ -102,48 +161,74 @@ const ReviewsPage = () => {
     [rows, user, examDate],
   );
 
+  const hydrate = useCallback((r: ReviewRow) => {
+    const nextSlots = emptySlots();
+    (r.items || []).forEach((i) => {
+      if (i.topic?.trim()) nextSlots[slotKey(i.skill, i.part)] = i.topic;
+    });
+    setSlots(nextSlots);
+    if ((r.items || []).length > 0) {
+      setMode("parts");
+      setFreeText("");
+      setNote(r.note || "");
+    } else {
+      setMode("free");
+      setFreeText(r.note || "");
+      setNote("");
+    }
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     if (existingForDate && editingId !== existingForDate.id) {
       setEditingId(existingForDate.id);
-      setNote(existingForDate.note || "");
-      setItems(
-        existingForDate.items.length
-          ? existingForDate.items.map((i) => ({ skill: i.skill, part: i.part, topic: i.topic }))
-          : [{ skill: "speaking", part: "Part 1", topic: "" }],
-      );
+      hydrate(existingForDate);
     } else if (!existingForDate && editingId) {
       setEditingId(null);
     }
-  }, [open, existingForDate, editingId]);
+  }, [open, existingForDate, editingId, hydrate]);
 
   const openCreate = () => {
     setExamDate(todayISO());
     setEditingId(null);
     setNote("");
-    setItems([{ skill: "speaking", part: "Part 1", topic: "" }]);
+    setMode("free");
+    setFreeText("");
+    setSlots(emptySlots());
     setOpen(true);
   };
 
   const openEdit = (r: ReviewRow) => {
     setExamDate(r.exam_date);
     setEditingId(r.id);
-    setNote(r.note || "");
-    setItems(
-      r.items.length
-        ? r.items.map((i) => ({ skill: i.skill, part: i.part, topic: i.topic }))
-        : [{ skill: "speaking", part: "Part 1", topic: "" }],
-    );
+    hydrate(r);
     setOpen(true);
   };
 
+  const filledSlots = useMemo(
+    () =>
+      SLOT_GROUPS.flatMap((g) =>
+        g.slots.map((s) => ({ skill: g.skill, part: s.part, topic: (slots[slotKey(g.skill, s.part)] || "").trim() })),
+      ).filter((s) => s.topic.length > 0),
+    [slots],
+  );
+
+  const canSubmit = mode === "free" ? freeText.trim().length > 0 : filledSlots.length > 0;
+
   const save = async () => {
     if (!user) return;
-    const clean = items
-      .map((i) => ({ ...i, topic: i.topic.trim() }))
-      .filter((i) => i.topic.length > 0);
-    if (!clean.length) {
-      toast.error("Cần ít nhất một dòng có topic.");
+    const clean: Item[] = mode === "parts" ? (filledSlots as Item[]) : [];
+    const finalNote =
+      mode === "free"
+        ? [freeText.trim(), note.trim()].filter(Boolean).join("\n\n")
+        : note.trim();
+
+    if (mode === "free" && !freeText.trim()) {
+      toast.error("Bạn hãy gõ lại nội dung đề bạn còn nhớ nhé.");
+      return;
+    }
+    if (mode === "parts" && !clean.length) {
+      toast.error("Cần điền ít nhất một part.");
       return;
     }
     setSaving(true);
@@ -152,23 +237,25 @@ const ReviewsPage = () => {
       if (reviewId) {
         const { error } = await supabase
           .from("exam_reviews")
-          .update({ note: note.trim() || null })
+          .update({ note: finalNote || null })
           .eq("id", reviewId);
         if (error) throw error;
         await supabase.from("exam_review_items").delete().eq("review_id", reviewId);
       } else {
         const { data, error } = await supabase
           .from("exam_reviews")
-          .insert({ user_id: user.id, exam_date: examDate, note: note.trim() || null })
+          .insert({ user_id: user.id, exam_date: examDate, note: finalNote || null })
           .select("id")
           .single();
         if (error) throw error;
         reviewId = data.id;
       }
-      const { error: itemsErr } = await supabase
-        .from("exam_review_items")
-        .insert(clean.map((i) => ({ review_id: reviewId, skill: i.skill, part: i.part, topic: i.topic })));
-      if (itemsErr) throw itemsErr;
+      if (clean.length) {
+        const { error: itemsErr } = await supabase
+          .from("exam_review_items")
+          .insert(clean.map((i) => ({ review_id: reviewId, skill: i.skill, part: i.part, topic: i.topic })));
+        if (itemsErr) throw itemsErr;
+      }
       toast.success(editingId ? "Đã cập nhật review của bạn." : "Đã chia sẻ, cảm ơn bạn nhiều!");
       setOpen(false);
       load();
@@ -178,6 +265,7 @@ const ReviewsPage = () => {
       setSaving(false);
     }
   };
+
 
   const remove = async (r: ReviewRow) => {
     if (!confirm("Xoá review này?")) return;
@@ -344,26 +432,29 @@ const ReviewsPage = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-xs uppercase text-muted-foreground">
-                              <th className="py-2 pr-4 font-medium">Kỹ năng</th>
-                              <th className="py-2 pr-4 font-medium">Part</th>
-                              <th className="py-2 font-medium">Topic</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {r.items.map((i, idx) => (
-                              <tr key={i.id || idx} className="border-t border-border/60">
-                                <td className="py-2 pr-4 whitespace-nowrap">{skillLabel(i.skill)}</td>
-                                <td className="py-2 pr-4 whitespace-nowrap">{i.part}</td>
-                                <td className="py-2">{i.topic}</td>
+                      {r.items && r.items.length > 0 && (
+                        <div className="mt-4 overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-xs uppercase text-muted-foreground">
+                                <th className="py-2 pr-4 font-medium">Kỹ năng</th>
+                                <th className="py-2 pr-4 font-medium">Part</th>
+                                <th className="py-2 font-medium">Topic</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {r.items.map((i, idx) => (
+                                <tr key={i.id || idx} className="border-t border-border/60">
+                                  <td className="py-2 pr-4 whitespace-nowrap">{skillLabel(i.skill)}</td>
+                                  <td className="py-2 pr-4 whitespace-nowrap">{i.part}</td>
+                                  <td className="py-2">{i.topic}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
 
                       {r.note && (
                         <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap border-t border-border/60 pt-3">
@@ -404,69 +495,62 @@ const ReviewsPage = () => {
               )}
             </div>
 
-            <div className="space-y-3">
-              {items.map((it, idx) => (
-                <div key={idx} className="grid gap-2 sm:grid-cols-[9rem_8rem_1fr_auto] items-center">
-                  <Select
-                    value={it.skill}
-                    onValueChange={(v) =>
-                      setItems((arr) =>
-                        arr.map((x, i) =>
-                          i === idx ? { ...x, skill: v as SkillKey, part: partsOf(v as SkillKey)[0] } : x,
-                        ),
-                      )
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SKILLS.map((s) => (
-                        <SelectItem key={s.key} value={s.key}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={it.part}
-                    onValueChange={(v) => setItems((arr) => arr.map((x, i) => (i === idx ? { ...x, part: v } : x)))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {partsOf(it.skill).map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    placeholder="Gõ topic bạn còn nhớ…"
-                    value={it.topic}
-                    onChange={(e) => setItems((arr) => arr.map((x, i) => (i === idx ? { ...x, topic: e.target.value } : x)))}
-                  />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => setItems((arr) => (arr.length > 1 ? arr.filter((_, i) => i !== idx) : arr))}
-                    aria-label="Xoá dòng"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1"
-                onClick={() => setItems((arr) => [...arr, { skill: "speaking", part: "Part 1", topic: "" }])}
+            {/* Hai chế độ */}
+            <div className="inline-flex rounded-lg border border-border p-1 bg-muted/40">
+              <button
+                type="button"
+                onClick={() => setMode("free")}
+                className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                  mode === "free" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
+                }`}
               >
-                <Plus className="w-3.5 h-3.5" /> Thêm dòng
-              </Button>
+                Gõ tự do
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("parts")}
+                className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                  mode === "parts" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
+                }`}
+              >
+                Review theo từng part
+              </button>
             </div>
+
+            {mode === "free" ? (
+              <Textarea
+                rows={9}
+                value={freeText}
+                onChange={(e) => setFreeText(e.target.value)}
+                placeholder="VD: Speaking Part 2 mình được tả cái ảnh nhóm bạn đi biển, Part 4 hỏi về thói quen đọc sách. Reading Part 4 bài về môi trường hơi dài…"
+              />
+            ) : (
+              <div className="space-y-5">
+                <p className="text-xs text-muted-foreground">
+                  Nhớ được part nào điền part đó, bỏ trống phần không nhớ cũng được.
+                </p>
+                {SLOT_GROUPS.map((g) => (
+                  <div key={g.skill} className="space-y-2">
+                    <div className="text-sm font-semibold text-foreground">{g.label}</div>
+                    {g.slots.map((s) => {
+                      const k = slotKey(g.skill, s.part);
+                      return (
+                        <div key={k} className="grid gap-2 sm:grid-cols-[13rem_1fr] items-center">
+                          <div className="text-sm text-muted-foreground">{s.label}</div>
+                          <Input
+                            placeholder="điền nội dung bạn nhớ, không nhớ thì để trống nha..."
+                            value={slots[k] || ""}
+                            onChange={(e) => setSlots((prev) => ({ ...prev, [k]: e.target.value }))}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+                <p className="text-xs font-medium text-primary">Đã điền {filledSlots.length} part</p>
+              </div>
+            )}
+
 
             <div>
               <div className="text-sm font-medium mb-2">Ghi chú chung (không bắt buộc)</div>
@@ -478,7 +562,7 @@ const ReviewsPage = () => {
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               Huỷ
             </Button>
-            <Button onClick={save} disabled={saving} className="gap-2">
+            <Button onClick={save} disabled={saving || !canSubmit} className="gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingId ? "Lưu thay đổi" : "Chia sẻ ngay"}
             </Button>
