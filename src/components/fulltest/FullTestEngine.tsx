@@ -817,11 +817,13 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           e.sub.items.forEach((it, itIdx) => {
             speakingItemSpecsInitial.push({
               questionText: it.spec.questionText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
+              part: e.sub.partType,
               recordingPath: null,
               ai: null,
             });
           });
         });
+
         const initialSnap = buildReviewSnapshot({
           skill: "speaking",
           part: null,
