@@ -69,6 +69,8 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Dictation = lazy(() => import("./pages/Dictation"));
 const MySets = lazy(() => import("./pages/MySets"));
+const FeedbackPage = lazy(() => import("./pages/Feedback"));
+const ReviewsPage = lazy(() => import("./pages/Reviews"));
 
 
 const queryClient = new QueryClient({
@@ -155,6 +157,8 @@ const App = () => (
                       <Route path="/history/:id" element={<HistoryDetail />} />
                       <Route path="/progress" element={<ProgressPage />} />
                       <Route path="/pricing" element={<PricingPage />} />
+                      <Route path="/feedback" element={<FeedbackPage />} />
+                      <Route path="/reviews" element={<ReviewsPage />} />
                       <Route path="/meo-thi-aptis" element={<Blog />} />
                       <Route path="/meo-thi-aptis/:slug" element={<BlogPost />} />
                       <Route path="/blog" element={<Navigate to="/meo-thi-aptis" replace />} />
