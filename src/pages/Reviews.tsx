@@ -624,15 +624,36 @@ const ReviewsPage = () => {
 
           <div className="space-y-4">
             <div>
-              <div className="text-sm font-medium mb-2">Ngày thi</div>
-              <Input
-                type="date"
-                value={examDate}
-                max={todayISO()}
-                disabled={!!editingId}
-                onChange={(e) => setExamDate(e.target.value)}
-                className="w-48"
-              />
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <div className="text-sm font-medium mb-2">Ngày thi</div>
+                  <Input
+                    type="date"
+                    value={examDate}
+                    max={todayISO()}
+                    disabled={!!editingId}
+                    onChange={(e) => setExamDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <div className="text-sm font-medium mb-2">Ca thi</div>
+                  <Input
+                    value={examSession}
+                    maxLength={120}
+                    onChange={(e) => setExamSession(e.target.value)}
+                    placeholder="VD: 8h30 sáng"
+                  />
+                </div>
+                <div>
+                  <div className="text-sm font-medium mb-2">Địa điểm thi</div>
+                  <Input
+                    value={examLocation}
+                    maxLength={120}
+                    onChange={(e) => setExamLocation(e.target.value)}
+                    placeholder="VD: BC Hà Nội - 20 Thụy Khuê"
+                  />
+                </div>
+              </div>
               {editingId && (
                 <p className="text-xs text-[#B26A00] mt-2">
                   Bạn đã chia sẻ đề ngày này rồi — đang sửa lại.
