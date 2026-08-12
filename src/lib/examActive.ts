@@ -50,3 +50,29 @@ export function markExamActive(): () => void {
     sync();
   };
 }
+
+/**
+ * Marks a Full Test session as running. A Full Test carries answers across
+ * skills, so a reload there DOES lose data — even on an instructions screen.
+ */
+let fullTestCount = 0;
+type FullTestWindow = Window & { __ktFullTestActive?: boolean };
+
+export function isFullTestActive(): boolean {
+  if (typeof window === "undefined") return false;
+  return !!(window as FullTestWindow).__ktFullTestActive;
+}
+
+export function markFullTestActive(): () => void {
+  fullTestCount++;
+  if (typeof window !== "undefined") (window as FullTestWindow).__ktFullTestActive = true;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    fullTestCount = Math.max(0, fullTestCount - 1);
+    if (typeof window !== "undefined") {
+      (window as FullTestWindow).__ktFullTestActive = fullTestCount > 0;
+    }
+  };
+}

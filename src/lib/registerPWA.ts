@@ -7,7 +7,7 @@
 // - When the student navigates to a non-exam page with an update waiting,
 //   apply it silently (reloading there loses nothing).
 import { toast } from "sonner";
-import { EXAM_ACTIVE_EVENT, isExamActive } from "@/lib/examActive";
+import { EXAM_ACTIVE_EVENT, isExamActive, isFullTestActive } from "@/lib/examActive";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
 const DISMISS_KEY = "kt-pwa-update-dismissed";
@@ -17,6 +17,30 @@ const LOCATION_EVENT = "kt-locationchange";
 // Real build id (injected by vite define). registration.waiting.scriptURL is
 // always "/sw.js", so it can't distinguish builds.
 const BUILD_ID = typeof __BUILD_ID__ !== "undefined" ? __BUILD_ID__ : "dev";
+
+// Module-level handles so exam entry screens can force-apply a waiting update.
+let updatePending = false;
+let applyUpdate: ((reload: boolean) => Promise<void>) | null = null;
+
+/**
+ * Apply a waiting service-worker update RIGHT NOW (reloads the page).
+ * Call this only from screens where nothing can be lost — typically the exam
+ * instructions/prompt screen, BEFORE the student presses start. Never called
+ * automatically while an exam is in progress.
+ *
+ * Returns true when an update was applied (page is about to reload).
+ */
+export function applyUpdateIfPending(): boolean {
+  if (!updatePending || !applyUpdate) return false;
+  // A Full Test keeps answers across skills → a reload would lose them.
+  if (isFullTestActive()) return false;
+  updatePending = false;
+  try {
+    toast.dismiss("pwa-update");
+  } catch {}
+  void applyUpdate(true);
+  return true;
+}
 
 function isDismissed(buildId: string) {
   try {
@@ -70,8 +94,6 @@ export function registerPWA() {
   // Dynamic import so dev builds don't break on the virtual module
   import("virtual:pwa-register")
     .then(({ registerSW }) => {
-      let updatePending = false;
-
       const showToast = () => {
         if (!updatePending) return;
         if (isExamActive()) return;
@@ -122,6 +144,7 @@ export function registerPWA() {
         immediate: true,
         onNeedRefresh() {
           updatePending = true;
+          applyUpdate = updateSW;
           showToast();
         },
         onRegisteredSW(_swUrl, registration) {
@@ -133,6 +156,7 @@ export function registerPWA() {
           }
         },
       });
+      applyUpdate = updateSW;
     })
     .catch(() => {
       /* ignore if virtual module not available */
