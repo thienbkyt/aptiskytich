@@ -448,115 +448,169 @@ const ReviewsPage = () => {
           </div>
         </section>
 
-        <section className="section-container py-8 space-y-8">
+        <section className="section-container py-8 space-y-3">
           {loading ? (
-            [0, 1].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)
+            [0, 1].map((i) => <Skeleton key={i} className="h-16 rounded-xl" />)
           ) : groups.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
               Chưa có review nào phù hợp.
             </div>
           ) : (
-            groups.map(([date, list]) => (
-              <div key={date}>
-                <div className="flex items-center gap-3 mb-3">
-                  <h2 className="text-lg font-heading font-bold text-foreground">Ngày thi {formatDate(date)}</h2>
-                  <Badge variant="outline">{list.length} review</Badge>
+            groups.map(([date, list]) => {
+              const dateOpen = filterActive || openDates.has(date);
+              return (
+                <div key={date} className="rounded-xl border border-border bg-card overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenDates((prev) => {
+                        const next = new Set(prev);
+                        next.has(date) ? next.delete(date) : next.add(date);
+                        return next;
+                      })
+                    }
+                    className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/40 transition-colors"
+                  >
+                    <ChevronRight
+                      className={`w-4 h-4 text-muted-foreground transition-transform ${dateOpen ? "rotate-90" : ""}`}
+                    />
+                    <span className="text-base font-heading font-bold text-foreground">
+                      Ngày thi {formatDate(date)}
+                    </span>
+                    <Badge variant="outline" className="ml-auto">{list.length} review</Badge>
+                  </button>
+
+                  {dateOpen && (
+                    <div className="border-t border-border divide-y divide-border">
+                      {list.map((r) => {
+                        const rowOpen = filterActive || openRows.has(r.id);
+                        const meta = [r.exam_session, r.exam_location]
+                          .map((x) => (x || "").trim())
+                          .filter(Boolean);
+                        return (
+                          <div key={r.id}>
+                            <div className="flex flex-wrap items-center gap-2 px-4 sm:px-5 py-3">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setOpenRows((prev) => {
+                                    const next = new Set(prev);
+                                    next.has(r.id) ? next.delete(r.id) : next.add(r.id);
+                                    return next;
+                                  })
+                                }
+                                className="flex items-center gap-2 text-left flex-1 min-w-0"
+                              >
+                                <ChevronRight
+                                  className={`w-4 h-4 shrink-0 text-muted-foreground transition-transform ${rowOpen ? "rotate-90" : ""}`}
+                                />
+                                <span className="text-sm truncate">
+                                  <span className="font-semibold text-foreground">{r.author_name || "Học viên"}</span>
+                                  {meta.map((m) => (
+                                    <span key={m} className="text-muted-foreground"> · {m}</span>
+                                  ))}
+                                </span>
+                                {r.hidden_at && (
+                                  <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal shrink-0">
+                                    {r.user_id === user?.id && !isAdmin
+                                      ? "Đang ẩn - chỉ mình bạn thấy"
+                                      : r.hidden_reason
+                                        ? `Đang ẩn · ${r.hidden_reason}`
+                                        : "Đang ẩn"}
+                                  </Badge>
+                                )}
+                              </button>
+                              <div className="flex items-center gap-2">
+                                {r.user_id === user?.id && (
+                                  <>
+                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openEdit(r)}>
+                                      <Pencil className="w-3.5 h-3.5" /> Sửa
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => remove(r)}>
+                                      <Trash2 className="w-3.5 h-3.5" /> Xoá
+                                    </Button>
+                                  </>
+                                )}
+                                {isAdmin && (
+                                  <>
+                                    {r.hidden_at ? (
+                                      <Button size="sm" variant="outline" className="gap-1" disabled={modBusy} onClick={() => applyHidden(r, false)}>
+                                        <Eye className="w-3.5 h-3.5" /> Bỏ ẩn
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-1"
+                                        onClick={() => {
+                                          setHideReason("");
+                                          setHideTarget(r);
+                                        }}
+                                      >
+                                        <EyeOff className="w-3.5 h-3.5" /> Ẩn
+                                      </Button>
+                                    )}
+                                    <Button size="sm" variant="outline" className="gap-1 text-primary" onClick={() => setDelTarget(r)}>
+                                      <Trash2 className="w-3.5 h-3.5" /> Xoá
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {rowOpen && (
+                              <div className="px-4 sm:px-5 pb-5 pt-1 bg-muted/20">
+                                <div className="text-xs text-muted-foreground">
+                                  Gửi lúc {formatTime(r.created_at)}
+                                </div>
+
+                                {r.items && r.items.length > 0 && (
+                                  <div className="mt-3 overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                      <thead>
+                                        <tr className="text-left text-xs uppercase text-muted-foreground">
+                                          <th className="py-2 pr-4 font-medium">Kỹ năng</th>
+                                          <th className="py-2 pr-4 font-medium">Part</th>
+                                          <th className="py-2 font-medium">Topic</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {r.items.map((i, idx) => (
+                                          <tr key={i.id || idx} className="border-t border-border/60">
+                                            <td className="py-2 pr-4 whitespace-nowrap">{skillLabel(i.skill)}</td>
+                                            <td className="py-2 pr-4 whitespace-nowrap">{i.part}</td>
+                                            <td className="py-2">{i.topic}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+
+                                {r.note && (
+                                  <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap">{r.note}</p>
+                                )}
+
+                                {r.user_id !== user?.id && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="gap-1 mt-3 text-muted-foreground"
+                                    onClick={() => report(r)}
+                                  >
+                                    <Flag className="w-3.5 h-3.5" /> Báo cáo nội dung
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-4">
-                  {list.map((r) => (
-                    <article key={r.id} className="rounded-xl border border-border bg-card p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="text-sm flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-foreground">{r.author_name || "Học viên"}</span>
-                          <span className="text-muted-foreground">· gửi lúc {formatTime(r.created_at)}</span>
-                          {r.hidden_at && (
-                            <Badge variant="secondary" className="bg-muted text-muted-foreground font-normal">
-                              {r.user_id === user?.id && !isAdmin
-                                ? "Đang ẩn - chỉ mình bạn thấy"
-                                : r.hidden_reason
-                                  ? `Đang ẩn · ${r.hidden_reason}`
-                                  : "Đang ẩn"}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {r.user_id === user?.id && (
-                            <>
-                              <Button size="sm" variant="outline" className="gap-1" onClick={() => openEdit(r)}>
-                                <Pencil className="w-3.5 h-3.5" /> Sửa
-                              </Button>
-                              <Button size="sm" variant="outline" className="gap-1" onClick={() => remove(r)}>
-                                <Trash2 className="w-3.5 h-3.5" /> Xoá
-                              </Button>
-                            </>
-                          )}
-                          {r.user_id !== user?.id && (
-                            <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={() => report(r)}>
-                              <Flag className="w-3.5 h-3.5" /> Báo cáo nội dung
-                            </Button>
-                          )}
-                          {isAdmin && (
-                            <>
-                              {r.hidden_at ? (
-                                <Button size="sm" variant="outline" className="gap-1" disabled={modBusy} onClick={() => applyHidden(r, false)}>
-                                  <Eye className="w-3.5 h-3.5" /> Bỏ ẩn
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="gap-1"
-                                  onClick={() => {
-                                    setHideReason("");
-                                    setHideTarget(r);
-                                  }}
-                                >
-                                  <EyeOff className="w-3.5 h-3.5" /> Ẩn
-                                </Button>
-                              )}
-                              <Button size="sm" variant="outline" className="gap-1 text-primary" onClick={() => setDelTarget(r)}>
-                                <Trash2 className="w-3.5 h-3.5" /> Xoá
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-
-                      {r.items && r.items.length > 0 && (
-                        <div className="mt-4 overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-left text-xs uppercase text-muted-foreground">
-                                <th className="py-2 pr-4 font-medium">Kỹ năng</th>
-                                <th className="py-2 pr-4 font-medium">Part</th>
-                                <th className="py-2 font-medium">Topic</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {r.items.map((i, idx) => (
-                                <tr key={i.id || idx} className="border-t border-border/60">
-                                  <td className="py-2 pr-4 whitespace-nowrap">{skillLabel(i.skill)}</td>
-                                  <td className="py-2 pr-4 whitespace-nowrap">{i.part}</td>
-                                  <td className="py-2">{i.topic}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-
-
-                      {r.note && (
-                        <p className="mt-3 text-sm text-foreground/90 whitespace-pre-wrap border-t border-border/60 pt-3">
-                          {r.note}
-                        </p>
-                      )}
-                    </article>
-                  ))}
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </section>
       </main>
