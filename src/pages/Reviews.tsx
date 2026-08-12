@@ -562,7 +562,7 @@ const ReviewsPage = () => {
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               Huỷ
             </Button>
-            <Button onClick={save} disabled={saving} className="gap-2">
+            <Button onClick={save} disabled={saving || !canSubmit} className="gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingId ? "Lưu thay đổi" : "Chia sẻ ngay"}
             </Button>
