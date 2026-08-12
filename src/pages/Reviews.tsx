@@ -100,6 +100,8 @@ type ReviewRow = {
   author_name: string | null;
   hidden_at?: string | null;
   hidden_reason?: string | null;
+  exam_location?: string | null;
+  exam_session?: string | null;
   items: Item[];
 };
 
@@ -134,11 +136,15 @@ const ReviewsPage = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [examDate, setExamDate] = useState(todayISO());
+  const [examSession, setExamSession] = useState("");
+  const [examLocation, setExamLocation] = useState("");
   const [note, setNote] = useState("");
   const [mode, setMode] = useState<"free" | "parts">("free");
   const [freeText, setFreeText] = useState("");
   const [slots, setSlots] = useState<Record<string, string>>(emptySlots());
   const [saving, setSaving] = useState(false);
+  const [openDates, setOpenDates] = useState<Set<string>>(new Set());
+  const [openRows, setOpenRows] = useState<Set<string>>(new Set());
 
   /* Admin moderation state */
   const [hideTarget, setHideTarget] = useState<ReviewRow | null>(null);
@@ -175,6 +181,8 @@ const ReviewsPage = () => {
       if (i.topic?.trim()) nextSlots[slotKey(i.skill, i.part)] = i.topic;
     });
     setSlots(nextSlots);
+    setExamSession(r.exam_session || "");
+    setExamLocation(r.exam_location || "");
     if ((r.items || []).length > 0) {
       setMode("parts");
       setFreeText("");
@@ -202,6 +210,8 @@ const ReviewsPage = () => {
     setNote("");
     setMode("free");
     setFreeText("");
+    setExamSession("");
+    setExamLocation("");
     setSlots(emptySlots());
     setOpen(true);
   };
@@ -242,17 +252,19 @@ const ReviewsPage = () => {
     setSaving(true);
     try {
       let reviewId = editingId;
+      const sess = examSession.trim().slice(0, 120) || null;
+      const loc = examLocation.trim().slice(0, 120) || null;
       if (reviewId) {
         const { error } = await supabase
           .from("exam_reviews")
-          .update({ note: finalNote || null })
+          .update({ note: finalNote || null, exam_session: sess, exam_location: loc })
           .eq("id", reviewId);
         if (error) throw error;
         await supabase.from("exam_review_items").delete().eq("review_id", reviewId);
       } else {
         const { data, error } = await supabase
           .from("exam_reviews")
-          .insert({ user_id: user.id, exam_date: examDate, note: finalNote || null })
+          .insert({ user_id: user.id, exam_date: examDate, note: finalNote || null, exam_session: sess, exam_location: loc })
           .select("id")
           .single();
         if (error) throw error;
