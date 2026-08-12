@@ -2991,6 +2991,32 @@ export type Database = {
       }
       is_premium: { Args: { p_uid: string }; Returns: boolean }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
+      list_exam_reviews: {
+        Args: never
+        Returns: {
+          author_name: string
+          created_at: string
+          exam_date: string
+          id: string
+          items: Json
+          note: string
+          user_id: string
+        }[]
+      }
+      list_student_feedback: {
+        Args: never
+        Returns: {
+          author_avatar: string
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_mine: boolean
+          rating: number
+          score_image_url: string
+        }[]
+      }
       log_feature_usage: {
         Args: { p_key: string; p_ref?: string; p_scope?: string }
         Returns: undefined
