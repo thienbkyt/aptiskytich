@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { applyUpdateIfPending } from "@/lib/registerPWA";
 import type { QuestionItem } from "@/components/reading/BottomNavBar";
 
 interface QuestionSection {
@@ -32,6 +33,13 @@ const ExamInstructions = ({
   useEffect(() => {
     document.body.classList.add("exam-mode");
     return () => document.body.classList.remove("exam-mode");
+  }, []);
+
+  // Safe moment to ship a pending app update: the student is still reading the
+  // instructions, so no answers exist yet. Prevents stale bundles from running
+  // for a whole session out of the PWA cache.
+  useEffect(() => {
+    applyUpdateIfPending();
   }, []);
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { markExamActive } from "@/lib/examActive";
+import { applyUpdateIfPending } from "@/lib/registerPWA";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import SpeakingHeader from "./SpeakingHeader";
 import BottomNavBar from "@/components/reading/BottomNavBar";
@@ -300,6 +301,13 @@ const SpeakingExamEngine = ({
 
 
   useEffect(() => markExamActive(), []);
+
+  // Pending app update? Apply it while the student is on the intro screen
+  // (nothing recorded yet). Never during "prompt"/recording phases.
+  useEffect(() => {
+    if (phase !== "start" && phase !== "instructions") return;
+    applyUpdateIfPending();
+  }, [phase]);
 
   // Initialize recordings array
   useEffect(() => {

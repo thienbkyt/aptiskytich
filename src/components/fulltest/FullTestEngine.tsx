@@ -1,5 +1,5 @@
 import { QuotaExceededError } from "@/lib/quotaError";
-import { markExamActive } from "@/lib/examActive";
+import { markExamActive, markFullTestActive } from "@/lib/examActive";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { WRITING_TOTAL_TIME } from "@/lib/writingTime";
 import { useExitWarning } from "@/hooks/useExitWarning";
@@ -197,9 +197,11 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   useEffect(() => {
     document.body.classList.add("full-test-active");
     const clearExamFlag = markExamActive();
+    const clearFullTestFlag = markFullTestActive();
     return () => {
       document.body.classList.remove("full-test-active");
       clearExamFlag();
+      clearFullTestFlag();
     };
   }, []);
 
