@@ -492,69 +492,62 @@ const ReviewsPage = () => {
               )}
             </div>
 
-            <div className="space-y-3">
-              {items.map((it, idx) => (
-                <div key={idx} className="grid gap-2 sm:grid-cols-[9rem_8rem_1fr_auto] items-center">
-                  <Select
-                    value={it.skill}
-                    onValueChange={(v) =>
-                      setItems((arr) =>
-                        arr.map((x, i) =>
-                          i === idx ? { ...x, skill: v as SkillKey, part: partsOf(v as SkillKey)[0] } : x,
-                        ),
-                      )
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SKILLS.map((s) => (
-                        <SelectItem key={s.key} value={s.key}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={it.part}
-                    onValueChange={(v) => setItems((arr) => arr.map((x, i) => (i === idx ? { ...x, part: v } : x)))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {partsOf(it.skill).map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    placeholder="Gõ topic bạn còn nhớ…"
-                    value={it.topic}
-                    onChange={(e) => setItems((arr) => arr.map((x, i) => (i === idx ? { ...x, topic: e.target.value } : x)))}
-                  />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    onClick={() => setItems((arr) => (arr.length > 1 ? arr.filter((_, i) => i !== idx) : arr))}
-                    aria-label="Xoá dòng"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1"
-                onClick={() => setItems((arr) => [...arr, { skill: "speaking", part: "Part 1", topic: "" }])}
+            {/* Hai chế độ */}
+            <div className="inline-flex rounded-lg border border-border p-1 bg-muted/40">
+              <button
+                type="button"
+                onClick={() => setMode("free")}
+                className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                  mode === "free" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
+                }`}
               >
-                <Plus className="w-3.5 h-3.5" /> Thêm dòng
-              </Button>
+                Gõ tự do
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("parts")}
+                className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                  mode === "parts" ? "bg-background text-primary shadow-sm" : "text-muted-foreground"
+                }`}
+              >
+                Review theo từng part
+              </button>
             </div>
+
+            {mode === "free" ? (
+              <Textarea
+                rows={9}
+                value={freeText}
+                onChange={(e) => setFreeText(e.target.value)}
+                placeholder="VD: Speaking Part 2 mình được tả cái ảnh nhóm bạn đi biển, Part 4 hỏi về thói quen đọc sách. Reading Part 4 bài về môi trường hơi dài…"
+              />
+            ) : (
+              <div className="space-y-5">
+                <p className="text-xs text-muted-foreground">
+                  Nhớ được part nào điền part đó, bỏ trống phần không nhớ cũng được.
+                </p>
+                {SLOT_GROUPS.map((g) => (
+                  <div key={g.skill} className="space-y-2">
+                    <div className="text-sm font-semibold text-foreground">{g.label}</div>
+                    {g.slots.map((s) => {
+                      const k = slotKey(g.skill, s.part);
+                      return (
+                        <div key={k} className="grid gap-2 sm:grid-cols-[13rem_1fr] items-center">
+                          <div className="text-sm text-muted-foreground">{s.label}</div>
+                          <Input
+                            placeholder="điền nội dung bạn nhớ, không nhớ thì để trống nha..."
+                            value={slots[k] || ""}
+                            onChange={(e) => setSlots((prev) => ({ ...prev, [k]: e.target.value }))}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+                <p className="text-xs font-medium text-primary">Đã điền {filledSlots.length} part</p>
+              </div>
+            )}
+
 
             <div>
               <div className="text-sm font-medium mb-2">Ghi chú chung (không bắt buộc)</div>
