@@ -297,6 +297,33 @@ const ReviewsPage = () => {
     toast.success("Đã gửi báo cáo, đội ngũ sẽ kiểm tra.");
   };
 
+  const applyHidden = async (r: ReviewRow, hidden: boolean, reason?: string) => {
+    setModBusy(true);
+    const { error } = await supabase.rpc("admin_set_review_hidden", {
+      p_review_id: r.id,
+      p_hidden: hidden,
+      p_reason: reason?.trim() || null,
+    });
+    setModBusy(false);
+    if (error) return toast.error(error.message || "Không thực hiện được.");
+    toast.success(hidden ? "Đã ẩn review." : "Đã bỏ ẩn review.");
+    setHideTarget(null);
+    setHideReason("");
+    load();
+  };
+
+  const adminDelete = async (r: ReviewRow) => {
+    setModBusy(true);
+    const { error } = await supabase.rpc("admin_delete_review", { p_review_id: r.id });
+    setModBusy(false);
+    if (error) return toast.error(error.message || "Không xoá được.");
+    toast.success("Đã xoá vĩnh viễn review.");
+    setDelTarget(null);
+    load();
+  };
+
+
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows
