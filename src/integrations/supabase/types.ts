@@ -787,6 +787,62 @@ export type Database = {
           },
         ]
       }
+      exam_review_items: {
+        Row: {
+          id: string
+          part: string
+          review_id: string
+          skill: string
+          topic: string
+        }
+        Insert: {
+          id?: string
+          part: string
+          review_id: string
+          skill: string
+          topic: string
+        }
+        Update: {
+          id?: string
+          part?: string
+          review_id?: string
+          skill?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_review_items_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "exam_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_reviews: {
+        Row: {
+          created_at: string
+          exam_date: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       exam_sets: {
         Row: {
           access_tier: string
@@ -1906,6 +1962,42 @@ export type Database = {
         }
         Relationships: []
       }
+      student_feedback: {
+        Row: {
+          approved_at: string | null
+          content: string
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_approved: boolean
+          rating: number
+          score_image_url: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_approved?: boolean
+          rating: number
+          score_image_url?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_approved?: boolean
+          rating?: number
+          score_image_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -2899,6 +2991,32 @@ export type Database = {
       }
       is_premium: { Args: { p_uid: string }; Returns: boolean }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
+      list_exam_reviews: {
+        Args: never
+        Returns: {
+          author_name: string
+          created_at: string
+          exam_date: string
+          id: string
+          items: Json
+          note: string
+          user_id: string
+        }[]
+      }
+      list_student_feedback: {
+        Args: never
+        Returns: {
+          author_avatar: string
+          author_name: string
+          content: string
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_mine: boolean
+          rating: number
+          score_image_url: string
+        }[]
+      }
       log_feature_usage: {
         Args: { p_key: string; p_ref?: string; p_scope?: string }
         Returns: undefined

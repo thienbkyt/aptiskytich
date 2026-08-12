@@ -6,6 +6,8 @@ interface PageMeta {
   /** Path-only, e.g. "/thi-thu". Will be prefixed with the production origin. */
   path?: string;
   ogImage?: string;
+  /** Set true for member-only pages that must stay out of search engines. */
+  noindex?: boolean;
 }
 
 const SITE = "https://aptiskytich.vn";
@@ -34,7 +36,7 @@ function upsertLink(rel: string, href: string) {
  * Set per-route title / description / canonical / og:* tags.
  * On unmount, falls back to the static head from index.html (no restore).
  */
-export function usePageMeta({ title, description, path, ogImage }: PageMeta) {
+export function usePageMeta({ title, description, path, ogImage, noindex }: PageMeta) {
   useEffect(() => {
     const url = path ? `${SITE}${path}` : SITE;
     document.title = title;
@@ -46,9 +48,10 @@ export function usePageMeta({ title, description, path, ogImage }: PageMeta) {
     upsertMeta("property", "og:type", "website");
     upsertMeta("name", "twitter:title", title);
     upsertMeta("name", "twitter:description", description);
+    upsertMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow");
     if (ogImage) {
       upsertMeta("property", "og:image", ogImage);
       upsertMeta("name", "twitter:image", ogImage);
     }
-  }, [title, description, path, ogImage]);
+  }, [title, description, path, ogImage, noindex]);
 }
