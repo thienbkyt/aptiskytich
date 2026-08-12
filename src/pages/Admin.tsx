@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle, Bell, Sparkles, Newspaper, ListMusic } from "lucide-react";
+import { Shield, Database, FileSpreadsheet, BookOpen, Combine, AlertTriangle, Bell, Sparkles, Newspaper, ListMusic, Inbox } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TestManager from "@/components/admin/TestManager";
@@ -69,6 +69,13 @@ const Admin = () => {
               >
                 <ListMusic className="w-4 h-4" />
                 Nghe chép chính tả
+              </Link>
+              <Link
+                to="/admin/inbox"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                <Inbox className="w-4 h-4" />
+                Hộp thư (báo lỗi & đề xuất)
               </Link>
               <Link
                 to="/admin/reports"

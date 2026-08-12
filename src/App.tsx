@@ -41,6 +41,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminReport = lazy(() => import("./pages/AdminReport"));
 const AdminReports = lazy(() => import("./pages/AdminReports"));
+const AdminInbox = lazy(() => import("./pages/AdminInbox"));
 const AdminReportPricing = lazy(() => import("./pages/AdminReportPricing"));
 const AdminStudents = lazy(() => import("./pages/AdminStudents"));
 const AdminNotifications = lazy(() => import("./pages/AdminNotifications"));
@@ -167,6 +168,7 @@ const App = () => (
                       <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
                       <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
                       <Route path="/admin/reports" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
+                      <Route path="/admin/inbox" element={<RequireAdmin><AdminInbox /></RequireAdmin>} />
                       <Route path="/admin/report/pricing" element={<RequireAdmin><AdminReportPricing /></RequireAdmin>} />
                       <Route path="/admin/students" element={<RequireAdmin><AdminStudents /></RequireAdmin>} />
                       <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
