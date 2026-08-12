@@ -132,6 +132,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_chinh_ta_20260812: {
+        Row: {
+          backed_up_at: string | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       backup_colloc_de01_20260812: {
         Row: {
           backed_up_at: string | null
@@ -193,6 +211,30 @@ export type Database = {
         Relationships: []
       }
       backup_wp1_mau_lech_20260811: {
+        Row: {
+          backed_up_at: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
+      backup_wp3_homeliving_20260812: {
         Row: {
           backed_up_at: string | null
           explanation: string | null
