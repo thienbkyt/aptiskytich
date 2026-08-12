@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { HeartHandshake, Plus, Trash2, Pencil, Flag, Loader2, Search } from "lucide-react";
+import { HeartHandshake, Plus, Trash2, Pencil, Flag, Loader2, Search, EyeOff, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
