@@ -686,13 +686,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         if (sub && !speakingV2PromisesByPartRef.current[currentPartIndex]) {
           const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
           const blobs = sub.items.map((it) => it.blob ?? null);
-          speakingV2PromisesByPartRef.current[currentPartIndex] =
-            gradeSpeakingPartV2(sub.partType, questions, blobs, {
-              sessionId: fullPartSessionRef.current,
-              fullTestSessionId: fullPartSessionRef.current,
-              testResultId: speakingTestResultIdByPartRef.current[currentPartIndex] ?? null,
-            });
+          const p = gradeSpeakingPartV2(sub.partType, questions, blobs, {
+            sessionId: fullPartSessionRef.current,
+            fullTestSessionId: fullPartSessionRef.current,
+            testResultId: speakingTestResultIdByPartRef.current[currentPartIndex] ?? null,
+          });
+          // Attach a no-op handler so a rejection here (e.g. quota exhausted)
+          // never surfaces as an unhandled promise rejection before the
+          // last-part flow awaits this promise and handles it properly.
+          p.catch((e) => {
+            if (e instanceof QuotaExceededError) setQuotaModal(e.info);
+          });
+          speakingV2PromisesByPartRef.current[currentPartIndex] = p;
         }
+
       } catch (e) {
         console.warn("[SkillFullPractice V2] background kick failed", e);
       }
