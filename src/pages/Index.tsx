@@ -108,7 +108,7 @@ const Index = () => {
 
       {/* Hero — light theme (landing only) */}
       <section
-        className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden"
+        className="relative pt-28 pb-14 md:pt-36 md:pb-20 overflow-hidden"
         style={{
           background:
             "linear-gradient(180deg, #FFF7F0 0%, #FFFBF6 55%, #FFFFFF 100%)",
@@ -265,7 +265,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats strip */}
+      {/* Stats strip + Trust bar */}
       <section className="relative py-10 md:py-14" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
           <motion.div
@@ -286,16 +286,11 @@ const Index = () => {
               </div>
             ))}
           </motion.div>
-        </div>
-      </section>
 
-      {/* Trust bar — 5 key advantages */}
-      <section className="relative py-8 md:py-10" style={{ background: "#FFFFFF" }}>
-        <div className="section-container">
           <motion.div
             variants={fadeUp} custom={0}
             initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="max-w-6xl mx-auto rounded-[22px] bg-white border border-[#F2E2D4] px-4 py-5 md:px-6 md:py-6"
+            className="max-w-6xl mx-auto rounded-[22px] bg-white border border-[#F2E2D4] px-4 py-5 md:px-6 md:py-6 mt-5 md:mt-6"
             style={{ boxShadow: "0 10px 24px -16px rgba(204, 28, 1, 0.2)" }}
           >
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-2">
@@ -322,9 +317,9 @@ const Index = () => {
       </section>
 
       {/* Getting started — 4 steps */}
-      <section className="relative py-16 md:py-20" style={{ background: "#FFFFFF" }}>
+      <section className="relative py-12 md:py-16" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-8 md:mb-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Bắt đầu từ đâu
             </motion.div>
@@ -382,9 +377,9 @@ const Index = () => {
 
 
       {/* Showcase — 3 panels */}
-      <section className="relative py-20 md:py-28" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
+      <section className="relative py-14 md:py-20" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
         <div className="section-container">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Tính năng nổi bật
             </motion.div>
@@ -396,7 +391,7 @@ const Index = () => {
             </motion.p>
           </motion.div>
 
-          <div className="space-y-10 md:space-y-14 max-w-6xl mx-auto">
+          <div className="space-y-8 md:space-y-10 max-w-6xl mx-auto">
             {showcasePanels.map((p, i) => {
               const reverse = i % 2 === 1;
               return (
@@ -516,9 +511,9 @@ const Index = () => {
 
 
       {/* Exam Structure — warm gradient cards */}
-      <section className="relative py-20 md:py-24 overflow-hidden" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
+      <section className="relative py-14 md:py-18 overflow-hidden" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
         <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-9 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Cấu trúc bài thi
             </motion.div>
@@ -557,10 +552,10 @@ const Index = () => {
       </section>
 
       {/* Features */}
-      <section className="section-padding relative overflow-hidden" style={{ background: "linear-gradient(180deg, #FFF7F0 0%, #FFFFFF 100%)" }}>
+      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: "linear-gradient(180deg, #FFF7F0 0%, #FFFFFF 100%)" }}>
         <div className="absolute inset-0 tech-grid-bg opacity-[0.12] pointer-events-none" />
         <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Điểm mạnh
             </motion.div>
@@ -627,9 +622,9 @@ const Index = () => {
       </section>
 
       {/* Study tools */}
-      <section className="section-padding relative overflow-hidden" style={{ background: "#FFFFFF" }}>
+      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
         <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Công cụ ôn tập
             </motion.div>
@@ -670,9 +665,9 @@ const Index = () => {
 
       {/* Student feedback — image marquee */}
       {hasFeedbackImages && (
-      <section className="relative py-16 md:py-20 overflow-hidden" style={{ background: "#FFFFFF" }}>
+      <section className="relative py-14 md:py-20 overflow-hidden" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Học viên nói gì
             </motion.div>
@@ -690,11 +685,11 @@ const Index = () => {
 
       {/* Final CTA — feature-focused */}
 
-      <section className="relative py-20 md:py-28" style={{ background: "#FFFFFF" }}>
+      <section className="relative py-14 md:py-20" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="relative max-w-5xl mx-auto rounded-[34px] overflow-hidden text-center px-6 py-16 md:px-12 md:py-20"
+            className="relative max-w-5xl mx-auto rounded-[34px] overflow-hidden text-center px-6 py-12 md:px-12 md:py-16"
             style={{
               background: "linear-gradient(135deg, #CC1C01 0%, #E85A1F 55%, #FEAD5F 100%)",
               boxShadow: "0 40px 80px -30px rgba(204, 28, 1, 0.5), 0 16px 32px -16px rgba(77, 13, 13, 0.3)",
