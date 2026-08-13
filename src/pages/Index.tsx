@@ -325,11 +325,11 @@ const Index = () => {
               Bắt đầu từ đâu
             </motion.div>
             <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
-              Chưa biết học thế nào? Làm đúng{" "}
+              Bắt đầu học với&nbsp;
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">4 bước này</span>
             </motion.h2>
             <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#6B4A3B" }}>
-              Lộ trình cho người mới, không cần đoán mò.
+              Lộ trình cho người mới
             </motion.p>
           </motion.div>
 
