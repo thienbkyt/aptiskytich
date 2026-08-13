@@ -35,6 +35,8 @@ const MediaLibrary = () => {
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
+  const [renamedFiles, setRenamedFiles] = useState<{ from: string; to: string }[]>([]);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const loadTokenRef = useRef(0);
 
