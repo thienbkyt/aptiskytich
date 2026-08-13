@@ -426,10 +426,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       return "ok";
     } catch (e) {
       const name = (e as { name?: string } | null)?.name;
-      if (name === "NotAllowedError" || name === "SecurityError") return "blocked";
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        logAudioError("play_blocked", e, audio, activeSrc, isFirstPlay, "blocked");
+        return "blocked";
+      }
+      logAudioError("play_failed", e, audio, activeSrc, isFirstPlay, "error");
       return "error";
     }
   };
+
 
   const togglePlay = async () => {
     const audio = audioRef.current;
