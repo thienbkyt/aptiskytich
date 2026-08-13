@@ -40,12 +40,17 @@ const DeleteCustomSetButton = ({
   const handleDelete = async () => {
     setBusy(true);
     try {
-      await deleteCustomSet(setId);
+      const removed = await deleteCustomSet(setId);
+      if (!removed) {
+        toast.error("Không xoá được bộ đề này");
+        setOpen(false);
+        return;
+      }
       toast.success("Đã xoá bộ đề");
       setOpen(false);
       onDeleted();
     } catch {
-      toast.error("Không xoá được bộ đề");
+      toast.error("Không xoá được bộ đề này");
     } finally {
       setBusy(false);
     }

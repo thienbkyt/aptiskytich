@@ -6,6 +6,7 @@ export type CustomSetMode = "full_test" | "full_part";
 
 export interface CustomSetRow {
   id: string;
+  user_id: string;
   title: string;
   mode: CustomSetMode;
   skill: string | null;
@@ -51,7 +52,8 @@ export const useCustomSets = () => {
     queryFn: async (): Promise<CustomSetRow[]> => {
       const { data: sets } = await supabase
         .from("custom_sets")
-        .select("id, title, mode, skill, created_at, last_played_at")
+        .select("id, user_id, title, mode, skill, created_at, last_played_at")
+        .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
 
       const ids = (sets || []).map((s) => s.id);
@@ -108,9 +110,15 @@ export const useCustomSetPlays = () => {
   return { playedIds: data ?? new Set<string>() };
 };
 
-export const deleteCustomSet = async (id: string) => {
-  const { error } = await supabase.from("custom_sets").delete().eq("id", id);
+/** Xoá bộ đề. Trả về true nếu thực sự có dòng bị xoá (RLS có thể chặn im lặng). */
+export const deleteCustomSet = async (id: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .from("custom_sets")
+    .delete()
+    .eq("id", id)
+    .select("id");
   if (error) throw error;
+  return (data?.length ?? 0) > 0;
 };
 
 export const touchCustomSetPlayed = async (id: string) => {
