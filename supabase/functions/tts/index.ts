@@ -8,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ELEVENLABS_VOICE_ID = "ET1Y16dAzb7BWkm9Bmxh";
+const ELEVENLABS_VOICE_ID = "onwK4e9ZLuTAKqWW03F9";
 
 const VOICE_CONFIG = {
   en: { languageCode: "en-US", name: "en-US-Neural2-J" },
