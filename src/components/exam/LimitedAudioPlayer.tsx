@@ -265,6 +265,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (resumeCountRef.current >= 2) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError(
+          "resume_exhausted",
+          new Error("resume limit reached"),
+          audio,
+          activeSrcRef.current || src,
+          undefined,
+          "error",
+          { position: audio.currentTime, resumeCount: resumeCountRef.current },
+        );
         return false;
       }
       resumeCountRef.current += 1;
@@ -276,6 +285,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (!url) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError(
+          "resume_sign_url_null",
+          new Error("resolveAudioUrl returned null"),
+          audio,
+          activeSrc,
+          undefined,
+          "error",
+          { position: pos, resumeCount: resumeCountRef.current },
+        );
         return false;
       }
       if (activeSrc === src) setResolvedSrc(url);
@@ -293,15 +311,20 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         lastTimeUpdateRef.current = Date.now();
         setErrorMsg("");
         return true;
-      } catch {
+      } catch (e) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError("resume_play_failed", e, audio, activeSrc, undefined, "error", {
+          position: pos,
+          resumeCount: resumeCountRef.current,
+        });
         return false;
       }
     } finally {
       resumingRef.current = false;
     }
-  }, [src]);
+  }, [src, logAudioError]);
+
 
   const handleAudioError = useCallback(async () => {
     // Ignore errors raised by the silent priming play — the main play flow owns recovery.
