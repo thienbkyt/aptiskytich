@@ -339,6 +339,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     if (retryCountRef.current >= 2) {
       setErrorMsg("Không tải được audio. Vui lòng bấm Thử lại hoặc tải lại trang.");
       setIsPlaying(false);
+      logAudioError(
+        "retry_exhausted",
+        (el?.error as unknown) ?? new Error("audio retry limit reached"),
+        el,
+        activeSrcRef.current || src,
+        undefined,
+        "error",
+        { retryCount: retryCountRef.current, mediaErrorCode: el?.error?.code ?? null },
+      );
       return;
     }
     retryCountRef.current += 1;
@@ -351,12 +360,16 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         await audioRef.current.play();
         setErrorMsg("");
         countThisPlay();
-      } catch {
+      } catch (e) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError("retry_play_failed", e, audioRef.current, activeSrcRef.current || src, undefined, "error", {
+          retryCount: retryCountRef.current,
+        });
       }
     }
-  }, [resolve, isPlaying, countThisPlay, resumeAtPosition]);
+  }, [resolve, isPlaying, countThisPlay, resumeAtPosition, logAudioError, src]);
+
 
   // Watchdog: playback that goes 5s without a timeupdate is stalled.
   useEffect(() => {
