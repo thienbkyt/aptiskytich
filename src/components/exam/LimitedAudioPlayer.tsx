@@ -3,6 +3,8 @@ import { CircleDot, CirclePlay, RefreshCw } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
+import { logClientError } from "@/lib/clientErrorLog";
+
 
 interface LimitedAudioPlayerProps {
   src: string;
@@ -90,6 +92,44 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
+  /**
+   * Fire-and-forget diagnostics for audio failures (never throws, never awaited).
+   * Does not touch playback / play-count logic.
+   */
+  const logAudioError = useCallback(
+    (
+      stage: string,
+      err: unknown,
+      audio: HTMLAudioElement | null,
+      activeSrc: string,
+      isFirstPlay?: boolean,
+      outcome?: string,
+      extra?: Record<string, unknown>,
+    ) => {
+      try {
+        logClientError("audio_playback", err, {
+          stage,
+          questionKey: String(questionKey ?? ""),
+          src: activeSrc,
+          readyState: audio?.readyState ?? null,
+          networkState: audio?.networkState ?? null,
+          currentTime: audio?.currentTime ?? null,
+          isFirstPlay: isFirstPlay ?? null,
+          outcome: outcome ?? null,
+          playCount,
+          maxPlays,
+          reviewMode,
+          ...(extra ?? {}),
+        });
+      } catch {
+        /* never break playback */
+      }
+    },
+    [questionKey, playCount, maxPlays, reviewMode],
+  );
+
+
+
   const resolve = useCallback(async (force = false): Promise<string | null> => {
     if (!src) return null;
     if (force) bustAudioUrlCache(src);
@@ -123,18 +163,26 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
           if (!url) {
             console.error("[LimitedAudioPlayer] resolveAudioUrl returned null for:", src);
             setErrorMsg("Không tải được audio.");
+            logAudioError(
+              "preload_sign_url_null",
+              new Error("resolveAudioUrl returned null"),
+              audioRef.current,
+              src,
+            );
           }
           setResolvedSrc(url || src);
         } catch (e) {
           if (cancelled) return;
           console.error("[LimitedAudioPlayer] resolveAudioUrl threw for:", src, e);
           setErrorMsg("Không tải được audio.");
+          logAudioError("preload_sign_threw", e, audioRef.current, src);
           setResolvedSrc(src);
         }
+
       })();
     }
     return () => { cancelled = true; };
-  }, [src]);
+  }, [src, logAudioError]);
 
   // Sync playCount from persistent store when question/src changes.
   // Do NOT reset to 0 — remembered per question across navigation.
@@ -225,6 +273,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (resumeCountRef.current >= 2) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError(
+          "resume_exhausted",
+          new Error("resume limit reached"),
+          audio,
+          activeSrcRef.current || src,
+          undefined,
+          "error",
+          { position: audio.currentTime, resumeCount: resumeCountRef.current },
+        );
         return false;
       }
       resumeCountRef.current += 1;
@@ -236,6 +293,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       if (!url) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError(
+          "resume_sign_url_null",
+          new Error("resolveAudioUrl returned null"),
+          audio,
+          activeSrc,
+          undefined,
+          "error",
+          { position: pos, resumeCount: resumeCountRef.current },
+        );
         return false;
       }
       if (activeSrc === src) setResolvedSrc(url);
@@ -253,15 +319,20 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         lastTimeUpdateRef.current = Date.now();
         setErrorMsg("");
         return true;
-      } catch {
+      } catch (e) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError("resume_play_failed", e, audio, activeSrc, undefined, "error", {
+          position: pos,
+          resumeCount: resumeCountRef.current,
+        });
         return false;
       }
     } finally {
       resumingRef.current = false;
     }
-  }, [src]);
+  }, [src, logAudioError]);
+
 
   const handleAudioError = useCallback(async () => {
     // Ignore errors raised by the silent priming play — the main play flow owns recovery.
@@ -276,6 +347,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     if (retryCountRef.current >= 2) {
       setErrorMsg("Không tải được audio. Vui lòng bấm Thử lại hoặc tải lại trang.");
       setIsPlaying(false);
+      logAudioError(
+        "retry_exhausted",
+        (el?.error as unknown) ?? new Error("audio retry limit reached"),
+        el,
+        activeSrcRef.current || src,
+        undefined,
+        "error",
+        { retryCount: retryCountRef.current, mediaErrorCode: el?.error?.code ?? null },
+      );
       return;
     }
     retryCountRef.current += 1;
@@ -288,12 +368,16 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         await audioRef.current.play();
         setErrorMsg("");
         countThisPlay();
-      } catch {
+      } catch (e) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
+        logAudioError("retry_play_failed", e, audioRef.current, activeSrcRef.current || src, undefined, "error", {
+          retryCount: retryCountRef.current,
+        });
       }
     }
-  }, [resolve, isPlaying, countThisPlay, resumeAtPosition]);
+  }, [resolve, isPlaying, countThisPlay, resumeAtPosition, logAudioError, src]);
+
 
   // Watchdog: playback that goes 5s without a timeupdate is stalled.
   useEffect(() => {
@@ -379,7 +463,17 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         bustAudioUrlCache(activeSrc);
         url = await resolveAudioUrl(activeSrc);
       }
-      if (!url) return "error";
+      if (!url) {
+        logAudioError(
+          "sign_url_null",
+          new Error("resolveAudioUrl returned null"),
+          audio,
+          activeSrc,
+          isFirstPlay,
+          "error",
+        );
+        return "error";
+      }
       if (activeSrc === src) setResolvedSrc(url);
       reloaded = audio.src !== url;
       if (reloaded) {
@@ -388,8 +482,10 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       }
     } catch (e) {
       console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
+      logAudioError("resolve_threw", e, audio, activeSrc, isFirstPlay, "error");
       return "error";
     }
+
     if (token !== undefined && token !== introTokenRef.current) return "stale";
     audio.muted = false;
     // After load() the browser already resets currentTime; touching it while
@@ -426,10 +522,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       return "ok";
     } catch (e) {
       const name = (e as { name?: string } | null)?.name;
-      if (name === "NotAllowedError" || name === "SecurityError") return "blocked";
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        logAudioError("play_blocked", e, audio, activeSrc, isFirstPlay, "blocked");
+        return "blocked";
+      }
+      logAudioError("play_failed", e, audio, activeSrc, isFirstPlay, "error");
       return "error";
     }
   };
+
 
   const togglePlay = async () => {
     const audio = audioRef.current;
