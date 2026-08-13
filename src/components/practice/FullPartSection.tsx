@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsPro } from "@/hooks/useIsPro";
+import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Layers, CheckCircle2, Lock, Plus, Pencil } from "lucide-react";
@@ -54,6 +55,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
     | null
   >(null);
 
+  const { user } = useAuth();
   const { sets: allCustomSets, invalidate } = useCustomSets();
   const { playedIds } = useCustomSetPlays();
 
@@ -211,6 +213,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
           {/* My custom sets */}
           {mineVisible.map((s) => {
             const played = playedIds.has(s.id);
+            const isOwner = !!user && s.user_id === user.id;
             return (
               <div
                 key={s.id}
@@ -238,21 +241,25 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                 </div>
                 <div className="flex-1" />
                 <div className="flex items-center justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setOverlay({ kind: "edit", set: s })}
-                    className="text-muted-foreground"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <DeleteCustomSetButton
-                    setId={s.id}
-                    title={s.title}
-                    onDeleted={invalidate}
-                    size="sm"
-                    variant="ghost"
-                  />
+                  {isOwner && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setOverlay({ kind: "edit", set: s })}
+                        className="text-muted-foreground"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <DeleteCustomSetButton
+                        setId={s.id}
+                        title={s.title}
+                        onDeleted={invalidate}
+                        size="sm"
+                        variant="ghost"
+                      />
+                    </>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

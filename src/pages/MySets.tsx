@@ -132,7 +132,9 @@ const MySets = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sets.map((s) => (
+                  {sets.map((s) => {
+                    const isOwner = !!user && s.user_id === user.id;
+                    return (
                     <div key={s.id} className="border border-border rounded-xl bg-card p-5 flex flex-col gap-3">
                       <div>
                         <h3 className="font-heading font-semibold text-foreground">{s.title}</h3>
@@ -152,20 +154,25 @@ const MySets = () => {
                         <Button size="sm" className="gap-1.5 flex-1" onClick={() => startPlay(s)}>
                           <Play className="w-3.5 h-3.5" /> Làm bài
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => setView({ kind: "edit", set: s })}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <DeleteCustomSetButton
-                          setId={s.id}
-                          title={s.title}
-                          onDeleted={invalidate}
-                          size="sm"
-                          variant="outline"
-                          iconClassName="w-3.5 h-3.5"
-                        />
+                        {isOwner && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => setView({ kind: "edit", set: s })}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <DeleteCustomSetButton
+                              setId={s.id}
+                              title={s.title}
+                              onDeleted={invalidate}
+                              size="sm"
+                              variant="outline"
+                              iconClassName="w-3.5 h-3.5"
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
