@@ -4,10 +4,11 @@ import UpdateFeedDock from "@/components/home/UpdateFeedDock";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
-  ArrowRight, Flame, BookOpen,
+  ArrowRight, Flame,
   Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
   GripVertical, Timer, ShieldCheck,
   Ear, BookText, Star, History, type LucideIcon,
+
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
@@ -510,47 +511,6 @@ const Index = () => {
       </section>
 
 
-      {/* Exam Structure — warm gradient cards */}
-      <section className="relative py-14 md:py-18 overflow-hidden" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
-        <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-9 max-w-2xl mx-auto">
-            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
-              Cấu trúc bài thi
-            </motion.div>
-            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
-              5 kỹ năng trong <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">đề Aptis</span>
-            </motion.h2>
-            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#6B4A3B" }}>
-              Hiểu rõ thời lượng từng phần để luyện đúng trọng tâm.
-            </motion.p>
-          </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl mx-auto">
-            {[
-              { skill: "Grammar & Vocabulary", questions: "25 câu", time: "25 phút", bg: "linear-gradient(135deg, #B81700 0%, #E14A14 100%)" },
-              { skill: "Reading", questions: "4 phần", time: "30 phút", bg: "linear-gradient(135deg, #CC1C01 0%, #F26A1F 100%)" },
-              { skill: "Listening", questions: "25 câu", time: "25 phút", bg: "linear-gradient(135deg, #E14A14 0%, #FB8B30 100%)" },
-              { skill: "Speaking", questions: "4 phần", time: "12 phút", bg: "linear-gradient(135deg, #F26A1F 0%, #FEAD5F 100%)" },
-              { skill: "Writing", questions: "4 phần", time: "25 phút", bg: "linear-gradient(135deg, #FB8B30 0%, #FFC684 100%)" },
-            ].map((s, i) => (
-              <motion.div
-                key={s.skill}
-                variants={fadeUp} custom={i}
-                initial="hidden" whileInView="visible" viewport={{ once: true }}
-                className="rounded-[22px] p-5 text-center h-full text-white transition-transform hover:-translate-y-1"
-                style={{ background: s.bg, boxShadow: "0 18px 36px -18px rgba(204, 28, 1, 0.5), 0 8px 16px -8px rgba(77, 13, 13, 0.25)" }}
-              >
-                <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3 border border-white/30">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="font-heading font-bold text-sm text-white mb-2 leading-tight">{s.skill}</h3>
-                <p className="text-xs text-white/85">{s.questions}</p>
-                <p className="text-xs text-white/85">{s.time}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Features */}
       <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: "linear-gradient(180deg, #FFF7F0 0%, #FFFFFF 100%)" }}>
         <div className="absolute inset-0 tech-grid-bg opacity-[0.12] pointer-events-none" />
@@ -618,20 +578,18 @@ const Index = () => {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* Study tools */}
-      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
-        <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 max-w-2xl mx-auto">
-            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
-              Công cụ ôn tập
-            </motion.div>
-            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
-              Không chỉ có <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">đề thi thử</span>
-            </motion.h2>
-          </motion.div>
+          {/* Divider */}
+          <div className="relative mt-10 mb-8 max-w-5xl mx-auto">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#F2E2D4]" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                CÔNG CỤ ÔN TẬP
+              </span>
+            </div>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {toolCards.map((t, i) => (
@@ -662,6 +620,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+
 
       {/* Student feedback — image marquee */}
       {hasFeedbackImages && (
