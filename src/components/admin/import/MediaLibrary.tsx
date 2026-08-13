@@ -287,6 +287,41 @@ const MediaLibrary = () => {
         </div>
       )}
 
+      <AlertDialog open={renamedFiles.length > 0} onOpenChange={(o) => !o && setRenamedFiles([])}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>File trùng tên đã được đổi tên</AlertDialogTitle>
+            <AlertDialogDescription>
+              File cũ trong bucket được giữ nguyên. Dùng tên mới dưới đây khi điền cột audio/ảnh lúc import đề.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {renamedFiles.map((r) => (
+              <div key={r.to} className="flex items-center gap-2 rounded-md border border-border p-2">
+                <div className="min-w-0 flex-1 text-xs">
+                  <p className="text-muted-foreground truncate">{r.from}</p>
+                  <p className="font-medium text-foreground truncate">→ {r.to}</p>
+                </div>
+                <Button
+                  variant="outline" size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(r.to);
+                    toast({ title: "Đã copy", description: r.to });
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setRenamedFiles([])}>Đã hiểu</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
+
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
