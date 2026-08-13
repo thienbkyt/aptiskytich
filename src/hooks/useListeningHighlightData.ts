@@ -45,6 +45,14 @@ export function useListeningHighlightData(
     setStatus("loading");
     (async () => {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          // Guests can't call the authenticated function — show plain text instead of an error.
+          const empty: ListeningHighlightData = { highlights: {} };
+          setData(empty);
+          setStatus("ready");
+          return;
+        }
         const res = await supabase.functions.invoke("listening-highlight", {
           body: { exam_set_id: examSetId, items },
         });
@@ -56,6 +64,8 @@ export function useListeningHighlightData(
         setStatus("ready");
       } catch (e) {
         console.warn("listening-highlight failed", e);
+        fetchedRef.current = null;
+        setData({ highlights: {} });
         setStatus("error");
       }
     })();
