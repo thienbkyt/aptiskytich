@@ -379,7 +379,17 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         bustAudioUrlCache(activeSrc);
         url = await resolveAudioUrl(activeSrc);
       }
-      if (!url) return "error";
+      if (!url) {
+        logAudioError(
+          "sign_url_null",
+          new Error("resolveAudioUrl returned null"),
+          audio,
+          activeSrc,
+          isFirstPlay,
+          "error",
+        );
+        return "error";
+      }
       if (activeSrc === src) setResolvedSrc(url);
       reloaded = audio.src !== url;
       if (reloaded) {
@@ -388,8 +398,10 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       }
     } catch (e) {
       console.error("[LimitedAudioPlayer] resolve activeSrc failed:", e);
+      logAudioError("resolve_threw", e, audio, activeSrc, isFirstPlay, "error");
       return "error";
     }
+
     if (token !== undefined && token !== introTokenRef.current) return "stale";
     audio.muted = false;
     // After load() the browser already resets currentTime; touching it while
