@@ -440,25 +440,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     setPhase("exam");
   };
 
-  // ── Progress bar ──
-  const progressBar = (
-    <div className="flex items-center gap-2 mb-4">
-      {SKILL_ORDER.map((skill, i) => (
-        <div key={skill} className="flex items-center gap-1">
-          <div
-            className={`h-1.5 rounded-full transition-all ${
-              i < currentSkillIndex ? "bg-green-500 w-10"
-                : i === currentSkillIndex ? "bg-primary w-14"
-                : "bg-muted w-10"
-            }`}
-          />
-        </div>
-      ))}
-      <span className="text-xs text-muted-foreground ml-2">
-        {currentSkillIndex + 1}/{SKILL_ORDER.length} – {SKILL_LABELS[currentSkill]}
-      </span>
-    </div>
-  );
 
   // Inner engines (ExamHeader / SpeakingHeader) already show the confirm popup.
   // On confirm they call onExit → just exit the full test.
