@@ -26,9 +26,9 @@ function hash(str: string): string {
   return h.toString(16).padStart(8, "0");
 }
 
-function buildCacheKey(text: string, lang: string, voice: string): string {
+function buildCacheKey(text: string, lang: string, voice: string, model: string): string {
   const normalized = text.trim().toLowerCase().replace(/\s+/g, " ");
-  return `${hash(normalized + "|" + lang + "|" + voice)}_${normalized.slice(0, 24).replace(/[^a-z0-9]+/g, "-")}`;
+  return `${hash(normalized + "|" + lang + "|" + voice + "|" + model)}_${normalized.slice(0, 24).replace(/[^a-z0-9]+/g, "-")}`;
 }
 
 function base64ToBytes(b64: string): Uint8Array {
