@@ -92,9 +92,13 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
+  // Mutable snapshot of log metadata so logAudioError can be identity-stable.
+  const metaRef = useRef({ questionKey, playCount, maxPlays, reviewMode });
+  metaRef.current = { questionKey, playCount, maxPlays, reviewMode };
+
   /**
    * Fire-and-forget diagnostics for audio failures (never throws, never awaited).
-   * Does not touch playback / play-count logic.
+   * Identity MUST stay stable ([] deps) — it is never a playback dependency.
    */
   const logAudioError = useCallback(
     (
@@ -107,26 +111,28 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       extra?: Record<string, unknown>,
     ) => {
       try {
+        const m = metaRef.current;
         logClientError("audio_playback", err, {
           stage,
-          questionKey: String(questionKey ?? ""),
+          questionKey: String(m.questionKey ?? ""),
           src: activeSrc,
           readyState: audio?.readyState ?? null,
           networkState: audio?.networkState ?? null,
           currentTime: audio?.currentTime ?? null,
           isFirstPlay: isFirstPlay ?? null,
           outcome: outcome ?? null,
-          playCount,
-          maxPlays,
-          reviewMode,
+          playCount: m.playCount,
+          maxPlays: m.maxPlays,
+          reviewMode: m.reviewMode,
           ...(extra ?? {}),
         });
       } catch {
         /* never break playback */
       }
     },
-    [questionKey, playCount, maxPlays, reviewMode],
+    [],
   );
+
 
 
 
@@ -182,7 +188,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       })();
     }
     return () => { cancelled = true; };
-  }, [src, logAudioError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src]);
 
   // Sync playCount from persistent store when question/src changes.
   // Do NOT reset to 0 — remembered per question across navigation.
@@ -331,7 +338,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     } finally {
       resumingRef.current = false;
     }
-  }, [src, logAudioError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src]);
 
 
   const handleAudioError = useCallback(async () => {
@@ -376,7 +384,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         });
       }
     }
-  }, [resolve, isPlaying, countThisPlay, resumeAtPosition, logAudioError, src]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolve, isPlaying, countThisPlay, resumeAtPosition, src]);
 
 
   // Watchdog: playback that goes 5s without a timeupdate is stalled.
