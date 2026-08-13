@@ -578,20 +578,18 @@ const Index = () => {
               </motion.div>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* Study tools */}
-      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
-        <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 max-w-2xl mx-auto">
-            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
-              Công cụ ôn tập
-            </motion.div>
-            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
-              Không chỉ có <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">đề thi thử</span>
-            </motion.h2>
-          </motion.div>
+          {/* Divider */}
+          <div className="relative mt-10 mb-8 max-w-5xl mx-auto">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#F2E2D4]" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-3 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                CÔNG CỤ ÔN TẬP
+              </span>
+            </div>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {toolCards.map((t, i) => (
@@ -622,6 +620,7 @@ const Index = () => {
           </div>
         </div>
       </section>
+
 
       {/* Student feedback — image marquee */}
       {hasFeedbackImages && (
