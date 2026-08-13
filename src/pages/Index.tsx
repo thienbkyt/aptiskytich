@@ -7,7 +7,9 @@ import {
   ArrowRight, Flame, BookOpen,
   Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
   GripVertical, Timer, ShieldCheck, GraduationCap,
+  Ear, BookText, Star, History, type LucideIcon,
 } from "lucide-react";
+
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LatestBlogSection from "@/components/blog/LatestBlogSection";

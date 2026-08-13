@@ -38,7 +38,7 @@ const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }
 
 const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
   { label: "Review tích đức", path: "/reviews", icon: Star, desc: "Đề thi các bạn chia sẻ lại" },
-  { label: "Mẹo thi Aptis", path: "/blog", icon: Newspaper, desc: "Blog mẹo & kinh nghiệm thi" },
+  { label: "Mẹo thi Aptis", path: "/meo-thi-aptis", icon: Newspaper, desc: "Blog mẹo & kinh nghiệm thi" },
 ];
 
 const adminLinks = [
