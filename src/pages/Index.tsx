@@ -513,7 +513,7 @@ const Index = () => {
       {/* Exam Structure — warm gradient cards */}
       <section className="relative py-14 md:py-18 overflow-hidden" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
         <div className="section-container relative">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-9 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Cấu trúc bài thi
             </motion.div>
