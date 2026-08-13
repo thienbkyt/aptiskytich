@@ -440,25 +440,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     setPhase("exam");
   };
 
-  // ── Progress bar ──
-  const progressBar = (
-    <div className="flex items-center gap-2 mb-4">
-      {SKILL_ORDER.map((skill, i) => (
-        <div key={skill} className="flex items-center gap-1">
-          <div
-            className={`h-1.5 rounded-full transition-all ${
-              i < currentSkillIndex ? "bg-green-500 w-10"
-                : i === currentSkillIndex ? "bg-primary w-14"
-                : "bg-muted w-10"
-            }`}
-          />
-        </div>
-      ))}
-      <span className="text-xs text-muted-foreground ml-2">
-        {currentSkillIndex + 1}/{SKILL_ORDER.length} – {SKILL_LABELS[currentSkill]}
-      </span>
-    </div>
-  );
 
   // Inner engines (ExamHeader / SpeakingHeader) already show the confirm popup.
   // On confirm they call onExit → just exit the full test.
@@ -658,7 +639,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     if (partCount === 0) {
       return (
         <div className="min-h-[70vh]">
-          {progressBar}
         {adminOverlay}
           <div className="max-w-xl mx-auto text-center py-12">
             <p className="text-muted-foreground mb-4">
@@ -680,7 +660,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
     return (
       <div className="min-h-[70vh]">
-        {progressBar}
         {adminOverlay}
         <div className="max-w-lg mx-auto text-center py-16">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
@@ -716,7 +695,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
     return (
       <div className="min-h-[70vh]">
-        {progressBar}
         {adminOverlay}
         <div className="max-w-lg mx-auto text-center py-16">
           <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
@@ -748,7 +726,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     const grammarQuestions = toGrammarQuestions(allQuestions);
     return (
       <>
-        {progressBar}
         {adminOverlay}
         <GrammarExamEngine
           key={`grammar-${engineKey}`}
@@ -1002,7 +979,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
     return (
       <>
-        {progressBar}
         {adminOverlay}
         <SpeakingExamEngine
           key={`speaking-${engineKey}`}
@@ -1036,7 +1012,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     }
     return (
       <>
-        {progressBar}
         {adminOverlay}
         <ListeningExamEngine
           key={`listening-${partType}`}
@@ -1069,7 +1044,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     }
     return (
       <>
-        {progressBar}
         {adminOverlay}
         <ReadingExamEngine
           key={`reading-${engineKey}`}
@@ -1514,7 +1488,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
     return (
       <>
-        {progressBar}
+        
         {adminOverlay}
         <WritingExamEngine
           key="writing-full"
