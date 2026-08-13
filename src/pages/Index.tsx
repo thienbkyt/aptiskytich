@@ -348,7 +348,7 @@ const Index = () => {
                 key={s.num}
                 variants={fadeUp} custom={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }}
-                className="relative rounded-[22px] bg-white border border-[#F2E2D4] p-6 md:p-7 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg"
+                className="relative rounded-[22px] bg-white border border-[#F2E2D4] p-6 md:p-7 flex flex-col items-center text-center transition-all hover:-translate-y-1 hover:shadow-lg"
                 style={{ boxShadow: "0 8px 20px -14px rgba(204, 28, 1, 0.18)" }}
               >
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center mb-5 font-heading font-extrabold text-white">
@@ -357,7 +357,7 @@ const Index = () => {
                 {i < arr.length - 1 && (
                   <ArrowRight className="hidden md:block absolute top-9 -right-4 w-6 h-6 text-primary/40" aria-hidden />
                 )}
-                <h3 className="font-heading font-extrabold text-base md:text-lg leading-tight mb-2" style={{ color: "#4D0D0D" }}>
+                <h3 className="font-heading font-extrabold text-base md:text-lg leading-tight mb-2 whitespace-nowrap" style={{ color: "#4D0D0D" }}>
                   {s.title}
                 </h3>
                 <p className="text-sm leading-relaxed mb-5" style={{ color: "#6b4a4a" }}>{s.desc}</p>
