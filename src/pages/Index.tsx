@@ -667,6 +667,24 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Student feedback — image marquee */}
+      <section className="relative py-16 md:py-20 overflow-hidden" style={{ background: "#FFFFFF" }}>
+        <div className="section-container">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
+            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
+              Học viên nói gì
+            </motion.div>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold" style={{ color: "#4D0D0D" }}>
+              Feedback của học viên{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Kỳ Tích</span>
+            </motion.h2>
+          </motion.div>
+        </div>
+        <FeedbackMarquee />
+      </section>
+
+
+
       {/* Final CTA — feature-focused */}
 
       <section className="relative py-20 md:py-28" style={{ background: "#FFFFFF" }}>
