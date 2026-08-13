@@ -63,10 +63,18 @@ export function useReadingReviewData(
     setStatus("loading");
     (async () => {
       try {
+        // Edge function requires a signed-in user; guests get an empty (non-error) result.
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          setData({ translations: {}, part3Evidence: {}, part4Evidence: {} });
+          setStatus("ready");
+          return;
+        }
         const res = await supabase.functions.invoke("translate-review", {
           body: { exam_set_id: examSetId, items, part3, part4 },
         });
         if (res.error) throw res.error;
+
         const payload = res.data as
           | { translations?: Record<string, string>; part3Evidence?: Record<string, { person: string; sentence: string }>; part4Evidence?: Record<string, string> }
           | null;
