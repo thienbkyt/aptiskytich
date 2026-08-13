@@ -88,6 +88,7 @@ export function useReadingReviewData(
         setStatus("ready");
       } catch (e) {
         console.warn("translate-review failed", e);
+        fetchedRef.current = null;
         setStatus("error");
       }
     })();
