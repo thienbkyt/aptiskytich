@@ -30,12 +30,15 @@ const fadeUp = {
   }),
 };
 
-const stats = [
-  { value: "596+", label: "Đề thi Aptis" },
-  { value: "Đề Key", label: "Update hằng ngày" },
-  { value: "AI\u00A0", label: "Giải thích chi tiết từng câu" },
-  { value: "Mô phỏng", label: "Giống bài thi thật" },
+const toolCards: { icon: LucideIcon; title: string; desc: string; path: string; pro?: boolean }[] = [
+  { icon: Layers, title: "Bộ đề tự tạo", desc: "Tự bốc đề thành full test hoặc full part riêng của bạn, chọn từng part từng kỹ năng.", path: "/my-sets", pro: true },
+  { icon: Timer, title: "Marathon từng part", desc: "Cày liên tục một part cho tới khi quen tay.", path: "/key-du-doan" },
+  { icon: Ear, title: "Nghe chép chính tả", desc: "Nghe rồi chép lại từng câu, luyện nghe chi tiết.", path: "/nghe-chep" },
+  { icon: BookText, title: "Học từ vựng", desc: "Kho từ vựng Aptis kèm flashcard.", path: "/vocabulary" },
+  { icon: Star, title: "Review tích đức", desc: "Người thi trước chia sẻ lại đề, người thi sau đỡ mò.", path: "/reviews" },
+  { icon: History, title: "Xem lại từng câu", desc: "Lịch sử học tập lưu nguyên bài đã làm, soi lại chỗ sai.", path: "/history" },
 ];
+
 
 const heroChips = [
   { icon: Target, label: "Mô phỏng 100% đề thật." },
