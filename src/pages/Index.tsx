@@ -299,7 +299,7 @@ const Index = () => {
           >
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-2">
               {[
-                { icon: ShieldCheck, title: "Sát đề thật", sub: "Mô phỏng 100% Aptis" },
+                { icon: ShieldCheck, title: "Sát đề thật", sub: "Mô phỏng giao diện thi thật" },
                 { icon: Cpu, title: "AI chấm Speaking", sub: "Band + gợi ý sửa" },
                 { icon: Sparkles, title: "AI chấm Writing", sub: "Nhận xét từng tiêu chí" },
                 { icon: Layers, title: `${deCount} đề luyện`, sub: "Cập nhật liên tục" },
