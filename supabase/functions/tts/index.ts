@@ -188,7 +188,9 @@ Deno.serve(async (req) => {
 
 
     // OpenAI branch: surface "app", or ElevenLabs auth/credit failure fallback.
-    const oaPath = `${lang}/openai_onyx/${buildCacheKey(text, lang, "openai|onyx")}.mp3`;
+    const oaModelId = "openai/gpt-4o-mini-tts";
+    const oaSafeModelId = oaModelId.replace(/\//g, "_");
+    const oaPath = `${lang}/openai_onyx_${oaSafeModelId}/${buildCacheKey(text, lang, "openai|onyx", oaModelId)}.mp3`;
     const oaUrl = supabase.storage.from("tts-cache").getPublicUrl(oaPath).data.publicUrl;
     if (oaPath !== path) {
       const oaHead = await fetch(oaUrl, { method: "HEAD" });
