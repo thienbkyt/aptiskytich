@@ -338,7 +338,7 @@ const Index = () => {
               { num: "01", title: "Làm 1 bài thi thử full test", desc: "Vào Thi thử làm trọn một đề như thi thật để biết mình đang ở đâu.", to: "/thi-thu", cta: "Vào thi thử" },
               { num: "02", title: "Xem band điểm AI chấm", desc: "AI chấm cả Speaking và Writing, trả band từng kỹ năng ngay sau khi nộp." },
               { num: "03", title: "Luyện kỹ năng yếu", desc: "Nhìn band, kỹ năng nào thấp nhất thì vào luyện từng part của kỹ năng đó.", to: "/speaking", cta: "Chọn kỹ năng" },
-              { num: "04", title: "Học theo Đề Key Dự Đoán", desc: "Làm đề ưu tiên Cao trước, rồi tới Vừa, Thấp, cuối cùng là Backup.", to: "/key-du-doan", cta: "Xem key hôm nay" },
+              { num: "04", title: "Học theo đề Key dự đoán", desc: "Làm đề ưu tiên Cao trước, rồi tới Vừa, Thấp, cuối cùng là Backup.", to: "/key-du-doan", cta: "Xem key hôm nay" },
             ].map((s, i, arr) => (
               <motion.div
                 key={s.num}
