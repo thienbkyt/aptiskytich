@@ -265,7 +265,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats strip */}
+      {/* Stats strip + Trust bar */}
       <section className="relative py-10 md:py-14" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
           <motion.div
@@ -286,16 +286,11 @@ const Index = () => {
               </div>
             ))}
           </motion.div>
-        </div>
-      </section>
 
-      {/* Trust bar — 5 key advantages */}
-      <section className="relative py-8 md:py-10" style={{ background: "#FFFFFF" }}>
-        <div className="section-container">
           <motion.div
             variants={fadeUp} custom={0}
             initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="max-w-6xl mx-auto rounded-[22px] bg-white border border-[#F2E2D4] px-4 py-5 md:px-6 md:py-6"
+            className="max-w-6xl mx-auto rounded-[22px] bg-white border border-[#F2E2D4] px-4 py-5 md:px-6 md:py-6 mt-5 md:mt-6"
             style={{ boxShadow: "0 10px 24px -16px rgba(204, 28, 1, 0.2)" }}
           >
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-2">
