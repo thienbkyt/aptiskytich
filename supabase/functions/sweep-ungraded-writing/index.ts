@@ -73,7 +73,12 @@ Deno.serve(async (req) => {
       .lt("created_at", olderThan)
       .gt("created_at", newerThan)
       .gt("created_at", SWEEP_NOT_BEFORE)
-      .order("created_at", { ascending: true })
+      // Exclude quota-blocked submissions IN THE QUERY (rows without the key
+      // are kept). Filtering them after the limit let 50 blocked rows fill the
+      // batch and starve every genuinely recoverable attempt.
+      .or("grade_payload->>_quotaBlocked.is.null,grade_payload->>_quotaBlocked.neq.true")
+      // Newest first: fresh submissions are the ones a student is waiting on.
+      .order("created_at", { ascending: false })
       .limit(BATCH_LIMIT);
 
 
@@ -163,7 +168,7 @@ Deno.serve(async (req) => {
           .lt("created_at", olderThan)
           .gt("created_at", newerThan)
           .gt("created_at", SWEEP_NOT_BEFORE)
-          .order("created_at", { ascending: true })
+          .order("created_at", { ascending: false })
           .limit(BATCH_LIMIT);
         if (orphanErr) throw new Error(orphanErr.message);
 
