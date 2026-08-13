@@ -92,6 +92,44 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
+  /**
+   * Fire-and-forget diagnostics for audio failures (never throws, never awaited).
+   * Does not touch playback / play-count logic.
+   */
+  const logAudioError = useCallback(
+    (
+      stage: string,
+      err: unknown,
+      audio: HTMLAudioElement | null,
+      activeSrc: string,
+      isFirstPlay?: boolean,
+      outcome?: string,
+      extra?: Record<string, unknown>,
+    ) => {
+      try {
+        logClientError("audio_playback", err, {
+          stage,
+          questionKey: String(questionKey ?? ""),
+          src: activeSrc,
+          readyState: audio?.readyState ?? null,
+          networkState: audio?.networkState ?? null,
+          currentTime: audio?.currentTime ?? null,
+          isFirstPlay: isFirstPlay ?? null,
+          outcome: outcome ?? null,
+          playCount,
+          maxPlays,
+          reviewMode,
+          ...(extra ?? {}),
+        });
+      } catch {
+        /* never break playback */
+      }
+    },
+    [questionKey, playCount, maxPlays, reviewMode],
+  );
+
+
+
   const resolve = useCallback(async (force = false): Promise<string | null> => {
     if (!src) return null;
     if (force) bustAudioUrlCache(src);
