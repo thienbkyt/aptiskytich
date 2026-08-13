@@ -163,14 +163,22 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
           if (!url) {
             console.error("[LimitedAudioPlayer] resolveAudioUrl returned null for:", src);
             setErrorMsg("Không tải được audio.");
+            logAudioError(
+              "preload_sign_url_null",
+              new Error("resolveAudioUrl returned null"),
+              audioRef.current,
+              src,
+            );
           }
           setResolvedSrc(url || src);
         } catch (e) {
           if (cancelled) return;
           console.error("[LimitedAudioPlayer] resolveAudioUrl threw for:", src, e);
           setErrorMsg("Không tải được audio.");
+          logAudioError("preload_sign_threw", e, audioRef.current, src);
           setResolvedSrc(src);
         }
+
       })();
     }
     return () => { cancelled = true; };
