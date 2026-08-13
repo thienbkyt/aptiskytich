@@ -115,21 +115,54 @@ const MediaLibrary = () => {
     setUploadProgress({ done: 0, total: list.length });
 
     const failures: string[] = [];
+    const renames: { from: string; to: string }[] = [];
     let successCount = 0;
     let cursor = 0;
+
+    const isDuplicateError = (err: unknown) => {
+      const anyErr = err as { statusCode?: string | number; message?: string } | null;
+      const status = String(anyErr?.statusCode ?? "");
+      const msg = (anyErr?.message ?? "").toLowerCase();
+      return status === "409" || msg.includes("already exists") || msg.includes("duplicate");
+    };
+
+    const withSuffix = (name: string, n: number) => {
+      const dot = name.lastIndexOf(".");
+      if (dot <= 0) return `${name}_${n}`;
+      return `${name.slice(0, dot)}_${n}${name.slice(dot)}`;
+    };
 
     const worker = async () => {
       while (cursor < list.length) {
         const file = list[cursor++];
-        const path = file.name.replace(/\s+/g, "_");
-        const { error } = await supabase.storage.from(activeBucket).upload(path, file, { upsert: true });
-        if (error) failures.push(`${file.name}: ${error.message}`);
-        else successCount++;
+        const basePath = file.name.replace(/\s+/g, "_");
+        let path = basePath;
+        let lastError: unknown = null;
+        let uploaded = false;
+
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          const { error } = await supabase.storage
+            .from(activeBucket)
+            .upload(path, file, { upsert: false });
+          if (!error) {
+            uploaded = true;
+            if (path !== basePath) renames.push({ from: basePath, to: path });
+            break;
+          }
+          lastError = error;
+          if (!isDuplicateError(error)) break;
+          path = withSuffix(basePath, attempt + 1);
+        }
+
+        if (uploaded) successCount++;
+        else failures.push(`${file.name}: ${(lastError as { message?: string } | null)?.message ?? "lỗi không rõ"}`);
         setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
       }
     };
 
     await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
+    if (renames.length) setRenamedFiles(renames);
+
 
     if (successCount === list.length) {
       toast({ title: `Đã upload ${successCount} file` });
