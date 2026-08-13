@@ -23,6 +23,8 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import writingResultAsset from "@/assets/writing-result.jpg.asset.json";
 import heroAiFeedbackAsset from "@/assets/hero-ai-feedback.png.asset.json";
 import InstallAppCard from "@/components/pwa/InstallAppCard";
+import { useSiteStats } from "@/hooks/useSiteStats";
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -91,7 +93,15 @@ const Index = () => {
     description: "Luyện thi Aptis với ngân hàng đề sát thi thật, AI chấm Speaking & Writing, lộ trình 7 ngày đạt B1–B2. Thi thử miễn phí ngay.",
     path: "/",
   });
+  const { deCount, userCount, attemptCount } = useSiteStats();
+  const stats = [
+    { value: deCount, label: "Đề thi Aptis" },
+    { value: userCount, label: "Học viên đang luyện" },
+    { value: attemptCount, label: "Lượt làm bài" },
+    { value: "Đề Key", label: "Cập nhật hằng ngày" },
+  ];
   return (
+
     <div className="min-h-screen bg-background">
       <Navbar />
 
