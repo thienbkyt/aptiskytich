@@ -3,6 +3,8 @@ import { CircleDot, CirclePlay, RefreshCw } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
+import { logClientError } from "@/lib/clientErrorLog";
+
 
 interface LimitedAudioPlayerProps {
   src: string;
