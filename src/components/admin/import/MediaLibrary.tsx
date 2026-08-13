@@ -69,10 +69,19 @@ const MediaLibrary = () => {
   const loadFiles = async (bucket: BucketType) => {
     const token = ++loadTokenRef.current;
     setLoading(true);
-    const { data, error } = await supabase.storage.from(bucket).list("", { limit: 1000, sortBy: { column: "updated_at", order: "desc" } });
-    if (token !== loadTokenRef.current) return;
-    if (!error && data) {
-      const items: FileItem[] = data
+    const limit = 1000;
+    let offset = 0;
+    const all: FileItem[] = [];
+    while (true) {
+      const { data, error } = await supabase.storage.from(bucket).list("", {
+        limit,
+        offset,
+        sortBy: { column: "created_at", order: "desc" },
+      });
+      if (token !== loadTokenRef.current) return;
+      if (error) break;
+      if (!data || data.length === 0) break;
+      const items = data
         .filter((f) => f.name !== ".emptyFolderPlaceholder")
         .map((f) => {
           const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(f.name);
@@ -84,10 +93,13 @@ const MediaLibrary = () => {
             url: urlData.publicUrl,
           };
         });
+      all.push(...items);
+      if (data.length < limit) break;
+      offset += data.length;
       if (token !== loadTokenRef.current) return;
-      setFiles(items);
     }
     if (token !== loadTokenRef.current) return;
+    setFiles(all);
     setLoading(false);
   };
 
