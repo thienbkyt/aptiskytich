@@ -188,7 +188,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       })();
     }
     return () => { cancelled = true; };
-  }, [src, logAudioError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src]);
 
   // Sync playCount from persistent store when question/src changes.
   // Do NOT reset to 0 — remembered per question across navigation.
@@ -337,7 +338,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     } finally {
       resumingRef.current = false;
     }
-  }, [src, logAudioError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src]);
 
 
   const handleAudioError = useCallback(async () => {
@@ -382,7 +384,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         });
       }
     }
-  }, [resolve, isPlaying, countThisPlay, resumeAtPosition, logAudioError, src]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolve, isPlaying, countThisPlay, resumeAtPosition, src]);
 
 
   // Watchdog: playback that goes 5s without a timeupdate is stalled.
