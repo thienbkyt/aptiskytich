@@ -2086,6 +2086,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_key13: {
+        Row: {
+          diem: number | null
+          id: string | null
+          part: string | null
+          skill: string | null
+          tier: string | null
+          title: string | null
+        }
+        Insert: {
+          diem?: number | null
+          id?: string | null
+          part?: string | null
+          skill?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Update: {
+          diem?: number | null
+          id?: string | null
+          part?: string | null
+          skill?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       tmp_p10: {
         Row: {
           j: Json | null
@@ -2095,6 +2122,24 @@ export type Database = {
         }
         Update: {
           j?: Json | null
+        }
+        Relationships: []
+      }
+      tmp_rathi_1208: {
+        Row: {
+          part: string | null
+          skill: string | null
+          ten: string | null
+        }
+        Insert: {
+          part?: string | null
+          skill?: string | null
+          ten?: string | null
+        }
+        Update: {
+          part?: string | null
+          skill?: string | null
+          ten?: string | null
         }
         Relationships: []
       }
