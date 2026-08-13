@@ -35,6 +35,8 @@ const MediaLibrary = () => {
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
+  const [renamedFiles, setRenamedFiles] = useState<{ from: string; to: string }[]>([]);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const loadTokenRef = useRef(0);
 
@@ -115,21 +117,54 @@ const MediaLibrary = () => {
     setUploadProgress({ done: 0, total: list.length });
 
     const failures: string[] = [];
+    const renames: { from: string; to: string }[] = [];
     let successCount = 0;
     let cursor = 0;
+
+    const isDuplicateError = (err: unknown) => {
+      const anyErr = err as { statusCode?: string | number; message?: string } | null;
+      const status = String(anyErr?.statusCode ?? "");
+      const msg = (anyErr?.message ?? "").toLowerCase();
+      return status === "409" || msg.includes("already exists") || msg.includes("duplicate");
+    };
+
+    const withSuffix = (name: string, n: number) => {
+      const dot = name.lastIndexOf(".");
+      if (dot <= 0) return `${name}_${n}`;
+      return `${name.slice(0, dot)}_${n}${name.slice(dot)}`;
+    };
 
     const worker = async () => {
       while (cursor < list.length) {
         const file = list[cursor++];
-        const path = file.name.replace(/\s+/g, "_");
-        const { error } = await supabase.storage.from(activeBucket).upload(path, file, { upsert: true });
-        if (error) failures.push(`${file.name}: ${error.message}`);
-        else successCount++;
+        const basePath = file.name.replace(/\s+/g, "_");
+        let path = basePath;
+        let lastError: unknown = null;
+        let uploaded = false;
+
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          const { error } = await supabase.storage
+            .from(activeBucket)
+            .upload(path, file, { upsert: false });
+          if (!error) {
+            uploaded = true;
+            if (path !== basePath) renames.push({ from: basePath, to: path });
+            break;
+          }
+          lastError = error;
+          if (!isDuplicateError(error)) break;
+          path = withSuffix(basePath, attempt + 1);
+        }
+
+        if (uploaded) successCount++;
+        else failures.push(`${file.name}: ${(lastError as { message?: string } | null)?.message ?? "lỗi không rõ"}`);
         setUploadProgress((p) => ({ ...p, done: p.done + 1 }));
       }
     };
 
     await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
+    if (renames.length) setRenamedFiles(renames);
+
 
     if (successCount === list.length) {
       toast({ title: `Đã upload ${successCount} file` });
@@ -251,6 +286,41 @@ const MediaLibrary = () => {
           ))}
         </div>
       )}
+
+      <AlertDialog open={renamedFiles.length > 0} onOpenChange={(o) => !o && setRenamedFiles([])}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>File trùng tên đã được đổi tên</AlertDialogTitle>
+            <AlertDialogDescription>
+              File cũ trong bucket được giữ nguyên. Dùng tên mới dưới đây khi điền cột audio/ảnh lúc import đề.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 max-h-72 overflow-y-auto">
+            {renamedFiles.map((r) => (
+              <div key={r.to} className="flex items-center gap-2 rounded-md border border-border p-2">
+                <div className="min-w-0 flex-1 text-xs">
+                  <p className="text-muted-foreground truncate">{r.from}</p>
+                  <p className="font-medium text-foreground truncate">→ {r.to}</p>
+                </div>
+                <Button
+                  variant="outline" size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(r.to);
+                    toast({ title: "Đã copy", description: r.to });
+                  }}
+                >
+                  Copy
+                </Button>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setRenamedFiles([])}>Đã hiểu</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
 
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
