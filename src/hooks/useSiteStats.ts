@@ -1,6 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { safeStorage } from "@/lib/safeStorage";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 type SiteStats = {
   de_count: number;
@@ -24,7 +24,7 @@ const FALLBACK = {
 
 function readCache(): SiteStats | undefined {
   try {
-    const raw = safeStorage.getItem(CACHE_KEY);
+    const raw = safeLocalStorage.getItem(CACHE_KEY);
     if (!raw) return undefined;
     const parsed = JSON.parse(raw) as SiteStats;
     if (typeof parsed?.de_count === "number") return parsed;
@@ -47,7 +47,7 @@ export function useSiteStats() {
       const stats = (data as unknown as SiteStats) ?? null;
       if (stats) {
         try {
-          safeStorage.setItem(CACHE_KEY, JSON.stringify(stats));
+          safeLocalStorage.setItem(CACHE_KEY, JSON.stringify(stats));
         } catch {
           /* ignore */
         }
