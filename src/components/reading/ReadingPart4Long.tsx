@@ -100,6 +100,7 @@ const ReadingPart4Long = ({
   const globallyRevealed = submitted || !!revealAnswers;
   const revealFor = (pIdx: number) => globallyRevealed || (lockedIndices?.has(pIdx) ?? false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [dropdownDir, setDropdownDir] = useState<"up" | "down">("down");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Click outside to close
@@ -113,6 +114,22 @@ const ReadingPart4Long = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [openDropdown]);
+
+  const openDropdownFor = (pIdx: number, triggerEl: HTMLElement) => {
+    if (openDropdown === pIdx) {
+      setOpenDropdown(null);
+      return;
+    }
+    const rect = triggerEl.getBoundingClientRect();
+    const bottomSpace = window.innerHeight - rect.bottom;
+    const topSpace = rect.top;
+    if (bottomSpace < 280 && topSpace > bottomSpace) {
+      setDropdownDir("up");
+    } else {
+      setDropdownDir("down");
+    }
+    setOpenDropdown(pIdx);
+  };
 
   const paragraphs: { index: number; text: string }[] = question.paragraphs || [];
   const explByPara = (question.explanation || "")
@@ -206,7 +223,7 @@ const ReadingPart4Long = ({
                   ) : (
                     <>
                       <button
-                        onClick={() => setOpenDropdown(openDropdown === pIdx ? null : pIdx)}
+                        onClick={(e) => openDropdownFor(pIdx, e.currentTarget)}
                         className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg border text-sm text-left transition-all bg-background hover:border-muted-foreground/50 ${
                           reveal
                             ? isCorrect
@@ -223,7 +240,11 @@ const ReadingPart4Long = ({
                         <ChevronDown className="w-4 h-4 shrink-0 ml-2 text-muted-foreground" />
                       </button>
                       {openDropdown === pIdx && (
-                        <div className="absolute z-50 left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-y-visible">
+                        <div
+                          className={`absolute z-50 left-0 right-0 max-h-64 overflow-y-auto bg-popover border border-border rounded-lg shadow-lg ${
+                            dropdownDir === "up" ? "bottom-full mb-1" : "top-full mt-1"
+                          }`}
+                        >
                           {allHeadingTexts.map((heading, hIdx) => (
                             <button
                               key={hIdx}
