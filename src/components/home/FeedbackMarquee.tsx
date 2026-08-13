@@ -10,6 +10,8 @@ const feedbackImages: { src: string; alt: string }[] = [
   // { src: fb01, alt: "Feedback học viên Aptis Kỳ Tích 1" },
 ];
 
+export const hasFeedbackImages = feedbackImages.length > 0;
+
 const Row = ({
   images,
   reverse,

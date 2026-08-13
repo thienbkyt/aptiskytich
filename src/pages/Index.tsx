@@ -23,6 +23,7 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import writingResultAsset from "@/assets/writing-result.jpg.asset.json";
 import heroAiFeedbackAsset from "@/assets/hero-ai-feedback.png.asset.json";
 import InstallAppCard from "@/components/pwa/InstallAppCard";
+import FeedbackMarquee, { hasFeedbackImages } from "@/components/home/FeedbackMarquee";
 import { useSiteStats } from "@/hooks/useSiteStats";
 
 
@@ -668,6 +669,7 @@ const Index = () => {
       </section>
 
       {/* Student feedback — image marquee */}
+      {hasFeedbackImages && (
       <section className="relative py-16 md:py-20 overflow-hidden" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
@@ -682,6 +684,7 @@ const Index = () => {
         </div>
         <FeedbackMarquee />
       </section>
+      )}
 
 
 
