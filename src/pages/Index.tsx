@@ -689,7 +689,7 @@ const Index = () => {
         <div className="section-container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true }}
-            className="relative max-w-5xl mx-auto rounded-[34px] overflow-hidden text-center px-6 py-16 md:px-12 md:py-20"
+            className="relative max-w-5xl mx-auto rounded-[34px] overflow-hidden text-center px-6 py-12 md:px-12 md:py-16"
             style={{
               background: "linear-gradient(135deg, #CC1C01 0%, #E85A1F 55%, #FEAD5F 100%)",
               boxShadow: "0 40px 80px -30px rgba(204, 28, 1, 0.5), 0 16px 32px -16px rgba(77, 13, 13, 0.3)",
