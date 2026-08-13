@@ -391,7 +391,7 @@ const Index = () => {
             </motion.p>
           </motion.div>
 
-          <div className="space-y-10 md:space-y-14 max-w-6xl mx-auto">
+          <div className="space-y-8 md:space-y-10 max-w-6xl mx-auto">
             {showcasePanels.map((p, i) => {
               const reverse = i % 2 === 1;
               return (
