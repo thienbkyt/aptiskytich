@@ -7,7 +7,9 @@ import {
   ArrowRight, Flame, BookOpen,
   Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
   GripVertical, Timer, ShieldCheck, GraduationCap,
+  Ear, BookText, Star, History, type LucideIcon,
 } from "lucide-react";
+
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import LatestBlogSection from "@/components/blog/LatestBlogSection";
@@ -21,6 +23,8 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import writingResultAsset from "@/assets/writing-result.jpg.asset.json";
 import heroAiFeedbackAsset from "@/assets/hero-ai-feedback.png.asset.json";
 import InstallAppCard from "@/components/pwa/InstallAppCard";
+import { useSiteStats } from "@/hooks/useSiteStats";
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -30,12 +34,15 @@ const fadeUp = {
   }),
 };
 
-const stats = [
-  { value: "596+", label: "Đề thi Aptis" },
-  { value: "Đề Key", label: "Update hằng ngày" },
-  { value: "AI\u00A0", label: "Giải thích chi tiết từng câu" },
-  { value: "Mô phỏng", label: "Giống bài thi thật" },
+const toolCards: { icon: LucideIcon; title: string; desc: string; path: string; pro?: boolean }[] = [
+  { icon: Layers, title: "Bộ đề tự tạo", desc: "Tự bốc đề thành full test hoặc full part riêng của bạn, chọn từng part từng kỹ năng.", path: "/my-sets", pro: true },
+  { icon: Timer, title: "Marathon từng part", desc: "Cày liên tục một part cho tới khi quen tay.", path: "/key-du-doan" },
+  { icon: Ear, title: "Nghe chép chính tả", desc: "Nghe rồi chép lại từng câu, luyện nghe chi tiết.", path: "/nghe-chep" },
+  { icon: BookText, title: "Học từ vựng", desc: "Kho từ vựng Aptis kèm flashcard.", path: "/vocabulary" },
+  { icon: Star, title: "Review tích đức", desc: "Người thi trước chia sẻ lại đề, người thi sau đỡ mò.", path: "/reviews" },
+  { icon: History, title: "Xem lại từng câu", desc: "Lịch sử học tập lưu nguyên bài đã làm, soi lại chỗ sai.", path: "/history" },
 ];
+
 
 const heroChips = [
   { icon: Target, label: "Mô phỏng 100% đề thật." },
@@ -86,7 +93,15 @@ const Index = () => {
     description: "Luyện thi Aptis với ngân hàng đề sát thi thật, AI chấm Speaking & Writing, lộ trình 7 ngày đạt B1–B2. Thi thử miễn phí ngay.",
     path: "/",
   });
+  const { deCount, userCount, attemptCount } = useSiteStats();
+  const stats = [
+    { value: deCount, label: "Đề thi Aptis" },
+    { value: userCount, label: "Học viên đang luyện" },
+    { value: attemptCount, label: "Lượt làm bài" },
+    { value: "Đề Key", label: "Cập nhật hằng ngày" },
+  ];
   return (
+
     <div className="min-h-screen bg-background">
       <Navbar />
 
@@ -137,7 +152,7 @@ const Index = () => {
                 className="text-base md:text-lg lg:text-xl mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed"
                 style={{ color: "#6b4a4a" }}
               >
-                596+ đề thi sát kỳ thi thật, AI chấm Speaking & Writing, trả band điểm và gợi ý cải thiện chỉ sau vài phút.
+                {deCount} đề thi sát kỳ thi thật, AI chấm Speaking & Writing, trả band điểm và gợi ý cải thiện chỉ sau vài phút.
               </motion.p>
 
               <motion.div
@@ -287,7 +302,7 @@ const Index = () => {
                 { icon: ShieldCheck, title: "Sát đề thật", sub: "Mô phỏng 100% Aptis" },
                 { icon: Cpu, title: "AI chấm Speaking", sub: "Band + gợi ý sửa" },
                 { icon: Sparkles, title: "AI chấm Writing", sub: "Nhận xét từng tiêu chí" },
-                { icon: Layers, title: "596+ đề luyện", sub: "Cập nhật liên tục" },
+                { icon: Layers, title: `${deCount} đề luyện`, sub: "Cập nhật liên tục" },
                 { icon: TrendingUp, title: "Theo dõi tiến độ", sub: "Biểu đồ & streak" },
               ].map((t, i) => (
                 <div key={i} className="flex md:flex-col items-center md:text-center gap-3 md:gap-2 md:px-3 md:py-1">
@@ -606,7 +621,50 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Study tools */}
+      <section className="section-padding relative overflow-hidden" style={{ background: "#FFFFFF" }}>
+        <div className="section-container relative">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
+            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
+              Công cụ ôn tập
+            </motion.div>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
+              Không chỉ có <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">đề thi thử</span>
+            </motion.h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {toolCards.map((t, i) => (
+              <motion.div
+                key={t.title}
+                variants={fadeUp} custom={i}
+                initial="hidden" whileInView="visible" viewport={{ once: true }}
+                className="h-full"
+              >
+                <Link to={t.path} className="block h-full">
+                  <SpotlightCard className="p-7 h-full flex flex-col group transition-transform duration-300 hover:-translate-y-1">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/15 transition-colors duration-300">
+                        <t.icon className="w-6 h-6 text-primary" />
+                      </div>
+                      {t.pro && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white shadow-sm">
+                          PRO
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-heading font-bold text-foreground mb-2 leading-tight">{t.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{t.desc}</p>
+                  </SpotlightCard>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA — feature-focused */}
+
       <section className="relative py-20 md:py-28" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
           <motion.div
@@ -625,14 +683,14 @@ const Index = () => {
                 variants={fadeUp} custom={0}
                 className="relative inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/40 text-sm font-semibold mb-6 text-white backdrop-blur-sm overflow-hidden"
               >
-                <Sparkles className="w-4 h-4" /> Miễn phí 100%
+                <Sparkles className="w-4 h-4" /> Thi thử miễn phí
                 <BorderBeam size={120} duration={6} colorFrom="#FFFFFF" colorTo="#FEAD5F" />
               </motion.div>
               <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-5xl font-heading font-extrabold text-white mb-5 leading-tight">
                 Sẵn sàng chinh phục Aptis?
               </motion.h2>
               <motion.p variants={fadeUp} custom={2} className="text-white/90 mb-10 leading-relaxed max-w-2xl mx-auto text-base md:text-lg">
-                Bắt đầu luyện ngay với bộ đề sát thật và AI chấm Speaking – Writing. Không tốn phí.
+                Bắt đầu với bài thi thử miễn phí, có AI chấm Speaking – Writing và trả band ngay.
               </motion.p>
               <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 justify-center">
                 <MagneticButton>
