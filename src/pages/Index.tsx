@@ -4,10 +4,11 @@ import UpdateFeedDock from "@/components/home/UpdateFeedDock";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
-  ArrowRight, Flame, BookOpen,
+  ArrowRight, Flame,
   Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
   GripVertical, Timer, ShieldCheck,
   Ear, BookText, Star, History, type LucideIcon,
+
 } from "lucide-react";
 
 import Navbar from "@/components/layout/Navbar";
