@@ -182,7 +182,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       })();
     }
     return () => { cancelled = true; };
-  }, [src]);
+  }, [src, logAudioError]);
 
   // Sync playCount from persistent store when question/src changes.
   // Do NOT reset to 0 — remembered per question across navigation.
