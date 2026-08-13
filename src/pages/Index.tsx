@@ -108,7 +108,7 @@ const Index = () => {
 
       {/* Hero — light theme (landing only) */}
       <section
-        className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden"
+        className="relative pt-28 pb-14 md:pt-36 md:pb-20 overflow-hidden"
         style={{
           background:
             "linear-gradient(180deg, #FFF7F0 0%, #FFFBF6 55%, #FFFFFF 100%)",
