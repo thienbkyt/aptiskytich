@@ -319,7 +319,7 @@ const Index = () => {
       {/* Getting started — 4 steps */}
       <section className="relative py-12 md:py-16" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-8 md:mb-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Bắt đầu từ đâu
             </motion.div>
