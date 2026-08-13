@@ -2639,7 +2639,14 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      site_stats_v: {
+        Row: {
+          attempt_count: number | null
+          de_count: number | null
+          user_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_activity_daily: {
@@ -2839,6 +2846,7 @@ export type Database = {
         Returns: string
       }
       get_db_size_mb: { Args: never; Returns: number }
+      get_site_stats: { Args: never; Returns: Json }
       get_storage_size_mb: {
         Args: never
         Returns: {
