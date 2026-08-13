@@ -294,44 +294,51 @@ const FullTest = () => {
 
                 )}
 
-                {mineVisible.map((s) => (
-                  <div key={s.id} className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
-                        Bộ của tôi
-                      </Badge>
+                {mineVisible.map((s) => {
+                  const isOwner = !!authUser && s.user_id === authUser.id;
+                  return (
+                    <div key={s.id} className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
+                          Bộ của tôi
+                        </Badge>
+                      </div>
+                      <h3 className="text-xl font-heading font-bold text-foreground mb-2">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Full test • {s.memberCount} Parts • tự tạo
+                      </p>
+                      <div className="mb-4">
+                        {playedIds.has(s.id) ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>
+                        )}
+                      </div>
+                      <div className="flex-1" />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => {
+                            touchCustomSetPlayed(s.id).then(invalidate);
+                            setOverlay({ kind: "play", set: s });
+                          }}
+                          className="flex-1 bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
+                        >
+                          Bắt đầu thi thử <ArrowRight className="w-4 h-4" />
+                        </Button>
+                        {isOwner && (
+                          <>
+                            <Button variant="outline" size="icon" onClick={() => setOverlay({ kind: "edit", set: s })}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <DeleteCustomSetButton setId={s.id} title={s.title} onDeleted={invalidate} />
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="text-xl font-heading font-bold text-foreground mb-2">{s.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Full test • {s.memberCount} Parts • tự tạo
-                    </p>
-                    <div className="mb-4">
-                      {playedIds.has(s.id) ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Đã làm
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>
-                      )}
-                    </div>
-                    <div className="flex-1" />
-                    <div className="flex items-center gap-2">
-                      <Button
-                        onClick={() => {
-                          touchCustomSetPlayed(s.id).then(invalidate);
-                          setOverlay({ kind: "play", set: s });
-                        }}
-                        className="flex-1 bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5"
-                      >
-                        Bắt đầu thi thử <ArrowRight className="w-4 h-4" />
-                      </Button>
-                      <Button variant="outline" size="icon" onClick={() => setOverlay({ kind: "edit", set: s })}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <DeleteCustomSetButton setId={s.id} title={s.title} onDeleted={invalidate} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {officialVisible.map((test, index) => {
                 const locked = isLocked(test as any);

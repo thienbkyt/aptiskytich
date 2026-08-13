@@ -97,6 +97,7 @@ export const useCustomSetPlays = () => {
       const { data } = await supabase
         .from("test_results")
         .select("skill_scores")
+        .eq("user_id", user!.id)
         .not("skill_scores->>customSetId", "is", null);
       const out = new Set<string>();
       (data || []).forEach((r: any) => {
