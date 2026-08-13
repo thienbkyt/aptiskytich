@@ -685,7 +685,7 @@ const Index = () => {
 
       {/* Final CTA — feature-focused */}
 
-      <section className="relative py-20 md:py-28" style={{ background: "#FFFFFF" }}>
+      <section className="relative py-14 md:py-20" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
           <motion.div
             initial="hidden" whileInView="visible" viewport={{ once: true }}
