@@ -69,10 +69,19 @@ const MediaLibrary = () => {
   const loadFiles = async (bucket: BucketType) => {
     const token = ++loadTokenRef.current;
     setLoading(true);
-    const { data, error } = await supabase.storage.from(bucket).list("", { limit: 1000, sortBy: { column: "updated_at", order: "desc" } });
-    if (token !== loadTokenRef.current) return;
-    if (!error && data) {
-      const items: FileItem[] = data
+    const limit = 1000;
+    let offset = 0;
+    const all: FileItem[] = [];
+    while (true) {
+      const { data, error } = await supabase.storage.from(bucket).list("", {
+        limit,
+        offset,
+        sortBy: { column: "created_at", order: "desc" },
+      });
+      if (token !== loadTokenRef.current) return;
+      if (error) break;
+      if (!data || data.length === 0) break;
+      const items = data
         .filter((f) => f.name !== ".emptyFolderPlaceholder")
         .map((f) => {
           const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(f.name);
@@ -84,10 +93,13 @@ const MediaLibrary = () => {
             url: urlData.publicUrl,
           };
         });
+      all.push(...items);
+      if (data.length < limit) break;
+      offset += data.length;
       if (token !== loadTokenRef.current) return;
-      setFiles(items);
     }
     if (token !== loadTokenRef.current) return;
+    setFiles(all);
     setLoading(false);
   };
 
@@ -119,15 +131,20 @@ const MediaLibrary = () => {
 
     await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
 
-    if (failures.length) {
+    if (successCount === list.length) {
+      toast({ title: `Đã upload ${successCount} file` });
+    } else if (successCount > 0) {
       toast({
-        title: `Lỗi upload ${failures.length} file`,
-        description: failures.join("\n"),
+        title: `Đã upload ${successCount}/${list.length} file`,
+        description: `${failures.length} file lỗi`,
         variant: "destructive",
       });
-    }
-    if (successCount > 0) {
-      toast({ title: `Đã upload ${successCount} file` });
+    } else {
+      toast({
+        title: `Lỗi upload ${failures.length}/${list.length} file`,
+        description: failures.slice(0, 3).join("\n") + (failures.length > 3 ? "..." : ""),
+        variant: "destructive",
+      });
     }
     loadFiles(activeBucket);
     setUploading(false);
