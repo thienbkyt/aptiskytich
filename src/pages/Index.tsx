@@ -622,7 +622,7 @@ const Index = () => {
       </section>
 
       {/* Study tools */}
-      <section className="section-padding relative overflow-hidden" style={{ background: "#FFFFFF" }}>
+      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: "#FFFFFF" }}>
         <div className="section-container relative">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
