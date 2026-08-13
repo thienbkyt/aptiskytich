@@ -146,8 +146,48 @@ async function persistWritingPart(job: any, body: any): Promise<{ rawPart: numbe
   } as any).eq("id", job.test_result_id);
   if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
 
+  // ── Standalone part (no full-test session) ────────────────────────────────
+  // The session finalizer only runs for full tests. Without this, a lone part
+  // graded by the worker would leave writing_skill_results empty and the
+  // student would see no score in History. Mirror the client's single-part
+  // math: scale50 = rawPart/30*50, no CEFR band (a lone part cannot yield one).
+  const standalone = !sessionId;
+  if (standalone) {
+    const { data: existing, error: exErr } = await admin
+      .from("writing_skill_results")
+      .select("id")
+      .eq("test_result_id", job.test_result_id)
+      .maybeSingle();
+    if (exErr) throw new Error(`writing_skill_results lookup failed: ${exErr.message}`);
+    if (!existing?.id) {
+      const { error: srErr } = await admin.from("writing_skill_results").insert({
+        user_id: job.user_id,
+        test_result_id: job.test_result_id,
+        exam_set_id: meta.examSetId ?? null,
+        full_test_session_id: null,
+        parts: {
+          [partType]: {
+            rawPart,
+            grammarErrors: body.grammarErrors || [],
+            spellingErrors: body.spellingErrors || [],
+            feedback: body.feedback || body.analysis || "",
+            improvedVersion: body.improvedVersion || "",
+          },
+        },
+        raw_total: rawPart,
+        scale50: Math.round((rawPart / 30) * 50),
+        cefr: "",
+        grey_zone: false,
+        flag_review: false,
+        feedback: body.feedback || body.analysis || "",
+      } as any);
+      if (srErr) throw new Error(`writing_skill_results insert failed: ${srErr.message}`);
+    }
+  }
+
   return { rawPart };
 }
+
 
 
 async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: number }> {
