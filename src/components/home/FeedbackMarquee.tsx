@@ -1,14 +1,32 @@
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import fb01 from "@/assets/feedback/fb01.webp.asset.json";
+import fb02 from "@/assets/feedback/fb02.webp.asset.json";
+import fb03 from "@/assets/feedback/fb03.webp.asset.json";
+import fb04 from "@/assets/feedback/fb04.webp.asset.json";
+import fb05 from "@/assets/feedback/fb05.webp.asset.json";
+import fb06 from "@/assets/feedback/fb06.webp.asset.json";
+import fb07 from "@/assets/feedback/fb07.webp.asset.json";
+import fb08 from "@/assets/feedback/fb08.webp.asset.json";
+import fb09 from "@/assets/feedback/fb09.webp.asset.json";
+import fb10 from "@/assets/feedback/fb10.webp.asset.json";
 
-/**
- * Ảnh feedback học viên. Thêm ảnh vào src/assets/feedback/ rồi import ở đây:
- *   import fb01 from "@/assets/feedback/fb-01.jpg";
- * Mảng rỗng → section không render.
- */
+/** Ảnh feedback học viên (4:5). Hàng trên: fb01–fb05, hàng dưới: fb06–fb10. */
 const feedbackImages: { src: string; alt: string }[] = [
-  // { src: fb01, alt: "Feedback học viên Aptis Kỳ Tích 1" },
+  { src: fb01.url, alt: "Feedback học viên Aptis Kỳ Tích 1" },
+  { src: fb02.url, alt: "Feedback học viên Aptis Kỳ Tích 2" },
+  { src: fb03.url, alt: "Feedback học viên Aptis Kỳ Tích 3" },
+  { src: fb04.url, alt: "Feedback học viên Aptis Kỳ Tích 4" },
+  { src: fb05.url, alt: "Feedback học viên Aptis Kỳ Tích 5" },
+  { src: fb06.url, alt: "Feedback học viên Aptis Kỳ Tích 6" },
+  { src: fb07.url, alt: "Feedback học viên Aptis Kỳ Tích 7" },
+  { src: fb08.url, alt: "Feedback học viên Aptis Kỳ Tích 8" },
+  { src: fb09.url, alt: "Feedback học viên Aptis Kỳ Tích 9" },
+  { src: fb10.url, alt: "Feedback học viên Aptis Kỳ Tích 10" },
 ];
+
+const topRow = feedbackImages.slice(0, 5);
+const bottomRow = feedbackImages.slice(5, 10);
 
 export const hasFeedbackImages = feedbackImages.length > 0;
 
@@ -21,7 +39,8 @@ const Row = ({
   reverse?: boolean;
   onPick: (img: { src: string; alt: string }) => void;
 }) => {
-  const doubled = [...images, ...images];
+  // Chỉ 5 ảnh/hàng → nhân ba để băng chạy không hụt trên màn hình rộng
+  const tripled = [...images, ...images, ...images];
   return (
     <div className="group relative overflow-hidden">
       <div
@@ -30,7 +49,7 @@ const Row = ({
           animation: `kt-marquee${reverse ? "-reverse" : ""} 60s linear infinite`,
         }}
       >
-        {doubled.map((img, i) => (
+        {tripled.map((img, i) => (
           <button
             key={`${img.src}-${i}`}
             type="button"
@@ -43,7 +62,7 @@ const Row = ({
               alt={img.alt}
               loading="lazy"
               decoding="async"
-              className="h-[260px] w-auto object-contain rounded-xl bg-white"
+              className="h-[300px] w-[240px] object-cover rounded-[16px] bg-white"
             />
           </button>
         ))}
@@ -59,14 +78,14 @@ const FeedbackMarquee = () => {
   return (
     <>
       <style>{`
-@keyframes kt-marquee { from { transform: translateX(-50%); } to { transform: translateX(0); } }
-@keyframes kt-marquee-reverse { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes kt-marquee { from { transform: translateX(-33.3333%); } to { transform: translateX(0); } }
+@keyframes kt-marquee-reverse { from { transform: translateX(0); } to { transform: translateX(-33.3333%); } }
 @media (prefers-reduced-motion: reduce) { .kt-marquee-wrap * { animation: none !important; } }
       `}</style>
 
       <div className="kt-marquee-wrap relative space-y-5">
-        <Row images={feedbackImages} onPick={setActive} />
-        <Row images={feedbackImages} reverse onPick={setActive} />
+        <Row images={topRow} onPick={setActive} />
+        <Row images={bottomRow} reverse onPick={setActive} />
 
         {/* Gradient mờ hai mép */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-white to-transparent" />
