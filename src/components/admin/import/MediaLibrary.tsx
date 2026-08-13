@@ -131,15 +131,20 @@ const MediaLibrary = () => {
 
     await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
 
-    if (failures.length) {
+    if (successCount === list.length) {
+      toast({ title: `Đã upload ${successCount} file` });
+    } else if (successCount > 0) {
       toast({
-        title: `Lỗi upload ${failures.length} file`,
-        description: failures.join("\n"),
+        title: `Đã upload ${successCount}/${list.length} file`,
+        description: `${failures.length} file lỗi`,
         variant: "destructive",
       });
-    }
-    if (successCount > 0) {
-      toast({ title: `Đã upload ${successCount} file` });
+    } else {
+      toast({
+        title: `Lỗi upload ${failures.length}/${list.length} file`,
+        description: failures.slice(0, 3).join("\n") + (failures.length > 3 ? "..." : ""),
+        variant: "destructive",
+      });
     }
     loadFiles(activeBucket);
     setUploading(false);
