@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import {
   ArrowRight, Flame, BookOpen,
   Target, Sparkles, Cpu, TrendingUp, Check, Layers, Lightbulb,
-  GripVertical, Timer, ShieldCheck, GraduationCap,
+  GripVertical, Timer, ShieldCheck,
   Ear, BookText, Star, History, type LucideIcon,
 } from "lucide-react";
 
@@ -23,6 +23,7 @@ import GradientOrb from "@/components/ui/gradient-orb";
 import writingResultAsset from "@/assets/writing-result.jpg.asset.json";
 import heroAiFeedbackAsset from "@/assets/hero-ai-feedback.png.asset.json";
 import InstallAppCard from "@/components/pwa/InstallAppCard";
+import FeedbackMarquee, { hasFeedbackImages } from "@/components/home/FeedbackMarquee";
 import { useSiteStats } from "@/hooks/useSiteStats";
 
 
@@ -320,61 +321,65 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Learning Path — 3 clear routes */}
+      {/* Getting started — 4 steps */}
       <section className="relative py-16 md:py-20" style={{ background: "#FFFFFF" }}>
         <div className="section-container">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
-              Lộ trình học
+              Bắt đầu từ đâu
             </motion.div>
-            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold" style={{ color: "#4D0D0D" }}>
-              Chọn lộ trình phù hợp với{" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">bạn</span>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold mb-4" style={{ color: "#4D0D0D" }}>
+              Chưa biết học thế nào? Làm đúng{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">4 bước này</span>
             </motion.h2>
+            <motion.p variants={fadeUp} custom={2} className="text-base md:text-lg" style={{ color: "#6B4A3B" }}>
+              Lộ trình cho người mới, không cần đoán mò.
+            </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-5 max-w-6xl mx-auto">
             {[
-              { icon: GraduationCap, badge: "Người mới", goal: "Nắm cơ bản, làm quen dạng bài Aptis", time: "4–6 tuần", to: "/grammar", cta: "Bắt đầu học" },
-              { icon: Timer, badge: "Thi gấp", goal: "Cày sát đề, luyện phản xạ bấm giờ", time: "1–2 tuần", to: "/thi-thu", cta: "Vào thi thử", featured: true },
-              { icon: Target, badge: "Mục tiêu B2 / C", goal: "Nâng band Speaking & Writing với AI", time: "6–8 tuần", to: "/speaking", cta: "Luyện nâng cao" },
-            ].map((p, i) => (
+              { num: "01", title: "Làm 1 bài thi thử full test", desc: "Vào Thi thử làm trọn một đề như thi thật để biết mình đang ở đâu.", to: "/thi-thu", cta: "Vào thi thử" },
+              { num: "02", title: "Xem band điểm AI chấm", desc: "AI chấm cả Speaking và Writing, trả band từng kỹ năng ngay sau khi nộp." },
+              { num: "03", title: "Luyện kỹ năng yếu nhất trước", desc: "Nhìn band, kỹ năng nào thấp nhất thì vào luyện từng part của kỹ năng đó.", to: "/speaking", cta: "Chọn kỹ năng" },
+              { num: "04", title: "Cày theo Đề Key Dự Đoán", desc: "Làm đề ưu tiên Cao trước, rồi tới Vừa, Thấp, cuối cùng là Backup.", to: "/key-du-doan", cta: "Xem key hôm nay" },
+            ].map((s, i, arr) => (
               <motion.div
-                key={p.badge}
+                key={s.num}
                 variants={fadeUp} custom={i}
                 initial="hidden" whileInView="visible" viewport={{ once: true }}
-                className={`relative rounded-[22px] bg-white border p-6 md:p-7 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg ${p.featured ? "border-primary/50" : "border-[#F2E2D4]"}`}
-                style={{ boxShadow: p.featured ? "0 20px 40px -20px rgba(204, 28, 1, 0.35)" : "0 8px 20px -14px rgba(204, 28, 1, 0.18)" }}
+                className="relative rounded-[22px] bg-white border border-[#F2E2D4] p-6 md:p-7 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg"
+                style={{ boxShadow: "0 8px 20px -14px rgba(204, 28, 1, 0.18)" }}
               >
-                {p.featured && (
-                  <span className="absolute -top-3 left-6 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white shadow-sm">
-                    <Sparkles className="w-3 h-3" /> PHỔ BIẾN
-                  </span>
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center mb-5 font-heading font-extrabold text-white">
+                  {s.num}
+                </div>
+                {i < arr.length - 1 && (
+                  <ArrowRight className="hidden md:block absolute top-9 -right-4 w-6 h-6 text-primary/40" aria-hidden />
                 )}
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] flex items-center justify-center mb-5">
-                  <p.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-heading font-extrabold text-lg md:text-xl leading-tight mb-2" style={{ color: "#4D0D0D" }}>
-                  {p.badge}
+                <h3 className="font-heading font-extrabold text-base md:text-lg leading-tight mb-2" style={{ color: "#4D0D0D" }}>
+                  {s.title}
                 </h3>
-                <p className="text-sm leading-relaxed mb-4" style={{ color: "#6b4a4a" }}>{p.goal}</p>
-                <div className="inline-flex items-center gap-1.5 text-xs font-semibold mb-6" style={{ color: "#6B4A3B" }}>
-                  <Timer className="w-3.5 h-3.5 text-primary" /> {p.time}
-                </div>
-                <div className="mt-auto">
-                  <Link to={p.to}>
-                    <Button
-                      className={`w-full rounded-full h-11 font-semibold gap-2 ${p.featured ? "bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110" : "bg-white border-2 border-primary text-primary hover:bg-primary/5"}`}
-                    >
-                      {p.cta} <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-                </div>
+                <p className="text-sm leading-relaxed mb-5" style={{ color: "#6b4a4a" }}>{s.desc}</p>
+                {s.to && (
+                  <div className="mt-auto">
+                    <Link to={s.to}>
+                      <Button className="w-full rounded-full h-11 font-semibold gap-2 bg-white border-2 border-primary text-primary hover:bg-primary/5">
+                        {s.cta} <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
+
+          <p className="text-center text-sm mt-8" style={{ color: "#6B4A3B" }}>
+            Lặp lại bước 3 và 4 mỗi ngày cho tới sát ngày thi.
+          </p>
         </div>
       </section>
+
 
       {/* Showcase — 3 panels */}
       <section className="relative py-20 md:py-28" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
@@ -662,6 +667,26 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Student feedback — image marquee */}
+      {hasFeedbackImages && (
+      <section className="relative py-16 md:py-20 overflow-hidden" style={{ background: "#FFFFFF" }}>
+        <div className="section-container">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 md:mb-12 max-w-2xl mx-auto">
+            <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
+              Học viên nói gì
+            </motion.div>
+            <motion.h2 variants={fadeUp} custom={1} className="text-3xl md:text-4xl font-heading font-extrabold" style={{ color: "#4D0D0D" }}>
+              Feedback của học viên{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F]">Kỳ Tích</span>
+            </motion.h2>
+          </motion.div>
+        </div>
+        <FeedbackMarquee />
+      </section>
+      )}
+
+
 
       {/* Final CTA — feature-focused */}
 
