@@ -639,7 +639,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     if (partCount === 0) {
       return (
         <div className="min-h-[70vh]">
-          {progressBar}
         {adminOverlay}
           <div className="max-w-xl mx-auto text-center py-12">
             <p className="text-muted-foreground mb-4">
