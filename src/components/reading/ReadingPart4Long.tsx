@@ -100,6 +100,7 @@ const ReadingPart4Long = ({
   const globallyRevealed = submitted || !!revealAnswers;
   const revealFor = (pIdx: number) => globallyRevealed || (lockedIndices?.has(pIdx) ?? false);
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [dropdownDir, setDropdownDir] = useState<"up" | "down">("down");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Click outside to close
@@ -113,6 +114,22 @@ const ReadingPart4Long = ({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [openDropdown]);
+
+  const openDropdownFor = (pIdx: number, triggerEl: HTMLElement) => {
+    if (openDropdown === pIdx) {
+      setOpenDropdown(null);
+      return;
+    }
+    const rect = triggerEl.getBoundingClientRect();
+    const bottomSpace = window.innerHeight - rect.bottom;
+    const topSpace = rect.top;
+    if (bottomSpace < 280 && topSpace > bottomSpace) {
+      setDropdownDir("up");
+    } else {
+      setDropdownDir("down");
+    }
+    setOpenDropdown(pIdx);
+  };
 
   const paragraphs: { index: number; text: string }[] = question.paragraphs || [];
   const explByPara = (question.explanation || "")
