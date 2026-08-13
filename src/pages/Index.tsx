@@ -379,7 +379,7 @@ const Index = () => {
       {/* Showcase — 3 panels */}
       <section className="relative py-14 md:py-20" style={{ background: "linear-gradient(180deg, #FFFFFF 0%, #FFF7F0 100%)" }}>
         <div className="section-container">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14 max-w-2xl mx-auto">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} custom={0} className="inline-block text-xs font-bold tracking-widest uppercase mb-3 text-primary">
               Tính năng nổi bật
             </motion.div>
