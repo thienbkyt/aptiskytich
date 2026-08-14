@@ -451,6 +451,30 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     }
   };
 
+  /**
+   * Signs + attaches the upcoming source while the intro TTS is still speaking,
+   * so there is no dead air between the spoken question and the recording.
+   * Never plays — playActiveSource still owns playback.
+   */
+  const prewarmActiveSource = async (audio: HTMLAudioElement, isFirstPlay: boolean) => {
+    const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    try {
+      const url = await resolveAudioUrl(activeSrc);
+      if (!url) return;
+      // Don't fight the silent priming play for the element.
+      for (let i = 0; i < 40 && primingRef.current; i++) {
+        await new Promise((r) => setTimeout(r, 25));
+      }
+      if (activeSrc === src) setResolvedSrc(url);
+      if (audio.src !== url) {
+        audio.src = url;
+        audio.load();
+      }
+    } catch {
+      /* playActiveSource will retry and report */
+    }
+  };
+
 
   /** Resolves + plays the right source. Returns "ok" | "blocked" | "error". */
   const playActiveSource = async (
