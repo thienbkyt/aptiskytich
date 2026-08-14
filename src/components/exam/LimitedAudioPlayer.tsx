@@ -77,7 +77,7 @@ export const resetLimitedAudioPlays = () => {
   playCountStore.clear();
 };
 
-const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 1000, reviewMode = false }: LimitedAudioPlayerProps) => {
+const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 400, reviewMode = false }: LimitedAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
@@ -85,6 +85,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   );
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [introSpeaking, setIntroSpeaking] = useState(false);
+  const [loadingAudio, setLoadingAudio] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [blocked, setBlocked] = useState(false);
   const retryCountRef = useRef(0);
