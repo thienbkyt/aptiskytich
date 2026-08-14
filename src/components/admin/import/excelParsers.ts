@@ -448,8 +448,6 @@ const parseListeningPart2 = (rows: any[]): ParseResult => {
     if (!info) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu info_text` }); return; }
     const correct = r.correct_person?.toString().trim();
     if (!correct) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu correct_person` }); return; }
-    // Skip noisy rows explicitly marked as "none" (unmatched/distractor info)
-    if (correct.toLowerCase() === "none") return;
     infoItems.push({ text: info, correctPerson: correct });
   });
 
