@@ -56,6 +56,14 @@ const ListeningPart4Monologue = ({
 
   const clipAnswers: Record<number, number> = answers[currentIndex] || {};
 
+  // Read BOTH questions of the clip before the recording starts.
+  const ordinals = ["one", "two", "three", "four", "five"];
+  const introTextForClip =
+    (clip.questions || [])
+      .map((q, i) => (q?.text ? `Question ${ordinals[i] || i + 1}: ${q.text}` : ""))
+      .filter(Boolean)
+      .join(" ... ") || undefined;
+
   const handleSelect = (qi: number, oi: number) => {
     if (reveal) return;
     onAnswer(currentIndex, { ...clipAnswers, [qi]: oi });
