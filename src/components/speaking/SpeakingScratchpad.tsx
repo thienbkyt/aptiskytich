@@ -6,6 +6,7 @@ import SpeakingOutlineHelper from "@/components/speaking/SpeakingOutlineHelper";
 interface Props {
   outlineB1?: SpeakingOutline | null;
   outlineB2?: SpeakingOutline | null;
+  currentQuestion?: number;
   note: string;
   onNoteChange: (v: string) => void;
   onClose: () => void;
@@ -19,7 +20,7 @@ interface Props {
  * during the current exam session, but are lost when leaving the page,
  * like exam scratch paper being collected.
  */
-export default function SpeakingScratchpad({ outlineB1, outlineB2, note, onNoteChange, onClose }: Props) {
+export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuestion, note, onNoteChange, onClose }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [showOutline, setShowOutline] = useState(false);
   const [size, setSize] = useState(() => {
@@ -124,7 +125,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, note, onNoteC
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto border-t border-gray-200 bg-[#24085a]/5">
-            <SpeakingOutlineHelper outlineB1={outlineB1} outlineB2={outlineB2} />
+            <SpeakingOutlineHelper outlineB1={outlineB1} outlineB2={outlineB2} currentQuestion={currentQuestion} />
           </div>
         </>
       )}
