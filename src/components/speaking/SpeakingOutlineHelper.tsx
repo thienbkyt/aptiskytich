@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Shuffle } from "lucide-react";
 import type { SpeakingOutline } from "@/data/speakingQuestions";
 
 interface Props {
   outlineB1?: SpeakingOutline | null;
   outlineB2?: SpeakingOutline | null;
+  /** Zero-based index of the question the student is on right now. */
+  currentQuestion?: number;
 }
 
 const tidy = (s: string) =>
@@ -16,17 +18,25 @@ const fill = (text: string, choice: string) => tidy(text.replace("___", choice))
  * "Dựng bài nhanh" — template with 19 blanks × 5 alternatives each.
  * Content only; the floating toggle button lives in OutlineBuilderButton.
  */
-export default function SpeakingOutlineHelper({ outlineB1, outlineB2 }: Props) {
+export default function SpeakingOutlineHelper({ outlineB1, outlineB2, currentQuestion = 0 }: Props) {
   const [level, setLevel] = useState<"b1" | "b2">("b1");
   const [choices, setChoices] = useState<Record<number, number>>({});
+  const [tab, setTab] = useState(currentQuestion);
+
+  // Follow the exam: moving to another question jumps to its tab.
+  useEffect(() => setTab(currentQuestion), [currentQuestion]);
 
   const requested = level === "b1" ? outlineB1 : outlineB2;
   const other = level === "b1" ? outlineB2 : outlineB1;
   const outline = requested ?? null;
 
+  const groups = outline?.groups ?? [];
+  const activeIdx = Math.min(Math.max(tab, 0), Math.max(groups.length - 1, 0));
+  const activeGroup = groups[activeIdx];
+
   const allItems = useMemo(
-    () => (outline?.groups ?? []).flatMap((g) => g.items ?? []),
-    [outline]
+    () => activeGroup?.items ?? [],
+    [activeGroup]
   );
 
   const composed = useMemo(() => {
@@ -106,14 +116,33 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2 }: Props) {
             </p>
           )}
 
+          {groups.length > 1 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {groups.map((_, gi) => (
+                <button
+                  key={gi}
+                  type="button"
+                  onClick={() => setTab(gi)}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition-colors ${
+                    gi === activeIdx
+                      ? "bg-[#24085a] text-white border-[#24085a]"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  Câu {gi + 1}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="space-y-5">
-            {outline.groups.map((g, gi) => (
-              <div key={gi}>
+            {activeGroup && (
+              <div>
                 <p className="text-xs text-muted-foreground mb-2">
-                  {g.question} · ~{g.seconds} giây
+                  {activeGroup.question} · ~{activeGroup.seconds} giây
                 </p>
                 <div className="space-y-2">
-                  {g.items.map((it) => {
+                  {activeGroup.items.map((it) => {
                     const idx = choices[it.no] ?? 0;
                     const [before, after] = it.text.split("___");
                     return (
@@ -141,7 +170,7 @@ export default function SpeakingOutlineHelper({ outlineB1, outlineB2 }: Props) {
                   })}
                 </div>
               </div>
-            ))}
+            )}
           </div>
 
           <div className="mt-5 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-4">
