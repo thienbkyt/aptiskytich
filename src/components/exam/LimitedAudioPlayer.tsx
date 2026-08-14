@@ -575,6 +575,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       introTokenRef.current += 1;
       stopTTS();
       setIntroSpeaking(false);
+      setLoadingAudio(false);
       audio.pause();
       releaseIfMine(audio);
       setIsPlaying(false);
@@ -602,6 +603,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
       if (needIntro) {
         setIntroSpeaking(true);
+        // Sign + load the recording IN PARALLEL with the spoken question.
+        void prewarmActiveSource(audio, isFirstPlay);
         let timedOut = false;
         try {
           // Safety net only: guards against speechSynthesis never firing onend.
@@ -619,7 +622,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         if (token !== introTokenRef.current) return;
       }
 
+      setLoadingAudio(true);
       const outcome = await playActiveSource(audio, isFirstPlay, token);
+      setLoadingAudio(false);
       if (outcome === "stale") return;
       if (outcome === "ok") {
         // Only now the student actually hears the audio → count the play.
