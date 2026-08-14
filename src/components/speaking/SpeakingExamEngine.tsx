@@ -1375,6 +1375,7 @@ const SpeakingExamEngine = ({
         <SpeakingScratchpad
           outlineB1={activeOutline?.outlineB1 ?? null}
           outlineB2={activeOutline?.outlineB2 ?? null}
+          currentQuestion={currentIndex}
           note={scratchNote}
           onNoteChange={setScratchNote}
           onClose={() => setOutlineOpen(false)}
