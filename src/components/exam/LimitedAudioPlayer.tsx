@@ -77,7 +77,7 @@ export const resetLimitedAudioPlays = () => {
   playCountStore.clear();
 };
 
-const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 1000, reviewMode = false }: LimitedAudioPlayerProps) => {
+const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, introPauseMs = 400, reviewMode = false }: LimitedAudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playCount, setPlayCount] = useState<number>(
@@ -85,6 +85,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   );
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [introSpeaking, setIntroSpeaking] = useState(false);
+  const [loadingAudio, setLoadingAudio] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [blocked, setBlocked] = useState(false);
   const retryCountRef = useRef(0);
@@ -450,6 +451,30 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     }
   };
 
+  /**
+   * Signs + attaches the upcoming source while the intro TTS is still speaking,
+   * so there is no dead air between the spoken question and the recording.
+   * Never plays — playActiveSource still owns playback.
+   */
+  const prewarmActiveSource = async (audio: HTMLAudioElement, isFirstPlay: boolean) => {
+    const activeSrc = !isFirstPlay && src2 ? src2 : src;
+    try {
+      const url = await resolveAudioUrl(activeSrc);
+      if (!url) return;
+      // Don't fight the silent priming play for the element.
+      for (let i = 0; i < 40 && primingRef.current; i++) {
+        await new Promise((r) => setTimeout(r, 25));
+      }
+      if (activeSrc === src) setResolvedSrc(url);
+      if (audio.src !== url) {
+        audio.src = url;
+        audio.load();
+      }
+    } catch {
+      /* playActiveSource will retry and report */
+    }
+  };
+
 
   /** Resolves + plays the right source. Returns "ok" | "blocked" | "error". */
   const playActiveSource = async (
@@ -550,6 +575,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       introTokenRef.current += 1;
       stopTTS();
       setIntroSpeaking(false);
+      setLoadingAudio(false);
       audio.pause();
       releaseIfMine(audio);
       setIsPlaying(false);
@@ -577,6 +603,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
       if (needIntro) {
         setIntroSpeaking(true);
+        // Sign + load the recording IN PARALLEL with the spoken question.
+        void prewarmActiveSource(audio, isFirstPlay);
         let timedOut = false;
         try {
           // Safety net only: guards against speechSynthesis never firing onend.
@@ -594,7 +622,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         if (token !== introTokenRef.current) return;
       }
 
+      setLoadingAudio(true);
       const outcome = await playActiveSource(audio, isFirstPlay, token);
+      setLoadingAudio(false);
       if (outcome === "stale") return;
       if (outcome === "ok") {
         // Only now the student actually hears the audio → count the play.
@@ -672,6 +702,11 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         )}
         <span>Play/Stop</span>
       </button>
+      {(introSpeaking || loadingAudio) && (
+        <p className="text-xs text-muted-foreground mt-1">
+          {introSpeaking ? "Đang đọc câu hỏi…" : "Đang tải bài nghe…"}
+        </p>
+      )}
       {disabled && (
         <p className="text-xs text-muted-foreground mt-1">
           Đã dùng hết {maxPlays} lượt nghe cho câu này

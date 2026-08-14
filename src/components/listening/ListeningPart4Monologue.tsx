@@ -56,6 +56,14 @@ const ListeningPart4Monologue = ({
 
   const clipAnswers: Record<number, number> = answers[currentIndex] || {};
 
+  // Read BOTH questions of the clip before the recording starts.
+  const ordinals = ["one", "two", "three", "four", "five"];
+  const introTextForClip =
+    (clip.questions || [])
+      .map((q, i) => (q?.text ? `Question ${ordinals[i] || i + 1}: ${q.text}` : ""))
+      .filter(Boolean)
+      .join(" ... ") || undefined;
+
   const handleSelect = (qi: number, oi: number) => {
     if (reveal) return;
     onAnswer(currentIndex, { ...clipAnswers, [qi]: oi });
@@ -96,7 +104,7 @@ const ListeningPart4Monologue = ({
           className="flex-1"
         >
           {clip.audioUrl ? (
-            <LimitedAudioPlayer src={clip.audioUrl} src2={clip.audioUrl2} introText={clip.questions?.[0]?.text} reviewMode={reveal} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:part4-${clip.id}`} />
+            <LimitedAudioPlayer src={clip.audioUrl} src2={clip.audioUrl2} introText={introTextForClip} reviewMode={reveal} maxPlays={2} questionKey={`${audioKeyPrefix || ""}:part4-${clip.id}`} />
           ) : (
             <MissingMediaNotice kind="audio" skill="listening" partType="part4" questionNumber={currentIndex + 1} />
           )}

@@ -132,6 +132,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp2_upgrade_20260814: {
+        Row: {
+          backed_up_at: string | null
+          exam_set_id: string | null
+          extra_data: Json | null
+          id: string | null
+          question_text: string | null
+          title: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+          title?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       backup_rp5_trung_20260810: {
         Row: {
           audio_url: string | null
