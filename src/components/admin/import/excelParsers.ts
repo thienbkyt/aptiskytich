@@ -428,12 +428,13 @@ const parseListeningPart1 = (rows: any[]): ParseResult => {
 };
 
 // ─── Listening Part 2: Information Matching — 4 monologues, match to 6 info pieces ───
-// Columns: person_name, audio_filename, info_text, correct_person
+// Columns: person_name, audio_filename, info_text, correct_person, topic (optional)
 const parseListeningPart2 = (rows: any[]): ParseResult => {
   const errors: { row: number; message: string }[] = [];
   if (rows.length === 0) return { questions: [], errors: [{ row: 2, message: "Sheet trống" }] };
 
   const audioUrl = rows[0].audio_filename?.toString().trim() || null;
+  const topic = rows[0].topic?.toString().trim();
   const personsSet = new Map<string, string>();
   const infoItems: { text: string; correctPerson: string }[] = [];
 
@@ -447,6 +448,8 @@ const parseListeningPart2 = (rows: any[]): ParseResult => {
     if (!info) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu info_text` }); return; }
     const correct = r.correct_person?.toString().trim();
     if (!correct) { errors.push({ row: rowNum, message: `Dòng ${rowNum}: Thiếu correct_person` }); return; }
+    // Skip noisy rows explicitly marked as "none" (unmatched/distractor info)
+    if (correct.toLowerCase() === "none") return;
     infoItems.push({ text: info, correctPerson: correct });
   });
 
@@ -454,7 +457,9 @@ const parseListeningPart2 = (rows: any[]): ParseResult => {
 
   const questions: ParsedQuestion[] = [{
     order_index: 0,
-    question_text: "Listen to four people and match each person to the correct information.",
+    question_text: topic
+      ? `Four people are talking about ${topic}. Match each person to the correct information.`
+      : "Listen to four people and match each person to the correct information.",
     question_type: "listening_matching",
     options: [],
     correct_answer: 0,
