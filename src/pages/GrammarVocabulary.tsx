@@ -88,7 +88,7 @@ const GrammarVocabulary = () => {
   }, [searchedSets, setPriority]);
   const hasPriority = useMemo(() => searchedSets.some((s) => setPriority.get(s.fullTestId) != null), [searchedSets, setPriority]);
   useEffect(() => { if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all"); }, [hasPriority, priorityFilter]);
-  const isSetDone = (s: { examSetIds: string[] }) => s.examSetIds.length > 0 && s.examSetIds.every((id) => progress.has(id));
+  const isSetDone = (s: { examSetIds: string[] }) => s.examSetIds.length > 0 && countGvDoneParts(s.examSetIds, progress) === s.examSetIds.length;
   const doneCounts = useMemo(() => {
     const base = priorityFilter === "all" ? searchedSets : searchedSets.filter((s) => setPriority.get(s.fullTestId) === priorityFilter);
     const done = base.filter((s) => isSetDone(s)).length;
