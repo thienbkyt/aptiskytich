@@ -132,6 +132,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp2_de09_20260815: {
+        Row: {
+          backed_up_at: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_upgrade_20260814: {
         Row: {
           backed_up_at: string | null

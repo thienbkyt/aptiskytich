@@ -23,6 +23,8 @@ import { useExamPriorityLabels, aggregatePriority } from "@/hooks/useExamPriorit
 import PriorityBadge from "@/components/practice/PriorityBadge";
 import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
 import DoneFilter, { type DoneFilterValue } from "@/components/practice/DoneFilter";
+import { countGvDoneParts, findGvFullAttempt } from "@/lib/gvProgress";
+
 
 interface FullPracticeState {
   active: boolean;
@@ -86,7 +88,7 @@ const GrammarVocabulary = () => {
   }, [searchedSets, setPriority]);
   const hasPriority = useMemo(() => searchedSets.some((s) => setPriority.get(s.fullTestId) != null), [searchedSets, setPriority]);
   useEffect(() => { if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all"); }, [hasPriority, priorityFilter]);
-  const isSetDone = (s: { examSetIds: string[] }) => s.examSetIds.length > 0 && s.examSetIds.every((id) => progress.has(id));
+  const isSetDone = (s: { examSetIds: string[] }) => s.examSetIds.length > 0 && countGvDoneParts(s.examSetIds, progress) === s.examSetIds.length;
   const doneCounts = useMemo(() => {
     const base = priorityFilter === "all" ? searchedSets : searchedSets.filter((s) => setPriority.get(s.fullTestId) === priorityFilter);
     const done = base.filter((s) => isSetDone(s)).length;
@@ -208,6 +210,10 @@ const GrammarVocabulary = () => {
                 <motion.div key={set.fullTestId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                   <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
                     {(() => {
+                      const full = findGvFullAttempt(set.examSetIds, progress);
+                      if (full) {
+                        return <div className="absolute top-3 right-3 z-10"><CornerResultBadge label={`${full.bestPct}%`} /></div>;
+                      }
                       const done = set.examSetIds.filter(id => progress.has(id)).length;
                       if (done === 0 || done !== set.examSetIds.length) return null;
                       let s = 0, t = 0;
@@ -215,6 +221,7 @@ const GrammarVocabulary = () => {
                       if (t <= 0) return null;
                       return <div className="absolute top-3 right-3 z-10"><CornerResultBadge label={`${Math.round((s / t) * 100)}%`} /></div>;
                     })()}
+
                     <div className="flex items-center gap-2 mb-3">
                       <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
                         Grammar & Vocab
@@ -225,7 +232,7 @@ const GrammarVocabulary = () => {
                     </div>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">{set.title}</h3>
                     <p className="text-sm text-muted-foreground mb-3">{set.questionCount} câu · {set.partCount} phần</p>
-                    <div className="mb-4">{(() => { const done = set.examSetIds.filter(id => progress.has(id)).length; if (done === set.examSetIds.length && done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">Đã hoàn thành tất cả {set.partCount} Part</span>; if (done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-info bg-info/10 px-2.5 py-1 rounded-full">Đã làm {done}/{set.partCount} Part</span>; return <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>; })()}</div>
+                    <div className="mb-4">{(() => { const done = countGvDoneParts(set.examSetIds, progress); if (done === set.examSetIds.length && done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success bg-success/10 px-2.5 py-1 rounded-full">Đã hoàn thành tất cả {set.partCount} Part</span>; if (done > 0) return <span className="inline-flex items-center gap-1.5 text-xs font-medium text-info bg-info/10 px-2.5 py-1 rounded-full">Đã làm {done}/{set.partCount} Part</span>; return <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">Chưa bắt đầu</span>; })()}</div>
                     <div className="flex-1" />
                     <div className="flex justify-end">
                       <Button variant="ghost" size="sm" onClick={() => guard(set as any, () => handleStartFullPractice(set), { feature: 'full_part', itemKey: set.fullTestId, setIds: set.examSetIds })} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
