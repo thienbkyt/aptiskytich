@@ -208,6 +208,10 @@ const GrammarVocabulary = () => {
                 <motion.div key={set.fullTestId} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                   <div className="group relative tech-card bg-card border border-border rounded-xl p-5 flex flex-col h-full">
                     {(() => {
+                      const full = findGvFullAttempt(set.examSetIds, progress);
+                      if (full) {
+                        return <div className="absolute top-3 right-3 z-10"><CornerResultBadge label={`${full.bestPct}%`} /></div>;
+                      }
                       const done = set.examSetIds.filter(id => progress.has(id)).length;
                       if (done === 0 || done !== set.examSetIds.length) return null;
                       let s = 0, t = 0;
@@ -215,6 +219,7 @@ const GrammarVocabulary = () => {
                       if (t <= 0) return null;
                       return <div className="absolute top-3 right-3 z-10"><CornerResultBadge label={`${Math.round((s / t) * 100)}%`} /></div>;
                     })()}
+
                     <div className="flex items-center gap-2 mb-3">
                       <Badge variant="secondary" className="w-fit text-[11px] font-medium bg-primary/10 text-primary dark:text-accent border-0">
                         Grammar & Vocab
