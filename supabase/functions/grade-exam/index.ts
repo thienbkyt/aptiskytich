@@ -552,6 +552,12 @@ OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" 
   • tf (Nội dung): nêu ý còn thiếu/lệch + cách triển khai sâu hơn (lý do + ví dụ).
 - bands: { tf, gra, vra, pro, fc } each integer 0..5.
 
+RÀNG BUỘC BẮT BUỘC VỀ DẪN CHỨNG (áp dụng cho analysis, criteriaAnalysis, upgradeTips):
+- Mọi từ/cụm đặt trong dấu nháy khi nhận xét BẮT BUỘC phải xuất hiện nguyên văn trong transcript của học viên.
+- Không được tự chế ví dụ lỗi. Nếu học viên không nói cụm nào đó, TUYỆT ĐỐI không được trích nó.
+- Nếu muốn gợi ý cách nói tốt hơn, chỉ được sửa từ/cụm CÓ THẬT trong transcript (dạng "cụm thật của học viên → bản sửa").
+- Nếu không tìm được dẫn chứng thật cho một tiêu chí, hãy nhận xét chung mà KHÔNG đặt bất kỳ cụm nào trong dấu nháy.
+
 Be honest, strict, fair. Do not invent content the student didn't say.`;
 
       // For non-Part4: send only spoken audios, but label every question and note which have NO AUDIO.
