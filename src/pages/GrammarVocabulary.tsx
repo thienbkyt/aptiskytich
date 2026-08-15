@@ -23,6 +23,8 @@ import { useExamPriorityLabels, aggregatePriority } from "@/hooks/useExamPriorit
 import PriorityBadge from "@/components/practice/PriorityBadge";
 import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
 import DoneFilter, { type DoneFilterValue } from "@/components/practice/DoneFilter";
+import { countGvDoneParts, findGvFullAttempt } from "@/lib/gvProgress";
+
 
 interface FullPracticeState {
   active: boolean;
