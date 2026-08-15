@@ -485,12 +485,23 @@ const SpeakingExamEngine = ({
     const questionText = getSpokenTextForIndex(currentIndexRef.current);
 
     if (questionText) {
+      const words = questionText.trim().split(/\s+/).filter(Boolean).length;
+      const speakTimeout = Math.max(15000, words * 450);
+      let finished = false;
       try {
-        await withTimeout(speakAsync(questionText), 15000);
+        await withTimeout(
+          speakAsync(questionText).then(() => { finished = true; }),
+          speakTimeout
+        );
       } catch {
-        /* Continue even if mobile audio is blocked. */
+        finished = true; /* Continue even if mobile audio is blocked. */
+      }
+      if (!finished) {
+        // Timed out: cut the voice so it never overlaps the prep timer.
+        try { stopTTS(); } catch { /* noop */ }
       }
     }
+
     if (token !== flowTokenRef.current) {
       console.warn("[Speaking] flow aborted - stale token after speakAsync");
       return;
