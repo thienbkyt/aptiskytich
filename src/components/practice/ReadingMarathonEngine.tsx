@@ -51,6 +51,8 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       return true;
     });
   }, [setsInput]);
+  /** Stable identity of the run's đề list — avoids reloading everything on re-render. */
+  const setsKey = sets.map((s) => s.id).join(",");
   /** Progress storage key: scoped so two different key days never share progress. */
   const progPart = scopeId ? `${partType}@${scopeId}` : partType;
   const savedInit = resume && persist ? loadMarathonProgress("reading", progPart) : null;
