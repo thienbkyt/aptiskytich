@@ -16,6 +16,8 @@ import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
 
 interface Props {
   sets: ExamSetRow[];
+  /** Isolates saved progress per source (e.g. a specific prediction key + priority). */
+  scopeId?: string;
   partType: ReadingPartType;
   skillLabel: string;
   onExit: () => void;
@@ -39,7 +41,18 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, isRetryMode = false }: Props) => {
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, isRetryMode = false }: Props) => {
+  /** Never let a duplicated exam_set_id create two rounds of the same đề. */
+  const sets = useMemo(() => {
+    const seen = new Set<string>();
+    return (setsInput || []).filter((s) => {
+      if (!s?.id || seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  }, [setsInput]);
+  /** Progress storage key: scoped so two different key days never share progress. */
+  const progPart = scopeId ? `${partType}@${scopeId}` : partType;
   const savedInit = resume && persist ? loadMarathonProgress("reading", progPart) : null;
   const openedRef = useRef(false);
   useEffect(() => {
