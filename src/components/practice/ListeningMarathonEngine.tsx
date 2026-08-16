@@ -44,14 +44,14 @@ type LoadedSet = {
 const HUGE_TIME = 24 * 60 * 60;
 
 const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet }: Props) => {
-  const savedInit = resume && persist ? loadMarathonProgress("listening", partType) : null;
+  const savedInit = resume && persist ? loadMarathonProgress("listening", progPart) : null;
   const openedRef = useRef(false);
   useEffect(() => {
     if (openedRef.current) return;
     const ids = sets.map((s) => s.id).filter(Boolean);
     if (ids.length === 0) return;
     openedRef.current = true;
-    void recordMarathonOpenedSets("listening", partType, ids);
+    void recordMarathonOpenedSets("listening", progPart, ids);
   }, [sets, partType]);
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
@@ -224,7 +224,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
     if (persist) {
-      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
+      saveMarathonProgress("listening", progPart, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     }
     if (pending) {
       setJumpQ(pending.qi);
@@ -300,7 +300,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
       if (id) {
         testResultIdRef.current = id;
         if (persist) {
-          saveMarathonProgress("listening", partType, {
+          saveMarathonProgress("listening", progPart, {
             currentIndex,
             results: list as any,
             drafts,
@@ -317,8 +317,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           const wq = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
           if (wq.length) wrongQBySet[r.examSetId] = wq;
         });
-        saveMarathonLast("listening", partType, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
-        clearMarathonProgress("listening", partType);
+        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
+        clearMarathonProgress("listening", progPart);
       }
     } finally {
       savingHistoryRef.current = false;
@@ -474,7 +474,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               )}
               <Button
                 onClick={() => {
-                  if (persist) clearMarathonProgress("listening", partType);
+                  if (persist) clearMarathonProgress("listening", progPart);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
@@ -544,7 +544,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     setDrafts((prev) => {
       const next = { ...prev, [currentSetId]: arr };
       if (persist) {
-        saveMarathonProgress("listening", partType, {
+        saveMarathonProgress("listening", progPart, {
           currentIndex,
           results: results as any,
           drafts: next,
@@ -711,7 +711,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             }
             setDrafts(nextDrafts);
             if (persist) {
-              saveMarathonProgress("listening", partType, {
+              saveMarathonProgress("listening", progPart, {
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,

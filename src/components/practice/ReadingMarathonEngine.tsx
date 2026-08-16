@@ -40,14 +40,14 @@ type ResultEntry = {
 const HUGE_TIME = 24 * 60 * 60;
 
 const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, isRetryMode = false }: Props) => {
-  const savedInit = resume && persist ? loadMarathonProgress("reading", partType) : null;
+  const savedInit = resume && persist ? loadMarathonProgress("reading", progPart) : null;
   const openedRef = useRef(false);
   useEffect(() => {
     if (openedRef.current) return;
     const ids = sets.map((s) => s.id).filter(Boolean);
     if (ids.length === 0) return;
     openedRef.current = true;
-    void recordMarathonOpenedSets("reading", partType, ids);
+    void recordMarathonOpenedSets("reading", progPart, ids);
   }, [sets, partType]);
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
@@ -244,7 +244,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const nextDrafts = { ...drafts };
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
-    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
+    if (persist) saveMarathonProgress("reading", progPart, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     if (pending) {
       setEnterAtLast(false);
       setJumpQ(pending.qi);
@@ -312,7 +312,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       if (id) {
         testResultIdRef.current = id;
         if (persist) {
-          saveMarathonProgress("reading", partType, {
+          saveMarathonProgress("reading", progPart, {
             currentIndex: resultsRef.current === list ? currentIndex : currentIndex,
             results: list as any,
             drafts,
@@ -324,8 +324,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       }
       if (opts?.finalize && persist) {
         const wrongSetIds = reviewable_.filter((r) => r.correct < r.total).map((r) => r.examSetId);
-        saveMarathonLast("reading", partType, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
-        clearMarathonProgress("reading", partType);
+        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
+        clearMarathonProgress("reading", progPart);
       }
     } finally {
       savingRef.current = false;
@@ -475,7 +475,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
               )}
               <Button
                 onClick={() => {
-                  if (persist) clearMarathonProgress("reading", partType);
+                  if (persist) clearMarathonProgress("reading", progPart);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
@@ -538,7 +538,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     setDrafts((prev) => {
       const next = { ...prev, [currentSetId]: bag };
       if (persist) {
-        saveMarathonProgress("reading", partType, {
+        saveMarathonProgress("reading", progPart, {
           currentIndex,
           results: results as any,
           drafts: next,
@@ -663,7 +663,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             if (setId) delete nextDrafts[setId];
             setDrafts(nextDrafts);
             if (persist) {
-              saveMarathonProgress("reading", partType, {
+              saveMarathonProgress("reading", progPart, {
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,
