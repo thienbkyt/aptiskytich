@@ -95,9 +95,19 @@ export async function logAIUsage(args: {
   model: string;
   usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | undefined;
   source_function: string;
+  finishReason?: string | null;
+  attempt?: number;
+  gradingSessionId?: string | null;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   if (!args.usage) return;
+  const baseMeta = args.metadata ?? {};
+  const merged = {
+    ...baseMeta,
+    finish_reason: args.finishReason ?? null,
+    attempt: args.attempt ?? null,
+    gradingSessionId: args.gradingSessionId ?? null,
+  };
   const inputTokens = Number(args.usage.prompt_tokens || 0);
   const outputTokens = Number(args.usage.completion_tokens || 0);
   const tasks: Promise<void>[] = [];
@@ -109,7 +119,7 @@ export async function logAIUsage(args: {
       units: inputTokens,
       unit_type: "input_tokens",
       source_function: args.source_function,
-      metadata: args.metadata,
+      metadata: merged,
     }));
   }
   if (outputTokens > 0) {
@@ -120,7 +130,7 @@ export async function logAIUsage(args: {
       units: outputTokens,
       unit_type: "output_tokens",
       source_function: args.source_function,
-      metadata: args.metadata,
+      metadata: merged,
     }));
   }
   await Promise.all(tasks);

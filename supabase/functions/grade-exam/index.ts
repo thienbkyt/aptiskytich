@@ -134,6 +134,9 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const body: GradingRequest = await req.json();
+    const gradingSessionId =
+      typeof body.gradingSessionId === "string" ? body.gradingSessionId
+        : (body as any)._meta?.fullTestSessionId ?? null;
     const { type, audioBase64, text, questions, partType } = body;
     const actualSpoken = Number(body.actualSpoken ?? 0);
     const speakTime = Number(body.speakTime ?? 0);
@@ -306,7 +309,15 @@ ${studentText}`;
         });
       }
       const rawData = await resp.json();
-      logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_checklist", partType: pt } }).catch(() => {});
+      logAIUsage({
+        model,
+        usage: rawData.usage,
+        source_function: "grade-exam",
+        finishReason: rawData.choices?.[0]?.finish_reason ?? null,
+        attempt: 1,
+        gradingSessionId,
+        metadata: { type: "writing_checklist", partType: pt },
+      }).catch(() => {});
       const tc = rawData.choices?.[0]?.message?.tool_calls?.[0];
       if (!tc?.function?.arguments) {
         return new Response(JSON.stringify({ error: "no_tool_call" }), {
@@ -667,7 +678,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       };
 
       let speakResp: Response | null = null;
+      let finalGatewayAttempt = 1;
       for (let attempt = 0; attempt < 2; attempt++) {
+        finalGatewayAttempt = attempt + 1;
         try {
           speakResp = await callGatewaySpeak();
           if (speakResp.status >= 500 && attempt === 0) {
@@ -730,6 +743,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
           model: MODEL_V2,
           usage: aiJson?.usage,
           source_function: "grade-exam",
+          finishReason: aiJson?.choices?.[0]?.finish_reason ?? null,
+          attempt: finalGatewayAttempt,
+          gradingSessionId,
           metadata: { mode: "speaking_v2", partType },
         });
       } catch { /* ignore */ }
@@ -1286,7 +1302,7 @@ ${partsIn.formalText ?? ""}`;
         | { kind: "truncated"; why: string }
         | { kind: "error"; status: number; message: string };
 
-      const runV2Once = async (maxTokens: number): Promise<V2Attempt> => {
+      const runV2Once = async (maxTokens: number, attempt: number): Promise<V2Attempt> => {
         let respOrNull: Response | null = null;
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
@@ -1318,9 +1334,17 @@ ${partsIn.formalText ?? ""}`;
         }
 
         const rawData = await resp.json();
-        logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_v2", partType: pt } }).catch(() => {});
-
         const choice = rawData.choices?.[0];
+        logAIUsage({
+          model,
+          usage: rawData.usage,
+          source_function: "grade-exam",
+          finishReason: choice?.finish_reason ?? null,
+          attempt,
+          gradingSessionId,
+          metadata: { type: "writing_v2", partType: pt },
+        }).catch(() => {});
+
         const finishReason = String(choice?.finish_reason ?? "");
         if (finishReason === "length" || finishReason === "MAX_TOKENS") {
           return { kind: "truncated", why: `finish_reason=${finishReason}` };
@@ -1350,10 +1374,10 @@ ${partsIn.formalText ?? ""}`;
         return { kind: "ok", parsed: parsedOnce };
       };
 
-      let v2 = await runV2Once(BASE_MAX_TOKENS);
+      let v2 = await runV2Once(BASE_MAX_TOKENS, 1);
       if (v2.kind === "truncated") {
         console.warn(`[grade-exam writing_v2] truncated output (${v2.why}) — retrying with higher cap`);
-        v2 = await runV2Once(RETRY_MAX_TOKENS);
+        v2 = await runV2Once(RETRY_MAX_TOKENS, 2);
       }
 
       if (v2.kind === "truncated") {
@@ -2063,7 +2087,9 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
 
     let response: Response | null = null;
     let lastErr: unknown = null;
+    let finalGatewayAttempt = 1;
     for (let attempt = 0; attempt < 2; attempt++) {
+      finalGatewayAttempt = attempt + 1;
       try {
         response = await callGateway();
         // Retry only on transient gateway errors (5xx). Pass-through 4xx (429/402/etc) without retrying.
@@ -2132,8 +2158,12 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       model,
       usage: data.usage,
       source_function: "grade-exam",
+      finishReason: data.choices?.[0]?.finish_reason ?? null,
+      attempt: finalGatewayAttempt,
+      gradingSessionId,
       metadata: { type, partType },
     }).catch(() => {});
+
 
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
