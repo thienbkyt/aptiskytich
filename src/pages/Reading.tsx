@@ -259,6 +259,28 @@ const Reading = () => {
     return base.filter((s) => (s.id && !seen.has(s.id) ? (seen.add(s.id), true) : false));
   }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, marathon.setIds, keySetIds, keyPrio, priorityLabels]);
 
+  // Freeze the đề list for the whole run: async sources (prediction items, priority
+  // labels, progress) resolve at different times and must never reorder or shrink a
+  // marathon already in progress — that would shift every index the student sees.
+  const frozenMarathonRef = useRef<{ token: string; sets: ExamSetRow[] } | null>(null);
+  const marathonToken = [
+    marathon.partType,
+    marathon.keyId ?? "",
+    marathon.prio ?? "",
+    marathon.priorityLabel ?? "",
+    (marathon.retryWrongSetIds ?? []).join("|"),
+  ].join("#");
+  const runSets = useMemo(() => {
+    if (!marathon.active) { frozenMarathonRef.current = null; return marathonSets; }
+    const frozen = frozenMarathonRef.current;
+    if (frozen && frozen.token === marathonToken && frozen.sets.length) return frozen.sets;
+    if (marathonSets.length) {
+      frozenMarathonRef.current = { token: marathonToken, sets: marathonSets };
+      return marathonSets;
+    }
+    return marathonSets;
+  }, [marathon.active, marathonToken, marathonSets]);
+
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ReadingPartType;
     setExam((prev) => ({ ...prev, active: true, partType, testTitle: set.title, loadingExam: true, showResults: false, correct: 0, total: 0, examSetId: set.id, startedAt: Date.now(), totalForScore: null, skipIntro: opts?.skipIntro ?? false }));
@@ -412,7 +434,7 @@ const Reading = () => {
     const partLabel = PARTS.find((p) => p.id === marathon.partType)?.label ?? "Part";
     return (
       <ReadingMarathonEngine
-        sets={marathonSets}
+        sets={runSets}
         scopeId={marathon.keyId ? `key:${marathon.keyId}:${marathon.prio ?? "all"}` : undefined}
         partType={marathon.partType}
         skillLabel={`Reading · Marathon ${partLabel}`}
