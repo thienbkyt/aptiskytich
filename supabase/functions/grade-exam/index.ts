@@ -1374,10 +1374,10 @@ ${partsIn.formalText ?? ""}`;
         return { kind: "ok", parsed: parsedOnce };
       };
 
-      let v2 = await runV2Once(BASE_MAX_TOKENS);
+      let v2 = await runV2Once(BASE_MAX_TOKENS, 1);
       if (v2.kind === "truncated") {
         console.warn(`[grade-exam writing_v2] truncated output (${v2.why}) — retrying with higher cap`);
-        v2 = await runV2Once(RETRY_MAX_TOKENS);
+        v2 = await runV2Once(RETRY_MAX_TOKENS, 2);
       }
 
       if (v2.kind === "truncated") {
