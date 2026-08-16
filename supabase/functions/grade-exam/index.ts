@@ -309,7 +309,15 @@ ${studentText}`;
         });
       }
       const rawData = await resp.json();
-      logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_checklist", partType: pt } }).catch(() => {});
+      logAIUsage({
+        model,
+        usage: rawData.usage,
+        source_function: "grade-exam",
+        finishReason: rawData.choices?.[0]?.finish_reason ?? null,
+        attempt: 1,
+        gradingSessionId,
+        metadata: { type: "writing_checklist", partType: pt },
+      }).catch(() => {});
       const tc = rawData.choices?.[0]?.message?.tool_calls?.[0];
       if (!tc?.function?.arguments) {
         return new Response(JSON.stringify({ error: "no_tool_call" }), {
