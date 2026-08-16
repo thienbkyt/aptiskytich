@@ -132,6 +132,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_auth_pass_20260815: {
+        Row: {
+          backed_up_at: string | null
+          encrypted_password: string | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          encrypted_password?: string | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          encrypted_password?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_de09_20260815: {
         Row: {
           backed_up_at: string | null
