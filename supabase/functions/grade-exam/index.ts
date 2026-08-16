@@ -2158,8 +2158,12 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       model,
       usage: data.usage,
       source_function: "grade-exam",
+      finishReason: data.choices?.[0]?.finish_reason ?? null,
+      attempt: finalGatewayAttempt,
+      gradingSessionId,
       metadata: { type, partType },
     }).catch(() => {});
+
 
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
