@@ -1302,7 +1302,7 @@ ${partsIn.formalText ?? ""}`;
         | { kind: "truncated"; why: string }
         | { kind: "error"; status: number; message: string };
 
-      const runV2Once = async (maxTokens: number): Promise<V2Attempt> => {
+      const runV2Once = async (maxTokens: number, attempt: number): Promise<V2Attempt> => {
         let respOrNull: Response | null = null;
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
@@ -1334,9 +1334,17 @@ ${partsIn.formalText ?? ""}`;
         }
 
         const rawData = await resp.json();
-        logAIUsage({ model, usage: rawData.usage, source_function: "grade-exam", metadata: { type: "writing_v2", partType: pt } }).catch(() => {});
-
         const choice = rawData.choices?.[0];
+        logAIUsage({
+          model,
+          usage: rawData.usage,
+          source_function: "grade-exam",
+          finishReason: choice?.finish_reason ?? null,
+          attempt,
+          gradingSessionId,
+          metadata: { type: "writing_v2", partType: pt },
+        }).catch(() => {});
+
         const finishReason = String(choice?.finish_reason ?? "");
         if (finishReason === "length" || finishReason === "MAX_TOKENS") {
           return { kind: "truncated", why: `finish_reason=${finishReason}` };
