@@ -66,7 +66,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     openedRef.current = true;
     void recordMarathonOpenedSets("listening", partType, ids);
   }, [sets, partType]);
-  const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
+  const [currentIndex, setCurrentIndex] = useState(Math.min(Math.max(0, savedInit?.currentIndex ?? 0), Math.max(0, (setsInput?.length ?? 1) - 1)));
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);

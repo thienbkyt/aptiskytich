@@ -62,7 +62,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     openedRef.current = true;
     void recordMarathonOpenedSets("reading", partType, ids);
   }, [sets, partType]);
-  const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
+  const [currentIndex, setCurrentIndex] = useState(Math.min(Math.max(0, savedInit?.currentIndex ?? 0), Math.max(0, (setsInput?.length ?? 1) - 1)));
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
