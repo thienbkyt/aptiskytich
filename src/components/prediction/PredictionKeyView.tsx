@@ -91,6 +91,19 @@ function skillRoute(skill: string | null | undefined, setId: string): string {
   return `/?set=${setId}`;
 }
 
+const PRIORITY_RANK: Priority[] = ["high", "medium", "low", "backup"];
+
+/**
+ * Single source of truth for đề order: priority, then sort_order, then exam_set_id.
+ * The table and the marathon run MUST use it so "đề số N" means the same thing in both.
+ */
+function compareItems(a: ItemRow, b: ItemRow): number {
+  const d = PRIORITY_RANK.indexOf(a.priority) - PRIORITY_RANK.indexOf(b.priority);
+  if (d !== 0) return d;
+  if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+  return a.exam_set_id.localeCompare(b.exam_set_id);
+}
+
 const partLabelFor = (skill: string, part: string) =>
   skill === "reading" ? readingPartLabel(part) : part.replace(/^part(\d+)$/i, "Part $1");
 
@@ -117,6 +130,8 @@ interface MarathonState {
   skill: string;
   part: string;
   sets: ExamSetRow[];
+  /** Progress isolation: one bucket per key day + priority filter. */
+  scopeId: string;
 }
 
 export default function PredictionKeyView() {
@@ -275,21 +290,29 @@ export default function PredictionKeyView() {
   const matchPart = (part: string | null) =>
     partFilter === "all" || (normalizePart(part || "") || "other") === partFilter;
 
-  const visibleItems = useMemo(() => {
-    const rank: Priority[] = ["high", "medium", "low", "backup"];
-    return skillItems
-      .filter((it) => matchPrio(it.priority) && matchDone(it.exam_set_id) && matchPart(it.part))
-      .slice()
-      .sort((a, b) => {
-        const d = rank.indexOf(a.priority) - rank.indexOf(b.priority);
-        if (d !== 0) return d;
-        return a.sort_order - b.sort_order;
-      });
-  }, [skillItems, prioFilter, doneFilter, partFilter, best, attempted]);
+  const visibleItems = useMemo(
+    () =>
+      skillItems
+        .filter((it) => matchPrio(it.priority) && matchDone(it.exam_set_id) && matchPart(it.part))
+        .slice()
+        .sort(compareItems),
+    [skillItems, prioFilter, doneFilter, partFilter, best, attempted]
+  );
 
   // Sets used by the action card: single part group (engines take one partType)
   const actionGroup = useMemo(() => {
-    const pool = skillItems.filter((it) => matchPrio(it.priority) && matchPart(it.part) && it.set);
+    // Same filter + ORDER as the visible table (minus the done filter, a run always
+    // contains every đề of the key) and deduped by exam_set_id so no đề repeats.
+    const seen = new Set<string>();
+    const pool = skillItems
+      .filter((it) => matchPrio(it.priority) && matchPart(it.part) && it.set)
+      .slice()
+      .sort(compareItems)
+      .filter((it) => {
+        if (seen.has(it.exam_set_id)) return false;
+        seen.add(it.exam_set_id);
+        return true;
+      });
     const m = new Map<string, ExamSetRow[]>();
     pool.forEach((it) => {
       const p = normalizePart(it.part || "") || "other";
@@ -346,14 +369,15 @@ export default function PredictionKeyView() {
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
         {marathon.skill === "reading" && (
-          <ReadingMarathonEngine sets={marathon.sets} partType={marathon.part as any} skillLabel={label} persist onExit={close} />
+          <ReadingMarathonEngine sets={marathon.sets} scopeId={marathon.scopeId} partType={marathon.part as any} skillLabel={label} persist onExit={close} />
         )}
         {marathon.skill === "listening" && (
-          <ListeningMarathonEngine sets={marathon.sets} partType={marathon.part as any} skillLabel={label} persist onExit={close} />
+          <ListeningMarathonEngine sets={marathon.sets} scopeId={marathon.scopeId} partType={marathon.part as any} skillLabel={label} persist onExit={close} />
         )}
         {marathon.skill === "writing" && (
           <WritingMarathonEngine
             sets={marathon.sets}
+            scopeId={marathon.scopeId}
             partType={marathon.part.replace("part", "task") as any}
             skillLabel={label}
             persist
@@ -592,7 +616,7 @@ export default function PredictionKeyView() {
                 onClick={() => {
                   if (!actionGroup || !activeSkill || !partChosen) return;
                   if (isSpeaking) setBrowse({ sets: actionGroup.sets, part: actionGroup.part });
-                  else setMarathon({ skill: activeSkill, part: actionGroup.part, sets: actionGroup.sets });
+                  else setMarathon({ skill: activeSkill, part: actionGroup.part, sets: actionGroup.sets, scopeId: `key:${selectedKeyId ?? "none"}:${prioFilter}` });
                 }}
               >
                 {isSpeaking ? "Xem đề" : "Bắt đầu"} <ArrowRight className="w-4 h-4" />
