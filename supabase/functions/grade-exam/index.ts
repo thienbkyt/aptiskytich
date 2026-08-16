@@ -2087,7 +2087,9 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
 
     let response: Response | null = null;
     let lastErr: unknown = null;
+    let finalGatewayAttempt = 1;
     for (let attempt = 0; attempt < 2; attempt++) {
+      finalGatewayAttempt = attempt + 1;
       try {
         response = await callGateway();
         // Retry only on transient gateway errors (5xx). Pass-through 4xx (429/402/etc) without retrying.
