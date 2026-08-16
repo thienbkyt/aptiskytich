@@ -28,10 +28,15 @@ const PageTransition = ({ children }: PageTransitionProps) => {
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        exit={{ opacity: 0, y: -8, filter: "blur(6px)" }}
+        // NOTE: no `filter` here on purpose. A lingering `filter: blur(0px)` turns this
+        // wrapper into a containing block for `position: fixed` children, which anchors
+        // the exam bottom nav ("Next") to the page content instead of the viewport —
+        // on phones the button ends up far below the fold.
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+
       >
         {routes}
       </motion.div>
