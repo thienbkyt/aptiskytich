@@ -164,7 +164,32 @@ const ListeningPart4Monologue = ({
         </motion.div>
       </AnimatePresence>
 
+      {hideBottomNav && questions.length > 1 && (
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onPrevious}
+            disabled={currentIndex === 0}
+            className="px-4 py-2 rounded-lg border border-border text-sm font-semibold text-foreground hover:border-primary/40 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ← Bài nghe trước
+          </button>
+          <span className="text-xs text-muted-foreground">
+            Bài nghe {currentIndex + 1}/{questions.length}
+          </span>
+          <button
+            type="button"
+            onClick={onNext}
+            disabled={currentIndex >= questions.length - 1}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Bài nghe sau →
+          </button>
+        </div>
+      )}
+
       {!hideBottomNav && (
+
         <BottomNavBar
           onPrevious={onPrevious}
           onNext={onNext}

@@ -660,8 +660,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
         currentLocked={currentLocked}
         draftsBySet={drafts}
         isRetryMode={isRetryMode}
-        chipLabelMode={partType === "part1" ? "question" : "set"}
-        showSetLabels={partType === "part1"}
+        chipLabelMode="question"
+        showSetLabels
+
         allowJumpInCurrent
         onReview={(si, qi) => setMidReview({ setIndex: si, qIndex: qi })}
         onJumpQuestion={(qi) => {
