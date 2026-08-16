@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const SIGN_TTL_SEC = 300;
 const CACHE_TTL_MS = 120 * 1000; // die well before the 5-min TTL
-const SIGN_TIMEOUT_MS = 5000;
+const SIGN_TIMEOUT_MS = 8000;
 
 function withTimeout<T>(p: PromiseLike<T>, ms = SIGN_TIMEOUT_MS): Promise<T> {
   return Promise.race([
@@ -74,7 +74,7 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
   const cached = cache.get(audioUrl);
   if (cached && cached.expiresAt > now) return cached.url;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
       const { data, error } = await withTimeout(
         supabase.storage.from("audio").createSignedUrl(audioUrl, SIGN_TTL_SEC)
@@ -86,7 +86,9 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
     } catch {
       /* network blip — retry */
     }
-    await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+    if (attempt < 3) {
+      await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+    }
   }
 
   return null;
