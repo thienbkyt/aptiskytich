@@ -51,7 +51,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     const ids = sets.map((s) => s.id).filter(Boolean);
     if (ids.length === 0) return;
     openedRef.current = true;
-    void recordMarathonOpenedSets("listening", progPart, ids);
+    void recordMarathonOpenedSets("listening", partType, ids);
   }, [sets, partType]);
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);

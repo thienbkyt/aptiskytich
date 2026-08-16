@@ -47,7 +47,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const ids = sets.map((s) => s.id).filter(Boolean);
     if (ids.length === 0) return;
     openedRef.current = true;
-    void recordMarathonOpenedSets("reading", progPart, ids);
+    void recordMarathonOpenedSets("reading", partType, ids);
   }, [sets, partType]);
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
   const [enterAtLast, setEnterAtLast] = useState(false);
