@@ -231,9 +231,16 @@ const MarathonNavigator = ({
           <span className="text-muted-foreground">
             Đề {activeSetNumber}/{totalSets}
           </span>
+          {/* Tên đề đang mở: giúp học viên đối chiếu với danh sách ngoài. */}
+          {(sets as any[])[activeSetNumber - 1]?.title && (
+            <p className="text-[11px] text-muted-foreground mt-0.5 truncate" title={(sets as any[])[activeSetNumber - 1].title}>
+              {(sets as any[])[activeSetNumber - 1].title}
+            </p>
+          )}
           {isReadingPart23 && (
             <p className="text-[11px] text-muted-foreground mt-0.5">Lưu ý: Mỗi đề gồm 2 đoạn</p>
           )}
+
         </div>
 
         <div className="rounded-md bg-muted/50 p-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
