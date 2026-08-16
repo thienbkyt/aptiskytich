@@ -678,7 +678,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       };
 
       let speakResp: Response | null = null;
+      let finalGatewayAttempt = 1;
       for (let attempt = 0; attempt < 2; attempt++) {
+        finalGatewayAttempt = attempt + 1;
         try {
           speakResp = await callGatewaySpeak();
           if (speakResp.status >= 500 && attempt === 0) {
