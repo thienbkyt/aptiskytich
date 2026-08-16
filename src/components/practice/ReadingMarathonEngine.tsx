@@ -16,6 +16,8 @@ import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
 
 interface Props {
   sets: ExamSetRow[];
+  /** Isolates saved progress per source (e.g. a specific prediction key + priority). */
+  scopeId?: string;
   partType: ReadingPartType;
   skillLabel: string;
   onExit: () => void;
@@ -39,8 +41,21 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, isRetryMode = false }: Props) => {
-  const savedInit = resume && persist ? loadMarathonProgress("reading", partType) : null;
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, isRetryMode = false }: Props) => {
+  /** Never let a duplicated exam_set_id create two rounds of the same đề. */
+  const sets = useMemo(() => {
+    const seen = new Set<string>();
+    return (setsInput || []).filter((s) => {
+      if (!s?.id || seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  }, [setsInput]);
+  /** Stable identity of the run's đề list — avoids reloading everything on re-render. */
+  const setsKey = sets.map((s) => s.id).join(",");
+  /** Progress storage key: scoped so two different key days never share progress. */
+  const progPart = scopeId ? `${partType}@${scopeId}` : partType;
+  const savedInit = resume && persist ? loadMarathonProgress("reading", progPart) : null;
   const openedRef = useRef(false);
   useEffect(() => {
     if (openedRef.current) return;
@@ -49,7 +64,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     openedRef.current = true;
     void recordMarathonOpenedSets("reading", partType, ids);
   }, [sets, partType]);
-  const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
+  const [currentIndex, setCurrentIndex] = useState(Math.min(Math.max(0, savedInit?.currentIndex ?? 0), Math.max(0, (setsInput?.length ?? 1) - 1)));
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
@@ -244,7 +259,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     const nextDrafts = { ...drafts };
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
-    if (persist) saveMarathonProgress("reading", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
+    if (persist) saveMarathonProgress("reading", progPart, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     if (pending) {
       setEnterAtLast(false);
       setJumpQ(pending.qi);
@@ -312,7 +327,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       if (id) {
         testResultIdRef.current = id;
         if (persist) {
-          saveMarathonProgress("reading", partType, {
+          saveMarathonProgress("reading", progPart, {
             currentIndex: resultsRef.current === list ? currentIndex : currentIndex,
             results: list as any,
             drafts,
@@ -324,8 +339,8 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
       }
       if (opts?.finalize && persist) {
         const wrongSetIds = reviewable_.filter((r) => r.correct < r.total).map((r) => r.examSetId);
-        saveMarathonLast("reading", partType, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
-        clearMarathonProgress("reading", partType);
+        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
+        clearMarathonProgress("reading", progPart);
       }
     } finally {
       savingRef.current = false;
@@ -475,7 +490,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
               )}
               <Button
                 onClick={() => {
-                  if (persist) clearMarathonProgress("reading", partType);
+                  if (persist) clearMarathonProgress("reading", progPart);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
@@ -538,7 +553,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
     setDrafts((prev) => {
       const next = { ...prev, [currentSetId]: bag };
       if (persist) {
-        saveMarathonProgress("reading", partType, {
+        saveMarathonProgress("reading", progPart, {
           currentIndex,
           results: results as any,
           drafts: next,
@@ -560,7 +575,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             examSetId={midReviewEntry.examSetId}
             skill="reading"
             part={midReviewEntry.part}
-            testTitle={`Đề ${midReview!.setIndex + 1}`}
+            testTitle={`Đề ${midReview!.setIndex + 1}${sets[midReview!.setIndex]?.title ? ` — ${sets[midReview!.setIndex]!.title}` : ""}`}
             qResults={midReviewEntry.qResults}
             onExit={() => setMidReview(null)}
             pageBase={partType === "part2" ? undefined : midReview!.setIndex}
@@ -576,7 +591,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             key={`${attempt}-${currentIndex}`}
             examSetId={sets[currentIndex]?.id ?? null}
             partType={partType}
-            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}${sets[currentIndex]?.title ? ` — ${sets[currentIndex]!.title}` : ""}`}
             timeLimit={HUGE_TIME}
             hideTimer
             skipIntro
@@ -663,7 +678,7 @@ const ReadingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = fa
             if (setId) delete nextDrafts[setId];
             setDrafts(nextDrafts);
             if (persist) {
-              saveMarathonProgress("reading", partType, {
+              saveMarathonProgress("reading", progPart, {
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,

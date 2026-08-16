@@ -16,6 +16,8 @@ import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
 
 interface Props {
   sets: ExamSetRow[];
+  /** Isolates saved progress per source (e.g. a specific prediction key + priority). */
+  scopeId?: string;
   partType: ListeningPartType;
   skillLabel: string;
   onExit: () => void;
@@ -43,8 +45,21 @@ type LoadedSet = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet }: Props) => {
-  const savedInit = resume && persist ? loadMarathonProgress("listening", partType) : null;
+const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet }: Props) => {
+  /** Never let a duplicated exam_set_id create two rounds of the same đề. */
+  const sets = useMemo(() => {
+    const seen = new Set<string>();
+    return (setsInput || []).filter((s) => {
+      if (!s?.id || seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  }, [setsInput]);
+  /** Stable identity of the run's đề list — avoids reloading everything on re-render. */
+  const setsKey = sets.map((s) => s.id).join(",");
+  /** Progress storage key: scoped so two different key days never share progress. */
+  const progPart = scopeId ? `${partType}@${scopeId}` : partType;
+  const savedInit = resume && persist ? loadMarathonProgress("listening", progPart) : null;
   const openedRef = useRef(false);
   useEffect(() => {
     if (openedRef.current) return;
@@ -53,7 +68,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     openedRef.current = true;
     void recordMarathonOpenedSets("listening", partType, ids);
   }, [sets, partType]);
-  const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);
+  const [currentIndex, setCurrentIndex] = useState(Math.min(Math.max(0, savedInit?.currentIndex ?? 0), Math.max(0, (setsInput?.length ?? 1) - 1)));
   const [enterAtLast, setEnterAtLast] = useState(false);
   const [phase, setPhase] = useState<Phase>("loading");
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
@@ -169,7 +184,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
       setPhase("exam");
     })();
     return () => { cancelled = true; };
-  }, [sets, partType, attempt]);
+  }, [setsKey, partType, attempt]);
 
   // Mục lục theo ĐỀ → pageBase = chỉ số đề hiện tại, pageTotal = tổng số đề.
   const pageTotal = sets.length;
@@ -224,7 +239,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     delete nextDrafts[set.id];
     setDrafts(nextDrafts);
     if (persist) {
-      saveMarathonProgress("listening", partType, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
+      saveMarathonProgress("listening", progPart, { currentIndex: nextIndex, results: nextResults as any, drafts: nextDrafts, sessionId: sessionIdRef.current, testResultId: testResultIdRef.current, updatedAt: Date.now() });
     }
     if (pending) {
       setJumpQ(pending.qi);
@@ -300,7 +315,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
       if (id) {
         testResultIdRef.current = id;
         if (persist) {
-          saveMarathonProgress("listening", partType, {
+          saveMarathonProgress("listening", progPart, {
             currentIndex,
             results: list as any,
             drafts,
@@ -317,8 +332,8 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
           const wq = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
           if (wq.length) wrongQBySet[r.examSetId] = wq;
         });
-        saveMarathonLast("listening", partType, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
-        clearMarathonProgress("listening", partType);
+        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
+        clearMarathonProgress("listening", progPart);
       }
     } finally {
       savingHistoryRef.current = false;
@@ -474,7 +489,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
               )}
               <Button
                 onClick={() => {
-                  if (persist) clearMarathonProgress("listening", partType);
+                  if (persist) clearMarathonProgress("listening", progPart);
                   setResults(new Array(sets.length).fill(undefined));
                   setReviewIndex(null);
                   setCurrentIndex(0);
@@ -544,7 +559,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
     setDrafts((prev) => {
       const next = { ...prev, [currentSetId]: arr };
       if (persist) {
-        saveMarathonProgress("listening", partType, {
+        saveMarathonProgress("listening", progPart, {
           currentIndex,
           results: results as any,
           drafts: next,
@@ -579,7 +594,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             examSetId={midReviewEntry.examSetId}
             skill="listening"
             part={midReviewEntry.part}
-            testTitle={`Đề ${midReview!.setIndex + 1}`}
+            testTitle={`Đề ${midReview!.setIndex + 1}${sets[midReview!.setIndex]?.title ? ` — ${sets[midReview!.setIndex]!.title}` : ""}`}
             qResults={midReviewEntry.qResults}
             onExit={() => setMidReview(null)}
             pageBase={0}
@@ -594,7 +609,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             key={`${attempt}-${currentIndex}`}
             examSetId={sets[currentIndex]?.id ?? null}
             partType={partType}
-            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}${sets[currentIndex]?.title ? ` — ${sets[currentIndex]!.title}` : ""}`}
             timeLimit={HUGE_TIME}
             hideTimer
             skipIntro
@@ -711,7 +726,7 @@ const ListeningMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = 
             }
             setDrafts(nextDrafts);
             if (persist) {
-              saveMarathonProgress("listening", partType, {
+              saveMarathonProgress("listening", progPart, {
                 currentIndex: si,
                 results: nextResults as any,
                 drafts: nextDrafts,

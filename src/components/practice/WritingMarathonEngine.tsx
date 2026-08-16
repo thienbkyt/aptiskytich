@@ -12,6 +12,8 @@ import { upsertMarathonResult } from "@/lib/saveExamResult";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 
 interface Props {
+  /** Isolates saved progress per source (e.g. a specific prediction key + priority). */
+  scopeId?: string;
   sets: ExamSetRow[];
   partType: WritingPartType;
   skillLabel: string;
@@ -98,8 +100,17 @@ const Checklist = ({ partType }: { partType: WritingPartType }) => {
   );
 };
 
-const WritingMarathonEngine = ({ sets, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
-  const marathonKey = partKey(partType);
+const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
+  /** Never let a duplicated exam_set_id create two rounds of the same đề. */
+  const sets = useMemo(() => {
+    const seen = new Set<string>();
+    return (setsInput || []).filter((s) => {
+      if (!s?.id || seen.has(s.id)) return false;
+      seen.add(s.id);
+      return true;
+    });
+  }, [setsInput]);
+  const marathonKey = scopeId ? `${partKey(partType)}@${scopeId}` : partKey(partType);
   const savedInit = resume && persist ? loadMarathonProgress("writing", marathonKey) : null;
 
   const [currentIndex, setCurrentIndex] = useState(savedInit?.currentIndex ?? 0);

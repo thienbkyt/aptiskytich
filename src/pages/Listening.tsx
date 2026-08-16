@@ -101,6 +101,8 @@ const Listening = () => {
   const { labels: priorityLabels } = useExamPriorityLabels();
   const [keySetIds, setKeySetIds] = useState<Set<string> | null>(null);
   const [keyPrio, setKeyPrio] = useState<Map<string, string>>(new Map());
+  /** exam_set_id -> position in the key, so a run follows the same order as the key list. */
+  const [keyOrder, setKeyOrder] = useState<Map<string, number>>(new Map());
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
@@ -156,19 +158,26 @@ const Listening = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!marathon.keyId) { setKeySetIds(null); setKeyPrio(new Map()); return; }
+    if (!marathon.keyId) { setKeySetIds(null); setKeyPrio(new Map()); setKeyOrder(new Map()); return; }
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("prediction_items")
-        .select("exam_set_id, priority")
-        .eq("key_id", marathon.keyId);
+        .select("exam_set_id, priority, sort_order")
+        .eq("key_id", marathon.keyId)
+        .order("sort_order", { ascending: true });
       if (cancelled) return;
       const rows = (data ?? []) as any[];
       setKeySetIds(new Set(rows.map((r) => r.exam_set_id)));
       const m = new Map<string, string>();
-      rows.forEach((r) => { if (r.exam_set_id && r.priority) m.set(r.exam_set_id, r.priority); });
+      const ord = new Map<string, number>();
+      rows.forEach((r, i) => {
+        if (!r.exam_set_id) return;
+        if (r.priority) m.set(r.exam_set_id, r.priority);
+        if (!ord.has(r.exam_set_id)) ord.set(r.exam_set_id, (r.sort_order ?? 0) * 1000 + i);
+      });
       setKeyPrio(m);
+      setKeyOrder(ord);
     })();
     return () => { cancelled = true; };
   }, [marathon.keyId]);
@@ -220,9 +229,39 @@ const Listening = () => {
       const ids = new Set(marathon.retryWrongSetIds);
       base = base.filter((s) => ids.has(s.id));
     }
-    return base;
-  }, [examSets, marathon.partType, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels]);
+    if (marathon.keyId) {
+      base = [...base].sort(
+        (a, b) =>
+          (keyOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (keyOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+          || a.id.localeCompare(b.id),
+      );
+    }
+    const seen = new Set<string>();
+    return base.filter((s) => (s.id && !seen.has(s.id) ? (seen.add(s.id), true) : false));
+  }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels]);
 
+
+  // Freeze the đề list for the whole run: async sources (prediction items, priority
+  // labels, progress) resolve at different times and must never reorder or shrink a
+  // marathon already in progress — that would shift every index the student sees.
+  const frozenMarathonRef = useRef<{ token: string; sets: ExamSetRow[] } | null>(null);
+  const marathonToken = [
+    marathon.partType,
+    marathon.keyId ?? "",
+    marathon.prio ?? "",
+    marathon.priorityLabel ?? "",
+    (marathon.retryWrongSetIds ?? []).join("|"),
+  ].join("#");
+  const runSets = useMemo(() => {
+    if (!marathon.active) { frozenMarathonRef.current = null; return marathonSets; }
+    const frozen = frozenMarathonRef.current;
+    if (frozen && frozen.token === marathonToken && frozen.sets.length) return frozen.sets;
+    if (marathonSets.length) {
+      frozenMarathonRef.current = { token: marathonToken, sets: marathonSets };
+      return marathonSets;
+    }
+    return marathonSets;
+  }, [marathon.active, marathonToken, marathonSets]);
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ListeningPartType;
@@ -363,7 +402,8 @@ const Listening = () => {
     const partLabel = PARTS.find((p) => p.id === marathon.partType)?.label ?? "Part";
     return (
       <ListeningMarathonEngine
-        sets={marathonSets}
+        sets={runSets}
+        scopeId={marathon.keyId ? `key:${marathon.keyId}:${marathon.prio ?? "all"}` : undefined}
         partType={marathon.partType}
         skillLabel={`Listening · Marathon ${partLabel}`}
         resume={marathon.resume}
