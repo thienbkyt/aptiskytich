@@ -484,10 +484,11 @@ const ListeningExamEngine = ({
     },
   ];
 
+  console.log("[DBG] idx", currentIndex, "total", totalQuestions, "p4", part4Questions?.length, "phase", phase, "submitted", submitted);
   const navProps = {
     onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : (onPreviousPart ?? (() => setPhase("listening_intro"))),
     onNext: currentIndex < totalQuestions - 1
-      ? () => setCurrentIndex((p) => p + 1)
+      ? () => { console.log("[DBG] next clicked from", currentIndex); setCurrentIndex((p) => p + 1); }
       : (!submitted ? handleSubmit : undefined),
     onSubmit: undefined,
     isFirst: false,
