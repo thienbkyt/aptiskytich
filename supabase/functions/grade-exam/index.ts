@@ -134,6 +134,9 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const body: GradingRequest = await req.json();
+    const gradingSessionId =
+      typeof body.gradingSessionId === "string" ? body.gradingSessionId
+        : (body as any)._meta?.fullTestSessionId ?? null;
     const { type, audioBase64, text, questions, partType } = body;
     const actualSpoken = Number(body.actualSpoken ?? 0);
     const speakTime = Number(body.speakTime ?? 0);
