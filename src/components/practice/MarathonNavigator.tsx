@@ -13,7 +13,7 @@ export type MarathonResult = {
 };
 
 interface Props {
-  sets: { id: string }[];
+  sets: { id: string; title?: string }[];
   results: (MarathonResult | undefined)[];
   currentIndex: number;
   /** When the parent is inline-reviewing a submitted set, highlight this set instead of currentIndex. */
@@ -195,7 +195,7 @@ const MarathonNavigator = ({
           isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
           "cursor-pointer",
         )}
-        title={chipLabelMode === "set" ? `Đi tới đề ${si + 1}` : `Đi tới đề ${si + 1} câu ${qi + 1}`}
+        title={`Đi tới đề ${si + 1}${(sets as any[])[si]?.title ? ` — ${(sets as any[])[si].title}` : ""}${chipLabelMode === "set" ? "" : ` · câu ${qi + 1}`}`}
       >
         {chipLabelMode === "set" ? si + 1 : qi + 1}
       </button>
@@ -300,7 +300,7 @@ const MarathonNavigator = ({
                     isActive && "ring-2 ring-[#24085a] ring-offset-1",
                     "cursor-pointer",
                   )}
-                  title={`Đề ${si + 1}`}
+                  title={`Đề ${si + 1}${(sets as any[])[si]?.title ? ` — ${(sets as any[])[si].title}` : ""}`}
                 >
                   {si + 1}
                 </button>
@@ -313,7 +313,7 @@ const MarathonNavigator = ({
           <div className="space-y-3">
             {groupedFlat.map((grp) => (
               <div key={grp.si}>
-                <div className="text-[11px] text-muted-foreground mb-1">Đề {grp.si + 1}</div>
+                <div className="text-[11px] text-muted-foreground mb-1 truncate" title={(sets as any[])[grp.si]?.title || undefined}>Đề {grp.si + 1}{(sets as any[])[grp.si]?.title ? ` — ${(sets as any[])[grp.si].title}` : ""}</div>
                 <div className="flex flex-wrap gap-1.5">
                   {grp.cells.map(({ cell, gi }) => renderChip(cell, gi))}
                 </div>
