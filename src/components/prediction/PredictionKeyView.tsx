@@ -153,6 +153,8 @@ export default function PredictionKeyView() {
   const [partFilter, setPartFilter] = useState<string>("all");
   const [marathon, setMarathon] = useState<MarathonState | null>(null);
   const [browse, setBrowse] = useState<{ sets: ExamSetRow[]; part: string } | null>(null);
+  /** Bumped when a marathon run closes so đã làm/chưa làm refreshes right away. */
+  const [progressTick, setProgressTick] = useState(0);
 
   const stripRef = useRef<HTMLDivElement | null>(null);
 
@@ -251,7 +253,7 @@ export default function PredictionKeyView() {
       setAttempted(tried);
     })();
     return () => { cancelled = true; };
-  }, [user, items]);
+  }, [user, items, progressTick]);
 
   const availableSkills = useMemo(() => {
     const set = new Set(items.map((it) => (it.skill || "other").toLowerCase()));
@@ -365,7 +367,7 @@ export default function PredictionKeyView() {
 
   if (marathon) {
     const label = `${SKILL_LABEL[marathon.skill] || marathon.skill} · Marathon ${partLabelFor(marathon.skill, marathon.part)}`;
-    const close = () => setMarathon(null);
+    const close = () => { setMarathon(null); setProgressTick((t) => t + 1); };
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
         {marathon.skill === "reading" && (
