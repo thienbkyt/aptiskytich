@@ -592,7 +592,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
             examSetId={midReviewEntry.examSetId}
             skill="listening"
             part={midReviewEntry.part}
-            testTitle={`Đề ${midReview!.setIndex + 1}`}
+            testTitle={`Đề ${midReview!.setIndex + 1}${sets[midReview!.setIndex]?.title ? ` — ${sets[midReview!.setIndex]!.title}` : ""}`}
             qResults={midReviewEntry.qResults}
             onExit={() => setMidReview(null)}
             pageBase={0}
@@ -607,7 +607,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
             key={`${attempt}-${currentIndex}`}
             examSetId={sets[currentIndex]?.id ?? null}
             partType={partType}
-            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}${sets[currentIndex]?.title ? ` — ${sets[currentIndex]!.title}` : ""}`}
             timeLimit={HUGE_TIME}
             hideTimer
             skipIntro

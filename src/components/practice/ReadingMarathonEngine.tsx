@@ -573,7 +573,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
             examSetId={midReviewEntry.examSetId}
             skill="reading"
             part={midReviewEntry.part}
-            testTitle={`Đề ${midReview!.setIndex + 1}`}
+            testTitle={`Đề ${midReview!.setIndex + 1}${sets[midReview!.setIndex]?.title ? ` — ${sets[midReview!.setIndex]!.title}` : ""}`}
             qResults={midReviewEntry.qResults}
             onExit={() => setMidReview(null)}
             pageBase={partType === "part2" ? undefined : midReview!.setIndex}
@@ -589,7 +589,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
             key={`${attempt}-${currentIndex}`}
             examSetId={sets[currentIndex]?.id ?? null}
             partType={partType}
-            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}`}
+            testTitle={`${partName} · Đề ${currentIndex + 1}/${sets.length}${sets[currentIndex]?.title ? ` — ${sets[currentIndex]!.title}` : ""}`}
             timeLimit={HUGE_TIME}
             hideTimer
             skipIntro
