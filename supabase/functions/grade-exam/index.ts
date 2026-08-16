@@ -743,6 +743,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
           model: MODEL_V2,
           usage: aiJson?.usage,
           source_function: "grade-exam",
+          finishReason: aiJson?.choices?.[0]?.finish_reason ?? null,
+          attempt: finalGatewayAttempt,
+          gradingSessionId,
           metadata: { mode: "speaking_v2", partType },
         });
       } catch { /* ignore */ }
