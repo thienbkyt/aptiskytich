@@ -75,8 +75,8 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
     staleTime: 5 * 60_000,
     queryFn: async () => {
       const uid = user!.id;
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      // VN day (same source of truth as saveExamResult.ts) so the key matches the key page.
+      const todayStr = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
       const [attemptRes, setsRes, wsrRes, ssrRes] = await Promise.all([
         supabase.from("test_results").select("exam_set_id, skill_scores, score, total").eq("user_id", uid),
@@ -85,18 +85,18 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
           .select("id, title, skill, part, access_tier, created_at")
           .eq("is_published", true)
           .order("created_at", { ascending: false }),
-        supabase.from("writing_skill_results").select("scale50").eq("user_id", uid).order("created_at", { ascending: false }).limit(5),
-        supabase.from("speaking_skill_results").select("scale50").eq("user_id", uid).order("created_at", { ascending: false }).limit(5),
+        supabase.from("writing_skill_results").select("scale50").eq("user_id", uid),
+        supabase.from("speaking_skill_results").select("scale50").eq("user_id", uid),
       ]);
 
+      // Same condition as PredictionKeyView's `tried.add`: an abandoned attempt doesn't count.
       const attempted = new Set<string>();
       (attemptRes.data || []).forEach((r: any) => {
-        if (r.exam_set_id) attempted.add(r.exam_set_id);
+        if (r.exam_set_id && Number(r.total) > 0) attempted.add(r.exam_set_id);
       });
 
-      const allSets = ((setsRes.data || []) as any[]).filter((s) =>
-        isPro ? true : !s.access_tier || s.access_tier === "free",
-      );
+      const publishedSets = (setsRes.data || []) as any[];
+      const allSets = publishedSets.filter((s) => (isPro ? true : !s.access_tier || s.access_tier === "free"));
       const setById = new Map<string, any>(allSets.map((s) => [s.id, s]));
 
       // ── Bands theo kỹ năng (cùng nguồn với "Tiến bộ theo kỹ năng") ──
