@@ -192,17 +192,30 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
         }
       }
 
-      // ── B4: kỹ năng có band thấp nhất ──
+      // ── B4: kỹ năng chưa luyện bao giờ → rồi tới band thấp nhất ──
       const undone = allSets.filter((s) => !attempted.has(s.id));
       if (picked.length < max) {
-        const ranked = Object.keys(bandNum).sort((a, b) => bandNum[a] - bandNum[b]);
-        for (const sk of ranked) {
-          if (picked.length >= max) break;
-          const pool = undone.filter((s) => {
+        const ALL_SKILLS = ["reading", "listening", "grammar_vocab", "writing", "speaking"] as const;
+        const poolFor = (sk: string) =>
+          undone.filter((s) => {
             const ss = String(s.skill).toLowerCase();
             return ss === sk || (sk === "grammar_vocab" && ss === "grammar");
           });
-          for (const s of pool) {
+        // Chưa có dữ liệu = yếu nhất tuyệt đối.
+        const untouched = ALL_SKILLS.filter((sk) => bandNum[sk] === undefined);
+        const ranked = ALL_SKILLS.filter((sk) => bandNum[sk] !== undefined).sort(
+          (a, b) => bandNum[a] - bandNum[b],
+        );
+        for (const sk of untouched) {
+          if (picked.length >= max) break;
+          for (const s of poolFor(sk)) {
+            if (picked.length >= max) break;
+            push(s, "Bạn chưa luyện kỹ năng này bao giờ");
+          }
+        }
+        for (const sk of ranked) {
+          if (picked.length >= max) break;
+          for (const s of poolFor(sk)) {
             if (picked.length >= max) break;
             push(s, `Kỹ năng yếu nhất của bạn (${bandLabel[sk]})`);
           }
