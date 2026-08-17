@@ -277,8 +277,8 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
               <div className="flex pt-8">
                 {/* Y-axis */}
                 <div
-                  className="relative text-xs text-neutral-700 pr-2"
-                  style={{ height: 200, minWidth: 18 }}
+                  className="relative text-xs text-neutral-700"
+                  style={{ height: 200, width: 28 }}
                 >
                   {Y_LEVELS.map((lvl, i) => (
                     <div
