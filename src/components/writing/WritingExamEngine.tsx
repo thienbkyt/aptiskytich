@@ -718,9 +718,10 @@ const WritingExamEngine = ({
         {belowContent}
         {!submitted && !reviewMode && (
           <div className="fixed bottom-[76px] right-3 z-40">
-            <AiQuotaBadge featureKey="ai_grading_writing" className="shadow-sm bg-background/95" />
+            <AiQuotaBadge className="shadow-sm bg-background/95" />
           </div>
         )}
+
 
         {(reviewMode || isReviewing) && effectiveGrading && (() => {
           const allErrors = [

@@ -60,8 +60,10 @@ export function useFeature(key: string, scope?: string | null): UseFeatureResult
           proQuota: d.pro_quota,
           used: d.used,
           remaining: d.remaining,
+          creditsBalance: d.credits_balance,
           enabled: d.enabled !== false,
         });
+
       }
     } finally {
       setLoading(false);
