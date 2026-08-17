@@ -142,8 +142,8 @@ const GoalCountdownCard = () => {
 
           <div className="flex items-center gap-4">
             {days > 0 && <Ring value={todayCount} max={goal.daily_target} done={done} />}
-            <div className="flex-1 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
-              Gợi ý bài hôm nay sẽ xuất hiện ở đây
+            <div className="flex-1 min-w-0 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-3">
+              <DailySuggestionList dailyTarget={goal.daily_target} done={done} />
             </div>
           </div>
         </div>
