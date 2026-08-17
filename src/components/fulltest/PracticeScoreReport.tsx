@@ -277,8 +277,8 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
               <div className="flex pt-8">
                 {/* Y-axis */}
                 <div
-                  className="relative text-xs text-neutral-700 pr-2"
-                  style={{ height: 200, minWidth: 18 }}
+                  className="relative text-xs text-neutral-700"
+                  style={{ height: 200, width: 28 }}
                 >
                   {Y_LEVELS.map((lvl, i) => (
                     <div
@@ -327,7 +327,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
               </div>
               {/* X labels */}
               <div className="flex mt-1">
-                <div className="pr-2 text-xs invisible leading-none" style={{ minWidth: 18 }}>B2</div>
+                <div style={{ width: 28 }} />
                 <div className="flex-1 flex gap-2 px-1">
                   {chartBars.map((b, i) => (
                     <div key={i} className="flex-1 text-center text-[10px] text-neutral-700 whitespace-pre-line leading-tight">
