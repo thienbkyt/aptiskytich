@@ -46,11 +46,11 @@ const GoalSetupModal = ({ open, onOpenChange, goal, onSave }: Props) => {
   }, [examDate, touchedTarget]);
 
   const today = vnTodayISO();
-  const isFuture = !!examDate && vnDaysUntil(examDate) > 0;
+  const isFuture = !!examDate && vnDaysUntil(examDate) >= 0;
 
   const submit = async () => {
     if (!isFuture) {
-      toast({ title: "Ngày thi phải ở tương lai", variant: "destructive" });
+      toast({ title: "Ngày thi không được ở quá khứ", variant: "destructive" });
       return;
     }
     setSaving(true);
