@@ -165,6 +165,8 @@ const App = () => (
                       <Route path="/meo-thi-aptis/:slug" element={<BlogPost />} />
                       <Route path="/blog" element={<Navigate to="/meo-thi-aptis" replace />} />
                       <Route path="/blog/:slug" element={<BlogSlugRedirect />} />
+                      <Route path="/__test-report" element={<
+__TestReport />} />
                       
                       <Route path="/admin" element={<RequireAdmin><Admin /></RequireAdmin>} />
                       <Route path="/admin/report" element={<RequireAdmin><AdminReport /></RequireAdmin>} />
