@@ -150,6 +150,132 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_exam_review_items_20260817: {
+        Row: {
+          id: string | null
+          part: string | null
+          review_id: string | null
+          skill: string | null
+          topic: string | null
+        }
+        Insert: {
+          id?: string | null
+          part?: string | null
+          review_id?: string | null
+          skill?: string | null
+          topic?: string | null
+        }
+        Update: {
+          id?: string | null
+          part?: string | null
+          review_id?: string | null
+          skill?: string | null
+          topic?: string | null
+        }
+        Relationships: []
+      }
+      backup_exam_review_items_20260817b: {
+        Row: {
+          id: string | null
+          part: string | null
+          review_id: string | null
+          skill: string | null
+          topic: string | null
+        }
+        Insert: {
+          id?: string | null
+          part?: string | null
+          review_id?: string | null
+          skill?: string | null
+          topic?: string | null
+        }
+        Update: {
+          id?: string | null
+          part?: string | null
+          review_id?: string | null
+          skill?: string | null
+          topic?: string | null
+        }
+        Relationships: []
+      }
+      backup_exam_reviews_20260817: {
+        Row: {
+          created_at: string | null
+          exam_date: string | null
+          exam_location: string | null
+          exam_session: string | null
+          hidden_at: string | null
+          hidden_by: string | null
+          hidden_reason: string | null
+          id: string | null
+          note: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_date?: string | null
+          exam_location?: string | null
+          exam_session?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
+          id?: string | null
+          note?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_date?: string | null
+          exam_location?: string | null
+          exam_session?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
+          id?: string | null
+          note?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_exam_reviews_20260817b: {
+        Row: {
+          created_at: string | null
+          exam_date: string | null
+          exam_location: string | null
+          exam_session: string | null
+          hidden_at: string | null
+          hidden_by: string | null
+          hidden_reason: string | null
+          id: string | null
+          note: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_date?: string | null
+          exam_location?: string | null
+          exam_session?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
+          id?: string | null
+          note?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_date?: string | null
+          exam_location?: string | null
+          exam_session?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
+          hidden_reason?: string | null
+          id?: string | null
+          note?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_de09_20260815: {
         Row: {
           backed_up_at: string | null
@@ -1019,6 +1145,93 @@ export type Database = {
           scope?: string | null
           used_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      finance_expenses: {
+        Row: {
+          amount_vnd: number
+          category: string
+          created_at: string
+          description: string | null
+          expense_group: string
+          id: string
+          is_paid: boolean
+          note: string | null
+          payer: string
+          spent_on: string
+        }
+        Insert: {
+          amount_vnd: number
+          category: string
+          created_at?: string
+          description?: string | null
+          expense_group: string
+          id?: string
+          is_paid?: boolean
+          note?: string | null
+          payer: string
+          spent_on: string
+        }
+        Update: {
+          amount_vnd?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          expense_group?: string
+          id?: string
+          is_paid?: boolean
+          note?: string | null
+          payer?: string
+          spent_on?: string
+        }
+        Relationships: []
+      }
+      finance_settings: {
+        Row: {
+          key: string
+          note: string | null
+          value: number
+        }
+        Insert: {
+          key: string
+          note?: string | null
+          value: number
+        }
+        Update: {
+          key?: string
+          note?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
+      finance_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          is_active: boolean
+          last_viewed_at: string | null
+          token: string
+          view_count: number
+          viewer_name: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          is_active?: boolean
+          last_viewed_at?: string | null
+          token: string
+          view_count?: number
+          viewer_name: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          is_active?: boolean
+          last_viewed_at?: string | null
+          token?: string
+          view_count?: number
+          viewer_name?: string
         }
         Relationships: []
       }
@@ -3004,6 +3217,7 @@ export type Database = {
         }
         Returns: string
       }
+      finance_report: { Args: { p_token: string }; Returns: Json }
       get_db_size_mb: { Args: never; Returns: number }
       get_site_stats: { Args: never; Returns: Json }
       get_storage_size_mb: {
