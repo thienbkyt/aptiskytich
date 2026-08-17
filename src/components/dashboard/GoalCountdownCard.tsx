@@ -72,7 +72,7 @@ const GoalCountdownCard = () => {
               <Target className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-heading font-extrabold text-base md:text-lg">🎯 Đặt mục tiêu của bạn</h3>
+              <h3 className="font-heading font-extrabold text-base md:text-lg">🎯 Set up mục tiêu của bạn</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Chọn ngày thi, aim và số bài mỗi ngày.
               </p>
