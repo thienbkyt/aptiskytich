@@ -581,6 +581,8 @@ const WritingExamEngine = ({
           need="pro"
           featureLabel="Chấm bài bằng AI"
           freeQuota={quotaModal.cap}
+          used={quotaModal.used}
+
           remaining={0}
           resetNote={
             quotaModal.tier === "free"
