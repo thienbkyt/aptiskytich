@@ -13,8 +13,10 @@ export interface FeatureAccess {
   proQuota?: number | null;
   used?: number;
   remaining?: number | null;
+  creditsBalance?: number | null;
   enabled: boolean;
 }
+
 
 export interface UseFeatureResult extends FeatureAccess {
   loading: boolean;
@@ -58,8 +60,10 @@ export function useFeature(key: string, scope?: string | null): UseFeatureResult
           proQuota: d.pro_quota,
           used: d.used,
           remaining: d.remaining,
+          creditsBalance: d.credits_balance,
           enabled: d.enabled !== false,
         });
+
       }
     } finally {
       setLoading(false);

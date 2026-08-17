@@ -73,13 +73,13 @@ const TierPill = ({ tier, isPro, isPremium, proUntil, className }: TierPillProps
           {label}
         </div>
         <div className="text-[11px] text-muted-foreground truncate">{sub}</div>
-        {!isPremium && (
+        {!isPro && !isPremium && (
           <button
             onClick={(e) => { e.stopPropagation(); goPricing(); }}
             className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm hover:brightness-110"
           >
             <Crown className="w-3 h-3" />
-            {isPro ? "Lên Premium" : "Nâng cấp"}
+            Nâng cấp
           </button>
         )}
       </div>
@@ -88,3 +88,4 @@ const TierPill = ({ tier, isPro, isPremium, proUntil, className }: TierPillProps
 };
 
 export default TierPill;
+

@@ -9,30 +9,31 @@ function capOf(f: ReturnType<typeof useFeature>) {
   return f.proQuota ?? f.freeQuota ?? 10;
 }
 
-function lineText(f: ReturnType<typeof useFeature>) {
-  if (f.loading) return "—";
+function formatQuota(f: ReturnType<typeof useFeature>) {
+  if (f.loading) {
+    return { main: "—", sub: "", out: false };
+  }
   const cap = capOf(f);
   const remaining =
     typeof f.remaining === "number" ? Math.max(0, f.remaining) : Math.max(0, cap - (f.used ?? 0));
-  if (f.tier === "free") return `còn ${remaining}/${cap} lượt dùng thử`;
-  return `còn ${remaining}/${cap} lượt hôm nay`;
+  const out = remaining <= 0;
+  const sub =
+    f.tier === "free"
+      ? out
+        ? "đã hết lượt dùng thử"
+        : "lượt dùng thử còn lại"
+      : out
+        ? "đã hết lượt hôm nay"
+        : "lượt còn lại hôm nay";
+  return { main: `${remaining}/${cap}`, sub, out };
 }
 
-function isOut(f: ReturnType<typeof useFeature>) {
-  if (f.loading) return false;
-  const cap = capOf(f);
-  const remaining =
-    typeof f.remaining === "number" ? f.remaining : cap - (f.used ?? 0);
-  return remaining <= 0;
-}
-
-/** Small dashboard card showing remaining AI grading credits (Writing + Speaking). */
+/** Small dashboard card showing remaining AI grading credits (shared pool for Writing + Speaking). */
 const AiQuotaPill = ({ className }: { className?: string }) => {
   const { isPremium } = useIsPro();
-  const writing = useFeature("ai_grading_writing");
-  const speaking = useFeature("ai_grading_speaking");
-
-  const out = !isPremium && (isOut(writing) || isOut(speaking));
+  const f = useFeature("ai_grading_writing");
+  const { main, sub, out } = formatQuota(f);
+  const creditsBalance = f.creditsBalance ?? 0;
 
   return (
     <div
@@ -59,15 +60,19 @@ const AiQuotaPill = ({ className }: { className?: string }) => {
             Không giới hạn
           </div>
         ) : (
-          <div className="mt-0.5 space-y-0.5">
-            <div className="text-[11px] leading-tight text-foreground">
-              <span className="font-semibold">Writing</span>{" "}
-              <span className="text-muted-foreground">{lineText(writing)}</span>
+          <>
+            <div className={cn(
+              "text-2xl font-heading font-extrabold leading-tight",
+              out ? "text-destructive" : "text-foreground",
+            )}>
+              {main}
             </div>
-            <div className="text-[11px] leading-tight text-foreground">
-              <span className="font-semibold">Speaking</span>{" "}
-              <span className="text-muted-foreground">{lineText(speaking)}</span>
-            </div>
+            <div className="text-[11px] leading-tight text-muted-foreground truncate">{sub}</div>
+            {creditsBalance > 0 && (
+              <div className="text-[11px] leading-tight text-accent truncate">
+                +{creditsBalance} lượt tặng từ mã ưu đãi
+              </div>
+            )}
             {out && (
               <Link
                 to="/pricing"
@@ -76,7 +81,7 @@ const AiQuotaPill = ({ className }: { className?: string }) => {
                 Nâng cấp
               </Link>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -84,3 +89,4 @@ const AiQuotaPill = ({ className }: { className?: string }) => {
 };
 
 export default AiQuotaPill;
+
