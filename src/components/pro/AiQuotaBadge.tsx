@@ -3,16 +3,15 @@ import { cn } from "@/lib/utils";
 import { useFeature } from "@/hooks/useFeature";
 import { useIsPro } from "@/hooks/useIsPro";
 
-/** Badge shown next to the submit button so students know before finishing. */
+/** Badge shown next to the submit button so students know before finishing.
+ *  Uses the shared AI grading quota (Writing + Speaking). */
 const AiQuotaBadge = ({
-  featureKey,
   className,
 }: {
-  featureKey: "ai_grading_writing" | "ai_grading_speaking";
   className?: string;
 }) => {
   const { isPremium } = useIsPro();
-  const f = useFeature(featureKey);
+  const f = useFeature("ai_grading_writing");
 
   if (isPremium || f.loading) return null;
 
@@ -40,3 +39,4 @@ const AiQuotaBadge = ({
 };
 
 export default AiQuotaBadge;
+

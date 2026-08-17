@@ -13,8 +13,10 @@ export interface FeatureAccess {
   proQuota?: number | null;
   used?: number;
   remaining?: number | null;
+  creditsBalance?: number | null;
   enabled: boolean;
 }
+
 
 export interface UseFeatureResult extends FeatureAccess {
   loading: boolean;
