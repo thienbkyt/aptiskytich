@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
-import { toScaledScore, getSkillBand } from "@/data/questions";
+import { toScaledScore, getSkillBand, getLevel } from "@/data/questions";
 
 export type KeyPriority = "high" | "medium" | "low" | "backup";
 
