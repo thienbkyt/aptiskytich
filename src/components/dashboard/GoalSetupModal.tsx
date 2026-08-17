@@ -46,11 +46,11 @@ const GoalSetupModal = ({ open, onOpenChange, goal, onSave }: Props) => {
   }, [examDate, touchedTarget]);
 
   const today = vnTodayISO();
-  const isFuture = !!examDate && vnDaysUntil(examDate) > 0;
+  const isFuture = !!examDate && vnDaysUntil(examDate) >= 0;
 
   const submit = async () => {
     if (!isFuture) {
-      toast({ title: "Ngày thi phải ở tương lai", variant: "destructive" });
+      toast({ title: "Ngày thi không được ở quá khứ", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -85,7 +85,7 @@ const GoalSetupModal = ({ open, onOpenChange, goal, onSave }: Props) => {
             <label className="text-sm font-semibold mb-1.5 block">Ngày thi</label>
             <Input type="date" min={today} value={examDate} onChange={(e) => setExamDate(e.target.value)} />
             {examDate && !isFuture && (
-              <p className="text-xs text-destructive mt-1">Ngày thi phải ở tương lai.</p>
+              <p className="text-xs text-destructive mt-1">Ngày thi không được ở quá khứ.</p>
             )}
           </div>
 
