@@ -121,18 +121,32 @@ export async function gradeSpeakingPartV2(
   });
 
   if (error || !data || (data as any).error) {
-    const errCode = (data as any)?.error;
+    // Quota refusals can arrive either in the JSON body (200) or as a 4xx
+    // FunctionsHttpError whose body is stashed on error.context.
+    let payload: any = data ?? null;
+    if (!payload?.error) {
+      const ctx: any = (error as any)?.context;
+      if (ctx && typeof ctx.json === "function") {
+        try {
+          payload = await ctx.json();
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    const errCode = payload?.error;
     if (errCode === "quota_exceeded" || errCode === "disabled") {
       // Quota is not a technical failure — never retry it through the queue.
       throw new QuotaExceededError({
-        used: Number((data as any).used ?? 0),
+        used: Number(payload.used ?? 0),
         cap:
-          Number((data as any).used ?? 0) + Number((data as any).remaining ?? 0) ||
-          Number((data as any).proQuota ?? (data as any).freeQuota ?? 0),
-        tier: String((data as any).tier ?? "free"),
+          Number(payload.used ?? 0) + Number(payload.remaining ?? 0) ||
+          Number(payload.proQuota ?? payload.freeQuota ?? 0),
+        tier: String(payload.tier ?? "free"),
         need: "pro",
       });
     }
+
     // Safety-net: submission MUST NOT be lost. Enqueue for background retry.
     // Upload audio blobs to storage so the queue payload stays small (no base64
     // in jsonb) and the worker can re-download when it retries.

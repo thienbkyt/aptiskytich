@@ -21,6 +21,8 @@ import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGradin
 import { gradeWritingPartV2 } from "@/components/writing/writingGradingV2";
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
 import UpgradeLock from "@/components/pro/UpgradeLock";
+import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
+
 
 import { toast } from "sonner";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
@@ -579,6 +581,8 @@ const WritingExamEngine = ({
           need="pro"
           featureLabel="Chấm bài bằng AI"
           freeQuota={quotaModal.cap}
+          used={quotaModal.used}
+
           remaining={0}
           resetNote={
             quotaModal.tier === "free"
@@ -712,6 +716,11 @@ const WritingExamEngine = ({
         )}
 
         {belowContent}
+        {!submitted && !reviewMode && (
+          <div className="fixed bottom-[76px] right-3 z-40">
+            <AiQuotaBadge featureKey="ai_grading_writing" className="shadow-sm bg-background/95" />
+          </div>
+        )}
 
         {(reviewMode || isReviewing) && effectiveGrading && (() => {
           const allErrors = [

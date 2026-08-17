@@ -52,6 +52,8 @@ import {
 } from "./speakingGradingV2";
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
 import UpgradeLock from "@/components/pro/UpgradeLock";
+import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
+
 
 
 import SpeakingProfileView from "./SpeakingProfileView";
@@ -1282,6 +1284,7 @@ const SpeakingExamEngine = ({
                 need="pro"
                 featureLabel="Chấm bài bằng AI"
                 freeQuota={quotaModal.cap}
+                used={quotaModal.used}
                 remaining={0}
                 resetNote={
                   quotaModal.tier === "free"
@@ -1393,6 +1396,9 @@ const SpeakingExamEngine = ({
         />
       )}
 
+      <div className="fixed bottom-[76px] right-3 z-40">
+        <AiQuotaBadge featureKey="ai_grading_speaking" className="shadow-sm bg-white/95" />
+      </div>
 
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">

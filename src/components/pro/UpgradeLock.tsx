@@ -24,7 +24,10 @@ export interface UpgradeLockProps {
   /** Small helper line under the description (e.g. quota reset info). */
   resetNote?: string;
   remaining?: number | null;
+  /** How many credits already consumed (rendered under the description). */
+  used?: number | null;
   freeQuota?: number | null;
+
 
   asModal?: boolean;
   open?: boolean;
@@ -86,12 +89,18 @@ function getCopy(
 }
 
 function LockBody(props: UpgradeLockProps) {
-  const { reason, featureLabel, remaining, freeQuota, resetNote } = props;
+  const { reason, featureLabel, remaining, freeQuota, resetNote, used } = props;
 
   const need: UpgradeRequiredTier =
     props.need ?? props.requiredTier ?? (reason === "premium" ? "premium" : "pro");
   const copy = getCopy(reason, need, featureLabel, remaining, freeQuota);
   const Icon = need === "premium" ? Gem : reason === "pro" || reason === "premium" ? Crown : Lock;
+  const usedCap =
+    typeof freeQuota === "number"
+      ? freeQuota
+      : typeof used === "number" && typeof remaining === "number"
+        ? used + remaining
+        : null;
   return (
     <div className="flex flex-col items-center text-center gap-4 py-2">
       <div className={cn(
@@ -105,9 +114,16 @@ function LockBody(props: UpgradeLockProps) {
       <div>
         <h3 className="text-lg font-heading font-bold text-foreground">{copy.title}</h3>
         <p className="text-sm text-muted-foreground mt-1 max-w-sm">{copy.desc}</p>
+        {typeof used === "number" && (
+          <p className="text-xs text-foreground/80 mt-1.5 font-medium">
+            Bạn đã dùng {used}
+            {usedCap !== null ? `/${usedCap}` : ""} lượt.
+          </p>
+        )}
         {resetNote && (
           <p className="text-xs text-muted-foreground mt-2 max-w-sm">{resetNote}</p>
         )}
+
 
         {(copy as any).remainingHint && (
           <p className="text-xs text-primary mt-2 font-medium">{(copy as any).remainingHint}</p>
