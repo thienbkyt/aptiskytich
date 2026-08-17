@@ -655,10 +655,15 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       const MODEL_V2 = "google/gemini-2.5-flash";
 
       const timeoutMsSpeak = isPart4 ? 170_000 : 140_000;
-      const callGatewaySpeak = async (): Promise<Response> => {
+      const callGatewaySpeak = async (repairNote?: string): Promise<Response> => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMsSpeak);
         try {
+          const msgs: any[] = [
+            { role: "system", content: sysV2 },
+            { role: "user", content: userParts },
+          ];
+          if (repairNote) msgs.push({ role: "user", content: [{ type: "text", text: repairNote }] });
           return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             signal: controller.signal,
@@ -670,10 +675,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
               model: MODEL_V2,
               reasoning_effort: isPart4 ? "low" : "medium",
               temperature: 0,
-              messages: [
-                { role: "system", content: sysV2 },
-                { role: "user", content: userParts },
-              ],
+              messages: msgs,
               tools: [toolSchemaV2],
               tool_choice: { type: "function", function: { name: "submit_speaking_v2" } },
             }),
