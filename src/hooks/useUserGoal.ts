@@ -52,14 +52,23 @@ export function useUserGoal() {
     staleTime: 30_000,
     queryFn: async () => {
       const { startISO, endISO } = vnTodayRangeUTC();
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from("test_results")
-        .select("id", { count: "exact", head: true })
+        .select("id, full_test_session_id, skill_scores")
         .eq("user_id", user!.id)
         .gte("created_at", startISO)
         .lt("created_at", endISO);
       if (error) throw error;
-      return count ?? 0;
+      const seen = new Set<string>();
+      (data || []).forEach((row: any) => {
+        if (row.skill_scores?.mode === "marathon") return;
+        if (row.full_test_session_id && row.skill_scores?.fullPartSession == null) {
+          seen.add(row.full_test_session_id);
+        } else {
+          seen.add(row.id);
+        }
+      });
+      return seen.size;
     },
   });
 
