@@ -52,6 +52,8 @@ import {
 } from "./speakingGradingV2";
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
 import UpgradeLock from "@/components/pro/UpgradeLock";
+import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
+
 
 
 import SpeakingProfileView from "./SpeakingProfileView";
