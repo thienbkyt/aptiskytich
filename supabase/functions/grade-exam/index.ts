@@ -553,7 +553,7 @@ HOW TO APPLY:
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
 OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = upgraded English rewrite of THAT segment (ONLY improvedVersion — and nothing else — may be consolidated into the FIRST item with the rest left empty; this permission NEVER applies to transcript). transcript is MANDATORY for every item. Split the monologue into segments — one per sub-question — using content and the student's transition phrases (for example 'moving to the next question', 'as for the last one', 'regarding'). Only return an empty transcript when the monologue genuinely never addresses that sub-question. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
+- perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = upgraded English rewrite of THAT segment (ONLY improvedVersion — and nothing else — may be consolidated into the FIRST item with the rest left empty; this permission NEVER applies to transcript). transcript is MANDATORY for every item. Split the monologue into segments — one per sub-question — using content and the student's transition phrases (for example 'moving to the next question', 'as for the last one', 'regarding'). SEGMENTATION RULE (MANDATORY): split the FULL monologue into EXACTLY ${itemCount} consecutive, non-overlapping segments covering the WHOLE recording from the first word to the LAST word — the final segment MUST run to the very end of the monologue, never cut mid-sentence or mid-word. Concatenating the ${itemCount} transcripts must reproduce essentially the entire monologue (no dropped middle or tail). Only return an empty transcript when the monologue genuinely never addresses that sub-question, and even then the remaining segments must still cover the whole recording. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
 - analysis: Vietnamese, 4-6 câu — phân tích tổng quan TRƯỚC khi cho band.
 - criteriaAnalysis: object với 5 trường tiếng Việt { tf, gra, vra, pro, fc }. MỖI tiêu chí 2-3 câu: VÌ SAO được band đó + cách CẢI THIỆN CỤ THỂ.
   • vra (Từ vựng): gợi ý từ TỰ NHIÊN, CHÍNH XÁC trong ngữ cảnh (không phải từ hiếm/kêu); tập trung sửa dùng sai + lặp từ (vd: "do a mistake → make a mistake", thay từ lặp bằng paraphrase tự nhiên).
@@ -602,6 +602,12 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
             properties: {
               perItem: {
                 type: "array",
+                // Part 4 = ONE monologue split into exactly one segment per sub-question.
+                minItems: itemCount,
+                maxItems: itemCount,
+                description: isPart4
+                  ? `EXACTLY ${itemCount} entries — one segment of the monologue per sub-question, in order. Never fewer, never merged.`
+                  : `EXACTLY ${itemCount} entries — one per question, in order.`,
                 items: {
                   type: "object",
                   additionalProperties: false,
@@ -649,10 +655,15 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       const MODEL_V2 = "google/gemini-2.5-flash";
 
       const timeoutMsSpeak = isPart4 ? 170_000 : 140_000;
-      const callGatewaySpeak = async (): Promise<Response> => {
+      const callGatewaySpeak = async (repairNote?: string): Promise<Response> => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMsSpeak);
         try {
+          const msgs: any[] = [
+            { role: "system", content: sysV2 },
+            { role: "user", content: userParts },
+          ];
+          if (repairNote) msgs.push({ role: "user", content: [{ type: "text", text: repairNote }] });
           return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             signal: controller.signal,
@@ -664,10 +675,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
               model: MODEL_V2,
               reasoning_effort: isPart4 ? "low" : "medium",
               temperature: 0,
-              messages: [
-                { role: "system", content: sysV2 },
-                { role: "user", content: userParts },
-              ],
+              messages: msgs,
               tools: [toolSchemaV2],
               tool_choice: { type: "function", function: { name: "submit_speaking_v2" } },
             }),
@@ -730,6 +738,56 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         return new Response(JSON.stringify({ error: "Phản hồi AI không hợp lệ" }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+
+      // ── PART 4 SEGMENTATION VALIDATION ─────────────────────────────
+      // The monologue must come back split into exactly `itemCount` segments that
+      // together cover (nearly) the whole transcript. Gemini sometimes returns a
+      // single truncated item → UI shows only "Câu 1". Retry once, then fall back
+      // to splitting the transcript ourselves so every sub-question has content.
+      const segCoverage = (p: any): { count: number; ratio: number; full: string } => {
+        const arr = Array.isArray(p?.perItem) ? p.perItem : [];
+        const full = typeof p?.fullTranscript === "string" ? p.fullTranscript : "";
+        const sum = arr.reduce((s: number, it: any) => s + String(it?.transcript ?? "").trim().length, 0);
+        const fullLen = full.trim().length;
+        return { count: arr.length, ratio: fullLen > 0 ? sum / fullLen : 1, full };
+      };
+      if (isPart4 && itemCount > 1) {
+        const cov = segCoverage(parsed);
+        if (cov.count < itemCount || cov.ratio < 0.7) {
+          console.warn(
+            `[grade-exam v2] part4 segmentation incomplete (items=${cov.count}/${itemCount}, coverage=${cov.ratio.toFixed(2)}) → retry once`,
+          );
+          const repairNote = `SEGMENTATION REPAIR — your previous answer was rejected. Return perItem with EXACTLY ${itemCount} entries, one per sub-question in order. Split the FULL monologue into ${itemCount} consecutive non-overlapping segments; the LAST segment must run to the final word of the recording. The ${itemCount} transcripts concatenated must reproduce the entire monologue (no truncation, no dropped tail, no cut mid-word). Also return the complete fullTranscript.`;
+          try {
+            const retryResp = await callGatewaySpeak(repairNote);
+            if (retryResp.ok) {
+              const retryJson = await retryResp.json();
+              const rtc = retryJson?.choices?.[0]?.message?.tool_calls?.[0];
+              if (rtc?.function?.arguments) {
+                const retryParsed = JSON.parse(rtc.function.arguments);
+                const rcov = segCoverage(retryParsed);
+                if (rcov.count >= itemCount && rcov.ratio >= cov.ratio) {
+                  parsed = retryParsed;
+                  console.warn(`[grade-exam v2] part4 segmentation repaired (coverage=${rcov.ratio.toFixed(2)})`);
+                }
+              }
+              try {
+                await logAIUsage({
+                  model: MODEL_V2,
+                  usage: retryJson?.usage,
+                  source_function: "grade-exam",
+                  finishReason: retryJson?.choices?.[0]?.finish_reason ?? null,
+                  attempt: 2,
+                  gradingSessionId,
+                  metadata: { mode: "speaking_v2", partType, repair: "part4_segmentation" },
+                });
+              } catch { /* ignore */ }
+            }
+          } catch (e) {
+            console.warn("[grade-exam v2] part4 segmentation retry failed", (e as any)?.message || e);
+          }
+        }
+      }
       const b = parsed.bands || {};
       const tf = Math.max(0, Math.min(5, Math.round(Number(b.tf ?? 0))));
       const gra = Math.max(0, Math.min(5, Math.round(Number(b.gra ?? 0))));
@@ -782,13 +840,46 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
 
 
       const fullTranscript = typeof parsed.fullTranscript === "string" ? parsed.fullTranscript : "";
-      // Part 4 safety-net: if the model only transcribed the first sub-question and
-      // left every later item empty, surface the whole monologue in item #1 so the
-      // student never loses their spoken content in the review screen.
+      // Part 4 safety-net: the review UI shows one card per sub-question, so every
+      // item needs a transcript. If the model still returned too few / truncated
+      // segments, split the full monologue ourselves — first on the student's
+      // transition phrases, otherwise evenly on sentence boundaries.
       if (isPart4 && fullTranscript.trim() && perItemOut.length > 1) {
-        const restEmpty = perItemOut.slice(1).every((it: any) => !String(it?.transcript ?? "").trim());
-        if (restEmpty) {
-          perItemOut[0] = { ...perItemOut[0], transcript: fullTranscript };
+        const full = fullTranscript.trim();
+        const covered = perItemOut.reduce((s: number, it: any) => s + String(it?.transcript ?? "").trim().length, 0);
+        const filled = perItemOut.filter((it: any) => String(it?.transcript ?? "").trim().length > 0).length;
+        if (filled < perItemOut.length || covered < full.length * 0.7) {
+          const n = perItemOut.length;
+          const markers = /\b(?:(?:now\s+)?(?:moving|move|turning|turn)\s+(?:on\s+)?to\s+the\s+(?:next|second|third|last|final)\b|as\s+for\s+the\s+(?:next|second|third|last|final)\b|regarding\s+the\s+(?:next|second|third|last|final)\b|(?:for|about)\s+the\s+(?:second|third|last|final)\s+question\b|the\s+(?:second|third|last|final)\s+question\b)/gi;
+          const cuts: number[] = [];
+          for (const m of full.matchAll(markers)) {
+            if (typeof m.index === "number" && m.index > 0) cuts.push(m.index);
+          }
+          let segments: string[] = [];
+          if (cuts.length >= n - 1) {
+            const chosen = cuts.slice(0, n - 1);
+            let prev = 0;
+            for (const c of chosen) { segments.push(full.slice(prev, c).trim()); prev = c; }
+            segments.push(full.slice(prev).trim());
+          } else {
+            // Even split on sentence boundaries; last segment always runs to the end.
+            const sentences = full.match(/[^.!?]+[.!?]*\s*/g) ?? [full];
+            const per = Math.ceil(sentences.length / n);
+            for (let i = 0; i < n; i++) {
+              segments.push(
+                (i === n - 1 ? sentences.slice(i * per) : sentences.slice(i * per, (i + 1) * per)).join("").trim(),
+              );
+            }
+          }
+          segments = segments.map((s) => s || "");
+          console.warn(
+            `[grade-exam v2] part4 fallback split applied (items=${n}, filled=${filled}, coverage=${(covered / full.length).toFixed(2)})`,
+          );
+          perItemOut = perItemOut.map((it: any, i: number) => ({
+            ...it,
+            transcript: segments[i] || String(it?.transcript ?? ""),
+            onTopic: !!it?.onTopic || (segments[i] || "").length > 0,
+          }));
         }
       }
 
