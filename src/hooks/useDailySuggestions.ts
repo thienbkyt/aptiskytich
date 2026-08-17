@@ -119,25 +119,25 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
 
       const bandNum: Record<string, number> = {};
       const bandLabel: Record<string, string> = {};
+      const setBand = (sk: string, band: string) => {
+        const norm = band === "C1" || band === "C2" ? "C" : band;
+        bandLabel[sk] = band;
+        bandNum[sk] = BAND_TO_NUM[norm] ?? 0;
+      };
       (["reading", "listening"] as const).forEach((sk) => {
         const a = agg[sk];
         if (!a || a.total <= 0) return;
-        const b = getSkillBand(toScaledScore(a.correct, a.total), sk);
-        bandLabel[sk] = b;
-        bandNum[sk] = BAND_TO_NUM[b] ?? 0;
+        setBand(sk, getSkillBand(toScaledScore(a.correct, a.total), sk));
       });
+      // Grammar & Vocab has no Aptis scaled band table — dashboard uses the % level.
+      {
+        const a = agg["grammar_vocab"];
+        if (a && a.total > 0) setBand("grammar_vocab", getLevel(a.correct, a.total));
+      }
       const w = avg50(wsrRes.data as any[]);
-      if (w !== undefined) {
-        const b = getSkillBand(w, "writing");
-        bandLabel.writing = b;
-        bandNum.writing = BAND_TO_NUM[b] ?? 0;
-      }
+      if (w !== undefined) setBand("writing", getSkillBand(w, "writing"));
       const sp = avg50(ssrRes.data as any[]);
-      if (sp !== undefined) {
-        const b = getSkillBand(sp, "speaking");
-        bandLabel.speaking = b;
-        bandNum.speaking = BAND_TO_NUM[b] ?? 0;
-      }
+      if (sp !== undefined) setBand("speaking", getSkillBand(sp, "speaking"));
 
       const picked: DailySuggestion[] = [];
       const used = new Set<string>();
