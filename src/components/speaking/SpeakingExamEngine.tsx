@@ -1393,6 +1393,9 @@ const SpeakingExamEngine = ({
         />
       )}
 
+      <div className="fixed bottom-[76px] right-3 z-40">
+        <AiQuotaBadge featureKey="ai_grading_speaking" className="shadow-sm bg-white/95" />
+      </div>
 
 
       <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
