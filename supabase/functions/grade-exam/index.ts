@@ -840,13 +840,46 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
 
 
       const fullTranscript = typeof parsed.fullTranscript === "string" ? parsed.fullTranscript : "";
-      // Part 4 safety-net: if the model only transcribed the first sub-question and
-      // left every later item empty, surface the whole monologue in item #1 so the
-      // student never loses their spoken content in the review screen.
+      // Part 4 safety-net: the review UI shows one card per sub-question, so every
+      // item needs a transcript. If the model still returned too few / truncated
+      // segments, split the full monologue ourselves — first on the student's
+      // transition phrases, otherwise evenly on sentence boundaries.
       if (isPart4 && fullTranscript.trim() && perItemOut.length > 1) {
-        const restEmpty = perItemOut.slice(1).every((it: any) => !String(it?.transcript ?? "").trim());
-        if (restEmpty) {
-          perItemOut[0] = { ...perItemOut[0], transcript: fullTranscript };
+        const full = fullTranscript.trim();
+        const covered = perItemOut.reduce((s: number, it: any) => s + String(it?.transcript ?? "").trim().length, 0);
+        const filled = perItemOut.filter((it: any) => String(it?.transcript ?? "").trim().length > 0).length;
+        if (filled < perItemOut.length || covered < full.length * 0.7) {
+          const n = perItemOut.length;
+          const markers = /\b(?:(?:now\s+)?(?:moving|move|turning|turn)\s+(?:on\s+)?to\s+the\s+(?:next|second|third|last|final)\b|as\s+for\s+the\s+(?:next|second|third|last|final)\b|regarding\s+the\s+(?:next|second|third|last|final)\b|(?:for|about)\s+the\s+(?:second|third|last|final)\s+question\b|the\s+(?:second|third|last|final)\s+question\b)/gi;
+          const cuts: number[] = [];
+          for (const m of full.matchAll(markers)) {
+            if (typeof m.index === "number" && m.index > 0) cuts.push(m.index);
+          }
+          let segments: string[] = [];
+          if (cuts.length >= n - 1) {
+            const chosen = cuts.slice(0, n - 1);
+            let prev = 0;
+            for (const c of chosen) { segments.push(full.slice(prev, c).trim()); prev = c; }
+            segments.push(full.slice(prev).trim());
+          } else {
+            // Even split on sentence boundaries; last segment always runs to the end.
+            const sentences = full.match(/[^.!?]+[.!?]*\s*/g) ?? [full];
+            const per = Math.ceil(sentences.length / n);
+            for (let i = 0; i < n; i++) {
+              segments.push(
+                (i === n - 1 ? sentences.slice(i * per) : sentences.slice(i * per, (i + 1) * per)).join("").trim(),
+              );
+            }
+          }
+          segments = segments.map((s) => s || "");
+          console.warn(
+            `[grade-exam v2] part4 fallback split applied (items=${n}, filled=${filled}, coverage=${(covered / full.length).toFixed(2)})`,
+          );
+          perItemOut = perItemOut.map((it: any, i: number) => ({
+            ...it,
+            transcript: segments[i] || String(it?.transcript ?? ""),
+            onTopic: !!it?.onTopic || (segments[i] || "").length > 0,
+          }));
         }
       }
 
