@@ -214,12 +214,15 @@ const Dashboard = () => {
           const correct = Number(ss.correct) || 0;
           const total = Number(ss.total) || 0;
           if (!skill || total <= 0) return;
+          // Lượt nộp trắng/bỏ dở: được giao câu nhưng không đúng câu nào.
+          // Không tính vào "Chính xác" và "Trình độ" nhưng vẫn giữ trong "Câu đã làm".
+          const isBlankSubmission = correct === 0 && total > 0;
 
           if (!skillAgg[skill]) skillAgg[skill] = { correct: 0, total: 0 };
           skillAgg[skill].correct += correct;
           skillAgg[skill].total += total;
           grandTotal += total;
-          if (MCQ_SKILLS.has(skill)) {
+          if (MCQ_SKILLS.has(skill) && !isBlankSubmission) {
             mcqCorrect += correct;
             mcqTotal += total;
           }
@@ -285,10 +288,14 @@ const Dashboard = () => {
           if (!sid) return;
           const ss = row.skill_scores;
           if (ss.fullPartSession) return;
+          const correct = Number(ss.correct) || 0;
+          const total = Number(ss.total) || 0;
+          if (total <= 0 || (correct === 0 && total > 0)) return;
           if (!sessionSkills.has(sid)) { sessionSkills.set(sid, new Map()); sessionOrder.push(sid); }
+          const prev = sessionSkills.get(sid)!.get(ss.skill);
           sessionSkills.get(sid)!.set(ss.skill, {
-            correct: Number(ss.correct) || 0,
-            total: Number(ss.total) || 0,
+            correct: (prev?.correct ?? 0) + correct,
+            total: (prev?.total ?? 0) + total,
           });
         });
         const s50BySession = (list: any[]) => {
@@ -323,7 +330,12 @@ const Dashboard = () => {
         if (scaledBySkill.reading === undefined) {
           (["reading", "listening"] as const).forEach((sk) => {
             const rows = scoreRows
-              .filter((row: any) => row.skill_scores.skill === sk && (Number(row.skill_scores.total) || 0) > 0)
+              .filter((row: any) => {
+                const ss = row.skill_scores;
+                const total = Number(ss.total) || 0;
+                const correct = Number(ss.correct) || 0;
+                return ss.skill === sk && total > 0 && correct > 0;
+              })
               .slice(0, 5);
             if (rows.length === 0) return;
             const c = rows.reduce((s: number, row: any) => s + (Number(row.skill_scores.correct) || 0), 0);
