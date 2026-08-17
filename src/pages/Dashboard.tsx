@@ -202,7 +202,7 @@ const Dashboard = () => {
         const skillAgg: Record<string, { correct: number; total: number }> = {};
         let mcqCorrect = 0;
         let mcqTotal = 0;
-        let grandTotal = 0;
+        let mcqTotalAll = 0;
         const MCQ_SKILLS = new Set(["grammar_vocab", "reading", "listening"]);
         allResults.forEach((row: any) => {
           const ss = row.skill_scores;
@@ -221,7 +221,9 @@ const Dashboard = () => {
           if (!skillAgg[skill]) skillAgg[skill] = { correct: 0, total: 0 };
           skillAgg[skill].correct += correct;
           skillAgg[skill].total += total;
-          grandTotal += total;
+          if (MCQ_SKILLS.has(skill)) {
+            mcqTotalAll += total; // "Câu đã làm" — tính mọi câu được giao
+          }
           if (MCQ_SKILLS.has(skill) && !isBlankSubmission) {
             mcqCorrect += correct;
             mcqTotal += total;
@@ -458,7 +460,7 @@ const Dashboard = () => {
         setData({
           displayName,
           streak: streakRes.data?.current_streak ?? 0,
-          totalQuestions: mcqTotal,
+          totalQuestions: mcqTotalAll,
           accuracy: mcqTotal > 0 ? Math.round((mcqCorrect / mcqTotal) * 100) : 0,
           currentLevel,
           skillsCovered,
