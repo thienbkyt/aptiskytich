@@ -116,7 +116,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
   const heightForBand = (b: string | null) => {
     if (!b) return 0;
     const n = BAND_TO_NUM[b] ?? 0; // 0..5
-    return ((n + 1) / 6) * 100; // percent of chart area, A0 shows small bar
+    return (n / 5) * 100; // A0=0%, C=100%
   };
 
   const chartBars: Array<{ label: string; band: string | null; color: string }> = [
@@ -274,11 +274,13 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
             <div>
               <div className="font-semibold mb-2" style={{ color: BRAND_NAVY }}>CEFR skill profile</div>
               <div className="text-xs text-neutral-600 mb-1">CEFR grade</div>
-              <div className="flex pt-5">
+              <div className="flex pt-8">
                 {/* Y-axis */}
-                <div className="flex flex-col justify-between text-xs text-neutral-700 pr-2" style={{ height: 200 }}>
+                <div className="flex flex-col text-xs text-neutral-700 pr-2" style={{ height: 200 }}>
                   {Y_LEVELS.map((lvl) => (
-                    <div key={lvl} className="leading-none">{lvl}</div>
+                    <div key={lvl} className="leading-none" style={{ flex: 1, display: "flex", alignItems: "center", transform: "translateY(-50%)" }}>
+                      {lvl}
+                    </div>
                   ))}
                 </div>
                 {/* Bars */}
@@ -293,22 +295,22 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                     {chartBars.map((b, i) => {
                       const h = heightForBand(b.band);
                       return (
-                        <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                        <div key={i} className="flex-1 relative flex flex-col justify-end h-full">
                           {b.band ? (
                             <>
                               <div
-                                className="text-[10px] font-semibold"
-                                style={{ color: b.color, marginBottom: 6 }}
+                                className="absolute left-0 right-0 text-center text-[10px] font-semibold"
+                                style={{ color: b.color, bottom: `calc(${h}% + 4px)` }}
                               >
                                 {showBand(b.band)}
                               </div>
                               <div
                                 className="w-full rounded-t"
-                                style={{ height: `${h * 0.88}%`, backgroundColor: b.color, minHeight: 4 }}
+                                style={{ height: `${h}%`, backgroundColor: b.color, minHeight: 4 }}
                               />
                             </>
                           ) : (
-                            <div className="text-[10px] text-neutral-400" style={{ marginBottom: 6 }}>—</div>
+                            <div className="absolute left-0 right-0 bottom-0 text-center text-[10px] text-neutral-400">—</div>
                           )}
                         </div>
                       );
@@ -317,7 +319,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                 </div>
               </div>
               {/* X labels */}
-              <div className="flex mt-1 pl-6">
+              <div className="flex mt-1 gap-2 px-1">
                 {chartBars.map((b, i) => (
                   <div key={i} className="flex-1 text-center text-[10px] text-neutral-700 whitespace-pre-line leading-tight">
                     {b.label}
