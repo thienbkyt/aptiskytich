@@ -72,6 +72,7 @@ const Dictation = lazy(() => import("./pages/Dictation"));
 const MySets = lazy(() => import("./pages/MySets"));
 const FeedbackPage = lazy(() => import("./pages/Feedback"));
 const ReviewsPage = lazy(() => import("./pages/Reviews"));
+const __TestReport = lazy(() => import("./pages/__TestReport"));
 
 
 const queryClient = new QueryClient({
