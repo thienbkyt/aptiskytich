@@ -104,7 +104,7 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
       (attemptRes.data || []).forEach((r: any) => {
         const ss = r.skill_scores;
         if (!ss || typeof ss !== "object" || ss.mode === "marathon") return;
-        const sk = ss.skill;
+        const sk = String(ss.skill || "").toLowerCase() === "grammar" ? "grammar_vocab" : ss.skill;
         const t = Number(ss.total) || 0;
         if (!sk || t <= 0) return;
         agg[sk] = agg[sk] || { correct: 0, total: 0 };
