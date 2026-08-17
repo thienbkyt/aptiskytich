@@ -5,6 +5,7 @@ import { Target, Pencil, Zap, MessageSquareHeart } from "lucide-react";
 import { useUserGoal } from "@/hooks/useUserGoal";
 import { vnDaysUntil } from "@/lib/vnDate";
 import GoalSetupModal from "./GoalSetupModal";
+import DailySuggestionList from "./DailySuggestionList";
 
 const Ring = ({ value, max, done }: { value: number; max: number; done: boolean }) => {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
