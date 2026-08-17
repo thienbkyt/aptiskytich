@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="referrer" content="no-referrer">
+<title>Báo cáo tài chính — Aptis Kỳ Tích</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<style>
+:root{color-scheme:light;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--soft:#f8fafc;
+ --brand:#1f4e79;--brand-soft:#eef4fa;--up:#047857;--down:#b91c1c;
+ --warn-bg:#fffbeb;--warn-line:#fcd34d;--warn-ink:#78350f}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 18px 60px;background:#f1f5f9;color:var(--ink);
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:13.5px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto}
+.sheet{background:#fff;border-radius:14px;padding:22px 24px 28px;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+h1{font-size:21px;margin:0 0 4px;letter-spacing:-.3px}
+.sub{color:var(--muted);font-size:11.5px}
+.hr{height:3px;background:var(--brand);border-radius:2px;margin:12px 0 20px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:24px 0 10px}
+.sec-h h2{font-size:12px;margin:0;color:var(--brand);text-transform:uppercase;letter-spacing:.7px;font-weight:800}
+.sec-h .tag{font-size:11px;color:var(--muted)}
+.row{display:grid;gap:10px}
+.c2{grid-template-columns:repeat(2,1fr)}.c3{grid-template-columns:repeat(3,1fr)}
+.c4{grid-template-columns:repeat(4,1fr)}.c5{grid-template-columns:repeat(5,1fr)}
+.card{border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:var(--soft)}
+.card .lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.card .val{font-size:18px;font-weight:750;margin-top:4px;letter-spacing:-.4px}
+.card .note{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+.hero .card{background:linear-gradient(180deg,#f7fbff,#fff);border-color:#cddcea;padding:14px 16px}
+.hero .val{font-size:24px}
+.pos{color:var(--up)}.neg{color:var(--down)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:var(--brand);color:#fff;text-align:left;padding:7px 10px;font-size:11px;font-weight:600;
+ text-transform:uppercase;letter-spacing:.3px}
+th:first-child{border-radius:8px 0 0 0}th:last-child{border-radius:0 8px 0 0}
+td{padding:6px 10px;border-bottom:1px solid #f1f5f9}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:750;border-top:2px solid var(--brand);background:var(--brand-soft)}
+.bar-cell{position:relative}.bar-cell .bg{position:absolute;left:0;top:2px;bottom:2px;background:#e8f0f7;border-radius:4px}
+.bar-cell span{position:relative}
+.chart{height:250px;position:relative;border:1px solid var(--line);border-radius:11px;padding:10px 8px 4px}
+.split{display:grid;gap:18px}.s11{grid-template-columns:1fr 1fr}.s64{grid-template-columns:1.5fr 1fr}
+.fn{display:flex;flex-direction:column;gap:7px}
+.fn-row{display:grid;grid-template-columns:104px 1fr 128px;align-items:center;gap:10px}
+.fn-lab{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right}
+.fn-track{background:var(--soft);border:1px solid var(--line);border-radius:7px;height:30px;overflow:hidden}
+.fn-fill{height:100%;background:linear-gradient(90deg,#1f4e79,#2f6ea5);display:flex;align-items:center;
+ padding-left:11px;color:#fff;font-size:12px;font-weight:700;min-width:52px}
+.fn-side{font-size:11.5px;color:var(--muted)}.fn-side b{color:var(--ink)}
+.note-box{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:9px;padding:10px 12px;
+ font-size:11.5px;color:var(--warn-ink);line-height:1.55;margin-top:10px}
+.foot{margin-top:26px;padding-top:12px;border-top:1px solid var(--line);color:#94a3b8;font-size:10.5px}
+.center{min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center}
+.box{background:#fff;border-radius:14px;padding:34px 30px;max-width:460px;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+.box h2{margin:0 0 8px;font-size:17px;color:var(--brand)}
+.box p{margin:0;color:var(--muted);font-size:13px}
+.spin{width:26px;height:26px;border:3px solid #dbe6f0;border-top-color:var(--brand);border-radius:50%;
+ animation:sp .8s linear infinite;margin:0 auto 14px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.muted{color:#94a3b8;font-style:italic}
+@media(max-width:900px){.split{grid-template-columns:1fr!important}.c4,.c5{grid-template-columns:repeat(2,1fr)}
+ body{padding:12px 10px 40px}.sheet{padding:16px 14px 20px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="root">
+  <div class="center"><div class="box"><div class="spin"></div>
+    <h2>Đang tải báo cáo</h2><p>Số liệu lấy trực tiếp từ hệ thống, vui lòng đợi vài giây.</p></div></div>
+</div>
+
+<script>
+/* ====== CẤU HÌNH ====== */
+const SUPABASE_URL = "https://bacoamhbatqpxatrrflz.supabase.co";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhY29hbWhiYXRxcHhhdHJyZmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMTgyODgsImV4cCI6MjA4ODY5NDI4OH0.BcFLY1mFlFxCK7E0E89iLlh4am3mEXkbYZaFJ4O_mpw";   // ← dán VITE_SUPABASE_PUBLISHABLE_KEY
+/* ====================== */
+
+const PLAN_LABEL={day:"1 ngày",week:"1 tuần",month:"1 tháng",quarter:"3 tháng",half_year:"6 tháng",lifetime:"Trọn đời"};
+const vnd=n=>(n==null||!isFinite(n)?"–":Math.round(n).toLocaleString("vi-VN")+"đ");
+const num=n=>(n==null||!isFinite(n)?"–":Math.round(n).toLocaleString("vi-VN"));
+const pct=n=>(isFinite(n)?(n*100).toFixed(1)+"%":"–");
+const dm=d=>d.split("-").reverse().join("/");
+const card=(l,v,nt,cls="")=>`<div class="card"><div class="lab">${l}</div><div class="val ${cls}">${v}</div><div class="note">${nt||""}</div></div>`;
+
+function fail(title,msg){
+  document.getElementById("root").innerHTML=
+   `<div class="center"><div class="box"><h2>${title}</h2><p>${msg}</p></div></div>`;
+}
+
+async function load(){
+  const t=new URLSearchParams(location.search).get("t");
+  if(!t) return fail("Thiếu mã truy cập","Đường dẫn không đầy đủ. Vui lòng dùng đúng link đã được gửi cho bạn.");
+  let r;
+  try{
+    r=await fetch(SUPABASE_URL+"/rest/v1/rpc/finance_report",{
+      method:"POST",
+      headers:{apikey:ANON_KEY,Authorization:"Bearer "+ANON_KEY,"Content-Type":"application/json"},
+      body:JSON.stringify({p_token:t})
+    });
+  }catch(e){ return fail("Không kết nối được","Vui lòng kiểm tra mạng rồi thử lại."); }
+  if(!r.ok){
+    return fail("Link không còn hiệu lực","Đường dẫn này đã bị thu hồi hoặc hết hạn. Liên hệ Bùi Khánh Thiện để lấy link mới.");
+  }
+  render(await r.json());
+}
+
+function render(D){
+  const S=D.settings||{}, T=D.totals||{}, subs=D.subs||{}, fn=D.funnel||{};
+  const daily=D.daily||[], monthly=D.monthly||[], byPlan=D.by_plan||[];
+  const expCat=D.exp_cat||[], expGroup=D.exp_group||[], expMonthly=D.exp_monthly||[], unpaid=D.unpaid||[];
+  const newUsers=D.new_users||[], byHour=(D.by_hour||[]).slice(0,5);
+
+  const rev=+T.rev||0, ord=+T.orders||0, expPaid=+T.exp_paid||0, expUnpaid=+T.exp_unpaid||0;
+  const fund0=+T.fund_initial||0, expAll=expPaid+expUnpaid;
+  const fundNow=fund0+rev-expPaid, fundAfter=fundNow-expUnpaid;
+  const pnl=rev-expAll, arpu=ord?rev/ord:0;
+
+  const expByM={}; expMonthly.forEach(x=>expByM[x.m]=+x.amt);
+  const months=[...new Set([...monthly.map(x=>x.m),...Object.keys(expByM)])].sort();
+  const revByM={},ordByM={}; monthly.forEach(x=>{revByM[x.m]=+x.dt;ordByM[x.m]=x.n;});
+
+  const curM=(D.as_of||"").slice(6,10)+"-"+(D.as_of||"").slice(3,5);
+  const revCur=revByM[curM]||0, ordCur=ordByM[curM]||0, expCur=expByM[curM]||0;
+  const dCur=daily.filter(x=>x.d.slice(0,7)===curM);
+  const todayISO=(D.as_of||"").slice(6,10)+"-"+(D.as_of||"").slice(3,5)+"-"+(D.as_of||"").slice(0,2);
+  const full=dCur.filter(x=>x.d!==todayISO);
+  const revPerDay=full.length?full.reduce((a,x)=>a+ +x.dt,0)/full.length:0;
+
+  const nuCur=newUsers.filter(x=>x.d.slice(0,7)===curM).reduce((a,x)=>a+x.n,0);
+  const linkTao=+fn.link_tao||0, linkTra=+fn.link_tra||0, boDo=linkTao-linkTra;
+  const doneRate=linkTao?linkTra/linkTao:0;
+
+  const usd=+S.usd_vnd||28000, lvCr=+S.lovable_credits||1200, lvUsd=+S.lovable_usd||294;
+  const lvLeft=+S.lovable_left||0, lvUsed=+S.lovable_used30||0, lvRun=+S.lovable_run30||0;
+  const lvBuild=lvUsed-lvRun, unit=lvUsd/lvCr*usd, planVnd=lvUsd*usd;
+  const burn=lvUsed/30, daysLeft=burn?lvLeft/burn:0;
+  const shortfall=Math.max(0,lvUsed-lvCr), lvMonthly=planVnd+shortfall*unit;
+
+  const maxCat=Math.max(...expCat.map(x=>+x.amt),1);
+  const fnMax=Math.max(nuCur,linkTao,1);
+  const fnRow=(lab,v,side)=>`<div class="fn-row"><div class="fn-lab">${lab}</div>
+    <div class="fn-track"><div class="fn-fill" style="width:${Math.max(5,v/fnMax*100)}%">${num(v)}</div></div>
+    <div class="fn-side">${side}</div></div>`;
+
+  document.getElementById("root").innerHTML=`<div class="sheet">
+   <h1>Báo cáo tài chính — Aptis Kỳ Tích</h1>
+   <div class="sub">Số liệu trực tiếp từ hệ thống, cập nhật lúc mở trang · Đơn vị VND · Mọi mốc ngày theo giờ Việt Nam
+     · Người xem: <b>${D.viewer||"–"}</b> · ${D.as_of||""}</div>
+   <div class="hr"></div>
+
+   <div class="sec-h"><h2>Sức khoẻ tài chính</h2><span class="tag">luỹ kế từ 10/03/2026</span></div>
+   <div class="row c4 hero">
+     ${card("Tổng quỹ Kỳ Tích",vnd(fundNow),`${vnd(fund0)} vốn + ${vnd(rev)} doanh thu − ${vnd(expPaid)} đã chi`)}
+     ${card("Doanh thu luỹ kế",vnd(rev),`${num(ord)} đơn · ARPU ${vnd(arpu)}`)}
+     ${card("Tổng chi phí",vnd(expAll),`${vnd(expUnpaid)} chưa thanh toán`)}
+     ${card("Lãi / lỗ luỹ kế",vnd(pnl),`${vnd(rev)} thu − ${vnd(expAll)} chi`,pnl>=0?"pos":"neg")}
+   </div>
+   <div class="row c4" style="margin-top:10px">
+     ${card("Doanh thu tháng "+curM,vnd(revCur),`${num(ordCur)} đơn`)}
+     ${card("Lãi / lỗ tháng "+curM,vnd(revCur-expCur),`chi phí ${vnd(expCur)}`,revCur-expCur>=0?"pos":"neg")}
+     ${card("Doanh số TB / ngày",vnd(revPerDay),"trong tháng, đã loại hôm nay")}
+     ${card("Quỹ sau khi trả hết nợ",vnd(fundAfter),`còn ${vnd(expUnpaid)} chưa trả`)}
+   </div>
+
+   <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">tháng ${curM}</span></div>
+   <div class="chart"><canvas id="c1"></canvas></div>
+
+   <div class="split s11" style="margin-top:16px">
+     <div>
+       <div class="sec-h" style="margin-top:8px"><h2>Kết quả theo tháng</h2></div>
+       <table><thead><tr><th>Tháng</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">Chi phí</th><th class="n">Lãi/lỗ</th></tr></thead><tbody>
+       ${months.map(m=>{const r=revByM[m]||0,e=expByM[m]||0,d=r-e;
+         return `<tr><td>${m}</td><td class="n">${ordByM[m]||0}</td><td class="n">${vnd(r)}</td><td class="n">${vnd(e)}</td><td class="n ${d>=0?"pos":"neg"}">${vnd(d)}</td></tr>`}).join("")}
+       <tr class="tot"><td>Tổng</td><td class="n">${num(ord)}</td><td class="n">${vnd(rev)}</td><td class="n">${vnd(expAll)}</td><td class="n ${pnl>=0?"pos":"neg"}">${vnd(pnl)}</td></tr>
+       </tbody></table>
+     </div>
+     <div>
+       <div class="sec-h" style="margin-top:8px"><h2>Doanh thu theo gói</h2></div>
+       <table><thead><tr><th>Gói</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">% DT</th><th class="n">ARPU</th></tr></thead><tbody>
+       ${byPlan.map(p=>`<tr><td>${PLAN_LABEL[p.k]||p.k}</td><td class="n">${p.n}</td><td class="n">${vnd(+p.dt)}</td><td class="n">${pct(+p.dt/rev)}</td><td class="n">${vnd(+p.dt/p.n)}</td></tr>`).join("")}
+       <tr class="tot"><td>Tổng</td><td class="n">${num(ord)}</td><td class="n">${vnd(rev)}</td><td class="n">100%</td><td class="n">${vnd(arpu)}</td></tr>
+       </tbody></table>
+     </div>
+   </div>
+
+   <div class="sec-h"><h2>Phễu khách hàng</h2><span class="tag">tháng ${curM}</span></div>
+   <div class="split s64">
+     <div>
+       <div class="fn">
+         ${fnRow("Đăng ký mới",nuCur,"người dùng mới trong tháng")}
+         ${fnRow("Bấm mua",linkTao,"tạo link thanh toán")}
+         ${fnRow("Trả tiền",linkTra,`<b>${pct(doneRate)}</b> hoàn tất`)}
+       </div>
+       <div class="note-box"><b>${num(boDo)} lượt bấm mua rồi bỏ</b> trong tháng, trung bình ${fn.phut_tb||"–"} phút từ lúc tạo link đến lúc trả tiền.
+       Kéo thêm 10% số này về là thêm khoảng <b>${vnd(0.10*boDo*arpu)}</b> doanh thu.</div>
+     </div>
+     <div>
+       <div class="sec-h" style="margin-top:0"><h2>Giờ bán chạy</h2></div>
+       <table><thead><tr><th>Khung giờ</th><th class="n">Đơn</th><th class="n">Doanh thu</th></tr></thead><tbody>
+       ${byHour.map(h=>`<tr><td>${String(h.h).padStart(2,"0")}:00 – ${String(h.h).padStart(2,"0")}:59</td><td class="n">${h.n}</td><td class="n">${vnd(+h.dt)}</td></tr>`).join("")||'<tr><td colspan="3" class="muted">Chưa có dữ liệu</td></tr>'}
+       </tbody></table>
+     </div>
+   </div>
+
+   <div class="sec-h"><h2>Chi phí</h2><span class="tag">luỹ kế · tổng ${vnd(expAll)}</span></div>
+   <div class="split s11">
+     <div>
+       <table><thead><tr><th>Danh mục</th><th class="n">Số tiền</th><th class="n">% tổng</th></tr></thead><tbody>
+       ${expCat.map(x=>`<tr><td class="bar-cell"><div class="bg" style="width:${+x.amt/maxCat*100}%"></div><span>${x.c}</span></td><td class="n">${vnd(+x.amt)}</td><td class="n">${pct(+x.amt/expAll)}</td></tr>`).join("")}
+       <tr class="tot"><td>Tổng</td><td class="n">${vnd(expAll)}</td><td class="n">100%</td></tr>
+       </tbody></table>
+     </div>
+     <div>
+       <div class="sec-h" style="margin-top:0"><h2>Theo nhóm</h2></div>
+       <table><thead><tr><th>Nhóm</th><th class="n">Số tiền</th><th class="n">%</th></tr></thead><tbody>
+       ${expGroup.map(x=>`<tr><td>${x.g}</td><td class="n">${vnd(+x.amt)}</td><td class="n">${pct(+x.amt/expAll)}</td></tr>`).join("")}
+       </tbody></table>
+       ${unpaid.length?`<div class="sec-h"><h2>Chưa thanh toán</h2><span class="tag">${vnd(expUnpaid)}</span></div>
+       <table><thead><tr><th>Ngày</th><th>Khoản</th><th class="n">Số tiền</th></tr></thead><tbody>
+       ${unpaid.map(u=>`<tr><td>${dm(u.d)}</td><td>${u.t}</td><td class="n neg">${vnd(+u.amt)}</td></tr>`).join("")}
+       </tbody></table>`:""}
+     </div>
+   </div>
+
+   <div class="sec-h"><h2>Hạ tầng Lovable</h2><span class="tag">${vnd(unit)}/credit theo ${num(usd)}đ/$</span></div>
+   <div class="row c4">
+     ${card("Credits còn lại",num(lvLeft),`đủ dùng ~${daysLeft.toFixed(0)} ngày`,daysLeft<10?"neg":"pos")}
+     ${card("Build 30 ngày",num(lvBuild),`${(lvBuild/30).toFixed(1)}/ngày · phát triển`)}
+     ${card("Run 30 ngày",num(lvRun),`${(lvRun/30).toFixed(1)}/ngày · vận hành`)}
+     ${card("Chi phí dự kiến / tháng",vnd(lvMonthly),`gồm ${vnd(shortfall*unit)} mua thêm`)}
+   </div>
+
+   <div class="sec-h"><h2>Thuê bao &amp; gia hạn</h2></div>
+   <div class="row c5">
+     ${card("Tổng người dùng",num(subs.tong_user))}
+     ${card("Đang còn hạn",num(subs.con_han),"tài khoản Pro/Premium")}
+     ${card("Hết hạn trong 30 ngày",num(subs.het_han_30d),"cần chăm để gia hạn")}
+     ${card("Đã từng trả phí",num(subs.da_mua),`${pct(subs.tong_user?subs.da_mua/subs.tong_user:0)} tổng người dùng`)}
+     ${card("Tỉ lệ mua lại",pct(subs.da_mua?subs.mua_lai/subs.da_mua:0),`${subs.mua_lai} người mua từ 2 lần`)}
+   </div>
+
+   <div class="foot">Doanh thu lấy từ cổng thanh toán PayOS, chỉ tính đơn đã thanh toán. Chi phí lấy từ sổ kế toán nội bộ.
+   Quỹ Kỳ Tích gồm vốn góp ban đầu cộng doanh thu, trừ các khoản đã chi. Số liệu Lovable cập nhật thủ công.
+   Trang này dành riêng cho ${D.viewer||"cổ đông"}, vui lòng không chuyển tiếp đường dẫn.</div>
+  </div>`;
+
+  const show=dCur.slice(-31);
+  new Chart(document.getElementById("c1"),{type:"bar",
+    data:{labels:show.map(x=>dm(x.d).slice(0,5)),datasets:[{data:show.map(x=>+x.dt),
+      backgroundColor:show.map(x=>x.d===todayISO?"#94a3b8":"#1f4e79"),borderRadius:4,maxBarThickness:40}]},
+    options:{responsive:true,maintainAspectRatio:false,
+     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>vnd(c.parsed.y)+"  ·  "+show[c.dataIndex].n+" đơn"}}},
+     scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(1)+"tr",font:{size:11}}},
+             x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}
+  });
+}
+load();
+</script>
+</body>
+</html>
