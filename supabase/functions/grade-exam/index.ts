@@ -602,6 +602,12 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
             properties: {
               perItem: {
                 type: "array",
+                // Part 4 = ONE monologue split into exactly one segment per sub-question.
+                minItems: itemCount,
+                maxItems: itemCount,
+                description: isPart4
+                  ? `EXACTLY ${itemCount} entries — one segment of the monologue per sub-question, in order. Never fewer, never merged.`
+                  : `EXACTLY ${itemCount} entries — one per question, in order.`,
                 items: {
                   type: "object",
                   additionalProperties: false,
