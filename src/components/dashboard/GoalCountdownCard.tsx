@@ -5,6 +5,7 @@ import { Target, Pencil, Zap, MessageSquareHeart } from "lucide-react";
 import { useUserGoal } from "@/hooks/useUserGoal";
 import { vnDaysUntil } from "@/lib/vnDate";
 import GoalSetupModal from "./GoalSetupModal";
+import DailySuggestionList from "./DailySuggestionList";
 
 const Ring = ({ value, max, done }: { value: number; max: number; done: boolean }) => {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
@@ -142,8 +143,8 @@ const GoalCountdownCard = () => {
 
           <div className="flex items-center gap-4">
             {days > 0 && <Ring value={todayCount} max={goal.daily_target} done={done} />}
-            <div className="flex-1 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
-              Gợi ý bài hôm nay sẽ xuất hiện ở đây
+            <div className="flex-1 min-w-0 rounded-xl border border-dashed border-border bg-muted/30 px-3 py-3">
+              <DailySuggestionList dailyTarget={goal.daily_target} done={done} />
             </div>
           </div>
         </div>
