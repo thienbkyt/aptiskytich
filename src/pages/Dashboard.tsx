@@ -602,6 +602,10 @@ const Dashboard = () => {
             </motion.div>
           )}
 
+          {/* GOAL & EXAM COUNTDOWN */}
+          <GoalCountdownCard />
+
+
           {/* VOUCHER / AI CREDITS CARD */}
           {(creditsBalance > 0 || hasCampaign) && (
             <div className="rounded-2xl border border-border bg-card p-4 md:p-5">
