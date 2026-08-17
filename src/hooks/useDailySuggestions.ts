@@ -230,13 +230,20 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
         }
       }
 
-      return { suggestions: picked, libraryCleared: undone.length === 0 };
+      // Free user hết đề free nhưng kho vẫn còn đề pro → không phải "cày sạch".
+      const undoneAll = publishedSets.filter((s) => !attempted.has(s.id));
+      return {
+        suggestions: picked,
+        libraryCleared: undoneAll.length === 0,
+        freeExhausted: !isPro && undone.length === 0 && undoneAll.length > 0,
+      };
     },
   });
 
   return {
     suggestions: data?.suggestions ?? [],
     libraryCleared: !!data?.libraryCleared,
+    freeExhausted: !!data?.freeExhausted,
     loading: isLoading || tierLoading,
     isPro,
   };
