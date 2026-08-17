@@ -738,6 +738,56 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         return new Response(JSON.stringify({ error: "Phản hồi AI không hợp lệ" }),
           { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+
+      // ── PART 4 SEGMENTATION VALIDATION ─────────────────────────────
+      // The monologue must come back split into exactly `itemCount` segments that
+      // together cover (nearly) the whole transcript. Gemini sometimes returns a
+      // single truncated item → UI shows only "Câu 1". Retry once, then fall back
+      // to splitting the transcript ourselves so every sub-question has content.
+      const segCoverage = (p: any): { count: number; ratio: number; full: string } => {
+        const arr = Array.isArray(p?.perItem) ? p.perItem : [];
+        const full = typeof p?.fullTranscript === "string" ? p.fullTranscript : "";
+        const sum = arr.reduce((s: number, it: any) => s + String(it?.transcript ?? "").trim().length, 0);
+        const fullLen = full.trim().length;
+        return { count: arr.length, ratio: fullLen > 0 ? sum / fullLen : 1, full };
+      };
+      if (isPart4 && itemCount > 1) {
+        const cov = segCoverage(parsed);
+        if (cov.count < itemCount || cov.ratio < 0.7) {
+          console.warn(
+            `[grade-exam v2] part4 segmentation incomplete (items=${cov.count}/${itemCount}, coverage=${cov.ratio.toFixed(2)}) → retry once`,
+          );
+          const repairNote = `SEGMENTATION REPAIR — your previous answer was rejected. Return perItem with EXACTLY ${itemCount} entries, one per sub-question in order. Split the FULL monologue into ${itemCount} consecutive non-overlapping segments; the LAST segment must run to the final word of the recording. The ${itemCount} transcripts concatenated must reproduce the entire monologue (no truncation, no dropped tail, no cut mid-word). Also return the complete fullTranscript.`;
+          try {
+            const retryResp = await callGatewaySpeak(repairNote);
+            if (retryResp.ok) {
+              const retryJson = await retryResp.json();
+              const rtc = retryJson?.choices?.[0]?.message?.tool_calls?.[0];
+              if (rtc?.function?.arguments) {
+                const retryParsed = JSON.parse(rtc.function.arguments);
+                const rcov = segCoverage(retryParsed);
+                if (rcov.count >= itemCount && rcov.ratio >= cov.ratio) {
+                  parsed = retryParsed;
+                  console.warn(`[grade-exam v2] part4 segmentation repaired (coverage=${rcov.ratio.toFixed(2)})`);
+                }
+              }
+              try {
+                await logAIUsage({
+                  model: MODEL_V2,
+                  usage: retryJson?.usage,
+                  source_function: "grade-exam",
+                  finishReason: retryJson?.choices?.[0]?.finish_reason ?? null,
+                  attempt: 2,
+                  gradingSessionId,
+                  metadata: { mode: "speaking_v2", partType, repair: "part4_segmentation" },
+                });
+              } catch { /* ignore */ }
+            }
+          } catch (e) {
+            console.warn("[grade-exam v2] part4 segmentation retry failed", (e as any)?.message || e);
+          }
+        }
+      }
       const b = parsed.bands || {};
       const tf = Math.max(0, Math.min(5, Math.round(Number(b.tf ?? 0))));
       const gra = Math.max(0, Math.min(5, Math.round(Number(b.gra ?? 0))));
