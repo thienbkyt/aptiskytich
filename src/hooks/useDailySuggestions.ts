@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
 import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
-import { toScaledScore, getSkillBand } from "@/data/questions";
+import { toScaledScore, getSkillBand, getLevel } from "@/data/questions";
 
 export type KeyPriority = "high" | "medium" | "low" | "backup";
 
@@ -42,6 +42,8 @@ export interface DailySuggestionsResult {
   isPro: boolean;
   /** true when nothing is left undone in the whole library */
   libraryCleared: boolean;
+  /** free user cleared every free set, but paid sets remain */
+  freeExhausted: boolean;
 }
 
 /** Route used by each skill's exam list. */
@@ -73,8 +75,8 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
     staleTime: 5 * 60_000,
     queryFn: async () => {
       const uid = user!.id;
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      // VN day (same source of truth as saveExamResult.ts) so the key matches the key page.
+      const todayStr = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 
       const [attemptRes, setsRes, wsrRes, ssrRes] = await Promise.all([
         supabase.from("test_results").select("exam_set_id, skill_scores, score, total").eq("user_id", uid),
@@ -83,18 +85,18 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
           .select("id, title, skill, part, access_tier, created_at")
           .eq("is_published", true)
           .order("created_at", { ascending: false }),
-        supabase.from("writing_skill_results").select("scale50").eq("user_id", uid).order("created_at", { ascending: false }).limit(5),
-        supabase.from("speaking_skill_results").select("scale50").eq("user_id", uid).order("created_at", { ascending: false }).limit(5),
+        supabase.from("writing_skill_results").select("scale50").eq("user_id", uid),
+        supabase.from("speaking_skill_results").select("scale50").eq("user_id", uid),
       ]);
 
+      // Same condition as PredictionKeyView's `tried.add`: an abandoned attempt doesn't count.
       const attempted = new Set<string>();
       (attemptRes.data || []).forEach((r: any) => {
-        if (r.exam_set_id) attempted.add(r.exam_set_id);
+        if (r.exam_set_id && Number(r.total) > 0) attempted.add(r.exam_set_id);
       });
 
-      const allSets = ((setsRes.data || []) as any[]).filter((s) =>
-        isPro ? true : !s.access_tier || s.access_tier === "free",
-      );
+      const publishedSets = (setsRes.data || []) as any[];
+      const allSets = publishedSets.filter((s) => (isPro ? true : !s.access_tier || s.access_tier === "free"));
       const setById = new Map<string, any>(allSets.map((s) => [s.id, s]));
 
       // ── Bands theo kỹ năng (cùng nguồn với "Tiến bộ theo kỹ năng") ──
@@ -102,7 +104,7 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
       (attemptRes.data || []).forEach((r: any) => {
         const ss = r.skill_scores;
         if (!ss || typeof ss !== "object" || ss.mode === "marathon") return;
-        const sk = ss.skill;
+        const sk = String(ss.skill || "").toLowerCase() === "grammar" ? "grammar_vocab" : ss.skill;
         const t = Number(ss.total) || 0;
         if (!sk || t <= 0) return;
         agg[sk] = agg[sk] || { correct: 0, total: 0 };
@@ -117,25 +119,25 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
 
       const bandNum: Record<string, number> = {};
       const bandLabel: Record<string, string> = {};
+      const setBand = (sk: string, band: string) => {
+        const norm = band === "C1" || band === "C2" ? "C" : band;
+        bandLabel[sk] = band;
+        bandNum[sk] = BAND_TO_NUM[norm] ?? 0;
+      };
       (["reading", "listening"] as const).forEach((sk) => {
         const a = agg[sk];
         if (!a || a.total <= 0) return;
-        const b = getSkillBand(toScaledScore(a.correct, a.total), sk);
-        bandLabel[sk] = b;
-        bandNum[sk] = BAND_TO_NUM[b] ?? 0;
+        setBand(sk, getSkillBand(toScaledScore(a.correct, a.total), sk));
       });
+      // Grammar & Vocab has no Aptis scaled band table — dashboard uses the % level.
+      {
+        const a = agg["grammar_vocab"];
+        if (a && a.total > 0) setBand("grammar_vocab", getLevel(a.correct, a.total));
+      }
       const w = avg50(wsrRes.data as any[]);
-      if (w !== undefined) {
-        const b = getSkillBand(w, "writing");
-        bandLabel.writing = b;
-        bandNum.writing = BAND_TO_NUM[b] ?? 0;
-      }
+      if (w !== undefined) setBand("writing", getSkillBand(w, "writing"));
       const sp = avg50(ssrRes.data as any[]);
-      if (sp !== undefined) {
-        const b = getSkillBand(sp, "speaking");
-        bandLabel.speaking = b;
-        bandNum.speaking = BAND_TO_NUM[b] ?? 0;
-      }
+      if (sp !== undefined) setBand("speaking", getSkillBand(sp, "speaking"));
 
       const picked: DailySuggestion[] = [];
       const used = new Set<string>();
@@ -190,17 +192,30 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
         }
       }
 
-      // ── B4: kỹ năng có band thấp nhất ──
+      // ── B4: kỹ năng chưa luyện bao giờ → rồi tới band thấp nhất ──
       const undone = allSets.filter((s) => !attempted.has(s.id));
       if (picked.length < max) {
-        const ranked = Object.keys(bandNum).sort((a, b) => bandNum[a] - bandNum[b]);
-        for (const sk of ranked) {
-          if (picked.length >= max) break;
-          const pool = undone.filter((s) => {
+        const ALL_SKILLS = ["reading", "listening", "grammar_vocab", "writing", "speaking"] as const;
+        const poolFor = (sk: string) =>
+          undone.filter((s) => {
             const ss = String(s.skill).toLowerCase();
             return ss === sk || (sk === "grammar_vocab" && ss === "grammar");
           });
-          for (const s of pool) {
+        // Chưa có dữ liệu = yếu nhất tuyệt đối.
+        const untouched = ALL_SKILLS.filter((sk) => bandNum[sk] === undefined);
+        const ranked = ALL_SKILLS.filter((sk) => bandNum[sk] !== undefined).sort(
+          (a, b) => bandNum[a] - bandNum[b],
+        );
+        for (const sk of untouched) {
+          if (picked.length >= max) break;
+          for (const s of poolFor(sk)) {
+            if (picked.length >= max) break;
+            push(s, "Bạn chưa luyện kỹ năng này bao giờ");
+          }
+        }
+        for (const sk of ranked) {
+          if (picked.length >= max) break;
+          for (const s of poolFor(sk)) {
             if (picked.length >= max) break;
             push(s, `Kỹ năng yếu nhất của bạn (${bandLabel[sk]})`);
           }
@@ -215,13 +230,20 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
         }
       }
 
-      return { suggestions: picked, libraryCleared: undone.length === 0 };
+      // Free user hết đề free nhưng kho vẫn còn đề pro → không phải "cày sạch".
+      const undoneAll = publishedSets.filter((s) => !attempted.has(s.id));
+      return {
+        suggestions: picked,
+        libraryCleared: undoneAll.length === 0,
+        freeExhausted: !isPro && undone.length === 0 && undoneAll.length > 0,
+      };
     },
   });
 
   return {
     suggestions: data?.suggestions ?? [],
     libraryCleared: !!data?.libraryCleared,
+    freeExhausted: !!data?.freeExhausted,
     loading: isLoading || tierLoading,
     isPro,
   };

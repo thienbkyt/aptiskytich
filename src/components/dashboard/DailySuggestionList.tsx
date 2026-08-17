@@ -15,11 +15,36 @@ const Skeleton2 = () => (
 );
 
 const DailySuggestionList = ({ dailyTarget, done }: Props) => {
-  const { suggestions, loading, isPro, libraryCleared } = useDailySuggestions(done ? 1 : dailyTarget);
+  const { suggestions, loading, isPro, libraryCleared, freeExhausted } = useDailySuggestions(done ? 1 : dailyTarget);
 
   if (loading) return <Skeleton2 />;
 
   if (libraryCleared || suggestions.length === 0) {
+    if (isPro && libraryCleared) {
+      return (
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Crown className="w-4 h-4 text-accent shrink-0" />
+          Bạn đã cày sạch kho đề 👑
+        </div>
+      );
+    }
+    if (!isPro) {
+      return (
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">
+            {freeExhausted
+              ? "Bạn đã làm hết đề miễn phí — còn 600+ đề trong gói Pro"
+              : "Chưa có gợi ý phù hợp hôm nay"}
+          </p>
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Nâng cấp <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center gap-2 text-sm font-semibold">
         <Crown className="w-4 h-4 text-accent shrink-0" />
