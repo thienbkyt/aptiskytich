@@ -116,7 +116,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
   const heightForBand = (b: string | null) => {
     if (!b) return 0;
     const n = BAND_TO_NUM[b] ?? 0; // 0..5
-    return ((n + 1) / 6) * 100; // percent of chart area, A0 shows small bar
+    return (n / 5) * 100; // A0=0%, C=100%
   };
 
   const chartBars: Array<{ label: string; band: string | null; color: string }> = [
