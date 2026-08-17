@@ -42,6 +42,8 @@ export interface DailySuggestionsResult {
   isPro: boolean;
   /** true when nothing is left undone in the whole library */
   libraryCleared: boolean;
+  /** free user cleared every free set, but paid sets remain */
+  freeExhausted: boolean;
 }
 
 /** Route used by each skill's exam list. */
