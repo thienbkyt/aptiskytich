@@ -2629,6 +2629,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_goals: {
+        Row: {
+          aim: string
+          created_at: string
+          daily_target: number
+          exam_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aim: string
+          created_at?: string
+          daily_target: number
+          exam_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aim?: string
+          created_at?: string
+          daily_target?: number
+          exam_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_opened_items: {
         Row: {
           created_at: string
