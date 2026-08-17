@@ -15,6 +15,18 @@ export function useUserGoal() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Nộp bài xong → cập nhật ngay "Hôm nay: x/y bài" và gợi ý, không đợi cache 30s.
+  useEffect(() => {
+    const onSaved = () => {
+      queryClient.invalidateQueries({ queryKey: ["user-tests-today"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-suggestions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-has-full-test"] });
+    };
+    window.addEventListener("exam-result-saved", onSaved);
+    return () => window.removeEventListener("exam-result-saved", onSaved);
+  }, [queryClient]);
+
+
   const goalQuery = useQuery({
     queryKey: ["user-goal", user?.id],
     enabled: !!user,
