@@ -39,7 +39,8 @@ export function useUserGoal() {
         .from("test_results")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user!.id)
-        .not("full_test_session_id", "is", null);
+        .not("full_test_session_id", "is", null)
+        .is("skill_scores->>fullPartSession", null);
       if (error) throw error;
       return (count ?? 0) > 0;
     },
