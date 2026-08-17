@@ -24,7 +24,10 @@ export interface UpgradeLockProps {
   /** Small helper line under the description (e.g. quota reset info). */
   resetNote?: string;
   remaining?: number | null;
+  /** How many credits already consumed (rendered under the description). */
+  used?: number | null;
   freeQuota?: number | null;
+
 
   asModal?: boolean;
   open?: boolean;
