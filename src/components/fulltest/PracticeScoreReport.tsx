@@ -276,9 +276,16 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
               <div className="text-xs text-neutral-600 mb-1">CEFR grade</div>
               <div className="flex pt-8">
                 {/* Y-axis */}
-                <div className="flex flex-col text-xs text-neutral-700 pr-2" style={{ height: 200 }}>
-                  {Y_LEVELS.map((lvl) => (
-                    <div key={lvl} className="leading-none" style={{ flex: 1, display: "flex", alignItems: "center", transform: "translateY(-50%)" }}>
+                <div
+                  className="relative text-xs text-neutral-700 pr-2"
+                  style={{ height: 200, minWidth: 18 }}
+                >
+                  {Y_LEVELS.map((lvl, i) => (
+                    <div
+                      key={lvl}
+                      className="absolute right-2 leading-none"
+                      style={{ top: `${i * 20}%`, transform: "translateY(-50%)" }}
+                    >
                       {lvl}
                     </div>
                   ))}
@@ -319,12 +326,15 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                 </div>
               </div>
               {/* X labels */}
-              <div className="flex mt-1 gap-2 px-1">
-                {chartBars.map((b, i) => (
-                  <div key={i} className="flex-1 text-center text-[10px] text-neutral-700 whitespace-pre-line leading-tight">
-                    {b.label}
-                  </div>
-                ))}
+              <div className="flex mt-1">
+                <div className="pr-2 text-xs invisible leading-none" style={{ minWidth: 18 }}>B2</div>
+                <div className="flex-1 flex gap-2 px-1">
+                  {chartBars.map((b, i) => (
+                    <div key={i} className="flex-1 text-center text-[10px] text-neutral-700 whitespace-pre-line leading-tight">
+                      {b.label}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
