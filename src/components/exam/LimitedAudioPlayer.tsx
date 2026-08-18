@@ -504,6 +504,14 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // audioUrl.ts makes this free when the URL is still fresh.
     let reloaded = false;
     try {
+      // If the previous signing failed (or we never got a URL / the element has
+      // no http src), this Play press IS the retry → bust the cache first.
+      const needsFresh =
+        signFailedRef.current ||
+        retryCountRef.current > 0 ||
+        !resolvedSrc ||
+        !/^https?:/.test(audio.src || "");
+      if (needsFresh) bustAudioUrlCache(activeSrc);
       let url = await resolveAudioUrl(activeSrc);
       if (!url) {
         // Bust cache and try once more (expired / transient failure).
@@ -511,6 +519,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         url = await resolveAudioUrl(activeSrc);
       }
       if (!url) {
+        signFailedRef.current = true;
         logAudioError(
           "sign_url_null",
           new Error("resolveAudioUrl returned null"),
@@ -521,7 +530,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         );
         return "error";
       }
+      signFailedRef.current = false;
       if (activeSrc === src) setResolvedSrc(url);
+
       reloaded = audio.src !== url;
       if (reloaded) {
         audio.src = url;
