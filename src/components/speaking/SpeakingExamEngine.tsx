@@ -1162,7 +1162,7 @@ const SpeakingExamEngine = ({
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
         <RotateDeviceOverlay />
         <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
-        <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
+        <div className="flex-1 flex items-start justify-center px-4 pt-6 sm:pt-12 pb-28 sm:pb-24">
           <div className="bg-white rounded-xl shadow-sm max-w-xl w-full p-8">
             <p className="text-xs text-gray-500">Aptis General Practice Test</p>
             <h2 className="text-lg font-bold text-gray-900 mb-4">Speaking Practice Test – {testTitle}</h2>
@@ -1188,7 +1188,7 @@ const SpeakingExamEngine = ({
     return (
       <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
         <RotateDeviceOverlay />
-        <div className="flex-1 flex items-start justify-center px-4 pt-12 pb-20">
+        <div className="flex-1 flex items-start justify-center px-4 pt-6 sm:pt-12 pb-28 sm:pb-24">
           <div className="bg-white rounded-xl shadow-sm max-w-3xl w-full p-8 md:p-12">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Aptis General Speaking Test Instructions</h2>
             <p className="text-sm font-bold text-gray-900 mb-3">Speaking</p>
@@ -1402,10 +1402,10 @@ const SpeakingExamEngine = ({
 
 
 
-      <div className="flex-1 flex px-4 pt-8 pb-20 gap-6 max-w-6xl mx-auto w-full">
+      <div className="flex-1 flex px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}
         <div className="flex-1">
-          <div className="bg-white rounded-xl shadow-sm p-8 min-h-[400px]">
+          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-8 sm:min-h-[400px]">
             <p className="text-xs text-gray-500 mb-1">Speaking</p>
             <p className="text-sm font-bold text-gray-900 mb-6">
               {(partType === "part1" || partType === "part2" || partType === "part3") ? "Question" : "Part"} {(partType === "part1" || partType === "part2" || partType === "part3") ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
@@ -1433,7 +1433,7 @@ const SpeakingExamEngine = ({
                   <SignedImage
                     src={part3Data.imageUrl1}
                     alt="Picture 1"
-                    className="w-full rounded-lg object-cover h-56"
+                    className="w-full rounded-lg object-cover h-[min(30vh,14rem)]"
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={1} />
@@ -1442,7 +1442,7 @@ const SpeakingExamEngine = ({
                   <SignedImage
                     src={part3Data.imageUrl2}
                     alt="Picture 2"
-                    className="w-full rounded-lg object-cover h-56"
+                    className="w-full rounded-lg object-cover h-[min(30vh,14rem)]"
                   />
                 ) : (
                   <MissingMediaNotice kind="image" skill="speaking" partType="part3" questionNumber={2} />
@@ -1459,7 +1459,7 @@ const SpeakingExamEngine = ({
                     <SignedImage
                       src={part4Data.imageUrl}
                       alt="Part 4 topic"
-                      className="w-full h-56 object-cover"
+                      className="w-full h-[min(30vh,14rem)] object-cover"
                     />
                   </div>
 

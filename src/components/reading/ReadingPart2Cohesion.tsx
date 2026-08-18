@@ -162,7 +162,7 @@ const ReadingPart2Cohesion = ({
   const isLast = currentSection === totalSections - 1;
 
   return (
-    <div className="min-h-[70vh] flex flex-col pb-20">
+    <div className="min-h-[70vh] flex flex-col pb-28 sm:pb-24">
       {!submitted && (
         <AdminExamControls
           label={`Reading Part 2 · Câu ${currentSection + 1}/${totalSections}`}
@@ -207,10 +207,10 @@ const ReadingPart2Cohesion = ({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.2 }}
-          className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_auto_320px] gap-4 border border-border rounded-lg p-4 bg-card"
+          className="flex-1 grid grid-cols-1 max-md:landscape:grid-cols-[1fr_240px] md:grid-cols-[1fr_auto_320px] gap-4 border border-border rounded-lg p-3 sm:p-4 bg-card"
         >
           {/* Left: drop zone slots 1..5 */}
-          <div className="space-y-3">
+          <div className="space-y-3 max-md:landscape:max-h-[52vh] max-md:landscape:overflow-y-auto max-md:landscape:pr-1">
             {section?.title ? (
               <p className="text-base md:text-lg font-bold text-left text-foreground mb-3">{section.title}</p>
             ) : null}
@@ -333,7 +333,7 @@ const ReadingPart2Cohesion = ({
             <div
               onDragOver={allowDrop}
               onDrop={handleDropOnPool}
-              className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full"
+              className="space-y-3 bg-muted/30 rounded-md p-3 min-h-full max-md:landscape:max-h-[52vh] max-md:landscape:overflow-y-auto"
             >
               {unplaced.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center py-4">

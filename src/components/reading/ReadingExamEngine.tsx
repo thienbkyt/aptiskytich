@@ -582,7 +582,7 @@ const ReadingExamEngine = ({
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
-        <div className="flex-1 w-full pb-20">
+        <div className="flex-1 w-full pb-28 sm:pb-24">
           <ExamInstructions
             skillName="Reading"
             timeLeft={timeLeft}
@@ -687,7 +687,7 @@ const ReadingExamEngine = ({
           Dùng ← → để chuyển câu
         </div>
       )}
-      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+      <div className="flex-1 px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence
             question={part1Question}

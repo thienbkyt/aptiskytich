@@ -626,3 +626,18 @@ html.dark body.exam-mode .hover\:bg-\[\#1f1149\]:hover {
   background-color: #2563EB !important;
 }
 
+
+/* Landscape phones (short viewports): move exam FABs out of the question area
+   into the empty middle strip of the bottom nav bar so they never cover text. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .exam-fab-report {
+    bottom: 10px !important;
+    left: auto !important;
+    right: 290px !important;
+  }
+  .exam-fab-reveal {
+    bottom: 10px !important;
+    left: auto !important;
+    right: 380px !important;
+  }
+}

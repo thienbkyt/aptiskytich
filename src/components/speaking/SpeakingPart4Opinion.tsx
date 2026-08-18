@@ -32,7 +32,7 @@ const SpeakingPart4Opinion = ({ data, recording, onRecordingComplete }: Props) =
 
       {data.imageUrl && (
         <div className="rounded-xl overflow-hidden border border-border mb-6 max-w-md">
-          <SignedImage src={data.imageUrl} alt="Part 4 topic" className="w-full h-64 object-cover" />
+          <SignedImage src={data.imageUrl} alt="Part 4 topic" className="w-full h-[min(36vh,16rem)] object-cover" />
         </div>
       )}
 
