@@ -89,6 +89,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [blocked, setBlocked] = useState(false);
   const retryCountRef = useRef(0);
+  // True when the last signing attempt failed → next Play must bust the cache.
+  const signFailedRef = useRef(false);
   // Bumped on every stop / new play so a pending intro sequence can bail out.
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
@@ -144,15 +146,19 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     try {
       const url = await resolveAudioUrl(src);
       if (!url) {
-        setResolvedSrc(src);
+        // Never put the raw storage path in <audio> — it triggers NotSupportedError.
+        signFailedRef.current = true;
+        setResolvedSrc("");
         setErrorMsg("Không tải được audio.");
         return null;
       }
+      signFailedRef.current = false;
       setResolvedSrc(url);
       return url;
     } catch (e) {
       console.error("[LimitedAudioPlayer] resolve failed:", e);
-      setResolvedSrc(src);
+      signFailedRef.current = true;
+      setResolvedSrc("");
       setErrorMsg("Không tải được audio.");
       return null;
     }
@@ -162,6 +168,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     let cancelled = false;
     setResolvedSrc("");
     retryCountRef.current = 0;
+    signFailedRef.current = false;
     if (src) {
       (async () => {
         try {
@@ -176,14 +183,19 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
               audioRef.current,
               src,
             );
+            signFailedRef.current = true;
+            setResolvedSrc("");
+            return;
           }
-          setResolvedSrc(url || src);
+          signFailedRef.current = false;
+          setResolvedSrc(url);
         } catch (e) {
           if (cancelled) return;
           console.error("[LimitedAudioPlayer] resolveAudioUrl threw for:", src, e);
           setErrorMsg("Không tải được audio.");
           logAudioError("preload_sign_threw", e, audioRef.current, src);
-          setResolvedSrc(src);
+          signFailedRef.current = true;
+          setResolvedSrc("");
         }
 
       })();
@@ -191,6 +203,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
+
 
   // Sync playCount from persistent store when question/src changes.
   // Do NOT reset to 0 — remembered per question across navigation.
@@ -491,6 +504,14 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // audioUrl.ts makes this free when the URL is still fresh.
     let reloaded = false;
     try {
+      // If the previous signing failed (or we never got a URL / the element has
+      // no http src), this Play press IS the retry → bust the cache first.
+      const needsFresh =
+        signFailedRef.current ||
+        retryCountRef.current > 0 ||
+        !resolvedSrc ||
+        !/^https?:/.test(audio.src || "");
+      if (needsFresh) bustAudioUrlCache(activeSrc);
       let url = await resolveAudioUrl(activeSrc);
       if (!url) {
         // Bust cache and try once more (expired / transient failure).
@@ -498,6 +519,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         url = await resolveAudioUrl(activeSrc);
       }
       if (!url) {
+        signFailedRef.current = true;
         logAudioError(
           "sign_url_null",
           new Error("resolveAudioUrl returned null"),
@@ -508,7 +530,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         );
         return "error";
       }
+      signFailedRef.current = false;
       if (activeSrc === src) setResolvedSrc(url);
+
       reloaded = audio.src !== url;
       if (reloaded) {
         audio.src = url;
