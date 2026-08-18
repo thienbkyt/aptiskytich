@@ -117,7 +117,7 @@ export default function ExamReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed z-[90] flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-slate-50"
+        className="exam-fab-report fixed z-[90] flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-slate-50"
         style={{
           bottom: 80,
           left: 16,

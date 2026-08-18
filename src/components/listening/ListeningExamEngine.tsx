@@ -648,7 +648,7 @@ const ListeningExamEngine = ({
         onMarathonFinish={onMarathonFinish}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
-      <div className="flex-1 px-4 pt-8 pb-20 max-w-3xl mx-auto w-full">
+      <div className="flex-1 px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Questions && (
           <ListeningPart1Word
             questions={part1Questions}

@@ -17,7 +17,7 @@ export default function RevealAnswerButton({ revealed, onToggle }: Props) {
     <button
       type="button"
       onClick={onToggle}
-      className="fixed z-[90] flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-slate-50"
+      className="exam-fab-reveal fixed z-[90] flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-slate-50"
       style={{
         bottom: 120,
         left: 16,
