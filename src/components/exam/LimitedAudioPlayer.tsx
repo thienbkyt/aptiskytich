@@ -89,6 +89,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [blocked, setBlocked] = useState(false);
   const retryCountRef = useRef(0);
+  // True when the last signing attempt failed → next Play must bust the cache.
+  const signFailedRef = useRef(false);
   // Bumped on every stop / new play so a pending intro sequence can bail out.
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
