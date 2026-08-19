@@ -713,6 +713,21 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
 
 
+  if (needsLogin) {
+    return (
+      <div className="my-3">
+        <button
+          type="button"
+          onClick={goLogin}
+          className="inline-flex items-center gap-1.5 rounded-md border border-primary px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+        >
+          <LogIn className="w-4 h-4" />
+          Đăng nhập để nghe audio
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="my-3">
       <audio
