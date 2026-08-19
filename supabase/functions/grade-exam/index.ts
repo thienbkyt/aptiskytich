@@ -1385,6 +1385,7 @@ ${partsIn.formalText ?? ""}`;
               messages: [
                 { role: "system", content: systemPromptV2 },
                 { role: "user", content: [{ type: "text", text: userText }] },
+                ...(repairNote ? [{ role: "user", content: [{ type: "text", text: repairNote }] }] : []),
               ],
               tools: [toolV2],
               tool_choice: { type: "function", function: { name: "submit_writing_grading_v2" } },
