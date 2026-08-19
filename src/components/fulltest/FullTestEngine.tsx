@@ -28,7 +28,7 @@ import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart, readingPartLabel } from "@/hooks/useExamSets";
-import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import { gradeSpeakingItems, saveSpeakingGradings, submissionQuestionTexts } from "@/components/speaking/speakingGrading";
 import {
   gradeSpeakingPartV2,
   finalizeSpeaking,
