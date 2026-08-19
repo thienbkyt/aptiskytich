@@ -14,8 +14,9 @@ import { supabase } from "@/integrations/supabase/client";
 const EXAM_IMAGES_BUCKET = "exam-images";
 const SIGNED_URL_TTL = 3600; // 1 hour
 
-const storageUrl = supabase.storage.url;
-const publicUrlBase = `${storageUrl}/object/public/${EXAM_IMAGES_BUCKET}/`;
+const publicUrlBase = supabase.storage
+  .from(EXAM_IMAGES_BUCKET)
+  .getPublicUrl("").data.publicUrl;
 
 function extractPath(value: string): string | null {
   if (!value) return null;
