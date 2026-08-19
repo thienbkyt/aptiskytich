@@ -182,6 +182,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     setResolvedSrc("");
     retryCountRef.current = 0;
     signFailedRef.current = false;
+    if (needsLogin) return () => { cancelled = true; };
     if (src) {
       (async () => {
         try {
