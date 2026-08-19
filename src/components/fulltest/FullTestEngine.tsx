@@ -28,7 +28,7 @@ import ReadingExamEngine from "@/components/reading/ReadingExamEngine";
 import WritingExamEngine from "@/components/writing/WritingExamEngine";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import { normalizePart, readingPartLabel } from "@/hooks/useExamSets";
-import { gradeSpeakingItems, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import { gradeSpeakingItems, saveSpeakingGradings, submissionQuestionTexts } from "@/components/speaking/speakingGrading";
 import {
   gradeSpeakingPartV2,
   finalizeSpeaking,
@@ -793,15 +793,16 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         //    can be linked even if grading fails later.
         const speakingItemSpecsInitial: any[] = [];
         orderedEntries.forEach((e) => {
-          e.sub.items.forEach((it, itIdx) => {
+          submissionQuestionTexts(e.sub).forEach((qText, itIdx) => {
             speakingItemSpecsInitial.push({
-              questionText: it.spec.questionText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
+              questionText: qText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
               part: e.sub.partType,
               recordingPath: null,
               ai: null,
             });
           });
         });
+
 
         const initialSnap = buildReviewSnapshot({
           skill: "speaking",
@@ -864,8 +865,9 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         try {
           for (const entry of orderedEntries) {
             const partType = entry.sub.partType as "part1" | "part2" | "part3" | "part4";
-            const questions = entry.sub.items.map((it) => safeText(it.spec.questionText));
+            const questions = submissionQuestionTexts(entry.sub).map((q) => safeText(q));
             const blobs = entry.sub.items.map((it) => it.blob ?? null);
+
             try {
               const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs, {
                 sessionId: sessionIdRef.current,

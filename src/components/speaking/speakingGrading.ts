@@ -74,6 +74,25 @@ export interface SpeakingGradingSpec {
   isAggregated?: boolean;       // true for Part 4 (one call covers whole part)
 }
 
+/**
+ * The real question texts of a submitted part, for grading + review.
+ * Prefers `submission.questions` (built from exam_questions), which is the ONLY
+ * correct source: Part 4's aggregated spec carries the topic as `questionText`,
+ * so reading specs alone would send the topic/title to the AI instead of the
+ * 3 real questions. Falls back to specs for legacy submissions.
+ */
+export function submissionQuestionTexts(sub: {
+  questions?: string[];
+  items: Array<{ spec: { questionText: string; subQuestions?: string[] } }>;
+}): string[] {
+  const fromSubmission = (sub.questions || []).map((q) => String(q ?? "").trim()).filter(Boolean);
+  if (fromSubmission.length) return fromSubmission;
+  const aggregatedSubs = sub.items.length === 1 ? (sub.items[0]?.spec.subQuestions || []) : [];
+  if (aggregatedSubs.length) return aggregatedSubs.map((q) => String(q ?? "")).filter(Boolean);
+  return sub.items.map((it, i) => it.spec.questionText || `Question ${i + 1}`);
+}
+
+
 export interface SpeakingPartDataBundle {
   part1Data?: SpeakingPart1Data;
   part2Data?: SpeakingPart2Data;

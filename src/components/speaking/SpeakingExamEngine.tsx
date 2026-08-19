@@ -71,7 +71,16 @@ export interface SpeakingPartSubmission {
   partType: SpeakingPartType;
   partNumber: number;
   items: SpeakingPartSubmissionItem[];
+  /**
+   * The REAL question texts of this part, taken from exam_questions via the
+   * toSpeakingPartX transformers. This is the only source of truth for grading
+   * and review — never the exam/custom-set title or a Part 4 topic. Part 4 has
+   * a single recording (items.length === 1) but 3 questions, so this list can
+   * be longer than `items`.
+   */
+  questions: string[];
 }
+
 
 interface SpeakingExamEngineProps {
   partType: SpeakingPartType;
@@ -199,6 +208,32 @@ const SpeakingExamEngine = ({
 
   const partNumber = PART_NUMBERS[partType];
   const totalParts = 4;
+
+  /**
+   * The real question texts of this part (from exam_questions via the
+   * toSpeakingPartX transformers). Single source of truth for grading + review,
+   * in BOTH single-part and full-flow (Full Part / Full Test / custom set) mode.
+   * Never falls back to the exam title; Part 4 falls back to its topic only when
+   * the set truly has no question rows.
+   */
+  const getPromptList = useCallback((): string[] => {
+    if (partType === "part1" && part1Data) return (part1Data.questions || []).filter(Boolean);
+    if (partType === "part2" && part2Data) {
+      const qs = (part2Data.questions || []).filter(Boolean);
+      return qs.length ? qs : [part2Data.prompt].filter(Boolean);
+    }
+    if (partType === "part3" && part3Data) {
+      const qs = (part3Data.questions || []).filter(Boolean);
+      return qs.length ? qs : [part3Data.prompt].filter(Boolean);
+    }
+    if (partType === "part4" && part4Data) {
+      const qs = (part4Data.questions || []).filter(Boolean);
+      return qs.length ? qs : [part4Data.topic].filter(Boolean);
+    }
+    return [];
+  }, [partType, part1Data, part2Data, part3Data, part4Data]);
+
+
 
   // Get total questions for this part
   const getTotalQuestions = () => {
@@ -359,13 +394,8 @@ const SpeakingExamEngine = ({
     if (phase !== "done" || v2RanRef.current) return;
     v2RanRef.current = true;
 
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions || [];
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return part4Data.questions?.length ? part4Data.questions : [part4Data.topic];
-      return [];
-    })();
+    const promptsList: string[] = getPromptList();
+
     const blobs = recordingsRef.current.slice();
     const questions = promptsList.map((q) => ({ questionText: q }));
 
@@ -840,6 +870,8 @@ const SpeakingExamEngine = ({
           partType,
           partNumber: PART_NUMBERS[partType],
           items,
+          // Real question texts (Part 4: all 3 sub-questions, one recording).
+          questions: getPromptList(),
         });
       } catch (e) {
         console.warn("[SpeakingExamEngine] fullFlow submission build failed", e);
@@ -850,13 +882,8 @@ const SpeakingExamEngine = ({
 
     // Create the aggregate test_results row FIRST so each recording can be linked
     // by test_result_id (review page no longer relies on time-window matching).
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions || [];
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return part4Data.questions || [part4Data.topic];
-      return [];
-    })();
+    const promptsList: string[] = getPromptList();
+
     try {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
