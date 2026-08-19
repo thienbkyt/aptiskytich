@@ -3,6 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
+import SignedImage from "@/components/exam/SignedImage";
 import type { ExamQuestionRow } from "../types";
 
 interface Props {
@@ -56,7 +57,7 @@ const SpeakingForm = ({ questions, setQuestions, part, onImageUpload, uploadingI
             <Label>Image URL (hình ảnh chung)</Label>
             {questions[0]?.image_url ? (
               <div className="flex items-center gap-2">
-                <img src={questions[0].image_url} alt="" className="w-20 h-20 object-cover rounded border border-border" />
+                <SignedImage src={questions[0].image_url} alt="" className="w-20 h-20 object-cover rounded border border-border" />
                 <Button variant="outline" size="sm" onClick={() => updateQ(0, "image_url", null)}>Xóa</Button>
               </div>
             ) : (
@@ -86,7 +87,7 @@ const SpeakingForm = ({ questions, setQuestions, part, onImageUpload, uploadingI
               <Label>Image URL</Label>
               {q.image_url ? (
                 <div className="flex items-center gap-2">
-                  <img src={q.image_url} alt="" className="w-20 h-20 object-cover rounded border border-border" />
+                  <SignedImage src={q.image_url} alt="" className="w-20 h-20 object-cover rounded border border-border" />
                   <Button variant="outline" size="sm" onClick={() => updateQ(idx, "image_url", null)}>Xóa</Button>
                 </div>
               ) : (
@@ -102,7 +103,7 @@ const SpeakingForm = ({ questions, setQuestions, part, onImageUpload, uploadingI
                 <Label>Image 1 URL</Label>
                 {q.image_url ? (
                   <div className="flex items-center gap-2">
-                    <img src={q.image_url} alt="" className="w-16 h-16 object-cover rounded border border-border" />
+                    <SignedImage src={q.image_url} alt="" className="w-16 h-16 object-cover rounded border border-border" />
                     <Button variant="outline" size="sm" onClick={() => updateQ(idx, "image_url", null)}>Xóa</Button>
                   </div>
                 ) : (
