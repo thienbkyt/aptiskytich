@@ -1492,8 +1492,9 @@ ${partsIn.formalText ?? ""}`;
         });
       }
 
-      const parsed = v2.parsed;
-
+      // Derives bands/rawPart/perItem from one parsed tool payload. Pure — so a
+      // repair retry can be re-derived without duplicating the rubric maths.
+      const deriveV2 = (parsed: any) => {
       // --- Sanitize error lists ---
       // 1) Drop "style suggestion" items the AI mislabelled as errors.
       // 2) Move pure spelling items out of grammarErrors into spellingErrors.
@@ -1515,6 +1516,7 @@ ${partsIn.formalText ?? ""}`;
       let rawPart = 0;
       let perItem: any[] = [];
       let analysis = "";
+
 
       if (pt === "task1") {
         const items: any[] = Array.isArray(parsed.items) ? parsed.items.slice(0, 5) : [];
