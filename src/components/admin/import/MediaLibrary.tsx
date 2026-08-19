@@ -89,18 +89,41 @@ const MediaLibrary = () => {
       if (token !== loadTokenRef.current) return;
       if (error) break;
       if (!data || data.length === 0) break;
-      const items = data
-        .filter((f) => f.name !== ".emptyFolderPlaceholder")
-        .map((f) => {
-          const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(f.name);
+      const filtered = data.filter((f) => f.name !== ".emptyFolderPlaceholder");
+
+      // Resolve signed URLs in batches for private buckets.
+      const signedUrls = new Map<string, string>();
+      if (bucket === "exam-images") {
+        for (const batch of chunk(filtered.map((f) => f.name), 100)) {
+          const { data: signed, error: signErr } = await supabase.storage
+            .from(bucket)
+            .createSignedUrls(batch, 3600);
+          if (signErr) continue;
+          for (const item of signed || []) {
+            if (!item.error && item.signedUrl) signedUrls.set(item.path, item.signedUrl);
+          }
+        }
+      }
+
+      const items = filtered.map((f) => {
+        if (bucket === "exam-images") {
           return {
             name: f.name,
             bucket,
             size: f.metadata?.size || 0,
             created_at: f.created_at || "",
-            url: urlData.publicUrl,
+            url: signedUrls.get(f.name) || "",
           };
-        });
+        }
+        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(f.name);
+        return {
+          name: f.name,
+          bucket,
+          size: f.metadata?.size || 0,
+          created_at: f.created_at || "",
+          url: urlData.publicUrl,
+        };
+      });
       all.push(...items);
       if (data.length < limit) break;
       offset += data.length;
