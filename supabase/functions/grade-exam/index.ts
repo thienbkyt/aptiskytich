@@ -1356,7 +1356,14 @@ ${partsIn.formalText ?? ""}`;
       const BASE_MAX_TOKENS = pt === "task4" ? 32000 : 16000;
       const RETRY_MAX_TOKENS = pt === "task4" ? 48000 : 24000;
 
-      const callGatewayV2 = async (maxTokens: number): Promise<Response> => {
+      const REPAIR_NOTE = [
+        "LƯU Ý SỬA LỖI (lần chấm lại): lần trước bạn trả về điểm band bằng 0 hoặc thiếu trường điểm",
+        "trong khi học viên CÓ bài làm thực sự. Bắt buộc trả ĐẦY ĐỦ mọi trường điểm/band",
+        "(bands.tf, bands.gra, bands.vra, bands.cc, bands.reg — hoặc items[].correct / items[].tfContent / emails[].bands tuỳ part)",
+        "với giá trị đúng theo rubric. Chỉ được cho 0 khi bài làm thực sự trống hoặc hoàn toàn không liên quan.",
+      ].join(" ");
+
+      const callGatewayV2 = async (maxTokens: number, repairNote?: string): Promise<Response> => {
         const controller = new AbortController();
         // Edge function wall-clock ceiling is ~150s, so task4 stops at 140s to
         // leave room for response serialisation instead of dying mid-write.
