@@ -211,7 +211,7 @@ async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: numb
         exam_set_id: meta.examSetId ?? null,
         part: partType,
         item_index: i,
-        max_points: Math.round(30 / perItem.length),
+        max_points: i === 0 ? 30 : Math.round(30 / perItem.length),
         part_score: i === 0 ? Math.round(rawPart) : 0,
         question_text: it.questionText ?? null,
         transcript: it.transcript ?? null,

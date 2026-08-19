@@ -276,6 +276,27 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_han_writing_20260819: {
+        Row: {
+          backed_up_at: string | null
+          data: Json | null
+          row_id: string | null
+          src: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          data?: Json | null
+          row_id?: string | null
+          src?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          data?: Json | null
+          row_id?: string | null
+          src?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_de09_20260815: {
         Row: {
           backed_up_at: string | null
@@ -336,6 +357,27 @@ export type Database = {
           id?: string | null
           question_text?: string | null
           title?: string | null
+        }
+        Relationships: []
+      }
+      backup_phu_speaking_20260819: {
+        Row: {
+          backed_up_at: string | null
+          data: Json | null
+          row_id: string | null
+          src: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          data?: Json | null
+          row_id?: string | null
+          src?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          data?: Json | null
+          row_id?: string | null
+          src?: string | null
         }
         Relationships: []
       }
@@ -423,6 +465,24 @@ export type Database = {
           question_type?: string | null
           response_time?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_sp_preptime_20260819: {
+        Row: {
+          backed_up_at: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
         }
         Relationships: []
       }
