@@ -1401,11 +1401,11 @@ ${partsIn.formalText ?? ""}`;
         | { kind: "truncated"; why: string }
         | { kind: "error"; status: number; message: string };
 
-      const runV2Once = async (maxTokens: number, attempt: number): Promise<V2Attempt> => {
+      const runV2Once = async (maxTokens: number, attempt: number, repairNote?: string): Promise<V2Attempt> => {
         let respOrNull: Response | null = null;
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
-            respOrNull = await callGatewayV2(maxTokens);
+            respOrNull = await callGatewayV2(maxTokens, repairNote);
             // Retry only transient gateway errors (5xx). 4xx passes through.
             if (respOrNull.status >= 500 && attempt === 0) {
               console.warn(`[grade-exam writing_v2] gateway ${respOrNull.status} on attempt 1, retrying...`);
