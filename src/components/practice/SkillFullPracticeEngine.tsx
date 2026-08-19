@@ -626,13 +626,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       }));
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
-      const promptsList: string[] = (() => {
-        try {
-          const q = (currentPart.questions?.[0] as any) || {};
-          if (Array.isArray(q.questions)) return q.questions;
-        } catch { /* noop */ }
-        return currentPart.questions.map((_, i) => `Question ${i + 1}`);
-      })();
+      // Real question texts of this part, straight from exam_questions —
+      // never the exam/custom-set title.
+      const promptsList: string[] = currentPart.questions.map((q) => String(q.question_text ?? ""));
+
       const specs = perQuestion.map((_, idx) => ({
         questionText: promptsList[idx] || `Question ${idx + 1}`,
         recordingPath: null,
