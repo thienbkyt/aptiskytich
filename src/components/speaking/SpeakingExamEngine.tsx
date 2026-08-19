@@ -394,13 +394,8 @@ const SpeakingExamEngine = ({
     if (phase !== "done" || v2RanRef.current) return;
     v2RanRef.current = true;
 
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions || [];
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return part4Data.questions?.length ? part4Data.questions : [part4Data.topic];
-      return [];
-    })();
+    const promptsList: string[] = getPromptList();
+
     const blobs = recordingsRef.current.slice();
     const questions = promptsList.map((q) => ({ questionText: q }));
 
