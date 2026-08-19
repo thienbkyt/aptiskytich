@@ -339,6 +339,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_rp5_de27_20260819: {
+        Row: {
+          backed_up_at: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_rp5_giaithich_20260819: {
         Row: {
           backed_up_at: string | null
