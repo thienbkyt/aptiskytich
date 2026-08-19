@@ -21,7 +21,7 @@ import {
 
 import SpeakingExamEngine, { type SpeakingPartSubmission } from "@/components/speaking/SpeakingExamEngine";
 import SpeakingFullResults, { type SpeakingFullPartResult } from "@/components/speaking/SpeakingFullResults";
-import { gradeSpeakingSpec, saveSpeakingGradings } from "@/components/speaking/speakingGrading";
+import { gradeSpeakingSpec, saveSpeakingGradings, submissionQuestionTexts } from "@/components/speaking/speakingGrading";
 import {
   gradeSpeakingPartV2,
   finalizeSpeaking,
