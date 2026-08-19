@@ -681,8 +681,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       try {
         const sub = speakingSubmissionsByPartRef.current[currentPartIndex];
         if (sub && !speakingV2PromisesByPartRef.current[currentPartIndex]) {
-          const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
+          const questions = submissionQuestionTexts(sub).map((q) => ({ questionText: q }));
           const blobs = sub.items.map((it) => it.blob ?? null);
+
           const p = gradeSpeakingPartV2(sub.partType, questions, blobs, {
             sessionId: fullPartSessionRef.current,
             fullTestSessionId: fullPartSessionRef.current,
