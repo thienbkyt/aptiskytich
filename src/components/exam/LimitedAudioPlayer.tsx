@@ -97,6 +97,17 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
+  // Guest gate: the `audio` bucket is private → signing only works for logged-in
+  // users. Show a login CTA instead of a dead Play button + error.
+  const { session, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isExternal = !!src && (src.startsWith("http://") || src.startsWith("https://"));
+  const needsLogin = !authLoading && !session && !!src && !isExternal;
+  const goLogin = () => {
+    navigate(`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`);
+  };
+
   // Mutable snapshot of log metadata so logAudioError can be identity-stable.
   const metaRef = useRef({ questionKey, playCount, maxPlays, reviewMode });
   metaRef.current = { questionKey, playCount, maxPlays, reviewMode };
