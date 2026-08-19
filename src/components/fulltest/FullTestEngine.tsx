@@ -864,8 +864,9 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         try {
           for (const entry of orderedEntries) {
             const partType = entry.sub.partType as "part1" | "part2" | "part3" | "part4";
-            const questions = entry.sub.items.map((it) => safeText(it.spec.questionText));
+            const questions = submissionQuestionTexts(entry.sub).map((q) => safeText(q));
             const blobs = entry.sub.items.map((it) => it.blob ?? null);
+
             try {
               const r = await gradeSpeakingPartV2(partType, questions.map((q) => ({ questionText: q })), blobs, {
                 sessionId: sessionIdRef.current,
