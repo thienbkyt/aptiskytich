@@ -15,10 +15,9 @@ const AiQuotaBadge = ({
 
   if (isPremium || f.loading) return null;
 
-  const cap = f.tier === "free" ? f.freeQuota ?? 3 : f.proQuota ?? f.freeQuota ?? 10;
-  const remaining =
-    typeof f.remaining === "number" ? f.remaining : cap - (f.used ?? 0);
+  const remaining = typeof f.remaining === "number" ? Math.max(0, f.remaining) : 0;
   const out = remaining <= 0;
+
 
   return (
     <span

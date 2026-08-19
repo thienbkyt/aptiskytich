@@ -4,18 +4,14 @@ import { cn } from "@/lib/utils";
 import { useFeature } from "@/hooks/useFeature";
 import { useIsPro } from "@/hooks/useIsPro";
 
-function capOf(f: ReturnType<typeof useFeature>) {
-  if (f.tier === "free") return f.freeQuota ?? 3;
-  return f.proQuota ?? f.freeQuota ?? 10;
-}
-
 function formatQuota(f: ReturnType<typeof useFeature>) {
   if (f.loading) {
     return { main: "—", sub: "", out: false };
   }
-  const cap = capOf(f);
-  const remaining =
-    typeof f.remaining === "number" ? Math.max(0, f.remaining) : Math.max(0, cap - (f.used ?? 0));
+  // Số liệu lấy nguyên từ RPC check_feature_access: cap thực tế = used + remaining
+  const used = f.used ?? 0;
+  const remaining = typeof f.remaining === "number" ? Math.max(0, f.remaining) : 0;
+  const cap = used + remaining;
   const out = remaining <= 0;
   const sub =
     f.tier === "free"
@@ -27,6 +23,7 @@ function formatQuota(f: ReturnType<typeof useFeature>) {
         : "lượt còn lại hôm nay";
   return { main: `${remaining}/${cap}`, sub, out };
 }
+
 
 /** Small dashboard card showing remaining AI grading credits (shared pool for Writing + Speaking). */
 const AiQuotaPill = ({ className }: { className?: string }) => {
