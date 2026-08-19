@@ -294,6 +294,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp2_de32_20260819: {
+        Row: {
+          backed_up_at: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_upgrade_20260814: {
         Row: {
           backed_up_at: string | null
@@ -318,6 +336,24 @@ export type Database = {
           id?: string | null
           question_text?: string | null
           title?: string | null
+        }
+        Relationships: []
+      }
+      backup_rp5_giaithich_20260819: {
+        Row: {
+          backed_up_at: string | null
+          explanation: string | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          id?: string | null
         }
         Relationships: []
       }
