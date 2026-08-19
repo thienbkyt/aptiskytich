@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CircleDot, CirclePlay, RefreshCw } from "lucide-react";
+import { CircleDot, CirclePlay, RefreshCw, LogIn } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
 import { logClientError } from "@/lib/clientErrorLog";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation, useNavigate } from "react-router-dom";
 
 
 interface LimitedAudioPlayerProps {
