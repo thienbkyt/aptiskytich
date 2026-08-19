@@ -209,6 +209,32 @@ const SpeakingExamEngine = ({
   const partNumber = PART_NUMBERS[partType];
   const totalParts = 4;
 
+  /**
+   * The real question texts of this part (from exam_questions via the
+   * toSpeakingPartX transformers). Single source of truth for grading + review,
+   * in BOTH single-part and full-flow (Full Part / Full Test / custom set) mode.
+   * Never falls back to the exam title; Part 4 falls back to its topic only when
+   * the set truly has no question rows.
+   */
+  const getPromptList = useCallback((): string[] => {
+    if (partType === "part1" && part1Data) return (part1Data.questions || []).filter(Boolean);
+    if (partType === "part2" && part2Data) {
+      const qs = (part2Data.questions || []).filter(Boolean);
+      return qs.length ? qs : [part2Data.prompt].filter(Boolean);
+    }
+    if (partType === "part3" && part3Data) {
+      const qs = (part3Data.questions || []).filter(Boolean);
+      return qs.length ? qs : [part3Data.prompt].filter(Boolean);
+    }
+    if (partType === "part4" && part4Data) {
+      const qs = (part4Data.questions || []).filter(Boolean);
+      return qs.length ? qs : [part4Data.topic].filter(Boolean);
+    }
+    return [];
+  }, [partType, part1Data, part2Data, part3Data, part4Data]);
+
+
+
   // Get total questions for this part
   const getTotalQuestions = () => {
     if (partType === "part1") return part1Data?.questions.length || 0;
