@@ -216,7 +216,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     }
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, needsLogin]);
 
 
   // Sync playCount from persistent store when question/src changes.
