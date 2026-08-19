@@ -71,7 +71,16 @@ export interface SpeakingPartSubmission {
   partType: SpeakingPartType;
   partNumber: number;
   items: SpeakingPartSubmissionItem[];
+  /**
+   * The REAL question texts of this part, taken from exam_questions via the
+   * toSpeakingPartX transformers. This is the only source of truth for grading
+   * and review — never the exam/custom-set title or a Part 4 topic. Part 4 has
+   * a single recording (items.length === 1) but 3 questions, so this list can
+   * be longer than `items`.
+   */
+  questions: string[];
 }
+
 
 interface SpeakingExamEngineProps {
   partType: SpeakingPartType;
