@@ -1356,7 +1356,14 @@ ${partsIn.formalText ?? ""}`;
       const BASE_MAX_TOKENS = pt === "task4" ? 32000 : 16000;
       const RETRY_MAX_TOKENS = pt === "task4" ? 48000 : 24000;
 
-      const callGatewayV2 = async (maxTokens: number): Promise<Response> => {
+      const REPAIR_NOTE = [
+        "LƯU Ý SỬA LỖI (lần chấm lại): lần trước bạn trả về điểm band bằng 0 hoặc thiếu trường điểm",
+        "trong khi học viên CÓ bài làm thực sự. Bắt buộc trả ĐẦY ĐỦ mọi trường điểm/band",
+        "(bands.tf, bands.gra, bands.vra, bands.cc, bands.reg — hoặc items[].correct / items[].tfContent / emails[].bands tuỳ part)",
+        "với giá trị đúng theo rubric. Chỉ được cho 0 khi bài làm thực sự trống hoặc hoàn toàn không liên quan.",
+      ].join(" ");
+
+      const callGatewayV2 = async (maxTokens: number, repairNote?: string): Promise<Response> => {
         const controller = new AbortController();
         // Edge function wall-clock ceiling is ~150s, so task4 stops at 140s to
         // leave room for response serialisation instead of dying mid-write.
@@ -1378,6 +1385,7 @@ ${partsIn.formalText ?? ""}`;
               messages: [
                 { role: "system", content: systemPromptV2 },
                 { role: "user", content: [{ type: "text", text: userText }] },
+                ...(repairNote ? [{ role: "user", content: [{ type: "text", text: repairNote }] }] : []),
               ],
               tools: [toolV2],
               tool_choice: { type: "function", function: { name: "submit_writing_grading_v2" } },
@@ -1393,11 +1401,11 @@ ${partsIn.formalText ?? ""}`;
         | { kind: "truncated"; why: string }
         | { kind: "error"; status: number; message: string };
 
-      const runV2Once = async (maxTokens: number, attempt: number): Promise<V2Attempt> => {
+      const runV2Once = async (maxTokens: number, attempt: number, repairNote?: string): Promise<V2Attempt> => {
         let respOrNull: Response | null = null;
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
-            respOrNull = await callGatewayV2(maxTokens);
+            respOrNull = await callGatewayV2(maxTokens, repairNote);
             // Retry only transient gateway errors (5xx). 4xx passes through.
             if (respOrNull.status >= 500 && attempt === 0) {
               console.warn(`[grade-exam writing_v2] gateway ${respOrNull.status} on attempt 1, retrying...`);
@@ -1433,7 +1441,7 @@ ${partsIn.formalText ?? ""}`;
           finishReason: choice?.finish_reason ?? null,
           attempt,
           gradingSessionId,
-          metadata: { type: "writing_v2", partType: pt },
+          metadata: { type: "writing_v2", partType: pt, ...(repairNote ? { repair: "missing_rawPart" } : {}) },
         }).catch(() => {});
 
         const finishReason = String(choice?.finish_reason ?? "");
@@ -1484,8 +1492,9 @@ ${partsIn.formalText ?? ""}`;
         });
       }
 
-      const parsed = v2.parsed;
-
+      // Derives bands/rawPart/perItem from one parsed tool payload. Pure — so a
+      // repair retry can be re-derived without duplicating the rubric maths.
+      const deriveV2 = (parsed: any) => {
       // --- Sanitize error lists ---
       // 1) Drop "style suggestion" items the AI mislabelled as errors.
       // 2) Move pure spelling items out of grammarErrors into spellingErrors.
@@ -1507,6 +1516,7 @@ ${partsIn.formalText ?? ""}`;
       let rawPart = 0;
       let perItem: any[] = [];
       let analysis = "";
+
 
       if (pt === "task1") {
         const items: any[] = Array.isArray(parsed.items) ? parsed.items.slice(0, 5) : [];
@@ -1614,19 +1624,48 @@ ${partsIn.formalText ?? ""}`;
         analysis = `Informal ${infoWc}/40-50 · Formal ${formalWc}/120-150. Raw informal=${rawPerEmail[0]}, formal=${rawPerEmail[1]}, weighted=${rawPart}.`;
       }
 
-      const payload = {
+      return {
         bands,
         rawPart,
         raw_part: rawPart,
         perItem,
         analysis,
-        criteriaAnalysis: criteriaAnalysisSchema,
+        criteriaAnalysis,
         grammarErrors,
         spellingErrors,
         feedback,
         improvedVersion,
         forcedComplexity,
       };
+      };
+
+      let payload = deriveV2(v2.parsed);
+
+      // --- Guard: never silently store rawPart=0 for a submission with content ---
+      // (a real blank submission still legitimately scores 0 and is left alone)
+      const hasContent = originalLen > 20;
+      if (hasContent && !(Number(payload.rawPart) > 0)) {
+        console.warn(`[grade-exam writing_v2] rawPart=0 with ${originalLen} chars of content — repair retry`);
+        const repaired = await runV2Once(RETRY_MAX_TOKENS, 2, REPAIR_NOTE);
+        let fixed = false;
+        if (repaired.kind === "ok") {
+          const p2 = deriveV2(repaired.parsed);
+          if (Number(p2.rawPart) > 0) {
+            payload = p2;
+            fixed = true;
+          }
+        }
+        if (!fixed) {
+          console.error("[grade-exam writing_v2] repair retry still rawPart=0 — refusing to save 0");
+          return new Response(JSON.stringify({
+            error: "AI chưa trả điểm hợp lệ cho bài này, sẽ chấm lại.",
+            notGraded: true,
+            flagReview: true,
+            repair: "missing_rawPart",
+          }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
 
       // Log usage once
       if (userId) {
