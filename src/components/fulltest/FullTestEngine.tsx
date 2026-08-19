@@ -793,15 +793,16 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         //    can be linked even if grading fails later.
         const speakingItemSpecsInitial: any[] = [];
         orderedEntries.forEach((e) => {
-          e.sub.items.forEach((it, itIdx) => {
+          submissionQuestionTexts(e.sub).forEach((qText, itIdx) => {
             speakingItemSpecsInitial.push({
-              questionText: it.spec.questionText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
+              questionText: qText || `Part ${e.sub.partNumber} · Q${itIdx + 1}`,
               part: e.sub.partType,
               recordingPath: null,
               ai: null,
             });
           });
         });
+
 
         const initialSnap = buildReviewSnapshot({
           skill: "speaking",
