@@ -25,6 +25,12 @@ const BUCKETS: { id: BucketType; label: string; icon: React.ReactNode; accept: s
   { id: "exam-images", label: "Hình ảnh (Exam)", icon: <ImageIcon className="w-4 h-4" />, accept: "image/*" },
 ];
 
+const chunk = <T,>(arr: T[], size: number): T[][] => {
+  const res: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+  return res;
+};
+
 const MediaLibrary = () => {
   const { toast } = useToast();
   const [activeBucket, setActiveBucket] = useState<BucketType>("audio");
