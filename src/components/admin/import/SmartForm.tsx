@@ -184,8 +184,7 @@ const SmartForm = ({ examSet, skill, examType, onBack, onSaved, prefillQuestions
     if (error) {
       toast({ title: "Upload lỗi", description: error.message, variant: "destructive" });
     } else {
-      const { data: urlData } = supabase.storage.from("exam-images").getPublicUrl(path);
-      updateQ(idx, "image_url", urlData.publicUrl);
+      updateQ(idx, "image_url", path);
       toast({ title: "Đã upload ảnh" });
     }
     setUploadingIdx(null);
