@@ -870,6 +870,8 @@ const SpeakingExamEngine = ({
           partType,
           partNumber: PART_NUMBERS[partType],
           items,
+          // Real question texts (Part 4: all 3 sub-questions, one recording).
+          questions: getPromptList(),
         });
       } catch (e) {
         console.warn("[SpeakingExamEngine] fullFlow submission build failed", e);
@@ -880,13 +882,8 @@ const SpeakingExamEngine = ({
 
     // Create the aggregate test_results row FIRST so each recording can be linked
     // by test_result_id (review page no longer relies on time-window matching).
-    const promptsList: string[] = (() => {
-      if (partType === "part1" && part1Data) return part1Data.questions || [];
-      if (partType === "part2" && part2Data) return part2Data.questions || [part2Data.prompt];
-      if (partType === "part3" && part3Data) return part3Data.questions || [part3Data.prompt];
-      if (partType === "part4" && part4Data) return part4Data.questions || [part4Data.topic];
-      return [];
-    })();
+    const promptsList: string[] = getPromptList();
+
     try {
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const { buildSpeakingItems, computeScaleAndBand } = await import("@/lib/reviewItemsBuilder");
