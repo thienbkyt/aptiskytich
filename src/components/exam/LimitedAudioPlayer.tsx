@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CircleDot, CirclePlay, RefreshCw } from "lucide-react";
+import { CircleDot, CirclePlay, RefreshCw, LogIn } from "lucide-react";
 import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
 import { logClientError } from "@/lib/clientErrorLog";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation, useNavigate } from "react-router-dom";
 
 
 interface LimitedAudioPlayerProps {
@@ -95,6 +97,17 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const introTokenRef = useRef(0);
   const disabled = playCount >= maxPlays && !isPlaying;
 
+  // Guest gate: the `audio` bucket is private → signing only works for logged-in
+  // users. Show a login CTA instead of a dead Play button + error.
+  const { session, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isExternal = !!src && (src.startsWith("http://") || src.startsWith("https://"));
+  const needsLogin = !authLoading && !session && !!src && !isExternal;
+  const goLogin = () => {
+    navigate(`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`);
+  };
+
   // Mutable snapshot of log metadata so logAudioError can be identity-stable.
   const metaRef = useRef({ questionKey, playCount, maxPlays, reviewMode });
   metaRef.current = { questionKey, playCount, maxPlays, reviewMode };
@@ -169,6 +182,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     setResolvedSrc("");
     retryCountRef.current = 0;
     signFailedRef.current = false;
+    if (needsLogin) return () => { cancelled = true; };
     if (src) {
       (async () => {
         try {
@@ -202,7 +216,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     }
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [src, needsLogin]);
 
 
   // Sync playCount from persistent store when question/src changes.
@@ -698,6 +712,21 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
 
 
+
+  if (needsLogin) {
+    return (
+      <div className="my-3">
+        <button
+          type="button"
+          onClick={goLogin}
+          className="inline-flex items-center gap-1.5 rounded-md border border-primary px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+        >
+          <LogIn className="w-4 h-4" />
+          Đăng nhập để nghe audio
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="my-3">
