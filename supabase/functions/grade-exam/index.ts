@@ -1624,19 +1624,48 @@ ${partsIn.formalText ?? ""}`;
         analysis = `Informal ${infoWc}/40-50 · Formal ${formalWc}/120-150. Raw informal=${rawPerEmail[0]}, formal=${rawPerEmail[1]}, weighted=${rawPart}.`;
       }
 
-      const payload = {
+      return {
         bands,
         rawPart,
         raw_part: rawPart,
         perItem,
         analysis,
-        criteriaAnalysis: criteriaAnalysisSchema,
+        criteriaAnalysis,
         grammarErrors,
         spellingErrors,
         feedback,
         improvedVersion,
         forcedComplexity,
       };
+      };
+
+      let payload = deriveV2(v2.parsed);
+
+      // --- Guard: never silently store rawPart=0 for a submission with content ---
+      // (a real blank submission still legitimately scores 0 and is left alone)
+      const hasContent = originalLen > 20;
+      if (hasContent && !(Number(payload.rawPart) > 0)) {
+        console.warn(`[grade-exam writing_v2] rawPart=0 with ${originalLen} chars of content — repair retry`);
+        const repaired = await runV2Once(RETRY_MAX_TOKENS, 2, REPAIR_NOTE);
+        let fixed = false;
+        if (repaired.kind === "ok") {
+          const p2 = deriveV2(repaired.parsed);
+          if (Number(p2.rawPart) > 0) {
+            payload = p2;
+            fixed = true;
+          }
+        }
+        if (!fixed) {
+          console.error("[grade-exam writing_v2] repair retry still rawPart=0 — refusing to save 0");
+          return new Response(JSON.stringify({
+            error: "AI chưa trả điểm hợp lệ cho bài này, sẽ chấm lại.",
+            notGraded: true,
+            flagReview: true,
+            repair: "missing_rawPart",
+          }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
 
       // Log usage once
       if (userId) {
