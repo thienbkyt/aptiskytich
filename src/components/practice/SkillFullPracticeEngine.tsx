@@ -803,7 +803,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             partType: sub.partType as any,
             partNumber: sub.partNumber,
             result: empty,
-            recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+            recordingUrls: promptTexts.map((_, i) => sub.items[i]?.audioUrl ?? null),
             sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         }
