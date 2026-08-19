@@ -751,7 +751,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         const sub = orderedSubs[oi];
         const originalIdx = orderedIndices[oi];
         setSpeakingV2Message(`AI Kỳ Tích đang hoàn tất Part ${sub.partNumber} (${oi + 1}/${orderedSubs.length})...`);
-        const questions = sub.items.map((it) => ({ questionText: it.spec.questionText }));
+        const promptTexts = submissionQuestionTexts(sub);
+        const questions = promptTexts.map((q) => ({ questionText: q }));
         const blobs = sub.items.map((it) => it.blob ?? null);
         // Reuse background promise if available; else fire fresh.
         let pending = speakingV2PromisesByPartRef.current[originalIdx];
@@ -769,7 +770,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             ...result,
             perItem: (result.perItem || []).map((it, i) => ({
               ...it,
-              questionText: it.questionText || sub.items[i]?.spec.questionText || `Question ${i + 1}`,
+              questionText: it.questionText || promptTexts[i] || `Question ${i + 1}`,
             })),
           };
           v2ByPart[sub.partType] = merged;
@@ -777,7 +778,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             partType: sub.partType as any,
             partNumber: sub.partNumber,
             result: merged,
-            recordingUrls: sub.items.map((it) => it.audioUrl ?? null),
+            recordingUrls: promptTexts.map((_, i) => sub.items[i]?.audioUrl ?? null),
             sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         } catch (e) {
@@ -788,14 +789,15 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           const empty: SpeakingPartResultV2 = {
             bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
             rawPart: 0,
-            perItem: sub.items.map((it) => ({
-              questionText: it.spec.questionText,
+            perItem: promptTexts.map((q) => ({
+              questionText: q,
               transcript: "",
               onTopic: false,
             })),
             analysis: "Không chấm được phần này. Vui lòng thử lại sau.",
             improvedVersion: "",
           };
+
           v2ByPart[sub.partType] = empty;
           v2Entries.push({
             partType: sub.partType as any,
