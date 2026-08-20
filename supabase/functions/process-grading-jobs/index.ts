@@ -149,8 +149,9 @@ async function persistWritingPart(job: any, body: any): Promise<{ rawPart: numbe
   // ── Standalone part (no full-test session) ────────────────────────────────
   // The session finalizer only runs for full tests. Without this, a lone part
   // graded by the worker would leave writing_skill_results empty and the
-  // student would see no score in History. The scale50, CEFR, and grey-zone
-  // values come from grade-exam's response; never recompute them here.
+  // student would see no score in History. For a single part we scale rawPart/30
+  // to a 0-50 score ourselves; CEFR is left blank because one part is not enough
+  // to assign a band. grade-exam writing_v2 does not return scale50/cefr.
   const standalone = !sessionId;
   if (standalone) {
     const { data: existing, error: exErr } = await admin
@@ -160,10 +161,8 @@ async function persistWritingPart(job: any, body: any): Promise<{ rawPart: numbe
       .maybeSingle();
     if (exErr) throw new Error(`writing_skill_results lookup failed: ${exErr.message}`);
     if (!existing?.id) {
-      const scale50 = body.scale50 ?? body.scale_50;
-      if (scale50 === undefined || scale50 === null) {
-        throw new Error("missing scale50 in grade body");
-      }
+      const scale50 = Math.round((rawPart / 30) * 50);
+
       const { error: srErr } = await admin.from("writing_skill_results").insert({
         user_id: job.user_id,
         test_result_id: job.test_result_id,
@@ -179,9 +178,10 @@ async function persistWritingPart(job: any, body: any): Promise<{ rawPart: numbe
           },
         },
         raw_total: rawPart,
-        scale50: Number(scale50),
-        cefr: body.cefr || "",
-        grey_zone: body.greyZone ?? body.grey_zone ?? false,
+        scale50,
+        cefr: "",
+        grey_zone: false,
+
         flag_review: false,
         feedback: body.feedback || body.analysis || "",
       } as any);
