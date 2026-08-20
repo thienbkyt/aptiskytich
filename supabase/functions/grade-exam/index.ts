@@ -1643,8 +1643,14 @@ ${partsIn.formalText ?? ""}`;
 
       // --- Guard: never silently store rawPart=0 for a submission with content ---
       // (a real blank submission still legitimately scores 0 and is left alone)
+      // Exception: task1 is all-or-nothing (0..5 correct × 6). A result with 5
+      // graded items is valid even when rawPart=0 because all 5 answers may be wrong.
       const hasContent = originalLen > 20;
-      if (hasContent && !(Number(payload.rawPart) > 0)) {
+      const task1HasValidItems =
+        pt === "task1" &&
+        Array.isArray(v2.parsed?.items) &&
+        v2.parsed.items.length === 5;
+      if (hasContent && !task1HasValidItems && !(Number(payload.rawPart) > 0)) {
         console.warn(`[grade-exam writing_v2] rawPart=0 with ${originalLen} chars of content — repair retry`);
         const repaired = await runV2Once(RETRY_MAX_TOKENS, 2, REPAIR_NOTE);
         let fixed = false;
@@ -1665,6 +1671,7 @@ ${partsIn.formalText ?? ""}`;
           }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       }
+
 
 
       // Log usage once
