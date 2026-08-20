@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
-import SignedImage from "@/components/exam/SignedImage";
+
 import type { ExamQuestionRow } from "../types";
 
 interface Props {
