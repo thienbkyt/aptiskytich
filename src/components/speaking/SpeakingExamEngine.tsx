@@ -518,7 +518,7 @@ const SpeakingExamEngine = ({
 
     if (questionText) {
       const words = questionText.trim().split(/\s+/).filter(Boolean).length;
-      const speakTimeout = Math.max(15000, words * 450);
+      const speakTimeout = Math.max(30000, words * 900 + 8000);
       let finished = false;
       try {
         await withTimeout(

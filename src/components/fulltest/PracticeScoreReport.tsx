@@ -245,7 +245,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
             <span className="font-bold text-lg" style={{ color: BRAND_NAVY }}>{showBand(overallBand)}</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-6 items-start">
             {/* Scale score */}
             <div>
               <div className="font-semibold mb-2" style={{ color: BRAND_NAVY }}>Scale score</div>
@@ -274,11 +274,11 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
             <div>
               <div className="font-semibold mb-2" style={{ color: BRAND_NAVY }}>CEFR skill profile</div>
               <div className="text-xs text-neutral-600 mb-1">CEFR grade</div>
-              <div className="flex pt-8">
+              <div className="flex pt-2">
                 {/* Y-axis */}
                 <div
                   className="relative text-xs text-neutral-700"
-                  style={{ height: 200, width: 28 }}
+                  style={{ height: 224, width: 28 }}
                 >
                   {Y_LEVELS.map((lvl, i) => (
                     <div
@@ -291,7 +291,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                   ))}
                 </div>
                 {/* Bars */}
-                <div className="flex-1 relative" style={{ height: 200 }}>
+                <div className="flex-1 relative" style={{ height: 224 }}>
                   {/* gridlines */}
                   <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                     {Y_LEVELS.map((lvl) => (
