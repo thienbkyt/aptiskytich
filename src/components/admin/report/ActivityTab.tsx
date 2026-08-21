@@ -310,7 +310,7 @@ const ActivityTab = () => {
             <p className="text-3xl font-heading font-extrabold text-foreground">
               {summary.paying_count.toLocaleString("vi-VN")}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Pro: {summary.pro_count} · Premium: {summary.premium_count}</p>
+            <p className="text-xs text-muted-foreground mt-1">Pro: {summary.pro_count} · Pro: {summary.premium_count}</p>
           </Card>
 
           <Card className="p-5">

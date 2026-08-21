@@ -364,7 +364,7 @@ const FeatureFlagsSection = () => {
       <CardHeader>
         <CardTitle>Cấu hình tính năng</CardTitle>
         <CardDescription>
-          Đổi tier yêu cầu, hạn mức Free/Pro và bật/tắt từng tính năng. Premium = không giới hạn.
+          Đổi tier yêu cầu, hạn mức Free/Pro và bật/tắt từng tính năng. Pro = không giới hạn.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -409,7 +409,7 @@ const FeatureFlagsSection = () => {
                           <SelectContent>
                             <SelectItem value="free">Free</SelectItem>
                             <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="premium">Premium</SelectItem>
+                            <SelectItem value="premium">Pro</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
@@ -599,7 +599,7 @@ const ProUsersSection = () => {
       toast.error("Cấp gói thất bại: " + error.message);
       return;
     }
-    toast.success(`Đã cấp ${grantTier === "premium" ? "Premium" : "Pro"} cho ${selected.email}`);
+    toast.success(`Đã cấp Pro cho ${selected.email}`);
     setSelected(null);
     setSearch("");
     setCustomDate(undefined);
@@ -628,7 +628,7 @@ const ProUsersSection = () => {
       <CardHeader>
         <CardTitle>Cấp / gỡ gói thủ công</CardTitle>
         <CardDescription>
-          Tìm user theo email, chọn tier (Pro / Premium) và thời hạn. Bảng dưới hiển thị các user đang trả phí.
+          Tìm user theo email, chọn tier (Pro / Pro) và thời hạn. Bảng dưới hiển thị các user đang trả phí.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -676,7 +676,7 @@ const ProUsersSection = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="premium">Pro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -708,10 +708,10 @@ const ProUsersSection = () => {
               <Button
                 onClick={handleGrant}
                 disabled={!selected || granting || (duration === "custom" && !customDate)}
-                className={cn("gap-2 md:mt-0", grantTier === "premium" && "bg-[#FEAD5F] text-[#4D0D0D] hover:bg-[#FEAD5F]/90")}
+                className={cn("gap-2 md:mt-0")}
               >
                 {granting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
-                Cấp {grantTier === "premium" ? "Premium" : "Pro"}
+                Cấp Pro
               </Button>
             </div>
           </div>
@@ -814,7 +814,7 @@ const ProUsersSection = () => {
                                 : "bg-primary/15 text-primary hover:bg-primary/20",
                             )}
                           >
-                            {isPremium ? "Premium" : "Pro"}
+                            Pro
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -996,7 +996,7 @@ const PricingPlansSection = () => {
                           <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="premium">Premium</SelectItem>
+                            <SelectItem value="premium">Pro</SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>

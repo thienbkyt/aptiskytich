@@ -22,7 +22,7 @@ type AccessTier = "free" | "pro" | "premium";
 const TIER_LABEL: Record<AccessTier, string> = {
   free: "FREE",
   pro: "PRO",
-  premium: "PREMIUM",
+  premium: "PRO",
 };
 
 const TIER_BADGE_CLASS: Record<AccessTier, string> = {
@@ -270,7 +270,7 @@ const ExamSetList = ({ examType, skill, onSelect, onCreateNew, refreshKey }: Pro
                   <SelectContent>
                     <SelectItem value="free">Free</SelectItem>
                     <SelectItem value="pro">Pro</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
+                    <SelectItem value="premium">Pro</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button
