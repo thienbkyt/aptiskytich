@@ -374,6 +374,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                     Full Part
                   </Badge>
                   <ExamTierBadge tier={set.access_tier} locked={isLocked ? isLocked(set) : false} />
+                  <PriorityBadge label={groupPriority(set)} />
                 </div>
                 <h3 className="text-xl font-heading font-bold text-foreground mb-2">
                   {set.title}
