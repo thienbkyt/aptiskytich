@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Crown, Gem } from "lucide-react";
+import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseDateSafe } from "@/lib/safeDate";
 
@@ -23,26 +23,22 @@ const TierPill = ({ tier, isPro, isPremium, proUntil, className }: TierPillProps
   const navigate = useNavigate();
   const goPricing = () => navigate("/pricing");
 
-  const Icon = isPremium ? Gem : Crown;
+  const Icon = Crown;
 
   // Visual variants
-  const wrapClass = isPremium
-    ? "border-[#FEAD5F]/60 bg-gradient-to-br from-[#FEAD5F]/20 via-[#CC1C01]/10 to-transparent hover:border-[#FEAD5F] hover:shadow-[0_0_24px_-6px_rgba(254,173,95,0.6)]"
-    : isPro
-      ? "border-[#FEAD5F]/50 bg-gradient-to-br from-[#FEAD5F]/15 via-[#CC1C01]/5 to-transparent hover:border-[#FEAD5F] hover:shadow-[0_0_20px_-8px_rgba(254,173,95,0.5)]"
-      : "border-border bg-card/70 hover:border-primary/50 hover:shadow-glow-soft";
+  const wrapClass = isPro || isPremium
+    ? "border-[#FEAD5F]/50 bg-gradient-to-br from-[#FEAD5F]/15 via-[#CC1C01]/5 to-transparent hover:border-[#FEAD5F] hover:shadow-[0_0_20px_-8px_rgba(254,173,95,0.5)]"
+    : "border-border bg-card/70 hover:border-primary/50 hover:shadow-glow-soft";
 
   const iconClass = isPro || isPremium
     ? "bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white ring-[#FEAD5F]/40"
     : "from-muted/40 to-muted/10 text-muted-foreground bg-gradient-to-br ring-border";
 
-  const label = isPremium ? "Premium" : isPro ? "Pro" : "Miễn phí";
+  const label = isPro || isPremium ? "Pro" : "Miễn phí";
 
-  const sub = isPremium
-    ? (proUntil ? `Đến ${formatDate(proUntil)}` : "Trọn đời")
-    : isPro
-      ? (proUntil ? `Đến ${formatDate(proUntil)}` : "Đang kích hoạt")
-      : "Mở khóa toàn bộ";
+  const sub = isPro || isPremium
+    ? (proUntil ? `Đến ${formatDate(proUntil)}` : "Đang kích hoạt")
+    : "Mở khóa toàn bộ";
 
   return (
     <div

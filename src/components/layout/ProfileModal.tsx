@@ -126,8 +126,7 @@ const ProfileModal = ({ open, onOpenChange }: Props) => {
 
   const planLabel = (() => {
     if (planKey && PLAN_LABEL[planKey]) return PLAN_LABEL[planKey];
-    if (isPremium) return "Premium";
-    if (isPro) return "Pro";
+    if (isPro || isPremium) return "Pro";
     return "Gói Free";
   })();
 

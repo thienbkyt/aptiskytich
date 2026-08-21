@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Crown, Lock, Gem } from "lucide-react";
+import { Crown, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,7 +36,7 @@ export interface UpgradeLockProps {
 }
 
 function tierLabel(t?: UpgradeRequiredTier) {
-  return t === "premium" ? "Premium" : "Pro";
+  return "Pro";
 }
 
 function getCopy(
@@ -47,7 +47,6 @@ function getCopy(
   freeQuota?: number | null,
 ) {
   const name = label || "Tính năng này";
-  const tName = tierLabel(need);
 
   if (reason === "disabled") {
     return {
@@ -58,27 +57,16 @@ function getCopy(
     };
   }
   if (reason === "quota" || reason === "quota_exceeded") {
-    const target = need === "premium"
-      ? "Nâng cấp Premium để dùng KHÔNG GIỚI HẠN."
-      : "Nâng cấp gói luyện thi để mở không giới hạn.";
     return {
       title: "Bạn đã hết lượt dùng",
-      desc: `${name} cho phép ${freeQuota ?? 0} lượt. ${target}`,
-      cta: `Nâng cấp ${tName}`,
-      showCTA: true,
-    };
-  }
-  if (need === "premium") {
-    return {
-      title: "Tính năng dành cho Premium",
-      desc: `${name} chỉ mở cho thành viên Premium (trọn đời). Nâng cấp để mở khóa toàn bộ.`,
-      cta: "Nâng cấp Premium",
+      desc: `${name} cho phép ${freeQuota ?? 0} lượt. Nâng cấp gói luyện thi để mở không giới hạn.`,
+      cta: "Nâng cấp Pro",
       showCTA: true,
     };
   }
   return {
     title: "Tính năng dành cho Pro",
-    desc: `${name} dành cho thành viên Pro hoặc Premium. Nâng cấp để mở khóa.`,
+    desc: `${name} dành cho thành viên Pro. Nâng cấp để mở khóa.`,
     cta: "Nâng cấp Pro",
     showCTA: true,
     remainingHint:
@@ -91,10 +79,8 @@ function getCopy(
 function LockBody(props: UpgradeLockProps) {
   const { reason, featureLabel, remaining, freeQuota, resetNote, used } = props;
 
-  const need: UpgradeRequiredTier =
-    props.need ?? props.requiredTier ?? (reason === "premium" ? "premium" : "pro");
-  const copy = getCopy(reason, need, featureLabel, remaining, freeQuota);
-  const Icon = need === "premium" ? Gem : reason === "pro" || reason === "premium" ? Crown : Lock;
+  const copy = getCopy(reason, "pro", featureLabel, remaining, freeQuota);
+  const Icon = reason === "pro" || reason === "premium" ? Crown : Lock;
   const usedCap =
     typeof freeQuota === "number"
       ? freeQuota
@@ -104,10 +90,7 @@ function LockBody(props: UpgradeLockProps) {
   return (
     <div className="flex flex-col items-center text-center gap-4 py-2">
       <div className={cn(
-        "w-14 h-14 rounded-full flex items-center justify-center ring-2",
-        need === "premium"
-          ? "bg-[#FEAD5F]/15 ring-[#FEAD5F]/40 text-[#CC1C01]"
-          : "bg-primary/10 ring-primary/30 text-primary",
+        "w-14 h-14 rounded-full flex items-center justify-center ring-2 bg-primary/10 ring-primary/30 text-primary",
       )}>
         <Icon className="w-7 h-7" />
       </div>
@@ -130,10 +113,7 @@ function LockBody(props: UpgradeLockProps) {
         )}
       </div>
       {copy.showCTA && (
-        <Button asChild variant="default" size="lg" className={cn(
-          "gap-2",
-          need === "premium" && "bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110",
-        )}>
+        <Button asChild variant="default" size="lg" className="gap-2">
           <Link to="/pricing">
             <Icon className="w-4 h-4" /> {copy.cta}
           </Link>
