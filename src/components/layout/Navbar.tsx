@@ -413,11 +413,11 @@ const Navbar = () => {
                 <Link
                   to="/pricing"
                   {...prefetchHandlers("/pricing")}
-                  title={`Tài khoản ${isPremium ? 'Premium' : 'Pro'} — xem chi tiết gói`}
+                  title="Tài khoản Pro — xem chi tiết gói"
                   className="inline-flex items-center gap-1.5 rounded-full h-8 px-2.5 text-[11px] font-extrabold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0 transition-all"
                 >
                   <Crown className="w-3.5 h-3.5" />
-                  <span>{isPremium ? 'PREMIUM' : 'PRO'}</span>
+                  <span>PRO</span>
                   {proUntil && (
                     <span className="text-[10px] font-semibold opacity-90">
                       · đến {new Date(proUntil).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
