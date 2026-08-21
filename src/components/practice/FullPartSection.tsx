@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsPro } from "@/hooks/useIsPro";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,10 @@ import {
   touchCustomSetPlayed,
   type CustomSetRow,
 } from "@/hooks/useCustomSets";
+import { useExamPriorityLabels, aggregateGroupPriority, type PriorityLabel } from "@/hooks/useExamPriorityLabels";
+import PriorityBadge from "@/components/practice/PriorityBadge";
+import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
+
 
 interface FullPartSectionProps {
   skillName: string;
