@@ -204,7 +204,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
       <div className="space-y-2 mb-5">
         {hasPriority && (
           <div className="flex flex-wrap items-center gap-2">
-            <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts} />
+            <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts} hideLow />
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">

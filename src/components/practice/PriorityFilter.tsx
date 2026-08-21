@@ -7,6 +7,7 @@ interface Props {
   onChange: (v: PriorityFilterValue) => void;
   counts?: Partial<Record<PriorityFilterValue, number>>;
   className?: string;
+  hideLow?: boolean;
 }
 
 const CHIPS: { key: PriorityFilterValue; label: string }[] = [
@@ -16,11 +17,12 @@ const CHIPS: { key: PriorityFilterValue; label: string }[] = [
   { key: "low", label: "Ưu tiên thấp" },
 ];
 
-const PriorityFilter = ({ value, onChange, counts, className = "" }: Props) => {
+const PriorityFilter = ({ value, onChange, counts, className = "", hideLow = false }: Props) => {
+  const chips = hideLow ? CHIPS.filter((c) => c.key !== "low") : CHIPS;
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
       <span className="text-xs font-medium text-muted-foreground mr-1">Lọc ưu tiên:</span>
-      {CHIPS.map((chip) => {
+      {chips.map((chip) => {
         const active = value === chip.key;
         const n = counts?.[chip.key];
         return (
