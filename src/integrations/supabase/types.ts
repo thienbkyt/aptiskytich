@@ -297,6 +297,36 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_key_earlyaus_20260820: {
+        Row: {
+          backed_up_at: string | null
+          created_at: string | null
+          exam_set_id: string | null
+          id: string | null
+          key_id: string | null
+          priority: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       backup_lp2_de09_20260815: {
         Row: {
           backed_up_at: string | null
