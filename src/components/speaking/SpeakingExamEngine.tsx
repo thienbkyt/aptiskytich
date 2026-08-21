@@ -340,6 +340,37 @@ const SpeakingExamEngine = ({
     return () => { cancelled = true; };
   }, [phase, partType, part2Data?.imageUrl, part3Data?.imageUrl1, part3Data?.imageUrl2, part4Data?.imageUrl]);
 
+  // Diagnostic logging: capture why Speaking Part 2/3/4 sometimes renders with a
+  // missing image despite the DB having an image. Fires once when the prompt screen
+  // first appears, not on every phase re-render.
+  useEffect(() => {
+    if (phase !== "prompt") return;
+    if (missingImageLoggedRef.current) return;
+    missingImageLoggedRef.current = true;
+
+    const missingPart2 = partType === "part2" && !part2Data?.imageUrl;
+    const missingPart3 = partType === "part3" && (!part3Data?.imageUrl1 || !part3Data?.imageUrl2);
+    const missingPart4 = partType === "part4" && !part4Data?.imageUrl;
+
+    if (!missingPart2 && !missingPart3 && !missingPart4) return;
+
+    logClientError("speaking_missing_image", new Error("missing_image_on_render"), {
+      partType,
+      examSetId: examSetId ?? null,
+      testTitle,
+      fullFlow,
+      nQuestions: (part1Data?.questions?.length ?? part2Data?.questions?.length ?? part3Data?.questions?.length ?? part4Data?.questions?.length ?? 0),
+      hasPartData: { p2: !!part2Data, p3: !!part3Data, p4: !!part4Data },
+      imageFields: {
+        p2: part2Data?.imageUrl ?? null,
+        p3a: part3Data?.imageUrl1 ?? null,
+        p3b: part3Data?.imageUrl2 ?? null,
+        p4: part4Data?.imageUrl ?? null,
+      },
+      online: typeof navigator !== "undefined" ? navigator.onLine : null,
+      conn: (navigator as any)?.connection?.effectiveType ?? null,
+    });
+  }, [phase, partType, part2Data, part3Data, part4Data, part1Data, examSetId, testTitle, fullFlow]);
 
   useEffect(() => markExamActive(), []);
 
