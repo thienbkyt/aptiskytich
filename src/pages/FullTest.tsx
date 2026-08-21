@@ -414,6 +414,7 @@ const FullTest = () => {
                         Full Test
                       </Badge>
                       <ExamTierBadge tier={(test as any).access_tier} locked={locked} />
+                      <PriorityBadge label={groupPriority(test)} />
                     </div>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">
                       {test.title}
