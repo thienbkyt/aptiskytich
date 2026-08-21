@@ -87,6 +87,30 @@ export function aggregatePriority(
   return best ? { label: best } : null;
 }
 
+/** Aggregate group priority by majority rule (used by Full Part / Full Test cards):
+ *  - >= 50% of parts are high => high
+ *  - else >= 50% of parts are high+medium => medium
+ *  - otherwise no badge.
+ */
+export function aggregateGroupPriority(
+  examSetIds: string[],
+  labels: Map<string, ExamPriorityInfo>,
+): PriorityLabel | null {
+  const n = examSetIds.length;
+  if (n === 0) return null;
+  let high = 0;
+  let medium = 0;
+  examSetIds.forEach((id) => {
+    const l = labels.get(id)?.label;
+    if (l === "high") high++;
+    else if (l === "medium") medium++;
+  });
+  if (high >= n / 2) return "high";
+  if (high + medium >= n / 2) return "medium";
+  return null;
+}
+
+
 export const PRIORITY_LABEL_VI: Record<PriorityLabel, string> = {
   high: "Ưu tiên cao",
   medium: "Ưu tiên vừa",
