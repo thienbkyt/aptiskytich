@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Navigate, useSearchParams, useNavigate } from "react-router-dom";
 import { useIsPro } from "@/hooks/useIsPro";
 import { Lock } from "lucide-react";
@@ -21,6 +21,10 @@ import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import CustomSetBuilder from "@/components/mysets/CustomSetBuilder";
 import { useCustomSets, useCustomSetPlays, touchCustomSetPlayed, type CustomSetRow } from "@/hooks/useCustomSets";
+import { useExamPriorityLabels, aggregateGroupPriority, type PriorityLabel } from "@/hooks/useExamPriorityLabels";
+import PriorityBadge from "@/components/practice/PriorityBadge";
+import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
+
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
