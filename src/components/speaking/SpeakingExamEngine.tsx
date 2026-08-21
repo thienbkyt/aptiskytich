@@ -202,6 +202,9 @@ const SpeakingExamEngine = ({
   const finishAfterStopRef = useRef(false);
   // When non-null, onstop should advance to this question index after writing the blob.
   const pendingAdvanceRef = useRef<number | null>(null);
+  // One-shot guard: only log the missing-image diagnostic once per part render.
+  const missingImageLoggedRef = useRef(false);
+
 
 
 
