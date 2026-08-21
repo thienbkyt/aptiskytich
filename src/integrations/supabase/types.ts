@@ -3453,6 +3453,23 @@ export type Database = {
           skill: string
         }[]
       }
+      insert_test_result: {
+        Args: {
+          p_correct_answers?: number
+          p_exam_set_id?: string
+          p_full_test_id?: string
+          p_full_test_session_id?: string
+          p_grade_payload?: Json
+          p_level?: string
+          p_review_snapshot?: Json
+          p_score?: number
+          p_skill_scores?: Json
+          p_time_spent?: number
+          p_total?: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       is_admin: { Args: { _uid: string }; Returns: boolean }
       is_premium: { Args: { p_uid: string }; Returns: boolean }
       is_pro: { Args: { p_uid: string }; Returns: boolean }
