@@ -66,24 +66,20 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
     // for per-question detail lookup.
     let testResultId: string | null = null;
     {
-      const { data: inserted, error } = await supabase
-        .from("test_results")
-        .insert({
-          user_id: user.id,
-          correct_answers: correct,
-          score: correct,
-          total: total || 1,
-          level,
-          exam_set_id: opts.examSetId ?? null,
-          time_spent: opts.timeSpent ?? null,
-          skill_scores: { skill: opts.skill, correct, total, ...(opts.extraSkillScores || {}) } as any,
-          full_test_session_id: opts.fullTestSessionId ?? null,
-          full_test_id: opts.fullTestId ?? null,
-          review_snapshot: opts.reviewSnapshot ?? null,
-        } as any)
-        .select("id")
-        .single();
-      if (!error && inserted) testResultId = (inserted as any).id;
+      const { data: inserted, error } = await (supabase as any).rpc("insert_test_result", {
+        p_user_id: user.id,
+        p_exam_set_id: opts.examSetId ?? null,
+        p_score: correct,
+        p_total: total || 1,
+        p_level: level,
+        p_correct_answers: correct,
+        p_time_spent: opts.timeSpent ?? null,
+        p_skill_scores: { skill: opts.skill, correct, total, ...(opts.extraSkillScores || {}) } as any,
+        p_full_test_session_id: opts.fullTestSessionId ?? null,
+        p_full_test_id: opts.fullTestId ?? null,
+        p_review_snapshot: opts.reviewSnapshot ?? null,
+      } as any);
+      if (!error && inserted) testResultId = inserted as any;
     }
 
     // Per-question detail
@@ -178,35 +174,33 @@ export async function upsertMarathonResult(opts: {
       console.warn("[upsertMarathonResult] update failed, re-inserting:", error);
     }
 
-    const { data: inserted, error: insErr } = await supabase
-      .from("test_results")
-      .insert({
-        user_id: user.id,
-        correct_answers: correct,
-        score: correct,
-        // NOT NULL column — keep at least 1 so DB accepts writing (total=0) rows.
-        total: Math.max(total, 1),
-        level,
-        exam_set_id: null,
-        skill_scores: {
-          skill: opts.skill,
-          correct,
-          total,
-          mode: "marathon",
-          marathonSessionId: opts.sessionId,
-          ...(opts.extraSkillScores || {}),
-        } as any,
-        review_snapshot: opts.reviewSnapshot ?? null,
-      } as any)
-      .select("id")
-      .single();
+    const { data: inserted, error: insErr } = await (supabase as any).rpc("insert_test_result", {
+      p_user_id: user.id,
+      p_exam_set_id: null,
+      p_score: correct,
+      p_total: Math.max(total, 1),
+      p_level: level,
+      p_correct_answers: correct,
+      p_time_spent: null,
+      p_skill_scores: {
+        skill: opts.skill,
+        correct,
+        total,
+        mode: "marathon",
+        marathonSessionId: opts.sessionId,
+        ...(opts.extraSkillScores || {}),
+      } as any,
+      p_full_test_session_id: null,
+      p_full_test_id: null,
+      p_review_snapshot: opts.reviewSnapshot ?? null,
+    } as any);
     if (insErr || !inserted) {
       console.warn("[upsertMarathonResult] insert failed:", insErr);
       return null;
     }
     await updateLearningStreak(user.id);
     notify();
-    return (inserted as any).id;
+    return inserted as any;
   } catch (err) {
     console.warn("[upsertMarathonResult] skipped:", err);
     return null;

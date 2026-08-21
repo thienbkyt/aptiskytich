@@ -233,7 +233,7 @@ export default function PricingPage() {
   };
 
 
-  const tierLabel = isPremium ? "Premium" : isPro ? "Pro" : "Free";
+  const tierLabel = isPro || isPremium ? "Pro" : "Free";
 
   const Cell = ({ v }: { v: string | boolean }) => {
     if (v === true) return <Check className="w-4 h-4 text-emerald-600 mx-auto" />;

@@ -409,17 +409,7 @@ const Navbar = () => {
                   aria-hidden
                   className="inline-block h-8 w-20 rounded-full bg-muted/50 animate-pulse"
                 />
-              ) : isPremium ? (
-                <Link to="/pricing" {...prefetchHandlers("/pricing")}>
-                  <button
-                    type="button"
-                    title="Bạn đang là thành viên Premium (trọn đời) — xem gói của tôi"
-                    className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-[11px] font-extrabold hover:brightness-110 transition"
-                  >
-                    <Crown className="w-3.5 h-3.5" /> Premium
-                  </button>
-                </Link>
-              ) : isPro ? (
+              ) : (isPro || isPremium) ? (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")}>
                   <Button
                     size="sm"

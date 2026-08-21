@@ -297,6 +297,36 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_key_earlyaus_20260820: {
+        Row: {
+          backed_up_at: string | null
+          created_at: string | null
+          exam_set_id: string | null
+          id: string | null
+          key_id: string | null
+          priority: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       backup_lp2_de09_20260815: {
         Row: {
           backed_up_at: string | null
@@ -3422,6 +3452,23 @@ export type Database = {
           set_title: string
           skill: string
         }[]
+      }
+      insert_test_result: {
+        Args: {
+          p_correct_answers?: number
+          p_exam_set_id?: string
+          p_full_test_id?: string
+          p_full_test_session_id?: string
+          p_grade_payload?: Json
+          p_level?: string
+          p_review_snapshot?: Json
+          p_score?: number
+          p_skill_scores?: Json
+          p_time_spent?: number
+          p_total?: number
+          p_user_id: string
+        }
+        Returns: string
       }
       is_admin: { Args: { _uid: string }; Returns: boolean }
       is_premium: { Args: { p_uid: string }; Returns: boolean }

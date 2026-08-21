@@ -600,17 +600,17 @@ const Dashboard = () => {
                     🔑 Key Dự Đoán hôm nay đã có
                   </h3>
                   <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-                    {isPremium
+                    {isPro || isPremium
                       ? "Vào xem ngay danh sách đề dự đoán được cập nhật hôm nay."
-                      : "Dành riêng cho Premium — nâng cấp để xem key cập nhật mỗi ngày."}
+                      : "Dành riêng cho Pro — nâng cấp để xem key cập nhật mỗi ngày."}
                   </p>
                 </div>
                 <Button
                   asChild
                   className="shrink-0 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] hover:brightness-110 text-white font-bold gap-1.5"
                 >
-                  <Link to={isPremium ? "/key-du-doan" : "/pricing"}>
-                    {isPremium ? <>Xem ngay <ArrowRight className="w-4 h-4" /></> : <><Crown className="w-4 h-4" /> Nâng cấp Premium</>}
+                  <Link to={isPro || isPremium ? "/key-du-doan" : "/pricing"}>
+                    {isPro || isPremium ? <>Xem ngay <ArrowRight className="w-4 h-4" /></> : <><Crown className="w-4 h-4" /> Nâng cấp Pro</>}
                   </Link>
                 </Button>
               </div>

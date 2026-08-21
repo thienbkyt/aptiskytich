@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Lock, Gem, Crown } from "lucide-react";
+import { Lock, Crown } from "lucide-react";
 import { useIsPro, tierRank, type UserTier } from "@/hooks/useIsPro";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { Badge } from "@/components/ui/badge";
@@ -153,13 +153,6 @@ export function ExamTierBadge({
     return (
       <Badge variant="secondary" className={`text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-0 ${className ?? ""}`}>
         FREE
-      </Badge>
-    );
-  }
-  if (t === "premium") {
-    return (
-      <Badge variant="secondary" className={`text-[10px] font-bold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white border-0 shadow-sm inline-flex items-center gap-1 ${className ?? ""}`}>
-        {locked ? <Lock className="w-3 h-3" /> : <Gem className="w-3 h-3" />} PREMIUM
       </Badge>
     );
   }

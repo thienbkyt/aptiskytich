@@ -510,7 +510,7 @@ const MergedExamsList = () => {
                           <SelectContent>
                             <SelectItem value="free">Free</SelectItem>
                             <SelectItem value="pro">Pro</SelectItem>
-                            <SelectItem value="premium">Premium</SelectItem>
+                            <SelectItem value="premium">Pro</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
