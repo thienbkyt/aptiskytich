@@ -66,7 +66,7 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
     // for per-question detail lookup.
     let testResultId: string | null = null;
     {
-      const { data: inserted, error } = await supabase.rpc("insert_test_result", {
+      const { data: inserted, error } = await (supabase as any).rpc("insert_test_result", {
         p_user_id: user.id,
         p_exam_set_id: opts.examSetId ?? null,
         p_score: correct,
