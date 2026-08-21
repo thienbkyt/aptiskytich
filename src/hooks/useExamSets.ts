@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { compareExamItems } from "@/lib/sortExamSets";
+import { logClientError } from "@/lib/clientErrorLog";
 
 const withTimeout = <T,>(p: PromiseLike<T>, ms = 15000): Promise<T> =>
   Promise.race([
