@@ -19,6 +19,7 @@ import { saveSpeakingRecording, saveExamResult } from "@/lib/saveExamResult";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCoreGVBand } from "@/lib/coreGV";
 import { safeText } from "@/lib/safeText";
+import { logClientError } from "@/lib/clientErrorLog";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
@@ -201,6 +202,9 @@ const SpeakingExamEngine = ({
   const finishAfterStopRef = useRef(false);
   // When non-null, onstop should advance to this question index after writing the blob.
   const pendingAdvanceRef = useRef<number | null>(null);
+  // One-shot guard: only log the missing-image diagnostic once per part render.
+  const missingImageLoggedRef = useRef(false);
+
 
 
 
@@ -336,6 +340,37 @@ const SpeakingExamEngine = ({
     return () => { cancelled = true; };
   }, [phase, partType, part2Data?.imageUrl, part3Data?.imageUrl1, part3Data?.imageUrl2, part4Data?.imageUrl]);
 
+  // Diagnostic logging: capture why Speaking Part 2/3/4 sometimes renders with a
+  // missing image despite the DB having an image. Fires once when the prompt screen
+  // first appears, not on every phase re-render.
+  useEffect(() => {
+    if (phase !== "prompt") return;
+    if (missingImageLoggedRef.current) return;
+    missingImageLoggedRef.current = true;
+
+    const missingPart2 = partType === "part2" && !part2Data?.imageUrl;
+    const missingPart3 = partType === "part3" && (!part3Data?.imageUrl1 || !part3Data?.imageUrl2);
+    const missingPart4 = partType === "part4" && !part4Data?.imageUrl;
+
+    if (!missingPart2 && !missingPart3 && !missingPart4) return;
+
+    logClientError("speaking_missing_image", new Error("missing_image_on_render"), {
+      partType,
+      examSetId: examSetId ?? null,
+      testTitle,
+      fullFlow,
+      nQuestions: (part1Data?.questions?.length ?? part2Data?.questions?.length ?? part3Data?.questions?.length ?? part4Data?.questions?.length ?? 0),
+      hasPartData: { p2: !!part2Data, p3: !!part3Data, p4: !!part4Data },
+      imageFields: {
+        p2: part2Data?.imageUrl ?? null,
+        p3a: part3Data?.imageUrl1 ?? null,
+        p3b: part3Data?.imageUrl2 ?? null,
+        p4: part4Data?.imageUrl ?? null,
+      },
+      online: typeof navigator !== "undefined" ? navigator.onLine : null,
+      conn: (navigator as any)?.connection?.effectiveType ?? null,
+    });
+  }, [phase, partType, part2Data, part3Data, part4Data, part1Data, examSetId, testTitle, fullFlow]);
 
   useEffect(() => markExamActive(), []);
 

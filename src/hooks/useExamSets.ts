@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { compareExamItems } from "@/lib/sortExamSets";
+import { logClientError } from "@/lib/clientErrorLog";
 
 const withTimeout = <T,>(p: PromiseLike<T>, ms = 15000): Promise<T> =>
   Promise.race([
@@ -109,7 +110,11 @@ export const fetchExamQuestions = async (examSetId: string): Promise<ExamQuestio
   } catch (e) { error = e; }
   if (error || !data) {
     console.error("[fetchExamQuestions] failed", { examSetId, error });
+    logClientError("exam_questions_empty", new Error("fetch_failed"), { examSetId, reason: "fetch_failed", online: navigator?.onLine ?? null });
     return [];
+  }
+  if (data.length === 0) {
+    logClientError("exam_questions_empty", new Error("empty_result"), { examSetId, online: navigator?.onLine ?? null });
   }
   return data.map((q: any) => ({
     ...q,
