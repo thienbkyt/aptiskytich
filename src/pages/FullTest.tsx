@@ -51,7 +51,7 @@ const FullTest = () => {
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
   const { guard, isLocked, LockModal } = useExamAccessGate();
   const navigate = useNavigate();
-  const { isPro } = useIsPro();
+  const { isPro, loading: tierLoading } = useIsPro();
 
   const { sets: allCustomSets, invalidate } = useCustomSets();
   const { playedIds } = useCustomSetPlays();
@@ -91,19 +91,26 @@ const FullTest = () => {
       const m = (title || "").match(/\d+/);
       return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
     };
+    // Pro users: priority-first; Free / anonymous users: free tests first.
+    const priorityFirst = tierLoading || isPro;
     return [...officialVisible].sort((a, b) => {
       const ra = rank(groupPriority(a));
       const rb = rank(groupPriority(b));
-      if (ra !== rb) return ra - rb;
       const ta = a.access_tier === "free" ? 0 : 1;
       const tb = b.access_tier === "free" ? 0 : 1;
-      if (ta !== tb) return ta - tb;
+      if (priorityFirst) {
+        if (ra !== rb) return ra - rb;
+        if (ta !== tb) return ta - tb;
+      } else {
+        if (ta !== tb) return ta - tb;
+        if (ra !== rb) return ra - rb;
+      }
       const na = num(a.title);
       const nb = num(b.title);
       if (na !== nb) return na - nb;
       return (a.title || "").localeCompare(b.title || "");
     });
-  }, [officialVisible, priorityLabels]);
+  }, [officialVisible, priorityLabels, isPro, tierLoading]);
 
   const priorityCounts = useMemo(() => {
     const c = { all: tests.length, high: 0, medium: 0, low: 0 } as Record<PriorityFilterValue, number>;
