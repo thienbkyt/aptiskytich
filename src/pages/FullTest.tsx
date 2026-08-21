@@ -57,9 +57,14 @@ const FullTest = () => {
   const { playedIds } = useCustomSetPlays();
   const [doneFilter, setDoneFilter] = useState<"all" | "undone" | "done">("all");
   const [sourceFilter, setSourceFilter] = useState<"all" | "official" | "mine">("all");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const [overlay, setOverlay] = useState<
     { kind: "create" } | { kind: "edit"; set: CustomSetRow } | { kind: "play"; set: CustomSetRow } | null
   >(null);
+
+  const { labels: priorityLabels } = useExamPriorityLabels();
+  const groupPriority = (t: FullTestItem): PriorityLabel | null =>
+    aggregateGroupPriority(t.examSetIds, priorityLabels);
 
   const mySets = useMemo(
     () => allCustomSets.filter((s) => s.mode === "full_test"),
@@ -69,14 +74,51 @@ const FullTest = () => {
 
   const officialVisible = useMemo(
     () =>
-      tests.filter((t) => {
-        if (sourceFilter === "mine") return false;
-        if (doneFilter === "done") return officialDone(t);
-        if (doneFilter === "undone") return !officialDone(t);
-        return true;
-      }),
-    [tests, sourceFilter, doneFilter, bands],
+      tests
+        .filter((t) => {
+          if (sourceFilter === "mine") return false;
+          if (doneFilter === "done") return officialDone(t);
+          if (doneFilter === "undone") return !officialDone(t);
+          return true;
+        })
+        .filter((t) => (priorityFilter === "all" ? true : groupPriority(t) === priorityFilter)),
+    [tests, sourceFilter, doneFilter, priorityFilter, bands, priorityLabels],
   );
+
+  const officialVisibleSorted = useMemo(() => {
+    const rank = (l: PriorityLabel | null) => (l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3);
+    const num = (title: string) => {
+      const m = (title || "").match(/\d+/);
+      return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
+    };
+    return [...officialVisible].sort((a, b) => {
+      const ra = rank(groupPriority(a));
+      const rb = rank(groupPriority(b));
+      if (ra !== rb) return ra - rb;
+      const ta = a.access_tier === "free" ? 0 : 1;
+      const tb = b.access_tier === "free" ? 0 : 1;
+      if (ta !== tb) return ta - tb;
+      const na = num(a.title);
+      const nb = num(b.title);
+      if (na !== nb) return na - nb;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [officialVisible, priorityLabels]);
+
+  const priorityCounts = useMemo(() => {
+    const c = { all: tests.length, high: 0, medium: 0, low: 0 } as Record<PriorityFilterValue, number>;
+    tests.forEach((t) => {
+      const l = groupPriority(t);
+      if (l) c[l]++;
+    });
+    return c;
+  }, [tests, priorityLabels]);
+
+  const hasPriority = useMemo(() => tests.some((t) => groupPriority(t) != null), [tests, priorityLabels]);
+  useEffect(() => {
+    if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all");
+  }, [hasPriority, priorityFilter]);
+
   const mineVisible = useMemo(
     () =>
       mySets.filter((s) => {
@@ -89,22 +131,24 @@ const FullTest = () => {
     [mySets, sourceFilter, doneFilter, playedIds],
   );
   const doneCounts = useMemo(() => {
-    const off = sourceFilter === "mine" ? [] : tests;
+    const off = sourceFilter === "mine" ? [] : priorityFilter === "all" ? tests : tests.filter((t) => groupPriority(t) === priorityFilter);
     const mine = sourceFilter === "official" ? [] : mySets;
     const done = off.filter(officialDone).length + mine.filter((s) => playedIds.has(s.id)).length;
     const total = off.length + mine.length;
     return { all: total, done, undone: total - done };
-  }, [tests, mySets, sourceFilter, bands, playedIds]);
+  }, [tests, mySets, sourceFilter, priorityFilter, bands, playedIds, priorityLabels]);
   const sourceCounts = useMemo(() => {
-    const off = tests.filter((t) =>
-      doneFilter === "done" ? officialDone(t) : doneFilter === "undone" ? !officialDone(t) : true,
-    ).length;
-    const mine = mySets.filter((s) => {
+    const off = (sourceFilter === "mine" ? [] : tests.filter((t) => {
+      if (priorityFilter !== "all" && groupPriority(t) !== priorityFilter) return false;
+      return doneFilter === "done" ? officialDone(t) : doneFilter === "undone" ? !officialDone(t) : true;
+    })).length;
+    const mine = (sourceFilter === "official" ? [] : mySets.filter((s) => {
       const d = playedIds.has(s.id);
       return doneFilter === "done" ? d : doneFilter === "undone" ? !d : true;
-    }).length;
+    })).length;
     return { all: off + mine, official: off, mine };
-  }, [tests, mySets, doneFilter, bands, playedIds]);
+  }, [tests, mySets, doneFilter, priorityFilter, bands, playedIds, priorityLabels]);
+
 
   const showCreateCard = doneFilter !== "done" && sourceFilter !== "official";
 
