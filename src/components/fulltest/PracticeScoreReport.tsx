@@ -291,7 +291,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                   ))}
                 </div>
                 {/* Bars */}
-                <div className="flex-1 relative" style={{ height: 200 }}>
+                <div className="flex-1 relative" style={{ height: 224 }}>
                   {/* gridlines */}
                   <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                     {Y_LEVELS.map((lvl) => (
