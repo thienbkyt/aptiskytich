@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsPro } from "@/hooks/useIsPro";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,10 @@ import {
   touchCustomSetPlayed,
   type CustomSetRow,
 } from "@/hooks/useCustomSets";
+import { useExamPriorityLabels, aggregateGroupPriority, type PriorityLabel } from "@/hooks/useExamPriorityLabels";
+import PriorityBadge from "@/components/practice/PriorityBadge";
+import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
+
 
 interface FullPartSectionProps {
   skillName: string;
@@ -49,11 +53,17 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
   const { isPro } = useIsPro();
   const [doneFilter, setDoneFilter] = useState<DoneFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const [overlay, setOverlay] = useState<
     | { kind: "create" }
     | { kind: "edit"; set: CustomSetRow }
     | null
   >(null);
+
+  const { labels: priorityLabels } = useExamPriorityLabels();
+  const groupPriority = (s: SkillFullSetItem): PriorityLabel | null =>
+    aggregateGroupPriority(s.examSetIds, priorityLabels);
+
 
   const { user } = useAuth();
   const { sets: allCustomSets, invalidate } = useCustomSets();
@@ -72,13 +82,15 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
 
   const officialVisible = useMemo(
     () =>
-      sets.filter((s) => {
-        if (sourceFilter === "mine") return false;
-        if (doneFilter === "done") return officialDone(s);
-        if (doneFilter === "undone") return !officialDone(s);
-        return true;
-      }),
-    [sets, sourceFilter, doneFilter, progress],
+      sets
+        .filter((s) => {
+          if (sourceFilter === "mine") return false;
+          if (doneFilter === "done") return officialDone(s);
+          if (doneFilter === "undone") return !officialDone(s);
+          return true;
+        })
+        .filter((s) => (priorityFilter === "all" ? true : groupPriority(s) === priorityFilter)),
+    [sets, sourceFilter, doneFilter, priorityFilter, progress, priorityLabels],
   );
 
   const mineVisible = useMemo(
@@ -93,24 +105,60 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
     [mySets, sourceFilter, doneFilter, playedIds],
   );
 
+  const priorityCounts = useMemo(() => {
+    const c = { all: sets.length, high: 0, medium: 0, low: 0 } as Record<PriorityFilterValue, number>;
+    sets.forEach((s) => {
+      const l = groupPriority(s);
+      if (l) c[l]++;
+    });
+    return c;
+  }, [sets, priorityLabels]);
+
+  const hasPriority = useMemo(() => sets.some((s) => groupPriority(s) != null), [sets, priorityLabels]);
+  useEffect(() => {
+    if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all");
+  }, [hasPriority, priorityFilter]);
+
+  const officialVisibleSorted = useMemo(() => {
+    const rank = (l: PriorityLabel | null) => (l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3);
+    const num = (t: string) => {
+      const m = (t || "").match(/\d+/);
+      return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
+    };
+    return [...officialVisible].sort((a, b) => {
+      const ra = rank(groupPriority(a));
+      const rb = rank(groupPriority(b));
+      if (ra !== rb) return ra - rb;
+      const ta = a.access_tier === "free" ? 0 : 1;
+      const tb = b.access_tier === "free" ? 0 : 1;
+      if (ta !== tb) return ta - tb;
+      const na = num(a.title);
+      const nb = num(b.title);
+      if (na !== nb) return na - nb;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [officialVisible, priorityLabels]);
+
   const doneCounts = useMemo(() => {
-    const pool = sourceFilter === "mine" ? [] : sets;
+    const pool = sourceFilter === "mine" ? [] : priorityFilter === "all" ? sets : sets.filter((s) => groupPriority(s) === priorityFilter);
     const minePool = sourceFilter === "official" ? [] : mySets;
     const done = pool.filter(officialDone).length + minePool.filter((s) => playedIds.has(s.id)).length;
     const total = pool.length + minePool.length;
     return { all: total, done, undone: total - done };
-  }, [sets, mySets, sourceFilter, progress, playedIds]);
+  }, [sets, mySets, sourceFilter, priorityFilter, progress, playedIds, priorityLabels]);
 
   const sourceCounts = useMemo(() => {
-    const off = sets.filter((s) =>
-      doneFilter === "done" ? officialDone(s) : doneFilter === "undone" ? !officialDone(s) : true,
-    ).length;
-    const mine = mySets.filter((s) => {
+    const off = (sourceFilter === "mine" ? [] : sets.filter((s) => {
+      if (priorityFilter !== "all" && groupPriority(s) !== priorityFilter) return false;
+      return doneFilter === "done" ? officialDone(s) : doneFilter === "undone" ? !officialDone(s) : true;
+    })).length;
+    const mine = (sourceFilter === "official" ? [] : mySets.filter((s) => {
       const done = playedIds.has(s.id);
       return doneFilter === "done" ? done : doneFilter === "undone" ? !done : true;
-    }).length;
+    })).length;
     return { all: off + mine, official: off, mine };
-  }, [sets, mySets, doneFilter, progress, playedIds]);
+  }, [sets, mySets, sourceFilter, doneFilter, priorityFilter, progress, playedIds, priorityLabels]);
+
 
   const showCreateCard = doneFilter !== "done" && sourceFilter !== "official";
 
@@ -154,6 +202,11 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
 
       {/* Filters */}
       <div className="space-y-2 mb-5">
+        {hasPriority && (
+          <div className="flex flex-wrap items-center gap-2">
+            <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts} />
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground mr-1">Trạng thái:</span>
           {([["all", "Tất cả", doneCounts.all], ["undone", "Chưa làm", doneCounts.undone], ["done", "Đã làm", doneCounts.done]] as const).map(
@@ -175,6 +228,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
           )}
         </div>
       </div>
+
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -278,7 +332,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
           })}
 
           {/* Official full part sets */}
-          {officialVisible.map((set) => {
+          {officialVisibleSorted.map((set) => {
             const doneCount = progress
               ? set.examSetIds.filter((id) => progress.has(id)).length
               : 0;
@@ -320,6 +374,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
                     Full Part
                   </Badge>
                   <ExamTierBadge tier={set.access_tier} locked={isLocked ? isLocked(set) : false} />
+                  <PriorityBadge label={groupPriority(set)} />
                 </div>
                 <h3 className="text-xl font-heading font-bold text-foreground mb-2">
                   {set.title}

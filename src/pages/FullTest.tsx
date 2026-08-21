@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Navigate, useSearchParams, useNavigate } from "react-router-dom";
 import { useIsPro } from "@/hooks/useIsPro";
 import { Lock } from "lucide-react";
@@ -21,6 +21,10 @@ import { useUserFullTestBands } from "@/hooks/useUserFullTestBands";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import CustomSetBuilder from "@/components/mysets/CustomSetBuilder";
 import { useCustomSets, useCustomSetPlays, touchCustomSetPlayed, type CustomSetRow } from "@/hooks/useCustomSets";
+import { useExamPriorityLabels, aggregateGroupPriority, type PriorityLabel } from "@/hooks/useExamPriorityLabels";
+import PriorityBadge from "@/components/practice/PriorityBadge";
+import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
+
 
 const SKILL_BREAKDOWN = [
   { label: "Speaking", time: "12 phút", icon: Mic, color: "text-accent" },
@@ -53,9 +57,14 @@ const FullTest = () => {
   const { playedIds } = useCustomSetPlays();
   const [doneFilter, setDoneFilter] = useState<"all" | "undone" | "done">("all");
   const [sourceFilter, setSourceFilter] = useState<"all" | "official" | "mine">("all");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const [overlay, setOverlay] = useState<
     { kind: "create" } | { kind: "edit"; set: CustomSetRow } | { kind: "play"; set: CustomSetRow } | null
   >(null);
+
+  const { labels: priorityLabels } = useExamPriorityLabels();
+  const groupPriority = (t: FullTestItem): PriorityLabel | null =>
+    aggregateGroupPriority(t.examSetIds, priorityLabels);
 
   const mySets = useMemo(
     () => allCustomSets.filter((s) => s.mode === "full_test"),
@@ -65,14 +74,51 @@ const FullTest = () => {
 
   const officialVisible = useMemo(
     () =>
-      tests.filter((t) => {
-        if (sourceFilter === "mine") return false;
-        if (doneFilter === "done") return officialDone(t);
-        if (doneFilter === "undone") return !officialDone(t);
-        return true;
-      }),
-    [tests, sourceFilter, doneFilter, bands],
+      tests
+        .filter((t) => {
+          if (sourceFilter === "mine") return false;
+          if (doneFilter === "done") return officialDone(t);
+          if (doneFilter === "undone") return !officialDone(t);
+          return true;
+        })
+        .filter((t) => (priorityFilter === "all" ? true : groupPriority(t) === priorityFilter)),
+    [tests, sourceFilter, doneFilter, priorityFilter, bands, priorityLabels],
   );
+
+  const officialVisibleSorted = useMemo(() => {
+    const rank = (l: PriorityLabel | null) => (l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3);
+    const num = (title: string) => {
+      const m = (title || "").match(/\d+/);
+      return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
+    };
+    return [...officialVisible].sort((a, b) => {
+      const ra = rank(groupPriority(a));
+      const rb = rank(groupPriority(b));
+      if (ra !== rb) return ra - rb;
+      const ta = a.access_tier === "free" ? 0 : 1;
+      const tb = b.access_tier === "free" ? 0 : 1;
+      if (ta !== tb) return ta - tb;
+      const na = num(a.title);
+      const nb = num(b.title);
+      if (na !== nb) return na - nb;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [officialVisible, priorityLabels]);
+
+  const priorityCounts = useMemo(() => {
+    const c = { all: tests.length, high: 0, medium: 0, low: 0 } as Record<PriorityFilterValue, number>;
+    tests.forEach((t) => {
+      const l = groupPriority(t);
+      if (l) c[l]++;
+    });
+    return c;
+  }, [tests, priorityLabels]);
+
+  const hasPriority = useMemo(() => tests.some((t) => groupPriority(t) != null), [tests, priorityLabels]);
+  useEffect(() => {
+    if (!hasPriority && priorityFilter !== "all") setPriorityFilter("all");
+  }, [hasPriority, priorityFilter]);
+
   const mineVisible = useMemo(
     () =>
       mySets.filter((s) => {
@@ -85,22 +131,24 @@ const FullTest = () => {
     [mySets, sourceFilter, doneFilter, playedIds],
   );
   const doneCounts = useMemo(() => {
-    const off = sourceFilter === "mine" ? [] : tests;
+    const off = sourceFilter === "mine" ? [] : priorityFilter === "all" ? tests : tests.filter((t) => groupPriority(t) === priorityFilter);
     const mine = sourceFilter === "official" ? [] : mySets;
     const done = off.filter(officialDone).length + mine.filter((s) => playedIds.has(s.id)).length;
     const total = off.length + mine.length;
     return { all: total, done, undone: total - done };
-  }, [tests, mySets, sourceFilter, bands, playedIds]);
+  }, [tests, mySets, sourceFilter, priorityFilter, bands, playedIds, priorityLabels]);
   const sourceCounts = useMemo(() => {
-    const off = tests.filter((t) =>
-      doneFilter === "done" ? officialDone(t) : doneFilter === "undone" ? !officialDone(t) : true,
-    ).length;
-    const mine = mySets.filter((s) => {
+    const off = (sourceFilter === "mine" ? [] : tests.filter((t) => {
+      if (priorityFilter !== "all" && groupPriority(t) !== priorityFilter) return false;
+      return doneFilter === "done" ? officialDone(t) : doneFilter === "undone" ? !officialDone(t) : true;
+    })).length;
+    const mine = (sourceFilter === "official" ? [] : mySets.filter((s) => {
       const d = playedIds.has(s.id);
       return doneFilter === "done" ? d : doneFilter === "undone" ? !d : true;
-    }).length;
+    })).length;
     return { all: off + mine, official: off, mine };
-  }, [tests, mySets, doneFilter, bands, playedIds]);
+  }, [tests, mySets, doneFilter, priorityFilter, bands, playedIds, priorityLabels]);
+
 
   const showCreateCard = doneFilter !== "done" && sourceFilter !== "official";
 
@@ -244,6 +292,11 @@ const FullTest = () => {
             <>
               {/* Filters */}
               <div className="space-y-2 mb-5">
+                {hasPriority && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PriorityFilter value={priorityFilter} onChange={setPriorityFilter} counts={priorityCounts} />
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground mr-1">Trạng thái:</span>
                   {([["all", "Tất cả", doneCounts.all], ["undone", "Chưa làm", doneCounts.undone], ["done", "Đã làm", doneCounts.done]] as const).map(
@@ -265,6 +318,7 @@ const FullTest = () => {
                   )}
                 </div>
               </div>
+
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
                 {showCreateCard && (
@@ -340,7 +394,7 @@ const FullTest = () => {
                   );
                 })}
 
-                {officialVisible.map((test, index) => {
+                {officialVisibleSorted.map((test, index) => {
                 const locked = isLocked(test as any);
                 return (
                 <motion.div
@@ -360,6 +414,7 @@ const FullTest = () => {
                         Full Test
                       </Badge>
                       <ExamTierBadge tier={(test as any).access_tier} locked={locked} />
+                      <PriorityBadge label={groupPriority(test)} />
                     </div>
                     <h3 className="text-xl font-heading font-bold text-foreground mb-2">
                       {test.title}
