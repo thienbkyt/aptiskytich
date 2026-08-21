@@ -65,7 +65,7 @@ const Navbar = () => {
   const moreHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, isAdmin } = useAuth();
-  const { isPro, isPremium, tier, loading: tierLoading } = useIsPro();
+  const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
   const isActive = (path: string) => location.pathname === path;
@@ -410,14 +410,19 @@ const Navbar = () => {
                   className="inline-block h-8 w-20 rounded-full bg-muted/50 animate-pulse"
                 />
               ) : (isPro || isPremium) ? (
-                <Link to="/pricing" {...prefetchHandlers("/pricing")}>
-                  <Button
-                    size="sm"
-                    title="Xem gói của tôi"
-                    className="rounded-full h-8 px-3 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0"
-                  >
-                    <Crown className="w-3.5 h-3.5" /> Gói của tôi
-                  </Button>
+                <Link
+                  to="/pricing"
+                  {...prefetchHandlers("/pricing")}
+                  title={`Tài khoản ${isPremium ? 'Premium' : 'Pro'} — xem chi tiết gói`}
+                  className="inline-flex items-center gap-1.5 rounded-full h-8 px-2.5 text-[11px] font-extrabold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0 transition-all"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>{isPremium ? 'PREMIUM' : 'PRO'}</span>
+                  {proUntil && (
+                    <span className="text-[10px] font-semibold opacity-90">
+                      · đến {new Date(proUntil).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                    </span>
+                  )}
                 </Link>
               ) : (
                 <Link to="/pricing" {...prefetchHandlers("/pricing")}>
@@ -748,9 +753,15 @@ const Navbar = () => {
                         Dashboard
                       </Button>
                     </Link>
-                    {isPro ? (
+                    {(isPro || isPremium) ? (
                       <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-extrabold">
-                        <Crown className="w-3.5 h-3.5" /> Bạn đang là thành viên Pro
+                        <Crown className="w-3.5 h-3.5" />
+                        <span>Bạn đang là thành viên {isPremium ? 'PREMIUM' : 'PRO'}</span>
+                        {proUntil && (
+                          <span className="text-[10px] font-semibold opacity-80">
+                            · đến {new Date(proUntil).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <Link to="/pricing">
