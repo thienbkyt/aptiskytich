@@ -53,11 +53,17 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
   const { isPro } = useIsPro();
   const [doneFilter, setDoneFilter] = useState<DoneFilter>("all");
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilterValue>("all");
   const [overlay, setOverlay] = useState<
     | { kind: "create" }
     | { kind: "edit"; set: CustomSetRow }
     | null
   >(null);
+
+  const { labels: priorityLabels } = useExamPriorityLabels();
+  const groupPriority = (s: SkillFullSetItem): PriorityLabel | null =>
+    aggregateGroupPriority(s.examSetIds, priorityLabels);
+
 
   const { user } = useAuth();
   const { sets: allCustomSets, invalidate } = useCustomSets();
