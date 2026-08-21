@@ -756,7 +756,7 @@ const Navbar = () => {
                     {(isPro || isPremium) ? (
                       <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-extrabold">
                         <Crown className="w-3.5 h-3.5" />
-                        <span>Bạn đang là thành viên {isPremium ? 'PREMIUM' : 'PRO'}</span>
+                        <span>Bạn đang là thành viên PRO</span>
                         {proUntil && (
                           <span className="text-[10px] font-semibold opacity-80">
                             · đến {new Date(proUntil).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
