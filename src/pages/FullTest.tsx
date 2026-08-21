@@ -394,7 +394,7 @@ const FullTest = () => {
                   );
                 })}
 
-                {officialVisible.map((test, index) => {
+                {officialVisibleSorted.map((test, index) => {
                 const locked = isLocked(test as any);
                 return (
                 <motion.div
