@@ -332,7 +332,7 @@ const FullPartSection = ({ skillName, sets, loading, onStart, progress, skillKey
           })}
 
           {/* Official full part sets */}
-          {officialVisible.map((set) => {
+          {officialVisibleSorted.map((set) => {
             const doneCount = progress
               ? set.examSetIds.filter((id) => progress.has(id)).length
               : 0;
