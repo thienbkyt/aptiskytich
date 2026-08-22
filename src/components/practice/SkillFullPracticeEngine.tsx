@@ -211,7 +211,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
   const { tier: userTier, proUntil } = useIsPro();
   /** Exam questions hidden (RLS) — most often an expired Pro plan. */
-  const [loadBlocked, setLoadBlocked] = useState<null | "expired" | "error">(null);
+  const [loadBlocked, setLoadBlocked] = useState<null | "empty" | "error">(null);
+  const [blockedNeedsPro, setBlockedNeedsPro] = useState(false);
 
 
   const skillLabel = SKILL_LABELS[skill] || skill;
@@ -274,8 +275,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       // usually means the learner's Pro plan expired. Block before any answering.
       console.error("[SkillFullPracticeEngine.loadData] failed", e);
       if (isExamEmptyError(e)) {
-        const needsPro = (sets as any[]).some((s) => s.access_tier && s.access_tier !== "free");
-        setLoadBlocked(userTier === "free" && needsPro ? "expired" : "error");
+        setBlockedNeedsPro((sets as any[]).some((s) => s.access_tier && s.access_tier !== "free"));
+        setLoadBlocked("empty");
       } else {
         setLoadBlocked("error");
       }
@@ -471,6 +472,22 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       }
     }
   }, [currentPartIndex, parts, skill]);
+
+  // ── Questions unavailable (hidden by RLS / expired plan) ──
+  if (loadBlocked) {
+    if (loadBlocked === "empty" && blockedNeedsPro && userTier === "free") {
+      return <PlanExpiredNotice proUntil={proUntil} onExit={onExit} />;
+    }
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-base font-semibold text-foreground">Không tải được đề, vui lòng thử lại</p>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onExit}>Về danh sách đề</Button>
+          <Button onClick={() => loadData()}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Loading ──
   if (phase === "loading") {
