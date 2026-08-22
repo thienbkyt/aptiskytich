@@ -35,6 +35,14 @@ export const computeHistoryDisplay = (
 
     if (skill === "writing" && r.total === 30) {
 
+      if (writingAgg && writingAgg.max > 0) {
+        return {
+          displayScore: `${Number(writingAgg.sum.toFixed(1))}/${writingAgg.max}`,
+          displayBand: "—",
+          scorePct: writingAgg.sum / writingAgg.max,
+        };
+      }
+
       return {
         displayScore: `${r.score}/${r.total}`,
         displayBand: "—",
