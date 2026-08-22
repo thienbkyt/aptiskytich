@@ -81,7 +81,7 @@ const SpeakingReviewPage = ({
       const { data: setRow } = await supabase
         .from("exam_sets").select("part").eq("id", examSetId).maybeSingle();
       const pt = normalizePart((setRow?.part as string) || partLabel) as SpeakingPartType;
-      const rows = await fetchExamQuestions(examSetId);
+      const rows = await fetchExamQuestions(examSetId, { allowEmpty: true });
       let promptCount = 0;
       if (pt === "part1") { const d = toSpeakingPart1(rows); setPart1Data(d); promptCount = d.questions.length; }
       else if (pt === "part2") { const d = toSpeakingPart2(rows); setPart2Data(d); promptCount = (d.questions || [d.prompt]).length; }

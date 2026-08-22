@@ -21,6 +21,10 @@ export interface UpgradeLockProps {
   /** What tier the user needs to upgrade to (overrides requiredTier when present). */
   need?: UpgradeRequiredTier;
   featureLabel?: string;
+  /** Overrides the auto-generated heading. */
+  title?: string;
+  /** Overrides the auto-generated description. */
+  description?: string;
   /** Small helper line under the description (e.g. quota reset info). */
   resetNote?: string;
   remaining?: number | null;
@@ -77,9 +81,10 @@ function getCopy(
 }
 
 function LockBody(props: UpgradeLockProps) {
-  const { reason, featureLabel, remaining, freeQuota, resetNote, used } = props;
+  const { reason, featureLabel, remaining, freeQuota, resetNote, used, title, description } = props;
 
-  const copy = getCopy(reason, "pro", featureLabel, remaining, freeQuota);
+  const base = getCopy(reason, "pro", featureLabel, remaining, freeQuota);
+  const copy = { ...base, title: title ?? base.title, desc: description ?? base.desc };
   const Icon = reason === "pro" || reason === "premium" ? Crown : Lock;
   const usedCap =
     typeof freeQuota === "number"
