@@ -516,6 +516,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_wp1_sampleanswer_20260823: {
+        Row: {
+          backed_up_at: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_wp2_bookclub_20260817: {
         Row: {
           backed_up_at: string | null
