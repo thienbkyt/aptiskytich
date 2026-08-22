@@ -137,17 +137,17 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
           list.sort((a, b) => a.part.localeCompare(b.part));
           const all: ExamQuestionRow[] = [];
           for (const s of list) {
-            const qs = await fetchExamQuestions(s.id);
+            const qs = await fetchExamQuestions(s.id, { allowEmpty: true });
             all.push(...qs);
           }
-          const resolved = all.length ? all : await fetchExamQuestions(examSetId);
+          const resolved = all.length ? all : await fetchExamQuestions(examSetId, { allowEmpty: true });
           if (cancelled) return;
           reviewRowsCache.set(cacheKey, resolved);
           setRows(resolved);
           return;
         }
       }
-      const r = await fetchExamQuestions(examSetId);
+      const r = await fetchExamQuestions(examSetId, { allowEmpty: true });
       if (cancelled) return;
       reviewRowsCache.set(cacheKey, r);
       setRows(r);

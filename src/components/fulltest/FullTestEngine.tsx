@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, type ExamQuestionRow } from "@/hooks/useExamSets";
+import { useIsPro } from "@/hooks/useIsPro";
+import PlanExpiredNotice from "@/components/pro/PlanExpiredNotice";
+import { isExamEmptyError } from "@/lib/examLoadError";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
@@ -189,6 +192,10 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
   const [writingUngraded, setWritingUngraded] = useState<null | "quota" | "error">(null);
+  const { tier: userTier, proUntil } = useIsPro();
+  /** Questions hidden by RLS (usually an expired Pro plan) — block before answering. */
+  const [loadBlocked, setLoadBlocked] = useState<null | "empty" | "error">(null);
+  const [blockedNeedsPro, setBlockedNeedsPro] = useState(false);
 
   useExitWarning(phase !== "loading" && phase !== "completed" && phase !== "finalizing-writing");
   const { gradeExam } = useExamGrading();
@@ -220,6 +227,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
   const loadAllData = async () => {
     setPhase("loading");
+    setLoadBlocked(null);
 
     // Member exam_set_ids: custom set (user-built) or official full_test_members.
     const { data: members } = customSetId
@@ -237,7 +245,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     const { data: sets } = memberIds.length
       ? await supabase
           .from("exam_sets")
-          .select("id, part, skill, created_at")
+          .select("id, part, skill, created_at, access_tier")
           .in("id", memberIds)
           .eq("is_published", true)
           .order("created_at", { ascending: true })
@@ -250,12 +258,26 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     }
 
     // Load all questions for all sets in parallel
-    const setsWithQuestions = await Promise.all(
-      sets.map(async (s) => {
-        const questions = await fetchExamQuestions(s.id);
-        return { ...s, questions, partNorm: normalizePart(s.part) };
-      })
-    );
+    let setsWithQuestions: any[];
+    try {
+      setsWithQuestions = await Promise.all(
+        sets.map(async (s) => {
+          const questions = await fetchExamQuestions(s.id);
+          return { ...s, questions, partNorm: normalizePart(s.part) };
+        })
+      );
+    } catch (e) {
+      // A published set always has questions: an empty result means the rows are
+      // hidden (RLS), typically because the learner's Pro plan expired.
+      console.error("[FullTestEngine.loadAllData] failed", e);
+      if (isExamEmptyError(e)) {
+        setBlockedNeedsPro((sets as any[]).some((s: any) => s.access_tier && s.access_tier !== "free"));
+        setLoadBlocked("empty");
+      } else {
+        setLoadBlocked("error");
+      }
+      return;
+    }
 
     // Group by skill
     const grouped: SkillData = {
@@ -511,6 +533,22 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       onBack={canGoBackPart ? handleAdminBackPart : undefined}
     />
   ) : null;
+
+  // ── Questions unavailable (hidden by RLS / expired plan) ──
+  if (loadBlocked) {
+    if (loadBlocked === "empty" && blockedNeedsPro && userTier === "free") {
+      return <PlanExpiredNotice proUntil={proUntil} onExit={onExit} />;
+    }
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-base font-semibold text-foreground">Không tải được đề, vui lòng thử lại</p>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onExit}>Về danh sách đề</Button>
+          <Button onClick={() => loadAllData()}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Loading ──
   if (phase === "loading") {

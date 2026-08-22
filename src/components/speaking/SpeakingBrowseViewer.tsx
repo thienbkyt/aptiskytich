@@ -36,7 +36,7 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
     let cancelled = false;
     setLoading(true);
     setQuestions(null);
-    fetchExamQuestions(currentSet.id)
+    fetchExamQuestions(currentSet.id, { allowEmpty: true })
       .then((rows) => {
         if (cancelled) return;
         setQuestions(rows || []);

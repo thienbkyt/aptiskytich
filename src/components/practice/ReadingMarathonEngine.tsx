@@ -180,7 +180,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       // Prefetch the next set into cache for an instant next hop.
       const nextSet = sets[currentIndex + 1];
       if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
-        fetchExamQuestions(nextSet.id)
+        fetchExamQuestions(nextSet.id, { allowEmpty: true })
           .then((qs) => { questionsCacheRef.current.set(nextSet.id, qs); })
           .catch(() => { /* noop */ });
       }
@@ -190,7 +190,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     setPhase("loading");
     setEngineData(null);
     (async () => {
-      const questions = await fetchExamQuestions(set.id);
+      const questions = await fetchExamQuestions(set.id, { allowEmpty: true });
       if (cancelled) return;
       questionsCacheRef.current.set(set.id, questions);
       setEngineData(buildEngineData(questions));
@@ -198,7 +198,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       // Prefetch neighbor after first paint.
       const nextSet = sets[currentIndex + 1];
       if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
-        fetchExamQuestions(nextSet.id)
+        fetchExamQuestions(nextSet.id, { allowEmpty: true })
           .then((qs) => { if (!cancelled) questionsCacheRef.current.set(nextSet.id, qs); })
           .catch(() => { /* noop */ });
       }

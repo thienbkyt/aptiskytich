@@ -142,7 +142,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     (async () => {
       const allLoaded = await Promise.all(
         sets.map(async (set) => {
-          let questions = await fetchExamQuestions(set.id);
+          let questions = await fetchExamQuestions(set.id, { allowEmpty: true });
           const wrongIds = wrongQuestionIdsBySet?.[set.id];
           if (partType === "part1" && wrongIds?.length) {
             const wset = new Set(wrongIds);

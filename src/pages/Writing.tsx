@@ -18,6 +18,9 @@ import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { WritingPartType } from "@/components/writing/WritingExamEngine";
 import { toast } from "sonner";
+import { useIsPro } from "@/hooks/useIsPro";
+import PlanExpiredDialog from "@/components/pro/PlanExpiredDialog";
+import { isExamEmptyError, isExpiredPlanBlock } from "@/lib/examLoadError";
 import { useExamSets, fetchExamQuestions, normalizePart, isNewSet, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4 } from "@/lib/examTransformers";
@@ -164,6 +167,9 @@ const Writing = () => {
     });
   }, [partSets, priorityFilter, priorityLabels, doneFilter, progress]);
 
+  const { tier: userTier, proUntil } = useIsPro();
+  const [planExpiredOpen, setPlanExpiredOpen] = useState(false);
+
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const normalizedPart = normalizePart(set.part);
     const partType = partToTask[normalizedPart] || "task1";
@@ -185,8 +191,16 @@ const Writing = () => {
       }
       setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
     } catch (e) {
-      console.error("[Writing.handleStartFromDB] failed", e);
-      toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      console.error("[handleStartFromDB] failed", e);
+      // Published sets always have questions: an empty result means the rows are hidden
+      // (typically an expired Pro plan). Never open the exam room in that case.
+      if (isExpiredPlanBlock(e, userTier, (set as any).access_tier)) {
+        setPlanExpiredOpen(true);
+      } else if (isExamEmptyError(e)) {
+        toast.error("Không tải được đề, vui lòng thử lại");
+      } else {
+        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      }
       setExam({ active: false, partType: "task1", testTitle: "", completed: false, loadingExam: false });
     } finally {
       setExam((prev) => prev.active ? { ...prev, loadingExam: false } : prev);
@@ -542,6 +556,7 @@ const Writing = () => {
       </main>
       <Footer />
       <LockModal />
+      <PlanExpiredDialog open={planExpiredOpen} onOpenChange={setPlanExpiredOpen} proUntil={proUntil} />
     </div>
   );
 };

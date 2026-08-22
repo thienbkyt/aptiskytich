@@ -30,7 +30,7 @@ export const computeReadingFullTotal = async (
   let T = 0;
   for (const row of data) {
     const partType = normalizePart(row.part);
-    const qs = await fetchExamQuestions(row.id);
+    const qs = await fetchExamQuestions(row.id, { allowEmpty: true });
     let total = 0;
     if (partType === "part1") {
       const q = toReadingPart1(qs);

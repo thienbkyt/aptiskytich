@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
+import { useIsPro } from "@/hooks/useIsPro";
+import PlanExpiredNotice from "@/components/pro/PlanExpiredNotice";
+import { isExamEmptyError } from "@/lib/examLoadError";
 import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
   collectSampleAnswers,
@@ -206,6 +209,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingV2Message, setSpeakingV2Message] = useState("");
   useExitWarning(phase !== "loading" && phase !== "completed");
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
+  const { tier: userTier, proUntil } = useIsPro();
+  /** Exam questions hidden (RLS) — most often an expired Pro plan. */
+  const [loadBlocked, setLoadBlocked] = useState<null | "empty" | "error">(null);
+  const [blockedNeedsPro, setBlockedNeedsPro] = useState(false);
 
 
   const skillLabel = SKILL_LABELS[skill] || skill;
@@ -217,6 +224,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
   const loadData = async () => {
     setPhase("loading");
+    setLoadBlocked(null);
 
     let sets: any[] | null = null;
     let orderMap: Record<string, number> | null = null;
@@ -232,7 +240,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       if (ids.length) {
         const { data } = await supabase
           .from("exam_sets")
-          .select("id, part, skill")
+          .select("id, part, skill, access_tier")
           .in("id", ids)
           .eq("skill", skill)
           .eq("is_published", true);
@@ -241,7 +249,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     } else {
       const { data } = await supabase
         .from("exam_sets")
-        .select("id, part, skill")
+        .select("id, part, skill, access_tier")
         .eq("full_test_id", fullTestId)
         .eq("skill", skill)
         .eq("is_published", true)
@@ -254,12 +262,26 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       return;
     }
 
-    const setsWithQuestions = await Promise.all(
-      sets.map(async (s) => {
-        const questions = await fetchExamQuestions(s.id);
-        return { ...s, questions, partNorm: normalizePart(s.part) };
-      })
-    );
+    let setsWithQuestions: any[];
+    try {
+      setsWithQuestions = await Promise.all(
+        sets.map(async (s) => {
+          const questions = await fetchExamQuestions(s.id);
+          return { ...s, questions, partNorm: normalizePart(s.part) };
+        })
+      );
+    } catch (e) {
+      // A published set never has zero questions: the rows are hidden (RLS), which
+      // usually means the learner's Pro plan expired. Block before any answering.
+      console.error("[SkillFullPracticeEngine.loadData] failed", e);
+      if (isExamEmptyError(e)) {
+        setBlockedNeedsPro((sets as any[]).some((s) => s.access_tier && s.access_tier !== "free"));
+        setLoadBlocked("empty");
+      } else {
+        setLoadBlocked("error");
+      }
+      return;
+    }
 
     // Sort by custom-set position when provided, otherwise by part label
     if (orderMap) {
@@ -450,6 +472,22 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       }
     }
   }, [currentPartIndex, parts, skill]);
+
+  // ── Questions unavailable (hidden by RLS / expired plan) ──
+  if (loadBlocked) {
+    if (loadBlocked === "empty" && blockedNeedsPro && userTier === "free") {
+      return <PlanExpiredNotice proUntil={proUntil} onExit={onExit} />;
+    }
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+        <p className="text-base font-semibold text-foreground">Không tải được đề, vui lòng thử lại</p>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onExit}>Về danh sách đề</Button>
+          <Button onClick={() => loadData()}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
 
   // ── Loading ──
   if (phase === "loading") {

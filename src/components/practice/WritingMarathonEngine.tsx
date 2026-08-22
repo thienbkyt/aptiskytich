@@ -152,7 +152,7 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       // prefetch neighbor
       const nextSet = sets[activeSetIndex + 1];
       if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
-        fetchExamQuestions(nextSet.id).then((qs) => { questionsCacheRef.current.set(nextSet.id, qs); }).catch(() => {});
+        fetchExamQuestions(nextSet.id, { allowEmpty: true }).then((qs) => { questionsCacheRef.current.set(nextSet.id, qs); }).catch(() => {});
       }
       return;
     }
@@ -161,14 +161,14 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     setEngineData(null);
     (async () => {
       try {
-        const qs = await fetchExamQuestions(set.id);
+        const qs = await fetchExamQuestions(set.id, { allowEmpty: true });
         if (cancelled) return;
         questionsCacheRef.current.set(set.id, qs);
         setEngineData(buildEngineData(qs));
         setPhase("exam");
         const nextSet = sets[activeSetIndex + 1];
         if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
-          fetchExamQuestions(nextSet.id).then((q2) => { if (!cancelled) questionsCacheRef.current.set(nextSet.id, q2); }).catch(() => {});
+          fetchExamQuestions(nextSet.id, { allowEmpty: true }).then((q2) => { if (!cancelled) questionsCacheRef.current.set(nextSet.id, q2); }).catch(() => {});
         }
       } catch { /* noop */ }
     })();

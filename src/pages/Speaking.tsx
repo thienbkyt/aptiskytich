@@ -16,6 +16,9 @@ import FullPartSection from "@/components/practice/FullPartSection";
 import SkillFullPracticeEngine from "@/components/practice/SkillFullPracticeEngine";
 import type { SpeakingPartType } from "@/data/speakingQuestions";
 import { toast } from "sonner";
+import { useIsPro } from "@/hooks/useIsPro";
+import PlanExpiredDialog from "@/components/pro/PlanExpiredDialog";
+import { isExamEmptyError, isExpiredPlanBlock } from "@/lib/examLoadError";
 import { useExamSets, fetchExamQuestions, normalizePart, isNewSet, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
@@ -189,6 +192,9 @@ const Speaking = () => {
     return m;
   }, [examSets]);
 
+  const { tier: userTier, proUntil } = useIsPro();
+  const [planExpiredOpen, setPlanExpiredOpen] = useState(false);
+
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as SpeakingPartType;
     setExam({ active: true, partType, testTitle: set.title, loadingExam: true, skipIntro: opts?.skipIntro ?? false, ...( { examSetId: set.id } as any) });
@@ -209,8 +215,16 @@ const Speaking = () => {
       }
       setExam((prev) => ({ ...prev, engineData, loadingExam: false }));
     } catch (e) {
-      console.error("[Speaking.handleStartFromDB] failed", e);
-      toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      console.error("[handleStartFromDB] failed", e);
+      // Published sets always have questions: an empty result means the rows are hidden
+      // (typically an expired Pro plan). Never open the exam room in that case.
+      if (isExpiredPlanBlock(e, userTier, (set as any).access_tier)) {
+        setPlanExpiredOpen(true);
+      } else if (isExamEmptyError(e)) {
+        toast.error("Không tải được đề, vui lòng thử lại");
+      } else {
+        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+      }
       setExam({ active: false, partType: "part1", testTitle: "", loadingExam: false });
     } finally {
       setExam((prev) => (prev.loadingExam ? { ...prev, loadingExam: false } : prev));
@@ -506,6 +520,7 @@ const Speaking = () => {
       </main>
       <Footer />
       <LockModal />
+      <PlanExpiredDialog open={planExpiredOpen} onOpenChange={setPlanExpiredOpen} proUntil={proUntil} />
     </div>
   );
 };

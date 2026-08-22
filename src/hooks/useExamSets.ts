@@ -98,9 +98,18 @@ export const useExamSets = (skill: string) => {
 };
 
 /**
- * Fetch all exam_questions for a given exam_set_id
+ * Fetch all exam_questions for a given exam_set_id.
+ *
+ * A published exam set always has questions, so an EMPTY result is never normal —
+ * it means the rows were hidden (e.g. RLS after a Pro plan expired) or the fetch
+ * silently under-delivered. In that case we throw an error tagged EXAM_EMPTY so
+ * call sites can block entering the exam room instead of showing a blank test.
+ * Read-only call sites (review/history/prefetch) can opt out with allowEmpty.
  */
-export const fetchExamQuestions = async (examSetId: string): Promise<ExamQuestionRow[]> => {
+export const fetchExamQuestions = async (
+  examSetId: string,
+  opts?: { allowEmpty?: boolean },
+): Promise<ExamQuestionRow[]> => {
   let data: any = null, error: any = null;
   try {
     const res = await withTimeout(
@@ -115,6 +124,9 @@ export const fetchExamQuestions = async (examSetId: string): Promise<ExamQuestio
   }
   if (data.length === 0) {
     logClientError("exam_questions_empty", new Error("empty_result"), { examSetId, online: navigator?.onLine ?? null });
+    if (!opts?.allowEmpty) {
+      throw Object.assign(new Error("exam_empty"), { code: "EXAM_EMPTY", examSetId });
+    }
   }
   return data.map((q: any) => ({
     ...q,
@@ -122,6 +134,7 @@ export const fetchExamQuestions = async (examSetId: string): Promise<ExamQuestio
     extra_data: (q.extra_data as Record<string, any>) || {},
   })) as ExamQuestionRow[];
 };
+
 
 /**
  * Fetch question count per exam set (for card display)
