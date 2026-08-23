@@ -900,6 +900,8 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         // 3) V2 grading per part — silent (no toast spam).
         const v2ByPart: Record<string, SpeakingPartResultV2> = {};
         const v2EntriesPayload: Record<string, any> = {};
+        let failedSpeakingParts = 0;
+        let speakingQuotaBlocked = false;
         try {
           for (const entry of orderedEntries) {
             const partType = entry.sub.partType as "part1" | "part2" | "part3" | "part4";
@@ -937,13 +939,54 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
                 fullTranscript: (merged as any).fullTranscript ?? (r as any)?.fullTranscript ?? null,
               };
             } catch (e) {
-              if (e instanceof QuotaExceededError) toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+              failedSpeakingParts += 1;
+              if (e instanceof QuotaExceededError) speakingQuotaBlocked = true;
               console.warn(`[FullTestEngine V2] gradeSpeakingPartV2 ${partType} failed`, e);
 
             }
           }
         } catch (e) {
+          failedSpeakingParts += 1;
           console.warn("[FullTestEngine V2] speaking V2 grading failed", e);
+        }
+
+        const gradedAllFour = failedSpeakingParts === 0 &&
+          !!v2ByPart.part1 && !!v2ByPart.part2 && !!v2ByPart.part3 && !!v2ByPart.part4;
+
+        if (!gradedAllFour) {
+          // NEVER store 0 / A0 for un-graded speaking. Persist what we have with
+          // flag_review so it can be re-graded later; recordings are already saved.
+          try {
+            await saveSpeakingSkillResult({
+              testResultId,
+              examSetId: orderedEntries[0]?.partId ?? null,
+              fullTestSessionId: sessionIdRef.current,
+              parts: v2EntriesPayload,
+              rawTotal: 0,
+              scale50: null as any,
+              cefr: null as any,
+              greyZone: false,
+              flagReview: true,
+            });
+          } catch (e) {
+            console.warn("[FullTestEngine V2] saveSpeakingSkillResult (pending) failed", e);
+          }
+
+          if (speakingQuotaBlocked) {
+            toast.error(
+              "Bài nói của bạn đã được lưu nhưng chưa chấm được vì đã hết lượt chấm AI. Nâng cấp gói để chấm bài này.",
+              {
+                duration: 12000,
+                action: { label: "Nâng cấp", onClick: () => navigate("/pricing") },
+              }
+            );
+          } else {
+            toast.error(
+              "Bài nói đã lưu nhưng chưa chấm được. Bên mình sẽ chấm lại, vui lòng quay lại sau ít phút.",
+              { duration: 12000 }
+            );
+          }
+          return;
         }
 
         // 4) Finalize → /50 + CEFR + flags.
@@ -954,13 +997,38 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           part4: v2ByPart.part4?.rawPart ?? 0,
         };
         let scale50 = 0, cefr = "", greyZone = false, flagReview = false, rawTotal = 0;
+        let finalizeOk = false;
         try {
           const coreGV = await fetchCoreGVBand({ fullTestSessionId: sessionIdRef.current });
           const f = await finalizeSpeaking(rawParts, coreGV);
           scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone;
           flagReview = f.flagReview; rawTotal = f.rawTotal;
+          finalizeOk = true;
         } catch (e) {
           console.warn("[FullTestEngine V2] finalizeSpeaking failed", e);
+        }
+
+        if (!finalizeOk) {
+          try {
+            await saveSpeakingSkillResult({
+              testResultId,
+              examSetId: orderedEntries[0]?.partId ?? null,
+              fullTestSessionId: sessionIdRef.current,
+              parts: v2EntriesPayload,
+              rawTotal: 0,
+              scale50: null as any,
+              cefr: null as any,
+              greyZone: false,
+              flagReview: true,
+            });
+          } catch (e) {
+            console.warn("[FullTestEngine V2] saveSpeakingSkillResult (pending) failed", e);
+          }
+          toast.error(
+            "Bài nói đã lưu nhưng chưa chấm được. Bên mình sẽ chấm lại, vui lòng quay lại sau ít phút.",
+            { duration: 12000 }
+          );
+          return;
         }
 
         // 5) Save ONE speaking_skill_results row (all 4 parts + scale50 + cefr).
@@ -999,6 +1067,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           speaking: { correct: scale50, total: 50 },
         }));
         setSkillOverrides((prev) => ({ ...prev, speaking: { scale50, cefr: cefr || null } }));
+
       } catch (e) {
         console.warn("[FullTestEngine] speaking grading failed", e);
       } finally {
