@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { normalizePart, readingPartLabel, type ExamSetRow } from "@/hooks/useExamSets";
 import { format } from "date-fns";
 import {
@@ -490,7 +490,23 @@ export default function PredictionKeyView() {
         </Popover>
       </div>
 
-      {!isPro ? (
+      {!user ? (
+        <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
+          <Sparkles className="w-12 h-12 text-primary/60 mx-auto mb-4" />
+          <h3 className="text-lg font-heading font-bold text-foreground mb-2">Đăng nhập để xem Key Dự Đoán</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
+            Key dự đoán đề thi Aptis được cập nhật hằng ngày. Đăng nhập để xem danh sách đề của ngày hôm nay.
+          </p>
+          <div className="flex items-center justify-center gap-2">
+            <Button asChild className="gap-1.5 text-white">
+              <Link to="/auth?redirect=%2Fkey-du-doan">Đăng nhập <ArrowRight className="w-4 h-4" /></Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/auth?redirect=%2Fkey-du-doan">Đăng ký</Link>
+            </Button>
+          </div>
+        </div>
+      ) : !isPro ? (
         <UpgradeLock reason="pro" need="pro" featureLabel="Key Dự Đoán (Update hằng ngày)" />
       ) : loadingItems ? (
         <div className="space-y-3">
