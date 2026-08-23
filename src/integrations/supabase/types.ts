@@ -390,6 +390,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp3_trungcauhoi_20260823: {
+        Row: {
+          backed_up_at: string | null
+          correct_answer: number | null
+          exam_set_id: string | null
+          id: string | null
+          order_index: number | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          exam_set_id?: string | null
+          id?: string | null
+          order_index?: number | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          exam_set_id?: string | null
+          id?: string | null
+          order_index?: number | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       backup_phu_speaking_20260819: {
         Row: {
           backed_up_at: string | null
@@ -408,6 +435,30 @@ export type Database = {
           data?: Json | null
           row_id?: string | null
           src?: string | null
+        }
+        Relationships: []
+      }
+      backup_r5_de27v2_headings_20260823: {
+        Row: {
+          backed_up_at: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          options: Json | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          options?: Json | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          options?: Json | null
         }
         Relationships: []
       }
