@@ -654,7 +654,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
 
       const MODEL_V2 = "google/gemini-2.5-flash";
 
-      const timeoutMsSpeak = isPart4 ? 170_000 : 140_000;
+      const timeoutMsSpeak = 170_000;
       const callGatewaySpeak = async (repairNote?: string): Promise<Response> => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMsSpeak);
@@ -700,6 +700,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
         } catch (e) {
           const isAbort = (e as any)?.name === "AbortError";
           console.error("[grade-exam v2] fetch failed", isAbort ? "timeout" : (e as any)?.message || e);
+          if (isAbort && attempt === 0) continue;
           break;
         }
       }
