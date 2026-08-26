@@ -758,6 +758,13 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         onEnded={() => { releaseIfMine(audioRef.current); setIsPlaying(false); }}
         onTimeUpdate={() => { lastTimeUpdateRef.current = Date.now(); }}
         onError={resolvedSrc ? handleAudioError : undefined}
+        onStalled={() => {
+          // networkState 3 === NETWORK_NO_SOURCE → signed URL expired mid-exam.
+          const el = audioRef.current;
+          if (el && el.networkState === 3 && isPlaying && !resumingRef.current) {
+            void resumeAtPosition(el);
+          }
+        }}
         preload="auto"
       />
       <button
