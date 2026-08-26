@@ -1462,7 +1462,7 @@ ${partsIn.formalText ?? ""}`;
           finishReason: choice?.finish_reason ?? null,
           attempt,
           gradingSessionId,
-          metadata: { type: "writing_v2", partType: pt, ...(repairNote ? { repair: "missing_rawPart" } : {}) },
+          metadata: { type: "writing_v2", partType: pt, ...(repairNote ? { repair: "missing_rawPart" } : {}), durationMs: writeDurationMs, gatewayAttempts: writeGatewayAttempts },
         }).catch(() => {});
 
         const finishReason = String(choice?.finish_reason ?? "");
