@@ -189,6 +189,7 @@ const SpeakingExamEngine = ({
   const volumeAudioContextRef = useRef<AudioContext | null>(null);
   const volumeAnalyserRef = useRef<AnalyserNode | null>(null);
   const volumeSampleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const volumeMeasurementActiveRef = useRef(false);
   const currentMaxRmsRef = useRef(0);
   const maxRmsByQuestionRef = useRef<number[]>([]);
   const silentByQuestionRef = useRef<boolean[]>([]);
@@ -680,16 +681,19 @@ const SpeakingExamEngine = ({
 
       stopVolumeMeasurement();
       currentMaxRmsRef.current = 0;
+      volumeMeasurementActiveRef.current = false;
       try {
         const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         if (AudioContextCtor) {
           const context = new AudioContextCtor();
+          if (context.state === "suspended") await context.resume();
           const source = context.createMediaStreamSource(stream);
           const analyser = context.createAnalyser();
           analyser.fftSize = 2048;
           source.connect(analyser);
           volumeAudioContextRef.current = context;
           volumeAnalyserRef.current = analyser;
+          volumeMeasurementActiveRef.current = true;
           const samples = new Float32Array(analyser.fftSize);
           volumeSampleTimerRef.current = setInterval(() => {
             analyser.getFloatTimeDomainData(samples);
@@ -754,7 +758,7 @@ const SpeakingExamEngine = ({
         }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const maxRms = currentMaxRmsRef.current;
-        const isSilent = maxRms < SILENCE_RMS_THRESHOLD;
+        const isSilent = volumeMeasurementActiveRef.current && maxRms < SILENCE_RMS_THRESHOLD;
         maxRmsByQuestionRef.current[recordingIndex] = maxRms;
         silentByQuestionRef.current[recordingIndex] = isSilent;
         const url = isSilent ? null : URL.createObjectURL(blob);
