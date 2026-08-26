@@ -43,8 +43,9 @@ export async function enqueueGradingFallback(args: {
 
     if (error) {
       console.warn("[enqueueGradingFallback] enqueue rpc failed:", error);
-      return { id: null };
+      return { id: null, errorCode: String((error as any)?.message || "enqueue_failed") };
     }
+
 
     // Best-effort: kick the worker immediately (cron is the guaranteed path).
     supabase.functions.invoke("process-grading-jobs", { body: {} }).catch(() => {});
