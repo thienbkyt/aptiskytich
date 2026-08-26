@@ -166,6 +166,9 @@ const SpeakingExamEngine = ({
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
   const [v2Error, setV2Error] = useState<string | null>(null);
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
+  // Background-queue grading state (single-part mode).
+  const [queuePending, setQueuePending] = useState(false);
+  const [queueTimedOut, setQueueTimedOut] = useState(false);
 
 
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
