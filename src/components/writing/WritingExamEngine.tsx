@@ -588,7 +588,9 @@ const WritingExamEngine = ({
             testResultId={submittedTestResultId}
             partType={partType}
           />
+          )}
         </div>
+
       </div>
     );
   }
