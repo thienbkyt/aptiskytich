@@ -18,7 +18,7 @@ export async function enqueueGradingFallback(args: {
   fullTestSessionId?: string | null;
   payload: Record<string, any>;
   lastError?: string;
-}): Promise<{ id: string | null }> {
+}): Promise<{ id: string | null; errorCode?: string }> {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { id: null };
