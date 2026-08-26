@@ -694,6 +694,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.${
             }),
           });
         } finally {
+          speakDurationMs = Date.now() - startedAt;
           clearTimeout(timeoutId);
         }
       };
