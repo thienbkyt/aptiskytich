@@ -1315,7 +1315,31 @@ const SpeakingExamEngine = ({
               </p>
             </div>
 
-            {isGrading && !v2Result && !v2Error && (
+            {!v2Result && !v2Error && (queuePending || queueTimedOut) && !fullFlow && (
+              <div className="bg-card border border-border rounded-2xl p-6 text-center space-y-4">
+                {queueTimedOut ? (
+                  <p className="text-sm text-muted-foreground">
+                    Bài đã lưu và đang chờ chấm. Vui lòng xem lại trong Lịch sử sau ít phút.
+                  </p>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <span>
+                      AI Kỳ Tích đang chấm bài nói của bạn — thường mất 1–3 phút. Bạn có thể thoát ra
+                      làm đề khác, kết quả sẽ có trong Lịch sử làm bài.
+                    </span>
+                  </div>
+                )}
+                <button
+                  onClick={onExit}
+                  className="bg-card border border-border hover:bg-muted/50 text-foreground rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+                >
+                  Thoát
+                </button>
+              </div>
+            )}
+
+            {isGrading && fullFlow && !v2Result && !v2Error && (
               <div className="bg-card border border-border rounded-2xl p-6 text-center">
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1323,6 +1347,7 @@ const SpeakingExamEngine = ({
                 </div>
               </div>
             )}
+
 
             {v2Error && (
               <div className="bg-card border border-rose-500/30 rounded-2xl p-6 text-center">
