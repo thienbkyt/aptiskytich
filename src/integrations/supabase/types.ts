@@ -3334,6 +3334,18 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_missing_imgs: {
+        Row: {
+          f: string | null
+        }
+        Insert: {
+          f?: string | null
+        }
+        Update: {
+          f?: string | null
+        }
+        Relationships: []
+      }
       tmp_p10: {
         Row: {
           j: Json | null
