@@ -653,7 +653,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.${
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
             },
-            required: ["perItem", "fullTranscript", "analysis", "criteriaAnalysis", "bands"],
+            required: isPart4
+              ? ["perItem", "fullTranscript", "analysis", "criteriaAnalysis", "bands"]
+              : ["perItem", "analysis", "criteriaAnalysis", "bands"],
           },
         },
       };
