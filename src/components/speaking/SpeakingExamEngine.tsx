@@ -422,124 +422,112 @@ const SpeakingExamEngine = ({
     };
   }, []);
 
-  // Single-part mode: when phase becomes "done", grade via NEW V2 system (5-criteria profile).
-  // Legacy per-item grading is intentionally disabled for single-part mode (replaced by V2).
+  // Single-part mode: when phase becomes "done", grade in the BACKGROUND via the
+  // grading_jobs queue (upload audio → enqueue → poll speaking_skill_results).
+  // Quota is enforced server-side inside the enqueue_grading_job RPC.
   useEffect(() => {
     if (fullFlow) return;
     if (phase !== "done" || v2RanRef.current) return;
     v2RanRef.current = true;
 
     const promptsList: string[] = getPromptList();
-
     const blobs = recordingsRef.current.slice();
     const questions = promptsList.map((q) => ({ questionText: q }));
 
+    // Keep the existing "no audio recorded" short-circuit: never enqueue silence.
+    const MIN_AUDIO_BYTES = 30000;
+    const anySpoken = blobs.some((b) => !!b && b.size >= MIN_AUDIO_BYTES);
+    if (!anySpoken) {
+      setV2Error(
+        "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.",
+      );
+      setIsGrading(false);
+      return;
+    }
+
+    let cancelled = false;
     setIsGrading(true);
     setV2Error(null);
+    setQueuePending(true);
+    setQueueTimedOut(false);
+
     (async () => {
       try {
-        const result = await gradeSpeakingPartV2(partType, questions, blobs, {
-          testResultId: testResultIdRef.current ?? null,
+        const testResultId = testResultIdRef.current ?? null;
+        const audioPaths = await uploadSpeakingBlobs(
+          blobs,
+          testResultId || examSetId || "adhoc",
+          partType,
+        );
+
+        await enqueueGradingFallback({
+          skill: "speaking",
+          partType,
+          testResultId,
           examSetId: examSetId ?? null,
-          fullTestSessionId: fullTestSessionId ?? null,
+          fullTestSessionId: null,
+          payload: { type: "speaking_v2", partType, questions, audioPaths },
         });
-        // Merge questionText back into per-item results for display.
-        const mergedPerItem = (result.perItem || []).map((it, i) => ({
-          ...it,
-          questionText: safeText(it.questionText) || safeText(promptsList[i]) || `Question ${i + 1}`,
-          transcript: safeText((it as any).transcript),
-          improvedVersion: safeText((it as any).improvedVersion),
-          upgradeTips: safeText((it as any).upgradeTips),
-        }));
 
-        const finalResult: SpeakingPartResultV2 = { ...result, perItem: mergedPerItem };
-        setV2Result(finalResult);
-
-        // Compute scale50 + CEFR for this single part using the finalize edge.
-        // Trick: pass rawPart in all 4 slots so the server math (rawTotal/126*50)
-        // collapses to rawPart/30*50 — i.e. percent = round(rawPart/30 * 100).
-        let scale50Out = Math.round((Number(finalResult.rawPart || 0) / 30) * 50);
-        let cefrOut = "";
-        let greyOut = false;
-        let flagOut = false;
-        try {
-          const coreGV = await fetchCoreGVBand();
-          const fin = await finalizeSpeaking({
-            part1: finalResult.rawPart,
-            part2: finalResult.rawPart,
-            part3: finalResult.rawPart,
-            part4: finalResult.rawPart,
-          }, coreGV);
-          scale50Out = Number(fin.scale50 ?? scale50Out);
-          cefrOut = fin.cefr || "";
-          greyOut = !!fin.greyZone;
-          flagOut = !!fin.flagReview;
-        } catch (e) {
-          console.warn("[Speaking V2] finalize (single part) failed:", e);
-        }
-        setV2Scale(scale50Out);
-        setV2Cefr(cefrOut);
-
-        // Best-effort save to speaking_skill_results (parts contains only this part).
-        try {
-          await saveSpeakingSkillResult({
-            testResultId: testResultIdRef.current,
-            examSetId: examSetId ?? null,
-            fullTestSessionId: fullTestSessionId ?? null,
-            parts: {
-              [partType]: {
-                bands: finalResult.bands,
-                items: mergedPerItem,
-                analysis: finalResult.analysis,
-                criteriaAnalysis: finalResult.criteriaAnalysis,
-                feedback: finalResult.feedback,
-                improvedVersion: finalResult.improvedVersion,
-                rawPart: finalResult.rawPart,
-                fullTranscript: (finalResult as any).fullTranscript ?? null,
-              },
-            },
-            rawTotal: finalResult.rawPart || 0,
-            scale50: scale50Out,
-            cefr: cefrOut,
-            greyZone: greyOut,
-            flagReview: flagOut,
-            feedback: finalResult.feedback,
-          });
-        } catch (e) {
-          console.warn("[Speaking V2] save skill result failed:", e);
+        if (!testResultId) {
+          if (!cancelled) setQueueTimedOut(true);
+          return;
         }
 
-        // Persist the official skill score into the test_results row itself
-        // (real columns + snapshot) so History/Dashboard don't show 0 / A1.
-        try {
-          if (testResultIdRef.current) {
-            const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-            await mergeSnapshotAI(testResultIdRef.current, {}, {
-              score: scale50Out,
-              total: 50,
-              scaled50: scale50Out,
-              band: cefrOut || null,
-            });
-          }
-        } catch (e) {
-          console.warn("[Speaking V2] persist score failed:", e);
+        // Poll for the worker's result: every 6s, max 5 minutes.
+        const deadline = Date.now() + 5 * 60 * 1000;
+        while (!cancelled && Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 6000));
+          if (cancelled) return;
+          const { data } = await supabase
+            .from("speaking_skill_results")
+            .select("parts, raw_total, scale50, cefr")
+            .eq("test_result_id", testResultId)
+            .maybeSingle();
+          const partData = (data as any)?.parts?.[partType];
+          if (!partData) continue;
+
+          const perItem = Array.isArray(partData.perItem) ? partData.perItem : [];
+          const mergedPerItem = perItem.map((it: any, i: number) => ({
+            ...it,
+            questionText: safeText(it?.questionText) || safeText(promptsList[i]) || `Question ${i + 1}`,
+            transcript: safeText(it?.transcript),
+            improvedVersion: safeText(it?.improvedVersion),
+            upgradeTips: safeText(it?.upgradeTips),
+          }));
+
+          if (cancelled) return;
+          setV2Result({
+            bands: partData.bands ?? { tf: "", gra: "", vra: "", pro: "", fc: "" },
+            rawPart: Number(partData.rawPart ?? (data as any)?.raw_total ?? 0),
+            perItem: mergedPerItem,
+            analysis: partData.analysis ?? "",
+            criteriaAnalysis: partData.criteriaAnalysis ?? undefined,
+            improvedVersion: partData.improvedVersion ?? "",
+            fullTranscript: partData.fullTranscript ?? "",
+          } as SpeakingPartResultV2);
+          setV2Scale(Number((data as any)?.scale50 ?? 0));
+          setV2Cefr(String((data as any)?.cefr ?? ""));
+          setQueuePending(false);
+          setIsGrading(false);
+          return;
         }
-
-
-
+        if (!cancelled) setQueueTimedOut(true);
       } catch (e: any) {
         if (e instanceof QuotaExceededError) {
           setQuotaModal(e.info);
         } else {
-          console.error("[Speaking V2] grading failed:", e);
+          console.error("[Speaking V2] enqueue/poll failed:", e);
           setV2Error(e?.message || "AI Kỳ Tích chưa chấm được phần này. Vui lòng thử lại sau.");
         }
-
       } finally {
-        setIsGrading(false);
+        if (!cancelled) setIsGrading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [phase, fullFlow, partType, part1Data, part2Data, part3Data, part4Data, examSetId, fullTestSessionId]);
+
 
 
 
