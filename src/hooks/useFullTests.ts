@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { compareExamItems } from "@/lib/sortExamSets";
 
@@ -18,6 +18,17 @@ export interface FullTestItem {
 
 export type FullTestCategory = "aptis" | "key";
 
+/** Wraps a promise with a timeout. Rejects (throws) if it doesn't resolve in `ms`. */
+function withTimeout<T>(promise: Promise<T>, ms: number, label = "request"): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
 /**
  * Fetches published Full Tests from the new full_tests table (linked to exam_sets via full_test_members).
  * This keeps Full Test as a layer on top of exam_sets so per-skill Full Part merges stay intact.
@@ -25,35 +36,51 @@ export type FullTestCategory = "aptis" | "key";
 export const useFullTests = (category: FullTestCategory = "aptis") => {
   const [tests, setTests] = useState<FullTestItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
+  const fetchTests = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const ftRes = await withTimeout(
+        supabase
+          .from("full_tests")
+          .select("id, title, category, is_published")
+          .eq("category", category)
+          .eq("is_published", true)
+          .order("created_at", { ascending: true }),
+        12000,
+        "full_tests",
+      );
 
-      const { data: ftRows, error: ftErr } = await supabase
-        .from("full_tests")
-        .select("id, title, category, is_published")
-        .eq("category", category)
-        .eq("is_published", true)
-        .order("created_at", { ascending: true });
-
+      const { data: ftRows, error: ftErr } = ftRes;
       if (ftErr || !ftRows || ftRows.length === 0) {
-        setLoading(false);
         setTests([]);
         return;
       }
 
       const ftIds = ftRows.map((r) => r.id);
-      const { data: members } = await supabase
-        .from("full_test_members")
-        .select("full_test_id, exam_set_id")
-        .in("full_test_id", ftIds);
+
+      const membersRes = await withTimeout(
+        supabase
+          .from("full_test_members")
+          .select("full_test_id, exam_set_id")
+          .in("full_test_id", ftIds),
+        12000,
+        "full_test_members",
+      );
+      const { data: members } = membersRes;
 
       const setIds = Array.from(new Set((members || []).map((m) => m.exam_set_id)));
-      const { data: sets } = await supabase
-        .from("exam_sets")
-        .select("id, skill, is_published, access_tier, new_until")
-        .in("id", setIds.length ? setIds : ["00000000-0000-0000-0000-000000000000"]);
+      const setsRes = await withTimeout(
+        supabase
+          .from("exam_sets")
+          .select("id, skill, is_published, access_tier, new_until")
+          .in("id", setIds.length ? setIds : ["00000000-0000-0000-0000-000000000000"]),
+        12000,
+        "exam_sets",
+      );
+      const { data: sets } = setsRes;
 
       const setSkillMap = new Map<string, { skill: string; published: boolean; tier: string; newUntil: string | null }>();
       for (const s of (sets || []) as any[]) {
@@ -99,9 +126,22 @@ export const useFullTests = (category: FullTestCategory = "aptis") => {
       );
 
       setTests(result);
+    } catch (err) {
+      console.error("[useFullTests] fetch failed:", err);
+      setError(true);
+      setTests([]);
+    } finally {
       setLoading(false);
-    })();
+    }
   }, [category]);
 
-  return { tests, loading };
+  const reload = useCallback(() => {
+    fetchTests();
+  }, [fetchTests]);
+
+  useEffect(() => {
+    fetchTests();
+  }, [fetchTests]);
+
+  return { tests, loading, error, reload };
 };
