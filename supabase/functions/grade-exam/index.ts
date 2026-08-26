@@ -569,7 +569,9 @@ RÀNG BUỘC BẮT BUỘC VỀ DẪN CHỨNG (áp dụng cho analysis, criteriaA
 - Nếu muốn gợi ý cách nói tốt hơn, chỉ được sửa từ/cụm CÓ THẬT trong transcript (dạng "cụm thật của học viên → bản sửa").
 - Nếu không tìm được dẫn chứng thật cho một tiêu chí, hãy nhận xét chung mà KHÔNG đặt bất kỳ cụm nào trong dấu nháy.
 
-Be honest, strict, fair. Do not invent content the student didn't say.`;
+Be honest, strict, fair. Do not invent content the student didn't say.${
+        isPart4 ? "" : "\nDo NOT transcribe the full recording separately; per-item transcripts are sufficient."
+      }`;
 
       // For non-Part4: send only spoken audios, but label every question and note which have NO AUDIO.
       // For Part4: single monologue; we already know anySpoken is true here.
