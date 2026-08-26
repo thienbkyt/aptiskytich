@@ -554,7 +554,31 @@ const WritingExamEngine = ({
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
           <PausedTimeNotice pausedMs={pausedMs} />
+          {(queuePending || queueTimedOut) && !v2Grading ? (
+            <div className="max-w-2xl mx-auto rounded-2xl bg-card border border-border p-6 text-center space-y-4">
+              {queueTimedOut ? (
+                <p className="text-base text-foreground">
+                  Bài đã lưu và đang chờ chấm, xem lại trong Lịch sử sau ít phút.
+                </p>
+              ) : (
+                <>
+                  <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <p className="text-base text-foreground">
+                    AI Kỳ Tích đang chấm bài viết — thường mất 1–3 phút. Bạn có thể thoát ra làm đề khác,
+                    kết quả sẽ có trong Lịch sử.
+                  </p>
+                </>
+              )}
+              <button
+                onClick={onExit}
+                className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-[#4D0D0D] transition-colors"
+              >
+                Thoát
+              </button>
+            </div>
+          ) : (
           <WritingResults
+
             isGrading={v2Loading || isGrading}
             grading={(v2Grading ?? grading) as import("@/hooks/useExamGrading").WritingGradingResult | null}
             onExit={onExit}
