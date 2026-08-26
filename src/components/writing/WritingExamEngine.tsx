@@ -18,7 +18,7 @@ import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
-import { gradeWritingPartV2 } from "@/components/writing/writingGradingV2";
+
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
@@ -156,6 +156,9 @@ const WritingExamEngine = ({
   const [v2Loading, setV2Loading] = useState(false);
   const [submittedTestResultId, setSubmittedTestResultId] = useState<string | null>(null);
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
+  const [queuePending, setQueuePending] = useState(false);
+  const [queueTimedOut, setQueueTimedOut] = useState(false);
+
 
   const effectiveGrading = (gradingResult ?? v2Grading ?? grading) as WritingGradingResult | null;
 
@@ -304,85 +307,108 @@ const WritingExamEngine = ({
       }
     }
 
-    let result: WritingGradingResult | null = null;
-    let quotaHit: QuotaInfo | null = null;
-    setV2Loading(true);
-
-
-    try {
-      const v2 = await gradeWritingPartV2(partType, questions, text, partsArg, {
-        testResultId: (trid as string | null) ?? null,
-        examSetId: examSetId ?? null,
-      });
-      result = {
+    // ---- Blank submission: handled locally, never enqueued, no quota burn.
+    const stripHtml = (s: any) => String(s || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ");
+    const combined = [
+      text, informalAnswer, formalAnswer, ...shortAnswers, ...part3Answers,
+    ].map(stripHtml).join(" ").replace(/\s+/g, " ").trim();
+    if (combined.length < 10) {
+      const { WRITING_NOT_ATTEMPTED_FEEDBACK } = await import("@/components/writing/writingGradingV2");
+      setV2Grading({
         partType,
-        partScore: Math.round(Number(v2.rawPart) || 0),
+        partScore: 0,
         maxPoints: 30,
         addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0,
         coherencePenaltyPercent: 0, openingClosingPenalty: 0,
-        grammarErrors: (v2.grammarErrors as any) || [],
-        spellingErrors: (v2.spellingErrors as any) || [],
-        feedback: v2.feedback || v2.analysis || "",
-        improvedVersion: v2.improvedVersion || "",
-      };
-      setV2Grading(result);
-
-      // Persist single-part writing score (no CEFR — a lone part cannot yield a band).
-      try {
-        const { saveWritingSkillResult } = await import("@/components/writing/writingGradingV2");
-        const rawPart = Number(v2.rawPart) || 0;
-        await saveWritingSkillResult({
-          testResultId: (trid as string | null) ?? null,
-          examSetId: examSetId ?? null,
-          parts: { [partType]: { ...v2, rawPart } },
-          rawTotal: rawPart,
-          scale50: Math.round((rawPart / 30) * 50),
-          cefr: "",
-          greyZone: false,
-          flagReview: false,
-        });
-        window.dispatchEvent(new Event("exam-result-saved"));
-      } catch (e) { console.warn("[Writing] save skill result failed", e); }
-    } catch (e: any) {
-      if (e instanceof QuotaExceededError) {
-        quotaHit = e.info;
-      } else {
-        toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
-      }
-    } finally {
-      setV2Loading(false);
-    }
-
-    if (quotaHit) {
-      setQuotaModal(quotaHit);
-      setPhase("practice");
+        grammarErrors: [], spellingErrors: [],
+        feedback: WRITING_NOT_ATTEMPTED_FEEDBACK,
+        improvedVersion: "",
+      } as WritingGradingResult);
+      setPhase("results");
       return;
     }
 
-
-
-    // Bake AI grading into the saved review_snapshot so History review is self-sufficient.
+    // ---- Background grading via grading_jobs (worker updates test_results +
+    // inserts writing_skill_results / writing_question_gradings).
+    setV2Loading(true);
+    setQueuePending(true);
+    setQueueTimedOut(false);
     try {
-      if (trid && result && (result as any).partScore !== undefined) {
-        const w = result as WritingGradingResult;
-        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-        const ai = {
-          partScore: w.partScore,
-          maxPoints: w.maxPoints,
-          grammarErrors: w.grammarErrors || [],
-          spellingErrors: w.spellingErrors || [],
-          feedback: w.feedback || null,
-        };
-        // Writing snapshots are single-item per part (one merged "text" item).
-        await mergeSnapshotAI(trid as string, { 0: ai }, {
-          score: w.partScore,
-          total: w.maxPoints,
-          scaled50: w.maxPoints > 0 ? Math.round((w.partScore / w.maxPoints) * 50) : null,
-        });
-      }
-    } catch (e) { console.warn("[Writing] bake AI failed", e); }
+      const { buildWritingGradePayload } = await import("@/components/writing/writingGradingV2");
+      const { enqueueGradingFallback } = await import("@/lib/gradingQueue");
+      const queued = await enqueueGradingFallback({
+        skill: "writing",
+        partType,
+        testResultId: (trid as string | null) ?? null,
+        examSetId: examSetId ?? null,
+        fullTestSessionId: null,
+        payload: buildWritingGradePayload(partType, questions, text, partsArg, null),
+      });
 
-    setPhase("results");
+      if (!queued.id) {
+        const code = queued.errorCode || "";
+        if (/quota_exceeded|disabled/i.test(code)) {
+          setV2Loading(false);
+          setQueuePending(false);
+          setQuotaModal({ used: 0, cap: 0, tier: "free", need: "pro" } as QuotaInfo);
+          setPhase("practice");
+          return;
+        }
+        setQueueTimedOut(true);
+        setV2Loading(false);
+        return;
+      }
+
+      if (typeof trid !== "string" || !trid) {
+        setQueueTimedOut(true);
+        setV2Loading(false);
+        return;
+      }
+
+      // Poll every 6s, up to 5 minutes.
+      const { supabase } = await import("@/integrations/supabase/client");
+      const deadline = Date.now() + 5 * 60 * 1000;
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 6000));
+        const { data } = await (supabase as any)
+          .from("writing_question_gradings")
+          .select("part_score, max_points, grammar_errors, spelling_errors, feedback")
+          .eq("test_result_id", trid)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!data) continue;
+        setV2Grading({
+          partType,
+          partScore: Math.round(Number(data.part_score) || 0),
+          maxPoints: Number(data.max_points) || 30,
+          addressPercent: 0, bonusPercent: 0, wordPenaltyPercent: 0,
+          coherencePenaltyPercent: 0, openingClosingPenalty: 0,
+          grammarErrors: (data.grammar_errors as any) || [],
+          spellingErrors: (data.spelling_errors as any) || [],
+          feedback: data.feedback || "",
+          improvedVersion: "",
+        } as WritingGradingResult);
+        setQueuePending(false);
+        setV2Loading(false);
+        window.dispatchEvent(new Event("exam-result-saved"));
+        setPhase("results");
+        return;
+      }
+      setQueueTimedOut(true);
+      setV2Loading(false);
+    } catch (e: any) {
+      setV2Loading(false);
+      if (e instanceof QuotaExceededError) {
+        setQuotaModal(e.info);
+        setQueuePending(false);
+        setPhase("practice");
+        return;
+      }
+      toast.error("Không chấm được bài. Bài làm đã được lưu, vui lòng thử lại sau.");
+      setQueueTimedOut(true);
+    }
+
   }, [onComplete, onPartAnswers, shortAnswers, textAnswer, part3Answers, informalAnswer, formalAnswer, partType, skipIntro, isLastPart, sourceQuestionIds]);
 
   const partLabel = PART_LABELS[partType];
@@ -528,7 +554,31 @@ const WritingExamEngine = ({
         <ExamHeader skillLabel="Writing" partLabel="Results" onExit={onExit} />
         <div className="flex-1 px-4 pt-8 pb-10">
           <PausedTimeNotice pausedMs={pausedMs} />
+          {(queuePending || queueTimedOut) && !v2Grading ? (
+            <div className="max-w-2xl mx-auto rounded-2xl bg-card border border-border p-6 text-center space-y-4">
+              {queueTimedOut ? (
+                <p className="text-base text-foreground">
+                  Bài đã lưu và đang chờ chấm, xem lại trong Lịch sử sau ít phút.
+                </p>
+              ) : (
+                <>
+                  <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <p className="text-base text-foreground">
+                    AI Kỳ Tích đang chấm bài viết — thường mất 1–3 phút. Bạn có thể thoát ra làm đề khác,
+                    kết quả sẽ có trong Lịch sử.
+                  </p>
+                </>
+              )}
+              <button
+                onClick={onExit}
+                className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-[#4D0D0D] transition-colors"
+              >
+                Thoát
+              </button>
+            </div>
+          ) : (
           <WritingResults
+
             isGrading={v2Loading || isGrading}
             grading={(v2Grading ?? grading) as import("@/hooks/useExamGrading").WritingGradingResult | null}
             onExit={onExit}
@@ -538,7 +588,9 @@ const WritingExamEngine = ({
             testResultId={submittedTestResultId}
             partType={partType}
           />
+          )}
         </div>
+
       </div>
     );
   }
