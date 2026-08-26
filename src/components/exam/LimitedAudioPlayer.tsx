@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { CircleDot, CirclePlay, RefreshCw, LogIn } from "lucide-react";
-import { resolveAudioUrl, bustAudioUrlCache } from "@/lib/audioUrl";
+import { resolveAudioUrl, bustAudioUrlCache, resolveAudioBlobUrl, revokeAudioBlobUrl, hasAudioBlob } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
 import { logClientError } from "@/lib/clientErrorLog";
@@ -88,6 +88,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [introSpeaking, setIntroSpeaking] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
+  const blobPathsRef = useRef<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [blocked, setBlocked] = useState(false);
   const retryCountRef = useRef(0);
@@ -152,12 +153,28 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
 
 
+  /**
+   * Downloads the whole file (blob URL) before playback so slow networks can't
+   * cause mid-playback stutter. Falls back to the signed URL inside the helper.
+   */
+  const loadAudioSrc = useCallback(async (path: string): Promise<string | null> => {
+    if (!path) return null;
+    if (hasAudioBlob(path)) return resolveAudioBlobUrl(path);
+    blobPathsRef.current.add(path);
+    setLoadingAudio(true);
+    try {
+      return await resolveAudioBlobUrl(path);
+    } finally {
+      setLoadingAudio(false);
+    }
+  }, []);
+
   const resolve = useCallback(async (force = false): Promise<string | null> => {
     if (!src) return null;
-    if (force) bustAudioUrlCache(src);
+    if (force) bustAudioUrlCache(src); revokeAudioBlobUrl(src);
     setErrorMsg("");
     try {
-      const url = await resolveAudioUrl(src);
+      const url = await loadAudioSrc(src);
       if (!url) {
         // Never put the raw storage path in <audio> — it triggers NotSupportedError.
         signFailedRef.current = true;
@@ -186,7 +203,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     if (src) {
       (async () => {
         try {
-          const url = await resolveAudioUrl(src);
+          const url = await loadAudioSrc(src);
           if (cancelled) return;
           if (!url) {
             console.error("[LimitedAudioPlayer] resolveAudioUrl returned null for:", src);
@@ -250,6 +267,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         /* noop */
       }
       releaseIfMine(el);
+      for (const p of blobPathsRef.current) revokeAudioBlobUrl(p);
+      blobPathsRef.current.clear();
     };
   }, []);
 
@@ -323,8 +342,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       const pos = audio.currentTime;
       const activeSrc = activeSrcRef.current || src;
       setErrorMsg("Đang nối lại audio...");
-      bustAudioUrlCache(activeSrc);
-      const url = await resolveAudioUrl(activeSrc);
+      bustAudioUrlCache(activeSrc); revokeAudioBlobUrl(activeSrc);
+      const url = await loadAudioSrc(activeSrc);
       if (!url) {
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
@@ -360,8 +379,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         // reload, restore the saved position, and play once more before
         // surfacing an error to the student.
         try {
-          bustAudioUrlCache(activeSrc);
-          const retryUrl = await resolveAudioUrl(activeSrc);
+          bustAudioUrlCache(activeSrc); revokeAudioBlobUrl(activeSrc);
+          const retryUrl = await loadAudioSrc(activeSrc);
           if (retryUrl) {
             if (activeSrc === src) setResolvedSrc(retryUrl);
             audio.src = retryUrl;
@@ -508,7 +527,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const prewarmActiveSource = async (audio: HTMLAudioElement, isFirstPlay: boolean) => {
     const activeSrc = !isFirstPlay && src2 ? src2 : src;
     try {
-      const url = await resolveAudioUrl(activeSrc);
+      const url = await loadAudioSrc(activeSrc);
       if (!url) return;
       // Don't fight the silent priming play for the element.
       for (let i = 0; i < 40 && primingRef.current; i++) {
@@ -546,13 +565,13 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         signFailedRef.current ||
         retryCountRef.current > 0 ||
         !resolvedSrc ||
-        !/^https?:/.test(audio.src || "");
-      if (needsFresh) bustAudioUrlCache(activeSrc);
-      let url = await resolveAudioUrl(activeSrc);
+        !/^(https?|blob):/.test(audio.src || "");
+      if (needsFresh) bustAudioUrlCache(activeSrc); revokeAudioBlobUrl(activeSrc);
+      let url = await loadAudioSrc(activeSrc);
       if (!url) {
         // Bust cache and try once more (expired / transient failure).
-        bustAudioUrlCache(activeSrc);
-        url = await resolveAudioUrl(activeSrc);
+        bustAudioUrlCache(activeSrc); revokeAudioBlobUrl(activeSrc);
+        url = await loadAudioSrc(activeSrc);
       }
       if (!url) {
         signFailedRef.current = true;
