@@ -93,3 +93,70 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
 
   return null;
 }
+
+/* ------------------------------------------------------------------ */
+/* Full-file blob caching                                              */
+/* Downloads the whole audio file before playback so slow networks     */
+/* cannot cause mid-playback stutter/stalls.                           */
+/* ------------------------------------------------------------------ */
+
+const blobCache = new Map<string, string>();
+const blobInflight = new Map<string, Promise<string | null>>();
+
+/**
+ * Resolves a storage path (or external URL) to a Blob object URL holding the
+ * entire file. Falls back to the plain signed URL on any fetch failure.
+ */
+export async function resolveAudioBlobUrl(path: string): Promise<string | null> {
+  if (!path) return null;
+
+  const cached = blobCache.get(path);
+  if (cached) return cached;
+
+  const inflight = blobInflight.get(path);
+  if (inflight) return inflight;
+
+  const task = (async (): Promise<string | null> => {
+    const signed = await resolveAudioUrl(path);
+    if (!signed) return null;
+    try {
+      const res = await fetch(signed);
+      if (!res.ok) return signed;
+      const blob = await res.blob();
+      if (!blob.size) return signed;
+      const objectUrl = URL.createObjectURL(blob);
+      blobCache.set(path, objectUrl);
+      return objectUrl;
+    } catch {
+      return signed;
+    }
+  })();
+
+  blobInflight.set(path, task);
+  try {
+    return await task;
+  } finally {
+    blobInflight.delete(path);
+  }
+}
+
+/** Frees the cached object URL for a path (call on unmount to avoid leaks). */
+export function revokeAudioBlobUrl(path?: string) {
+  if (!path) {
+    for (const url of blobCache.values()) {
+      try { URL.revokeObjectURL(url); } catch { /* noop */ }
+    }
+    blobCache.clear();
+    return;
+  }
+  const url = blobCache.get(path);
+  if (url) {
+    try { URL.revokeObjectURL(url); } catch { /* noop */ }
+    blobCache.delete(path);
+  }
+}
+
+/** True when a full-file blob for this path is already cached. */
+export function hasAudioBlob(path?: string | null): boolean {
+  return !!path && blobCache.has(path);
+}
