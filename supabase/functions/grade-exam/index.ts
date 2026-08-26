@@ -622,7 +622,11 @@ Be honest, strict, fair. Do not invent content the student didn't say.${
                   required: ["transcript", "onTopic", "improvedVersion", "upgradeTips"],
                 },
               },
-              fullTranscript: { type: "string", description: "Verbatim transcription of the ENTIRE audio, uncut, before any segmentation." },
+              // Part 4 needs the full monologue to segment it; Parts 1–3 don't
+              // (it doubled the call latency and caused timeouts).
+              ...(isPart4
+                ? { fullTranscript: { type: "string", description: "Verbatim transcription of the ENTIRE audio, uncut, before any segmentation." } }
+                : {}),
               analysis: { type: "string" },
               criteriaAnalysis: {
                 type: "object",
