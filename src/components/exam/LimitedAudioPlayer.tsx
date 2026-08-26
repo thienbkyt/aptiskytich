@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { CircleDot, CirclePlay, RefreshCw, LogIn } from "lucide-react";
-import { resolveAudioUrl, bustAudioUrlCache, resolveAudioBlobUrl, revokeAudioBlobUrl, hasAudioBlob } from "@/lib/audioUrl";
+import { bustAudioUrlCache, resolveAudioBlobUrl, revokeAudioBlobUrl, hasAudioBlob } from "@/lib/audioUrl";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { speakAsync, stopTTS, unlockAudio, prefetchTTS } from "@/lib/tts";
 import { logClientError } from "@/lib/clientErrorLog";
