@@ -245,8 +245,50 @@ async function persistSpeakingPart(job: any, body: any): Promise<{ rawPart: numb
   } as any).eq("id", job.test_result_id);
   if (trErr) throw new Error(`test_results update failed: ${trErr.message}`);
 
+  // ── Standalone part (no full-test session) ────────────────────────────────
+  // Same reasoning as persistWritingPart: the session finalizer only runs for
+  // full tests, so a lone part must write its own speaking_skill_results row.
+  // The single-part client polls this table for the result.
+  const sessionId: string | null = meta.fullTestSessionId ?? null;
+  if (!sessionId) {
+    const { data: existing, error: exErr } = await admin
+      .from("speaking_skill_results")
+      .select("id")
+      .eq("test_result_id", job.test_result_id)
+      .maybeSingle();
+    if (exErr) throw new Error(`speaking_skill_results lookup failed: ${exErr.message}`);
+    if (!existing?.id) {
+      const scale50 = Math.round((rawPart / 30) * 50);
+      const { error: srErr } = await admin.from("speaking_skill_results").insert({
+        user_id: job.user_id,
+        test_result_id: job.test_result_id,
+        exam_set_id: meta.examSetId ?? null,
+        full_test_session_id: null,
+        parts: {
+          [partType]: {
+            bands: body.bands ?? null,
+            rawPart,
+            perItem: perItem,
+            analysis: body.analysis || "",
+            criteriaAnalysis: body.criteriaAnalysis ?? null,
+            improvedVersion: body.improvedVersion || "",
+            fullTranscript: body.fullTranscript ?? null,
+          },
+        },
+        raw_total: rawPart,
+        scale50,
+        cefr: "",
+        grey_zone: false,
+        flag_review: false,
+        feedback: body.feedback || body.analysis || "",
+      } as any);
+      if (srErr) throw new Error(`speaking_skill_results insert failed: ${srErr.message}`);
+    }
+  }
+
   return { rawPart };
 }
+
 
 // ─── finalize (all 4 parts of a session) ────────────────────────────────────
 

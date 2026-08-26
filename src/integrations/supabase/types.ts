@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -564,6 +564,63 @@ export type Database = {
           backed_up_at?: string | null
           extra_data?: Json | null
           id?: string | null
+        }
+        Relationships: []
+      }
+      backup_speaking_timeout_jobs_20260824: {
+        Row: {
+          attempts: number | null
+          backed_up_at: string | null
+          finished_at: string | null
+          id: string | null
+          last_error: string | null
+          status: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          backed_up_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          status?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          backed_up_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+      backup_sub_giaupham_20260825: {
+        Row: {
+          ai_daily_cap: number | null
+          backed_up_at: string | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          backed_up_at?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          backed_up_at?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
