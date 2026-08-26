@@ -3397,6 +3397,24 @@ export type Database = {
         }
         Relationships: []
       }
+      trash_images_20260826: {
+        Row: {
+          b: string | null
+          f: string | null
+          size: number | null
+        }
+        Insert: {
+          b?: string | null
+          f?: string | null
+          size?: number | null
+        }
+        Update: {
+          b?: string | null
+          f?: string | null
+          size?: number | null
+        }
+        Relationships: []
+      }
       usage_events: {
         Row: {
           created_at: string
