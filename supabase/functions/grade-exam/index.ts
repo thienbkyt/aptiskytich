@@ -794,7 +794,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.${
                   finishReason: retryJson?.choices?.[0]?.finish_reason ?? null,
                   attempt: 2,
                   gradingSessionId,
-                  metadata: { mode: "speaking_v2", partType, repair: "part4_segmentation" },
+                  metadata: { mode: "speaking_v2", partType, repair: "part4_segmentation", durationMs: speakDurationMs, gatewayAttempts: speakGatewayAttempts },
                 });
               } catch { /* ignore */ }
             }
