@@ -571,7 +571,9 @@ RÀNG BUỘC BẮT BUỘC VỀ DẪN CHỨNG (áp dụng cho analysis, criteriaA
 
 Be honest, strict, fair. Do not invent content the student didn't say.${
         isPart4 ? "" : "\nDo NOT transcribe the full recording separately; per-item transcripts are sufficient."
-      }`;
+      }
+
+CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only background noise (fan, static, breathing). If you cannot hear clearly intelligible SPEECH in an audio, you MUST return transcript='' and onTopic=false for that item. NEVER infer, guess, or compose an answer based on the question text. A plausible answer that fits the question is NOT evidence of speech — transcribe ONLY what is actually audible. If unsure whether speech is present, treat it as silent.`;
 
       // For non-Part4: send only spoken audios, but label every question and note which have NO AUDIO.
       // For Part4: single monologue; we already know anySpoken is true here.
@@ -614,7 +616,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.${
                   type: "object",
                   additionalProperties: false,
                   properties: {
-                    transcript: { type: "string" },
+                    transcript: { type: "string", description: "Verbatim transcription of clearly audible speech ONLY. Empty string if the audio is silent or unintelligible. Never invent content." },
                     onTopic: { type: "boolean" },
                     improvedVersion: { type: "string", description: "Upgraded English rewrite of THIS answer/sub-segment. Empty string if silent." },
                     upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis-oriented tips to score higher on THIS answer (complex grammar, linking words, idea development, vocabulary upgrades). Empty if silent." },
