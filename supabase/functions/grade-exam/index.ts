@@ -819,7 +819,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.${
           finishReason: aiJson?.choices?.[0]?.finish_reason ?? null,
           attempt: finalGatewayAttempt,
           gradingSessionId,
-          metadata: { mode: "speaking_v2", partType },
+          metadata: { mode: "speaking_v2", partType, durationMs: speakDurationMs, gatewayAttempts: speakGatewayAttempts },
         });
       } catch { /* ignore */ }
       try {
