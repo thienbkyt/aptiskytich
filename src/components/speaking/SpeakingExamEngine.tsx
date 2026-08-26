@@ -494,7 +494,7 @@ const SpeakingExamEngine = ({
           partType,
         );
 
-        await enqueueGradingFallback({
+        const queued = await enqueueGradingFallback({
           skill: "speaking",
           partType,
           testResultId,
@@ -502,6 +502,18 @@ const SpeakingExamEngine = ({
           fullTestSessionId: null,
           payload: { type: "speaking_v2", partType, questions, audioPaths },
         });
+
+        if (!queued.id) {
+          if (cancelled) return;
+          const code = queued.errorCode || "";
+          if (/quota_exceeded|disabled/i.test(code)) {
+            setQuotaModal({ used: 0, cap: 0, tier: "free", need: "pro" } as QuotaInfo);
+            setQueuePending(false);
+          } else {
+            setQueueTimedOut(true);
+          }
+          return;
+        }
 
         if (!testResultId) {
           if (!cancelled) setQueueTimedOut(true);
