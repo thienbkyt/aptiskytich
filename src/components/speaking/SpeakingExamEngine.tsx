@@ -186,6 +186,12 @@ const SpeakingExamEngine = ({
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const volumeAudioContextRef = useRef<AudioContext | null>(null);
+  const volumeAnalyserRef = useRef<AnalyserNode | null>(null);
+  const volumeSampleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentMaxRmsRef = useRef(0);
+  const maxRmsByQuestionRef = useRef<number[]>([]);
+  const silentByQuestionRef = useRef<boolean[]>([]);
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
   const adminNavLockedRef = useRef(false);
@@ -209,6 +215,24 @@ const SpeakingExamEngine = ({
   const pendingAdvanceRef = useRef<number | null>(null);
   // One-shot guard: only log the missing-image diagnostic once per part render.
   const missingImageLoggedRef = useRef(false);
+
+  // RMS is measured on a normalized 0..1 scale. Tune this threshold if real
+  // devices prove consistently quieter/louder; background noise should stay below it.
+  const SILENCE_RMS_THRESHOLD = 0.01;
+
+  const stopVolumeMeasurement = useCallback(() => {
+    if (volumeSampleTimerRef.current) {
+      clearInterval(volumeSampleTimerRef.current);
+      volumeSampleTimerRef.current = null;
+    }
+    try { volumeAnalyserRef.current?.disconnect(); } catch { /* noop */ }
+    volumeAnalyserRef.current = null;
+    const context = volumeAudioContextRef.current;
+    volumeAudioContextRef.current = null;
+    if (context && context.state !== "closed") {
+      void context.close().catch(() => undefined);
+    }
+  }, []);
 
 
 
@@ -392,6 +416,8 @@ const SpeakingExamEngine = ({
     setRecordings(new Array(total).fill(null));
     recordingsRef.current = new Array(total).fill(null);
     durationsRef.current = new Array(total).fill(null);
+    maxRmsByQuestionRef.current = new Array(total).fill(0);
+    silentByQuestionRef.current = new Array(total).fill(false);
   }, [partType]);
 
   // Ensure exam-mode dark overrides apply across ALL speaking phases
@@ -412,6 +438,7 @@ const SpeakingExamEngine = ({
       if (timerRef.current) clearInterval(timerRef.current);
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
       if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
+      stopVolumeMeasurement();
       // Stop the exam voice (ElevenLabs/OpenAI audio element) as well as browser TTS.
       try { stopTTS(); } catch { /* noop */ }
       // Drop any in-progress recording: it must NOT be graded or counted as a submission.
@@ -425,7 +452,7 @@ const SpeakingExamEngine = ({
       }
       window.speechSynthesis?.cancel();
     };
-  }, []);
+  }, [stopVolumeMeasurement]);
 
   // Single-part mode: when phase becomes "done", grade in the BACKGROUND via the
   // grading_jobs queue (upload audio → enqueue → poll speaking_skill_results).
@@ -436,12 +463,13 @@ const SpeakingExamEngine = ({
     v2RanRef.current = true;
 
     const promptsList: string[] = getPromptList();
-    const blobs = recordingsRef.current.slice();
+    const blobs = recordingsRef.current.map((blob, index) =>
+      silentByQuestionRef.current[index] ? null : blob,
+    );
     const questions = promptsList.map((q) => ({ questionText: q }));
 
-    // Keep the existing "no audio recorded" short-circuit: never enqueue silence.
-    const MIN_AUDIO_BYTES = 30000;
-    const anySpoken = blobs.some((b) => !!b && b.size >= MIN_AUDIO_BYTES);
+    // Never enqueue a part where RMS measurement found no intelligible speech.
+    const anySpoken = blobs.some(Boolean);
     if (!anySpoken) {
       setV2Error(
         "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.",
@@ -650,6 +678,31 @@ const SpeakingExamEngine = ({
     try {
       streamRef.current = stream;
 
+      stopVolumeMeasurement();
+      currentMaxRmsRef.current = 0;
+      try {
+        const AudioContextCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (AudioContextCtor) {
+          const context = new AudioContextCtor();
+          const source = context.createMediaStreamSource(stream);
+          const analyser = context.createAnalyser();
+          analyser.fftSize = 2048;
+          source.connect(analyser);
+          volumeAudioContextRef.current = context;
+          volumeAnalyserRef.current = analyser;
+          const samples = new Float32Array(analyser.fftSize);
+          volumeSampleTimerRef.current = setInterval(() => {
+            analyser.getFloatTimeDomainData(samples);
+            let sumSquares = 0;
+            for (let i = 0; i < samples.length; i += 1) sumSquares += samples[i] * samples[i];
+            const rms = Math.sqrt(sumSquares / samples.length);
+            if (rms > currentMaxRmsRef.current) currentMaxRmsRef.current = rms;
+          }, 200);
+        }
+      } catch (error) {
+        console.warn("[SpeakingExamEngine] volume measurement unavailable", error);
+      }
+
       // Detect mid-recording disconnects (mic unplugged, OS revokes permission, etc.)
       stream.getAudioTracks().forEach((track) => {
         track.onended = () => {
@@ -685,6 +738,7 @@ const SpeakingExamEngine = ({
       };
 
       mediaRecorder.onstop = () => {
+        stopVolumeMeasurement();
         if (suppressRecordingSaveRef.current || token !== flowTokenRef.current) {
           suppressRecordingSaveRef.current = false;
           chunksRef.current = [];
@@ -699,7 +753,11 @@ const SpeakingExamEngine = ({
           return;
         }
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const url = URL.createObjectURL(blob);
+        const maxRms = currentMaxRmsRef.current;
+        const isSilent = maxRms < SILENCE_RMS_THRESHOLD;
+        maxRmsByQuestionRef.current[recordingIndex] = maxRms;
+        silentByQuestionRef.current[recordingIndex] = isSilent;
+        const url = isSilent ? null : URL.createObjectURL(blob);
         // Record actual spoken duration (capped at speakTime).
         const startedAt = recordingStartRef.current;
         const elapsedSec = startedAt
@@ -879,16 +937,27 @@ const SpeakingExamEngine = ({
     // raw recordings + grading specs and immediately advance — no per-part
     // DB save, no in-engine grading, no "done" screen here.
     if (fullFlow) {
+      const effectiveRecordings = recordingsRef.current.map((blob, index) =>
+        silentByQuestionRef.current[index] ? null : blob,
+      );
+      if (!effectiveRecordings.some(Boolean)) {
+        setV2Error(
+          "Không nhận được âm thanh từ micro. Bài này không được chấm và không bị trừ lượt. Hãy kiểm tra micro rồi thu lại.",
+        );
+        setIsGrading(false);
+        setPhase("done");
+        return;
+      }
       try {
         const specs = buildSpeakingGradingSpecs(partType, { part1Data, part2Data, part3Data, part4Data });
         const items: SpeakingPartSubmissionItem[] = await Promise.all(
           specs.map(async (spec, idx) => {
-            const blob = recordingsRef.current[idx] ?? null;
+            const blob = effectiveRecordings[idx] ?? null;
             const audioBase64 = blob ? await blobToBase64(blob).catch(() => null) : null;
             return {
               spec,
               audioBase64,
-              audioUrl: recordings[idx] ?? (blob ? URL.createObjectURL(blob) : null),
+              audioUrl: blob ? (recordings[idx] ?? URL.createObjectURL(blob)) : null,
               blob,
               actualSpoken: durationsRef.current[idx] ?? 0,
             };
@@ -941,7 +1010,7 @@ const SpeakingExamEngine = ({
       if (sourceQuestionIds && sourceQuestionIds.length > 0) {
         const perQuestion = sourceQuestionIds.map((qid, idx) => ({
           exam_question_id: qid,
-          user_answer: recordingsRef.current[idx] ? "(recorded)" : null,
+          user_answer: recordingsRef.current[idx] && !silentByQuestionRef.current[idx] ? "(recorded)" : null,
           is_correct: false,
         }));
         const trid = await saveExamResult({
@@ -987,7 +1056,9 @@ const SpeakingExamEngine = ({
     // so we can bake them into the snapshot items.
     const uploadedPaths: (string | null)[] = [];
     try {
-      const currentRecordings = recordingsRef.current;
+      const currentRecordings = recordingsRef.current.map((blob, index) =>
+        silentByQuestionRef.current[index] ? null : blob,
+      );
       await Promise.all(
         currentRecordings.map(async (blob, idx) => {
           if (!blob) { uploadedPaths[idx] = null; return; }
@@ -1036,6 +1107,7 @@ const SpeakingExamEngine = ({
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
     if (transitionTimeoutRef.current) { clearTimeout(transitionTimeoutRef.current); transitionTimeoutRef.current = null; }
+    stopVolumeMeasurement();
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       suppressRecordingSaveRef.current = true;
       try { mediaRecorderRef.current.stop(); } catch { /* noop */ }
@@ -1055,6 +1127,7 @@ const SpeakingExamEngine = ({
     try { window.speechSynthesis?.cancel(); } catch (e) { console.warn("[SpeakingExamEngine] speechSynthesis.cancel failed:", e); }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     if (finishTimerRef.current) { clearTimeout(finishTimerRef.current); finishTimerRef.current = null; }
+    stopVolumeMeasurement();
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       suppressRecordingSaveRef.current = suppressCurrentRecording;
       try { mediaRecorderRef.current.stop(); } catch (e) { console.warn("[SpeakingExamEngine] mediaRecorder.stop failed:", e); }
