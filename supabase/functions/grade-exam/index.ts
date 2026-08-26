@@ -663,7 +663,12 @@ Be honest, strict, fair. Do not invent content the student didn't say.${
       const MODEL_V2 = "google/gemini-2.5-flash";
 
       const timeoutMsSpeak = 170_000;
+      // Telemetry: latency of the LAST gateway call + how many calls were made.
+      let speakDurationMs = 0;
+      let speakGatewayAttempts = 0;
       const callGatewaySpeak = async (repairNote?: string): Promise<Response> => {
+        speakGatewayAttempts += 1;
+        const startedAt = Date.now();
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMsSpeak);
         try {
