@@ -1378,7 +1378,12 @@ ${partsIn.formalText ?? ""}`;
         "với giá trị đúng theo rubric. Chỉ được cho 0 khi bài làm thực sự trống hoặc hoàn toàn không liên quan.",
       ].join(" ");
 
+      // Telemetry: latency of the LAST gateway call + how many calls were made.
+      let writeDurationMs = 0;
+      let writeGatewayAttempts = 0;
       const callGatewayV2 = async (maxTokens: number, repairNote?: string): Promise<Response> => {
+        writeGatewayAttempts += 1;
+        const startedAt = Date.now();
         const controller = new AbortController();
         // Edge function wall-clock ceiling is ~150s, so task4 stops at 140s to
         // leave room for response serialisation instead of dying mid-write.
