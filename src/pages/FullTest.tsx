@@ -285,6 +285,16 @@ const FullTest = () => {
                 <TechSkeleton key={i} variant="card" className="h-52" />
               ))}
             </div>
+          ) : error ? (
+            <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
+              <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
+              <p className="text-muted-foreground font-medium mb-4">
+                Không tải được danh sách đề. Vui lòng thử lại.
+              </p>
+              <Button onClick={reload} className="bg-primary hover:bg-brand-brown text-white font-semibold gap-1.5">
+                Thử lại <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           ) : tests.length === 0 ? (
             <div className="text-center py-16 bg-card border border-dashed border-border rounded-xl">
               <ClipboardCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
