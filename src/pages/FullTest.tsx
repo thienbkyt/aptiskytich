@@ -45,7 +45,7 @@ const FullTest = () => {
   if (tabParam === "key" || tabParam === "prediction") {
     return <Navigate to="/key-du-doan" replace />;
   }
-  const { tests, loading } = useFullTests("aptis");
+  const { tests, loading, error, reload } = useFullTests("aptis");
   const { user: authUser, loading: authLoading } = useAuth();
   const { bands } = useUserFullTestBands();
   const [activeTest, setActiveTest] = useState<FullTestItem | null>(null);
