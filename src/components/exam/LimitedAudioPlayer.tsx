@@ -171,7 +171,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
   const resolve = useCallback(async (force = false): Promise<string | null> => {
     if (!src) return null;
-    if (force) bustAudioUrlCache(src); revokeAudioBlobUrl(src);
+    if (force) { bustAudioUrlCache(src); revokeAudioBlobUrl(src); }
     setErrorMsg("");
     try {
       const url = await loadAudioSrc(src);
@@ -566,7 +566,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         retryCountRef.current > 0 ||
         !resolvedSrc ||
         !/^(https?|blob):/.test(audio.src || "");
-      if (needsFresh) bustAudioUrlCache(activeSrc); revokeAudioBlobUrl(activeSrc);
+      if (needsFresh) { bustAudioUrlCache(activeSrc); revokeAudioBlobUrl(activeSrc); }
       let url = await loadAudioSrc(activeSrc);
       if (!url) {
         // Bust cache and try once more (expired / transient failure).
