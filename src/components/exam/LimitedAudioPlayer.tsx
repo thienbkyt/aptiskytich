@@ -355,6 +355,28 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         setErrorMsg("");
         return true;
       } catch (e) {
+        // One automatic retry: the freshly signed URL may itself be stale or
+        // the network blip may persist. Re-sign from scratch (cache busted),
+        // reload, restore the saved position, and play once more before
+        // surfacing an error to the student.
+        try {
+          bustAudioUrlCache(activeSrc);
+          const retryUrl = await resolveAudioUrl(activeSrc);
+          if (retryUrl) {
+            if (activeSrc === src) setResolvedSrc(retryUrl);
+            audio.src = retryUrl;
+            audio.load();
+            await waitForReady(audio);
+            try { audio.currentTime = pos; } catch { /* noop */ }
+            stopOthers(audio);
+            await audio.play();
+            lastTimeUpdateRef.current = Date.now();
+            setErrorMsg("");
+            return true;
+          }
+        } catch {
+          /* fall through — surface the original error */
+        }
         setIsPlaying(false);
         setErrorMsg("Không phát được audio. Bấm Thử lại.");
         logAudioError("resume_play_failed", e, audio, activeSrc, undefined, "error", {
