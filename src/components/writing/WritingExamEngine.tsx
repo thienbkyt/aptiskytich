@@ -156,6 +156,9 @@ const WritingExamEngine = ({
   const [v2Loading, setV2Loading] = useState(false);
   const [submittedTestResultId, setSubmittedTestResultId] = useState<string | null>(null);
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
+  const [queuePending, setQueuePending] = useState(false);
+  const [queueTimedOut, setQueueTimedOut] = useState(false);
+
 
   const effectiveGrading = (gradingResult ?? v2Grading ?? grading) as WritingGradingResult | null;
 
