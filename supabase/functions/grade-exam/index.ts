@@ -1412,6 +1412,7 @@ ${partsIn.formalText ?? ""}`;
             }),
           });
         } finally {
+          writeDurationMs = Date.now() - startedAt;
           clearTimeout(timeoutId);
         }
       };
