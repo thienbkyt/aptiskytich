@@ -327,6 +327,114 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp1_chuanhoa_20260826: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          set_title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_lp2_chuanhoa_20260826: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          set_title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_de09_20260815: {
         Row: {
           backed_up_at: string | null
@@ -390,6 +498,114 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp3_chuanhoa_20260826: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          set_title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_lp3_de03_univ_20260826: {
+        Row: {
+          backed_up_at: string | null
+          correct_answer: number | null
+          explanation: string | null
+          id: string | null
+          order_index: number | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          explanation?: string | null
+          id?: string | null
+          order_index?: number | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          explanation?: string | null
+          id?: string | null
+          order_index?: number | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
+      backup_lp3_thutu_20260826: {
+        Row: {
+          backed_up_at: string | null
+          correct_answer: number | null
+          exam_set_id: string | null
+          id: string | null
+          order_index: number | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          exam_set_id?: string | null
+          id?: string | null
+          order_index?: number | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_up_at?: string | null
+          correct_answer?: number | null
+          exam_set_id?: string | null
+          id?: string | null
+          order_index?: number | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       backup_lp3_trungcauhoi_20260823: {
         Row: {
           backed_up_at: string | null
@@ -417,6 +633,60 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp4_chuanhoa_20260826: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          set_title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          set_title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_phu_speaking_20260819: {
         Row: {
           backed_up_at: string | null
@@ -435,6 +705,129 @@ export type Database = {
           data?: Json | null
           row_id?: string | null
           src?: string | null
+        }
+        Relationships: []
+      }
+      backup_qa_fix_26082026: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_r5_de09_cache_20260826: {
+        Row: {
+          content_hash: string | null
+          created_at: string | null
+          data: Json | null
+          exam_set_id: string | null
+        }
+        Insert: {
+          content_hash?: string | null
+          created_at?: string | null
+          data?: Json | null
+          exam_set_id?: string | null
+        }
+        Update: {
+          content_hash?: string | null
+          created_at?: string | null
+          data?: Json | null
+          exam_set_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_r5_de09_paraindex_20260826: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -678,6 +1071,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_sub_giaupham_double_20260826: {
+        Row: {
+          ai_daily_cap: number | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_urbanfarming_de11_20260826: {
         Row: {
           audio_url: string | null
@@ -765,6 +1185,57 @@ export type Database = {
           backed_up_at?: string | null
           extra_data?: Json | null
           id?: string | null
+        }
+        Relationships: []
+      }
+      backup_wp2_techclub_20260826: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2908,6 +3379,21 @@ export type Database = {
           part?: string | null
           skill?: string | null
           ten?: string | null
+        }
+        Relationships: []
+      }
+      trash_audio_20260826: {
+        Row: {
+          f: string | null
+          size: number | null
+        }
+        Insert: {
+          f?: string | null
+          size?: number | null
+        }
+        Update: {
+          f?: string | null
+          size?: number | null
         }
         Relationships: []
       }
