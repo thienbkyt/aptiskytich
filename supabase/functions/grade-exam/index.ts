@@ -569,7 +569,9 @@ RÀNG BUỘC BẮT BUỘC VỀ DẪN CHỨNG (áp dụng cho analysis, criteriaA
 - Nếu muốn gợi ý cách nói tốt hơn, chỉ được sửa từ/cụm CÓ THẬT trong transcript (dạng "cụm thật của học viên → bản sửa").
 - Nếu không tìm được dẫn chứng thật cho một tiêu chí, hãy nhận xét chung mà KHÔNG đặt bất kỳ cụm nào trong dấu nháy.
 
-Be honest, strict, fair. Do not invent content the student didn't say.`;
+Be honest, strict, fair. Do not invent content the student didn't say.${
+        isPart4 ? "" : "\nDo NOT transcribe the full recording separately; per-item transcripts are sufficient."
+      }`;
 
       // For non-Part4: send only spoken audios, but label every question and note which have NO AUDIO.
       // For Part4: single monologue; we already know anySpoken is true here.
@@ -620,7 +622,11 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                   required: ["transcript", "onTopic", "improvedVersion", "upgradeTips"],
                 },
               },
-              fullTranscript: { type: "string", description: "Verbatim transcription of the ENTIRE audio, uncut, before any segmentation." },
+              // Part 4 needs the full monologue to segment it; Parts 1–3 don't
+              // (it doubled the call latency and caused timeouts).
+              ...(isPart4
+                ? { fullTranscript: { type: "string", description: "Verbatim transcription of the ENTIRE audio, uncut, before any segmentation." } }
+                : {}),
               analysis: { type: "string" },
               criteriaAnalysis: {
                 type: "object",
@@ -647,7 +653,9 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                 required: ["tf", "gra", "vra", "pro", "fc"],
               },
             },
-            required: ["perItem", "fullTranscript", "analysis", "criteriaAnalysis", "bands"],
+            required: isPart4
+              ? ["perItem", "fullTranscript", "analysis", "criteriaAnalysis", "bands"]
+              : ["perItem", "analysis", "criteriaAnalysis", "bands"],
           },
         },
       };
@@ -655,7 +663,12 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
       const MODEL_V2 = "google/gemini-2.5-flash";
 
       const timeoutMsSpeak = 170_000;
+      // Telemetry: latency of the LAST gateway call + how many calls were made.
+      let speakDurationMs = 0;
+      let speakGatewayAttempts = 0;
       const callGatewaySpeak = async (repairNote?: string): Promise<Response> => {
+        speakGatewayAttempts += 1;
+        const startedAt = Date.now();
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMsSpeak);
         try {
@@ -681,6 +694,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
             }),
           });
         } finally {
+          speakDurationMs = Date.now() - startedAt;
           clearTimeout(timeoutId);
         }
       };
@@ -780,7 +794,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
                   finishReason: retryJson?.choices?.[0]?.finish_reason ?? null,
                   attempt: 2,
                   gradingSessionId,
-                  metadata: { mode: "speaking_v2", partType, repair: "part4_segmentation" },
+                  metadata: { mode: "speaking_v2", partType, repair: "part4_segmentation", durationMs: speakDurationMs, gatewayAttempts: speakGatewayAttempts },
                 });
               } catch { /* ignore */ }
             }
@@ -805,7 +819,7 @@ Be honest, strict, fair. Do not invent content the student didn't say.`;
           finishReason: aiJson?.choices?.[0]?.finish_reason ?? null,
           attempt: finalGatewayAttempt,
           gradingSessionId,
-          metadata: { mode: "speaking_v2", partType },
+          metadata: { mode: "speaking_v2", partType, durationMs: speakDurationMs, gatewayAttempts: speakGatewayAttempts },
         });
       } catch { /* ignore */ }
       try {
@@ -1364,7 +1378,12 @@ ${partsIn.formalText ?? ""}`;
         "với giá trị đúng theo rubric. Chỉ được cho 0 khi bài làm thực sự trống hoặc hoàn toàn không liên quan.",
       ].join(" ");
 
+      // Telemetry: latency of the LAST gateway call + how many calls were made.
+      let writeDurationMs = 0;
+      let writeGatewayAttempts = 0;
       const callGatewayV2 = async (maxTokens: number, repairNote?: string): Promise<Response> => {
+        writeGatewayAttempts += 1;
+        const startedAt = Date.now();
         const controller = new AbortController();
         // Edge function wall-clock ceiling is ~150s, so task4 stops at 140s to
         // leave room for response serialisation instead of dying mid-write.
@@ -1393,6 +1412,7 @@ ${partsIn.formalText ?? ""}`;
             }),
           });
         } finally {
+          writeDurationMs = Date.now() - startedAt;
           clearTimeout(timeoutId);
         }
       };
@@ -1442,7 +1462,7 @@ ${partsIn.formalText ?? ""}`;
           finishReason: choice?.finish_reason ?? null,
           attempt,
           gradingSessionId,
-          metadata: { type: "writing_v2", partType: pt, ...(repairNote ? { repair: "missing_rawPart" } : {}) },
+          metadata: { type: "writing_v2", partType: pt, ...(repairNote ? { repair: "missing_rawPart" } : {}), durationMs: writeDurationMs, gatewayAttempts: writeGatewayAttempts },
         }).catch(() => {});
 
         const finishReason = String(choice?.finish_reason ?? "");
