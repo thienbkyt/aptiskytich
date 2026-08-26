@@ -18,13 +18,13 @@ export interface FullTestItem {
 
 export type FullTestCategory = "aptis" | "key";
 
-/** Wraps a promise with a timeout. Rejects (throws) if it doesn't resolve in `ms`. */
-function withTimeout<T>(promise: Promise<T>, ms: number, label = "request"): Promise<T> {
+/** Wraps a thenable with a timeout. Rejects (throws) if it doesn't resolve in `ms`. */
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, label = "request"): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
   });
-  return Promise.race([promise, timeout]).finally(() => {
+  return Promise.race<T>([Promise.resolve(promise), timeout]).finally(() => {
     if (timer) clearTimeout(timer);
   });
 }
