@@ -566,6 +566,34 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     });
   };
 
+  // Shared "đi tới đề khác" logic, used by the navigator chips and the inline "Sau →" button.
+  const goToSet = (si: number, qi: number) => {
+    try {
+      if (si < 0 || si >= sets.length) return;
+      const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
+      if (midReview) {
+        setMidReview(null);
+        setEnterAtLast(false);
+        setJumpQ(clamped);
+        setCurrentIndex(si);
+        setTimeout(() => setJumpQ(null), 0);
+        return;
+      }
+      const hasAnyAnswer = currentAnswered.some(Boolean);
+      if (hasAnyAnswer) {
+        // Auto-submit the current in-progress set, then jump.
+        pendingJumpRef.current = { si, qi: clamped };
+        setSubmitSignal((s) => s + 1);
+        return;
+      }
+      setEnterAtLast(false);
+      setJumpQ(clamped);
+      setCurrentIndex(si);
+      setTimeout(() => setJumpQ(null), 0);
+    } catch { /* noop */ }
+  };
+
+
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
       <div className="flex-1 min-w-0">
@@ -607,6 +635,11 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
                 setCurrentIndex((i) => i - 1);
               }
             }}
+            onNavPrevSet={currentIndex > 0 ? () => {
+              setEnterAtLast(true);
+              setCurrentIndex((i) => i - 1);
+            } : undefined}
+            onNavNextSet={currentIndex < sets.length - 1 ? () => goToSet(currentIndex + 1, 0) : undefined}
             enterAtLastQuestion={enterAtLast}
             initialAnswers={initialAnswers}
             onAnswersChange={persistAnswers}
@@ -642,31 +675,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           setJumpQ(clamped);
           setTimeout(() => setJumpQ(null), 0);
         }}
-        onEnterSet={(si, qi) => {
-          try {
-            if (si < 0 || si >= sets.length) return;
-            const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
-            if (midReview) {
-              setMidReview(null);
-              setEnterAtLast(false);
-              setJumpQ(clamped);
-              setCurrentIndex(si);
-              setTimeout(() => setJumpQ(null), 0);
-              return;
-            }
-            const hasAnyAnswer = currentAnswered.some(Boolean);
-            if (hasAnyAnswer) {
-              // Auto-submit the current in-progress set, then jump.
-              pendingJumpRef.current = { si, qi: clamped };
-              setSubmitSignal((s) => s + 1);
-              return;
-            }
-            setEnterAtLast(false);
-            setJumpQ(clamped);
-            setCurrentIndex(si);
-            setTimeout(() => setJumpQ(null), 0);
-          } catch { /* noop */ }
-        }}
+        onEnterSet={(si, qi) => goToSet(si, qi)}
         onRetrySet={(si) => {
           try {
             if (si < 0 || si >= sets.length) return;

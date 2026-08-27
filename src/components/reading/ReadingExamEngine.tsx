@@ -113,6 +113,10 @@ interface ReadingExamEngineProps {
   hideBackToResults?: boolean;
   /** Notifies parent whenever the active section index changes (Part 2). */
   onSectionChange?: (i: number) => void;
+  /** Marathon: go to the previous exam set (used at the first question). */
+  onNavPrevSet?: () => void;
+  /** Marathon: go to the next exam set (used at the last question). */
+  onNavNextSet?: () => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
@@ -133,6 +137,8 @@ const ReadingExamEngine = ({
   onLockedChange,
   hideBackToResults = false,
   onSectionChange,
+  onNavPrevSet,
+  onNavNextSet,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
@@ -496,14 +502,17 @@ const ReadingExamEngine = ({
     onSubmitTest: !submitted ? handleSubmit : undefined,
   }), [currentIndex, totalQuestions, submitted, handleSubmit, goPrevQuestion, goNextQuestion, goToPrevPhase, sections]);
 
-  // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections.
+  // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections,
+  // and cross over to the previous/next exam set at the edges.
   const arrowPrev = useCallback(() => {
     if (currentIndex > 0) navProps.onPrevious?.();
-  }, [currentIndex, navProps]);
+    else onNavPrevSet?.();
+  }, [currentIndex, navProps, onNavPrevSet]);
 
   const arrowNext = useCallback(() => {
     if (currentIndex < totalQuestions - 1) goNextQuestion();
-  }, [currentIndex, totalQuestions, goNextQuestion]);
+    else onNavNextSet?.();
+  }, [currentIndex, totalQuestions, goNextQuestion, onNavNextSet]);
   useMarathonArrowKeys({
     enabled: hideBottomNav && phase === "practice",
     onPrev: arrowPrev,
@@ -683,33 +692,6 @@ const ReadingExamEngine = ({
         onMarathonFinish={onMarathonFinish}
         onBackToResults={!hideBackToResults && isReviewing ? () => setIsReviewing(false) : undefined}
       />
-      {hideBottomNav && phase === "practice" && (
-        <div className="fixed bottom-3 left-4 z-30 flex items-center gap-1.5 bg-background/95 border border-border rounded-full shadow px-1.5 py-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8 px-3 text-xs"
-            onClick={arrowPrev}
-            disabled={currentIndex === 0}
-          >
-            ← Câu trước
-          </Button>
-          <span className="text-xs font-semibold px-1">
-            {currentIndex + 1}/{totalQuestions || 1}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8 px-3 text-xs"
-            onClick={arrowNext}
-            disabled={currentIndex === totalQuestions - 1}
-          >
-            Câu sau →
-          </Button>
-        </div>
-      )}
       <div className="flex-1 px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence
@@ -806,6 +788,31 @@ const ReadingExamEngine = ({
             lockedIndices={lockedP4}
             hideBottomNav={hideBottomNav}
           />
+        )}
+
+        {hideBottomNav && phase === "practice" && (
+          <div className="flex items-center justify-between max-w-3xl mx-auto w-full mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full border-primary text-primary"
+              onClick={arrowPrev}
+              disabled={currentIndex === 0 && !onNavPrevSet}
+            >
+              ← Trước
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {currentIndex + 1}/{totalQuestions || 1}
+            </span>
+            <Button
+              type="button"
+              className="rounded-full bg-primary text-primary-foreground"
+              onClick={arrowNext}
+              disabled={currentIndex === totalQuestions - 1 && !onNavNextSet}
+            >
+              Sau →
+            </Button>
+          </div>
         )}
       </div>
     </div>

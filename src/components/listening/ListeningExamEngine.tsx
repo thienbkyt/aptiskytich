@@ -93,6 +93,10 @@ interface ListeningExamEngineProps {
   onLockedChange?: (locked: boolean[]) => void;
   /** Marathon: bump `n` to clear + unlock question `qi` (Làm lại câu này). */
   unlockSignal?: { qi: number; n: number } | null;
+  /** Marathon: go to the previous exam set (used at the first question). */
+  onNavPrevSet?: () => void;
+  /** Marathon: go to the next exam set (used at the last question). */
+  onNavNextSet?: () => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
@@ -119,6 +123,8 @@ const ListeningExamEngine = ({
   marathonLock = false,
   onLockedChange,
   unlockSignal,
+  onNavPrevSet,
+  onNavNextSet,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
@@ -497,13 +503,15 @@ const ListeningExamEngine = ({
     onSubmitTest: !submitted ? handleSubmit : undefined,
   };
 
-  // Marathon mode (bottom nav hidden): ← → move between questions.
+  // Marathon mode (bottom nav hidden): ← → move between questions, crossing sets at the edges.
   const arrowPrev = useCallback(() => {
-    setCurrentIndex((p) => Math.max(0, p - 1));
-  }, []);
+    if (currentIndex > 0) setCurrentIndex((p) => Math.max(0, p - 1));
+    else onNavPrevSet?.();
+  }, [currentIndex, onNavPrevSet]);
   const arrowNext = useCallback(() => {
-    setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
-  }, [totalQuestions]);
+    if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+    else onNavNextSet?.();
+  }, [currentIndex, totalQuestions, onNavNextSet]);
   useMarathonArrowKeys({
     enabled: hideBottomNav && phase === "practice",
     onPrev: arrowPrev,
@@ -649,33 +657,6 @@ const ListeningExamEngine = ({
         onMarathonFinish={onMarathonFinish}
         onBackToResults={isReviewing ? () => setIsReviewing(false) : undefined}
       />
-      {hideBottomNav && phase === "practice" && (
-        <div className="fixed bottom-3 left-4 z-30 flex items-center gap-1.5 bg-background/95 border border-border rounded-full shadow px-1.5 py-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8 px-3 text-xs"
-            onClick={arrowPrev}
-            disabled={currentIndex === 0}
-          >
-            ← Câu trước
-          </Button>
-          <span className="text-xs font-semibold px-1">
-            {currentIndex + 1}/{totalQuestions || 1}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8 px-3 text-xs"
-            onClick={arrowNext}
-            disabled={currentIndex === totalQuestions - 1}
-          >
-            Câu sau →
-          </Button>
-        </div>
-      )}
       <div className="flex-1 px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Questions && (
           <ListeningPart1Word
@@ -767,6 +748,31 @@ const ListeningExamEngine = ({
             hideBottomNav={hideBottomNav}
             audioKeyPrefix={examSetId ?? ""}
           />
+        )}
+
+        {hideBottomNav && phase === "practice" && (
+          <div className="flex items-center justify-between max-w-3xl mx-auto w-full mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full border-primary text-primary"
+              onClick={arrowPrev}
+              disabled={currentIndex === 0 && !onNavPrevSet}
+            >
+              ← Trước
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {currentIndex + 1}/{totalQuestions || 1}
+            </span>
+            <Button
+              type="button"
+              className="rounded-full bg-primary text-primary-foreground"
+              onClick={arrowNext}
+              disabled={currentIndex === totalQuestions - 1 && !onNavNextSet}
+            >
+              Sau →
+            </Button>
+          </div>
         )}
       </div>
     </div>
