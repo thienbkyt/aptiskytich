@@ -132,6 +132,21 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_aliases: {
+        Row: {
+          new_name: string
+          old_name: string
+        }
+        Insert: {
+          new_name: string
+          old_name: string
+        }
+        Update: {
+          new_name?: string
+          old_name?: string
+        }
+        Relationships: []
+      }
       backup_auth_pass_20260815: {
         Row: {
           backed_up_at: string | null
@@ -684,6 +699,21 @@ export type Database = {
           response_time?: number | null
           set_title?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_p2_audio_20260827: {
+        Row: {
+          audio_url: string | null
+          id: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          id?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          id?: string | null
         }
         Relationships: []
       }
