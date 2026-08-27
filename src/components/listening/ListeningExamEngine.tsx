@@ -93,6 +93,10 @@ interface ListeningExamEngineProps {
   onLockedChange?: (locked: boolean[]) => void;
   /** Marathon: bump `n` to clear + unlock question `qi` (Làm lại câu này). */
   unlockSignal?: { qi: number; n: number } | null;
+  /** Marathon: go to the previous exam set (used at the first question). */
+  onNavPrevSet?: () => void;
+  /** Marathon: go to the next exam set (used at the last question). */
+  onNavNextSet?: () => void;
 }
 
 type Phase = "instructions" | "listening_intro" | "practice" | "review";
