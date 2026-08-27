@@ -161,19 +161,26 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
   /**
    * Downloads the whole file (blob URL) before playback so slow networks can't
-   * cause mid-playback stutter. Falls back to the signed URL inside the helper.
+   * cause mid-playback stutter. Reports download % and gives up after 8s,
+   * falling back to streaming the signed URL so the student can listen at once.
    */
   const loadAudioSrc = useCallback(async (path: string): Promise<string | null> => {
     if (!path) return null;
     if (hasAudioBlob(path)) return resolveAudioBlobUrl(path);
     blobPathsRef.current.add(path);
     setLoadingAudio(true);
+    setLoadPercent(0);
     try {
-      return await resolveAudioBlobUrl(path);
+      return await resolveAudioBlobUrl(path, {
+        timeoutMs: 8000,
+        onProgress: (p) => setLoadPercent(p),
+      });
     } finally {
       setLoadingAudio(false);
+      setLoadPercent(null);
     }
   }, []);
+
 
   const resolve = useCallback(async (force = false): Promise<string | null> => {
     if (!src) return null;
