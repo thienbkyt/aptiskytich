@@ -88,6 +88,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [introSpeaking, setIntroSpeaking] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
+  const [loadPercent, setLoadPercent] = useState<number | null>(null);
+
   const blobPathsRef = useRef<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [blocked, setBlocked] = useState(false);
