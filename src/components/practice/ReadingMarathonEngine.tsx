@@ -635,6 +635,11 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
                 setCurrentIndex((i) => i - 1);
               }
             }}
+            onNavPrevSet={currentIndex > 0 ? () => {
+              setEnterAtLast(true);
+              setCurrentIndex((i) => i - 1);
+            } : undefined}
+            onNavNextSet={currentIndex < sets.length - 1 ? () => goToSet(currentIndex + 1, 0) : undefined}
             enterAtLastQuestion={enterAtLast}
             initialAnswers={initialAnswers}
             onAnswersChange={persistAnswers}
