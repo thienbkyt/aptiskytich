@@ -661,6 +661,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
+    // Ignore presses while the file is downloading — repeated presses caused AbortError.
+    if (loadingAudio && !isPlaying) return;
+
 
     if (isPlaying) {
       // Also cancels a spoken prompt / pause that is still in progress.
