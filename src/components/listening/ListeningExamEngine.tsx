@@ -29,6 +29,7 @@ import type { ListeningHighlightData } from "@/lib/listeningReview";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import { Button } from "@/components/ui/button";
 
 export type ListeningPartType = "part1" | "part2" | "part3" | "part4";
 
