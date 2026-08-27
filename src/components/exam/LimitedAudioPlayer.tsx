@@ -130,8 +130,12 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       extra?: Record<string, unknown>,
     ) => {
       try {
+        // Rapid play/pause presses produce AbortError — pure noise, skip them.
+        const name = (err as { name?: string } | null)?.name;
+        if (name === "AbortError") return;
         const m = metaRef.current;
         logClientError("audio_playback", err, {
+
           stage,
           questionKey: String(m.questionKey ?? ""),
           src: activeSrc,
