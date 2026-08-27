@@ -805,9 +805,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       <button
         type="button"
         onClick={togglePlay}
-        disabled={disabled}
+        disabled={disabled || loadingAudio}
         className={`inline-flex items-center gap-1.5 text-sm underline underline-offset-2 transition-colors ${
-          disabled
+          disabled || loadingAudio
             ? "text-muted-foreground cursor-not-allowed no-underline"
             : "text-foreground hover:text-primary cursor-pointer"
         }`}
@@ -821,9 +821,12 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       </button>
       {(introSpeaking || loadingAudio) && (
         <p className="text-xs text-muted-foreground mt-1">
-          {introSpeaking ? "Đang đọc câu hỏi…" : "Đang tải bài nghe…"}
+          {introSpeaking
+            ? "Đang đọc câu hỏi…"
+            : `Đang tải bài nghe… ${loadPercent ?? 0}%`}
         </p>
       )}
+
       {disabled && (
         <p className="text-xs text-muted-foreground mt-1">
           Đã dùng hết {maxPlays} lượt nghe cho câu này
