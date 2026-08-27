@@ -137,6 +137,8 @@ const ReadingExamEngine = ({
   onLockedChange,
   hideBackToResults = false,
   onSectionChange,
+  onNavPrevSet,
+  onNavNextSet,
 }: ReadingExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialSection ?? 0);
