@@ -692,33 +692,6 @@ const ReadingExamEngine = ({
         onMarathonFinish={onMarathonFinish}
         onBackToResults={!hideBackToResults && isReviewing ? () => setIsReviewing(false) : undefined}
       />
-      {hideBottomNav && phase === "practice" && (
-        <div className="fixed bottom-3 left-4 z-30 flex items-center gap-1.5 bg-background/95 border border-border rounded-full shadow px-1.5 py-1">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8 px-3 text-xs"
-            onClick={arrowPrev}
-            disabled={currentIndex === 0}
-          >
-            ← Câu trước
-          </Button>
-          <span className="text-xs font-semibold px-1">
-            {currentIndex + 1}/{totalQuestions || 1}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full h-8 px-3 text-xs"
-            onClick={arrowNext}
-            disabled={currentIndex === totalQuestions - 1}
-          >
-            Câu sau →
-          </Button>
-        </div>
-      )}
       <div className="flex-1 px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 max-w-3xl mx-auto w-full">
         {partType === "part1" && part1Question && (
           <ReadingPart1Sentence
