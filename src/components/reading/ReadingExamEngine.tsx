@@ -502,14 +502,17 @@ const ReadingExamEngine = ({
     onSubmitTest: !submitted ? handleSubmit : undefined,
   }), [currentIndex, totalQuestions, submitted, handleSubmit, goPrevQuestion, goNextQuestion, goToPrevPhase, sections]);
 
-  // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections.
+  // Marathon mode (bottom nav hidden): allow ← → to move between questions/sections,
+  // and cross over to the previous/next exam set at the edges.
   const arrowPrev = useCallback(() => {
     if (currentIndex > 0) navProps.onPrevious?.();
-  }, [currentIndex, navProps]);
+    else onNavPrevSet?.();
+  }, [currentIndex, navProps, onNavPrevSet]);
 
   const arrowNext = useCallback(() => {
     if (currentIndex < totalQuestions - 1) goNextQuestion();
-  }, [currentIndex, totalQuestions, goNextQuestion]);
+    else onNavNextSet?.();
+  }, [currentIndex, totalQuestions, goNextQuestion, onNavNextSet]);
   useMarathonArrowKeys({
     enabled: hideBottomNav && phase === "practice",
     onPrev: arrowPrev,
