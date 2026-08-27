@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerPWA } from "./lib/registerPWA";
 import { supabase } from "@/integrations/supabase/client";
+import { logClientError } from "@/lib/clientErrorLog";
 
 registerPWA();
 
@@ -183,6 +184,22 @@ window.addEventListener("error", (e) => {
   const msg = e?.message || "";
   if (msg.includes("Failed to fetch dynamically imported module")) {
     showUpdateBanner();
+    return;
+  }
+  // Bỏ qua lỗi do script bên thứ ba tiêm vào trang (Zalo in-app browser, v.v.)
+  // — không phải code bundle của web mình.
+  const filename = e?.filename || "";
+  const isThirdParty =
+    msg.includes("zaloJSV2") ||
+    /zalo/i.test(msg) ||
+    msg === "Script error." ||
+    !filename.includes("/assets/");
+  if (isThirdParty) {
+    logClientError("third_party_script", new Error(msg), {
+      filename,
+      lineno: e?.lineno,
+      colno: e?.colno,
+    });
     return;
   }
   pushOverlay(
