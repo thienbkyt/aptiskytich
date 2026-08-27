@@ -26,6 +26,7 @@ import { useReadingReviewData } from "@/hooks/useReadingReviewData";
 import { useExitWarning } from "@/hooks/useExitWarning";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import { Button } from "@/components/ui/button";
 
 export type ReadingPartType = "part1" | "part2" | "part3" | "part4";
 
@@ -683,8 +684,30 @@ const ReadingExamEngine = ({
         onBackToResults={!hideBackToResults && isReviewing ? () => setIsReviewing(false) : undefined}
       />
       {hideBottomNav && phase === "practice" && (
-        <div className="hidden sm:block fixed bottom-3 left-4 z-30 text-xs text-muted-foreground">
-          Dùng ← → để chuyển câu
+        <div className="fixed bottom-3 left-4 z-30 flex items-center gap-1.5 bg-background/95 border border-border rounded-full shadow px-1.5 py-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full h-8 px-3 text-xs"
+            onClick={arrowPrev}
+            disabled={currentIndex === 0}
+          >
+            ← Câu trước
+          </Button>
+          <span className="text-xs font-semibold px-1">
+            {currentIndex + 1}/{totalQuestions || 1}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full h-8 px-3 text-xs"
+            onClick={arrowNext}
+            disabled={currentIndex === totalQuestions - 1}
+          >
+            Câu sau →
+          </Button>
         </div>
       )}
       <div className="flex-1 px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 max-w-3xl mx-auto w-full">
