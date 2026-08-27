@@ -789,6 +789,31 @@ const ReadingExamEngine = ({
             hideBottomNav={hideBottomNav}
           />
         )}
+
+        {hideBottomNav && phase === "practice" && (
+          <div className="flex items-center justify-between max-w-3xl mx-auto w-full mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full border-primary text-primary"
+              onClick={arrowPrev}
+              disabled={currentIndex === 0 && !onNavPrevSet}
+            >
+              ← Trước
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {currentIndex + 1}/{totalQuestions || 1}
+            </span>
+            <Button
+              type="button"
+              className="rounded-full bg-primary text-primary-foreground"
+              onClick={arrowNext}
+              disabled={currentIndex === totalQuestions - 1 && !onNavNextSet}
+            >
+              Sau →
+            </Button>
+          </div>
+        )}
       </div>
     </div>
     </TimerProvider>
