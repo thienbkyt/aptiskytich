@@ -123,6 +123,8 @@ const ListeningExamEngine = ({
   marathonLock = false,
   onLockedChange,
   unlockSignal,
+  onNavPrevSet,
+  onNavNextSet,
 }: ListeningExamEngineProps) => {
   const [phase, setPhase] = useState<Phase>((skipIntro || reviewMode || enterAtLastQuestion) ? "practice" : "instructions");
   const [currentIndex, setCurrentIndex] = useState(initialQuestion ?? 0);
