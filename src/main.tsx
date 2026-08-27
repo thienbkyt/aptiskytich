@@ -4,6 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { registerPWA } from "./lib/registerPWA";
 import { supabase } from "@/integrations/supabase/client";
+import { logClientError } from "@/lib/clientErrorLog";
 
 registerPWA();
 
