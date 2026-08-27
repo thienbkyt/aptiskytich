@@ -585,6 +585,37 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const midReviewEntry = midReview ? results[midReview.setIndex] : null;
   const midPageCount = midReviewEntry?.qResults.length ?? 0;
 
+  // Shared "đi tới đề khác" logic, used by the navigator chips and the inline "Sau →" button.
+  const goToSet = (si: number, qi: number) => {
+    try {
+      if (si < 0 || si >= sets.length) return;
+      const max = Math.max(1, loaded[si]?.pageCount ?? 1) - 1;
+      const clamped = Math.max(0, Math.min(qi, max));
+      if (midReview) {
+        setMidReview(null);
+        setEnterAtLast(false);
+        setJumpQ(clamped);
+        setCurrentIndex(si);
+        setTimeout(() => setJumpQ(null), 0);
+        return;
+      }
+      // Per-question mode: only submit the set when EVERY question is done,
+      // so unanswered questions are never graded as blank.
+      const need = Math.max(1, loaded[currentIndex]?.pageCount ?? 1);
+      const doneCount = currentAnswered.filter(Boolean).length;
+      const allAnswered = doneCount >= need;
+      if (allAnswered) {
+        pendingJumpRef.current = { si, qi: clamped };
+        setSubmitSignal((s) => s + 1);
+        return;
+      }
+      setEnterAtLast(false);
+      setJumpQ(clamped);
+      setCurrentIndex(si);
+      setTimeout(() => setJumpQ(null), 0);
+    } catch { /* noop */ }
+  };
+
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">
       <div className="flex-1 min-w-0">
