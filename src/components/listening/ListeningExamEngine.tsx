@@ -503,13 +503,15 @@ const ListeningExamEngine = ({
     onSubmitTest: !submitted ? handleSubmit : undefined,
   };
 
-  // Marathon mode (bottom nav hidden): ← → move between questions.
+  // Marathon mode (bottom nav hidden): ← → move between questions, crossing sets at the edges.
   const arrowPrev = useCallback(() => {
-    setCurrentIndex((p) => Math.max(0, p - 1));
-  }, []);
+    if (currentIndex > 0) setCurrentIndex((p) => Math.max(0, p - 1));
+    else onNavPrevSet?.();
+  }, [currentIndex, onNavPrevSet]);
   const arrowNext = useCallback(() => {
-    setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
-  }, [totalQuestions]);
+    if (currentIndex < totalQuestions - 1) setCurrentIndex((p) => Math.min(totalQuestions - 1, p + 1));
+    else onNavNextSet?.();
+  }, [currentIndex, totalQuestions, onNavNextSet]);
   useMarathonArrowKeys({
     enabled: hideBottomNav && phase === "practice",
     onPrev: arrowPrev,
