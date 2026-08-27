@@ -113,6 +113,10 @@ interface ReadingExamEngineProps {
   hideBackToResults?: boolean;
   /** Notifies parent whenever the active section index changes (Part 2). */
   onSectionChange?: (i: number) => void;
+  /** Marathon: go to the previous exam set (used at the first question). */
+  onNavPrevSet?: () => void;
+  /** Marathon: go to the next exam set (used at the last question). */
+  onNavNextSet?: () => void;
 }
 
 type Phase = "instructions" | "reading_intro" | "practice" | "review";
