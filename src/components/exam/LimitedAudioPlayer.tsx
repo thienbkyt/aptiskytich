@@ -648,12 +648,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       return "ok";
     } catch (e) {
       const name = (e as { name?: string } | null)?.name;
+      // Rapid play/pause presses abort the pending play() — benign, stay silent.
+      if (name === "AbortError") return "stale";
       if (name === "NotAllowedError" || name === "SecurityError") {
         logAudioError("play_blocked", e, audio, activeSrc, isFirstPlay, "blocked");
         return "blocked";
       }
       logAudioError("play_failed", e, audio, activeSrc, isFirstPlay, "error");
       return "error";
+
     }
   };
 
