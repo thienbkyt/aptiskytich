@@ -185,6 +185,22 @@ window.addEventListener("error", (e) => {
     showUpdateBanner();
     return;
   }
+  // Bỏ qua lỗi do script bên thứ ba tiêm vào trang (Zalo in-app browser, v.v.)
+  // — không phải code bundle của web mình.
+  const filename = e?.filename || "";
+  const isThirdParty =
+    msg.includes("zaloJSV2") ||
+    /zalo/i.test(msg) ||
+    msg === "Script error." ||
+    !filename.includes("/assets/");
+  if (isThirdParty) {
+    logClientError("third_party_script", new Error(msg), {
+      filename,
+      lineno: e?.lineno,
+      colno: e?.colno,
+    });
+    return;
+  }
   pushOverlay(
     `Error: ${msg}\nat ${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}\n${
       (e.error && (e.error.stack || "")) || ""
