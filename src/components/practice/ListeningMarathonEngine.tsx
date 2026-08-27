@@ -671,35 +671,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           setJumpQ(Math.max(0, Math.min(qi, max)));
           setTimeout(() => setJumpQ(null), 0);
         }}
-        onEnterSet={(si, qi) => {
-          try {
-            if (si < 0 || si >= sets.length) return;
-            const max = Math.max(1, loaded[si]?.pageCount ?? 1) - 1;
-            const clamped = Math.max(0, Math.min(qi, max));
-            if (midReview) {
-              setMidReview(null);
-              setEnterAtLast(false);
-              setJumpQ(clamped);
-              setCurrentIndex(si);
-              setTimeout(() => setJumpQ(null), 0);
-              return;
-            }
-            // Per-question mode: only submit the set when EVERY question is done,
-            // so unanswered questions are never graded as blank.
-            const need = Math.max(1, loaded[currentIndex]?.pageCount ?? 1);
-            const doneCount = currentAnswered.filter(Boolean).length;
-            const allAnswered = doneCount >= need;
-            if (allAnswered) {
-              pendingJumpRef.current = { si, qi: clamped };
-              setSubmitSignal((s) => s + 1);
-              return;
-            }
-            setEnterAtLast(false);
-            setJumpQ(clamped);
-            setCurrentIndex(si);
-            setTimeout(() => setJumpQ(null), 0);
-          } catch { /* noop */ }
-        }}
+        onEnterSet={(si, qi) => goToSet(si, qi)}
         onRetryQuestion={(si, qi) => {
           try {
             if (si < 0 || si >= sets.length) return;
