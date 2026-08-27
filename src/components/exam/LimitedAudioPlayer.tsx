@@ -88,6 +88,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const [resolvedSrc, setResolvedSrc] = useState<string>("");
   const [introSpeaking, setIntroSpeaking] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
+  const [loadPercent, setLoadPercent] = useState<number | null>(null);
+
   const blobPathsRef = useRef<Set<string>>(new Set());
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [blocked, setBlocked] = useState(false);
@@ -128,8 +130,12 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       extra?: Record<string, unknown>,
     ) => {
       try {
+        // Rapid play/pause presses produce AbortError — pure noise, skip them.
+        const name = (err as { name?: string } | null)?.name;
+        if (name === "AbortError") return;
         const m = metaRef.current;
         logClientError("audio_playback", err, {
+
           stage,
           questionKey: String(m.questionKey ?? ""),
           src: activeSrc,
@@ -155,19 +161,26 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
   /**
    * Downloads the whole file (blob URL) before playback so slow networks can't
-   * cause mid-playback stutter. Falls back to the signed URL inside the helper.
+   * cause mid-playback stutter. Reports download % and gives up after 8s,
+   * falling back to streaming the signed URL so the student can listen at once.
    */
   const loadAudioSrc = useCallback(async (path: string): Promise<string | null> => {
     if (!path) return null;
     if (hasAudioBlob(path)) return resolveAudioBlobUrl(path);
     blobPathsRef.current.add(path);
     setLoadingAudio(true);
+    setLoadPercent(0);
     try {
-      return await resolveAudioBlobUrl(path);
+      return await resolveAudioBlobUrl(path, {
+        timeoutMs: 8000,
+        onProgress: (p) => setLoadPercent(p),
+      });
     } finally {
       setLoadingAudio(false);
+      setLoadPercent(null);
     }
   }, []);
+
 
   const resolve = useCallback(async (force = false): Promise<string | null> => {
     if (!src) return null;
@@ -635,12 +648,15 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       return "ok";
     } catch (e) {
       const name = (e as { name?: string } | null)?.name;
+      // Rapid play/pause presses abort the pending play() — benign, stay silent.
+      if (name === "AbortError") return "stale";
       if (name === "NotAllowedError" || name === "SecurityError") {
         logAudioError("play_blocked", e, audio, activeSrc, isFirstPlay, "blocked");
         return "blocked";
       }
       logAudioError("play_failed", e, audio, activeSrc, isFirstPlay, "error");
       return "error";
+
     }
   };
 
@@ -648,6 +664,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
+    // Ignore presses while the file is downloading — repeated presses caused AbortError.
+    if (loadingAudio && !isPlaying) return;
+
 
     if (isPlaying) {
       // Also cancels a spoken prompt / pause that is still in progress.
@@ -789,9 +808,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       <button
         type="button"
         onClick={togglePlay}
-        disabled={disabled}
+        disabled={disabled || loadingAudio}
         className={`inline-flex items-center gap-1.5 text-sm underline underline-offset-2 transition-colors ${
-          disabled
+          disabled || loadingAudio
             ? "text-muted-foreground cursor-not-allowed no-underline"
             : "text-foreground hover:text-primary cursor-pointer"
         }`}
@@ -805,9 +824,12 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       </button>
       {(introSpeaking || loadingAudio) && (
         <p className="text-xs text-muted-foreground mt-1">
-          {introSpeaking ? "Đang đọc câu hỏi…" : "Đang tải bài nghe…"}
+          {introSpeaking
+            ? "Đang đọc câu hỏi…"
+            : `Đang tải bài nghe… ${loadPercent ?? 0}%`}
         </p>
       )}
+
       {disabled && (
         <p className="text-xs text-muted-foreground mt-1">
           Đã dùng hết {maxPlays} lượt nghe cho câu này
