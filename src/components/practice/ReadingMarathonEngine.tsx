@@ -670,31 +670,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           setJumpQ(clamped);
           setTimeout(() => setJumpQ(null), 0);
         }}
-        onEnterSet={(si, qi) => {
-          try {
-            if (si < 0 || si >= sets.length) return;
-            const clamped = Math.max(0, Math.min(qi, pagesPerSet - 1));
-            if (midReview) {
-              setMidReview(null);
-              setEnterAtLast(false);
-              setJumpQ(clamped);
-              setCurrentIndex(si);
-              setTimeout(() => setJumpQ(null), 0);
-              return;
-            }
-            const hasAnyAnswer = currentAnswered.some(Boolean);
-            if (hasAnyAnswer) {
-              // Auto-submit the current in-progress set, then jump.
-              pendingJumpRef.current = { si, qi: clamped };
-              setSubmitSignal((s) => s + 1);
-              return;
-            }
-            setEnterAtLast(false);
-            setJumpQ(clamped);
-            setCurrentIndex(si);
-            setTimeout(() => setJumpQ(null), 0);
-          } catch { /* noop */ }
-        }}
+        onEnterSet={(si, qi) => goToSet(si, qi)}
         onRetrySet={(si) => {
           try {
             if (si < 0 || si >= sets.length) return;
