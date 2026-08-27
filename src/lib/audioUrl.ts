@@ -103,11 +103,22 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
 const blobCache = new Map<string, string>();
 const blobInflight = new Map<string, Promise<string | null>>();
 
+export type BlobLoadOptions = {
+  /** Called with 0-100 while the file downloads (only when content-length known). */
+  onProgress?: (percent: number) => void;
+  /** Abort the full-file download after this many ms and fall back to streaming. */
+  timeoutMs?: number;
+};
+
 /**
  * Resolves a storage path (or external URL) to a Blob object URL holding the
- * entire file. Falls back to the plain signed URL on any fetch failure.
+ * entire file. Falls back to the plain signed URL on any fetch failure, on
+ * abort, or when the download exceeds `timeoutMs`.
  */
-export async function resolveAudioBlobUrl(path: string): Promise<string | null> {
+export async function resolveAudioBlobUrl(
+  path: string,
+  opts: BlobLoadOptions = {},
+): Promise<string | null> {
   if (!path) return null;
 
   const cached = blobCache.get(path);
@@ -119,16 +130,42 @@ export async function resolveAudioBlobUrl(path: string): Promise<string | null> 
   const task = (async (): Promise<string | null> => {
     const signed = await resolveAudioUrl(path);
     if (!signed) return null;
+    const ctrl = new AbortController();
+    const timer = opts.timeoutMs
+      ? setTimeout(() => { try { ctrl.abort(); } catch { /* noop */ } }, opts.timeoutMs)
+      : null;
     try {
-      const res = await fetch(signed);
+      const res = await fetch(signed, { signal: ctrl.signal });
       if (!res.ok) return signed;
-      const blob = await res.blob();
+      const total = Number(res.headers.get("content-length") || 0);
+      let blob: Blob;
+      if (res.body && total > 0 && opts.onProgress) {
+        const reader = res.body.getReader();
+        const chunks: BlobPart[] = [];
+        let loaded = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            chunks.push(value as unknown as BlobPart);
+            loaded += value.byteLength;
+            opts.onProgress(Math.min(99, Math.round((loaded / total) * 100)));
+          }
+        }
+        blob = new Blob(chunks, { type: res.headers.get("content-type") || "audio/mpeg" });
+      } else {
+        blob = await res.blob();
+      }
       if (!blob.size) return signed;
+      opts.onProgress?.(100);
       const objectUrl = URL.createObjectURL(blob);
       blobCache.set(path, objectUrl);
       return objectUrl;
     } catch {
+      // Aborted (timeout) or network failure → stream from the signed URL.
       return signed;
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   })();
 
@@ -139,6 +176,7 @@ export async function resolveAudioBlobUrl(path: string): Promise<string | null> 
     blobInflight.delete(path);
   }
 }
+
 
 /** Frees the cached object URL for a path (call on unmount to avoid leaks). */
 export function revokeAudioBlobUrl(path?: string) {
