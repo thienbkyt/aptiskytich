@@ -814,6 +814,12 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       // 2) Await V2 grading per part (most were kicked off in background as parts completed).
       const v2ByPart: Record<string, SpeakingPartResultV2> = {};
       const v2Entries: SpeakingV2PartEntry[] = [];
+      /** Parts whose live grading failed and were handed to the background queue. */
+      const queuedParts: Array<{
+        originalIdx: number;
+        sub: SpeakingPartSubmission;
+        promptTexts: string[];
+      }> = [];
       for (let oi = 0; oi < orderedSubs.length; oi++) {
         const sub = orderedSubs[oi];
         const originalIdx = orderedIndices[oi];
