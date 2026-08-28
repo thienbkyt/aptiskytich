@@ -218,7 +218,15 @@ window.addEventListener("error", (e) => {
     `Error: ${msg}\nat ${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}\n${
       (e.error && (e.error.stack || "")) || ""
     }`,
+    {
+      message: msg,
+      filename: e.filename,
+      lineno: e.lineno,
+      colno: e.colno,
+      stack: (e.error && (e.error.stack || "")) || "",
+    }
   );
+
 });
 window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
