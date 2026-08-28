@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -969,6 +969,54 @@ export type Database = {
           question_type?: string | null
           response_time?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_sp_hieu_de17_20260828: {
+        Row: {
+          cefr: string | null
+          created_at: string | null
+          exam_set_id: string | null
+          feedback: string | null
+          flag_review: boolean | null
+          full_test_session_id: string | null
+          grey_zone: boolean | null
+          id: string | null
+          parts: Json | null
+          raw_total: number | null
+          scale50: number | null
+          test_result_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cefr?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string | null
+          parts?: Json | null
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cefr?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string | null
+          parts?: Json | null
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
