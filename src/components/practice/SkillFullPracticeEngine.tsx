@@ -611,14 +611,33 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     }
 
     if (speakingPhase === "grading") {
+      if (speakingQueueTimedOut) {
+        return (
+          <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            <p className="text-sm text-foreground font-medium">
+              Bài đã lưu, đang chờ chấm — xem lại trong Lịch sử.
+            </p>
+            <p className="text-xs text-muted-foreground max-w-md">
+              AI Kỳ Tích sẽ hoàn tất trong ít phút. Bạn không cần ở lại trang này.
+            </p>
+            <Button onClick={onExit}>Thoát</Button>
+          </div>
+        );
+      }
       return (
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            AI Kỳ Tích đang chấm Speaking 5 tiêu chí — đừng thoát hay đổi tab nha.
+            {speakingQueuePending
+              ? "AI đang chấm — thường 1–3 phút. Bạn có thể thoát ra, kết quả sẽ có trong Lịch sử."
+              : "AI Kỳ Tích đang chấm Speaking 5 tiêu chí — đừng thoát hay đổi tab nha."}
           </p>
           {speakingV2Message && (
             <p className="text-xs text-muted-foreground">{speakingV2Message}</p>
+          )}
+          {speakingQueuePending && (
+            <Button variant="outline" onClick={onExit}>Thoát ra, xem sau</Button>
           )}
         </div>
       );
