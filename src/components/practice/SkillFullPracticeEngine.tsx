@@ -42,6 +42,7 @@ import WritingFullResults from "@/components/writing/WritingFullResults";
 import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
+import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { gradableGrammarQuestions } from "@/lib/grammarGroups";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
