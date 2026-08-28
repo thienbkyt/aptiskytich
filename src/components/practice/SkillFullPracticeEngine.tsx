@@ -42,6 +42,7 @@ import WritingFullResults from "@/components/writing/WritingFullResults";
 import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import { saveExamResult, saveSpeakingRecording } from "@/lib/saveExamResult";
+import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { gradableGrammarQuestions } from "@/lib/grammarGroups";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
@@ -207,6 +208,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingV2FlagReview, setSpeakingV2FlagReview] = useState(false);
   const [speakingV2RawTotal, setSpeakingV2RawTotal] = useState(0);
   const [speakingV2Message, setSpeakingV2Message] = useState("");
+  /** Some parts fell back to the background grading queue (worker + poll). */
+  const [speakingQueuePending, setSpeakingQueuePending] = useState(false);
+  const [speakingQueueTimedOut, setSpeakingQueueTimedOut] = useState(false);
   useExitWarning(phase !== "loading" && phase !== "completed");
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
   const { tier: userTier, proUntil } = useIsPro();
@@ -607,14 +611,33 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     }
 
     if (speakingPhase === "grading") {
+      if (speakingQueueTimedOut) {
+        return (
+          <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            <p className="text-sm text-foreground font-medium">
+              Bài đã lưu, đang chờ chấm — xem lại trong Lịch sử.
+            </p>
+            <p className="text-xs text-muted-foreground max-w-md">
+              AI Kỳ Tích sẽ hoàn tất trong ít phút. Bạn không cần ở lại trang này.
+            </p>
+            <Button onClick={onExit}>Thoát</Button>
+          </div>
+        );
+      }
       return (
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            AI Kỳ Tích đang chấm Speaking 5 tiêu chí — đừng thoát hay đổi tab nha.
+            {speakingQueuePending
+              ? "AI đang chấm — thường 1–3 phút. Bạn có thể thoát ra, kết quả sẽ có trong Lịch sử."
+              : "AI Kỳ Tích đang chấm Speaking 5 tiêu chí — đừng thoát hay đổi tab nha."}
           </p>
           {speakingV2Message && (
             <p className="text-xs text-muted-foreground">{speakingV2Message}</p>
+          )}
+          {speakingQueuePending && (
+            <Button variant="outline" onClick={onExit}>Thoát ra, xem sau</Button>
           )}
         </div>
       );
@@ -758,25 +781,31 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         .filter(Boolean) as SpeakingPartSubmission[];
 
       // 1) Upload recordings (best-effort, parallel across parts).
+      //    Keep the storage paths so the queue fallback can reuse them instead
+      //    of uploading the same audio twice.
+      const audioPathsByPart: Record<number, Array<string | null>> = {};
       try {
         await Promise.all(orderedSubs.map(async (sub, oi) => {
           const originalPartIdx = orderedIndices[oi];
           const originalPart = parts[originalPartIdx];
           if (!originalPart) return;
+          const paths: Array<string | null> = new Array(sub.items.length).fill(null);
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
             try {
-              await saveSpeakingRecording({
+              const path = await saveSpeakingRecording({
                 examSetId: originalPart.id,
                 part: `${originalPart.partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
                 testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
               });
+              paths[idx] = path ?? null;
             } catch (e) {
               console.warn("[SkillFullPractice V2] saveSpeakingRecording failed", e);
             }
           }));
+          audioPathsByPart[originalPartIdx] = paths;
         }));
       } catch (e) {
         console.warn("[SkillFullPractice V2] recordings upload failed", e);
@@ -785,6 +814,12 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       // 2) Await V2 grading per part (most were kicked off in background as parts completed).
       const v2ByPart: Record<string, SpeakingPartResultV2> = {};
       const v2Entries: SpeakingV2PartEntry[] = [];
+      /** Parts whose live grading failed and were handed to the background queue. */
+      const queuedParts: Array<{
+        originalIdx: number;
+        sub: SpeakingPartSubmission;
+        promptTexts: string[];
+      }> = [];
       for (let oi = 0; oi < orderedSubs.length; oi++) {
         const sub = orderedSubs[oi];
         const originalIdx = orderedIndices[oi];
@@ -820,30 +855,56 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         } catch (e) {
-          if (e instanceof QuotaExceededError) { setQuotaModal(e.info); toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm."); }
-
           console.warn(`[SkillFullPractice V2] gradeSpeakingPartV2 ${sub.partType} failed`, e);
 
-          const empty: SpeakingPartResultV2 = {
-            bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
-            rawPart: 0,
-            perItem: promptTexts.map((q) => ({
-              questionText: q,
-              transcript: "",
-              onTopic: false,
-            })),
-            analysis: "Không chấm được phần này. Vui lòng thử lại sau.",
-            improvedVersion: "",
-          };
-
-          v2ByPart[sub.partType] = empty;
-          v2Entries.push({
-            partType: sub.partType as any,
-            partNumber: sub.partNumber,
-            result: empty,
-            recordingUrls: promptTexts.map((_, i) => sub.items[i]?.audioUrl ?? null),
-            sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
-          });
+          if (e instanceof QuotaExceededError) {
+            // Quota is not a technical failure — never retry through the queue.
+            setQuotaModal(e.info);
+            toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+            const empty: SpeakingPartResultV2 = {
+              bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
+              rawPart: 0,
+              perItem: promptTexts.map((q) => ({
+                questionText: q,
+                transcript: "",
+                onTopic: false,
+              })),
+              analysis: "Không chấm được phần này. Vui lòng thử lại sau.",
+              improvedVersion: "",
+            };
+            v2ByPart[sub.partType] = empty;
+            v2Entries.push({
+              partType: sub.partType as any,
+              partNumber: sub.partNumber,
+              result: empty,
+              recordingUrls: promptTexts.map((_, i) => sub.items[i]?.audioUrl ?? null),
+              sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
+            });
+          } else {
+            // Technical failure (network blip, 5xx, timeout) → hand this part to
+            // the background worker instead of scoring it 0.
+            speakingV2PromisesByPartRef.current[originalIdx] = undefined as any;
+            try {
+              await enqueueGradingFallback({
+                skill: "speaking",
+                partType: sub.partType,
+                testResultId: speakingTestResultIdByPartRef.current[originalIdx] ?? null,
+                examSetId: parts[originalIdx]?.id ?? null,
+                fullTestSessionId: fullPartSessionRef.current,
+                payload: {
+                  type: "speaking_v2",
+                  partType: sub.partType,
+                  questions,
+                  audioPaths: audioPathsByPart[originalIdx] ?? [],
+                },
+                lastError: (e as any)?.message || "live_grade_failed",
+              });
+            } catch (err) {
+              console.warn("[SkillFullPractice V2] enqueue fallback failed", err);
+            }
+            queuedParts.push({ originalIdx, sub, promptTexts });
+            continue;
+          }
         }
 
         // Write the part score back to its own test_results row (+ snapshot).
@@ -879,6 +940,147 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
       }
 
+      // 2b) Some parts went to the background queue → wait for the worker
+      //     instead of finalizing with rawPart 0 (which produced fake A0).
+      if (queuedParts.length > 0) {
+        setSpeakingQueuePending(true);
+        setSpeakingQueueTimedOut(false);
+        setSpeakingV2Message(
+          `Còn ${queuedParts.length} phần đang được chấm nền — kết quả sẽ tự hiện.`,
+        );
+
+        const remaining = new Map(queuedParts.map((q) => [q.originalIdx, q]));
+        const deadline = Date.now() + 5 * 60 * 1000;
+
+        while (remaining.size > 0 && Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 6000));
+          for (const [idx, q] of Array.from(remaining.entries())) {
+            const trId = speakingTestResultIdByPartRef.current[idx] ?? null;
+            if (!trId) continue;
+            let partData: any = null;
+            try {
+              const { data } = await supabase
+                .from("speaking_skill_results")
+                .select("parts")
+                .eq("test_result_id", trId)
+                .maybeSingle();
+              partData = (data as any)?.parts?.[q.sub.partType] ?? null;
+            } catch {
+              continue;
+            }
+            if (!partData) continue;
+
+            const rawItems = Array.isArray(partData.items)
+              ? partData.items
+              : Array.isArray(partData.perItem)
+                ? partData.perItem
+                : [];
+            const merged: SpeakingPartResultV2 = {
+              bands: partData.bands ?? { tf: "", gra: "", vra: "", pro: "", fc: "" },
+              rawPart: Number(partData.rawPart ?? 0),
+              perItem: rawItems.map((it: any, i: number) => ({
+                ...it,
+                questionText: it?.questionText || q.promptTexts[i] || `Question ${i + 1}`,
+                transcript: it?.transcript ?? "",
+                onTopic: !!it?.onTopic,
+              })),
+              analysis: partData.analysis ?? "",
+              criteriaAnalysis: partData.criteriaAnalysis ?? undefined,
+              feedback: partData.feedback ?? undefined,
+              improvedVersion: partData.improvedVersion ?? "",
+              fullTranscript: partData.fullTranscript ?? "",
+            };
+            v2ByPart[q.sub.partType] = merged;
+            v2Entries.push({
+              partType: q.sub.partType as any,
+              partNumber: q.sub.partNumber,
+              result: merged,
+              recordingUrls: q.promptTexts.map((_, i) => q.sub.items[i]?.audioUrl ?? null),
+              sampleAnswers: collectSampleAnswers(parts[idx]?.questions ?? []),
+            });
+
+            try {
+              const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+              const rawPart = Number(merged.rawPart ?? 0);
+              const aiByIndex: Record<number, any> = {};
+              merged.perItem.forEach((it: any, i: number) => {
+                aiByIndex[i] = {
+                  transcript: it?.transcript ?? null,
+                  feedback: i === 0 ? (merged.feedback ?? merged.analysis ?? undefined) : undefined,
+                  ...(i === 0 ? { partScore: rawPart, maxPoints: 30 } : {}),
+                };
+              });
+              if (!aiByIndex[0]) {
+                aiByIndex[0] = {
+                  partScore: rawPart,
+                  maxPoints: 30,
+                  feedback: merged.feedback ?? merged.analysis ?? undefined,
+                };
+              }
+              const isLastIdx = idx === orderedIndices[orderedIndices.length - 1];
+              await mergeSnapshotAI(
+                trId,
+                aiByIndex,
+                isLastIdx
+                  ? undefined
+                  : { score: rawPart, total: 30, partScaled50: Math.round((rawPart / 30) * 50) },
+              );
+            } catch (e) {
+              console.warn("[SkillFullPractice V2] mergeSnapshotAI queued part failed", e);
+            }
+
+            remaining.delete(idx);
+            setSpeakingV2Message(
+              remaining.size > 0
+                ? `Còn ${remaining.size} phần đang được chấm nền — kết quả sẽ tự hiện.`
+                : "Đang tổng hợp điểm...",
+            );
+          }
+        }
+
+        if (remaining.size > 0) {
+          // Give up waiting in the UI, but NEVER write 0/A0. Store the parts we
+          // have with flag_review so admins/worker can complete it later.
+          const partsPayload: Record<string, any> = {};
+          for (const entry of v2Entries) {
+            partsPayload[entry.partType] = {
+              bands: entry.result.bands,
+              items: entry.result.perItem,
+              analysis: entry.result.analysis,
+              criteriaAnalysis: entry.result.criteriaAnalysis,
+              feedback: entry.result.feedback,
+              improvedVersion: entry.result.improvedVersion,
+              rawPart: entry.result.rawPart,
+              fullTranscript: (entry.result as any).fullTranscript ?? null,
+            };
+          }
+          try {
+            await saveSpeakingSkillResult({
+              testResultId:
+                speakingTestResultIdByPartRef.current[
+                  orderedIndices[orderedIndices.length - 1]
+                ] ?? null,
+              examSetId: parts[orderedIndices[orderedIndices.length - 1]]?.id ?? null,
+              fullTestSessionId: fullPartSessionRef.current,
+              parts: partsPayload,
+              rawTotal: 0,
+              scale50: null as any,
+              cefr: null as any,
+              greyZone: false,
+              flagReview: true,
+            });
+          } catch (e) {
+            console.warn("[SkillFullPractice V2] save pending speaking result failed", e);
+          }
+          setSpeakingQueuePending(false);
+          setSpeakingQueueTimedOut(true);
+          toast.info("Bài đã lưu, đang chờ chấm — xem lại trong Lịch sử.");
+          return;
+        }
+
+        setSpeakingQueuePending(false);
+        v2Entries.sort((a, b) => a.partNumber - b.partNumber);
+      }
 
       // 3) Finalize → /50 + CEFR + flags.
       setSpeakingV2Message("Đang tổng hợp điểm /50 và CEFR...");
