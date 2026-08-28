@@ -855,30 +855,56 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
           });
         } catch (e) {
-          if (e instanceof QuotaExceededError) { setQuotaModal(e.info); toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm."); }
-
           console.warn(`[SkillFullPractice V2] gradeSpeakingPartV2 ${sub.partType} failed`, e);
 
-          const empty: SpeakingPartResultV2 = {
-            bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
-            rawPart: 0,
-            perItem: promptTexts.map((q) => ({
-              questionText: q,
-              transcript: "",
-              onTopic: false,
-            })),
-            analysis: "Không chấm được phần này. Vui lòng thử lại sau.",
-            improvedVersion: "",
-          };
-
-          v2ByPart[sub.partType] = empty;
-          v2Entries.push({
-            partType: sub.partType as any,
-            partNumber: sub.partNumber,
-            result: empty,
-            recordingUrls: promptTexts.map((_, i) => sub.items[i]?.audioUrl ?? null),
-            sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
-          });
+          if (e instanceof QuotaExceededError) {
+            // Quota is not a technical failure — never retry through the queue.
+            setQuotaModal(e.info);
+            toast.error("Hết lượt chấm AI — bài đã lưu, nâng cấp gói để chấm.");
+            const empty: SpeakingPartResultV2 = {
+              bands: { tf: "0", gra: "0", vra: "0", pro: "0", fc: "0" },
+              rawPart: 0,
+              perItem: promptTexts.map((q) => ({
+                questionText: q,
+                transcript: "",
+                onTopic: false,
+              })),
+              analysis: "Không chấm được phần này. Vui lòng thử lại sau.",
+              improvedVersion: "",
+            };
+            v2ByPart[sub.partType] = empty;
+            v2Entries.push({
+              partType: sub.partType as any,
+              partNumber: sub.partNumber,
+              result: empty,
+              recordingUrls: promptTexts.map((_, i) => sub.items[i]?.audioUrl ?? null),
+              sampleAnswers: collectSampleAnswers(parts[originalIdx]?.questions ?? []),
+            });
+          } else {
+            // Technical failure (network blip, 5xx, timeout) → hand this part to
+            // the background worker instead of scoring it 0.
+            speakingV2PromisesByPartRef.current[originalIdx] = undefined as any;
+            try {
+              await enqueueGradingFallback({
+                skill: "speaking",
+                partType: sub.partType,
+                testResultId: speakingTestResultIdByPartRef.current[originalIdx] ?? null,
+                examSetId: parts[originalIdx]?.id ?? null,
+                fullTestSessionId: fullPartSessionRef.current,
+                payload: {
+                  type: "speaking_v2",
+                  partType: sub.partType,
+                  questions,
+                  audioPaths: audioPathsByPart[originalIdx] ?? [],
+                },
+                lastError: (e as any)?.message || "live_grade_failed",
+              });
+            } catch (err) {
+              console.warn("[SkillFullPractice V2] enqueue fallback failed", err);
+            }
+            queuedParts.push({ originalIdx, sub, promptTexts });
+            continue;
+          }
         }
 
         // Write the part score back to its own test_results row (+ snapshot).
