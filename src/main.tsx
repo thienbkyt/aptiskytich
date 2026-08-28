@@ -243,7 +243,10 @@ window.addEventListener("unhandledrejection", (e) => {
       .catch(() => { /* ignore */ });
     return;
   }
-  pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`);
+  pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`, {
+    message: msg,
+    stack: reason?.stack || "",
+  });
 });
 
 
