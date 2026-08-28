@@ -192,21 +192,31 @@ function pushOverlay(
 }
 
 
+function isThirdParty(msg: string, filename?: string, stack?: string): boolean {
+  if (!msg) return false;
+  const combined = `${msg} ${filename || ""} ${stack || ""}`;
+  const isBrowserExtension =
+    combined.includes("chrome-extension://") ||
+    combined.includes("moz-extension://") ||
+    combined.includes("safari-extension://");
+  return (
+    msg.includes("zaloJSV2") ||
+    /zalo/i.test(msg) ||
+    msg === "Script error." ||
+    isBrowserExtension ||
+    (!!filename && !filename.includes("/assets/"))
+  );
+}
+
 window.addEventListener("error", (e) => {
   const msg = e?.message || "";
   if (msg.includes("Failed to fetch dynamically imported module")) {
     showUpdateBanner();
     return;
   }
-  // Bỏ qua lỗi do script bên thứ ba tiêm vào trang (Zalo in-app browser, v.v.)
-  // — không phải code bundle của web mình.
   const filename = e?.filename || "";
-  const isThirdParty =
-    msg.includes("zaloJSV2") ||
-    /zalo/i.test(msg) ||
-    msg === "Script error." ||
-    !filename.includes("/assets/");
-  if (isThirdParty) {
+  const stack = (e.error && (e.error.stack || "")) || "";
+  if (isThirdParty(msg, filename, stack)) {
     logClientError("third_party_script", new Error(msg), {
       filename,
       lineno: e?.lineno,
@@ -215,19 +225,17 @@ window.addEventListener("error", (e) => {
     return;
   }
   pushOverlay(
-    `Error: ${msg}\nat ${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}\n${
-      (e.error && (e.error.stack || "")) || ""
-    }`,
+    `Error: ${msg}\nat ${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}\n${stack}`,
     {
       message: msg,
       filename: e.filename,
       lineno: e.lineno,
       colno: e.colno,
-      stack: (e.error && (e.error.stack || "")) || "",
+      stack,
     }
   );
-
 });
+
 window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
   const msg = String(reason?.message || reason || "");
@@ -243,9 +251,14 @@ window.addEventListener("unhandledrejection", (e) => {
       .catch(() => { /* ignore */ });
     return;
   }
-  pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`, {
+  const stack = reason?.stack || "";
+  if (isThirdParty(msg, undefined, stack)) {
+    logClientError("third_party_script", new Error(msg), { stack });
+    return;
+  }
+  pushOverlay(`Unhandled Rejection: ${msg}\n${stack}`, {
     message: msg,
-    stack: reason?.stack || "",
+    stack,
   });
 });
 
