@@ -166,8 +166,19 @@ function ensureOverlay(): HTMLDivElement {
   else document.addEventListener("DOMContentLoaded", () => document.body.prepend(overlay!));
   return overlay;
 }
-function pushOverlay(text: string) {
+function pushOverlay(
+  text: string,
+  details?: { message?: string; filename?: string; stack?: string; lineno?: number; colno?: number }
+) {
   try {
+    if (details) {
+      logClientError("app_crash", new Error(details.message || text), {
+        filename: details.filename,
+        lineno: details.lineno,
+        colno: details.colno,
+        stack: details.stack,
+      });
+    }
     const el = ensureOverlay();
     el.style.display = "block";
     const line = document.createElement("div");
@@ -179,6 +190,7 @@ function pushOverlay(text: string) {
     /* ignore */
   }
 }
+
 
 window.addEventListener("error", (e) => {
   const msg = e?.message || "";
@@ -206,7 +218,15 @@ window.addEventListener("error", (e) => {
     `Error: ${msg}\nat ${e.filename || "?"}:${e.lineno || "?"}:${e.colno || "?"}\n${
       (e.error && (e.error.stack || "")) || ""
     }`,
+    {
+      message: msg,
+      filename: e.filename,
+      lineno: e.lineno,
+      colno: e.colno,
+      stack: (e.error && (e.error.stack || "")) || "",
+    }
   );
+
 });
 window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
@@ -223,7 +243,10 @@ window.addEventListener("unhandledrejection", (e) => {
       .catch(() => { /* ignore */ });
     return;
   }
-  pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`);
+  pushOverlay(`Unhandled Rejection: ${msg}\n${reason?.stack || ""}`, {
+    message: msg,
+    stack: reason?.stack || "",
+  });
 });
 
 
