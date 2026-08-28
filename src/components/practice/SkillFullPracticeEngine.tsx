@@ -208,6 +208,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   const [speakingV2FlagReview, setSpeakingV2FlagReview] = useState(false);
   const [speakingV2RawTotal, setSpeakingV2RawTotal] = useState(0);
   const [speakingV2Message, setSpeakingV2Message] = useState("");
+  /** Some parts fell back to the background grading queue (worker + poll). */
+  const [speakingQueuePending, setSpeakingQueuePending] = useState(false);
+  const [speakingQueueTimedOut, setSpeakingQueueTimedOut] = useState(false);
   useExitWarning(phase !== "loading" && phase !== "completed");
   const [quotaModal, setQuotaModal] = useState<QuotaInfo | null>(null);
   const { tier: userTier, proUntil } = useIsPro();
