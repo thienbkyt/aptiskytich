@@ -781,25 +781,31 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         .filter(Boolean) as SpeakingPartSubmission[];
 
       // 1) Upload recordings (best-effort, parallel across parts).
+      //    Keep the storage paths so the queue fallback can reuse them instead
+      //    of uploading the same audio twice.
+      const audioPathsByPart: Record<number, Array<string | null>> = {};
       try {
         await Promise.all(orderedSubs.map(async (sub, oi) => {
           const originalPartIdx = orderedIndices[oi];
           const originalPart = parts[originalPartIdx];
           if (!originalPart) return;
+          const paths: Array<string | null> = new Array(sub.items.length).fill(null);
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
             try {
-              await saveSpeakingRecording({
+              const path = await saveSpeakingRecording({
                 examSetId: originalPart.id,
                 part: `${originalPart.partNorm}_q${idx + 1}`,
                 blob: item.blob,
                 durationSeconds: item.actualSpoken,
                 testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
               });
+              paths[idx] = path ?? null;
             } catch (e) {
               console.warn("[SkillFullPractice V2] saveSpeakingRecording failed", e);
             }
           }));
+          audioPathsByPart[originalPartIdx] = paths;
         }));
       } catch (e) {
         console.warn("[SkillFullPractice V2] recordings upload failed", e);
