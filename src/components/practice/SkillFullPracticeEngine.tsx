@@ -940,6 +940,147 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
       }
 
+      // 2b) Some parts went to the background queue → wait for the worker
+      //     instead of finalizing with rawPart 0 (which produced fake A0).
+      if (queuedParts.length > 0) {
+        setSpeakingQueuePending(true);
+        setSpeakingQueueTimedOut(false);
+        setSpeakingV2Message(
+          `Còn ${queuedParts.length} phần đang được chấm nền — kết quả sẽ tự hiện.`,
+        );
+
+        const remaining = new Map(queuedParts.map((q) => [q.originalIdx, q]));
+        const deadline = Date.now() + 5 * 60 * 1000;
+
+        while (remaining.size > 0 && Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 6000));
+          for (const [idx, q] of Array.from(remaining.entries())) {
+            const trId = speakingTestResultIdByPartRef.current[idx] ?? null;
+            if (!trId) continue;
+            let partData: any = null;
+            try {
+              const { data } = await supabase
+                .from("speaking_skill_results")
+                .select("parts")
+                .eq("test_result_id", trId)
+                .maybeSingle();
+              partData = (data as any)?.parts?.[q.sub.partType] ?? null;
+            } catch {
+              continue;
+            }
+            if (!partData) continue;
+
+            const rawItems = Array.isArray(partData.items)
+              ? partData.items
+              : Array.isArray(partData.perItem)
+                ? partData.perItem
+                : [];
+            const merged: SpeakingPartResultV2 = {
+              bands: partData.bands ?? { tf: "", gra: "", vra: "", pro: "", fc: "" },
+              rawPart: Number(partData.rawPart ?? 0),
+              perItem: rawItems.map((it: any, i: number) => ({
+                ...it,
+                questionText: it?.questionText || q.promptTexts[i] || `Question ${i + 1}`,
+                transcript: it?.transcript ?? "",
+                onTopic: !!it?.onTopic,
+              })),
+              analysis: partData.analysis ?? "",
+              criteriaAnalysis: partData.criteriaAnalysis ?? undefined,
+              feedback: partData.feedback ?? undefined,
+              improvedVersion: partData.improvedVersion ?? "",
+              fullTranscript: partData.fullTranscript ?? "",
+            };
+            v2ByPart[q.sub.partType] = merged;
+            v2Entries.push({
+              partType: q.sub.partType as any,
+              partNumber: q.sub.partNumber,
+              result: merged,
+              recordingUrls: q.promptTexts.map((_, i) => q.sub.items[i]?.audioUrl ?? null),
+              sampleAnswers: collectSampleAnswers(parts[idx]?.questions ?? []),
+            });
+
+            try {
+              const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+              const rawPart = Number(merged.rawPart ?? 0);
+              const aiByIndex: Record<number, any> = {};
+              merged.perItem.forEach((it: any, i: number) => {
+                aiByIndex[i] = {
+                  transcript: it?.transcript ?? null,
+                  feedback: i === 0 ? (merged.feedback ?? merged.analysis ?? undefined) : undefined,
+                  ...(i === 0 ? { partScore: rawPart, maxPoints: 30 } : {}),
+                };
+              });
+              if (!aiByIndex[0]) {
+                aiByIndex[0] = {
+                  partScore: rawPart,
+                  maxPoints: 30,
+                  feedback: merged.feedback ?? merged.analysis ?? undefined,
+                };
+              }
+              const isLastIdx = idx === orderedIndices[orderedIndices.length - 1];
+              await mergeSnapshotAI(
+                trId,
+                aiByIndex,
+                isLastIdx
+                  ? undefined
+                  : { score: rawPart, total: 30, partScaled50: Math.round((rawPart / 30) * 50) },
+              );
+            } catch (e) {
+              console.warn("[SkillFullPractice V2] mergeSnapshotAI queued part failed", e);
+            }
+
+            remaining.delete(idx);
+            setSpeakingV2Message(
+              remaining.size > 0
+                ? `Còn ${remaining.size} phần đang được chấm nền — kết quả sẽ tự hiện.`
+                : "Đang tổng hợp điểm...",
+            );
+          }
+        }
+
+        if (remaining.size > 0) {
+          // Give up waiting in the UI, but NEVER write 0/A0. Store the parts we
+          // have with flag_review so admins/worker can complete it later.
+          const partsPayload: Record<string, any> = {};
+          for (const entry of v2Entries) {
+            partsPayload[entry.partType] = {
+              bands: entry.result.bands,
+              items: entry.result.perItem,
+              analysis: entry.result.analysis,
+              criteriaAnalysis: entry.result.criteriaAnalysis,
+              feedback: entry.result.feedback,
+              improvedVersion: entry.result.improvedVersion,
+              rawPart: entry.result.rawPart,
+              fullTranscript: (entry.result as any).fullTranscript ?? null,
+            };
+          }
+          try {
+            await saveSpeakingSkillResult({
+              testResultId:
+                speakingTestResultIdByPartRef.current[
+                  orderedIndices[orderedIndices.length - 1]
+                ] ?? null,
+              examSetId: parts[orderedIndices[orderedIndices.length - 1]]?.id ?? null,
+              fullTestSessionId: fullPartSessionRef.current,
+              parts: partsPayload,
+              rawTotal: 0,
+              scale50: null as any,
+              cefr: null as any,
+              greyZone: false,
+              flagReview: true,
+            });
+          } catch (e) {
+            console.warn("[SkillFullPractice V2] save pending speaking result failed", e);
+          }
+          setSpeakingQueuePending(false);
+          setSpeakingQueueTimedOut(true);
+          toast.info("Bài đã lưu, đang chờ chấm — xem lại trong Lịch sử.");
+          return;
+        }
+
+        setSpeakingQueuePending(false);
+        v2Entries.sort((a, b) => a.partNumber - b.partNumber);
+      }
 
       // 3) Finalize → /50 + CEFR + flags.
       setSpeakingV2Message("Đang tổng hợp điểm /50 và CEFR...");
