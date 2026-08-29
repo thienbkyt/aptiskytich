@@ -1666,7 +1666,7 @@ ${partsIn.formalText ?? ""}`;
         criteriaAnalysis,
         grammarErrors,
         spellingErrors,
-        feedback,
+        feedback: feedbackOut,
         improvedVersion,
         forcedComplexity,
       };
