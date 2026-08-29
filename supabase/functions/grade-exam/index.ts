@@ -1544,6 +1544,7 @@ ${partsIn.formalText ?? ""}`;
       let rawPart = 0;
       let perItem: any[] = [];
       let analysis = "";
+      let feedbackOut = feedback;
 
 
       if (pt === "task1") {
