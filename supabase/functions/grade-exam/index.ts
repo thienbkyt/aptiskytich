@@ -1544,6 +1544,7 @@ ${partsIn.formalText ?? ""}`;
       let rawPart = 0;
       let perItem: any[] = [];
       let analysis = "";
+      let feedbackOut = feedback;
 
 
       if (pt === "task1") {
@@ -1559,6 +1560,10 @@ ${partsIn.formalText ?? ""}`;
         const correctCount = items.filter((it) => !!it.correct).length; // 0..5 → band
         bands = { tf: correctCount, gra: 0, vra: 0, cc: 0, reg: 0 }; // Part 1 chỉ dùng TF-aggregate
         rawPart = correctCount * 6; // 0..30
+        const failed = items.map((it, i) => (it?.correct ? null : `câu ${i + 1}`)).filter(Boolean) as string[];
+        if (failed.length) {
+          feedbackOut = `**Các câu chưa được tính điểm**\nBạn đạt ${correctCount}/5 câu. Chưa đạt: ${failed.join(", ")}. Part 1 yêu cầu mỗi câu trả lời 1–5 từ và đúng ngữ pháp.\n\n` + feedback;
+        }
         perItem = items.map((it, i) => ({
           questionText: qs[i] ?? "",
           userAnswer: (partsIn.shortAnswers || [])[i] ?? "",
@@ -1661,7 +1666,7 @@ ${partsIn.formalText ?? ""}`;
         criteriaAnalysis,
         grammarErrors,
         spellingErrors,
-        feedback,
+        feedback: feedbackOut,
         improvedVersion,
         forcedComplexity,
       };
