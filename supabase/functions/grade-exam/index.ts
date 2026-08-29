@@ -1156,6 +1156,11 @@ Chia feedback thành đúng 3 mục, MỖI mục bắt đầu bằng nhãn in đ
 **Từ vựng**
 Sau mỗi nhãn xuống dòng rồi viết 1–3 câu tiếng Việt tự nhiên.
 
+RÀNG BUỘC FEEDBACK (bắt buộc):
+- feedback PHẢI nhất quán với items: nếu có bất kỳ item nào tooManyWords=true hoặc grammarCorrect=false thì TUYỆT ĐỐI không được viết những câu như "trả lời đúng và đầy đủ tất cả các câu hỏi".
+- nếu grammarErrors và spellingErrors đều rỗng thì KHÔNG được nhắc tới lỗi ngữ pháp/chính tả nào trong feedback (kể cả lỗi viết hoa).
+- mỗi lỗi nêu trong feedback phải tương ứng với một phần tử có thật trong grammarErrors hoặc spellingErrors.
+
 RETURN VIA TOOL CALL.`;
 
       let systemPromptV2 = "";
