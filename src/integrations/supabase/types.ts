@@ -396,6 +396,39 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp1_exp_20260829: {
+        Row: {
+          explanation: string | null
+          id: string | null
+        }
+        Insert: {
+          explanation?: string | null
+          id?: string | null
+        }
+        Update: {
+          explanation?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      backup_lp1_opts_20260829: {
+        Row: {
+          id: string | null
+          options: Json | null
+          question_text: string | null
+        }
+        Insert: {
+          id?: string | null
+          options?: Json | null
+          question_text?: string | null
+        }
+        Update: {
+          id?: string | null
+          options?: Json | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_chuanhoa_20260826: {
         Row: {
           audio_url: string | null
@@ -702,6 +735,21 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_p1_key_fix_20260829: {
+        Row: {
+          correct_answer: number | null
+          id: string | null
+        }
+        Insert: {
+          correct_answer?: number | null
+          id?: string | null
+        }
+        Update: {
+          correct_answer?: number | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_p2_audio_20260827: {
         Row: {
           audio_url: string | null
@@ -885,6 +933,39 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_rp2_exp_20260829: {
+        Row: {
+          explanation: string | null
+          id: string | null
+        }
+        Insert: {
+          explanation?: string | null
+          id?: string | null
+        }
+        Update: {
+          explanation?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      backup_rp3_stmt_20260829: {
+        Row: {
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_rp5_de27_20260819: {
         Row: {
           backed_up_at: string | null
@@ -1033,6 +1114,42 @@ export type Database = {
         }
         Update: {
           backed_up_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      backup_sp23_samples_20260829: {
+        Row: {
+          exam_set_id: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      backup_sp4_preptime_20260829: {
+        Row: {
+          exam_set_id: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          exam_set_id?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          exam_set_id?: string | null
           extra_data?: Json | null
           id?: string | null
         }

@@ -1156,6 +1156,11 @@ Chia feedback thành đúng 3 mục, MỖI mục bắt đầu bằng nhãn in đ
 **Từ vựng**
 Sau mỗi nhãn xuống dòng rồi viết 1–3 câu tiếng Việt tự nhiên.
 
+RÀNG BUỘC FEEDBACK (bắt buộc):
+- feedback PHẢI nhất quán với items: nếu có bất kỳ item nào tooManyWords=true hoặc grammarCorrect=false thì TUYỆT ĐỐI không được viết những câu như "trả lời đúng và đầy đủ tất cả các câu hỏi".
+- nếu grammarErrors và spellingErrors đều rỗng thì KHÔNG được nhắc tới lỗi ngữ pháp/chính tả nào trong feedback (kể cả lỗi viết hoa).
+- mỗi lỗi nêu trong feedback phải tương ứng với một phần tử có thật trong grammarErrors hoặc spellingErrors.
+
 RETURN VIA TOOL CALL.`;
 
       let systemPromptV2 = "";
@@ -2462,6 +2467,19 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       while (items.length < 5) items.push({ tooManyWords: false, grammarCorrect: false });
       const correctCount = items.filter((it) => !it.tooManyWords && it.grammarCorrect).length;
       const partScore = round1(clamp(correctCount * 2, 0, 10));
+
+      // Post-process feedback so it cannot contradict the score: prepend a
+      // concise summary of which AI-returned items were not counted.
+      let finalFeedback = feedback;
+      const failed = items.map((it, i) => {
+        if (!it.tooManyWords && it.grammarCorrect) return null;
+        const ly_do = it.tooManyWords ? "viết quá 5 từ" : "lỗi ngữ pháp";
+        return `câu ${i + 1} (${ly_do})`;
+      }).filter(Boolean);
+      if (failed.length) {
+        finalFeedback = `**Các câu chưa được tính điểm**\nBạn đạt ${correctCount}/5 câu. Chưa đạt: ${failed.join(", ")}. Part 1 yêu cầu mỗi câu trả lời 1–5 từ và đúng ngữ pháp.\n\n` + feedback;
+      }
+
       payload = {
         partType,
         maxPoints: 10,
@@ -2473,7 +2491,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         grammarErrors: stripIdx(allGrammar),
         spellingErrors: stripIdx(allSpelling),
         partScore,
-        feedback,
+        feedback: finalFeedback,
         improvedVersion: grading?.improvedVersion ?? "",
         upgradeTips: grading?.upgradeTips ?? "",
       };
