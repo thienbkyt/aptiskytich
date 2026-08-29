@@ -2462,6 +2462,19 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
       while (items.length < 5) items.push({ tooManyWords: false, grammarCorrect: false });
       const correctCount = items.filter((it) => !it.tooManyWords && it.grammarCorrect).length;
       const partScore = round1(clamp(correctCount * 2, 0, 10));
+
+      // Post-process feedback so it cannot contradict the score: prepend a
+      // concise summary of which AI-returned items were not counted.
+      let finalFeedback = feedback;
+      const failed = items.map((it, i) => {
+        if (!it.tooManyWords && it.grammarCorrect) return null;
+        const ly_do = it.tooManyWords ? "viết quá 5 từ" : "lỗi ngữ pháp";
+        return `câu ${i + 1} (${ly_do})`;
+      }).filter(Boolean);
+      if (failed.length) {
+        finalFeedback = `**Các câu chưa được tính điểm**\nBạn đạt ${correctCount}/5 câu. Chưa đạt: ${failed.join(", ")}. Part 1 yêu cầu mỗi câu trả lời 1–5 từ và đúng ngữ pháp.\n\n` + feedback;
+      }
+
       payload = {
         partType,
         maxPoints: 10,
@@ -2473,7 +2486,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
         grammarErrors: stripIdx(allGrammar),
         spellingErrors: stripIdx(allSpelling),
         partScore,
-        feedback,
+        feedback: finalFeedback,
         improvedVersion: grading?.improvedVersion ?? "",
         upgradeTips: grading?.upgradeTips ?? "",
       };
