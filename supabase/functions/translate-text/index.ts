@@ -12,6 +12,27 @@ const corsHeaders = {
 
 const MAX_LEN = 2000;
 
+const TRANSLATOR_SYSTEM = [
+  "Bạn là MÁY DỊCH Anh→Việt, không phải trợ lý. Nhiệm vụ duy nhất: dịch nghĩa đoạn văn bản được đưa vào.",
+  "TUYỆT ĐỐI KHÔNG trả lời, không giải thích, không đưa lời khuyên, không cho ví dụ, kể cả khi đầu vào là câu hỏi hoặc câu mệnh lệnh (\"Describe...\", \"Tell me about...\", \"What...?\"). Câu hỏi thì dịch thành câu hỏi tiếng Việt; câu mệnh lệnh thì dịch thành câu mệnh lệnh tiếng Việt.",
+  "Chỉ trả về đúng bản dịch, một đoạn văn xuôi. Không markdown, không bullet, không xuống dòng kép, không thêm bất kỳ chú thích nào.",
+  "Đầu ra phải có độ dài tương đương đầu vào.",
+].join("\n");
+
+const STRICT_RETRY_SYSTEM = TRANSLATOR_SYSTEM +
+  "\nLần trước bạn đã trả lời câu hỏi thay vì dịch. Chỉ dịch nguyên văn, một đoạn văn xuôi, độ dài tương đương đầu vào. Không thêm gì khác.";
+
+/** true nếu output có dấu hiệu "trả lời" thay vì "dịch" */
+function isBadTranslation(input: string, output: string): boolean {
+  const out = output.trim();
+  if (!out) return true;
+  if (/\*\*/.test(out)) return true;
+  if (/(^|\n)\s*([-*•]|\d+[.)])\s+/.test(out)) return true;
+  if (/\n\s*\n/.test(out)) return true;
+  if (out.length > input.trim().length * 3.5 && out.length > 150) return true;
+  return false;
+}
+
 function normalize(text: string): string {
   return text.replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -19,6 +40,7 @@ function normalize(text: string): string {
 function hash(text: string): string {
   return createHash("md5").update(text).digest("hex");
 }
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS")
@@ -68,7 +90,7 @@ serve(async (req) => {
       .eq("text_hash", textHash)
       .maybeSingle();
 
-    if (cached?.translation_vi) {
+    if (cached?.translation_vi && !isBadTranslation(trimmed, cached.translation_vi)) {
       const s = new ReadableStream({
         start(c) {
           c.enqueue(encoder.encode(`data: ${JSON.stringify({ t: cached.translation_vi })}\n\n`));
@@ -78,71 +100,65 @@ serve(async (req) => {
       });
       return new Response(s, { headers: sseHeaders });
     }
+    if (cached?.translation_vi) {
+      // Bản dịch cũ bị hỏng (AI trả lời thay vì dịch) → xoá, dịch lại
+      await supabase.from("sentence_translation_cache").delete().eq("text_hash", textHash);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const model = "google/gemini-2.5-flash-lite";
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model,
-        stream: true,
-        messages: [
-          { role: "system", content: "You are a professional English-to-Vietnamese translator. Translate the given English text into natural, fluent Vietnamese suitable for learners. Return ONLY the Vietnamese translation, no quotes, no notes, no English." },
-          { role: "user", content: trimmed },
-        ],
-        max_tokens: 1024,
-      }),
-    });
 
-    if (!response.ok || !response.body) {
-      if (response.status === 429) return new Response(JSON.stringify({ error: "Quá nhiều yêu cầu, vui lòng thử lại sau." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (response.status === 402) return new Response(JSON.stringify({ error: "Hết lượt sử dụng AI, vui lòng nạp thêm." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
+    const callModel = async (system: string) => {
+      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: trimmed },
+          ],
+          temperature: 0,
+          max_tokens: 1024,
+        }),
+      });
+      if (!r.ok) return { status: r.status, text: "", raw: await r.text() };
+      const j = await r.json();
+      return { status: 200, text: String(j.choices?.[0]?.message?.content || "").trim(), raw: "" };
+    };
+
+    let res = await callModel(TRANSLATOR_SYSTEM);
+    if (res.status !== 200) {
+      if (res.status === 429) return new Response(JSON.stringify({ error: "Quá nhiều yêu cầu, vui lòng thử lại sau." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (res.status === 402) return new Response(JSON.stringify({ error: "Hết lượt sử dụng AI, vui lòng nạp thêm." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.error("AI gateway error:", res.status, res.raw);
       return new Response(JSON.stringify({ error: "AI translate failed" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    let full = "";
+    if (isBadTranslation(trimmed, res.text)) {
+      console.warn("translate-text: bad output, retrying strictly");
+      const retry = await callModel(STRICT_RETRY_SYSTEM);
+      if (retry.status === 200) res = retry;
+    }
+
+    const full = res.text.trim();
+    if (!full || isBadTranslation(trimmed, full)) {
+      return new Response(
+        JSON.stringify({ error: "Không dịch được đoạn này, vui lòng thử lại." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    supabase.from("sentence_translation_cache").upsert({ text_hash: textHash, source_text: trimmed, translation_vi: full }, { onConflict: "text_hash" }).then(({ error }) => { if (error) console.error("Cache write error:", error); });
+    logAIUsage({ model, usage: undefined, source_function: "translate-text", metadata: { len: trimmed.length, streamed: false } }).catch(() => {});
+
     const outStream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-            for (const line of lines) {
-              const l = line.trim();
-              if (!l.startsWith("data:")) continue;
-              const payload = l.slice(5).trim();
-              if (payload === "[DONE]") continue;
-              try {
-                const j = JSON.parse(payload);
-                const token = j.choices?.[0]?.delta?.content || "";
-                if (token) {
-                  full += token;
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ t: token })}\n\n`));
-                }
-              } catch { /* chunk chưa đủ, bỏ qua */ }
-            }
-          }
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
-        } catch (e) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: "stream error" })}\n\n`));
-        } finally {
-          controller.close();
-          if (full.trim()) {
-            supabase.from("sentence_translation_cache").upsert({ text_hash: textHash, source_text: trimmed, translation_vi: full.trim() }, { onConflict: "text_hash" }).then(({ error }) => { if (error) console.error("Cache write error:", error); });
-            logAIUsage({ model, usage: undefined, source_function: "translate-text", metadata: { len: trimmed.length, streamed: true } }).catch(() => {});
-          }
-        }
+      start(c) {
+        c.enqueue(encoder.encode(`data: ${JSON.stringify({ t: full })}\n\n`));
+        c.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
+        c.close();
       },
     });
     return new Response(outStream, { headers: sseHeaders });
