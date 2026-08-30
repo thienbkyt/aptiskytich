@@ -12,6 +12,27 @@ const corsHeaders = {
 
 const MAX_LEN = 2000;
 
+const TRANSLATOR_SYSTEM = [
+  "Bạn là MÁY DỊCH Anh→Việt, không phải trợ lý. Nhiệm vụ duy nhất: dịch nghĩa đoạn văn bản được đưa vào.",
+  "TUYỆT ĐỐI KHÔNG trả lời, không giải thích, không đưa lời khuyên, không cho ví dụ, kể cả khi đầu vào là câu hỏi hoặc câu mệnh lệnh (\"Describe...\", \"Tell me about...\", \"What...?\"). Câu hỏi thì dịch thành câu hỏi tiếng Việt; câu mệnh lệnh thì dịch thành câu mệnh lệnh tiếng Việt.",
+  "Chỉ trả về đúng bản dịch, một đoạn văn xuôi. Không markdown, không bullet, không xuống dòng kép, không thêm bất kỳ chú thích nào.",
+  "Đầu ra phải có độ dài tương đương đầu vào.",
+].join("\n");
+
+const STRICT_RETRY_SYSTEM = TRANSLATOR_SYSTEM +
+  "\nLần trước bạn đã trả lời câu hỏi thay vì dịch. Chỉ dịch nguyên văn, một đoạn văn xuôi, độ dài tương đương đầu vào. Không thêm gì khác.";
+
+/** true nếu output có dấu hiệu "trả lời" thay vì "dịch" */
+function isBadTranslation(input: string, output: string): boolean {
+  const out = output.trim();
+  if (!out) return true;
+  if (/\*\*/.test(out)) return true;
+  if (/(^|\n)\s*([-*•]|\d+[.)])\s+/.test(out)) return true;
+  if (/\n\s*\n/.test(out)) return true;
+  if (out.length > input.trim().length * 3.5 && out.length > 150) return true;
+  return false;
+}
+
 function normalize(text: string): string {
   return text.replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -19,6 +40,7 @@ function normalize(text: string): string {
 function hash(text: string): string {
   return createHash("md5").update(text).digest("hex");
 }
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS")
