@@ -113,8 +113,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   };
 
   // Mutable snapshot of log metadata so logAudioError can be identity-stable.
-  const metaRef = useRef({ questionKey, playCount, maxPlays, reviewMode });
-  metaRef.current = { questionKey, playCount, maxPlays, reviewMode };
+  const metaRef = useRef({ questionKey, playCount, maxPlays: effectiveMax, reviewMode });
+  metaRef.current = { questionKey, playCount, maxPlays: effectiveMax, reviewMode };
 
   /**
    * Fire-and-forget diagnostics for audio failures (never throws, never awaited).
