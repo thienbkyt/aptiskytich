@@ -24,12 +24,16 @@ const STRICT_RETRY_SYSTEM = TRANSLATOR_SYSTEM +
 
 /** true nếu output có dấu hiệu "trả lời" thay vì "dịch" */
 function isBadTranslation(input: string, output: string): boolean {
+  const src = input.trim();
   const out = output.trim();
   if (!out) return true;
-  if (/\*\*/.test(out)) return true;
-  if (/(^|\n)\s*([-*•]|\d+[.)])\s+/.test(out)) return true;
-  if (/\n\s*\n/.test(out)) return true;
-  if (out.length > input.trim().length * 3.5 && out.length > 150) return true;
+  const hasBold = (s: string) => /\*\*/.test(s);
+  const hasBullet = (s: string) => /(^|\n)\s*([-*•]|\d+[.)])\s+/.test(s);
+  const hasBlank = (s: string) => /\n\s*\n/.test(s);
+  if (hasBold(out) && !hasBold(src)) return true;
+  if (hasBullet(out) && !hasBullet(src)) return true;
+  if (hasBlank(out) && !hasBlank(src)) return true;
+  if (out.length > src.length * 3.5 && out.length > 150) return true;
   return false;
 }
 
