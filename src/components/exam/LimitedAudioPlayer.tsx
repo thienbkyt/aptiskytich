@@ -98,7 +98,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const signFailedRef = useRef(false);
   // Bumped on every stop / new play so a pending intro sequence can bail out.
   const introTokenRef = useRef(0);
-  const disabled = playCount >= maxPlays && !isPlaying;
+  const effectiveMax = reviewMode ? Infinity : maxPlays;
+  const disabled = playCount >= effectiveMax && !isPlaying;
 
   // Guest gate: the `audio` bucket is private → signing only works for logged-in
   // users. Show a login CTA instead of a dead Play button + error.
