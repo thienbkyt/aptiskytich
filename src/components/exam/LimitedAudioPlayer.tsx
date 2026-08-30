@@ -831,7 +831,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
         </p>
       )}
 
-      {disabled && (
+      {disabled && !reviewMode && (
         <p className="text-xs text-muted-foreground mt-1">
           Đã dùng hết {maxPlays} lượt nghe cho câu này
         </p>
