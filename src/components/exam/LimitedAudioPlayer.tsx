@@ -460,6 +460,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     // Auto-resume if user had pressed play
     if (isPlaying && audioRef.current) {
       try {
+        lastCurrentTimeRef.current = 0;
         audioRef.current.load();
         await audioRef.current.play();
         setErrorMsg("");
