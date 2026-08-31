@@ -309,8 +309,8 @@ export type SaveWritingSkillResultArgs = {
   fullTestSessionId?: string | null;
   parts: Record<string, Partial<WritingPartResultV2>>;
   rawTotal: number;
-  scale50: number;
-  cefr: string;
+  scale50: number | null;
+  cefr: string | null;
   greyZone: boolean;
   flagReview: boolean;
   feedback?: string;
