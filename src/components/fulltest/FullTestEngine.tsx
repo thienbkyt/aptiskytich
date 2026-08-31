@@ -1514,14 +1514,37 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       const { hasAllFourWritingParts } = await import("@/components/writing/writingGradingV2");
 
       const allFour = hasAllFourWritingParts(rawParts) && failedParts === 0;
-      let scale50 = 0, cefr = "A0", greyZone = false, flagReview = false, rawTotal = 0;
+      let scale50: number | null = 0, cefr: string | null = "A0", greyZone = false, flagReview = false, rawTotal = 0;
+      let finalizeOk = false;
       if (allFour) {
+        let coreGV: string | null = null;
         try {
-          const coreGV = await fetchCoreGVBand({ fullTestSessionId: sessionIdRef.current });
+          coreGV = await fetchCoreGVBand({ fullTestSessionId: sessionIdRef.current });
+        } catch (e) {
+          console.warn("[FullTest v2] fetchCoreGVBand failed", e);
+        }
+        try {
           const f = await finalizeWriting(rawParts, coreGV, anyForcedComplexity);
           scale50 = f.scale50; cefr = f.cefr; greyZone = f.greyZone; flagReview = f.flagReview; rawTotal = f.rawTotal;
+          finalizeOk = true;
         } catch (err) {
-          console.warn("[FullTest v2] finalizeWriting failed", err);
+          console.warn("[FullTest v2] finalizeWriting failed, retrying once", err);
+          try {
+            const f2 = await finalizeWriting(rawParts, coreGV, anyForcedComplexity);
+            scale50 = f2.scale50; cefr = f2.cefr; greyZone = f2.greyZone; flagReview = f2.flagReview; rawTotal = f2.rawTotal;
+            finalizeOk = true;
+          } catch (err2) {
+            console.warn("[FullTest v2] finalizeWriting retry failed", err2);
+          }
+        }
+
+        if (!finalizeOk) {
+          // All 4 parts graded but finalization failed — preserve raw parts and flag for review.
+          rawTotal = Object.values(rawParts).reduce((sum, v) => sum + (Number(v) || 0), 0);
+          scale50 = null;
+          cefr = null;
+          flagReview = true;
+          toast("Đã chấm xong 4 phần nhưng chưa tổng hợp được điểm — bài đã lưu, xem lại trong Lịch sử sau ít phút.");
         }
 
         // Save aggregate writing_skill_results
@@ -1538,24 +1561,27 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         }
 
         // Patch last test_results row → score=scale50, total=50, level=cefr
-        try {
-          if (lastTestResultId) {
-            await supabase.rpc("finalize_skill_test_result", {
-              p_test_result_id: lastTestResultId,
-              p_score: scale50, p_total: 50, p_level: cefr, p_correct_answers: scale50,
-            } as any);
-          }
-        } catch (err) { console.warn("[FullTest v2] finalize test_results failed", err); }
+        // ONLY when finalization succeeded; avoid writing 0/A0 when it failed.
+        if (finalizeOk) {
+          try {
+            if (lastTestResultId) {
+              await supabase.rpc("finalize_skill_test_result", {
+                p_test_result_id: lastTestResultId,
+                p_score: scale50, p_total: 50, p_level: cefr, p_correct_answers: scale50,
+              } as any);
+            }
+          } catch (err) { console.warn("[FullTest v2] finalize test_results failed", err); }
+        }
       } else {
         console.info("[FullTest v2] Incomplete writing attempt — skipping scale50/CEFR finalize.");
       }
 
 
-      setScores((prev) => ({
-        ...prev,
-        writing: allFour ? { correct: scale50, total: 50 } : { correct: 0, total: 0 },
-      }));
-      if (allFour) {
+      if (finalizeOk) {
+        setScores((prev) => ({
+          ...prev,
+          writing: { correct: scale50, total: 50 },
+        }));
         setSkillOverrides((prev) => ({ ...prev, writing: { scale50, cefr: cefr || null } }));
       }
       if (!allFour) setWritingUngraded(quotaBlocked ? "quota" : "error");
