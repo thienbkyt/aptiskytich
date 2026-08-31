@@ -1434,6 +1434,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_wr_trangkun_20260831: {
+        Row: {
+          cefr: string | null
+          created_at: string | null
+          exam_set_id: string | null
+          feedback: string | null
+          flag_review: boolean | null
+          full_test_session_id: string | null
+          grey_zone: boolean | null
+          id: string | null
+          parts: Json | null
+          raw_total: number | null
+          scale50: number | null
+          test_result_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cefr?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string | null
+          parts?: Json | null
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cefr?: string | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          flag_review?: boolean | null
+          full_test_session_id?: string | null
+          grey_zone?: boolean | null
+          id?: string | null
+          parts?: Json | null
+          raw_total?: number | null
+          scale50?: number | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string | null
