@@ -188,6 +188,8 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   const savedRowIdRef = useRef<Record<string, string>>({});
   /** Reading answers kept per part so navigating back/forward doesn't lose them. */
   const readingAnswersByPartRef = useRef<Record<number, any>>({});
+  /** Listening answers kept per part so navigating back/forward doesn't lose them. */
+  const listeningAnswersByPartRef = useRef<Record<number, any[]>>({});
   const [writingGradedCount, setWritingGradedCount] = useState(0);
   const [writingTotalToGrade, setWritingTotalToGrade] = useState(0);
   const [waitingForSpeaking, setWaitingForSpeaking] = useState(false);
