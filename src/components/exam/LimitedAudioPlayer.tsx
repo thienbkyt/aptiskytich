@@ -259,6 +259,9 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     setBlocked(false);
     setIntroSpeaking(false);
     retryCountRef.current = 0;
+    countedRef.current = false;
+    playedMsRef.current = 0;
+    lastCurrentTimeRef.current = 0;
     // Cancel any pending intro sequence for the previous question.
     introTokenRef.current += 1;
     stopTTS();
@@ -310,6 +313,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const resumeCountRef = useRef(0);
   const resumingRef = useRef(false);
   const lastTimeUpdateRef = useRef(0);
+  const playedMsRef = useRef(0);
+  const lastCurrentTimeRef = useRef(0);
 
   /** Waits until the element has data (or 8s). Same pattern as playActiveSource. */
   const waitForReady = (audio: HTMLAudioElement) =>
@@ -470,6 +475,19 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolve, isPlaying, countThisPlay, resumeAtPosition, src]);
 
+  /** Counts a play only after the audio has actually played for 3 seconds. */
+  const handleTimeUpdate = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    lastTimeUpdateRef.current = Date.now();
+    const now = audio.currentTime;
+    const delta = Math.max(0, now - lastCurrentTimeRef.current);
+    lastCurrentTimeRef.current = now;
+    playedMsRef.current += delta * 1000;
+    if (playedMsRef.current >= 3000 && !countedRef.current) {
+      countThisPlay();
+    }
+  }, [countThisPlay]);
 
   // Watchdog: playback that goes 5s without a timeupdate is stalled.
   useEffect(() => {
@@ -693,6 +711,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
 
       const token = ++introTokenRef.current;
       countedRef.current = false;
+      playedMsRef.current = 0;
+      lastCurrentTimeRef.current = 0;
       resumeCountRef.current = 0;
       lastTimeUpdateRef.current = Date.now();
       retryCountRef.current = 0;
@@ -726,8 +746,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       setLoadingAudio(false);
       if (outcome === "stale") return;
       if (outcome === "ok") {
-        // Only now the student actually hears the audio → count the play.
-        countThisPlay();
+        // Play has started; the actual count happens after 3s of playback
+        // (handleTimeUpdate) or at onEnded for short clips.
         return;
       }
       if (outcome === "blocked") {
@@ -751,6 +771,8 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     stopTTS();
     setIntroSpeaking(false);
     countedRef.current = false;
+    playedMsRef.current = 0;
+    lastCurrentTimeRef.current = 0;
     resumeCountRef.current = 0;
     lastTimeUpdateRef.current = Date.now();
     setBlocked(false);
@@ -759,7 +781,7 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     const outcome = await playActiveSource(audio, playCount === 0, token);
     if (outcome === "stale") return;
     if (outcome === "ok") {
-      countThisPlay();
+      // Count is handled by handleTimeUpdate after 3s or onEnded for short clips.
       return;
     }
     setIsPlaying(false);
@@ -794,8 +816,13 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
       <audio
         ref={audioRef}
         {...(resolvedSrc ? { src: resolvedSrc } : {})}
-        onEnded={() => { releaseIfMine(audioRef.current); setIsPlaying(false); }}
-        onTimeUpdate={() => { lastTimeUpdateRef.current = Date.now(); }}
+        onEnded={() => {
+          // Short clips (<3s) still count as a play once they reach the end.
+          countThisPlay();
+          releaseIfMine(audioRef.current);
+          setIsPlaying(false);
+        }}
+        onTimeUpdate={handleTimeUpdate}
         onError={resolvedSrc ? handleAudioError : undefined}
         onStalled={() => {
           // networkState 3 === NETWORK_NO_SOURCE → signed URL expired mid-exam.
