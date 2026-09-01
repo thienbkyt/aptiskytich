@@ -217,16 +217,23 @@ export default function PredictionKeyView() {
     let cancelled = false;
     (async () => {
       const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
-      const { data } = await supabase
-        .from("test_results")
-        .select("exam_set_id,score,total")
-        .eq("user_id", user.id)
-        .in("exam_set_id", ids);
-      if (cancelled) return;
+      const CHUNK = 100;
+      const rows: any[] = [];
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const slice = ids.slice(i, i + CHUNK);
+        const { data, error } = await supabase
+          .from("test_results")
+          .select("exam_set_id,score,total")
+          .eq("user_id", user.id)
+          .in("exam_set_id", slice);
+        if (cancelled) return;
+        if (error) { console.error("[PredictionKeyView] load progress failed", error); continue; }
+        if (data) rows.push(...data);
+      }
       const skillOf = new Map(items.map((i) => [i.exam_set_id, (i.skill || "").toLowerCase()]));
       const map = new Map<string, BestScore>();
       const tried = new Set<string>();
-      (data || []).forEach((r: any) => {
+      rows.forEach((r: any) => {
         if (!r.exam_set_id || !r.total || r.total <= 0) return;
         tried.add(r.exam_set_id);
         const sk = skillOf.get(r.exam_set_id) || "";
