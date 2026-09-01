@@ -1137,7 +1137,10 @@ RETURN VIA TOOL CALL. Mọi lỗi liệt kê ĐẦY ĐỦ, mỗi lỗi 1 dòng {
 PHÂN LOẠI LỖI BẮT BUỘC:
 - Lỗi SAI CHÍNH TẢ thuần túy (viết sai từ, thiếu/thừa chữ cái, sai hoa/thường) LUÔN đưa vào spellingErrors, TUYỆT ĐỐI KHÔNG đưa vào grammarErrors.
 - grammarErrors chỉ chứa lỗi ngữ pháp thực sự; explanation KHÔNG được bắt đầu bằng "Lỗi chính tả".
-- CHỈ đưa một mục vào mảng khi "corrected" KHÁC "original" sau khi bỏ khoảng trắng thừa.
+- grammarCorrect / correct chỉ được false khi câu trả lời có lỗi ngữ pháp THẬT làm sai nghĩa hoặc sai cấu trúc (sai thì, sai số ít/số nhiều, thiếu động từ, sai giới từ, v.v.).
+- TUYỆT ĐỐI KHÔNG đánh trượt câu vì lỗi hình thức: khoảng trắng thừa (kể cả trước dấu câu), thiếu hoặc thừa dấu chấm/dấu phẩy, viết hoa hay viết thường đầu câu, gõ thiếu dấu cách sau dấu câu. Với Part 1, câu trả lời 1–5 từ dạng cụm từ (không phải câu đầy đủ) là hoàn toàn hợp lệ.
+- Các lỗi hình thức nói trên KHÔNG được đưa vào grammarErrors hay spellingErrors.
+- CHỉ đưa một mục vào mảng khi "corrected" KHÁC "original" sau khi bỏ khoảng trắng thừa.
 
 KHÔNG COI GÓP Ý PHONG CÁCH LÀ LỖI:
 - Nếu câu trả lời đúng ngữ pháp và đúng nghĩa, chỉ là "có cách viết khác hay hơn / tự nhiên hơn / trang trọng hơn" thì TUYỆT ĐỐI KHÔNG đưa vào grammarErrors hay spellingErrors.
