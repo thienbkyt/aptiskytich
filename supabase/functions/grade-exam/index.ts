@@ -1174,8 +1174,13 @@ RETURN VIA TOOL CALL.`;
 QUY TẮC CHẤM TỪNG CÂU (bắt buộc):
 Một câu là correct = true khi thoả CẢ HAI điều kiện:
 (a) trả lời ĐÚNG NỘI DUNG câu hỏi;
-(b) KHÔNG có lỗi ngữ pháp hoặc lỗi chính tả.
+(b) KHÔNG có lỗi ngữ pháp hoặc lỗi chính tả THẬT.
 Nếu thoả cả hai → correct = true. Ngược lại → correct = false.
+
+ĐIỀU KIỆN (b) — LỖI NGỮ PHÁP/CHÍNH TẢ THẬT:
+- Chỉ đánh grammarCorrect=false hoặc correct=false vì lỗi ngữ pháp THẬT làm sai nghĩa hoặc sai cấu trúc (sai thì, sai số ít/số nhiều, thiếu động từ, sai giới từ, v.v.).
+- TUYỆT ĐỐI KHÔNG đánh trượt câu vì lỗi hình thức: khoảng trắng thừa (kể cả trước dấu câu), thiếu hoặc thừa dấu chấm/dấu phẩy, viết hoa hay viết thường đầu câu, gõ thiếu dấu cách sau dấu câu. Part 1 câu trả lời 1–5 từ dạng cụm từ (không phải câu đầy đủ) là hoàn toàn hợp lệ.
+- Các lỗi hình thức nói trên KHÔNG được đưa vào grammarErrors hay spellingErrors.
 
 TUYỆT ĐỐI KHÔNG XÉT ĐỘ DÀI câu trả lời. Câu trả lời dài hay ngắn, viết thành câu đầy đủ chủ ngữ + động từ hay chỉ là một cụm từ, đều được chấp nhận NHƯ NHAU và đều có thể correct = true. KHÔNG BAO GIỜ đánh correct = false vì lý do độ dài. KHÔNG BAO GIỜ khuyên học viên viết ngắn lại hay dài ra.
 
