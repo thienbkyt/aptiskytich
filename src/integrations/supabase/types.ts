@@ -1347,6 +1347,51 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_wp1_hanh_20260901: {
+        Row: {
+          created_at: string | null
+          exam_set_id: string | null
+          feedback: string | null
+          grammar_errors: Json | null
+          id: string | null
+          item_index: number | null
+          max_points: number | null
+          part: string | null
+          part_score: number | null
+          spelling_errors: Json | null
+          test_result_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          grammar_errors?: Json | null
+          id?: string | null
+          item_index?: number | null
+          max_points?: number | null
+          part?: string | null
+          part_score?: number | null
+          spelling_errors?: Json | null
+          test_result_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          feedback?: string | null
+          grammar_errors?: Json | null
+          id?: string | null
+          item_index?: number | null
+          max_points?: number | null
+          part?: string | null
+          part_score?: number | null
+          spelling_errors?: Json | null
+          test_result_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_wp1_sampleanswer_20260823: {
         Row: {
           backed_up_at: string | null

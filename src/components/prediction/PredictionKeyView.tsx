@@ -218,17 +218,22 @@ export default function PredictionKeyView() {
     (async () => {
       const ids = Array.from(new Set(items.map((i) => i.exam_set_id)));
       const CHUNK = 100;
+      const slices: string[][] = [];
+      for (let i = 0; i < ids.length; i += CHUNK) slices.push(ids.slice(i, i + CHUNK));
+      const results = await Promise.all(
+        slices.map((slice) =>
+          supabase
+            .from("test_results")
+            .select("exam_set_id,score,total")
+            .eq("user_id", user.id)
+            .in("exam_set_id", slice)
+        )
+      );
+      if (cancelled) return;
       const rows: any[] = [];
-      for (let i = 0; i < ids.length; i += CHUNK) {
-        const slice = ids.slice(i, i + CHUNK);
-        const { data, error } = await supabase
-          .from("test_results")
-          .select("exam_set_id,score,total")
-          .eq("user_id", user.id)
-          .in("exam_set_id", slice);
-        if (cancelled) return;
-        if (error) { console.error("[PredictionKeyView] load progress failed", error); continue; }
-        if (data) rows.push(...data);
+      for (const r of results) {
+        if (r.error) { console.error("[PredictionKeyView] load progress failed", r.error); continue; }
+        if (r.data) rows.push(...r.data);
       }
       const skillOf = new Map(items.map((i) => [i.exam_set_id, (i.skill || "").toLowerCase()]));
       const map = new Map<string, BestScore>();
@@ -260,7 +265,7 @@ export default function PredictionKeyView() {
       setAttempted(tried);
     })();
     return () => { cancelled = true; };
-  }, [user, items, progressTick]);
+  }, [user?.id, items, progressTick]);
 
   const availableSkills = useMemo(() => {
     const set = new Set(items.map((it) => (it.skill || "other").toLowerCase()));
