@@ -1998,7 +1998,7 @@ RELEVANT WORD COUNT: count ONLY words that contribute to addressing the prompt �
 
 RUBRIC PER partType — return ONLY these qualitative fields via the tool:
 
-• task1 — items: array of EXACTLY 5 objects { tooManyWords: boolean (answer has MORE than 5 words), grammarCorrect: boolean }. Also return grammarErrors[], spellingErrors[], feedback.
+• task1 — items: array of EXACTLY 5 objects { tooManyWords: boolean (answer has MORE than 5 words), grammarCorrect: boolean }. grammarCorrect = false ONLY when the answer has a real grammatical error that changes meaning or structure (wrong tense, subject-verb agreement, missing verb, wrong preposition, etc.). NEVER mark grammarCorrect = false because of formatting issues (extra/missing spaces, punctuation before/after spaces, missing/extra commas or periods, capitalization/lowercase at the start of an answer, missing space after a punctuation mark). With task1, answers of 1–5 words as phrases (not full sentences) are fully valid. NEVER include such formatting-only errors in grammarErrors or spellingErrors. Also return grammarErrors[], spellingErrors[], feedback.
 
 • task2 — addressPercent (0–100), bonusPercent (0 / 20 / 40 — +20 per short relevant detail, max 40; or +40 for one long detailed example), relevantWordCount (number), coherenceLacking (boolean), grammarErrors[], spellingErrors[], feedback.
 
