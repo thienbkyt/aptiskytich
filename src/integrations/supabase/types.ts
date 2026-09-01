@@ -4130,7 +4130,7 @@ export type Database = {
       }
       writing_skill_results: {
         Row: {
-          cefr: string
+          cefr: string | null
           created_at: string
           exam_set_id: string | null
           feedback: string | null
@@ -4140,13 +4140,13 @@ export type Database = {
           id: string
           parts: Json
           raw_total: number
-          scale50: number
+          scale50: number | null
           test_result_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          cefr?: string
+          cefr?: string | null
           created_at?: string
           exam_set_id?: string | null
           feedback?: string | null
@@ -4156,13 +4156,13 @@ export type Database = {
           id?: string
           parts?: Json
           raw_total?: number
-          scale50?: number
+          scale50?: number | null
           test_result_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          cefr?: string
+          cefr?: string | null
           created_at?: string
           exam_set_id?: string | null
           feedback?: string | null
@@ -4172,7 +4172,7 @@ export type Database = {
           id?: string
           parts?: Json
           raw_total?: number
-          scale50?: number
+          scale50?: number | null
           test_result_id?: string | null
           updated_at?: string
           user_id?: string
