@@ -1191,7 +1191,7 @@ function ResultScreen({
     if (!userId) return;
     void supabase
       .rpc("finish_dictation_session", {
-        p_mode: "dictation",
+        p_mode: mode,
         p_level: level,
         p_set_id: setId,
         p_total: total,
