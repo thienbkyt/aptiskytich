@@ -33,6 +33,10 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { toast } from "@/hooks/use-toast";
+import { useAudioRecording } from "@/hooks/useAudioRecording";
+import AudioRecorder from "@/components/speaking/AudioRecorder";
+import UpgradeLock from "@/components/pro/UpgradeLock";
+import { useIsPro } from "@/hooks/useIsPro";
 
 /* ------------------------------------------------------------------ */
 /* Word-level diff (case & punctuation insensitive)                    */
