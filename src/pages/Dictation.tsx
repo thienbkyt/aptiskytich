@@ -1,73 +1,48 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Play, Volume2, Check, ChevronRight, ChevronLeft, Ear, Eye, EyeOff, Lightbulb, CheckCircle2, Repeat, Headphones } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  ArrowLeft,
+  Headphones,
+  Mic,
+  Sparkles,
+  Lightbulb,
+  CheckCircle2,
+  Loader2,
+  X,
+  RotateCcw,
+  Home,
+  ChevronRight,
+} from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
-import { speakAsync, speakWithTTS, stopTTS } from "@/lib/tts";
-import { Pause } from "lucide-react";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import SegmentPlayer, { type SegmentPlayerHandle } from "@/components/dictation/SegmentPlayer";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { safeLocalStorage } from "@/lib/safeStorage";
+import { toast } from "@/hooks/use-toast";
 
-/** Best-effort upsert of best_accuracy = max(existing, new) for signed-in users. */
-async function saveDictationProgress(
-  userId: string | undefined,
-  setId: string,
-  sentenceId: string,
-  accuracy: number,
-): Promise<number | null> {
-  if (!userId) return null;
-  try {
-    const acc = Math.max(0, Math.min(100, Math.round(accuracy)));
-    const { data: existing } = await supabase
-      .from("dictation_progress")
-      .select("best_accuracy")
-      .eq("user_id", userId)
-      .eq("sentence_id", sentenceId)
-      .maybeSingle();
-    const best = Math.max(existing?.best_accuracy ?? 0, acc);
-    if (existing && best === existing.best_accuracy) return best;
-    await supabase
-      .from("dictation_progress")
-      .upsert(
-        { user_id: userId, set_id: setId, sentence_id: sentenceId, best_accuracy: best },
-        { onConflict: "user_id,sentence_id" },
-      );
-    return best;
-  } catch {
-    return null;
-  }
-}
-
-
-type DictationSet = {
-  id: string;
-  title: string;
-  level: number | null;
-  sort: number | null;
-  sentence_count?: number;
-};
-
-type Sentence = {
-  id: string;
-  set_id: string;
-  text: string;
-  audio_url: string | null;
-  sort: number | null;
-};
-
-type Mode = "check" | "chep";
-
-/* --------- Word-level diff (case & punctuation insensitive) --------- */
+/* ------------------------------------------------------------------ */
+/* Word-level diff (case & punctuation insensitive)                    */
+/* ------------------------------------------------------------------ */
 type WordDiffPart = { word: string; ok: boolean };
+
 function normalizeWordCore(w: string) {
   return w.toLowerCase().replace(/[^a-z0-9']/gi, "");
 }
+
 function diffWords(expected: string, got: string): WordDiffPart[] {
   const expRaw = expected.split(/\s+/).filter(Boolean);
   const gotRaw = got.split(/\s+/).filter(Boolean);
@@ -91,948 +66,781 @@ function diffWords(expected: string, got: string): WordDiffPart[] {
   }
   return expRaw.map((w, k) => ({ word: w, ok: matched[k] }));
 }
+
 function wordAccuracyPct(parts: WordDiffPart[]) {
   if (!parts.length) return 0;
   const ok = parts.filter((p) => p.ok).length;
   return Math.round((ok / parts.length) * 100);
 }
 
+/* ------------------------------------------------------------------ */
+/* Types & settings                                                    */
+/* ------------------------------------------------------------------ */
+type Screen = "mode" | "level" | "setup" | "practice" | "result";
 
-/* --------- Word tokenization for "Nghe Check" --------- */
-type Token = { raw: string; core: string; isWord: boolean };
-function tokenize(text: string): Token[] {
-  // Split into words vs. non-word chunks so punctuation is preserved.
-  const parts = text.match(/[A-Za-z0-9''-]+|[^A-Za-z0-9''-]+/g) ?? [];
-  return parts.map((raw) => {
-    const isWord = /[A-Za-z0-9]/.test(raw);
-    return { raw, core: raw.trim(), isWord };
-  });
-}
-function normalizeWord(w: string) {
-  return w.toLowerCase().replace(/[^a-z0-9']/g, "");
-}
+type LevelRow = {
+  level: number;
+  bo: number;
+  cau: number;
+  bo_xong: number;
+  cau_xong: number;
+};
 
-// Deterministic seeded shuffle so hidden picks stay stable per sentence+ratio.
-function seededPickIndices(count: number, howMany: number, seed: string): Set<number> {
-  const indices = Array.from({ length: count }, (_, i) => i);
-  // FNV-1a hash for a stable numeric seed
-  let h = 2166136261;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+type SessionSentence = {
+  sentence_id: string;
+  set_id: string;
+  set_title: string;
+  part: string | null;
+  sort: number | null;
+  text: string;
+  audio_url: string | null;
+  start_sec: number | null;
+  end_sec: number | null;
+  best_accuracy: number | null;
+};
+
+type Settings = {
+  size: number;
+  speed: number;
+  maxPlays: number; // 0 = unlimited
+  onlyTodo: boolean;
+};
+
+const SETTINGS_KEY = "dict:v2:settings";
+const DEFAULT_SETTINGS: Settings = { size: 10, speed: 1, maxPlays: 5, onlyTodo: true };
+
+function loadSettings(): Settings {
+  try {
+    const raw = safeLocalStorage.getItem(SETTINGS_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    const parsed = JSON.parse(raw);
+    return {
+      size: [5, 10, 15, 20].includes(parsed?.size) ? parsed.size : DEFAULT_SETTINGS.size,
+      speed: [0.75, 1, 1.25].includes(parsed?.speed) ? parsed.speed : DEFAULT_SETTINGS.speed,
+      maxPlays: [0, 3, 5].includes(parsed?.maxPlays) ? parsed.maxPlays : DEFAULT_SETTINGS.maxPlays,
+      onlyTodo: typeof parsed?.onlyTodo === "boolean" ? parsed.onlyTodo : DEFAULT_SETTINGS.onlyTodo,
+    };
+  } catch {
+    return DEFAULT_SETTINGS;
   }
-  const rand = () => {
-    h ^= h << 13; h ^= h >>> 17; h ^= h << 5;
-    return ((h >>> 0) % 1_000_000) / 1_000_000;
-  };
-  for (let i = indices.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-  return new Set(indices.slice(0, Math.max(0, Math.min(howMany, count))));
 }
 
-/* ==================== List page ==================== */
-function DictationListView() {
-  usePageMeta({
-    title: "Nghe chép chính tả — Aptis Kỳ Tích",
-    description: "Luyện nghe và chép lại câu tiếng Anh theo từng bộ, kiểm tra chính xác từng ký tự.",
-  });
+const LEVEL_META: Record<number, { title: string; desc: string }> = {
+  1: { title: "Level 1 · Khởi động", desc: "Câu ngắn, tốc độ chậm — Listening Part 1" },
+  2: { title: "Level 2 · Tăng tốc", desc: "Đoạn dài, nhiều thông tin — Listening Part 2" },
+  3: { title: "Level 3 · Thử thách", desc: "Học thuật, tốc độ thi thật — Listening Part 3 & 4" },
+};
+
+type Answer = {
+  sentenceId: string;
+  text: string;
+  typed: string;
+  accuracy: number;
+};
+
+/* ------------------------------------------------------------------ */
+/* Page                                                               */
+/* ------------------------------------------------------------------ */
+export default function Dictation() {
+  const { setId } = useParams<{ setId?: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const [sets, setSets] = useState<DictationSet[] | null>(null);
-  const groupedSets = useMemo(() => {
-    if (!sets) return [];
-    const groups = new Map<string, { label: string; level: number | null; sets: DictationSet[] }>();
-    sets.forEach((s) => {
-      const key = s.level != null ? `level-${s.level}` : "uncategorized";
-      if (!groups.has(key)) {
-        groups.set(key, {
-          label: s.level != null ? `Level ${s.level}` : "Chưa phân loại",
-          level: s.level ?? null,
-          sets: [],
-        });
-      }
-      groups.get(key)!.sets.push(s);
-    });
-    return Array.from(groups.values())
-      .sort((a, b) => (a.level ?? Number.MAX_VALUE) - (b.level ?? Number.MAX_VALUE))
-      .map((g) => ({ ...g, sets: [...g.sets].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0)) }));
-  }, [sets]);
-  const [doneBySet, setDoneBySet] = useState<Record<string, number>>({});
-  const [error, setError] = useState<string | null>(null);
 
+  usePageMeta({
+    title: "Luyện nghe chép chính tả Aptis | Aptis Kỳ Tích",
+    description:
+      "Luyện nghe chép chính tả với audio Listening Aptis thật, cắt sẵn từng câu. Chấm điểm tự động theo từ, lộ trình 3 cấp độ.",
+  });
+
+  const [screen, setScreen] = useState<Screen>("mode");
+  const [settings, setSettings] = useState<Settings>(loadSettings);
+  const [levels, setLevels] = useState<LevelRow[]>([]);
+  const [levelsLoading, setLevelsLoading] = useState(false);
+  const [level, setLevel] = useState<number>(1);
+
+  const [sentences, setSentences] = useState<SessionSentence[]>([]);
+  const [loadingSession, setLoadingSession] = useState(false);
+  const [index, setIndex] = useState(0);
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const [startedAt, setStartedAt] = useState<number>(0);
+  const [durationSec, setDurationSec] = useState(0);
+
+  /* --- persist settings --- */
   useEffect(() => {
+    safeLocalStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }, [settings]);
+
+  /* --- load level stats when entering screen 2 --- */
+  useEffect(() => {
+    if (screen !== "level") return;
+    let cancelled = false;
+    setLevelsLoading(true);
     (async () => {
-      const { data: setsData, error: e1 } = await supabase
-        .from("dictation_sets")
-        .select("id, title, level, sort")
-        .order("sort", { ascending: true })
-        .order("created_at", { ascending: true });
-      if (e1) { setError(e1.message); return; }
-      const ids = (setsData || []).map((s) => s.id);
-      const counts: Record<string, number> = {};
-      if (ids.length) {
-        const { data: sents } = await supabase
-          .from("dictation_sentences")
-          .select("set_id")
-          .in("set_id", ids);
-        (sents || []).forEach((r: any) => { counts[r.set_id] = (counts[r.set_id] || 0) + 1; });
-      }
-      setSets((setsData || []).map((s) => ({ ...s, sentence_count: counts[s.id] || 0 })));
-
-      if (user?.id && ids.length) {
-        const { data: progress } = await supabase
-          .from("dictation_progress")
-          .select("set_id")
-          .eq("user_id", user.id)
-          .eq("best_accuracy", 100)
-          .in("set_id", ids);
-        const done: Record<string, number> = {};
-        (progress || []).forEach((r: any) => { done[r.set_id] = (done[r.set_id] || 0) + 1; });
-        setDoneBySet(done);
-      } else {
-        setDoneBySet({});
-      }
+      const { data, error } = await supabase.rpc("get_dictation_levels");
+      if (cancelled) return;
+      if (!error && data) setLevels(data as LevelRow[]);
+      setLevelsLoading(false);
     })();
-  }, [user?.id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [screen]);
 
-  const levelMeta = (lvl: number | null) => {
-    if (lvl === 1) return { label: "Cơ bản", badge: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" };
-    if (lvl === 2) return { label: "Trung bình", badge: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500" };
-    if (lvl === 3) return { label: "Nâng cao", badge: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-500" };
-    if (lvl != null) return { label: "Chuyên sâu", badge: "bg-rose-100 text-rose-700 border-rose-200", dot: "bg-rose-500" };
-    return { label: "Khác", badge: "bg-muted text-muted-foreground border-border", dot: "bg-muted-foreground" };
+  const startSession = async () => {
+    setLoadingSession(true);
+    const { data, error } = await supabase.rpc("get_dictation_session", {
+      p_level: level,
+      p_size: settings.size,
+      p_set_id: setId ?? null,
+    });
+    setLoadingSession(false);
+    const rows = (data ?? []) as SessionSentence[];
+    if (error || rows.length === 0) {
+      toast({
+        title: "Chưa lấy được câu luyện tập",
+        description: error?.message ?? "Cấp độ này hiện chưa có câu phù hợp. Hãy thử cấp độ khác.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSentences(rows);
+    setIndex(0);
+    setAnswers([]);
+    setStartedAt(Date.now());
+    setScreen("practice");
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50/60 via-background to-background">
-      <Navbar />
-      <main className="max-w-5xl mx-auto px-4 pt-[144px] md:pt-24 pb-14">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-[hsl(var(--brand-brown,0_0%_30%))] flex items-center justify-center shadow-sm">
-            <Ear className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Nghe chép chính tả</h1>
-        </div>
-        <p className="text-muted-foreground mb-10 max-w-2xl whitespace-pre-line">
-          2 Chế độ: <span className="font-medium text-foreground">Nghe Check</span> (chép từng từ) và{" "}
-          <span className="font-medium text-foreground">Nghe Chép</span> (chép nguyên câu) với 3 level.{"\n"}
-          Đội ngũ Aptiskytich đang trong quá trình cải tiến tính năng này.
+  const handleSentenceDone = (a: Answer) => {
+    setAnswers((prev) => (prev.some((p) => p.sentenceId === a.sentenceId) ? prev : [...prev, a]));
+  };
+
+  const goNext = () => {
+    if (index + 1 < sentences.length) {
+      setIndex((i) => i + 1);
+    } else {
+      setDurationSec(Math.max(1, Math.round((Date.now() - startedAt) / 1000)));
+      setScreen("result");
+    }
+  };
+
+  const exitPractice = () => {
+    if (!window.confirm("Thoát phiên luyện tập? Các câu chưa làm sẽ không được tính.")) return;
+    setScreen("setup");
+  };
+
+  /* ---------------- Screen 1: mode ---------------- */
+  if (screen === "mode") {
+    const cards = [
+      { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones, soon: false },
+      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio", icon: Mic, soon: true },
+      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles, soon: true },
+    ];
+    return (
+      <Shell>
+        <h1 className="text-2xl sm:text-3xl font-bold">Luyện nghe chép chính tả</h1>
+        <p className="text-muted-foreground mt-2">
+          Chọn kiểu luyện tập bạn muốn bắt đầu.
         </p>
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {cards.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              disabled={c.soon}
+              onClick={() => setScreen("level")}
+              className={cn(
+                "text-left rounded-xl border p-6 transition",
+                c.soon
+                  ? "opacity-60 cursor-not-allowed bg-muted/40"
+                  : "hover:border-primary hover:shadow-md bg-card",
+              )}
+            >
+              <c.icon className="w-9 h-9 text-primary" />
+              <div className="mt-4 flex items-center gap-2">
+                <span className="font-semibold text-lg">{c.title}</span>
+                {c.soon && <Badge variant="secondary">Sắp có</Badge>}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">{c.desc}</p>
+            </button>
+          ))}
+        </div>
+      </Shell>
+    );
+  }
 
-        {error && <p className="text-destructive">{error}</p>}
-        {!sets ? (
-          <p className="text-muted-foreground">Đang tải…</p>
-        ) : sets.length === 0 ? (
-          <p className="text-muted-foreground">Chưa có bộ luyện nào.</p>
-        ) : (
-          <div className="space-y-10">
-            {groupedSets.map((group) => {
-              const meta = levelMeta(group.level);
-              return (
-                <section key={group.label}>
-                  <div className="flex items-center gap-3 mb-5">
-                    <span className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold border", meta.badge)}>
-                      <span className={cn("w-2 h-2 rounded-full", meta.dot)} />
-                      {group.label}
-                    </span>
-                    <span className="text-sm text-muted-foreground">{meta.label}</span>
-                    <div className="flex-1 h-px bg-border" />
-                    <span className="text-xs text-muted-foreground">{group.sets.length} bộ</span>
+  /* ---------------- Screen 2: level ---------------- */
+  if (screen === "level") {
+    return (
+      <Shell onBack={() => setScreen("mode")}>
+        <h1 className="text-2xl sm:text-3xl font-bold">Chọn lộ trình</h1>
+        <p className="text-muted-foreground mt-2">Ba cấp độ tăng dần theo độ khó bài thi thật.</p>
+
+        <div className="mt-6 space-y-4">
+          {[1, 2, 3].map((lv) => {
+            const row = levels.find((r) => Number(r.level) === lv);
+            const cau = Number(row?.cau ?? 0);
+            const done = Number(row?.cau_xong ?? 0);
+            const pct = cau ? Math.round((done / cau) * 100) : 0;
+            return (
+              <button
+                key={lv}
+                type="button"
+                onClick={() => {
+                  setLevel(lv);
+                  setScreen("setup");
+                }}
+                className="w-full text-left rounded-xl border bg-card p-5 hover:border-primary hover:shadow-md transition"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold">{LEVEL_META[lv].title}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{LEVEL_META[lv].desc}</p>
                   </div>
-                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-                    {group.sets.map((s) => {
-                      const total = s.sentence_count ?? 0;
-                      const done = doneBySet[s.id] ?? 0;
-                      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-                      const allDone = user && total > 0 && done >= total;
-                      return (
-                        <Link key={s.id} to={`/nghe-chep/${s.id}`} className="block group">
-                          <Card className="p-5 h-full bg-card rounded-2xl border border-border/70 shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg group-hover:border-primary/60">
-                            <div className="flex items-start gap-4">
-                              <div className={cn(
-                                "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors",
-                                allDone ? "bg-emerald-100 text-emerald-600" : "bg-primary/10 text-primary group-hover:bg-primary/15"
-                              )}>
-                                {allDone ? <CheckCircle2 className="w-5 h-5" /> : <Headphones className="w-5 h-5" />}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="font-semibold text-base md:text-lg leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                                  {s.title}
-                                </h3>
-                                <p className="text-sm text-muted-foreground mt-1">{total} câu</p>
-                              </div>
-                              <ChevronRight className="w-5 h-5 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all mt-1 shrink-0" />
-                            </div>
-                            {user && total > 0 && (
-                              <div className="mt-4">
-                                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                                  <div
-                                    className={cn(
-                                      "h-full rounded-full transition-all duration-500",
-                                      allDone ? "bg-emerald-500" : "bg-gradient-to-r from-primary to-[#FEAD5F]"
-                                    )}
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                                <div className="flex items-center justify-between mt-1.5 text-xs">
-                                  <span className="text-muted-foreground">{done}/{total} câu</span>
-                                  <span className={cn("font-semibold", allDone ? "text-emerald-600" : "text-primary")}>{pct}%</span>
-                                </div>
-                              </div>
-                            )}
-                          </Card>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            })}
+                  <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                </div>
+                <div className="mt-4">
+                  {levelsLoading ? (
+                    <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Đang tải số liệu…
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        {Number(row?.bo ?? 0)} bài · {cau} câu
+                      </p>
+                      {user && (
+                        <div className="mt-2 flex items-center gap-3">
+                          <Progress value={pct} className="h-2 flex-1" />
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {done}/{cau}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </Shell>
+    );
+  }
+
+  /* ---------------- Screen 3: setup ---------------- */
+  if (screen === "setup") {
+    return (
+      <Shell onBack={() => setScreen("level")}>
+        <h1 className="text-2xl sm:text-3xl font-bold">Thiết lập phiên luyện</h1>
+        <p className="text-muted-foreground mt-2">{LEVEL_META[level].title}</p>
+
+        <Card className="mt-6 p-5 space-y-6">
+          <OptionRow label="Số câu mỗi phiên">
+            {[5, 10, 15, 20].map((v) => (
+              <Chip key={v} active={settings.size === v} onClick={() => setSettings((s) => ({ ...s, size: v }))}>
+                {v} câu
+              </Chip>
+            ))}
+          </OptionRow>
+
+          <OptionRow label="Tốc độ phát">
+            {[0.75, 1, 1.25].map((v) => (
+              <Chip key={v} active={settings.speed === v} onClick={() => setSettings((s) => ({ ...s, speed: v }))}>
+                {v}×
+              </Chip>
+            ))}
+          </OptionRow>
+
+          <OptionRow label="Số lần nghe tối đa mỗi câu">
+            {[
+              { v: 3, l: "3 lần" },
+              { v: 5, l: "5 lần" },
+              { v: 0, l: "Không giới hạn" },
+            ].map((o) => (
+              <Chip
+                key={o.v}
+                active={settings.maxPlays === o.v}
+                onClick={() => setSettings((s) => ({ ...s, maxPlays: o.v }))}
+              >
+                {o.l}
+              </Chip>
+            ))}
+          </OptionRow>
+
+          <div className="flex items-center justify-between gap-4 pt-2 border-t">
+            <div>
+              <p className="text-sm font-medium">Chỉ luyện bài chưa hoàn thành</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Ưu tiên những câu bạn chưa đạt điểm tối đa.
+              </p>
+            </div>
+            <Switch
+              checked={settings.onlyTodo}
+              onCheckedChange={(v) => setSettings((s) => ({ ...s, onlyTodo: v }))}
+            />
           </div>
-        )}
-      </main>
 
+          <Button className="w-full" size="lg" onClick={startSession} disabled={loadingSession}>
+            {loadingSession ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Bắt đầu
+          </Button>
+        </Card>
+      </Shell>
+    );
+  }
+
+  /* ---------------- Screen 4: practice ---------------- */
+  if (screen === "practice") {
+    const s = sentences[index];
+    if (!s) return null;
+    return (
+      <Shell>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-semibold truncate">{s.set_title}</p>
+            <p className="text-xs text-muted-foreground">
+              Câu {index + 1}/{sentences.length}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={exitPractice}>
+            <X className="w-4 h-4 mr-1" /> Thoát
+          </Button>
+        </div>
+        <Progress value={((index + 1) / sentences.length) * 100} className="h-2 mt-3" />
+
+        <SentenceTask
+          key={s.sentence_id}
+          sentence={s}
+          settings={settings}
+          userId={user?.id}
+          isLast={index + 1 >= sentences.length}
+          onDone={handleSentenceDone}
+          onNext={goNext}
+        />
+      </Shell>
+    );
+  }
+
+  /* ---------------- Screen 5: result ---------------- */
+  return (
+    <Shell>
+      <ResultScreen
+        answers={answers}
+        total={sentences.length}
+        durationSec={durationSec}
+        level={level}
+        setId={setId ?? null}
+        userId={user?.id}
+        onNewSession={() => setScreen("setup")}
+        onRetry={() => {
+          setIndex(0);
+          setAnswers([]);
+          setStartedAt(Date.now());
+          setScreen("practice");
+        }}
+        onHome={() => navigate("/")}
+      />
+    </Shell>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout & small UI helpers                                          */
+/* ------------------------------------------------------------------ */
+function Shell({ children, onBack }: { children: React.ReactNode; onBack?: () => void }) {
+  const navigate = useNavigate();
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
+        <button
+          type="button"
+          onClick={() => (onBack ? onBack() : navigate("/luyen-tap"))}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" /> Quay lại
+        </button>
+        {children}
+      </main>
     </div>
   );
 }
 
-/* ==================== Practice page ==================== */
-function DictationPracticeView({ setId }: { setId: string }) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [setInfo, setSetInfo] = useState<DictationSet | null>(null);
-  const [sentences, setSentences] = useState<Sentence[] | null>(null);
-  const [idx, setIdx] = useState(0);
-  const [mode, setMode] = useState<Mode>("check");
-  const [error, setError] = useState<string | null>(null);
-  const [completed, setCompleted] = useState<Set<string>>(new Set());
+function OptionRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-sm font-medium mb-2">{label}</p>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
 
-  usePageMeta({
-    title: `${setInfo?.title || "Nghe chép chính tả"} — Aptis Kỳ Tích`,
-    description: "Luyện nghe với 3 chế độ: nghe full, điền từ, và chép chính tả.",
-  });
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "px-4 py-2 rounded-lg border text-sm transition",
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "bg-card hover:border-primary/50",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 
-  useEffect(() => {
-    (async () => {
-      const [{ data: s, error: e1 }, { data: ss, error: e2 }] = await Promise.all([
-        supabase.from("dictation_sets").select("id, title, level, sort").eq("id", setId).maybeSingle(),
-        supabase.from("dictation_sentences").select("id, set_id, text, audio_url, sort")
-          .eq("set_id", setId).order("sort", { ascending: true }).order("created_at", { ascending: true }),
-      ]);
-      if (e1 || e2) { setError((e1 || e2)?.message || "Lỗi tải dữ liệu"); return; }
-      setSetInfo(s as any);
-      setSentences((ss || []) as Sentence[]);
-    })();
-    return () => { stopTTS(); };
-  }, [setId]);
+/* ------------------------------------------------------------------ */
+/* One sentence task                                                  */
+/* ------------------------------------------------------------------ */
+function SentenceTask({
+  sentence,
+  settings,
+  userId,
+  isLast,
+  onDone,
+  onNext,
+}: {
+  sentence: SessionSentence;
+  settings: Settings;
+  userId?: string;
+  isLast: boolean;
+  onDone: (a: Answer) => void;
+  onNext: () => void;
+}) {
+  const playerRef = useRef<SegmentPlayerHandle | null>(null);
+  const [input, setInput] = useState("");
+  const [plays, setPlays] = useState(1); // autoPlay counts as the first listen
+  const [hints, setHints] = useState<string[]>([]);
+  const [checked, setChecked] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const firstAccuracyRef = useRef<number | null>(null);
+  const savedRef = useRef(false);
 
-  // Load user's completed (best_accuracy=100) sentences for this set
-  useEffect(() => {
-    if (!user?.id) { setCompleted(new Set()); return; }
-    (async () => {
-      const { data } = await supabase
-        .from("dictation_progress")
-        .select("sentence_id")
-        .eq("user_id", user.id)
-        .eq("set_id", setId)
-        .eq("best_accuracy", 100);
-      setCompleted(new Set((data || []).map((r: any) => r.sentence_id)));
-    })();
-  }, [user?.id, setId]);
+  const words = useMemo(() => sentence.text.split(/\s+/).filter(Boolean), [sentence.text]);
+  const limitReached = settings.maxPlays > 0 && plays >= settings.maxPlays;
 
-  const current = sentences && sentences[idx];
-  const total = sentences?.length || 0;
+  const diff = useMemo(
+    () => (checked ? diffWords(sentence.text, input) : null),
+    [checked, sentence.text, input],
+  );
+  const shownAccuracy = firstAccuracyRef.current ?? 0;
+  const perfect = checked && diff !== null && wordAccuracyPct(diff) === 100;
 
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
-  const chainTokenRef = useRef(0);
-  const pendingResolveRef = useRef<(() => void) | null>(null);
-
-  // Persisted playback settings
-  const [speed, setSpeed] = useState<number>(() => {
-    const v = parseFloat(localStorage.getItem("dict:speed") || "1");
-    return Number.isFinite(v) && v >= 0.7 && v <= 1.4 ? v : 1;
-  });
-  const [repeatCount, setRepeatCount] = useState<number>(() => {
-    const v = parseInt(localStorage.getItem("dict:repeatCount") || "3", 10);
-    return [2, 3, 4, 5].includes(v) ? v : 3;
-  });
-  const [repeatGap, setRepeatGap] = useState<number>(() => {
-    const v = parseFloat(localStorage.getItem("dict:repeatGap") || "1");
-    return [0.5, 1, 1.5, 2].includes(v) ? v : 1;
-  });
-  useEffect(() => { localStorage.setItem("dict:speed", String(speed)); }, [speed]);
-  useEffect(() => { localStorage.setItem("dict:repeatCount", String(repeatCount)); }, [repeatCount]);
-  useEffect(() => { localStorage.setItem("dict:repeatGap", String(repeatGap)); }, [repeatGap]);
-
-  const stopAudio = () => {
-    chainTokenRef.current++;
-    stopTTS();
-    const a = audioElRef.current;
-    if (a) {
-      try { a.pause(); } catch { /* noop */ }
-      a.onended = null;
-      a.onerror = null;
-      audioElRef.current = null;
+  const saveResult = async (accuracy: number) => {
+    if (savedRef.current) return;
+    savedRef.current = true;
+    if (!userId) return;
+    try {
+      await supabase.rpc("save_dictation_result", {
+        p_sentence_id: sentence.sentence_id,
+        p_accuracy: accuracy,
+        p_mode: "dictation",
+      });
+    } catch {
+      /* progress ghi thất bại — không chặn luyện tập */
     }
-    const r = pendingResolveRef.current;
-    pendingResolveRef.current = null;
-    r?.();
   };
 
-  const speakBrowser = (text: string, rate: number, token: number): Promise<void> =>
-    new Promise((resolve) => {
-      if (typeof window === "undefined" || !("speechSynthesis" in window)) return resolve();
-      if (token !== chainTokenRef.current) return resolve();
-      try { window.speechSynthesis.cancel(); } catch { /* noop */ }
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = "en-US";
-      u.rate = rate;
-      let done = false;
-      const finish = () => { if (done) return; done = true; pendingResolveRef.current = null; resolve(); };
-      u.onend = finish;
-      u.onerror = finish;
-      pendingResolveRef.current = finish;
-      try { window.speechSynthesis.speak(u); } catch { finish(); }
-    });
-
-  const playOnce = (rate: number, token: number): Promise<void> =>
-    new Promise((resolve) => {
-      if (!current || token !== chainTokenRef.current) return resolve();
-      const settle = () => { pendingResolveRef.current = null; resolve(); };
-      if (current.audio_url) {
-        const a = new Audio(current.audio_url);
-        a.playbackRate = rate;
-        audioElRef.current = a;
-        a.onended = () => { audioElRef.current = null; settle(); };
-        a.onerror = () => {
-          audioElRef.current = null;
-          speakBrowser(current.text, rate, token).then(settle);
-        };
-        pendingResolveRef.current = settle;
-        a.play().catch(() => {
-          audioElRef.current = null;
-          speakBrowser(current.text, rate, token).then(settle);
-        });
-      } else {
-        speakBrowser(current.text, rate, token).then(settle);
-      }
-    });
-
-  const playAudio = async (onEnded?: () => void) => {
-    if (!current) return;
-    stopAudio();
-    const token = ++chainTokenRef.current;
-    const count = repeatCount;
-    const gapMs = Math.round(repeatGap * 1000);
-    for (let i = 0; i < count; i++) {
-      if (token !== chainTokenRef.current) return;
-      await playOnce(speed, token);
-      if (token !== chainTokenRef.current) return;
-      if (i < count - 1) {
-        await new Promise<void>((r) => {
-          const t = setTimeout(() => { pendingResolveRef.current = null; r(); }, gapMs);
-          pendingResolveRef.current = () => { clearTimeout(t); r(); };
-        });
-        if (token !== chainTokenRef.current) return;
-      }
-    }
-    if (token === chainTokenRef.current) onEnded?.();
-  };
-
-  const goPrev = () => { if (idx > 0) setIdx(idx - 1); };
-  const goNext = () => { if (idx + 1 < total) setIdx(idx + 1); };
-
-  const handleSave = async (sentenceId: string, accuracy: number) => {
-    const best = await saveDictationProgress(user?.id, setId, sentenceId, accuracy);
-    if (best === 100) {
-      setCompleted((prev) => {
-        if (prev.has(sentenceId)) return prev;
-        const next = new Set(prev);
-        next.add(sentenceId);
-        return next;
+  const handleCheck = () => {
+    if (!input.trim()) return;
+    const parts = diffWords(sentence.text, input);
+    let acc = wordAccuracyPct(parts);
+    if (hints.length > 0) acc = Math.min(acc, 90);
+    setChecked(true);
+    if (firstAccuracyRef.current === null) {
+      firstAccuracyRef.current = acc;
+      void saveResult(acc);
+      onDone({
+        sentenceId: sentence.sentence_id,
+        text: sentence.text,
+        typed: input,
+        accuracy: acc,
       });
     }
   };
 
-
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-3xl mx-auto px-4 pt-[144px] md:pt-24 pb-10"><p className="text-destructive">{error}</p></div>
-      </div>
-    );
-  }
-  if (!sentences || !setInfo) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-3xl mx-auto px-4 pt-[144px] md:pt-24 pb-10"><p className="text-muted-foreground">Đang tải…</p></div>
-      </div>
-    );
-  }
-  if (total === 0) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="max-w-3xl mx-auto px-4 pt-[144px] md:pt-24 pb-10">
-          <p className="text-muted-foreground">Bộ này chưa có câu nào.</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate("/nghe-chep")}>
-            <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="max-w-3xl mx-auto px-4 pt-[144px] md:pt-24 pb-8">
-        <button
-          onClick={() => navigate("/nghe-chep")}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <ArrowLeft className="w-4 h-4" /> Tất cả bộ luyện
-        </button>
-
-        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            {setInfo.title}
-            {user && total > 0 && completed.size >= total && (
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-            )}
-          </h1>
-          <div className="flex items-center gap-2">
-            {current && completed.has(current.id) && (
-              <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Đã đạt 100%
-              </span>
-            )}
-            <span className="text-sm font-medium px-3 py-1 rounded-full bg-primary/10 text-primary">
-              Câu {idx + 1}/{total}
-              {user && total > 0 && ` · ${completed.size}/${total} ✓`}
-            </span>
-          </div>
-        </div>
-
-        {/* Mode selector */}
-        <div className="inline-flex rounded-lg border border-border bg-muted p-1 mb-4">
-          {[
-            { key: "check", label: "Nghe Check" },
-            { key: "chep", label: "Nghe Chép Full Câu" },
-          ].map((m) => (
-            <button
-              key={m.key}
-              onClick={() => setMode(m.key as Mode)}
-              className={cn(
-                "px-4 py-1.5 text-sm font-medium rounded-md transition-colors",
-                mode === m.key
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Audio settings: speed + repeat */}
-        <AudioSettingsBar
-          speed={speed}
-          setSpeed={setSpeed}
-          repeatCount={repeatCount}
-          setRepeatCount={setRepeatCount}
-          repeatGap={repeatGap}
-          setRepeatGap={setRepeatGap}
-        />
-
-        {/* progress bar */}
-        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mb-6">
-          <div className="h-full bg-primary transition-all" style={{ width: `${((idx + 1) / total) * 100}%` }} />
-        </div>
-
-
-        {mode === "check" && current && (
-          <CheckMode
-            key={current.id}
-            sentence={current}
-            playAudio={playAudio}
-            stopAudio={stopAudio}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={idx > 0}
-            hasNext={idx + 1 < total}
-            onSave={(acc) => handleSave(current.id, acc)}
-          />
-        )}
-        {mode === "chep" && current && (
-          <ChepMode
-            key={current.id}
-            sentence={current}
-            playAudio={playAudio}
-            stopAudio={stopAudio}
-            onPrev={goPrev}
-            onNext={goNext}
-            hasPrev={idx > 0}
-            hasNext={idx + 1 < total}
-            onSave={(acc) => handleSave(current.id, acc)}
-          />
-        )}
-
-
-      </main>
-    </div>
-  );
-}
-
-/* ==================== Audio settings bar ==================== */
-function AudioSettingsBar({
-  speed, setSpeed, repeatCount, setRepeatCount, repeatGap, setRepeatGap,
-}: {
-  speed: number;
-  setSpeed: (v: number) => void;
-  repeatCount: number;
-  setRepeatCount: (v: number) => void;
-  repeatGap: number;
-  setRepeatGap: (v: number) => void;
-}) {
-  const speeds = [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4];
-  const [open, setOpen] = useState(false);
-  const [draftCount, setDraftCount] = useState(repeatCount);
-  const [draftGap, setDraftGap] = useState(repeatGap);
-  useEffect(() => { if (open) { setDraftCount(repeatCount); setDraftGap(repeatGap); } }, [open, repeatCount, repeatGap]);
-
-  const apply = () => {
-    setRepeatCount(draftCount);
-    setRepeatGap(draftGap);
-    setOpen(false);
+  const handleHint = () => {
+    const remaining = words.filter((w) => !hints.includes(w));
+    if (remaining.length === 0) return;
+    const pick = remaining[Math.floor(Math.random() * remaining.length)];
+    setHints((h) => [...h, pick]);
   };
 
-  return (
-    <div className="flex flex-wrap items-center gap-3 mb-4">
-      <div className="flex items-center gap-2">
-        <label className="text-sm text-muted-foreground">Tốc độ</label>
-        <Select value={String(speed)} onValueChange={(v) => setSpeed(parseFloat(v))}>
-          <SelectTrigger className="w-[92px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {speeds.map((s) => (
-              <SelectItem key={s} value={String(s)}>{s.toFixed(1)}x</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-9 gap-2">
-            <Repeat className="w-4 h-4" />
-            Lặp {repeatCount}x{"\u00a0"}· Nghỉ {repeatGap}s
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72" align="start">
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium mb-2">Số lần phát lại</p>
-              <div className="inline-flex rounded-md border border-border p-0.5">
-                {[2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setDraftCount(n)}
-                    className={cn(
-                      "px-3 py-1 text-sm font-medium rounded",
-                      draftCount === n ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {n} lần
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2">Thời gian nghỉ</p>
-              <div className="inline-flex flex-wrap gap-1 rounded-md border border-border p-0.5">
-                {[0.5, 1, 1.5, 2].map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setDraftGap(g)}
-                    className={cn(
-                      "px-3 py-1 text-sm font-medium rounded",
-                      draftGap === g ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {g}s
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button size="sm" onClick={apply}>Áp dụng</Button>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
-
-/* ==================== Shared play/stop hook ==================== */
-function usePlayback(
-  playAudio: (onEnded?: () => void) => void,
-  stopAudio: () => void,
-) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const didAutoplayRef = useRef(false);
-
-  const play = () => {
-    setIsPlaying(true);
-    playAudio(() => setIsPlaying(false));
-  };
-  const stop = () => {
-    stopAudio();
-    setIsPlaying(false);
-  };
-  const toggle = () => (isPlaying ? stop() : play());
-
-  // Autoplay once per sentence (component remounts on sentence change via key).
-  useEffect(() => {
-    if (didAutoplayRef.current) return;
-    didAutoplayRef.current = true;
-    const t = setTimeout(play, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => () => stopAudio(), []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return { isPlaying, toggle };
-}
-
-
-/* ==================== Mode: Nghe Check ==================== */
-function CheckMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
-  sentence: Sentence;
-  playAudio: (onEnded?: () => void) => void;
-  stopAudio: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-  hasPrev: boolean;
-  hasNext: boolean;
-  onSave: (accuracy: number) => void;
-}) {
-  const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
-  const [ratio, setRatio] = useState<30 | 50 | 100>(100);
-  const [checked, setChecked] = useState(false);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [revealed, setRevealed] = useState<Set<number>>(new Set());
-  const inputsRef = useRef<Record<number, HTMLInputElement | null>>({});
-
-  const tokens = useMemo(() => tokenize(sentence.text), [sentence.text]);
-  // indices of word tokens (in tokens array)
-  const wordIdxList = useMemo(
-    () => tokens.map((t, i) => (t.isWord ? i : -1)).filter((i) => i >= 0),
-    [tokens],
-  );
-
-  const hiddenSet = useMemo(() => {
-    const wordCount = wordIdxList.length;
-    const howMany = Math.round((wordCount * ratio) / 100);
-    const picked = seededPickIndices(wordCount, howMany, `${sentence.id}:${ratio}`);
-    return new Set([...picked].map((k) => wordIdxList[k]));
-  }, [wordIdxList, ratio, sentence.id]);
-
-  useEffect(() => {
+  const handleRelisten = () => {
+    // Sửa tiếp, không cộng lượt nghe
     setChecked(false);
-    setAnswers({});
-    setRevealed(new Set());
-  }, [sentence.id, ratio]);
-
-
-
-
-  const isCorrect = (tokenIdx: number) => {
-    const exp = normalizeWord(tokens[tokenIdx].core);
-    const got = normalizeWord(answers[tokenIdx] || "");
-    return exp !== "" && exp === got;
+    playerRef.current?.play();
   };
 
-  const handleCheck = () => {
+  const handleSkip = () => {
+    if (firstAccuracyRef.current === null) {
+      firstAccuracyRef.current = 0;
+      void saveResult(0);
+      onDone({ sentenceId: sentence.sentence_id, text: sentence.text, typed: input, accuracy: 0 });
+    }
     setChecked(true);
-    // Accuracy = share of hidden slots filled with the correct word (revealed slots count as correct).
-    const hidden = [...hiddenSet];
-    if (hidden.length === 0) { onSave(0); return; }
-    const ok = hidden.filter((i) => isCorrect(i)).length;
-    onSave(Math.round((ok / hidden.length) * 100));
+    setRevealed(true);
   };
 
-
-
-  const handleReveal = () => {
-    // Reveal one hidden, still-empty & not-yet-revealed word
-    const candidates = [...hiddenSet].filter(
-      (i) => !revealed.has(i) && !isCorrect(i),
-    );
-    if (candidates.length === 0) return;
-    const target = candidates[Math.floor(Math.random() * candidates.length)];
-    setRevealed((prev) => new Set(prev).add(target));
-    setAnswers((prev) => ({ ...prev, [target]: tokens[target].core }));
-    // focus next input
-    setTimeout(() => {
-      const el = inputsRef.current[target];
-      if (el) el.blur();
-    }, 0);
-  };
-
-  const allCorrect = checked && [...hiddenSet].every((i) => isCorrect(i));
+  const hasAudio = !!sentence.audio_url && sentence.start_sec != null && sentence.end_sec != null;
 
   return (
-    <Card className="p-6 sm:p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggle}
-            className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-            aria-label={isPlaying ? "Dừng" : "Phát câu"}
-          >
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-          </button>
-          <Button variant="ghost" size="sm" onClick={toggle}>
-            <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
-          </Button>
-        </div>
+    <Card className="mt-5 p-5 sm:p-6">
+      {hasAudio ? (
+        <>
+          <SegmentPlayer
+            ref={playerRef}
+            path={sentence.audio_url as string}
+            startSec={Number(sentence.start_sec)}
+            endSec={Number(sentence.end_sec)}
+            speed={settings.speed}
+            autoPlay
+            disabled={limitReached}
+            onEnded={() => setPlays((p) => p + 1)}
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            {settings.maxPlays > 0
+              ? `Đã nghe ${Math.min(plays, settings.maxPlays)}/${settings.maxPlays} lần`
+              : `Đã nghe ${plays} lần`}
+            {limitReached && " · đã hết lượt nghe"}
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-destructive">Câu này chưa có dữ liệu audio.</p>
+      )}
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground mr-1">Ẩn</span>
-          <div className="inline-flex rounded-md border border-border p-0.5">
-            {[30, 50, 100].map((r) => (
-              <button
-                key={r}
-                onClick={() => setRatio(r as 30 | 50 | 100)}
-                className={cn(
-                  "px-2.5 py-1 text-xs font-medium rounded",
-                  ratio === r ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {r}%
-              </button>
-            ))}
-          </div>
-          <Button variant="outline" size="sm" onClick={handleReveal} disabled={checked && allCorrect}>
-            <Lightbulb className="w-4 h-4 mr-1" /> Hé 1 từ
-          </Button>
-        </div>
-      </div>
-
-      <div className="text-lg leading-loose flex flex-wrap items-center gap-y-2">
-        {tokens.map((t, i) => {
-          if (!t.isWord) {
-            // Preserve whitespace/punctuation exactly
-            return <span key={i} className="whitespace-pre-wrap">{t.raw}</span>;
-          }
-          if (!hiddenSet.has(i)) {
-            return <span key={i} className="font-medium">{t.raw}</span>;
-          }
-          const val = answers[i] ?? "";
-          const isRev = revealed.has(i);
-          const correct = isCorrect(i);
-          const state: "idle" | "ok" | "bad" =
-            isRev ? "ok" : checked ? (correct ? "ok" : "bad") : correct ? "ok" : "idle";
-          // width based on target word length
-          const w = Math.max(3, t.core.length + 1);
-          return (
-            <input
-              key={i}
-              ref={(el) => { inputsRef.current[i] = el; }}
-              value={val}
-              onChange={(e) => setAnswers((prev) => ({ ...prev, [i]: e.target.value }))}
-              disabled={isRev}
-              spellCheck={false}
-              autoComplete="off"
-              style={{ width: `${w}ch` }}
-              className={cn(
-                "inline-block px-1.5 py-0.5 mx-0.5 rounded border-b-2 bg-background text-center font-medium outline-none focus:border-primary transition-colors",
-                state === "ok" && "border-green-600 text-green-700 dark:text-green-500",
-                state === "bad" && "border-destructive text-destructive",
-                state === "idle" && "border-muted-foreground/40",
-              )}
-            />
-          );
-        })}
-      </div>
-
-      {checked && (() => {
-        const hidden = [...hiddenSet];
-        const ok = hidden.filter((i) => isCorrect(i)).length;
-        const total = hidden.length;
-        const pct = total ? Math.round((ok / total) * 100) : 0;
-        return (
-          <div className="mt-6 space-y-3">
-            <div className={cn(
-              "text-sm font-semibold",
-              pct === 100 ? "text-green-600" : "text-primary"
-            )}>
-              {pct === 100 ? `✓ Đúng hết! ${ok}/${total} từ · 100%` : `Đúng ${ok}/${total} từ · ${pct}%`}
-            </div>
-            {!allCorrect && (
-              <div className="rounded-md border border-border bg-muted/40 p-3">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án</p>
-                <p className="text-base">{sentence.text}</p>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-
-      <div className="mt-6 flex flex-wrap gap-3 justify-end">
-        {!checked ? (
-          <Button onClick={handleCheck}>
-            <Check className="w-4 h-4 mr-2" /> Hiện đáp án
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            onClick={() => { setChecked(false); }}
-          >
-            <EyeOff className="w-4 h-4 mr-2" /> Ẩn&nbsp;đáp án
-          </Button>
-        )}
-      </div>
-
-      <NavButtons onPrev={onPrev} onNext={onNext} hasPrev={hasPrev} hasNext={hasNext} />
-    </Card>
-  );
-}
-
-/* ==================== Mode: Nghe Chép (existing) ==================== */
-function ChepMode({ sentence, playAudio, stopAudio, onPrev, onNext, hasPrev, hasNext, onSave }: {
-  sentence: Sentence;
-  playAudio: (onEnded?: () => void) => void;
-  stopAudio: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-  hasPrev: boolean;
-  hasNext: boolean;
-  onSave: (accuracy: number) => void;
-}) {
-  const [input, setInput] = useState("");
-  const [checked, setChecked] = useState(false);
-  const { isPlaying, toggle } = usePlayback(playAudio, stopAudio);
-
-  const diff = useMemo(() => (checked ? diffWords(sentence.text, input) : null), [checked, sentence.text, input]);
-
-  const handleCheck = () => {
-    if (!input.trim()) return;
-    setChecked(true);
-    const parts = diffWords(sentence.text, input);
-    onSave(wordAccuracyPct(parts));
-  };
-
-  const acc = diff ? wordAccuracyPct(diff) : 0;
-  const okCount = diff ? diff.filter((p) => p.ok).length : 0;
-  const totalWords = diff ? diff.length : 0;
-  const perfect = checked && acc === 100;
-
-  return (
-    <Card className="p-6 sm:p-8">
-      <div className="flex flex-col items-center gap-4">
-        <button
-          type="button"
-          onClick={toggle}
-          className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
-          aria-label={isPlaying ? "Dừng" : "Phát câu"}
-        >
-          {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
-        </button>
-        <Button variant="ghost" size="sm" onClick={toggle}>
-          <Volume2 className="w-4 h-4 mr-2" /> {isPlaying ? "Dừng" : "Phát lại"}
-        </Button>
-      </div>
-
-
-      <div className="mt-8">
+      <div className="mt-6">
         <label className="text-sm font-medium mb-2 block">Gõ lại câu bạn nghe được:</label>
-        <Input
+        <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !checked) handleCheck();
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              if (!checked) handleCheck();
+            }
           }}
           placeholder="Nhập câu tiếng Anh…"
-          disabled={checked}
           autoFocus
+          rows={3}
           className="text-base"
         />
-      </div>
-
-      {checked && diff && (
-        <div className="mt-6 space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              So sánh theo từ (đỏ = sai/thiếu)
-            </p>
-            <p className="text-lg leading-relaxed flex flex-wrap gap-x-1.5 gap-y-1">
-              {diff.map((p, i) => (
-                <span
-                  key={i}
-                  className={p.ok ? "text-foreground" : "text-destructive font-semibold underline decoration-destructive/60"}
-                >
-                  {p.word}
-                </span>
-              ))}
-            </p>
+        {hints.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {hints.map((h, i) => (
+              <span key={`${h}-${i}`} className="px-2 py-1 rounded-md bg-muted text-xs font-medium">
+                {h}
+              </span>
+            ))}
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án đúng</p>
-            <p className="text-lg leading-relaxed">{sentence.text}</p>
-          </div>
-          <div className={`text-sm font-medium ${perfect ? "text-green-600" : "text-primary"}`}>
-            {perfect ? `✓ Chính xác 100%! (${okCount}/${totalWords} từ)` : `Đúng ${okCount}/${totalWords} từ · ${acc}%`}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-6 flex flex-wrap gap-3 justify-end">
-        {!checked ? (
-          <Button onClick={handleCheck} disabled={!input.trim()}>
-            <Check className="w-4 h-4 mr-2" /> Hiện đáp án
-          </Button>
-        ) : (
-          <Button variant="outline" onClick={() => { setChecked(false); }}>Sửa tiếp</Button>
         )}
       </div>
 
-      <NavButtons onPrev={onPrev} onNext={onNext} hasPrev={hasPrev} hasNext={hasNext} />
-    </Card>
+      {!checked && (
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button onClick={handleCheck} disabled={!input.trim()}>
+            Kiểm tra
+          </Button>
+          <Button variant="outline" onClick={handleHint}>
+            <Lightbulb className="w-4 h-4 mr-2" /> Gợi ý
+            {hints.length > 0 && ` (${hints.length})`}
+          </Button>
+        </div>
+      )}
 
+      {checked && diff && (
+        <div
+          className={cn(
+            "mt-6 rounded-xl border p-4",
+            perfect ? "border-green-500/40 bg-green-500/10" : "border-amber-500/40 bg-amber-500/10",
+          )}
+        >
+          <div className="flex items-center gap-2">
+            {perfect ? (
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            ) : (
+              <Lightbulb className="w-5 h-5 text-amber-600" />
+            )}
+            <p className="font-semibold">
+              {perfect ? "Chính xác 100%!" : `Điểm ghi nhận: ${shownAccuracy}%`}
+            </p>
+          </div>
+
+          <div className="mt-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+              {perfect || revealed ? "Câu đầy đủ" : "Đối chiếu"}
+            </p>
+            <p className="leading-relaxed">
+              {perfect || revealed
+                ? sentence.text
+                : diff.map((p, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        "mr-1",
+                        p.ok ? "text-green-600 font-medium" : "text-destructive underline",
+                      )}
+                    >
+                      {p.word}
+                    </span>
+                  ))}
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {perfect || revealed ? (
+              <Button onClick={onNext}>
+                {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={handleRelisten}>
+                  <RotateCcw className="w-4 h-4 mr-2" /> Nghe lại &amp; sửa
+                </Button>
+                <Button variant="secondary" onClick={handleSkip}>
+                  Bỏ qua, xem đáp án
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }
 
-/* ==================== Shared nav ==================== */
-function NavButtons({ onPrev, onNext, hasPrev, hasNext }: {
-  onPrev: () => void; onNext: () => void; hasPrev: boolean; hasNext: boolean;
+/* ------------------------------------------------------------------ */
+/* Result screen                                                      */
+/* ------------------------------------------------------------------ */
+function ResultScreen({
+  answers,
+  total,
+  durationSec,
+  level,
+  setId,
+  userId,
+  onNewSession,
+  onRetry,
+  onHome,
+}: {
+  answers: Answer[];
+  total: number;
+  durationSec: number;
+  level: number;
+  setId: string | null;
+  userId?: string;
+  onNewSession: () => void;
+  onRetry: () => void;
+  onHome: () => void;
 }) {
+  const finishedRef = useRef(false);
+  const avg = answers.length
+    ? Math.round(answers.reduce((sum, a) => sum + a.accuracy, 0) / answers.length)
+    : 0;
+  const correct = answers.filter((a) => a.accuracy === 100).length;
+
+  useEffect(() => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    if (!userId) return;
+    void supabase
+      .rpc("finish_dictation_session", {
+        p_mode: "dictation",
+        p_level: level,
+        p_set_id: setId,
+        p_total: total,
+        p_correct: correct,
+        p_duration_sec: durationSec,
+      })
+      .then(() => undefined, () => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const mm = Math.floor(durationSec / 60);
+  const ss = durationSec % 60;
+
   return (
-    <div className="mt-6 flex items-center justify-between pt-6 border-t border-border">
-      <Button variant="ghost" onClick={onPrev} disabled={!hasPrev}>
-        <ChevronLeft className="w-4 h-4 mr-1" /> Câu trước
-      </Button>
-      <Button variant="ghost" onClick={onNext} disabled={!hasNext}>
-        Câu tiếp <ChevronRight className="w-4 h-4 ml-1" />
-      </Button>
+    <div>
+      <h1 className="text-2xl sm:text-3xl font-bold">Kết quả phiên luyện</h1>
+
+      <Card className="mt-5 p-6 flex flex-col items-center">
+        <div
+          className="w-32 h-32 rounded-full flex items-center justify-center"
+          style={{
+            background: `conic-gradient(hsl(var(--primary)) ${avg * 3.6}deg, hsl(var(--muted)) 0deg)`,
+          }}
+        >
+          <div className="w-24 h-24 rounded-full bg-card flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold">{avg}%</span>
+            <span className="text-[10px] text-muted-foreground">chính xác</span>
+          </div>
+        </div>
+        <div className="mt-5 flex gap-8 text-center">
+          <div>
+            <p className="text-lg font-semibold">
+              {correct}/{total}
+            </p>
+            <p className="text-xs text-muted-foreground">câu đúng hoàn toàn</p>
+          </div>
+          <div>
+            <p className="text-lg font-semibold">
+              {mm}:{String(ss).padStart(2, "0")}
+            </p>
+            <p className="text-xs text-muted-foreground">thời gian làm</p>
+          </div>
+        </div>
+      </Card>
+
+      <Accordion type="single" collapsible className="mt-5">
+        {answers.map((a, i) => (
+          <AccordionItem key={a.sentenceId} value={a.sentenceId}>
+            <AccordionTrigger className="text-left">
+              <span className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">Câu {i + 1}</span>
+                <span
+                  className={cn(
+                    "text-sm font-semibold",
+                    a.accuracy === 100 ? "text-green-600" : "text-amber-600",
+                  )}
+                >
+                  {a.accuracy}%
+                </span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Câu gốc</p>
+                <p className="text-sm">{a.text}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã gõ</p>
+                <p className="text-sm">{a.typed || "(để trống)"}</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Button onClick={onNewSession}>Luyện tiếp bài mới</Button>
+        <Button variant="outline" onClick={onRetry}>
+          <RotateCcw className="w-4 h-4 mr-2" /> Làm lại bài này
+        </Button>
+        <Button variant="ghost" onClick={onHome}>
+          <Home className="w-4 h-4 mr-2" /> Về trang chủ
+        </Button>
+      </div>
     </div>
   );
-}
-
-/* ==================== Route wrapper ==================== */
-export default function Dictation() {
-  const { setId } = useParams();
-  if (setId) return <DictationPracticeView setId={setId} />;
-  return <DictationListView />;
 }
