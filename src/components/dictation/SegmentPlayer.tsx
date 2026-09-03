@@ -25,6 +25,7 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
   ref,
 ) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const rafRef = useRef<number | null>(null);
   const [src, setSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
@@ -34,8 +35,43 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
   onEndedRef.current = onEnded;
   const autoPlayRef = useRef(autoPlay);
   autoPlayRef.current = autoPlay;
+  const endSecRef = useRef(endSec);
+  endSecRef.current = endSec;
 
   const duration = Math.max(0.01, endSec - startSec);
+
+  const cancelRaf = () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
+
+  // Vòng requestAnimationFrame: dừng đúng endSec (timeupdate chỉ ~4 lần/giây, bị lẹm).
+  const startRafLoop = () => {
+    cancelRaf();
+    const tick = () => {
+      const a = audioRef.current;
+      if (!a) {
+        rafRef.current = null;
+        return;
+      }
+      if (a.currentTime >= endSecRef.current) {
+        try {
+          a.pause();
+        } catch {
+          /* ignore */
+        }
+        setPlaying(false);
+        setPct(100);
+        cancelRaf();
+        onEndedRef.current?.();
+        return;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  };
 
   // Resolve the private-bucket path into a playable blob URL.
   useEffect(() => {
@@ -52,8 +88,11 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
     })();
     return () => {
       cancelled = true;
+      cancelRaf();
     };
   }, [path]);
+
+  useEffect(() => cancelRaf, []);
 
   const startPlay = () => {
     const a = audioRef.current;
