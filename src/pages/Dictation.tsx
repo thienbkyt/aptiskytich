@@ -543,6 +543,7 @@ export default function Dictation() {
           key={s.sentence_id}
           sentence={s}
           settings={settings}
+          mode={mode}
           userId={user?.id}
           isLast={index + 1 >= sentences.length}
           onDone={handleSentenceDone}
