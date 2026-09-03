@@ -165,6 +165,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_band_c_20260903: {
+        Row: {
+          bang: string | null
+          gia_tri_cu: string | null
+          row_id: string | null
+        }
+        Insert: {
+          bang?: string | null
+          gia_tri_cu?: string | null
+          row_id?: string | null
+        }
+        Update: {
+          bang?: string | null
+          gia_tri_cu?: string | null
+          row_id?: string | null
+        }
+        Relationships: []
+      }
       backup_exam_review_items_20260817: {
         Row: {
           id: string | null
