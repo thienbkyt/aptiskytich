@@ -285,10 +285,16 @@ export default function Dictation() {
 
   /* ---------------- Screen 1: mode ---------------- */
   if (screen === "mode") {
-    const cards = [
+    const cards: Array<{
+      key: PracticeMode;
+      title: string;
+      desc: string;
+      icon: typeof Headphones;
+      soon: boolean;
+    }> = [
       { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones, soon: false },
-      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio", icon: Mic, soon: true },
-      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles, soon: true },
+      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio", icon: Mic, soon: false },
+      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles, soon: false },
     ];
     return (
       <Shell>
@@ -302,7 +308,10 @@ export default function Dictation() {
               key={c.key}
               type="button"
               disabled={c.soon}
-              onClick={() => setScreen("level")}
+              onClick={() => {
+                setMode(c.key);
+                setScreen("level");
+              }}
               className={cn(
                 "text-left rounded-xl border p-6 transition",
                 c.soon
