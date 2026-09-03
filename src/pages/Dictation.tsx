@@ -426,11 +426,78 @@ export default function Dictation() {
             />
           </div>
 
-          <Button className="w-full" size="lg" onClick={startSession} disabled={loadingSession}>
+          <Button className="w-full" size="lg" onClick={() => void startSession()} disabled={loadingSession}>
             {loadingSession ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Bắt đầu
           </Button>
+
+          <button
+            type="button"
+            onClick={openSetsScreen}
+            className="w-full text-center text-sm text-primary hover:underline"
+          >
+            Hoặc chọn bài cụ thể →
+          </button>
         </Card>
+      </Shell>
+    );
+  }
+
+  /* ---------------- Screen 3b: chọn bài cụ thể ---------------- */
+  if (screen === "sets") {
+    return (
+      <Shell onBack={() => setScreen("setup")}>
+        <h1 className="text-2xl sm:text-3xl font-bold">Chọn bài cụ thể</h1>
+        <p className="text-muted-foreground mt-2">{LEVEL_META[level].title}</p>
+
+        <div className="mt-6 space-y-3">
+          {setRows.map((r) => {
+            const total = Number(r.sentence_count ?? 0);
+            const done = Number(r.done_cnt ?? 0);
+            const pct = total ? Math.round((done / total) * 100) : 0;
+            return (
+              <button
+                key={r.id}
+                type="button"
+                disabled={loadingSession}
+                onClick={() => void startSession(r.id)}
+                className="w-full text-left rounded-xl border bg-card p-4 hover:border-primary hover:shadow-md transition disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{r.title}</p>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      {r.part && <Badge variant="secondary">{r.part}</Badge>}
+                      <span className="text-xs text-muted-foreground">
+                        {done}/{total} câu
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                </div>
+                <Progress value={pct} className="h-2 mt-3" />
+              </button>
+            );
+          })}
+
+          {setsLoading && (
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải…
+            </p>
+          )}
+
+          {!setsLoading && setRows.length === 0 && (
+            <Card className="p-6 text-center text-muted-foreground text-sm">
+              Không có bài nào phù hợp ở cấp độ này.
+            </Card>
+          )}
+
+          {setsHasMore && !setsLoading && (
+            <Button variant="outline" className="w-full" onClick={() => void loadSets(setsPage + 1)}>
+              Xem thêm
+            </Button>
+          )}
+        </div>
       </Shell>
     );
   }
