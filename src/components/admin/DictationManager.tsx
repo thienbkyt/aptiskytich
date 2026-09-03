@@ -30,7 +30,9 @@ type DictationSet = {
   title: string;
   level: number | null;
   sort: number | null;
-  sentence_count?: number;
+  part?: string | null;
+  is_active?: boolean | null;
+  sentence_count?: number | null;
 };
 
 type Sentence = {
@@ -44,12 +46,17 @@ const DictationManager = () => {
   const [sets, setSets] = useState<DictationSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<DictationSet | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
+  const [levelFilter, setLevelFilter] = useState<string>("all");
 
   const loadSets = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from("dictation_sets")
-      .select("id, title, level, sort")
+      .select("id, title, level, sort, part, is_active, sentence_count");
+    if (!showInactive) query = query.eq("is_active", true);
+    if (levelFilter !== "all") query = query.eq("level", parseInt(levelFilter, 10));
+    const { data, error } = await query
       .order("sort", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) {
@@ -58,23 +65,14 @@ const DictationManager = () => {
       setLoading(false);
       return;
     }
-    const list = (data || []) as DictationSet[];
-    if (list.length) {
-      const { data: counts } = await supabase
-        .from("dictation_sentences")
-        .select("set_id")
-        .in("set_id", list.map((s) => s.id));
-      const map = new Map<string, number>();
-      (counts || []).forEach((r: any) => map.set(r.set_id, (map.get(r.set_id) || 0) + 1));
-      list.forEach((s) => (s.sentence_count = map.get(s.id) || 0));
-    }
-    setSets(list);
+    setSets((data || []) as DictationSet[]);
     setLoading(false);
   };
 
   useEffect(() => {
     loadSets();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showInactive, levelFilter]);
 
   if (selected) {
     return (
@@ -94,6 +92,10 @@ const DictationManager = () => {
       loading={loading}
       onReload={loadSets}
       onOpen={(s) => setSelected(s)}
+      levelFilter={levelFilter}
+      onLevelFilter={setLevelFilter}
+      showInactive={showInactive}
+      onToggleInactive={setShowInactive}
     />
   );
 };
