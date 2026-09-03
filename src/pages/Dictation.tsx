@@ -151,6 +151,7 @@ type Answer = {
   text: string;
   typed: string;
   accuracy: number;
+  speakingScore?: number | null;
 };
 
 /* ------------------------------------------------------------------ */
