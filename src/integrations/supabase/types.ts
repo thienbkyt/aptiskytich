@@ -204,6 +204,84 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_dictation_20260903_progress: {
+        Row: {
+          best_accuracy: number | null
+          id: string | null
+          sentence_id: string | null
+          set_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          best_accuracy?: number | null
+          id?: string | null
+          sentence_id?: string | null
+          set_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          best_accuracy?: number | null
+          id?: string | null
+          sentence_id?: string | null
+          set_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_dictation_20260903_sentences: {
+        Row: {
+          audio_url: string | null
+          created_at: string | null
+          id: string | null
+          set_id: string | null
+          sort: number | null
+          text: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          set_id?: string | null
+          sort?: number | null
+          text?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string | null
+          id?: string | null
+          set_id?: string | null
+          sort?: number | null
+          text?: string | null
+        }
+        Relationships: []
+      }
+      backup_dictation_20260903_sets: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          level: number | null
+          sort: number | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          level?: number | null
+          sort?: number | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          level?: number | null
+          sort?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       backup_exam_review_items_20260817: {
         Row: {
           id: string | null
@@ -1776,26 +1854,62 @@ export type Database = {
         }
         Relationships: []
       }
+      dictation_import_stage: {
+        Row: {
+          audio_url: string
+          batch: number | null
+          end_sec: number | null
+          sort: number
+          start_sec: number | null
+          text: string
+        }
+        Insert: {
+          audio_url: string
+          batch?: number | null
+          end_sec?: number | null
+          sort: number
+          start_sec?: number | null
+          text: string
+        }
+        Update: {
+          audio_url?: string
+          batch?: number | null
+          end_sec?: number | null
+          sort?: number
+          start_sec?: number | null
+          text?: string
+        }
+        Relationships: []
+      }
       dictation_progress: {
         Row: {
+          attempts: number
           best_accuracy: number
+          best_speaking_score: number | null
           id: string
+          last_mode: string | null
           sentence_id: string
           set_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          attempts?: number
           best_accuracy?: number
+          best_speaking_score?: number | null
           id?: string
+          last_mode?: string | null
           sentence_id: string
           set_id: string
           updated_at?: string
           user_id?: string
         }
         Update: {
+          attempts?: number
           best_accuracy?: number
+          best_speaking_score?: number | null
           id?: string
+          last_mode?: string | null
           sentence_id?: string
           set_id?: string
           updated_at?: string
@@ -1822,26 +1936,38 @@ export type Database = {
         Row: {
           audio_url: string | null
           created_at: string
+          end_sec: number | null
           id: string
+          match_score: number | null
           set_id: string
           sort: number
+          start_sec: number | null
           text: string
+          word_count: number | null
         }
         Insert: {
           audio_url?: string | null
           created_at?: string
+          end_sec?: number | null
           id?: string
+          match_score?: number | null
           set_id: string
           sort?: number
+          start_sec?: number | null
           text: string
+          word_count?: number | null
         }
         Update: {
           audio_url?: string | null
           created_at?: string
+          end_sec?: number | null
           id?: string
+          match_score?: number | null
           set_id?: string
           sort?: number
+          start_sec?: number | null
           text?: string
+          word_count?: number | null
         }
         Relationships: [
           {
@@ -1853,26 +1979,83 @@ export type Database = {
           },
         ]
       }
-      dictation_sets: {
+      dictation_sessions: {
         Row: {
+          accuracy: number
+          correct: number
           created_at: string
+          duration_sec: number
           id: string
           level: number
+          mode: string
+          set_id: string | null
+          total: number
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number
+          correct?: number
+          created_at?: string
+          duration_sec?: number
+          id?: string
+          level: number
+          mode?: string
+          set_id?: string | null
+          total?: number
+          user_id?: string
+        }
+        Update: {
+          accuracy?: number
+          correct?: number
+          created_at?: string
+          duration_sec?: number
+          id?: string
+          level?: number
+          mode?: string
+          set_id?: string | null
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dictation_sets: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          exam_set_id: string | null
+          id: string
+          is_active: boolean
+          level: number
+          part: string | null
+          sentence_count: number
           sort: number
+          source: string
           title: string
         }
         Insert: {
+          audio_url?: string | null
           created_at?: string
+          exam_set_id?: string | null
           id?: string
+          is_active?: boolean
           level?: number
+          part?: string | null
+          sentence_count?: number
           sort?: number
+          source?: string
           title: string
         }
         Update: {
+          audio_url?: string | null
           created_at?: string
+          exam_set_id?: string | null
           id?: string
+          is_active?: boolean
           level?: number
+          part?: string | null
+          sentence_count?: number
           sort?: number
+          source?: string
           title?: string
         }
         Relationships: []
@@ -4508,7 +4691,59 @@ export type Database = {
         Returns: string
       }
       finance_report: { Args: { p_token: string }; Returns: Json }
+      finish_dictation_session: {
+        Args: {
+          p_correct: number
+          p_duration_sec: number
+          p_level: number
+          p_mode: string
+          p_set_id: string
+          p_total: number
+        }
+        Returns: string
+      }
       get_db_size_mb: { Args: never; Returns: number }
+      get_dictation_levels: {
+        Args: never
+        Returns: {
+          bo: number
+          bo_xong: number
+          cau: number
+          cau_xong: number
+          level: number
+        }[]
+      }
+      get_dictation_session: {
+        Args: { p_level: number; p_set_id?: string; p_size?: number }
+        Returns: {
+          audio_url: string
+          best_accuracy: number
+          end_sec: number
+          part: string
+          sentence_id: string
+          set_id: string
+          set_title: string
+          sort: number
+          start_sec: number
+          text: string
+        }[]
+      }
+      get_dictation_sets: {
+        Args: {
+          p_level: number
+          p_limit?: number
+          p_offset?: number
+          p_only_todo?: boolean
+        }
+        Returns: {
+          done_cnt: number
+          id: string
+          part: string
+          sentence_count: number
+          sort: number
+          title: string
+        }[]
+      }
       get_site_stats: { Args: never; Returns: Json }
       get_storage_size_mb: {
         Args: never
@@ -4636,6 +4871,15 @@ export type Database = {
       resolve_question_report: {
         Args: { p_report_id: string }
         Returns: number
+      }
+      save_dictation_result: {
+        Args: {
+          p_accuracy: number
+          p_mode?: string
+          p_sentence_id: string
+          p_speaking_score?: number
+        }
+        Returns: undefined
       }
       send_subscription_reminder_emails: { Args: never; Returns: number }
       slugify_vi: { Args: { _input: string }; Returns: string }
