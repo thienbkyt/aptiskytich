@@ -762,34 +762,36 @@ function SentenceTask({
         <p className="text-sm text-destructive">Câu này chưa có dữ liệu audio.</p>
       )}
 
-      <div className="mt-6">
-        <label className="text-sm font-medium mb-2 block">Gõ lại câu bạn nghe được:</label>
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              if (!checked) handleCheck();
-            }
-          }}
-          placeholder="Nhập câu tiếng Anh…"
-          autoFocus
-          rows={3}
-          className="text-base"
-        />
-        {hints.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {hints.map((h, i) => (
-              <span key={`${h}-${i}`} className="px-2 py-1 rounded-md bg-muted text-xs font-medium">
-                {h}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      {showDictation && (
+        <div className="mt-6">
+          <label className="text-sm font-medium mb-2 block">Gõ lại câu bạn nghe được:</label>
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (!checked) handleCheck();
+              }
+            }}
+            placeholder="Nhập câu tiếng Anh…"
+            autoFocus
+            rows={3}
+            className="text-base"
+          />
+          {hints.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {hints.map((h, i) => (
+                <span key={`${h}-${i}`} className="px-2 py-1 rounded-md bg-muted text-xs font-medium">
+                  {h}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {!checked && (
+      {showDictation && !checked && (
         <div className="mt-5 flex flex-wrap gap-2">
           <Button onClick={handleCheck} disabled={!input.trim()}>
             Kiểm tra
@@ -801,7 +803,7 @@ function SentenceTask({
         </div>
       )}
 
-      {checked && diff && (
+      {showDictation && checked && diff && (
         <div
           className={cn(
             "mt-6 rounded-xl border p-4",
@@ -846,9 +848,15 @@ function SentenceTask({
 
           <div className="mt-4 flex flex-wrap gap-2">
             {finishedSentence ? (
-              <Button onClick={onNext}>
-                {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+              mode === "combo" ? (
+                <p className="text-sm text-muted-foreground">
+                  Tốt lắm! Giờ hãy nói đuổi lại câu này ở phần dưới.
+                </p>
+              ) : (
+                <Button onClick={onNext}>
+                  {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              )
             ) : (
               <>
                 <Button variant="outline" onClick={handleRelisten}>
@@ -861,6 +869,25 @@ function SentenceTask({
             )}
           </div>
         </div>
+      )}
+
+      {showShadow && (
+        <ShadowBlock
+          sentence={sentence}
+          isLast={isLast}
+          onPlayModel={() => playerRef.current?.play()}
+          onNext={onNext}
+          onScored={(score) => {
+            void saveResult(mode === "shadow" ? 100 : (firstAccuracyRef.current ?? 0), score);
+            onDone({
+              sentenceId: sentence.sentence_id,
+              text: sentence.text,
+              typed: input,
+              accuracy: mode === "shadow" ? 100 : (firstAccuracyRef.current ?? 0),
+              speakingScore: score,
+            });
+          }}
+        />
       )}
     </Card>
   );
