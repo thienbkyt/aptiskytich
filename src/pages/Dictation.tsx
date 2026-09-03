@@ -76,7 +76,16 @@ function wordAccuracyPct(parts: WordDiffPart[]) {
 /* ------------------------------------------------------------------ */
 /* Types & settings                                                    */
 /* ------------------------------------------------------------------ */
-type Screen = "mode" | "level" | "setup" | "practice" | "result";
+type Screen = "mode" | "level" | "setup" | "sets" | "practice" | "result";
+
+type SetRow = {
+  id: string;
+  title: string;
+  part: string | null;
+  sentence_count: number | null;
+  sort: number | null;
+  done_cnt: number | null;
+};
 
 type LevelRow = {
   level: number;
