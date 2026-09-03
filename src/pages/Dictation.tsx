@@ -761,6 +761,8 @@ function SentenceTask({
   };
 
   const hasAudio = !!sentence.audio_url && sentence.start_sec != null && sentence.end_sec != null;
+  const showDictation = mode !== "shadow";
+  const showShadow = mode === "shadow" || (mode === "combo" && finishedSentence);
 
   return (
     <Card className="mt-5 p-5 sm:p-6">
