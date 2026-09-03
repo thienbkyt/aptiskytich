@@ -646,6 +646,7 @@ function Chip({
 function SentenceTask({
   sentence,
   settings,
+  mode,
   userId,
   isLast,
   onDone,
@@ -653,6 +654,7 @@ function SentenceTask({
 }: {
   sentence: SessionSentence;
   settings: Settings;
+  mode: PracticeMode;
   userId?: string;
   isLast: boolean;
   onDone: (a: Answer) => void;
@@ -666,6 +668,7 @@ function SentenceTask({
   const [revealed, setRevealed] = useState(false);
   const firstAccuracyRef = useRef<number | null>(null);
   const savedRef = useRef(false);
+  const speakingSavedRef = useRef(false);
 
   const words = useMemo(() => sentence.text.split(/\s+/).filter(Boolean), [sentence.text]);
   const limitReached = settings.maxPlays > 0 && plays >= settings.maxPlays;
