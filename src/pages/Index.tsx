@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import UpdateFeedDock from "@/components/home/UpdateFeedDock";
 import { Button } from "@/components/ui/button";
