@@ -174,6 +174,13 @@ export default function Dictation() {
   const [startedAt, setStartedAt] = useState<number>(0);
   const [durationSec, setDurationSec] = useState(0);
 
+  /* --- chọn bài cụ thể --- */
+  const [setRows, setSetRows] = useState<SetRow[]>([]);
+  const [setsLoading, setSetsLoading] = useState(false);
+  const [setsPage, setSetsPage] = useState(0);
+  const [setsHasMore, setSetsHasMore] = useState(false);
+  const [chosenSetId, setChosenSetId] = useState<string | null>(null);
+
   /* --- persist settings --- */
   useEffect(() => {
     safeLocalStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -195,12 +202,41 @@ export default function Dictation() {
     };
   }, [screen]);
 
-  const startSession = async () => {
+  const PAGE_SIZE = 30;
+
+  const loadSets = async (page: number) => {
+    setSetsLoading(true);
+    const { data, error } = await supabase.rpc("get_dictation_sets", {
+      p_level: level,
+      p_limit: PAGE_SIZE,
+      p_offset: page * PAGE_SIZE,
+      p_only_todo: settings.onlyTodo,
+    });
+    setSetsLoading(false);
+    if (error) {
+      toast({ title: "Không tải được danh sách bài", description: error.message, variant: "destructive" });
+      return;
+    }
+    const rows = (data ?? []) as SetRow[];
+    setSetRows((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setSetsHasMore(rows.length === PAGE_SIZE);
+    setSetsPage(page);
+  };
+
+  const openSetsScreen = () => {
+    setSetRows([]);
+    setSetsHasMore(false);
+    setScreen("sets");
+    void loadSets(0);
+  };
+
+  const startSession = async (overrideSetId?: string | null) => {
+    const targetSetId = overrideSetId ?? setId ?? null;
     setLoadingSession(true);
     const { data, error } = await supabase.rpc("get_dictation_session", {
       p_level: level,
       p_size: settings.size,
-      p_set_id: setId ?? null,
+      p_set_id: targetSetId,
     });
     setLoadingSession(false);
     const rows = (data ?? []) as SessionSentence[];
@@ -212,6 +248,7 @@ export default function Dictation() {
       });
       return;
     }
+    setChosenSetId(targetSetId);
     setSentences(rows);
     setIndex(0);
     setAnswers([]);
