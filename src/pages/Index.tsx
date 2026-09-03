@@ -484,7 +484,7 @@ const Index = () => {
                             <div className="flex items-center justify-between mb-5">
                               <div>
                                 <div className="text-xs font-semibold text-[#6B4A3B] mb-0.5">Tiến độ tuần này</div>
-                                <div className="text-2xl font-extrabold" style={{ color: "#4D0D0D" }}>B1+ → B2</div>
+                                <div className="text-2xl font-extrabold" style={{ color: "#4D0D0D" }}>B1 → B2</div>
                               </div>
                               <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white text-xs font-bold">
                                 <Flame className="w-3.5 h-3.5" /> 18 ngày
