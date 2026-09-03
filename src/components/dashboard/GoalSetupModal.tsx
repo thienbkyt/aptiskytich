@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { vnTodayISO, vnDaysUntil } from "@/lib/vnDate";
 import type { UserGoal } from "@/hooks/useUserGoal";
 
-const AIMS = ["B1", "B2", "C"] as const;
+const AIMS = ["B1", "B2", "C1"] as const;
 
 const suggestTarget = (examDate: string) => {
   const days = vnDaysUntil(examDate);

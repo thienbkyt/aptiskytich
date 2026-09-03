@@ -10,8 +10,8 @@ interface Props {
   overrides?: Overrides;
 }
 
-const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
-const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
+const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
+const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C1"];
 
 const FullTestScoreTable = ({ scores, overrides }: Props) => {
   const score50 = (sk: SkillKey) => {

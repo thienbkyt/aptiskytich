@@ -22,14 +22,14 @@ const SKILL_LABEL: Record<SkillKey, string> = {
   writing: "Writing",
 };
 const SKILL_ORDER: SkillKey[] = ["reading", "listening", "grammar", "speaking", "writing"];
-const BAND_ORDER = ["A0", "A1", "A2", "B1", "B2", "C"] as const;
+const BAND_ORDER = ["A0", "A1", "A2", "B1", "B2", "C1"] as const;
 const BAND_COLORS: Record<string, string> = {
   A0: "#94a3b8",
   A1: "#cbd5e1",
   A2: "#FEAD5F",
   B1: "#f97316",
   B2: "#CC1C01",
-  C: "#4D0D0D",
+  C1: "#4D0D0D",
 };
 
 interface OutcomesPayload {

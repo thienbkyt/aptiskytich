@@ -7,7 +7,7 @@ import { vnTodayRangeUTC } from "@/lib/vnDate";
 export interface UserGoal {
   user_id: string;
   exam_date: string;
-  aim: "B1" | "B2" | "C";
+  aim: "B1" | "B2" | "C1";
   daily_target: number;
 }
 
