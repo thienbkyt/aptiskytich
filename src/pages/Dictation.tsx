@@ -561,6 +561,7 @@ export default function Dictation() {
         total={sentences.length}
         durationSec={durationSec}
         level={level}
+        mode={mode}
         setId={chosenSetId ?? setId ?? null}
         userId={user?.id}
         onNewSession={() => setScreen("setup")}
