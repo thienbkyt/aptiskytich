@@ -245,6 +245,7 @@ export default function Dictation() {
       p_level: level,
       p_size: settings.size,
       p_set_id: targetSetId,
+      p_only_todo: settings.onlyTodo,
     });
     setLoadingSession(false);
     const rows = (data ?? []) as SessionSentence[];
