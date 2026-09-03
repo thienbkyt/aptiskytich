@@ -4,9 +4,10 @@ import { resolveAudioBlobUrl } from "@/lib/audioUrl";
 import { cn } from "@/lib/utils";
 
 export type SegmentPlayerHandle = {
-  play: () => void;
+  play: (opts?: { silentCount?: boolean }) => void;
   stop: () => void;
 };
+
 
 type Props = {
   path: string;
@@ -38,7 +39,10 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
   const endSecRef = useRef(endSec);
   endSecRef.current = endSec;
 
+  const silentCountRef = useRef(false);
+
   const duration = Math.max(0.01, endSec - startSec);
+
 
   const cancelRaf = () => {
     if (rafRef.current !== null) {
@@ -65,13 +69,18 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
         setPlaying(false);
         setPct(100);
         cancelRaf();
-        onEndedRef.current?.();
+        if (!silentCountRef.current) {
+          onEndedRef.current?.();
+        } else {
+          silentCountRef.current = false;
+        }
         return;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
   };
+
 
   // Resolve the private-bucket path into a playable blob URL.
   useEffect(() => {
@@ -94,9 +103,10 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
 
   useEffect(() => cancelRaf, []);
 
-  const startPlay = () => {
+  const startPlay = (opts?: { silentCount?: boolean }) => {
     const a = audioRef.current;
     if (!a || !src) return;
+    silentCountRef.current = opts?.silentCount === true;
     try {
       a.playbackRate = speed;
       a.currentTime = startSec;
@@ -106,6 +116,7 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
       /* ignore */
     }
   };
+
 
   const stopPlay = () => {
     const a = audioRef.current;
@@ -117,9 +128,11 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
     } catch {
       /* ignore */
     }
+    silentCountRef.current = false;
     setPlaying(false);
     setPct(0);
   };
+
 
   useImperativeHandle(ref, () => ({ play: startPlay, stop: stopPlay }));
 
@@ -179,12 +192,18 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
           onPause={() => {
             setPlaying(false);
             cancelRaf();
+            silentCountRef.current = false;
           }}
           onEnded={() => {
             cancelRaf();
             setPlaying(false);
-            onEndedRef.current?.();
+            if (!silentCountRef.current) {
+              onEndedRef.current?.();
+            } else {
+              silentCountRef.current = false;
+            }
           }}
+
         />
       )}
       <button
