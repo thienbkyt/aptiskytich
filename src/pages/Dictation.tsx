@@ -1161,6 +1161,7 @@ function ResultScreen({
   total,
   durationSec,
   level,
+  mode,
   setId,
   userId,
   onNewSession,
