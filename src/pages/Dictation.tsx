@@ -924,6 +924,236 @@ function SentenceTask({
 }
 
 /* ------------------------------------------------------------------ */
+/* Shadowing block (Nói đuổi)                                         */
+/* ------------------------------------------------------------------ */
+async function blobToBase64Raw(blob: Blob): Promise<string> {
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  const chunk = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
+  }
+  return btoa(binary);
+}
+
+type ShadowResult = {
+  transcript: string;
+  score: number;
+  missed: string[];
+  extra: string[];
+};
+
+function ShadowBlock({
+  sentence,
+  isLast,
+  onPlayModel,
+  onNext,
+  onScored,
+}: {
+  sentence: SessionSentence;
+  isLast: boolean;
+  onPlayModel: () => void;
+  onNext: () => void;
+  onScored: (score: number) => void;
+}) {
+  const { isPro } = useIsPro();
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [grading, setGrading] = useState(false);
+  const [result, setResult] = useState<ShadowResult | null>(null);
+  const [gate, setGate] = useState<null | "pro" | "quota">(null);
+
+  const {
+    isRecording,
+    audioUrl,
+    timeLeft,
+    micError,
+    isRequestingMic,
+    startRecording,
+    stopRecording,
+  } = useAudioRecording({
+    maxDuration: 20,
+    questionKey: sentence.sentence_id,
+    onComplete: async (url: string) => {
+      try {
+        const res = await fetch(url);
+        setBlob(await res.blob());
+      } catch {
+        setBlob(null);
+      }
+    },
+  });
+
+  const missedSet = useMemo(
+    () => new Set((result?.missed ?? []).map((w) => w.toLowerCase().replace(/[^a-z0-9']/gi, ""))),
+    [result],
+  );
+
+  const handleGrade = async () => {
+    if (!blob) return;
+    setGrading(true);
+    setGate(null);
+    try {
+      const base64 = await blobToBase64Raw(blob);
+      const { data, error } = await supabase.functions.invoke("grade-shadowing", {
+        body: { audio: base64, mimeType: blob.type || "audio/webm", text: sentence.text },
+      });
+      let errCode = "";
+      if (error) {
+        try {
+          const body = await (error as any)?.context?.json?.();
+          errCode = String(body?.error ?? "");
+        } catch {
+          errCode = "";
+        }
+        if (!errCode) errCode = String((error as any)?.message ?? "");
+      } else if ((data as any)?.error) {
+        errCode = String((data as any).error);
+      }
+      const low = errCode.toLowerCase();
+      if (low.includes("quota")) {
+        setGate("quota");
+        return;
+      }
+      if (low.includes("pro")) {
+        setGate("pro");
+        return;
+      }
+      if (error || !data) {
+        toast({
+          variant: "destructive",
+          title: "Không chấm được",
+          description: "Vui lòng thử lại sau ít phút.",
+        });
+        return;
+      }
+      const r: ShadowResult = {
+        transcript: String((data as any).transcript ?? ""),
+        score: Number((data as any).score ?? 0),
+        missed: Array.isArray((data as any).missed) ? (data as any).missed : [],
+        extra: Array.isArray((data as any).extra) ? (data as any).extra : [],
+      };
+      setResult(r);
+      onScored(r.score);
+    } finally {
+      setGrading(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
+      <div className="flex items-center gap-2">
+        <Mic className="w-5 h-5 text-primary" />
+        <p className="font-semibold">Nói đuổi</p>
+      </div>
+      <p className="text-sm text-muted-foreground mt-1">
+        Nghe câu mẫu rồi nhắc lại thật giống. Nghe mẫu không tính vào lượt nghe.
+      </p>
+
+      <div className="mt-3">
+        <Button variant="outline" size="sm" onClick={onPlayModel}>
+          <Headphones className="w-4 h-4 mr-2" /> Nghe câu mẫu
+        </Button>
+      </div>
+
+      <div className="mt-4">
+        <AudioRecorder
+          isRecording={isRecording}
+          onStartRecording={startRecording}
+          onStopRecording={stopRecording}
+          audioUrl={audioUrl}
+          timeLeft={timeLeft}
+          totalTime={20}
+          label="Thu âm câu nói của bạn"
+          micError={micError}
+          isRequestingMic={isRequestingMic}
+        />
+      </div>
+
+      {audioUrl && !isRecording && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button variant="ghost" size="sm" onClick={startRecording}>
+            <RotateCcw className="w-4 h-4 mr-2" /> Thu lại
+          </Button>
+        </div>
+      )}
+
+      {gate && (
+        <div className="mt-4">
+          <UpgradeLock reason={gate} featureLabel="AI chấm phát âm" />
+        </div>
+      )}
+
+      {!gate && !isPro && (
+        <div className="mt-4">
+          <UpgradeLock reason="pro" featureLabel="AI chấm phát âm" />
+        </div>
+      )}
+
+      {!gate && isPro && !result && (
+        <div className="mt-4">
+          <Button onClick={handleGrade} disabled={!blob || isRecording || grading}>
+            {grading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Đang chấm…
+              </>
+            ) : (
+              "Chấm phát âm"
+            )}
+          </Button>
+        </div>
+      )}
+
+      {result && (
+        <div className="mt-4 rounded-lg border bg-card p-4">
+          <p className="font-semibold">Điểm phát âm: {result.score}%</p>
+          <div className="mt-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+              Bạn đã nói
+            </p>
+            <p className="leading-relaxed">
+              {result.transcript ? result.transcript : "(Không nghe được tiếng nói)"}
+            </p>
+          </div>
+          <div className="mt-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Câu mẫu</p>
+            <p className="leading-relaxed">
+              {sentence.text
+                .split(/\s+/)
+                .filter(Boolean)
+                .map((w, i) => {
+                  const norm = w.toLowerCase().replace(/[^a-z0-9']/gi, "");
+                  const bad = missedSet.has(norm);
+                  return (
+                    <span
+                      key={`${w}-${i}`}
+                      className={cn("mr-1", bad ? "text-destructive underline font-medium" : "")}
+                    >
+                      {w}
+                    </span>
+                  );
+                })}
+            </p>
+          </div>
+          {result.extra.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Từ nói thừa: {result.extra.join(", ")}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="mt-4">
+        <Button variant={result ? "default" : "secondary"} onClick={onNext}>
+          {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
+/* ------------------------------------------------------------------ */
 /* Result screen                                                      */
 /* ------------------------------------------------------------------ */
 function ResultScreen({
