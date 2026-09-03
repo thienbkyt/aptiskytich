@@ -95,10 +95,6 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const forceHome = searchParams.get("home") === "1";
 
-  if (!authLoading && user && !forceHome) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   usePageMeta({
     title: "Aptis Kỳ Tích — Luyện thi Aptis & Thi thử miễn phí",
     description: "Luyện thi Aptis với ngân hàng đề sát thi thật, AI chấm Speaking & Writing, lộ trình 7 ngày đạt B1–B2. Thi thử miễn phí ngay.",
@@ -111,6 +107,10 @@ const Index = () => {
     { value: attemptCount, label: "Lượt làm bài" },
     { value: "Đề Key", label: "Cập nhật hằng ngày" },
   ];
+
+  if (!authLoading && user && !forceHome) {
+    return <Navigate to="/dashboard" replace />;
+  }
   return (
 
     <div className="min-h-screen bg-background">
