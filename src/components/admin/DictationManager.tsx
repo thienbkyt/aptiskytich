@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { ArrowLeft, ArrowUp, ArrowDown, Pencil, Trash2, Plus, ListMusic } from "lucide-react";
 
 type DictationSet = {
