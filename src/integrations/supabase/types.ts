@@ -3868,6 +3868,27 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_kho04: {
+        Row: {
+          kpart: string | null
+          rotflag: string | null
+          tier: string | null
+          title: string | null
+        }
+        Insert: {
+          kpart?: string | null
+          rotflag?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Update: {
+          kpart?: string | null
+          rotflag?: string | null
+          tier?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       tmp_missing_imgs: {
         Row: {
           f: string | null
@@ -4714,7 +4735,12 @@ export type Database = {
         }[]
       }
       get_dictation_session: {
-        Args: { p_level: number; p_set_id?: string; p_size?: number }
+        Args: {
+          p_level: number
+          p_only_todo?: boolean
+          p_set_id?: string
+          p_size?: number
+        }
         Returns: {
           audio_url: string
           best_accuracy: number

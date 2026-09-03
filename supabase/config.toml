@@ -20,3 +20,5 @@ project_id = "bacoamhbatqpxatrrflz"
   [functions.cleanup-recordings]
     verify_jwt = false
 
+  [functions.grade-shadowing]
+    verify_jwt = true
