@@ -835,8 +835,6 @@ function SentenceTask({
           </div>
         </div>
       )}
-        </div>
-      )}
     </Card>
   );
 }
