@@ -109,6 +109,7 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
 
   const stopPlay = () => {
     const a = audioRef.current;
+    cancelRaf();
     if (!a) return;
     try {
       a.pause();
@@ -139,20 +140,10 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
     if (autoPlayRef.current) startPlay();
   };
 
+  // Chỉ cập nhật thanh tiến trình; việc dừng do vòng rAF lo.
   const handleTimeUpdate = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (a.currentTime >= endSec) {
-      try {
-        a.pause();
-      } catch {
-        /* ignore */
-      }
-      setPlaying(false);
-      setPct(100);
-      onEndedRef.current?.();
-      return;
-    }
     setPct(Math.max(0, Math.min(100, ((a.currentTime - startSec) / duration) * 100)));
   };
 
@@ -160,6 +151,7 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
     if (disabled) return;
     if (playing) {
       const a = audioRef.current;
+      cancelRaf();
       try {
         a?.pause();
       } catch {
@@ -180,9 +172,16 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
           preload="auto"
           onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
+          onPlay={() => {
+            setPlaying(true);
+            startRafLoop();
+          }}
+          onPause={() => {
+            setPlaying(false);
+            cancelRaf();
+          }}
           onEnded={() => {
+            cancelRaf();
             setPlaying(false);
             onEndedRef.current?.();
           }}
