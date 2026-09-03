@@ -520,7 +520,7 @@ function SentenceTask({
 }) {
   const playerRef = useRef<SegmentPlayerHandle | null>(null);
   const [input, setInput] = useState("");
-  const [plays, setPlays] = useState(1); // autoPlay counts as the first listen
+  const [plays, setPlays] = useState(0);
   const [hints, setHints] = useState<string[]>([]);
   const [checked, setChecked] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -535,7 +535,9 @@ function SentenceTask({
     [checked, sentence.text, input],
   );
   const shownAccuracy = firstAccuracyRef.current ?? 0;
-  const perfect = checked && diff !== null && wordAccuracyPct(diff) === 100;
+  const allWordsCorrect = checked && diff !== null && wordAccuracyPct(diff) === 100;
+  const perfect = checked && shownAccuracy === 100;
+  const finishedSentence = allWordsCorrect || revealed;
 
   const saveResult = async (accuracy: number) => {
     if (savedRef.current) return;
