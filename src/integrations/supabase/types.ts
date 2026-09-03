@@ -3868,27 +3868,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tmp_kho04: {
-        Row: {
-          kpart: string | null
-          rotflag: string | null
-          tier: string | null
-          title: string | null
-        }
-        Insert: {
-          kpart?: string | null
-          rotflag?: string | null
-          tier?: string | null
-          title?: string | null
-        }
-        Update: {
-          kpart?: string | null
-          rotflag?: string | null
-          tier?: string | null
-          title?: string | null
-        }
-        Relationships: []
-      }
       tmp_missing_imgs: {
         Row: {
           f: string | null
