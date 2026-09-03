@@ -1172,6 +1172,7 @@ function ResultScreen({
   total: number;
   durationSec: number;
   level: number;
+  mode: PracticeMode;
   setId: string | null;
   userId?: string;
   onNewSession: () => void;
