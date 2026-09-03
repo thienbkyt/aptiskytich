@@ -183,6 +183,27 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_de36_q11_20260903: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          explanation: string | null
+          id: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          explanation?: string | null
+          id?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          explanation?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_exam_review_items_20260817: {
         Row: {
           id: string | null
