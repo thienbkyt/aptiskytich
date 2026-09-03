@@ -679,19 +679,41 @@ function SentenceTask({
   const perfect = checked && shownAccuracy === 100;
   const finishedSentence = allWordsCorrect || revealed;
 
-  const saveResult = async (accuracy: number) => {
-    if (savedRef.current) return;
-    savedRef.current = true;
+  const saveResult = async (accuracy: number, speakingScore?: number | null) => {
+    const isSpeaking = typeof speakingScore === "number";
+    if (isSpeaking) {
+      if (speakingSavedRef.current) return;
+      speakingSavedRef.current = true;
+    } else {
+      if (savedRef.current) return;
+      savedRef.current = true;
+    }
     if (!userId) return;
     try {
       await supabase.rpc("save_dictation_result", {
         p_sentence_id: sentence.sentence_id,
         p_accuracy: accuracy,
-        p_mode: "dictation",
+        p_mode: mode,
+        p_speaking_score: isSpeaking ? speakingScore : null,
       });
     } catch {
       /* progress ghi thất bại — không chặn luyện tập */
     }
+  };
+
+  /** Nói đuổi: đánh dấu hoàn thành câu dù chưa chấm AI (ví dụ chưa Pro). */
+  const ensureShadowRecorded = () => {
+    if (mode !== "shadow") return;
+    if (firstAccuracyRef.current !== null) return;
+    firstAccuracyRef.current = 100;
+    void saveResult(100);
+    onDone({
+      sentenceId: sentence.sentence_id,
+      text: sentence.text,
+      typed: "",
+      accuracy: 100,
+      speakingScore: null,
+    });
   };
 
   const handleCheck = () => {
