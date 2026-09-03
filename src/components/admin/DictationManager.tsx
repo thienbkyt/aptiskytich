@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { ArrowLeft, ArrowUp, ArrowDown, Pencil, Trash2, Plus, ListMusic } from "lucide-react";
 
 type DictationSet = {
@@ -30,7 +31,9 @@ type DictationSet = {
   title: string;
   level: number | null;
   sort: number | null;
-  sentence_count?: number;
+  part?: string | null;
+  is_active?: boolean | null;
+  sentence_count?: number | null;
 };
 
 type Sentence = {
@@ -44,12 +47,17 @@ const DictationManager = () => {
   const [sets, setSets] = useState<DictationSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<DictationSet | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
+  const [levelFilter, setLevelFilter] = useState<string>("all");
 
   const loadSets = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from("dictation_sets")
-      .select("id, title, level, sort")
+      .select("id, title, level, sort, part, is_active, sentence_count");
+    if (!showInactive) query = query.eq("is_active", true);
+    if (levelFilter !== "all") query = query.eq("level", parseInt(levelFilter, 10));
+    const { data, error } = await query
       .order("sort", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) {
@@ -58,23 +66,14 @@ const DictationManager = () => {
       setLoading(false);
       return;
     }
-    const list = (data || []) as DictationSet[];
-    if (list.length) {
-      const { data: counts } = await supabase
-        .from("dictation_sentences")
-        .select("set_id")
-        .in("set_id", list.map((s) => s.id));
-      const map = new Map<string, number>();
-      (counts || []).forEach((r: any) => map.set(r.set_id, (map.get(r.set_id) || 0) + 1));
-      list.forEach((s) => (s.sentence_count = map.get(s.id) || 0));
-    }
-    setSets(list);
+    setSets((data || []) as DictationSet[]);
     setLoading(false);
   };
 
   useEffect(() => {
     loadSets();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showInactive, levelFilter]);
 
   if (selected) {
     return (
@@ -94,6 +93,10 @@ const DictationManager = () => {
       loading={loading}
       onReload={loadSets}
       onOpen={(s) => setSelected(s)}
+      levelFilter={levelFilter}
+      onLevelFilter={setLevelFilter}
+      showInactive={showInactive}
+      onToggleInactive={setShowInactive}
     />
   );
 };
@@ -104,11 +107,19 @@ const SetsList = ({
   loading,
   onReload,
   onOpen,
+  levelFilter,
+  onLevelFilter,
+  showInactive,
+  onToggleInactive,
 }: {
   sets: DictationSet[];
   loading: boolean;
   onReload: () => void;
   onOpen: (s: DictationSet) => void;
+  levelFilter: string;
+  onLevelFilter: (v: string) => void;
+  showInactive: boolean;
+  onToggleInactive: (v: boolean) => void;
 }) => {
   const [editing, setEditing] = useState<DictationSet | null>(null);
   const [creating, setCreating] = useState(false);
@@ -138,6 +149,31 @@ const SetsList = ({
         </Button>
       </div>
 
+      <Card className="p-3 flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Label className="text-xs">Level</Label>
+          <div className="flex gap-1">
+            {["all", "1", "2", "3"].map((v) => (
+              <Button
+                key={v}
+                size="sm"
+                variant={levelFilter === v ? "default" : "outline"}
+                onClick={() => onLevelFilter(v)}
+              >
+                {v === "all" ? "Tất cả" : `L${v}`}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant={showInactive ? "default" : "outline"}
+          onClick={() => onToggleInactive(!showInactive)}
+        >
+          {showInactive ? "Đang hiện cả bộ tắt" : "Chỉ bộ đang bật"}
+        </Button>
+      </Card>
+
       {loading ? (
         <p className="text-muted-foreground">Đang tải…</p>
       ) : sets.length === 0 ? (
@@ -151,6 +187,21 @@ const SetsList = ({
                   <span className="font-semibold text-foreground">{s.title}</span>
                   <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
                     Level {s.level ?? 1}
+                  </span>
+                  {s.part && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                      {s.part}
+                    </span>
+                  )}
+                  <span
+                    className={cn(
+                      "text-xs px-2 py-0.5 rounded",
+                      s.is_active
+                        ? "bg-primary/10 text-primary"
+                        : "bg-destructive/10 text-destructive",
+                    )}
+                  >
+                    {s.is_active ? "Đang bật" : "Đang tắt"}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     Sort: {s.sort ?? 0}

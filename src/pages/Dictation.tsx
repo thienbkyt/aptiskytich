@@ -76,7 +76,16 @@ function wordAccuracyPct(parts: WordDiffPart[]) {
 /* ------------------------------------------------------------------ */
 /* Types & settings                                                    */
 /* ------------------------------------------------------------------ */
-type Screen = "mode" | "level" | "setup" | "practice" | "result";
+type Screen = "mode" | "level" | "setup" | "sets" | "practice" | "result";
+
+type SetRow = {
+  id: string;
+  title: string;
+  part: string | null;
+  sentence_count: number | null;
+  sort: number | null;
+  done_cnt: number | null;
+};
 
 type LevelRow = {
   level: number;
@@ -165,6 +174,13 @@ export default function Dictation() {
   const [startedAt, setStartedAt] = useState<number>(0);
   const [durationSec, setDurationSec] = useState(0);
 
+  /* --- chọn bài cụ thể --- */
+  const [setRows, setSetRows] = useState<SetRow[]>([]);
+  const [setsLoading, setSetsLoading] = useState(false);
+  const [setsPage, setSetsPage] = useState(0);
+  const [setsHasMore, setSetsHasMore] = useState(false);
+  const [chosenSetId, setChosenSetId] = useState<string | null>(null);
+
   /* --- persist settings --- */
   useEffect(() => {
     safeLocalStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -186,12 +202,41 @@ export default function Dictation() {
     };
   }, [screen]);
 
-  const startSession = async () => {
+  const PAGE_SIZE = 30;
+
+  const loadSets = async (page: number) => {
+    setSetsLoading(true);
+    const { data, error } = await supabase.rpc("get_dictation_sets", {
+      p_level: level,
+      p_limit: PAGE_SIZE,
+      p_offset: page * PAGE_SIZE,
+      p_only_todo: settings.onlyTodo,
+    });
+    setSetsLoading(false);
+    if (error) {
+      toast({ title: "Không tải được danh sách bài", description: error.message, variant: "destructive" });
+      return;
+    }
+    const rows = (data ?? []) as SetRow[];
+    setSetRows((prev) => (page === 0 ? rows : [...prev, ...rows]));
+    setSetsHasMore(rows.length === PAGE_SIZE);
+    setSetsPage(page);
+  };
+
+  const openSetsScreen = () => {
+    setSetRows([]);
+    setSetsHasMore(false);
+    setScreen("sets");
+    void loadSets(0);
+  };
+
+  const startSession = async (overrideSetId?: string | null) => {
+    const targetSetId = overrideSetId ?? setId ?? null;
     setLoadingSession(true);
     const { data, error } = await supabase.rpc("get_dictation_session", {
       p_level: level,
       p_size: settings.size,
-      p_set_id: setId ?? null,
+      p_set_id: targetSetId,
     });
     setLoadingSession(false);
     const rows = (data ?? []) as SessionSentence[];
@@ -203,6 +248,7 @@ export default function Dictation() {
       });
       return;
     }
+    setChosenSetId(targetSetId);
     setSentences(rows);
     setIndex(0);
     setAnswers([]);
@@ -380,11 +426,78 @@ export default function Dictation() {
             />
           </div>
 
-          <Button className="w-full" size="lg" onClick={startSession} disabled={loadingSession}>
+          <Button className="w-full" size="lg" onClick={() => void startSession()} disabled={loadingSession}>
             {loadingSession ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Bắt đầu
           </Button>
+
+          <button
+            type="button"
+            onClick={openSetsScreen}
+            className="w-full text-center text-sm text-primary hover:underline"
+          >
+            Hoặc chọn bài cụ thể →
+          </button>
         </Card>
+      </Shell>
+    );
+  }
+
+  /* ---------------- Screen 3b: chọn bài cụ thể ---------------- */
+  if (screen === "sets") {
+    return (
+      <Shell onBack={() => setScreen("setup")}>
+        <h1 className="text-2xl sm:text-3xl font-bold">Chọn bài cụ thể</h1>
+        <p className="text-muted-foreground mt-2">{LEVEL_META[level].title}</p>
+
+        <div className="mt-6 space-y-3">
+          {setRows.map((r) => {
+            const total = Number(r.sentence_count ?? 0);
+            const done = Number(r.done_cnt ?? 0);
+            const pct = total ? Math.round((done / total) * 100) : 0;
+            return (
+              <button
+                key={r.id}
+                type="button"
+                disabled={loadingSession}
+                onClick={() => void startSession(r.id)}
+                className="w-full text-left rounded-xl border bg-card p-4 hover:border-primary hover:shadow-md transition disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{r.title}</p>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      {r.part && <Badge variant="secondary">{r.part}</Badge>}
+                      <span className="text-xs text-muted-foreground">
+                        {done}/{total} câu
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+                </div>
+                <Progress value={pct} className="h-2 mt-3" />
+              </button>
+            );
+          })}
+
+          {setsLoading && (
+            <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" /> Đang tải…
+            </p>
+          )}
+
+          {!setsLoading && setRows.length === 0 && (
+            <Card className="p-6 text-center text-muted-foreground text-sm">
+              Không có bài nào phù hợp ở cấp độ này.
+            </Card>
+          )}
+
+          {setsHasMore && !setsLoading && (
+            <Button variant="outline" className="w-full" onClick={() => void loadSets(setsPage + 1)}>
+              Xem thêm
+            </Button>
+          )}
+        </div>
       </Shell>
     );
   }
@@ -429,7 +542,7 @@ export default function Dictation() {
         total={sentences.length}
         durationSec={durationSec}
         level={level}
-        setId={setId ?? null}
+        setId={chosenSetId ?? setId ?? null}
         userId={user?.id}
         onNewSession={() => setScreen("setup")}
         onRetry={() => {
@@ -455,7 +568,7 @@ function Shell({ children, onBack }: { children: React.ReactNode; onBack?: () =>
       <main className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
         <button
           type="button"
-          onClick={() => (onBack ? onBack() : navigate("/luyen-tap"))}
+          onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại
@@ -520,7 +633,7 @@ function SentenceTask({
 }) {
   const playerRef = useRef<SegmentPlayerHandle | null>(null);
   const [input, setInput] = useState("");
-  const [plays, setPlays] = useState(1); // autoPlay counts as the first listen
+  const [plays, setPlays] = useState(0);
   const [hints, setHints] = useState<string[]>([]);
   const [checked, setChecked] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -535,7 +648,9 @@ function SentenceTask({
     [checked, sentence.text, input],
   );
   const shownAccuracy = firstAccuracyRef.current ?? 0;
-  const perfect = checked && diff !== null && wordAccuracyPct(diff) === 100;
+  const allWordsCorrect = checked && diff !== null && wordAccuracyPct(diff) === 100;
+  const perfect = checked && shownAccuracy === 100;
+  const finishedSentence = allWordsCorrect || revealed;
 
   const saveResult = async (accuracy: number) => {
     if (savedRef.current) return;
@@ -673,16 +788,20 @@ function SentenceTask({
               <Lightbulb className="w-5 h-5 text-amber-600" />
             )}
             <p className="font-semibold">
-              {perfect ? "Chính xác 100%!" : `Điểm ghi nhận: ${shownAccuracy}%`}
+              {perfect
+                ? "Chính xác 100%!"
+                : allWordsCorrect
+                  ? `Đúng hết — trừ điểm gợi ý: ${shownAccuracy}%`
+                  : `Điểm ghi nhận: ${shownAccuracy}%`}
             </p>
           </div>
 
           <div className="mt-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              {perfect || revealed ? "Câu đầy đủ" : "Đối chiếu"}
+              {finishedSentence ? "Câu đầy đủ" : "Đối chiếu"}
             </p>
             <p className="leading-relaxed">
-              {perfect || revealed
+              {finishedSentence
                 ? sentence.text
                 : diff.map((p, i) => (
                     <span
@@ -699,7 +818,7 @@ function SentenceTask({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {perfect || revealed ? (
+            {finishedSentence ? (
               <Button onClick={onNext}>
                 {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
