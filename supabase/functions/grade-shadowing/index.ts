@@ -241,10 +241,13 @@ serve(async (req) => {
     const transcript = (await transcribe(audio)).trim();
     const { score, missed, extra } = scoreShadowing(text, transcript);
 
-    userClient.rpc("log_feature_usage", { p_key: "ai_shadowing" }).then(
-      () => undefined,
-      () => undefined,
-    );
+    try {
+      await userClient.rpc("log_feature_usage", { p_key: "ai_shadowing" });
+    } catch (logErr) {
+      console.error("[grade-shadowing] log_feature_usage failed:", logErr);
+      // vẫn trả kết quả chấm cho học viên, không chặn vì lỗi ghi usage
+    }
+
 
     return json({ transcript, score, missed, extra });
   } catch (e) {
