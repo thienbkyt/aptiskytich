@@ -747,8 +747,9 @@ function SentenceTask({
   const handleRelisten = () => {
     // Sửa tiếp, không cộng lượt nghe
     setChecked(false);
-    playerRef.current?.play();
+    playerRef.current?.play({ silentCount: true });
   };
+
 
   const handleSkip = () => {
     if (firstAccuracyRef.current === null) {
@@ -902,8 +903,9 @@ function SentenceTask({
         <ShadowBlock
           sentence={sentence}
           isLast={isLast}
-          onPlayModel={() => playerRef.current?.play()}
+          onPlayModel={() => playerRef.current?.play({ silentCount: true })}
           onNext={() => {
+
             ensureShadowRecorded();
             onNext();
           }}
