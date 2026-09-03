@@ -903,7 +903,10 @@ function SentenceTask({
           sentence={sentence}
           isLast={isLast}
           onPlayModel={() => playerRef.current?.play()}
-          onNext={onNext}
+          onNext={() => {
+            ensureShadowRecorded();
+            onNext();
+          }}
           onScored={(score) => {
             void saveResult(mode === "shadow" ? 100 : (firstAccuracyRef.current ?? 0), score);
             onDone({
