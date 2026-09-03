@@ -43,7 +43,7 @@ interface FullPartSectionProps {
   onStartCustom?: (set: CustomSetRow) => void;
 }
 
-const CEFR_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
+const CEFR_RANK: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
 
 type DoneFilter = "all" | "undone" | "done";
 type SourceFilter = "all" | "official" | "mine";

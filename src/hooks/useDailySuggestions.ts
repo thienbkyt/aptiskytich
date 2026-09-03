@@ -24,7 +24,7 @@ const SKILL_LABEL: Record<string, string> = {
   speaking: "Speaking",
 };
 
-const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
+const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
 
 export interface DailySuggestion {
   examSetId: string;
@@ -120,7 +120,7 @@ export function useDailySuggestions(limit: number): DailySuggestionsResult {
       const bandNum: Record<string, number> = {};
       const bandLabel: Record<string, string> = {};
       const setBand = (sk: string, band: string) => {
-        const norm = band === "C1" || band === "C2" ? "C" : band;
+        const norm = band === "C2" ? "C1" : band;
         bandLabel[sk] = band;
         bandNum[sk] = BAND_TO_NUM[norm] ?? 0;
       };

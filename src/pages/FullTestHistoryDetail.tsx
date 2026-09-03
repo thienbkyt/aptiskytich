@@ -180,8 +180,8 @@ const FullTestHistoryDetail = () => {
   // Overall CEFR = average of the four skill bands (Aptis thresholds), never a
   // percent-based level.
   const overallLevel = useMemo(() => {
-    const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5 };
-    const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
+    const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
+    const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C1"];
     const bands = (["listening", "reading", "speaking", "writing"] as const)
       .map((sk) => {
         const o = officialSkill[sk as SkillKey];
