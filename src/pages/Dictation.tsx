@@ -675,16 +675,20 @@ function SentenceTask({
               <Lightbulb className="w-5 h-5 text-amber-600" />
             )}
             <p className="font-semibold">
-              {perfect ? "Chính xác 100%!" : `Điểm ghi nhận: ${shownAccuracy}%`}
+              {perfect
+                ? "Chính xác 100%!"
+                : allWordsCorrect
+                  ? `Đúng hết — trừ điểm gợi ý: ${shownAccuracy}%`
+                  : `Điểm ghi nhận: ${shownAccuracy}%`}
             </p>
           </div>
 
           <div className="mt-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              {perfect || revealed ? "Câu đầy đủ" : "Đối chiếu"}
+              {finishedSentence ? "Câu đầy đủ" : "Đối chiếu"}
             </p>
             <p className="leading-relaxed">
-              {perfect || revealed
+              {finishedSentence
                 ? sentence.text
                 : diff.map((p, i) => (
                     <span
@@ -701,7 +705,7 @@ function SentenceTask({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {perfect || revealed ? (
+            {finishedSentence ? (
               <Button onClick={onNext}>
                 {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -716,6 +720,8 @@ function SentenceTask({
               </>
             )}
           </div>
+        </div>
+      )}
         </div>
       )}
     </Card>
