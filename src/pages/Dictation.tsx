@@ -169,6 +169,7 @@ export default function Dictation() {
   });
 
   const [screen, setScreen] = useState<Screen>("mode");
+  const [mode, setMode] = useState<PracticeMode>("dictation");
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [levels, setLevels] = useState<LevelRow[]>([]);
   const [levelsLoading, setLevelsLoading] = useState(false);
