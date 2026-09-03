@@ -266,7 +266,14 @@ export default function Dictation() {
   };
 
   const handleSentenceDone = (a: Answer) => {
-    setAnswers((prev) => (prev.some((p) => p.sentenceId === a.sentenceId) ? prev : [...prev, a]));
+    setAnswers((prev) => {
+      const i = prev.findIndex((p) => p.sentenceId === a.sentenceId);
+      if (i === -1) return [...prev, a];
+      // Đã ghi nhận lần chấm đầu — chỉ bổ sung điểm nói đuổi.
+      const next = [...prev];
+      next[i] = { ...next[i], speakingScore: a.speakingScore ?? next[i].speakingScore ?? null };
+      return next;
+    });
   };
 
   const goNext = () => {
