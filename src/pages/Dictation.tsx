@@ -542,7 +542,7 @@ export default function Dictation() {
         total={sentences.length}
         durationSec={durationSec}
         level={level}
-        setId={setId ?? null}
+        setId={chosenSetId ?? setId ?? null}
         userId={user?.id}
         onNewSession={() => setScreen("setup")}
         onRetry={() => {
