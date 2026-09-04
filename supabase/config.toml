@@ -7,6 +7,8 @@ project_id = "bacoamhbatqpxatrrflz"
     verify_jwt = false
   [functions.notify-new-key]
     verify_jwt = true
+  [functions.send-app-email]
+    verify_jwt = false
   [functions.cleanup-exams]
     verify_jwt = false
   [functions.ai-coach]
