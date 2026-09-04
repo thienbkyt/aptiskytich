@@ -121,6 +121,7 @@ type Answer = {
   typed: string;
   accuracy: number;
   speakingScore?: number | null;
+  spoken?: string | null;
 };
 
 /** State của từng câu, giữ ở component cha để quay lại câu cũ không mất bài. */
