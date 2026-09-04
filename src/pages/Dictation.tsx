@@ -300,7 +300,7 @@ export default function Dictation() {
       soon: boolean;
     }> = [
       { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones, soon: false },
-      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio", icon: Mic, soon: false },
+      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio (Shadowing)", icon: Mic, soon: false },
       { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles, soon: false },
     ];
     return (
