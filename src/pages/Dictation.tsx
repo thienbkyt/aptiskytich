@@ -121,6 +121,7 @@ type Answer = {
   typed: string;
   accuracy: number;
   speakingScore?: number | null;
+  spoken?: string | null;
 };
 
 /** State của từng câu, giữ ở component cha để quay lại câu cũ không mất bài. */
@@ -260,7 +261,11 @@ export default function Dictation() {
       if (i === -1) return [...prev, a];
       // Đã ghi nhận lần chấm đầu — chỉ bổ sung điểm nói nhại.
       const next = [...prev];
-      next[i] = { ...next[i], speakingScore: a.speakingScore ?? next[i].speakingScore ?? null };
+      next[i] = {
+        ...next[i],
+        speakingScore: a.speakingScore ?? next[i].speakingScore ?? null,
+        spoken: a.spoken ?? next[i].spoken ?? null,
+      };
       return next;
     });
   };
@@ -750,6 +755,7 @@ function SentenceTask({
   const firstAccuracyRef = useRef<number | null>(initialState?.accuracy ?? null);
   const savedRef = useRef(initialState?.saved ?? false);
   const speakingScoreRef = useRef<number | null>(initialState?.speakingScore ?? null);
+  const spokenRef = useRef<string | null>(null);
   const resRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
   /** Bản chụp kết quả lần chấm ĐẦU TIÊN — không bao giờ bị null hoá. */
   const firstResultRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
@@ -794,6 +800,7 @@ function SentenceTask({
       typed: firstResultRef.current?.filledSentence ?? "",
       accuracy,
       speakingScore,
+      spoken: mode === "dictation" ? null : spokenRef.current,
     });
     persistRef.current();
     if (!userId) return;
@@ -860,9 +867,20 @@ function SentenceTask({
     return { correct, total: hidden.length, filled, filledSentence };
   };
 
-  const handleScored = (score: number) => {
+  const handleScored = ({ score, transcript }: { score: number; transcript: string }) => {
     speakingScoreRef.current = score;
-    if (mode === "shadow") saveOnce(0, score);
+    spokenRef.current = transcript;
+    if (savedRef.current) {
+      // Đã ghi bản chấm chính — chỉ bổ sung điểm & lời nói.
+      onDone({
+        sentenceId: sentence.sentence_id,
+        text: sentence.text,
+        typed: firstResultRef.current?.filledSentence ?? "",
+        accuracy: firstAccuracyRef.current ?? 0,
+        speakingScore: score,
+        spoken: transcript,
+      });
+    } else if (mode === "shadow") saveOnce(0, score);
     else saveOnce(firstAccuracyRef.current ?? 0, score);
     persistRef.current();
   };
@@ -1163,6 +1181,18 @@ function ResultScreen({
     ? Math.round(answers.reduce((sum, a) => sum + a.accuracy, 0) / answers.length)
     : 0;
   const correct = answers.filter((a) => a.accuracy === 100).length;
+  const spokenScores = answers
+    .map((a) => a.speakingScore)
+    .filter((s): s is number => typeof s === "number");
+  const avgSpeaking = spokenScores.length
+    ? Math.round(spokenScores.reduce((s, v) => s + v, 0) / spokenScores.length)
+    : 0;
+  const goodSpeaking = spokenScores.filter((s) => s >= 80).length;
+  const isShadow = mode === "shadow";
+  const isCombo = mode === "combo";
+  const circleValue = isShadow ? avgSpeaking : avg;
+  const circleLabel = isShadow ? "điểm phát âm" : "chính xác";
+  const noSpeakingGraded = isShadow && spokenScores.length === 0;
 
   useEffect(() => {
     if (finishedRef.current) return;
@@ -1189,24 +1219,45 @@ function ResultScreen({
       <h1 className="text-2xl sm:text-3xl font-bold">Kết quả phiên luyện</h1>
 
       <Card className="mt-5 p-6 flex flex-col items-center">
-        <div
-          className="w-32 h-32 rounded-full flex items-center justify-center"
-          style={{
-            background: `conic-gradient(hsl(var(--primary)) ${avg * 3.6}deg, hsl(var(--muted)) 0deg)`,
-          }}
-        >
-          <div className="w-24 h-24 rounded-full bg-card flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold">{avg}%</span>
-            <span className="text-[10px] text-muted-foreground">chính xác</span>
+        {noSpeakingGraded ? (
+          <p className="text-sm text-muted-foreground text-center">
+            Bạn chưa chấm phát âm câu nào trong phiên này
+          </p>
+        ) : (
+          <div
+            className="w-32 h-32 rounded-full flex items-center justify-center"
+            style={{
+              background: `conic-gradient(hsl(var(--primary)) ${circleValue * 3.6}deg, hsl(var(--muted)) 0deg)`,
+            }}
+          >
+            <div className="w-24 h-24 rounded-full bg-card flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold">{circleValue}%</span>
+              <span className="text-[10px] text-muted-foreground">{circleLabel}</span>
+            </div>
           </div>
-        </div>
-        <div className="mt-5 flex gap-8 text-center">
-          <div>
-            <p className="text-lg font-semibold">
-              {correct}/{total}
-            </p>
-            <p className="text-xs text-muted-foreground">câu đúng hoàn toàn</p>
-          </div>
+        )}
+        <div className="mt-5 flex flex-wrap justify-center gap-8 text-center">
+          {isShadow ? (
+            <div>
+              <p className="text-lg font-semibold">
+                {goodSpeaking}/{total}
+              </p>
+              <p className="text-xs text-muted-foreground">câu phát âm tốt</p>
+            </div>
+          ) : (
+            <div>
+              <p className="text-lg font-semibold">
+                {correct}/{total}
+              </p>
+              <p className="text-xs text-muted-foreground">câu đúng hoàn toàn</p>
+            </div>
+          )}
+          {isCombo && (
+            <div>
+              <p className="text-lg font-semibold">{avgSpeaking}%</p>
+              <p className="text-xs text-muted-foreground">điểm phát âm TB</p>
+            </div>
+          )}
           <div>
             <p className="text-lg font-semibold">
               {mm}:{String(ss).padStart(2, "0")}
@@ -1223,8 +1274,13 @@ function ResultScreen({
             <tr className="text-left">
               <th className="px-3 py-2 w-16 font-semibold">Câu</th>
               <th className="px-3 py-2 font-semibold">Câu gốc</th>
-              <th className="px-3 py-2 font-semibold">Bạn đã gõ</th>
-              <th className="px-3 py-2 w-16 text-right font-semibold">%</th>
+              {!isShadow && <th className="px-3 py-2 font-semibold">Bạn đã gõ</th>}
+              {isShadow || isCombo ? (
+                <th className="px-3 py-2 font-semibold">Bạn đã nói</th>
+              ) : null}
+              <th className="px-3 py-2 w-24 text-right font-semibold">
+                {isShadow ? "Điểm phát âm" : isCombo ? "% / Phát âm" : "%"}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -1232,16 +1288,50 @@ function ResultScreen({
               <tr key={a.sentenceId} className="border-t align-top">
                 <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                 <td className="px-3 py-2 whitespace-pre-wrap break-words">{a.text}</td>
-                <td className="px-3 py-2 whitespace-pre-wrap break-words">
-                  {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
-                </td>
-                <td
-                  className={cn(
-                    "px-3 py-2 text-right font-semibold",
-                    a.accuracy === 100 ? "text-green-600" : "text-amber-600",
+                {!isShadow && (
+                  <td className="px-3 py-2 whitespace-pre-wrap break-words">
+                    {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+                  </td>
+                )}
+                {(isShadow || isCombo) && (
+                  <td className="px-3 py-2 whitespace-pre-wrap break-words">
+                    {a.spoken?.trim() ? (
+                      a.spoken
+                    ) : (
+                      <span className="text-muted-foreground">(chưa chấm)</span>
+                    )}
+                  </td>
+                )}
+                <td className="px-3 py-2 text-right font-semibold">
+                  {isShadow ? (
+                    typeof a.speakingScore === "number" ? (
+                      <span className={a.speakingScore >= 80 ? "text-green-600" : "text-amber-600"}>
+                        {a.speakingScore}%
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground font-normal">—</span>
+                    )
+                  ) : (
+                    <span className="whitespace-nowrap">
+                      <span className={a.accuracy === 100 ? "text-green-600" : "text-amber-600"}>
+                        {a.accuracy}%
+                      </span>
+                      {isCombo && (
+                        <>
+                          {" / "}
+                          {typeof a.speakingScore === "number" ? (
+                            <span
+                              className={a.speakingScore >= 80 ? "text-green-600" : "text-amber-600"}
+                            >
+                              {a.speakingScore}%
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground font-normal">—</span>
+                          )}
+                        </>
+                      )}
+                    </span>
                   )}
-                >
-                  {a.accuracy}%
                 </td>
               </tr>
             ))}
@@ -1255,28 +1345,58 @@ function ResultScreen({
           <div key={a.sentenceId} className="rounded-xl border p-3">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">Câu {i + 1}</span>
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  a.accuracy === 100 ? "text-green-600" : "text-amber-600",
+              <span className="text-sm font-semibold">
+                {isShadow ? (
+                  typeof a.speakingScore === "number" ? (
+                    <span className={a.speakingScore >= 80 ? "text-green-600" : "text-amber-600"}>
+                      {a.speakingScore}%
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground font-normal">—</span>
+                  )
+                ) : (
+                  <>
+                    <span className={a.accuracy === 100 ? "text-green-600" : "text-amber-600"}>
+                      {a.accuracy}%
+                    </span>
+                    {isCombo && typeof a.speakingScore === "number" && (
+                      <span
+                        className={cn(
+                          "ml-1",
+                          a.speakingScore >= 80 ? "text-green-600" : "text-amber-600",
+                        )}
+                      >
+                        / {a.speakingScore}%
+                      </span>
+                    )}
+                  </>
                 )}
-              >
-                {a.accuracy}%
               </span>
             </div>
             <div className="mt-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Câu gốc</p>
               <p className="text-sm whitespace-pre-wrap break-words">{a.text}</p>
             </div>
-            <div className="mt-2">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã gõ</p>
-              <p className="text-sm whitespace-pre-wrap break-words">
-                {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
-              </p>
-            </div>
+            {!isShadow && (
+              <div className="mt-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã gõ</p>
+                <p className="text-sm whitespace-pre-wrap break-words">
+                  {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+                </p>
+              </div>
+            )}
+            {(isShadow || isCombo) && (
+              <div className="mt-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã nói</p>
+                <p className="text-sm whitespace-pre-wrap break-words">
+                  {a.spoken?.trim() ? a.spoken : <span className="text-muted-foreground">(chưa chấm)</span>}
+                </p>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
 
 
       <div className="mt-6 flex flex-wrap gap-2">

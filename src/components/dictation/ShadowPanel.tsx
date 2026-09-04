@@ -74,7 +74,7 @@ export default function ShadowPanel({
   sentence: ShadowSentence;
   speed: number;
   revealed: boolean;
-  onScored: (score: number) => void;
+  onScored: (result: { score: number; transcript: string }) => void;
   onPlayModel?: () => void;
 }) {
   const { isPro } = useIsPro();
@@ -162,7 +162,7 @@ export default function ShadowPanel({
         extra: Array.isArray((data as any).extra) ? (data as any).extra : [],
       };
       setResult(r);
-      onScored(r.score);
+      onScored({ score: r.score, transcript: r.transcript });
     } finally {
       setGrading(false);
     }
