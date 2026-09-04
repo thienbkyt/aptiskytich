@@ -22,22 +22,23 @@ export const MagicLinkEmail = ({
   siteName,
   confirmationUrl,
 }: MagicLinkEmailProps) => (
-  <Html lang="vi" dir="ltr">
+  <Html lang="en" dir="ltr">
     <Head>
-      <meta charSet="utf-8" />
+      <style>{darkModeCss}</style>
     </Head>
-    <Preview>Link đăng nhập Aptis Kỳ Tích</Preview>
+    <Preview>Your login link for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Link đăng nhập của bạn</Heading>
+        <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
-          Bấm nút bên dưới để đăng nhập vào Aptis Kỳ Tích. Link này sẽ hết hạn sau một thời gian ngắn.
+          Click the button below to log in to {siteName}. This link will expire
+          shortly.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Đăng nhập
+        <Button className="dm-btn" style={button} href={confirmationUrl}>
+          Log In
         </Button>
         <Text style={footer}>
-          Nếu bạn không yêu cầu link này, hãy bỏ qua email này.
+          If you didn't request this link, you can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -46,9 +47,35 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Plus Jakarta Sans', Arial, sans-serif" }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '20px 25px' }
-const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#121212', margin: '0 0 20px' }
-const text = { fontSize: '14px', color: '#737373', lineHeight: '1.5', margin: '0 0 25px' }
-const button = { backgroundColor: '#E11D1F', color: '#ffffff', fontSize: '14px', borderRadius: '8px', padding: '12px 20px', textDecoration: 'none' }
+const h1 = {
+  fontSize: '22px',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  margin: '0 0 20px',
+}
+const text = {
+  fontSize: '14px',
+  color: '#55575d',
+  lineHeight: '1.5',
+  margin: '0 0 25px',
+}
+const button = {
+  backgroundColor: '#000000',
+  color: '#ffffff',
+  fontSize: '14px',
+  border: '1px solid #000000',
+  borderRadius: '8px',
+  padding: '12px 20px',
+  textDecoration: 'none',
+}
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
+const darkModeCss = `
+  @media (prefers-color-scheme: dark) {
+    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  }
+  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
+`
