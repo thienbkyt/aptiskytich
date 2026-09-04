@@ -79,6 +79,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const [attempt, setAttempt] = useState(0);
   const [loadErr, setLoadErr] = useState<ExamLoadErrorState | null>(null);
   const [loadTick, setLoadTick] = useState(0);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, any[]>>(() => (savedInit?.drafts as any) ?? {});
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
     const base = new Array(sets.length).fill(undefined);
