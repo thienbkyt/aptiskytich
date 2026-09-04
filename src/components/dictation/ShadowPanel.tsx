@@ -17,10 +17,19 @@ export type ShadowSentence = {
   end_sec: number | null;
 };
 
+type WordStatus = "correct" | "close" | "wrong" | "missing";
+
+type ShadowWord = {
+  expected: string;
+  spoken: string | null;
+  status: WordStatus;
+  ipa?: string;
+};
+
 type ShadowResult = {
   transcript: string;
   score: number;
-  missed: string[];
+  words: ShadowWord[];
   extra: string[];
 };
 
