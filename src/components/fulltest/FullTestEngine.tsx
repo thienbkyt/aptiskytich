@@ -561,7 +561,11 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Đang tải dữ liệu bài thi...</p>
+        <p className="text-sm text-muted-foreground">
+          {loadTotal > 0
+            ? `Đang tải đề... ${Math.min(loadDone, loadTotal)}/${loadTotal}`
+            : "Đang tải dữ liệu bài thi..."}
+        </p>
       </div>
     );
   }
