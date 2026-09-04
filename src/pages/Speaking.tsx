@@ -18,7 +18,7 @@ import type { SpeakingPartType } from "@/data/speakingQuestions";
 import { toast } from "sonner";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredDialog from "@/components/pro/PlanExpiredDialog";
-import { isExamEmptyError, isExpiredPlanBlock, examLoadReason } from "@/lib/examLoadError";
+import { isExpiredPlanBlock, examLoadReason } from "@/lib/examLoadError";
 import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import { useExamSets, fetchExamQuestions, normalizePart, isNewSet, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
@@ -202,11 +202,6 @@ const Speaking = () => {
     setExam({ active: true, partType, testTitle: set.title, loadingExam: true, skipIntro: opts?.skipIntro ?? false, ...( { examSetId: set.id } as any) });
     try {
       const questions = await fetchExamQuestions(set.id);
-      if (!questions || questions.length === 0) {
-        setLoadBlock({ reason: "empty_result", accessTier: (set as any).access_tier ?? null, retry: () => { setLoadBlock(null); void handleStartFromDB(set, opts); } });
-        setExam({ active: false, partType: "part1", testTitle: "", loadingExam: false });
-        return;
-      }
       const sourceQuestionIds = questions.map((q: any) => q.id);
       let engineData: any = { sourceQuestionIds };
       switch (partType) {
