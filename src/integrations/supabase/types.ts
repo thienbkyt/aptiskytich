@@ -4857,6 +4857,10 @@ export type Database = {
         Args: { p_key: string; p_ref?: string; p_scope?: string }
         Returns: undefined
       }
+      merge_test_result_review_snapshot: {
+        Args: { p_review_snapshot: Json; p_test_result_id: string }
+        Returns: undefined
+      }
       open_sets_bulk: { Args: { p_set_ids: string[] }; Returns: boolean }
       promo_active: { Args: never; Returns: boolean }
       public_stats: { Args: never; Returns: Json }
@@ -4890,6 +4894,10 @@ export type Database = {
           p_skill?: string
         }
         Returns: Json
+      }
+      update_test_result_grade_payload: {
+        Args: { p_grade_payload: Json; p_test_result_id: string }
+        Returns: undefined
       }
       user_can_access_set: { Args: { p_set: string }; Returns: boolean }
       user_tier: { Args: { p_uid: string }; Returns: string }
