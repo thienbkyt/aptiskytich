@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -28,6 +27,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import SegmentPlayer, { type SegmentPlayerHandle } from "@/components/dictation/SegmentPlayer";
+import FillBlanks, { type FillBlanksResult } from "@/components/dictation/FillBlanks";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,46 +41,10 @@ import { useIsPro } from "@/hooks/useIsPro";
 /* ------------------------------------------------------------------ */
 /* Word-level diff (case & punctuation insensitive)                    */
 /* ------------------------------------------------------------------ */
-type WordDiffPart = { word: string; ok: boolean };
-
-function normalizeWordCore(w: string) {
-  return w.toLowerCase().replace(/[^a-z0-9']/gi, "");
-}
-
-function diffWords(expected: string, got: string): WordDiffPart[] {
-  const expRaw = expected.split(/\s+/).filter(Boolean);
-  const gotRaw = got.split(/\s+/).filter(Boolean);
-  const a = expRaw.map(normalizeWordCore);
-  const b = gotRaw.map(normalizeWordCore);
-  const m = a.length, n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] = a[i - 1] && a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1] + 1
-        : Math.max(dp[i - 1][j], dp[i][j - 1]);
-    }
-  }
-  const matched = new Array<boolean>(m).fill(false);
-  let i = m, j = n;
-  while (i > 0 && j > 0) {
-    if (a[i - 1] && a[i - 1] === b[j - 1]) { matched[i - 1] = true; i--; j--; }
-    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
-    else j--;
-  }
-  return expRaw.map((w, k) => ({ word: w, ok: matched[k] }));
-}
-
-function wordAccuracyPct(parts: WordDiffPart[]) {
-  if (!parts.length) return 0;
-  const ok = parts.filter((p) => p.ok).length;
-  return Math.round((ok / parts.length) * 100);
-}
-
 /* ------------------------------------------------------------------ */
 /* Types & settings                                                    */
 /* ------------------------------------------------------------------ */
-type Screen = "mode" | "level" | "setup" | "sets" | "practice" | "result";
+type Screen = "home" | "setup" | "sets" | "practice" | "result";
 
 type PracticeMode = "dictation" | "shadow" | "combo";
 
@@ -119,10 +83,20 @@ type Settings = {
   speed: number;
   maxPlays: number; // 0 = unlimited
   onlyTodo: boolean;
+  blankRatio: number;
 };
 
 const SETTINGS_KEY = "dict:v2:settings";
-const DEFAULT_SETTINGS: Settings = { size: 10, speed: 1, maxPlays: 5, onlyTodo: true };
+const BLANK_RATIOS = [0.3, 0.5, 0.7, 1];
+const DEFAULT_SETTINGS: Settings = {
+  size: 10,
+  speed: 1,
+  maxPlays: 5,
+  onlyTodo: true,
+  blankRatio: 0.3,
+};
+
+const LEVEL_DEFAULT_RATIO: Record<number, number> = { 1: 0.3, 2: 0.5, 3: 0.7 };
 
 function loadSettings(): Settings {
   try {
@@ -134,6 +108,9 @@ function loadSettings(): Settings {
       speed: [0.75, 1, 1.25].includes(parsed?.speed) ? parsed.speed : DEFAULT_SETTINGS.speed,
       maxPlays: [0, 3, 5].includes(parsed?.maxPlays) ? parsed.maxPlays : DEFAULT_SETTINGS.maxPlays,
       onlyTodo: typeof parsed?.onlyTodo === "boolean" ? parsed.onlyTodo : DEFAULT_SETTINGS.onlyTodo,
+      blankRatio: BLANK_RATIOS.includes(parsed?.blankRatio)
+        ? parsed.blankRatio
+        : DEFAULT_SETTINGS.blankRatio,
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -145,6 +122,7 @@ const LEVEL_META: Record<number, { title: string; desc: string }> = {
   2: { title: "Level 2 · Tăng tốc", desc: "Đoạn dài, nhiều thông tin — Listening Part 2" },
   3: { title: "Level 3 · Thử thách", desc: "Học thuật, tốc độ thi thật — Listening Part 3 & 4" },
 };
+
 
 type Answer = {
   sentenceId: string;
@@ -168,7 +146,7 @@ export default function Dictation() {
       "Luyện nghe chép chính tả với audio Listening Aptis thật, cắt sẵn từng câu. Chấm điểm tự động theo từ, lộ trình 3 cấp độ.",
   });
 
-  const [screen, setScreen] = useState<Screen>("mode");
+  const [screen, setScreen] = useState<Screen>("home");
   const [mode, setMode] = useState<PracticeMode>("dictation");
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [levels, setLevels] = useState<LevelRow[]>([]);
@@ -194,9 +172,10 @@ export default function Dictation() {
     safeLocalStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [settings]);
 
-  /* --- load level stats when entering screen 2 --- */
+  /* --- load level stats on the merged first screen --- */
   useEffect(() => {
-    if (screen !== "level") return;
+    if (screen !== "home") return;
+
     let cancelled = false;
     setLevelsLoading(true);
     (async () => {
@@ -290,63 +269,52 @@ export default function Dictation() {
     setScreen("setup");
   };
 
-  /* ---------------- Screen 1: mode ---------------- */
-  if (screen === "mode") {
+  /* ---------------- Screen 1: kiểu luyện + lộ trình ---------------- */
+  if (screen === "home") {
     const cards: Array<{
       key: PracticeMode;
       title: string;
       desc: string;
       icon: typeof Headphones;
-      soon: boolean;
     }> = [
-      { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones, soon: false },
-      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio (Shadowing)", icon: Mic, soon: false },
-      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles, soon: false },
+      { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones },
+      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio (Shadowing)", icon: Mic },
+      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles },
     ];
     return (
-      <Shell>
+      <Shell onBack={() => navigate("/dashboard")}>
         <h1 className="text-2xl sm:text-3xl font-bold">Luyện nghe chép chính tả</h1>
-        <p className="text-muted-foreground mt-2">
-          Chọn kiểu luyện tập bạn muốn bắt đầu.
-        </p>
+        <p className="text-muted-foreground mt-2">Chọn kiểu luyện tập, rồi chọn lộ trình để bắt đầu.</p>
+
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {cards.map((c) => (
             <button
               key={c.key}
               type="button"
-              disabled={c.soon}
-              onClick={() => {
-                setMode(c.key);
-                setScreen("level");
-              }}
+              onClick={() => setMode(c.key)}
               className={cn(
-                "text-left rounded-xl border p-6 transition",
-                c.soon
-                  ? "opacity-60 cursor-not-allowed bg-muted/40"
-                  : "hover:border-primary hover:shadow-md bg-card",
+                "text-left rounded-xl border p-6 transition bg-card",
+                mode === c.key
+                  ? "border-primary ring-2 ring-primary/30 shadow-md"
+                  : "hover:border-primary/60 hover:shadow-md",
               )}
             >
               <c.icon className="w-9 h-9 text-primary" />
               <div className="mt-4 flex items-center gap-2">
                 <span className="font-semibold text-lg">{c.title}</span>
-                {c.soon && <Badge variant="secondary">Sắp có</Badge>}
+                {mode === c.key && <Badge variant="secondary">Đang chọn</Badge>}
               </div>
               <p className="text-sm text-muted-foreground mt-1">{c.desc}</p>
             </button>
           ))}
         </div>
-      </Shell>
-    );
-  }
 
-  /* ---------------- Screen 2: level ---------------- */
-  if (screen === "level") {
-    return (
-      <Shell onBack={() => setScreen("mode")}>
-        <h1 className="text-2xl sm:text-3xl font-bold">Chọn lộ trình</h1>
-        <p className="text-muted-foreground mt-2">Ba cấp độ tăng dần theo độ khó bài thi thật.</p>
+        <h2 className="text-xl font-bold mt-10">Chọn lộ trình</h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Ba cấp độ tăng dần theo độ khó bài thi thật.
+        </p>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 space-y-4">
           {[1, 2, 3].map((lv) => {
             const row = levels.find((r) => Number(r.level) === lv);
             const cau = Number(row?.cau ?? 0);
@@ -358,6 +326,7 @@ export default function Dictation() {
                 type="button"
                 onClick={() => {
                   setLevel(lv);
+                  setSettings((s) => ({ ...s, blankRatio: LEVEL_DEFAULT_RATIO[lv] ?? s.blankRatio }));
                   setScreen("setup");
                 }}
                 className="w-full text-left rounded-xl border bg-card p-5 hover:border-primary hover:shadow-md transition"
@@ -398,11 +367,12 @@ export default function Dictation() {
     );
   }
 
-  /* ---------------- Screen 3: setup ---------------- */
+  /* ---------------- Screen 2: setup ---------------- */
   if (screen === "setup") {
     return (
-      <Shell onBack={() => setScreen("level")}>
+      <Shell onBack={() => setScreen("home")}>
         <h1 className="text-2xl sm:text-3xl font-bold">Thiết lập phiên luyện</h1>
+
         <p className="text-muted-foreground mt-2">{LEVEL_META[level].title}</p>
 
         <Card className="mt-6 p-5 space-y-6">
@@ -421,6 +391,24 @@ export default function Dictation() {
               </Chip>
             ))}
           </OptionRow>
+
+          <OptionRow label="Độ khó (số từ phải điền)">
+            {[
+              { v: 0.3, l: "Dễ · ẩn 30%" },
+              { v: 0.5, l: "Vừa · 50%" },
+              { v: 0.7, l: "Khó · 70%" },
+              { v: 1, l: "Chép hết · 100%" },
+            ].map((o) => (
+              <Chip
+                key={o.v}
+                active={settings.blankRatio === o.v}
+                onClick={() => setSettings((s) => ({ ...s, blankRatio: o.v }))}
+              >
+                {o.l}
+              </Chip>
+            ))}
+          </OptionRow>
+
 
           <OptionRow label="Số lần nghe tối đa mỗi câu">
             {[
@@ -532,19 +520,26 @@ export default function Dictation() {
     const s = sentences[index];
     if (!s) return null;
     return (
-      <Shell>
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-semibold truncate">{s.set_title}</p>
-            <p className="text-xs text-muted-foreground">
-              Câu {index + 1}/{sentences.length}
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={exitPractice}>
-            <X className="w-4 h-4 mr-1" /> Thoát
+      <Shell onBack={exitPractice} backLabel="Thoát" backIcon={X}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={index === 0}
+            onClick={() => setIndex((i) => Math.max(0, i - 1))}
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" /> Câu trước
           </Button>
+          <Badge variant="secondary" className="mx-1">
+            {index + 1}/{sentences.length}
+          </Badge>
+          <Button size="sm" onClick={goNext}>
+            {index + 1 >= sentences.length ? "Xem kết quả" : "Câu tiếp theo"}
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+          <p className="text-xs text-muted-foreground ml-auto truncate max-w-[45%]">{s.set_title}</p>
         </div>
-        <Progress value={((index + 1) / sentences.length) * 100} className="h-2 mt-3" />
+        <Progress value={((index + 1) / sentences.length) * 100} className="h-1 mt-3" />
 
         <SentenceTask
           key={s.sentence_id}
@@ -562,7 +557,7 @@ export default function Dictation() {
 
   /* ---------------- Screen 5: result ---------------- */
   return (
-    <Shell>
+    <Shell onBack={() => setScreen("home")}>
       <ResultScreen
         answers={answers}
         total={sentences.length}
@@ -572,6 +567,7 @@ export default function Dictation() {
         setId={chosenSetId ?? setId ?? null}
         userId={user?.id}
         onNewSession={() => setScreen("setup")}
+
         onRetry={() => {
           setIndex(0);
           setAnswers([]);
@@ -587,24 +583,35 @@ export default function Dictation() {
 /* ------------------------------------------------------------------ */
 /* Layout & small UI helpers                                          */
 /* ------------------------------------------------------------------ */
-function Shell({ children, onBack }: { children: React.ReactNode; onBack?: () => void }) {
+function Shell({
+  children,
+  onBack,
+  backLabel = "Quay lại",
+  backIcon: BackIcon = ArrowLeft,
+}: {
+  children: React.ReactNode;
+  onBack?: () => void;
+  backLabel?: string;
+  backIcon?: typeof ArrowLeft;
+}) {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
+      <main className="max-w-3xl mx-auto px-4 pt-20 pb-10 sm:pt-24">
         <button
           type="button"
           onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại
+          <BackIcon className="w-4 h-4" /> {backLabel}
         </button>
         {children}
       </main>
     </div>
   );
 }
+
 
 function OptionRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -643,6 +650,23 @@ function Chip({
 /* ------------------------------------------------------------------ */
 /* One sentence task                                                  */
 /* ------------------------------------------------------------------ */
+function waveformBars(seed: string) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  const bars: number[] = [];
+  let x = h || 0x9e3779b9;
+  for (let i = 0; i < 40; i++) {
+    x ^= x << 13; x >>>= 0;
+    x ^= x >>> 17;
+    x ^= x << 5; x >>>= 0;
+    bars.push(20 + Math.round((x / 0xffffffff) * 80));
+  }
+  return bars;
+}
+
 function SentenceTask({
   sentence,
   settings,
@@ -661,26 +685,20 @@ function SentenceTask({
   onNext: () => void;
 }) {
   const playerRef = useRef<SegmentPlayerHandle | null>(null);
-  const [input, setInput] = useState("");
   const [plays, setPlays] = useState(0);
-  const [hints, setHints] = useState<string[]>([]);
+  const [speed, setSpeed] = useState(settings.speed);
+  const [hintUsed, setHintUsed] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [res, setRes] = useState<FillBlanksResult | null>(null);
   const firstAccuracyRef = useRef<number | null>(null);
   const savedRef = useRef(false);
   const speakingSavedRef = useRef(false);
 
-  const words = useMemo(() => sentence.text.split(/\s+/).filter(Boolean), [sentence.text]);
   const limitReached = settings.maxPlays > 0 && plays >= settings.maxPlays;
-
-  const diff = useMemo(
-    () => (checked ? diffWords(sentence.text, input) : null),
-    [checked, sentence.text, input],
-  );
   const shownAccuracy = firstAccuracyRef.current ?? 0;
-  const allWordsCorrect = checked && diff !== null && wordAccuracyPct(diff) === 100;
-  const perfect = checked && shownAccuracy === 100;
-  const finishedSentence = allWordsCorrect || revealed;
+  const allCorrect = !!res && res.total > 0 && res.correct === res.total;
+  const finishedSentence = checked && allCorrect;
+  const bars = useMemo(() => waveformBars(sentence.sentence_id), [sentence.sentence_id]);
 
   const saveResult = async (accuracy: number, speakingScore?: number | null) => {
     const isSpeaking = typeof speakingScore === "number";
@@ -719,11 +737,10 @@ function SentenceTask({
     });
   };
 
-  const handleCheck = () => {
-    if (!input.trim()) return;
-    const parts = diffWords(sentence.text, input);
-    let acc = wordAccuracyPct(parts);
-    if (hints.length > 0) acc = Math.min(acc, 90);
+  const handleCheck = (result: FillBlanksResult) => {
+    let acc = result.total ? Math.round((result.correct / result.total) * 100) : 0;
+    if (hintUsed) acc = Math.min(acc, 90);
+    setRes(result);
     setChecked(true);
     if (firstAccuracyRef.current === null) {
       firstAccuracyRef.current = acc;
@@ -731,54 +748,85 @@ function SentenceTask({
       onDone({
         sentenceId: sentence.sentence_id,
         text: sentence.text,
-        typed: input,
+        typed: result.filled.join(" "),
         accuracy: acc,
       });
     }
   };
 
-  const handleHint = () => {
-    const remaining = words.filter((w) => !hints.includes(w));
-    if (remaining.length === 0) return;
-    const pick = remaining[Math.floor(Math.random() * remaining.length)];
-    setHints((h) => [...h, pick]);
-  };
-
   const handleRelisten = () => {
-    // Sửa tiếp, không cộng lượt nghe
-    setChecked(false);
     playerRef.current?.play({ silentCount: true });
   };
 
-
-  const handleSkip = () => {
-    if (firstAccuracyRef.current === null) {
-      firstAccuracyRef.current = 0;
-      void saveResult(0);
-      onDone({ sentenceId: sentence.sentence_id, text: sentence.text, typed: input, accuracy: 0 });
-    }
-    setChecked(true);
-    setRevealed(true);
+  const cycleSpeed = () => {
+    setSpeed((s) => (s === 0.75 ? 1 : s === 1 ? 1.25 : 0.75));
   };
 
   const hasAudio = !!sentence.audio_url && sentence.start_sec != null && sentence.end_sec != null;
+  const segLen = Math.max(1, Math.round(Number(sentence.end_sec ?? 0) - Number(sentence.start_sec ?? 0)));
   const showDictation = mode !== "shadow";
   const showShadow = mode === "shadow" || (mode === "combo" && finishedSentence);
 
   return (
     <Card className="mt-5 p-5 sm:p-6">
+      <div className="flex items-center gap-3">
+        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <Headphones className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+            Nghe và điền từ
+          </p>
+          <p className="text-lg font-bold leading-tight">Listen &amp; Fill</p>
+        </div>
+      </div>
+
       {hasAudio ? (
         <>
-          <SegmentPlayer
-            ref={playerRef}
-            path={sentence.audio_url as string}
-            startSec={Number(sentence.start_sec)}
-            endSec={Number(sentence.end_sec)}
-            speed={settings.speed}
-            autoPlay
-            disabled={limitReached}
-            onEnded={() => setPlays((p) => p + 1)}
-          />
+          <div className="mt-5 flex items-center gap-3">
+            <SegmentPlayer
+              ref={playerRef}
+              path={sentence.audio_url as string}
+              startSec={Number(sentence.start_sec)}
+              endSec={Number(sentence.end_sec)}
+              speed={speed}
+              autoPlay
+              disabled={limitReached}
+              onEnded={() => setPlays((p) => p + 1)}
+              className="shrink-0 [&>div]:hidden"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Phát lại"
+              disabled={limitReached}
+              onClick={() => playerRef.current?.play()}
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
+
+            {/* Waveform trang trí — không phân tích audio thật */}
+            <div className="flex-1 min-w-0 h-10 flex items-center gap-[3px] overflow-hidden">
+              {bars.map((b, i) => (
+                <span
+                  key={i}
+                  className="flex-1 rounded-full bg-primary/30"
+                  style={{ height: `${b}%` }}
+                />
+              ))}
+            </div>
+
+            <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+              0:00 / 0:{String(segLen).padStart(2, "0")}
+            </span>
+            <button
+              type="button"
+              onClick={cycleSpeed}
+              className="shrink-0 px-2.5 py-1 rounded-full border text-xs font-medium hover:border-primary"
+            >
+              {speed}x
+            </button>
+          </div>
           <p className="text-xs text-muted-foreground mt-2">
             {settings.maxPlays > 0
               ? `Đã nghe ${Math.min(plays, settings.maxPlays)}/${settings.maxPlays} lần`
@@ -787,113 +835,54 @@ function SentenceTask({
           </p>
         </>
       ) : (
-        <p className="text-sm text-destructive">Câu này chưa có dữ liệu audio.</p>
+        <p className="mt-4 text-sm text-destructive">Câu này chưa có dữ liệu audio.</p>
       )}
 
       {showDictation && (
-        <div className="mt-6">
-          <label className="text-sm font-medium mb-2 block">Gõ lại câu bạn nghe được:</label>
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (!checked) handleCheck();
-              }
+        <div className="mt-6 rounded-xl border bg-muted/30 p-4 sm:p-5">
+          <FillBlanks
+            text={sentence.text}
+            ratio={settings.blankRatio}
+            sentenceId={sentence.sentence_id}
+            hintUsed={hintUsed}
+            onHint={() => setHintUsed(true)}
+            onReset={() => {
+              setChecked(false);
+              setRes(null);
             }}
-            placeholder="Nhập câu tiếng Anh…"
-            autoFocus
-            rows={3}
-            className="text-base"
+            onCheck={handleCheck}
           />
-          {hints.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {hints.map((h, i) => (
-                <span key={`${h}-${i}`} className="px-2 py-1 rounded-md bg-muted text-xs font-medium">
-                  {h}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
-      {showDictation && !checked && (
-        <div className="mt-5 flex flex-wrap gap-2">
-          <Button onClick={handleCheck} disabled={!input.trim()}>
-            Kiểm tra
-          </Button>
-          <Button variant="outline" onClick={handleHint}>
-            <Lightbulb className="w-4 h-4 mr-2" /> Gợi ý
-            {hints.length > 0 && ` (${hints.length})`}
-          </Button>
-        </div>
-      )}
-
-      {showDictation && checked && diff && (
-        <div
-          className={cn(
-            "mt-6 rounded-xl border p-4",
-            perfect ? "border-green-500/40 bg-green-500/10" : "border-amber-500/40 bg-amber-500/10",
-          )}
-        >
+      {showDictation && checked && res && (
+        <div className="mt-5 rounded-xl border bg-muted/40 p-4">
           <div className="flex items-center gap-2">
-            {perfect ? (
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            {allCorrect ? (
+              <CheckCircle2 className="w-5 h-5 text-primary" />
             ) : (
-              <Lightbulb className="w-5 h-5 text-amber-600" />
+              <Lightbulb className="w-5 h-5 text-[#FEAD5F]" />
             )}
             <p className="font-semibold">
-              {perfect
-                ? "Chính xác 100%!"
-                : allWordsCorrect
-                  ? `Đúng hết — trừ điểm gợi ý: ${shownAccuracy}%`
-                  : `Điểm ghi nhận: ${shownAccuracy}%`}
+              Kết quả: {res.correct}/{res.total} từ đúng
+              <span className="text-muted-foreground font-normal"> · {shownAccuracy}%</span>
             </p>
           </div>
-
           <div className="mt-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              {finishedSentence ? "Câu đầy đủ" : "Đối chiếu"}
+              Đáp án đúng
             </p>
-            <p className="leading-relaxed">
-              {finishedSentence
-                ? sentence.text
-                : diff.map((p, i) => (
-                    <span
-                      key={i}
-                      className={cn(
-                        "mr-1",
-                        p.ok ? "text-green-600 font-medium" : "text-destructive underline",
-                      )}
-                    >
-                      {p.word}
-                    </span>
-                  ))}
-            </p>
+            <p className="leading-relaxed font-medium">{sentence.text}</p>
           </div>
-
           <div className="mt-4 flex flex-wrap gap-2">
-            {finishedSentence ? (
-              mode === "combo" ? (
-                <p className="text-sm text-muted-foreground">
-                  Tốt lắm! Giờ hãy nói đuổi lại câu này ở phần dưới.
-                </p>
-              ) : (
-                <Button onClick={onNext}>
-                  {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
-              )
-            ) : (
-              <>
-                <Button variant="outline" onClick={handleRelisten}>
-                  <RotateCcw className="w-4 h-4 mr-2" /> Nghe lại &amp; sửa
-                </Button>
-                <Button variant="secondary" onClick={handleSkip}>
-                  Bỏ qua, xem đáp án
-                </Button>
-              </>
+            <Button variant="outline" size="sm" onClick={handleRelisten}>
+              <RotateCcw className="w-4 h-4 mr-2" /> Nghe lại &amp; sửa
+            </Button>
+            {mode !== "combo" && (
+              <Button size="sm" onClick={onNext}>
+                {isLast ? "Xem kết quả" : "Câu tiếp theo"}
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
             )}
           </div>
         </div>
@@ -905,7 +894,6 @@ function SentenceTask({
           isLast={isLast}
           onPlayModel={() => playerRef.current?.play({ silentCount: true })}
           onNext={() => {
-
             ensureShadowRecorded();
             onNext();
           }}
@@ -914,7 +902,7 @@ function SentenceTask({
             onDone({
               sentenceId: sentence.sentence_id,
               text: sentence.text,
-              typed: input,
+              typed: res?.filled.join(" ") ?? "",
               accuracy: mode === "shadow" ? 100 : (firstAccuracyRef.current ?? 0),
               speakingScore: score,
             });
@@ -924,6 +912,7 @@ function SentenceTask({
     </Card>
   );
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Shadowing block (Nói đuổi)                                         */
