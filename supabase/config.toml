@@ -26,3 +26,5 @@ project_id = "bacoamhbatqpxatrrflz"
 
   [functions.grade-shadowing]
     verify_jwt = true
+  [functions.grading-queue-alert]
+    verify_jwt = false
