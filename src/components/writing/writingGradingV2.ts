@@ -194,10 +194,10 @@ export async function gradeWritingPartV2(
       // when the learner has quota again. Do not enqueue while quota-blocked.
       if (opts?.testResultId) {
         try {
-          await (supabase as any)
-            .from("test_results")
-            .update({ grade_payload: { ...gradePayload, _quotaBlocked: true } })
-            .eq("id", opts.testResultId);
+          await persistWritingGradePayload(opts.testResultId, {
+            ...gradePayload,
+            _quotaBlocked: true,
+          });
         } catch (e) {
           console.warn("[gradeWritingPartV2] failed to mark quota-blocked payload:", e);
         }
