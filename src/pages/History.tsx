@@ -24,6 +24,9 @@ import {
   Pagination, PaginationContent, PaginationItem, PaginationLink,
   PaginationPrevious, PaginationNext, PaginationEllipsis,
 } from "@/components/ui/pagination";
+import { useFailedGradingJobs } from "@/hooks/useFailedGradingJobs";
+import { toast } from "@/hooks/use-toast";
+
 
 interface HistoryRow {
   id: string;
