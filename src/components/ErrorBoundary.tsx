@@ -1,4 +1,9 @@
 import { Component, ReactNode } from "react";
+import { logClientError } from "@/lib/clientErrorLog";
+
+/** Dedupe identical crash messages within 60s — a 3rd-party script can loop errors. */
+const lastLogged = new Map<string, number>();
+const DEDUPE_MS = 60_000;
 
 interface Props {
   children: ReactNode;
