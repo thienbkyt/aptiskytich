@@ -28,6 +28,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import SegmentPlayer, { type SegmentPlayerHandle } from "@/components/dictation/SegmentPlayer";
 import FillBlanks, { type FillBlanksResult } from "@/components/dictation/FillBlanks";
+import ShadowPanel from "@/components/dictation/ShadowPanel";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -519,9 +520,31 @@ export default function Dictation() {
   if (screen === "practice") {
     const s = sentences[index];
     if (!s) return null;
+    const modeMeta =
+      mode === "dictation"
+        ? { icon: Headphones, label: "Nghe & điền từ" }
+        : mode === "shadow"
+          ? { icon: Mic, label: "Nghe & nói đuổi" }
+          : { icon: Sparkles, label: "Chế độ Kết hợp" };
+    const ModeIcon = modeMeta.icon;
     return (
-      <Shell onBack={exitPractice} backLabel="Thoát" backIcon={X}>
-        <div className="flex flex-wrap items-center gap-2">
+      <Shell wide={mode === "combo"} hideBack>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={exitPractice}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Quay lại
+          </Button>
+          <div className="flex-1 min-w-0 text-center">
+            <p className="font-semibold truncate">{s.set_title}</p>
+            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-0.5">
+              <ModeIcon className="w-3.5 h-3.5" /> {modeMeta.label}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={exitPractice}>
+            <X className="w-4 h-4 mr-1" /> Thoát
+          </Button>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -537,7 +560,6 @@ export default function Dictation() {
             {index + 1 >= sentences.length ? "Xem kết quả" : "Câu tiếp theo"}
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
-          <p className="text-xs text-muted-foreground ml-auto truncate max-w-[45%]">{s.set_title}</p>
         </div>
         <Progress value={((index + 1) / sentences.length) * 100} className="h-1 mt-3" />
 
@@ -588,24 +610,30 @@ function Shell({
   onBack,
   backLabel = "Quay lại",
   backIcon: BackIcon = ArrowLeft,
+  wide = false,
+  hideBack = false,
 }: {
   children: React.ReactNode;
   onBack?: () => void;
   backLabel?: string;
   backIcon?: typeof ArrowLeft;
+  wide?: boolean;
+  hideBack?: boolean;
 }) {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 pt-20 pb-10 sm:pt-24">
-        <button
-          type="button"
-          onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <BackIcon className="w-4 h-4" /> {backLabel}
-        </button>
+      <main className={cn("mx-auto px-4 pt-20 pb-10 sm:pt-24", wide ? "max-w-6xl" : "max-w-3xl")}>
+        {!hideBack && (
+          <button
+            type="button"
+            onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+          >
+            <BackIcon className="w-4 h-4" /> {backLabel}
+          </button>
+        )}
         {children}
       </main>
     </div>
@@ -689,52 +717,43 @@ function SentenceTask({
   const [speed, setSpeed] = useState(settings.speed);
   const [hintUsed, setHintUsed] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [res, setRes] = useState<FillBlanksResult | null>(null);
   const firstAccuracyRef = useRef<number | null>(null);
   const savedRef = useRef(false);
-  const speakingSavedRef = useRef(false);
 
   const limitReached = settings.maxPlays > 0 && plays >= settings.maxPlays;
   const shownAccuracy = firstAccuracyRef.current ?? 0;
   const allCorrect = !!res && res.total > 0 && res.correct === res.total;
-  const finishedSentence = checked && allCorrect;
   const bars = useMemo(() => waveformBars(sentence.sentence_id), [sentence.sentence_id]);
 
-  const saveResult = async (accuracy: number, speakingScore?: number | null) => {
-    const isSpeaking = typeof speakingScore === "number";
-    if (isSpeaking) {
-      if (speakingSavedRef.current) return;
-      speakingSavedRef.current = true;
-    } else {
-      if (savedRef.current) return;
-      savedRef.current = true;
-    }
-    if (!userId) return;
-    try {
-      await supabase.rpc("save_dictation_result", {
-        p_sentence_id: sentence.sentence_id,
-        p_accuracy: accuracy,
-        p_mode: mode,
-        p_speaking_score: isSpeaking ? speakingScore : null,
-      });
-    } catch {
-      /* progress ghi thất bại — không chặn luyện tập */
-    }
-  };
+  const hasAudio = !!sentence.audio_url && sentence.start_sec != null && sentence.end_sec != null;
+  const segLen = Math.max(1, Math.round(Number(sentence.end_sec ?? 0) - Number(sentence.start_sec ?? 0)));
 
-  /** Nói đuổi: đánh dấu hoàn thành câu dù chưa chấm AI (ví dụ chưa Pro). */
-  const ensureShadowRecorded = () => {
-    if (mode !== "shadow") return;
-    if (firstAccuracyRef.current !== null) return;
-    firstAccuracyRef.current = 100;
-    void saveResult(100);
+  /** Ghi kết quả — chỉ MỘT lần cho mỗi câu. */
+  const saveOnce = (accuracy: number, speakingScore: number | null) => {
+    if (savedRef.current) return;
+    savedRef.current = true;
     onDone({
       sentenceId: sentence.sentence_id,
       text: sentence.text,
-      typed: "",
-      accuracy: 100,
-      speakingScore: null,
+      typed: res?.filled.join(" ") ?? "",
+      accuracy,
+      speakingScore,
     });
+    if (!userId) return;
+    void (async () => {
+      try {
+        await supabase.rpc("save_dictation_result", {
+          p_sentence_id: sentence.sentence_id,
+          p_accuracy: accuracy,
+          p_mode: mode,
+          p_speaking_score: speakingScore,
+        });
+      } catch {
+        /* progress ghi thất bại — không chặn luyện tập */
+      }
+    })();
   };
 
   const handleCheck = (result: FillBlanksResult) => {
@@ -742,16 +761,22 @@ function SentenceTask({
     if (hintUsed) acc = Math.min(acc, 90);
     setRes(result);
     setChecked(true);
-    if (firstAccuracyRef.current === null) {
-      firstAccuracyRef.current = acc;
-      void saveResult(acc);
-      onDone({
-        sentenceId: sentence.sentence_id,
-        text: sentence.text,
-        typed: result.filled.join(" "),
-        accuracy: acc,
-      });
+    if (firstAccuracyRef.current === null) firstAccuracyRef.current = acc;
+    // Nghe chép thuần: ghi ngay. Kết hợp: chờ điểm nói (hoặc lúc sang câu khác).
+    if (mode === "dictation") saveOnce(firstAccuracyRef.current, null);
+  };
+
+  const handleScored = (score: number) => {
+    if (mode === "shadow") saveOnce(0, score);
+    else saveOnce(firstAccuracyRef.current ?? 0, score);
+  };
+
+  const handleNext = () => {
+    if (mode === "shadow") saveOnce(0, null);
+    else if (mode === "combo" && firstAccuracyRef.current !== null) {
+      saveOnce(firstAccuracyRef.current, null);
     }
+    onNext();
   };
 
   const handleRelisten = () => {
@@ -762,13 +787,68 @@ function SentenceTask({
     setSpeed((s) => (s === 0.75 ? 1 : s === 1 ? 1.25 : 0.75));
   };
 
-  const hasAudio = !!sentence.audio_url && sentence.start_sec != null && sentence.end_sec != null;
-  const segLen = Math.max(1, Math.round(Number(sentence.end_sec ?? 0) - Number(sentence.start_sec ?? 0)));
-  const showDictation = mode !== "shadow";
-  const showShadow = mode === "shadow" || (mode === "combo" && finishedSentence);
+  const audioRow = hasAudio ? (
+    <>
+      <div className="mt-5 flex items-center gap-3">
+        <SegmentPlayer
+          ref={playerRef}
+          path={sentence.audio_url as string}
+          startSec={Number(sentence.start_sec)}
+          endSec={Number(sentence.end_sec)}
+          speed={speed}
+          autoPlay
+          disabled={limitReached}
+          onEnded={() => setPlays((p) => p + 1)}
+          className="shrink-0 [&>div]:hidden"
+        />
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Phát lại"
+          disabled={limitReached}
+          onClick={() => playerRef.current?.play()}
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
 
-  return (
-    <Card className="mt-5 p-5 sm:p-6">
+        {/* Waveform trang trí — không phân tích audio thật */}
+        <div className="flex-1 min-w-0 h-10 flex items-center gap-[3px] overflow-hidden">
+          {bars.map((b, i) => (
+            <span key={i} className="flex-1 rounded-full bg-primary/30" style={{ height: `${b}%` }} />
+          ))}
+        </div>
+
+        <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+          0:00 / 0:{String(segLen).padStart(2, "0")}
+        </span>
+        <button
+          type="button"
+          onClick={cycleSpeed}
+          className="shrink-0 px-2.5 py-1 rounded-full border text-xs font-medium hover:border-primary"
+        >
+          {speed}x
+        </button>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        {settings.maxPlays > 0
+          ? `Đã nghe ${Math.min(plays, settings.maxPlays)}/${settings.maxPlays} lần`
+          : `Đã nghe ${plays} lần`}
+        {limitReached && " · đã hết lượt nghe"}
+      </p>
+    </>
+  ) : (
+    <p className="mt-4 text-sm text-destructive">Câu này chưa có dữ liệu audio.</p>
+  );
+
+  const nextButton = (
+    <Button size="sm" onClick={handleNext}>
+      {isLast ? "Xem kết quả" : "Câu tiếp theo"}
+      <ChevronRight className="w-4 h-4 ml-1" />
+    </Button>
+  );
+
+  const fillColumn = (
+    <div>
       <div className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
           <Headphones className="w-5 h-5 text-primary" />
@@ -781,81 +861,24 @@ function SentenceTask({
         </div>
       </div>
 
-      {hasAudio ? (
-        <>
-          <div className="mt-5 flex items-center gap-3">
-            <SegmentPlayer
-              ref={playerRef}
-              path={sentence.audio_url as string}
-              startSec={Number(sentence.start_sec)}
-              endSec={Number(sentence.end_sec)}
-              speed={speed}
-              autoPlay
-              disabled={limitReached}
-              onEnded={() => setPlays((p) => p + 1)}
-              className="shrink-0 [&>div]:hidden"
-            />
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Phát lại"
-              disabled={limitReached}
-              onClick={() => playerRef.current?.play()}
-            >
-              <RotateCcw className="w-4 h-4" />
-            </Button>
+      {audioRow}
 
-            {/* Waveform trang trí — không phân tích audio thật */}
-            <div className="flex-1 min-w-0 h-10 flex items-center gap-[3px] overflow-hidden">
-              {bars.map((b, i) => (
-                <span
-                  key={i}
-                  className="flex-1 rounded-full bg-primary/30"
-                  style={{ height: `${b}%` }}
-                />
-              ))}
-            </div>
+      <div className="mt-6 rounded-xl border bg-muted/30 p-4 sm:p-5">
+        <FillBlanks
+          text={sentence.text}
+          ratio={settings.blankRatio}
+          sentenceId={sentence.sentence_id}
+          hintUsed={hintUsed}
+          onHint={() => setHintUsed(true)}
+          onReset={() => {
+            setChecked(false);
+            setRes(null);
+          }}
+          onCheck={handleCheck}
+        />
+      </div>
 
-            <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-              0:00 / 0:{String(segLen).padStart(2, "0")}
-            </span>
-            <button
-              type="button"
-              onClick={cycleSpeed}
-              className="shrink-0 px-2.5 py-1 rounded-full border text-xs font-medium hover:border-primary"
-            >
-              {speed}x
-            </button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            {settings.maxPlays > 0
-              ? `Đã nghe ${Math.min(plays, settings.maxPlays)}/${settings.maxPlays} lần`
-              : `Đã nghe ${plays} lần`}
-            {limitReached && " · đã hết lượt nghe"}
-          </p>
-        </>
-      ) : (
-        <p className="mt-4 text-sm text-destructive">Câu này chưa có dữ liệu audio.</p>
-      )}
-
-      {showDictation && (
-        <div className="mt-6 rounded-xl border bg-muted/30 p-4 sm:p-5">
-          <FillBlanks
-            text={sentence.text}
-            ratio={settings.blankRatio}
-            sentenceId={sentence.sentence_id}
-            hintUsed={hintUsed}
-            onHint={() => setHintUsed(true)}
-            onReset={() => {
-              setChecked(false);
-              setRes(null);
-            }}
-            onCheck={handleCheck}
-          />
-        </div>
-      )}
-
-      {showDictation && checked && res && (
+      {checked && res && (
         <div className="mt-5 rounded-xl border bg-muted/40 p-4">
           <div className="flex items-center gap-2">
             {allCorrect ? (
@@ -869,279 +892,76 @@ function SentenceTask({
             </p>
           </div>
           <div className="mt-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              Đáp án đúng
-            </p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án đúng</p>
             <p className="leading-relaxed font-medium">{sentence.text}</p>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={handleRelisten}>
               <RotateCcw className="w-4 h-4 mr-2" /> Nghe lại &amp; sửa
             </Button>
-            {mode !== "combo" && (
-              <Button size="sm" onClick={onNext}>
-                {isLast ? "Xem kết quả" : "Câu tiếp theo"}
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            )}
+            {mode === "dictation" && nextButton}
           </div>
         </div>
       )}
 
-      {showShadow && (
-        <ShadowBlock
-          sentence={sentence}
-          isLast={isLast}
-          onPlayModel={() => playerRef.current?.play({ silentCount: true })}
-          onNext={() => {
-            ensureShadowRecorded();
-            onNext();
-          }}
-          onScored={(score) => {
-            void saveResult(mode === "shadow" ? 100 : (firstAccuracyRef.current ?? 0), score);
-            onDone({
-              sentenceId: sentence.sentence_id,
-              text: sentence.text,
-              typed: res?.filled.join(" ") ?? "",
-              accuracy: mode === "shadow" ? 100 : (firstAccuracyRef.current ?? 0),
-              speakingScore: score,
-            });
-          }}
-        />
-      )}
-    </Card>
-  );
-}
-
-
-/* ------------------------------------------------------------------ */
-/* Shadowing block (Nói đuổi)                                         */
-/* ------------------------------------------------------------------ */
-async function blobToBase64Raw(blob: Blob): Promise<string> {
-  const buf = await blob.arrayBuffer();
-  const bytes = new Uint8Array(buf);
-  const chunk = 0x8000;
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
-  }
-  return btoa(binary);
-}
-
-type ShadowResult = {
-  transcript: string;
-  score: number;
-  missed: string[];
-  extra: string[];
-};
-
-function ShadowBlock({
-  sentence,
-  isLast,
-  onPlayModel,
-  onNext,
-  onScored,
-}: {
-  sentence: SessionSentence;
-  isLast: boolean;
-  onPlayModel: () => void;
-  onNext: () => void;
-  onScored: (score: number) => void;
-}) {
-  const { isPro } = useIsPro();
-  const [blob, setBlob] = useState<Blob | null>(null);
-  const [grading, setGrading] = useState(false);
-  const [result, setResult] = useState<ShadowResult | null>(null);
-  const [gate, setGate] = useState<null | "pro" | "quota">(null);
-
-  const {
-    isRecording,
-    audioUrl,
-    timeLeft,
-    micError,
-    isRequestingMic,
-    startRecording,
-    stopRecording,
-  } = useAudioRecording({
-    maxDuration: 20,
-    questionKey: sentence.sentence_id,
-    onComplete: async (url: string) => {
-      try {
-        const res = await fetch(url);
-        setBlob(await res.blob());
-      } catch {
-        setBlob(null);
-      }
-    },
-  });
-
-  const missedSet = useMemo(
-    () => new Set((result?.missed ?? []).map((w) => w.toLowerCase().replace(/[^a-z0-9']/gi, ""))),
-    [result],
-  );
-
-  const handleGrade = async () => {
-    if (!blob) return;
-    setGrading(true);
-    setGate(null);
-    try {
-      const base64 = await blobToBase64Raw(blob);
-      const { data, error } = await supabase.functions.invoke("grade-shadowing", {
-        body: { audio: base64, mimeType: blob.type || "audio/webm", text: sentence.text },
-      });
-      let errCode = "";
-      if (error) {
-        try {
-          const body = await (error as any)?.context?.json?.();
-          errCode = String(body?.error ?? "");
-        } catch {
-          errCode = "";
-        }
-        if (!errCode) errCode = String((error as any)?.message ?? "");
-      } else if ((data as any)?.error) {
-        errCode = String((data as any).error);
-      }
-      const low = errCode.toLowerCase();
-      if (low.includes("quota")) {
-        setGate("quota");
-        return;
-      }
-      if (low.includes("pro")) {
-        setGate("pro");
-        return;
-      }
-      if (error || !data) {
-        toast({
-          variant: "destructive",
-          title: "Không chấm được",
-          description: "Vui lòng thử lại sau ít phút.",
-        });
-        return;
-      }
-      const r: ShadowResult = {
-        transcript: String((data as any).transcript ?? ""),
-        score: Number((data as any).score ?? 0),
-        missed: Array.isArray((data as any).missed) ? (data as any).missed : [],
-        extra: Array.isArray((data as any).extra) ? (data as any).extra : [],
-      };
-      setResult(r);
-      onScored(r.score);
-    } finally {
-      setGrading(false);
-    }
-  };
-
-  return (
-    <div className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4">
-      <div className="flex items-center gap-2">
-        <Mic className="w-5 h-5 text-primary" />
-        <p className="font-semibold">Nói đuổi</p>
-      </div>
-      <p className="text-sm text-muted-foreground mt-1">
-        Nghe câu mẫu rồi nhắc lại thật giống. Nghe mẫu không tính vào lượt nghe.
-      </p>
-
-      <div className="mt-3">
-        <Button variant="outline" size="sm" onClick={onPlayModel}>
-          <Headphones className="w-4 h-4 mr-2" /> Nghe câu mẫu
-        </Button>
-      </div>
-
-      <div className="mt-4">
-        <AudioRecorder
-          isRecording={isRecording}
-          onStartRecording={startRecording}
-          onStopRecording={stopRecording}
-          audioUrl={audioUrl}
-          timeLeft={timeLeft}
-          totalTime={20}
-          label="Thu âm câu nói của bạn"
-          micError={micError}
-          isRequestingMic={isRequestingMic}
-        />
-      </div>
-
-      {audioUrl && !isRecording && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="ghost" size="sm" onClick={startRecording}>
-            <RotateCcw className="w-4 h-4 mr-2" /> Thu lại
+      {!checked && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setChecked(true);
+              setRevealed(true);
+              if (firstAccuracyRef.current === null) firstAccuracyRef.current = 0;
+              setRes((r) => r ?? { correct: 0, total: 0, filled: [] });
+              if (mode === "dictation") saveOnce(0, null);
+            }}
+          >
+            Bỏ qua, xem đáp án
           </Button>
         </div>
       )}
-
-      {gate && (
-        <div className="mt-4">
-          <UpgradeLock reason={gate} featureLabel="AI chấm phát âm" />
-        </div>
-      )}
-
-      {!gate && !isPro && (
-        <div className="mt-4">
-          <UpgradeLock reason="pro" featureLabel="AI chấm phát âm" />
-        </div>
-      )}
-
-      {!gate && isPro && !result && (
-        <div className="mt-4">
-          <Button onClick={handleGrade} disabled={!blob || isRecording || grading}>
-            {grading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Đang chấm…
-              </>
-            ) : (
-              "Chấm phát âm"
-            )}
-          </Button>
-        </div>
-      )}
-
-      {result && (
-        <div className="mt-4 rounded-lg border bg-card p-4">
-          <p className="font-semibold">Điểm phát âm: {result.score}%</p>
-          <div className="mt-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
-              Bạn đã nói
-            </p>
-            <p className="leading-relaxed">
-              {result.transcript ? result.transcript : "(Không nghe được tiếng nói)"}
-            </p>
-          </div>
-          <div className="mt-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Câu mẫu</p>
-            <p className="leading-relaxed">
-              {sentence.text
-                .split(/\s+/)
-                .filter(Boolean)
-                .map((w, i) => {
-                  const norm = w.toLowerCase().replace(/[^a-z0-9']/gi, "");
-                  const bad = missedSet.has(norm);
-                  return (
-                    <span
-                      key={`${w}-${i}`}
-                      className={cn("mr-1", bad ? "text-destructive underline font-medium" : "")}
-                    >
-                      {w}
-                    </span>
-                  );
-                })}
-            </p>
-          </div>
-          {result.extra.length > 0 && (
-            <p className="text-xs text-muted-foreground mt-3">
-              Từ nói thừa: {result.extra.join(", ")}
-            </p>
-          )}
-        </div>
-      )}
-
-      <div className="mt-4">
-        <Button variant={result ? "default" : "secondary"} onClick={onNext}>
-          {isLast ? "Xem kết quả" : "Câu tiếp theo"} <ChevronRight className="w-4 h-4 ml-1" />
-        </Button>
-      </div>
     </div>
   );
+
+  const shadowPanel = (
+    <ShadowPanel
+      sentence={sentence}
+      speed={speed}
+      revealed={mode === "shadow" ? true : checked || revealed}
+      onScored={handleScored}
+      onPlayModel={() => playerRef.current?.play({ silentCount: true })}
+    />
+  );
+
+  /* ---- Nói đuổi: một cột ---- */
+  if (mode === "shadow") {
+    return (
+      <Card className="mt-5 p-5 sm:p-6">
+        {audioRow}
+        <div className="mt-5">{shadowPanel}</div>
+        <div className="mt-4 flex justify-end">{nextButton}</div>
+      </Card>
+    );
+  }
+
+  /* ---- Kết hợp: hai cột ---- */
+  if (mode === "combo") {
+    return (
+      <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        <Card className="p-5 sm:p-6">{fillColumn}</Card>
+        <div className="space-y-4">
+          {shadowPanel}
+          <div className="flex justify-end">{nextButton}</div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---- Nghe chép ---- */
+  return <Card className="mt-5 p-5 sm:p-6">{fillColumn}</Card>;
 }
+
 
 
 /* ------------------------------------------------------------------ */
