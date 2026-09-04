@@ -158,7 +158,7 @@ export default function ShadowPanel({
       const r: ShadowResult = {
         transcript: String((data as any).transcript ?? ""),
         score: Number((data as any).score ?? 0),
-        missed: Array.isArray((data as any).missed) ? (data as any).missed : [],
+        words: Array.isArray((data as any).words) ? ((data as any).words as ShadowWord[]) : [],
         extra: Array.isArray((data as any).extra) ? (data as any).extra : [],
       };
       setResult(r);
