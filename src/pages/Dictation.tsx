@@ -1042,6 +1042,7 @@ function SentenceTask({
               setChecked(true);
               setRevealed(true);
               if (firstAccuracyRef.current === null) firstAccuracyRef.current = 0;
+              resRef.current = resRef.current ?? { correct: 0, total: 0, filled: [] };
               setRes((r) => r ?? { correct: 0, total: 0, filled: [] });
               if (mode === "dictation") saveOnce(0, null);
             }}
