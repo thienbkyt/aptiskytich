@@ -5,6 +5,8 @@ import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import { Button } from "@/components/ui/button";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
+import { examLoadReason } from "@/lib/examLoadError";
+import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
 } from "@/lib/examTransformers";
@@ -74,6 +76,8 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const [loaded, setLoaded] = useState<LoadedSet[] | null>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [loadErr, setLoadErr] = useState<ExamLoadErrorState | null>(null);
+  const [loadTick, setLoadTick] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, any[]>>(() => (savedInit?.drafts as any) ?? {});
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
     const base = new Array(sets.length).fill(undefined);
@@ -139,10 +143,12 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     let cancelled = false;
     setPhase("loading");
     setLoaded(null);
+    setLoadErr(null);
     (async () => {
+      try {
       const allLoaded = await Promise.all(
         sets.map(async (set) => {
-          let questions = await fetchExamQuestions(set.id, { allowEmpty: true });
+          let questions = await fetchExamQuestions(set.id);
           const wrongIds = wrongQuestionIdsBySet?.[set.id];
           if (partType === "part1" && wrongIds?.length) {
             const wset = new Set(wrongIds);
@@ -182,9 +188,14 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       if (cancelled) return;
       setLoaded(allLoaded);
       setPhase("exam");
+      } catch (e) {
+        if (cancelled) return;
+        const reason = examLoadReason(e) ?? "fetch_failed";
+        setLoadErr({ reason, accessTier: (sets[0] as any)?.access_tier ?? null });
+      }
     })();
     return () => { cancelled = true; };
-  }, [setsKey, partType, attempt]);
+  }, [setsKey, partType, attempt, loadTick]);
 
   // Mục lục theo ĐỀ → pageBase = chỉ số đề hiện tại, pageTotal = tổng số đề.
   const pageTotal = sets.length;
@@ -460,6 +471,19 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           pageBase={page.priorPages}
           pageTotal={pages.length}
           initialSection={page.q}
+        />
+      </div>
+    );
+  }
+
+  if (loadErr) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamLoadErrorModal
+          state={loadErr}
+          onClose={() => { setLoadErr(null); onExit(); }}
+          onRetry={() => { setLoadErr(null); setLoadTick((t) => t + 1); }}
         />
       </div>
     );
