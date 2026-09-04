@@ -182,7 +182,7 @@ export default function Dictation() {
       "Luyện nghe chép chính tả với audio Listening Aptis thật, cắt sẵn từng câu. Chấm điểm tự động theo từ, lộ trình 3 cấp độ.",
   });
 
-  const [screen, setScreen] = useState<Screen>("mode");
+  const [screen, setScreen] = useState<Screen>("home");
   const [mode, setMode] = useState<PracticeMode>("dictation");
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [levels, setLevels] = useState<LevelRow[]>([]);
