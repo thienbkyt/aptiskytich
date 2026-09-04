@@ -4640,15 +4640,6 @@ export type Database = {
       }
       current_user_is_pro: { Args: never; Returns: boolean }
       current_user_tier: { Args: never; Returns: string }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       enqueue_grading_job: {
         Args: {
           p_last_error?: string
@@ -4866,26 +4857,9 @@ export type Database = {
         Args: { p_key: string; p_ref?: string; p_scope?: string }
         Returns: undefined
       }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
       open_sets_bulk: { Args: { p_set_ids: string[] }; Returns: boolean }
       promo_active: { Args: never; Returns: boolean }
       public_stats: { Args: never; Returns: Json }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
       redeem_voucher: { Args: { p_code: string }; Returns: Json }
       register_device: {
         Args: { p_device_id: string; p_label: string; p_type: string }
