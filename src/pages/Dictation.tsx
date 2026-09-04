@@ -1198,18 +1198,23 @@ function ResultScreen({
     if (finishedRef.current) return;
     finishedRef.current = true;
     if (!userId) return;
+    // Mode shadow: thống kê theo phát âm — mẫu số là số câu đã chấm, tử số là số câu >= 80.
+    // (RPC tự suy accuracy từ correct/total nên đây là cách đổi giá trị truyền vào mà không sửa RPC.)
+    const p_total = isShadow ? Math.max(1, spokenScores.length) : total;
+    const p_correct = isShadow ? goodSpeaking : correct;
     void supabase
       .rpc("finish_dictation_session", {
         p_mode: mode,
         p_level: level,
         p_set_id: setId,
-        p_total: total,
-        p_correct: correct,
+        p_total,
+        p_correct,
         p_duration_sec: durationSec,
       })
       .then(() => undefined, () => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const mm = Math.floor(durationSec / 60);
   const ss = durationSec % 60;
