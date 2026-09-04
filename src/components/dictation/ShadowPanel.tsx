@@ -195,11 +195,13 @@ export default function ShadowPanel({
         )}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 flex items-center gap-3">
         <Button variant="outline" size="sm" onClick={onPlayModel} disabled={!onPlayModel}>
           <Headphones className="w-4 h-4 mr-2" /> Nghe câu mẫu
         </Button>
+        <span className="text-xs text-muted-foreground">Tốc độ mẫu {speed}x · không tính lượt nghe</span>
       </div>
+
 
       <div className="mt-5">
         <p className="text-sm font-semibold mb-2">Luyện nói</p>
