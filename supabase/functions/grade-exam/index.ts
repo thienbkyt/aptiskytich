@@ -1097,7 +1097,12 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
       }
 
 
-      const fullTranscript = typeof parsed.fullTranscript === "string" ? parsed.fullTranscript : "";
+      const fullTranscript = (typeof parsed.fullTranscript === "string" && parsed.fullTranscript.trim())
+        ? parsed.fullTranscript
+        // textOnly (recording > 60s): the model saw no audio, so fall back to the
+        // transcript produced in step 1 rather than losing it.
+        : (textOnly ? preFullTranscript : "");
+
       // Part 4 safety-net: the review UI shows one card per sub-question, so every
       // item needs a transcript. If the model still returned too few / truncated
       // segments, split the full monologue ourselves — first on the student's
