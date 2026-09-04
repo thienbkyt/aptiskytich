@@ -528,7 +528,7 @@ export default function Dictation() {
           : { icon: Sparkles, label: "Chế độ Kết hợp" };
     const ModeIcon = modeMeta.icon;
     return (
-      <Shell wide={mode === "combo"}>
+      <Shell wide={mode === "combo"} hideBack>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={exitPractice}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Quay lại
