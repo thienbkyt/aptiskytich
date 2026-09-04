@@ -129,6 +129,17 @@ type Answer = {
   speakingScore?: number | null;
 };
 
+/** State của từng câu, giữ ở component cha để quay lại câu cũ không mất bài. */
+type TaskState = {
+  checked: boolean;
+  hintUsed: boolean;
+  accuracy: number | null;
+  res: FillBlanksResult | null;
+  speakingScore: number | null;
+  plays: number;
+  saved: boolean;
+};
+
 /* ------------------------------------------------------------------ */
 /* Page                                                               */
 /* ------------------------------------------------------------------ */
