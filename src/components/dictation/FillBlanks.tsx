@@ -56,7 +56,12 @@ function tokenize(text: string): Token[] {
   return out;
 }
 
-export type FillBlanksResult = { correct: number; total: number; filled: string[] };
+export type FillBlanksResult = {
+  correct: number;
+  total: number;
+  filled: string[];
+  filledSentence: string;
+};
 
 type Props = {
   text: string;
