@@ -295,15 +295,47 @@ export default function ShadowPanel({
           <p className="font-semibold">Điểm phát âm: {result.score}%</p>
           <div className="mt-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Bạn đã nói</p>
-            <p className="leading-relaxed">
-              {result.transcript ? result.transcript : "(Không nghe được tiếng nói)"}
-            </p>
+            {result.words.length > 0 ? (
+              <p className="leading-loose">
+                {result.words.map((w, i) => (
+                  <span key={`${w.expected}-${i}`} className="mr-2 inline-block">
+                    <span
+                      className={cn(
+                        "font-medium",
+                        w.status === "correct" && "text-green-600",
+                        w.status === "close" && "text-amber-600",
+                        w.status === "wrong" && "text-destructive",
+                        w.status === "missing" && "text-destructive line-through",
+                      )}
+                    >
+                      {w.status === "missing" ? w.expected : (w.spoken ?? w.expected)}
+                    </span>
+                    {w.status !== "correct" && w.ipa && (
+                      <span className="ml-1 text-[11px] text-muted-foreground/70">/{w.ipa}/</span>
+                    )}
+                  </span>
+                ))}
+              </p>
+            ) : (
+              <p className="leading-relaxed">(Không nghe được tiếng nói)</p>
+            )}
           </div>
           {result.extra.length > 0 && (
             <p className="text-xs text-muted-foreground mt-3">
               Từ nói thừa: {result.extra.join(", ")}
             </p>
           )}
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-green-600" /> đúng
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-500" /> hơi lệch
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-destructive" /> sai
+            </span>
+          </div>
         </div>
       )}
     </div>
