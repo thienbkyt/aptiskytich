@@ -24,16 +24,16 @@ export function buildWritingGradePayload(
   } as Record<string, unknown>;
 }
 
-/** Writes grade_payload onto the attempt row. Never throws. */
+/** Writes grade_payload onto the attempt row via SECURITY DEFINER RPC. Never throws. */
 export async function persistWritingGradePayload(
   testResultId: string,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown> | null,
 ): Promise<void> {
   try {
-    const { error } = await (supabase as any)
-      .from("test_results")
-      .update({ grade_payload: payload })
-      .eq("id", testResultId);
+    const { error } = await (supabase as any).rpc("update_test_result_grade_payload", {
+      p_test_result_id: testResultId,
+      p_grade_payload: payload,
+    });
     if (error) throw error;
   } catch (e) {
     console.warn("[persistWritingGradePayload] failed:", e);
@@ -194,10 +194,10 @@ export async function gradeWritingPartV2(
       // when the learner has quota again. Do not enqueue while quota-blocked.
       if (opts?.testResultId) {
         try {
-          await (supabase as any)
-            .from("test_results")
-            .update({ grade_payload: { ...gradePayload, _quotaBlocked: true } })
-            .eq("id", opts.testResultId);
+          await persistWritingGradePayload(opts.testResultId, {
+            ...gradePayload,
+            _quotaBlocked: true,
+          });
         } catch (e) {
           console.warn("[gradeWritingPartV2] failed to mark quota-blocked payload:", e);
         }
@@ -341,10 +341,7 @@ export async function saveWritingSkillResult(
     // Graded successfully — clear the pending payload marker.
     if (args.testResultId) {
       try {
-        await (supabase as any)
-          .from("test_results")
-          .update({ grade_payload: null })
-          .eq("id", args.testResultId);
+        await persistWritingGradePayload(args.testResultId, null);
       } catch (e) {
         console.warn("[saveWritingSkillResult] failed to clear grade_payload:", e);
       }

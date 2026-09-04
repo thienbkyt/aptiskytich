@@ -386,11 +386,11 @@ export async function mergeSnapshotAI(
       ...(extra || {}),
     };
 
-    // 1) Snapshot write (many screens read review_snapshot).
-    await supabase
-      .from("test_results")
-      .update({ review_snapshot: updated as any })
-      .eq("id", testResultId);
+    // 1) Snapshot write via SECURITY DEFINER RPC (many screens read review_snapshot).
+    await (supabase as any).rpc("merge_test_result_review_snapshot", {
+      p_test_result_id: testResultId,
+      p_review_snapshot: updated,
+    });
 
     // 2) Real columns (score/total/level) — same contract as the
     //    `process-grading-jobs` worker. Integers, clamped to [0, total].
