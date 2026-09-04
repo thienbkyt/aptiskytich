@@ -13,6 +13,7 @@ import { fetchExamQuestions, type ExamQuestionRow } from "@/hooks/useExamSets";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredNotice from "@/components/pro/PlanExpiredNotice";
 import { isExamEmptyError } from "@/lib/examLoadError";
+import { mapWithLimit } from "@/lib/concurrency";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
@@ -129,6 +130,8 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   /** Gắn phiên làm bài với bộ đề tự tạo (không đổi schema: ghi vào skill_scores). */
   const customSetExtra = customSetId ? { customSetId, customSetTitle: testTitle } : undefined;
   const [phase, setPhase] = useState<FlowPhase>("loading");
+  const [loadDone, setLoadDone] = useState(0);
+  const [loadTotal, setLoadTotal] = useState(0);
   const [skillData, setSkillData] = useState<SkillData>({
     speaking: [], listening: [], grammar: [], reading: [], writing: [],
   });
@@ -259,15 +262,16 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       return;
     }
 
-    // Load all questions for all sets in parallel
+    // Load questions theo lô (giới hạn 4 request đồng thời)
     let setsWithQuestions: any[];
+    setLoadTotal(sets.length);
+    setLoadDone(0);
     try {
-      setsWithQuestions = await Promise.all(
-        sets.map(async (s) => {
-          const questions = await fetchExamQuestions(s.id);
-          return { ...s, questions, partNorm: normalizePart(s.part) };
-        })
-      );
+      setsWithQuestions = await mapWithLimit(sets as any[], 4, async (s: any) => {
+        const questions = await fetchExamQuestions(s.id);
+        setLoadDone((n) => n + 1);
+        return { ...s, questions, partNorm: normalizePart(s.part) };
+      });
     } catch (e) {
       // A published set always has questions: an empty result means the rows are
       // hidden (RLS), typically because the learner's Pro plan expired.
@@ -557,7 +561,11 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Đang tải dữ liệu bài thi...</p>
+        <p className="text-sm text-muted-foreground">
+          {loadTotal > 0
+            ? `Đang tải đề... ${Math.min(loadDone, loadTotal)}/${loadTotal}`
+            : "Đang tải dữ liệu bài thi..."}
+        </p>
       </div>
     );
   }

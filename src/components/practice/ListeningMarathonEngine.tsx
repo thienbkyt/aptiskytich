@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
 import { examLoadReason } from "@/lib/examLoadError";
+import { mapWithLimit } from "@/lib/concurrency";
 import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
@@ -78,6 +79,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const [attempt, setAttempt] = useState(0);
   const [loadErr, setLoadErr] = useState<ExamLoadErrorState | null>(null);
   const [loadTick, setLoadTick] = useState(0);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, any[]>>(() => (savedInit?.drafts as any) ?? {});
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
     const base = new Array(sets.length).fill(undefined);
@@ -138,16 +140,16 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     [results]
   );
 
-  // Preload all sets in parallel
+  // Preload sets theo lô (giới hạn 4 request đồng thời)
   useEffect(() => {
     let cancelled = false;
     setPhase("loading");
     setLoaded(null);
     setLoadErr(null);
+    setLoadProgress(0);
     (async () => {
       try {
-      const allLoaded = await Promise.all(
-        sets.map(async (set) => {
+      const allLoaded = await mapWithLimit(sets, 4, async (set) => {
           let questions = await fetchExamQuestions(set.id);
           const wrongIds = wrongQuestionIdsBySet?.[set.id];
           if (partType === "part1" && wrongIds?.length) {
@@ -182,9 +184,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
               break;
             }
           }
+          if (!cancelled) setLoadProgress((n) => n + 1);
           return { engineData: data, pageCount } as LoadedSet;
-        })
-      );
+        });
       if (cancelled) return;
       setLoaded(allLoaded);
       setPhase("exam");
@@ -541,7 +543,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
         <main className="flex-1 flex items-center justify-center">
           <div className="space-y-4 text-center">
             <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
-            <TechSkeleton variant="text" className="w-40 mx-auto" />
+            <p className="text-sm text-muted-foreground">
+              Đang tải đề... {Math.min(loadProgress, sets.length)}/{sets.length}
+            </p>
           </div>
         </main>
       </div>
