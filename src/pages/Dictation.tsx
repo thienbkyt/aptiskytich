@@ -520,9 +520,31 @@ export default function Dictation() {
   if (screen === "practice") {
     const s = sentences[index];
     if (!s) return null;
+    const modeMeta =
+      mode === "dictation"
+        ? { icon: Headphones, label: "Nghe & điền từ" }
+        : mode === "shadow"
+          ? { icon: Mic, label: "Nghe & nói đuổi" }
+          : { icon: Sparkles, label: "Chế độ Kết hợp" };
+    const ModeIcon = modeMeta.icon;
     return (
-      <Shell onBack={exitPractice} backLabel="Thoát" backIcon={X}>
-        <div className="flex flex-wrap items-center gap-2">
+      <Shell wide={mode === "combo"}>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={exitPractice}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Quay lại
+          </Button>
+          <div className="flex-1 min-w-0 text-center">
+            <p className="font-semibold truncate">{s.set_title}</p>
+            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5 mt-0.5">
+              <ModeIcon className="w-3.5 h-3.5" /> {modeMeta.label}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={exitPractice}>
+            <X className="w-4 h-4 mr-1" /> Thoát
+          </Button>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -538,7 +560,6 @@ export default function Dictation() {
             {index + 1 >= sentences.length ? "Xem kết quả" : "Câu tiếp theo"}
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
-          <p className="text-xs text-muted-foreground ml-auto truncate max-w-[45%]">{s.set_title}</p>
         </div>
         <Progress value={((index + 1) / sentences.length) * 100} className="h-1 mt-3" />
 
@@ -589,24 +610,30 @@ function Shell({
   onBack,
   backLabel = "Quay lại",
   backIcon: BackIcon = ArrowLeft,
+  wide = false,
+  hideBack = false,
 }: {
   children: React.ReactNode;
   onBack?: () => void;
   backLabel?: string;
   backIcon?: typeof ArrowLeft;
+  wide?: boolean;
+  hideBack?: boolean;
 }) {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 pt-20 pb-10 sm:pt-24">
-        <button
-          type="button"
-          onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <BackIcon className="w-4 h-4" /> {backLabel}
-        </button>
+      <main className={cn("mx-auto px-4 pt-20 pb-10 sm:pt-24", wide ? "max-w-6xl" : "max-w-3xl")}>
+        {!hideBack && (
+          <button
+            type="button"
+            onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+          >
+            <BackIcon className="w-4 h-4" /> {backLabel}
+          </button>
+        )}
         {children}
       </main>
     </div>
