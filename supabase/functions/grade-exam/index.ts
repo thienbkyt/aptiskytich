@@ -763,6 +763,26 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
       for (const a of spokenAudios) {
         userParts.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
       }
+      // STEP 2 of the two-step worker flow: transcripts already produced by the
+      // `speaking_transcribe` step are attached as a REFERENCE so this call does
+      // not have to redo the transcription work. The rubric and the system
+      // prompt above are untouched.
+      {
+        const pre: string[] = Array.isArray((body as any).precomputedTranscripts)
+          ? (body as any).precomputedTranscripts.map((t: any) => String(t ?? ""))
+          : [];
+        const preFull = typeof (body as any).precomputedFullTranscript === "string"
+          ? (body as any).precomputedFullTranscript
+          : "";
+        if (pre.some((t) => t.trim().length > 0)) {
+          const lines = pre.map((t, i) => `${i + 1}. ${t.trim() ? t : "(nothing audible)"}`).join("\n");
+          userParts.push({
+            type: "text",
+            text: `REFERENCE TRANSCRIPTS (already transcribed verbatim from the SAME audio in a previous step — reuse them as the transcript values instead of re-transcribing; still LISTEN to the audio to judge pronunciation):\n${lines}${preFull ? `\n\nFULL RECORDING:\n${preFull}` : ""}`,
+          });
+        }
+      }
+
 
 
       const toolSchemaV2 = {
