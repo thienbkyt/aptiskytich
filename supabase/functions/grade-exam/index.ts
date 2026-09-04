@@ -722,7 +722,7 @@ CRITERIA:
   ${isPart4 ? "For PART 4: ONE monologue audio addresses several sub-questions. Judge on-topic PER SUB-QUESTION over the SAME monologue." : ""}
 - GRA (Grammar Range & Accuracy): reward attempts at complex structures even if not perfect. Only deduct band when errors block understanding. Do NOT count errors absolutely.
 - VRA (Vocabulary Range & Accuracy): same leniency; reward variety.
-- PRO (Pronunciation): JUDGE FROM AUDIO ONLY (intelligibility, rhythm, stress). Do not use spelling.
+- PRO (Pronunciation): ${textOnly ? (proBandOverride !== null ? `NO AUDIO IS ATTACHED for this part. Return pro = ${proBandOverride} exactly (it is taken from the student's shorter recordings in the same attempt) and describe pronunciation only in general terms, never claiming to have heard specific sounds.` : "NO AUDIO IS ATTACHED for this part. Estimate pro conservatively from the transcript (word choice, sentence control, signs of hesitation in the wording) and state in criteriaAnalysis.pro that it is an estimate from the transcript. Never claim to have heard specific sounds.") : "JUDGE FROM AUDIO ONLY (intelligibility, rhythm, stress). Do not use spelling."}
 - FC (Fluency & Coherence): pace, linking, hesitation, organisation.
 
 REWARDS: dám dùng cấu trúc phức tạp / từ vựng cao cấp / kết nối ý → cộng band ngay cả khi còn lỗi nhỏ.
