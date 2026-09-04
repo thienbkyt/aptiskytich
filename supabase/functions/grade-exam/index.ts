@@ -584,6 +584,28 @@ ${isP4T
 
     if ((type as string) === "speaking_v2") {
       const audios: string[] = Array.isArray((body as any).audios) ? (body as any).audios : [];
+      // ── 60-SECOND THRESHOLD (two-step worker flow) ───────────────────────────
+      // Recordings ≤ 60s are still graded WITH the audio, so PRO stays audio-based.
+      // Longer recordings (Part 4 monologues) are graded from the transcript only —
+      // the worker sets `textOnly` and, when the same attempt has shorter parts
+      // already graded, passes their averaged PRO band as `proBandOverride`.
+      const textOnly = (body as any).textOnly === true;
+      const proOverrideNum = Number((body as any).proBandOverride);
+      const proBandOverride = Number.isFinite(proOverrideNum)
+        ? Math.max(0, Math.min(5, Math.round(proOverrideNum)))
+        : null;
+      const preTranscripts: string[] = Array.isArray((body as any).precomputedTranscripts)
+        ? (body as any).precomputedTranscripts.map((t: any) => String(t ?? ""))
+        : [];
+      const preFullTranscript = typeof (body as any).precomputedFullTranscript === "string"
+        ? (body as any).precomputedFullTranscript
+        : "";
+      if (textOnly && !preTranscripts.some((t) => t.trim().length > 0) && !preFullTranscript.trim()) {
+        return new Response(JSON.stringify({ error: "textOnly grading requires precomputedTranscripts" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (!Array.isArray(questions) || questions.length === 0 || questions.length > 20) {
         return new Response(JSON.stringify({ error: "Invalid questions" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -602,7 +624,7 @@ ${isP4T
       });
       (questions as any).length = 0;
       (questions as any).push(...questionStrings);
-      if (!audios.length) {
+      if (!audios.length && !textOnly) {
         return new Response(JSON.stringify({ error: "No audios provided" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -617,8 +639,15 @@ ${isP4T
       const isPart4 = partType === "part4";
       const MIN_AUDIO_LEN = 40000; // ~30KB nhị phân; dưới mức này là khoảng lặng, KHÔNG gửi cho AI
       // Treat very short / empty base64 strings as "silent" (no recording).
-      const spokenMask: boolean[] = audios.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN);
-      const anySpoken = spokenMask.some(Boolean);
+      // In textOnly mode there is no audio at all: "spoken" is decided by whether
+      // the transcript produced in step 1 has any words.
+      const spokenMask: boolean[] = textOnly
+        ? (preTranscripts.length
+            ? preTranscripts.map((t) => t.trim().length > 0)
+            : questionStrings.map((_, i) => i === 0 && preFullTranscript.trim().length > 0))
+        : audios.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN);
+      const anySpoken = spokenMask.some(Boolean) || (textOnly && preFullTranscript.trim().length > 0);
+
       const itemCount = isPart4 ? Math.max(questions.length, 1) : questions.length;
 
       // No audio at all → don't call AI, return zeroed grading.
@@ -693,7 +722,7 @@ CRITERIA:
   ${isPart4 ? "For PART 4: ONE monologue audio addresses several sub-questions. Judge on-topic PER SUB-QUESTION over the SAME monologue." : ""}
 - GRA (Grammar Range & Accuracy): reward attempts at complex structures even if not perfect. Only deduct band when errors block understanding. Do NOT count errors absolutely.
 - VRA (Vocabulary Range & Accuracy): same leniency; reward variety.
-- PRO (Pronunciation): JUDGE FROM AUDIO ONLY (intelligibility, rhythm, stress). Do not use spelling.
+- PRO (Pronunciation): ${textOnly ? (proBandOverride !== null ? `NO AUDIO IS ATTACHED for this part. Return pro = ${proBandOverride} exactly (it is taken from the student's shorter recordings in the same attempt) and describe pronunciation only in general terms, never claiming to have heard specific sounds.` : "NO AUDIO IS ATTACHED for this part. Estimate pro conservatively from the transcript (word choice, sentence control, signs of hesitation in the wording) and state in criteriaAnalysis.pro that it is an estimate from the transcript. Never claim to have heard specific sounds.") : "JUDGE FROM AUDIO ONLY (intelligibility, rhythm, stress). Do not use spelling."}
 - FC (Fluency & Coherence): pace, linking, hesitation, organisation.
 
 REWARDS: dám dùng cấu trúc phức tạp / từ vựng cao cấp / kết nối ý → cộng band ngay cả khi còn lỗi nhỏ.
@@ -753,35 +782,39 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
         ? questions.map((q, i) => `${i + 1}. ${q}`).join("\n")
         : questions.map((q, i) => `${i + 1}. ${q}${spokenMask[i] ? "" : "  [NO AUDIO — student did not record]"}`).join("\n");
 
-      const audioOrderNote = isPart4
-        ? "ONE monologue audio follows."
-        : `${spokenAudios.length} audio file(s) follow, IN ORDER, for question number(s): ${spokenIdx.map((i) => i + 1).join(", ")}. Other questions have NO AUDIO and MUST be returned with empty transcript and onTopic=false.`;
+      const audioOrderNote = textOnly
+        ? "NO AUDIO IS ATTACHED (the recording is longer than 60 seconds and was already transcribed). Grade from the transcripts below only."
+        : isPart4
+          ? "ONE monologue audio follows."
+          : `${spokenAudios.length} audio file(s) follow, IN ORDER, for question number(s): ${spokenIdx.map((i) => i + 1).join(", ")}. Other questions have NO AUDIO and MUST be returned with empty transcript and onTopic=false.`;
 
       const userParts: any[] = [
         { type: "text", text: `Exam Part: ${partType}\n${isPart4 ? "Sub-questions" : "Questions"}:\n${questionListText}\n\n${audioOrderNote}` },
       ];
-      for (const a of spokenAudios) {
-        userParts.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
+      if (!textOnly) {
+        for (const a of spokenAudios) {
+          userParts.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
+        }
       }
       // STEP 2 of the two-step worker flow: transcripts already produced by the
-      // `speaking_transcribe` step are attached as a REFERENCE so this call does
-      // not have to redo the transcription work. The rubric and the system
-      // prompt above are untouched.
+      // `speaking_transcribe` step are attached. For recordings ≤ 60s the audio
+      // is attached as well (they are a REFERENCE only); for longer recordings
+      // (textOnly) they are the ONLY evidence available. The rubric and the
+      // system prompt above are untouched.
       {
-        const pre: string[] = Array.isArray((body as any).precomputedTranscripts)
-          ? (body as any).precomputedTranscripts.map((t: any) => String(t ?? ""))
-          : [];
-        const preFull = typeof (body as any).precomputedFullTranscript === "string"
-          ? (body as any).precomputedFullTranscript
-          : "";
-        if (pre.some((t) => t.trim().length > 0)) {
+        const pre = preTranscripts;
+        const preFull = preFullTranscript;
+        if (pre.some((t) => t.trim().length > 0) || (textOnly && preFull.trim())) {
           const lines = pre.map((t, i) => `${i + 1}. ${t.trim() ? t : "(nothing audible)"}`).join("\n");
           userParts.push({
             type: "text",
-            text: `REFERENCE TRANSCRIPTS (already transcribed verbatim from the SAME audio in a previous step — reuse them as the transcript values instead of re-transcribing; still LISTEN to the audio to judge pronunciation):\n${lines}${preFull ? `\n\nFULL RECORDING:\n${preFull}` : ""}`,
+            text: textOnly
+              ? `TRANSCRIPTS (verbatim, transcribed from the student's recording in a previous step — this is the ONLY evidence; no audio is attached):\n${lines}${preFull ? `\n\nFULL RECORDING TRANSCRIPT:\n${preFull}` : ""}`
+              : `REFERENCE TRANSCRIPTS (already transcribed verbatim from the SAME audio in a previous step — reuse them as the transcript values instead of re-transcribing; still LISTEN to the audio to judge pronunciation):\n${lines}${preFull ? `\n\nFULL RECORDING:\n${preFull}` : ""}`,
           });
         }
       }
+
 
 
 
@@ -999,9 +1032,27 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
       const tf = Math.max(0, Math.min(5, Math.round(Number(b.tf ?? 0))));
       const gra = Math.max(0, Math.min(5, Math.round(Number(b.gra ?? 0))));
       const vra = Math.max(0, Math.min(5, Math.round(Number(b.vra ?? 0))));
-      const pro = Math.max(0, Math.min(5, Math.round(Number(b.pro ?? 0))));
+      // Recording longer than 60s → graded without audio. PRO comes from the
+      // shorter parts of the same attempt when available; otherwise it is the
+      // model's transcript-based estimate and gets labelled as such below.
+      const proEstimatedFromText = textOnly && proBandOverride === null;
+      const pro = textOnly && proBandOverride !== null
+        ? proBandOverride
+        : Math.max(0, Math.min(5, Math.round(Number(b.pro ?? 0))));
       const fc = Math.max(0, Math.min(5, Math.round(Number(b.fc ?? 0))));
       const raw_part = tf * 2 + gra + vra + pro + fc;
+      if (textOnly) {
+        const note = proEstimatedFromText
+          ? "Phát âm ước lượng từ bản chữ."
+          : "Phát âm lấy trung bình từ các phần ghi âm ngắn trong cùng lượt làm bài.";
+        parsed.criteriaAnalysis = parsed.criteriaAnalysis || {};
+        const prev = String(parsed.criteriaAnalysis.pro ?? "").trim();
+        parsed.criteriaAnalysis.pro = prev ? `${note} ${prev}` : note;
+        const prevAnalysis = String(parsed.analysis ?? "").trim();
+        parsed.analysis = prevAnalysis ? `${prevAnalysis} ${note}` : note;
+        parsed.bands = { ...(parsed.bands || {}), pro };
+      }
+
 
       try {
         await logAIUsage({
@@ -1046,7 +1097,12 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
       }
 
 
-      const fullTranscript = typeof parsed.fullTranscript === "string" ? parsed.fullTranscript : "";
+      const fullTranscript = (typeof parsed.fullTranscript === "string" && parsed.fullTranscript.trim())
+        ? parsed.fullTranscript
+        // textOnly (recording > 60s): the model saw no audio, so fall back to the
+        // transcript produced in step 1 rather than losing it.
+        : (textOnly ? preFullTranscript : "");
+
       // Part 4 safety-net: the review UI shows one card per sub-question, so every
       // item needs a transcript. If the model still returned too few / truncated
       // segments, split the full monologue ourselves — first on the student's

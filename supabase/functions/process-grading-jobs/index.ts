@@ -143,6 +143,87 @@ async function ensureSpeakingTranscript(
   return { payload: next };
 }
 
+// ─── 60-second audio threshold for step 2 ───────────────────────────────────
+// ≤ 60s (Parts 1-3): step 2 still receives the recording, so PRO is graded from
+//   the audio exactly as before.
+// > 60s (Part 4 monologue): step 2 receives the transcript ONLY. PRO is then the
+//   average PRO of the ≤ 60s parts of the SAME attempt; with no such part the
+//   model estimates it from the transcript and the feedback says so.
+const AUDIO_MAX_SEC = 60;
+
+/** Longest recording of this job in seconds, or null when unknown. */
+function longestRecordingSec(payload: any): number | null {
+  const raw = payload?.durationsSec ?? payload?.durationSeconds ?? null;
+  const list = Array.isArray(raw) ? raw : (raw == null ? [] : [raw]);
+  const nums = list.map((v: any) => Number(v)).filter((n: number) => Number.isFinite(n) && n > 0);
+  if (!nums.length) return null;
+  return Math.max(...nums);
+}
+
+/** True when this job's audio must be withheld from the grading step. */
+function isLongRecording(payload: any): boolean {
+  const sec = longestRecordingSec(payload);
+  if (sec != null) return sec > AUDIO_MAX_SEC;
+  // No duration recorded (older submissions): Part 4 is the ~2-minute monologue,
+  // every other part is capped well under 60s by the exam timer.
+  return String(payload?.partType || "") === "part4";
+}
+
+/**
+ * Average PRO band of the short (≤ 60s) speaking parts already graded in the
+ * same attempt — session first, then the standalone attempt. Null when none.
+ */
+async function peerProBand(job: any): Promise<number | null> {
+  const meta = job.payload?._meta || {};
+  const sessionId: string | null = meta.fullTestSessionId ?? null;
+  try {
+    let query = admin
+      .from("grading_jobs")
+      .select("part, payload, raw_response, status")
+      .eq("user_id", job.user_id)
+      .eq("skill", "speaking")
+      .eq("status", "done");
+    if (sessionId) {
+      query = query.eq("payload->_meta->>fullTestSessionId", sessionId);
+    } else if (job.test_result_id) {
+      query = query.eq("test_result_id", job.test_result_id);
+    } else {
+      return null;
+    }
+    const { data, error } = await query;
+    if (error || !data) return null;
+    const bands: number[] = [];
+    for (const j of data as any[]) {
+      if (j.part === job.part) continue;               // not this very part
+      if (isLongRecording(j.payload || {})) continue;  // only ≤ 60s parts count
+      const pro = Number(j?.raw_response?.bands?.pro);
+      if (Number.isFinite(pro) && pro > 0) bands.push(pro);
+    }
+    if (!bands.length) return null;
+    return Math.round(bands.reduce((s, n) => s + n, 0) / bands.length);
+  } catch (e) {
+    console.warn("[worker] peerProBand failed:", (e as any)?.message || e);
+    return null;
+  }
+}
+
+/** Payload for grading step 2, applying the 60s audio threshold. */
+async function buildGradePayload(job: any, payload: any): Promise<any> {
+  if (job.skill !== "speaking" || payload?.type !== "speaking_v2") return payload;
+  if (!isLongRecording(payload)) return payload;        // ≤ 60s → keep the audio
+
+  const proBandOverride = await peerProBand(job);
+  // Drop the audio references so hydrateAudioPaths downloads nothing.
+  const { audioPaths, audios, ...rest } = payload;
+  return {
+    ...rest,
+    textOnly: true,
+    ...(proBandOverride != null ? { proBandOverride } : {}),
+  };
+}
+
+
+
 
 // ─── permanent-failure detection ────────────────────────────────────────────
 // Never retry quota / rate / credit / validation errors — they never succeed
@@ -580,8 +661,11 @@ Deno.serve(async (req) => {
           continue;
         }
         // Step 2: rubric grading (unchanged prompt), separate 60s budget.
-        const payload = step1.payload;
+        // Recordings over 60s are graded from the transcript only (see
+        // buildGradePayload) — everything ≤ 60s still goes in with its audio.
+        const payload = await buildGradePayload(job, step1.payload);
         const { ok, status, body } = await invokeGradeExam(payload, job.user_id);
+
 
 
         if (ok && body && !body.error) {

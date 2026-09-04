@@ -896,6 +896,11 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
                   partType: sub.partType,
                   questions,
                   audioPaths: audioPathsByPart[originalIdx] ?? [],
+                  // Real recording lengths → the worker applies the 60s rule exactly.
+                  durationsSec: sub.items.map((it) =>
+                    typeof it.actualSpoken === "number" ? it.actualSpoken : null,
+                  ),
+
                 },
                 lastError: (e as any)?.message || "live_grade_failed",
               });

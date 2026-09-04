@@ -502,7 +502,16 @@ const SpeakingExamEngine = ({
           testResultId,
           examSetId: examSetId ?? null,
           fullTestSessionId: null,
-          payload: { type: "speaking_v2", partType, questions, audioPaths },
+          // durationsSec lets the worker apply the 60-second rule with the real
+          // recording lengths instead of guessing from the part number.
+          payload: {
+            type: "speaking_v2",
+            partType,
+            questions,
+            audioPaths,
+            durationsSec: durationsRef.current.map((d) => (typeof d === "number" ? d : null)),
+          },
+
         });
 
         if (!queued.id) {
