@@ -18,16 +18,23 @@ body{margin:0;padding:20px 18px 60px;background:#f1f5f9;color:var(--ink);
 .sheet{background:#fff;border-radius:14px;padding:22px 24px 28px;box-shadow:0 1px 3px rgba(15,23,42,.08)}
 h1{font-size:21px;margin:0 0 4px;letter-spacing:-.3px}
 .sub{color:var(--muted);font-size:11.5px}
-.hr{height:3px;background:var(--brand);border-radius:2px;margin:12px 0 16px}
+.hr{height:3px;background:var(--brand);border-radius:2px;margin:12px 0 14px}
 #bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;
- padding:9px 12px;background:var(--brand-soft);border:1px solid #d6e3ef;border-radius:10px;margin-bottom:6px}
+ padding:9px 12px;background:var(--brand-soft);border:1px solid #d6e3ef;border-radius:10px;margin-bottom:10px}
 #bar label{font-size:11.5px;color:var(--muted);font-weight:600}
 #bar button{font:inherit;font-size:12px;padding:5px 12px;border:1px solid #c9d8e6;background:#fff;
  color:var(--brand);border-radius:7px;cursor:pointer}
 #bar button.on{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
 #bar input[type=date]{font:inherit;font-size:12px;padding:4px 7px;border:1px solid #c9d8e6;border-radius:7px;background:#fff}
 #bar .sep{width:1px;height:20px;background:#c9d8e6;margin:0 5px}
-.sec-h{display:flex;align-items:baseline;gap:10px;margin:24px 0 10px}
+#tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+#tabs button{font:inherit;font-size:13px;font-weight:600;padding:8px 15px;border:none;background:none;
+ color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px}
+#tabs button.on{color:var(--brand);border-bottom-color:var(--brand)}
+.insight{background:var(--brand-soft);border:1px solid #d6e3ef;border-radius:9px;padding:9px 13px;
+ font-size:12.5px;margin-bottom:14px;line-height:1.5}
+.insight b{color:var(--brand)}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin:22px 0 10px}
 .sec-h h2{font-size:12px;margin:0;color:var(--brand);text-transform:uppercase;letter-spacing:.7px;font-weight:800}
 .sec-h .tag{font-size:11px;color:var(--muted)}
 .row{display:grid;gap:10px}
@@ -37,7 +44,7 @@ h1{font-size:21px;margin:0 0 4px;letter-spacing:-.3px}
 .card .val{font-size:18px;font-weight:750;margin-top:4px;letter-spacing:-.4px}
 .card .note{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.35}
 .hero .card{background:linear-gradient(180deg,#f7fbff,#fff);border-color:#cddcea;padding:14px 16px}
-.hero .val{font-size:24px}
+.hero .val{font-size:23px}
 .pos{color:var(--up)}.neg{color:var(--down)}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
 th{background:var(--brand);color:#fff;text-align:left;padding:7px 10px;font-size:11px;font-weight:600;
@@ -79,35 +86,32 @@ tr.tot td{font-weight:750;border-top:2px solid var(--brand);background:var(--bra
 </div>
 
 <script>
-const SUPABASE_URL = "https://bacoamhbatqpxatrrflz.supabase.co";
-const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhY29hbWhiYXRxcHhhdHJyZmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMTgyODgsImV4cCI6MjA4ODY5NDI4OH0.BcFLY1mFlFxCK7E0E89iLlh4am3mEXkbYZaFJ4O_mpw";
-
+const SUPABASE_URL="https://bacoamhbatqpxatrrflz.supabase.co";
+const ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhY29hbWhiYXRxcHhhdHJyZmx6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMTgyODgsImV4cCI6MjA4ODY5NDI4OH0.BcFLY1mFlFxCK7E0E89iLlh4am3mEXkbYZaFJ4O_mpw";
 const PLAN_LABEL={day:"1 ngày",week:"1 tuần",month:"1 tháng",quarter:"3 tháng",half_year:"6 tháng",lifetime:"Trọn đời"};
 const vnd=n=>(n==null||!isFinite(n)?"–":Math.round(n).toLocaleString("vi-VN")+"đ");
 const num=n=>(n==null||!isFinite(n)?"–":Math.round(n).toLocaleString("vi-VN"));
 const pct=n=>(isFinite(n)?(n*100).toFixed(1)+"%":"–");
 const dm=d=>d.split("-").reverse().join("/");
+const mk=d=>d.slice(0,7);
 const card=(l,v,nt,cls="")=>`<div class="card"><div class="lab">${l}</div><div class="val ${cls}">${v}</div><div class="note">${nt||""}</div></div>`;
-
-let D=null, RANGE={mode:"month",from:null,to:null}, chart=null;
-
+let D=null,RANGE={mode:"month",from:null,to:null},TAB="overview",charts=[];
 function fail(t,m){document.getElementById("root").innerHTML=
  `<div class="center"><div class="box"><h2>${t}</h2><p>${m}</p></div></div>`;}
-
 const inRange=d=>RANGE.mode==="all"?true:(d>=RANGE.from&&d<=RANGE.to);
 function rangeLabel(){
  if(RANGE.mode==="all")return "toàn thời gian";
  if(RANGE.mode==="month")return "tháng "+RANGE.from.slice(0,7);
  if(RANGE.mode==="30d")return "30 ngày gần nhất";
- return dm(RANGE.from)+" → "+dm(RANGE.to);
-}
-
+ return dm(RANGE.from)+" → "+dm(RANGE.to);}
 function addDays(s,k){const p=s.split("-").map(Number);const dt=new Date(Date.UTC(p[0],p[1]-1,p[2]));
  dt.setUTCDate(dt.getUTCDate()+k);return dt.toISOString().slice(0,10);}
+function mkChart(id,cfg){const el=document.getElementById(id);if(el)charts.push(new Chart(el,cfg));}
 
 function shell(){
- const today=D.today, m0=today.slice(0,8)+"01", d30=addDays(today,-29);
+ const today=D.today,m0=today.slice(0,8)+"01";
  if(RANGE.mode==="month"&&!RANGE.from){RANGE.from=m0;RANGE.to=today;}
+ const tabs=[["overview","Tổng quan"],["kpi","KPI tháng"],["revenue","Doanh thu"],["customers","Khách hàng"],["costs","Chi phí"]];
  return `<div class="sheet">
   <h1>Báo cáo tài chính — Aptis Kỳ Tích</h1>
   <div class="sub">Số liệu trực tiếp từ hệ thống, cập nhật lúc mở trang · Đơn vị VND · Mọi mốc ngày theo giờ Việt Nam
@@ -123,206 +127,244 @@ function shell(){
    <label>đến</label><input type="date" id="t" value="${RANGE.to||today}" min="2026-03-01" max="${today}">
    <button id="go">Áp dụng</button>
   </div>
+  <div id="tabs">${tabs.map(([k,l])=>`<button data-t="${k}" class="${k===TAB?"on":""}">${l}</button>`).join("")}</div>
   <div id="body"></div>
- </div>`;
-}
+  <div class="foot">Doanh thu lấy từ cổng thanh toán PayOS, chỉ tính đơn đã thanh toán. Chi phí lấy từ sổ kế toán nội bộ.
+  Quỹ Kỳ Tích gồm vốn góp ban đầu cộng doanh thu, trừ các khoản đã chi.
+  Trang này dành riêng cho ${D.viewer||"cổ đông"}, vui lòng không chuyển tiếp đường dẫn.</div>
+ </div>`;}
 
-function wireBar(){
- const today=D.today, m0=today.slice(0,8)+"01", d30=addDays(today,-29);
+function wire(){
+ const today=D.today,m0=today.slice(0,8)+"01",d30=addDays(today,-29);
  document.querySelectorAll("#bar button[data-m]").forEach(b=>{
   if(b.dataset.m===RANGE.mode)b.classList.add("on");
   b.onclick=()=>{const m=b.dataset.m;
    if(m==="all")RANGE={mode:"all",from:null,to:null};
    if(m==="month")RANGE={mode:"month",from:m0,to:today};
    if(m==="30d")RANGE={mode:"30d",from:d30,to:today};
-   render();};
- });
+   render();};});
  document.getElementById("go").onclick=()=>{
-  RANGE={mode:"custom",from:document.getElementById("f").value,to:document.getElementById("t").value};
-  render();};
-}
+  RANGE={mode:"custom",from:document.getElementById("f").value,to:document.getElementById("t").value};render();};
+ document.querySelectorAll("#tabs button").forEach(b=>{b.onclick=()=>{TAB=b.dataset.t;render();};});}
 
-function render(){
- document.getElementById("root").innerHTML=shell();
- wireBar();
+function calc(){
  const S=D.settings||{},T=D.totals||{},subs=D.subs||{},fn=D.funnel||{};
  const daily=D.daily||[],planM=D.plan_monthly||[],expItems=D.exp_items||[];
- const unpaid=D.unpaid||[],newUsers=D.new_users||[],byHour=(D.by_hour||[]).slice(0,5);
- const today=D.today, curM=today.slice(0,7);
-
- const rev=+T.rev||0, ord=+T.orders||0, expPaid=+T.exp_paid||0, expUnpaid=+T.exp_unpaid||0;
- const fund0=+T.fund_initial||0, expAll=expPaid+expUnpaid;
- const fundNow=fund0+rev-expPaid, fundAfter=fundNow-expUnpaid;
- const pnl=rev-expAll, arpu=ord?rev/ord:0;
-
- const dF=daily.filter(x=>inRange(x.d));
- const eF=expItems.filter(x=>inRange(x.d));
- const revR=dF.reduce((a,x)=>a+ +x.dt,0), ordR=dF.reduce((a,x)=>a+x.n,0);
- const expR=eF.reduce((a,x)=>a+ +x.amt,0);
- const arpuR=ordR?revR/ordR:0;
+ const today=D.today,curM=today.slice(0,7);
+ const dayN=+today.slice(8,10);
+ const daysM=new Date(+today.slice(0,4),+today.slice(5,7),0).getDate();
+ const prevM=(()=>{const y=+today.slice(0,4),m=+today.slice(5,7);
+   return m===1?(y-1)+"-12":y+"-"+String(m-1).padStart(2,"0");})();
+ const rev=+T.rev||0,ord=+T.orders||0,expPaid=+T.exp_paid||0,expUnpaid=+T.exp_unpaid||0;
+ const fund0=+T.fund_initial||0,expAll=expPaid+expUnpaid;
+ const fundNow=fund0+rev-expPaid,fundAfter=fundNow-expUnpaid;
+ const pnl=rev-expAll,arpu=ord?rev/ord:0;
+ const dF=daily.filter(x=>inRange(x.d)),eF=expItems.filter(x=>inRange(x.d));
+ const revR=dF.reduce((a,x)=>a+ +x.dt,0),ordR=dF.reduce((a,x)=>a+x.n,0);
+ const expR=eF.reduce((a,x)=>a+ +x.amt,0),arpuR=ordR?revR/ordR:0;
  const full=dF.filter(x=>x.d!==today);
  const revPerDay=full.length?full.reduce((a,x)=>a+ +x.dt,0)/full.length:0;
- const revCur=daily.filter(x=>x.d.slice(0,7)===curM).reduce((a,x)=>a+ +x.dt,0);
- const dayOfMonth=+today.slice(8,10);
- const projRev=dayOfMonth?revCur/dayOfMonth*(new Date(+today.slice(0,4),+today.slice(5,7),0).getDate()):0;
-
+ const revM=daily.filter(x=>mk(x.d)===curM).reduce((a,x)=>a+ +x.dt,0);
+ const ordM=daily.filter(x=>mk(x.d)===curM).reduce((a,x)=>a+x.n,0);
+ const projRev=dayN?revM/dayN*daysM:0;
  const revByM={},ordByM={},expByM={};
- daily.forEach(x=>{const m=x.d.slice(0,7);revByM[m]=(revByM[m]||0)+ +x.dt;ordByM[m]=(ordByM[m]||0)+x.n;});
- expItems.forEach(x=>{const m=x.d.slice(0,7);expByM[m]=(expByM[m]||0)+ +x.amt;});
+ daily.forEach(x=>{const m=mk(x.d);revByM[m]=(revByM[m]||0)+ +x.dt;ordByM[m]=(ordByM[m]||0)+x.n;});
+ expItems.forEach(x=>{const m=mk(x.d);expByM[m]=(expByM[m]||0)+ +x.amt;});
  const months=[...new Set([...Object.keys(revByM),...Object.keys(expByM)])].sort();
-
+ const byCat={},byGroup={};
+ eF.forEach(x=>{byCat[x.c]=(byCat[x.c]||0)+ +x.amt;byGroup[x.g]=(byGroup[x.g]||0)+ +x.amt;});
  const planAgg={};
  planM.filter(p=>RANGE.mode==="all"||(p.m>=RANGE.from.slice(0,7)&&p.m<=RANGE.to.slice(0,7)))
   .forEach(p=>{const a=planAgg[p.k]||(planAgg[p.k]={n:0,dt:0});a.n+=p.n;a.dt+=+p.dt;});
- const planRev=Object.values(planAgg).reduce((a,x)=>a+x.dt,0)||1;
-
- const byCat={},byGroup={};
- eF.forEach(x=>{byCat[x.c]=(byCat[x.c]||0)+ +x.amt;byGroup[x.g]=(byGroup[x.g]||0)+ +x.amt;});
- const maxCat=Math.max(...Object.values(byCat),1);
-
- const nuCur=newUsers.filter(x=>x.d.slice(0,7)===curM).reduce((a,x)=>a+x.n,0);
+ const nuM=(D.new_users||[]).filter(x=>mk(x.d)===curM).reduce((a,x)=>a+x.n,0);
+ const nuR=(D.new_users||[]).filter(x=>inRange(x.d)).reduce((a,x)=>a+x.n,0);
  const linkTao=+fn.link_tao||0,linkTra=+fn.link_tra||0,boDo=linkTao-linkTra;
  const doneRate=linkTao?linkTra/linkTao:0;
- const fnMax=Math.max(nuCur,linkTao,1);
+ return {S,subs,fn,daily,today,curM,prevM,dayN,daysM,rev,ord,expPaid,expUnpaid,fund0,expAll,fundNow,fundAfter,
+  pnl,arpu,dF,eF,revR,ordR,expR,arpuR,revPerDay,revM,ordM,projRev,revByM,ordByM,expByM,months,byCat,byGroup,
+  planAgg,nuM,nuR,linkTao,linkTra,boDo,doneRate,unpaid:D.unpaid||[],byHour:(D.by_hour||[]).slice(0,5)};}
+
+function tOverview(C){
+ const show=C.dF.slice(-62);
+ document.getElementById("body").innerHTML=`
+ <div class="sec-h"><h2>Sức khoẻ tài chính</h2><span class="tag">kỳ: ${rangeLabel()}</span></div>
+ <div class="row c4 hero">
+  ${card("Tổng quỹ Kỳ Tích",vnd(C.fundNow),`${vnd(C.fund0)} vốn + ${vnd(C.rev)} doanh thu − ${vnd(C.expPaid)} đã chi`)}
+  ${card("Doanh thu kỳ này",vnd(C.revR),`${num(C.ordR)} đơn · ARPU ${vnd(C.arpuR)}`)}
+  ${card("Lãi / lỗ kỳ này",vnd(C.revR-C.expR),`chi phí ${vnd(C.expR)}`,C.revR-C.expR>=0?"pos":"neg")}
+  ${card("Lãi / lỗ luỹ kế",vnd(C.pnl),`${vnd(C.rev)} thu − ${vnd(C.expAll)} chi`,C.pnl>=0?"pos":"neg")}
+ </div>
+ <div class="row c4" style="margin-top:10px">
+  ${card("Doanh số TB / ngày",vnd(C.revPerDay),"đã loại hôm nay")}
+  ${card("Dự kiến hết tháng "+C.curM,vnd(C.projRev),"theo run-rate hiện tại")}
+  ${card("Quỹ sau khi trả hết nợ",vnd(C.fundAfter),C.expUnpaid?`còn ${vnd(C.expUnpaid)} chưa TT`:"không còn công nợ")}
+  ${card("Người dùng mới trong kỳ",num(C.nuR),"đăng ký tài khoản")}
+ </div>
+ <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
+ <div class="chart"><canvas id="c1"></canvas></div>`;
+ mkChart("c1",{type:"bar",
+  data:{labels:show.map(x=>dm(x.d).slice(0,5)),datasets:[{data:show.map(x=>+x.dt),
+   backgroundColor:show.map(x=>x.d===C.today?"#94a3b8":"#1f4e79"),borderRadius:4,maxBarThickness:40}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+   tooltip:{callbacks:{label:c=>vnd(c.parsed.y)+" · "+show[c.dataIndex].n+" đơn"}}},
+   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(1)+"tr",font:{size:11}}},
+    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});}
+
+function tKPI(C){
+ const KPI=+(C.S["kpi_"+C.curM.replace("-","")]||0);
+ if(!KPI){document.getElementById("body").innerHTML=
+  `<div class="insight">Chưa đặt KPI cho tháng ${C.curM}.</div>`;return;}
+ const daysLeft=Math.max(C.daysM-C.dayN,1);
+ const done=C.revM/KPI,remaining=Math.max(KPI-C.revM,0);
+ const rateNow=C.dayN?C.revM/C.dayN:0,needPerDay=remaining/daysLeft;
+ const mult=rateNow?needPerDay/rateNow:null;
+ const prevDaily=C.daily.filter(x=>mk(x.d)===C.prevM);
+ const prevTot=prevDaily.reduce((a,x)=>a+ +x.dt,0);
+ const prevCum=prevDaily.filter(x=>+x.d.slice(8,10)<=C.dayN).reduce((a,x)=>a+ +x.dt,0);
+ const paceExp=prevTot?prevCum/prevTot:C.dayN/C.daysM;
+ const onPace=C.revM/(KPI*paceExp);
+ const L=C.linkTao,P=C.linkTra;
+ const arpuM=C.ordM?C.revM/C.ordM:0;
+ const b=C.nuM?L/C.nuM:0,c=L?P/L:0;
+ const chain=[
+  ["Đăng ký mới / ngày",num(C.nuM/Math.max(C.dayN,1)),mult?num(C.nuM/Math.max(C.dayN,1)*mult)+" /ngày":"–"],
+  ["Đăng ký → bấm mua",pct(b),mult?pct(Math.min(b*mult,1)):"–"],
+  ["Bấm mua → trả tiền",pct(c),mult?pct(Math.min(c*mult,1)):"–"],
+  ["ARPU",vnd(arpuM),mult?vnd(arpuM*mult):"–"]];
+ const feas=mult==null?"":mult<=1.3?`<b class="pos">Khả thi</b> nếu giữ đà và nhích nhẹ.`
+  :mult<=2?`<b>Căng nhưng với được</b> — cần tăng tốc ×${mult.toFixed(1)}.`
+  :`<b class="neg">Rất khó với đà hiện tại</b> — cần ×${mult.toFixed(1)} mỗi ngày còn lại.`;
+ document.getElementById("body").innerHTML=`
+ <div class="insight">KPI tháng ${C.curM}: <b>${vnd(KPI)}</b>. Đã đạt <b>${pct(done)}</b> (${vnd(C.revM)}) sau ${C.dayN}/${C.daysM} ngày.
+ Theo nhịp tháng trước, tới ngày này thường đạt <b>${pct(paceExp)}</b> tháng — đang chạy ở <b class="${onPace>=1?"pos":"neg"}">${pct(onPace)} pace</b>. ${feas}</div>
+ <div class="row c4 hero">
+  ${card("KPI tháng",vnd(KPI),"mục tiêu do công ty đặt")}
+  ${card("Thực đạt",vnd(C.revM),`${pct(done)} KPI · ${C.dayN}/${C.daysM} ngày`,onPace>=1?"pos":"neg")}
+  ${card("Còn thiếu",vnd(remaining),`${daysLeft} ngày còn lại`)}
+  ${card("Cần / ngày từ giờ",vnd(needPerDay),mult?`×${mult.toFixed(1)} nhịp hiện tại (${vnd(rateNow)}/ngày)`:"",mult&&mult>2?"neg":"")}
+ </div>
+ <div class="sec-h"><h2>Tiến độ so với nhịp chuẩn</h2><span class="tag">nhịp chuẩn = đường cong tháng ${C.prevM.slice(5)}</span></div>
+ <div class="fn">
+  <div class="fn-row"><div class="fn-lab">Pace chuẩn</div>
+   <div class="fn-track"><div class="fn-fill" style="width:${Math.min(paceExp*100,100)}%;background:#94a3b8">${pct(paceExp)}</div></div>
+   <div class="fn-side">mức "đúng nhịp" tới hôm nay</div></div>
+  <div class="fn-row"><div class="fn-lab">Đang ở</div>
+   <div class="fn-track"><div class="fn-fill" style="width:${Math.min(done*100,100)}%">${pct(done)}</div></div>
+   <div class="fn-side">${onPace>=1?"<b class='pos'>trước nhịp</b>":"<b class='neg'>sau nhịp</b>"}</div></div>
+ </div>
+ <div class="sec-h"><h2>Các mắt xích để đạt KPI</h2><span class="tag">cột "cần" = nếu chỉ vặn mắt xích đó, giữ nguyên phần còn lại</span></div>
+ <table><thead><tr><th>Mắt xích</th><th class="n">Hiện tại (tháng này)</th><th class="n">Cần để đạt KPI</th></tr></thead><tbody>
+ ${chain.map(r=>`<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n"><b>${r[2]}</b></td></tr>`).join("")}
+ </tbody></table>
+ <div class="note-box">Doanh thu = Đăng ký × Bấm mua × Hoàn tất × ARPU. Không cần vặn tất cả — cải thiện 1-2 mắt xích yếu nhất thường hiệu quả hơn cào đều.</div>`;}
+
+function tRevenue(C){
+ const planRev=Object.values(C.planAgg).reduce((a,x)=>a+x.dt,0)||1;
+ const show=C.dF.slice(-62);
+ document.getElementById("body").innerHTML=`
+ <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
+ <div class="chart"><canvas id="c1"></canvas></div>
+ <div class="split s11" style="margin-top:16px">
+  <div><div class="sec-h"><h2>Kết quả theo tháng</h2><span class="tag">toàn thời gian</span></div>
+   <table><thead><tr><th>Tháng</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">Chi phí</th><th class="n">Lãi/lỗ</th></tr></thead><tbody>
+   ${C.months.map(m=>{const r=C.revByM[m]||0,e=C.expByM[m]||0,d=r-e;
+    return `<tr><td>${m}</td><td class="n">${C.ordByM[m]||0}</td><td class="n">${vnd(r)}</td><td class="n">${vnd(e)}</td><td class="n ${d>=0?"pos":"neg"}">${vnd(d)}</td></tr>`}).join("")}
+   <tr class="tot"><td>Tổng</td><td class="n">${num(C.ord)}</td><td class="n">${vnd(C.rev)}</td><td class="n">${vnd(C.expAll)}</td><td class="n ${C.pnl>=0?"pos":"neg"}">${vnd(C.pnl)}</td></tr>
+   </tbody></table></div>
+  <div><div class="sec-h"><h2>Theo gói</h2><span class="tag">${rangeLabel()}</span></div>
+   <table><thead><tr><th>Gói</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">% DT</th><th class="n">ARPU</th></tr></thead><tbody>
+   ${Object.entries(C.planAgg).sort((a,b)=>b[1].dt-a[1].dt).map(([k,v])=>
+    `<tr><td>${PLAN_LABEL[k]||k}</td><td class="n">${v.n}</td><td class="n">${vnd(v.dt)}</td><td class="n">${pct(v.dt/planRev)}</td><td class="n">${vnd(v.dt/v.n)}</td></tr>`).join("")
+    ||'<tr><td colspan="5" class="muted">Không có đơn trong kỳ</td></tr>'}
+   </tbody></table>
+   <div class="sec-h"><h2>Giờ bán chạy</h2><span class="tag">tháng ${C.curM}</span></div>
+   <table><thead><tr><th>Khung giờ</th><th class="n">Đơn</th><th class="n">Doanh thu</th></tr></thead><tbody>
+   ${C.byHour.map(h=>`<tr><td>${String(h.h).padStart(2,"0")}:00 – ${String(h.h).padStart(2,"0")}:59</td><td class="n">${h.n}</td><td class="n">${vnd(+h.dt)}</td></tr>`).join("")||'<tr><td colspan="3" class="muted">Chưa có dữ liệu</td></tr>'}
+   </tbody></table></div>
+ </div>`;
+ mkChart("c1",{type:"bar",
+  data:{labels:show.map(x=>dm(x.d).slice(0,5)),datasets:[{data:show.map(x=>+x.dt),
+   backgroundColor:show.map(x=>x.d===C.today?"#94a3b8":"#1f4e79"),borderRadius:4,maxBarThickness:40}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+   tooltip:{callbacks:{label:c=>vnd(c.parsed.y)+" · "+show[c.dataIndex].n+" đơn"}}},
+   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(1)+"tr",font:{size:11}}},
+    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}});}
+
+function tCustomers(C){
+ const s=C.subs;
+ const fnMax=Math.max(C.nuM,C.linkTao,1);
  const fnRow=(lab,v,side)=>`<div class="fn-row"><div class="fn-lab">${lab}</div>
   <div class="fn-track"><div class="fn-fill" style="width:${Math.max(5,v/fnMax*100)}%">${num(v)}</div></div>
   <div class="fn-side">${side}</div></div>`;
-
- const usd=+S.usd_vnd||28000,lvCr=+S.lovable_credits||1200,lvUsd=+S.lovable_usd||294;
- const lvLeft=+S.lovable_left||0,lvUsed=+S.lovable_used30||0,lvRun=+S.lovable_run30||0;
- const lvBuild=lvUsed-lvRun,unit=lvUsd/lvCr*usd,planVnd=lvUsd*usd;
- const burn=lvUsed/30,daysLeft=burn?lvLeft/burn:0;
- const shortfall=Math.max(0,lvUsed-lvCr),lvMonthly=planVnd+shortfall*unit;
-
  document.getElementById("body").innerHTML=`
-  <div class="sec-h"><h2>Kỳ báo cáo</h2><span class="tag">${rangeLabel()}</span></div>
-  <div class="row c4 hero">
-   ${card("Doanh thu kỳ này",vnd(revR),`${num(ordR)} đơn · ARPU ${vnd(arpuR)}`)}
-   ${card("Chi phí kỳ này",vnd(expR),`${eF.length} khoản`)}
-   ${card("Lãi / lỗ kỳ này",vnd(revR-expR),`biên ${revR?pct((revR-expR)/revR):"–"}`,revR-expR>=0?"pos":"neg")}
-   ${card("Doanh số TB / ngày",vnd(revPerDay),"đã loại hôm nay vì chưa trọn ngày")}
-  </div>
-
-  <div class="sec-h"><h2>Toàn thời gian</h2><span class="tag">luỹ kế từ 10/03/2026</span></div>
-  <div class="row c4">
-   ${card("Tổng quỹ Kỳ Tích",vnd(fundNow),`${vnd(fund0)} vốn + ${vnd(rev)} doanh thu − ${vnd(expPaid)} đã chi`)}
-   ${card("Lãi / lỗ luỹ kế",vnd(pnl),`${vnd(rev)} thu − ${vnd(expAll)} chi`,pnl>=0?"pos":"neg")}
-   ${card("Quỹ sau khi trả hết nợ",vnd(fundAfter),`còn ${vnd(expUnpaid)} chưa thanh toán`)}
-   ${card("Dự kiến hết tháng "+curM,vnd(projRev),"theo run-rate tháng hiện tại")}
-  </div>
-
-  <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
-  <div class="chart"><canvas id="c1"></canvas></div>
-
-  <div class="split s11" style="margin-top:16px">
-   <div>
-    <div class="sec-h" style="margin-top:8px"><h2>Kết quả theo tháng</h2><span class="tag">toàn thời gian</span></div>
-    <table><thead><tr><th>Tháng</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">Chi phí</th><th class="n">Lãi/lỗ</th></tr></thead><tbody>
-    ${months.map(m=>{const r=revByM[m]||0,e=expByM[m]||0,d=r-e;
-     return `<tr><td>${m}</td><td class="n">${ordByM[m]||0}</td><td class="n">${vnd(r)}</td><td class="n">${vnd(e)}</td><td class="n ${d>=0?"pos":"neg"}">${vnd(d)}</td></tr>`}).join("")}
-    <tr class="tot"><td>Tổng</td><td class="n">${num(ord)}</td><td class="n">${vnd(rev)}</td><td class="n">${vnd(expAll)}</td><td class="n ${pnl>=0?"pos":"neg"}">${vnd(pnl)}</td></tr>
-    </tbody></table>
+ <div class="split s64">
+  <div><div class="sec-h"><h2>Phễu khách hàng</h2><span class="tag">tháng ${C.curM}</span></div>
+   <div class="fn">
+    ${fnRow("Đăng ký mới",C.nuM,"người dùng mới trong tháng")}
+    ${fnRow("Bấm mua",C.linkTao,"tạo link thanh toán")}
+    ${fnRow("Trả tiền",C.linkTra,`<b>${pct(C.doneRate)}</b> hoàn tất`)}
    </div>
-   <div>
-    <div class="sec-h" style="margin-top:8px"><h2>Doanh thu theo gói</h2><span class="tag">${rangeLabel()}</span></div>
-    <table><thead><tr><th>Gói</th><th class="n">Đơn</th><th class="n">Doanh thu</th><th class="n">% DT</th><th class="n">ARPU</th></tr></thead><tbody>
-    ${Object.entries(planAgg).sort((a,b)=>b[1].dt-a[1].dt).map(([k,v])=>
-     `<tr><td>${PLAN_LABEL[k]||k}</td><td class="n">${v.n}</td><td class="n">${vnd(v.dt)}</td><td class="n">${pct(v.dt/planRev)}</td><td class="n">${vnd(v.dt/v.n)}</td></tr>`).join("")
-     ||'<tr><td colspan="5" class="muted">Không có đơn trong kỳ</td></tr>'}
-    </tbody></table>
-   </div>
+   <div class="note-box"><b>${num(C.boDo)} lượt bấm mua rồi bỏ</b> trong tháng, trung bình ${C.fn.phut_tb||"–"} phút từ tạo link đến trả tiền.
+   Kéo thêm 10% số này về ≈ thêm <b>${vnd(0.10*C.boDo*C.arpu)}</b>.</div></div>
+  <div><div class="sec-h"><h2>Thuê bao &amp; gia hạn</h2></div>
+   <div class="row c2">
+    ${card("Tổng người dùng",num(s.tong_user))}
+    ${card("Đang còn hạn",num(s.con_han),"Pro/Premium")}
+    ${card("Hết hạn 30 ngày tới",num(s.het_han_30d),"cần chăm gia hạn")}
+    ${card("Tỉ lệ mua lại",pct(s.da_mua?s.mua_lai/s.da_mua:0),`${s.mua_lai}/${s.da_mua} mua ≥2 lần`)}
+   </div></div>
+ </div>`;}
+
+function tCosts(C){
+ const maxCat=Math.max(...Object.values(C.byCat),1);
+ document.getElementById("body").innerHTML=`
+ <div class="split s11">
+  <div><div class="sec-h"><h2>Theo danh mục</h2><span class="tag">${rangeLabel()} · ${vnd(C.expR)}</span></div>
+   <table><thead><tr><th>Danh mục</th><th class="n">Số tiền</th><th class="n">% kỳ</th></tr></thead><tbody>
+   ${Object.entries(C.byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+    `<tr><td class="bar-cell"><div class="bg" style="width:${v/maxCat*100}%"></div><span>${k}</span></td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(C.expR||1))}</td></tr>`).join("")
+    ||'<tr><td colspan="3" class="muted">Không có chi phí trong kỳ</td></tr>'}
+   ${C.expR?`<tr class="tot"><td>Tổng</td><td class="n">${vnd(C.expR)}</td><td class="n">100%</td></tr>`:""}
+   </tbody></table></div>
+  <div><div class="sec-h"><h2>Theo nhóm</h2><span class="tag">${rangeLabel()}</span></div>
+   <table><thead><tr><th>Nhóm</th><th class="n">Số tiền</th><th class="n">%</th></tr></thead><tbody>
+   ${Object.entries(C.byGroup).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+    `<tr><td>${k}</td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(C.expR||1))}</td></tr>`).join("")
+    ||'<tr><td colspan="3" class="muted">Không có chi phí</td></tr>'}
+   </tbody></table>
+   ${C.unpaid.length?`<div class="sec-h"><h2>Chưa thanh toán</h2><span class="tag">${vnd(C.expUnpaid)}</span></div>
+   <table><thead><tr><th>Ngày</th><th>Khoản</th><th class="n">Số tiền</th></tr></thead><tbody>
+   ${C.unpaid.map(u=>`<tr><td>${dm(u.d)}</td><td>${u.t}</td><td class="n neg">${vnd(+u.amt)}</td></tr>`).join("")}
+   </tbody></table>`:""}
   </div>
+ </div>`;}
 
-  <div class="sec-h"><h2>Phễu khách hàng</h2><span class="tag">tháng ${curM}</span></div>
-  <div class="split s64">
-   <div>
-    <div class="fn">
-     ${fnRow("Đăng ký mới",nuCur,"người dùng mới trong tháng")}
-     ${fnRow("Bấm mua",linkTao,"tạo link thanh toán")}
-     ${fnRow("Trả tiền",linkTra,`<b>${pct(doneRate)}</b> hoàn tất`)}
-    </div>
-    <div class="note-box"><b>${num(boDo)} lượt bấm mua rồi bỏ</b> trong tháng, trung bình ${fn.phut_tb||"–"} phút từ lúc tạo link đến lúc trả tiền.
-    Kéo thêm 10% số này về là thêm khoảng <b>${vnd(0.10*boDo*arpu)}</b> doanh thu.</div>
-   </div>
-   <div>
-    <div class="sec-h" style="margin-top:0"><h2>Giờ bán chạy</h2><span class="tag">tháng ${curM}</span></div>
-    <table><thead><tr><th>Khung giờ</th><th class="n">Đơn</th><th class="n">Doanh thu</th></tr></thead><tbody>
-    ${byHour.map(h=>`<tr><td>${String(h.h).padStart(2,"0")}:00 – ${String(h.h).padStart(2,"0")}:59</td><td class="n">${h.n}</td><td class="n">${vnd(+h.dt)}</td></tr>`).join("")||'<tr><td colspan="3" class="muted">Chưa có dữ liệu</td></tr>'}
-    </tbody></table>
-   </div>
-  </div>
-
-  <div class="sec-h"><h2>Chi phí</h2><span class="tag">${rangeLabel()} · tổng ${vnd(expR)}</span></div>
-  <div class="split s11">
-   <div>
-    <table><thead><tr><th>Danh mục</th><th class="n">Số tiền</th><th class="n">% kỳ</th></tr></thead><tbody>
-    ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
-     `<tr><td class="bar-cell"><div class="bg" style="width:${v/maxCat*100}%"></div><span>${k}</span></td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(expR||1))}</td></tr>`).join("")
-     ||'<tr><td colspan="3" class="muted">Không có chi phí trong kỳ</td></tr>'}
-    ${expR?`<tr class="tot"><td>Tổng</td><td class="n">${vnd(expR)}</td><td class="n">100%</td></tr>`:""}
-    </tbody></table>
-   </div>
-   <div>
-    <div class="sec-h" style="margin-top:0"><h2>Theo nhóm</h2><span class="tag">${rangeLabel()}</span></div>
-    <table><thead><tr><th>Nhóm</th><th class="n">Số tiền</th><th class="n">%</th></tr></thead><tbody>
-    ${Object.entries(byGroup).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
-     `<tr><td>${k}</td><td class="n">${vnd(v)}</td><td class="n">${pct(v/(expR||1))}</td></tr>`).join("")
-     ||'<tr><td colspan="3" class="muted">Không có chi phí trong kỳ</td></tr>'}
-    </tbody></table>
-    ${unpaid.length?`<div class="sec-h"><h2>Chưa thanh toán</h2><span class="tag">${vnd(expUnpaid)} · toàn thời gian</span></div>
-    <table><thead><tr><th>Ngày</th><th>Khoản</th><th class="n">Số tiền</th></tr></thead><tbody>
-    ${unpaid.map(u=>`<tr><td>${dm(u.d)}</td><td>${u.t}</td><td class="n neg">${vnd(+u.amt)}</td></tr>`).join("")}
-    </tbody></table>`:""}
-   </div>
-  </div>
-
-  <div class="sec-h"><h2>Hạ tầng Lovable</h2><span class="tag">${vnd(unit)}/credit theo ${num(usd)}đ/$</span></div>
-  <div class="row c4">
-   ${card("Credits còn lại",num(lvLeft),`đủ dùng ~${daysLeft.toFixed(0)} ngày`,daysLeft<10?"neg":"pos")}
-   ${card("Build 30 ngày",num(lvBuild),`${(lvBuild/30).toFixed(1)}/ngày · phát triển`)}
-   ${card("Run 30 ngày",num(lvRun),`${(lvRun/30).toFixed(1)}/ngày · vận hành`)}
-   ${card("Chi phí dự kiến / tháng",vnd(lvMonthly),`gồm ${vnd(shortfall*unit)} mua thêm`)}
-  </div>
-
-  <div class="sec-h"><h2>Thuê bao &amp; gia hạn</h2></div>
-  <div class="row c5">
-   ${card("Tổng người dùng",num(subs.tong_user))}
-   ${card("Đang còn hạn",num(subs.con_han),"tài khoản Pro/Premium")}
-   ${card("Hết hạn trong 30 ngày",num(subs.het_han_30d),"cần chăm để gia hạn")}
-   ${card("Đã từng trả phí",num(subs.da_mua),`${pct(subs.tong_user?subs.da_mua/subs.tong_user:0)} tổng người dùng`)}
-   ${card("Tỉ lệ mua lại",pct(subs.da_mua?subs.mua_lai/subs.da_mua:0),`${subs.mua_lai} người mua từ 2 lần`)}
-  </div>
-
-  <div class="foot">Doanh thu lấy từ cổng thanh toán PayOS, chỉ tính đơn đã thanh toán. Chi phí lấy từ sổ kế toán nội bộ.
-  Quỹ Kỳ Tích gồm vốn góp ban đầu cộng doanh thu, trừ các khoản đã chi. Số liệu Lovable cập nhật thủ công.
-  Trang này dành riêng cho ${D.viewer||"cổ đông"}, vui lòng không chuyển tiếp đường dẫn.</div>`;
-
- const show=dF.slice(-62);
- if(chart)chart.destroy();
- chart=new Chart(document.getElementById("c1"),{type:"bar",
-  data:{labels:show.map(x=>dm(x.d).slice(0,5)),datasets:[{data:show.map(x=>+x.dt),
-   backgroundColor:show.map(x=>x.d===today?"#94a3b8":"#1f4e79"),borderRadius:4,maxBarThickness:40}]},
-  options:{responsive:true,maintainAspectRatio:false,
-   plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>vnd(c.parsed.y)+"  ·  "+show[c.dataIndex].n+" đơn"}}},
-   scales:{y:{grid:{color:"#f1f5f9"},ticks:{callback:v=>(v/1e6).toFixed(1)+"tr",font:{size:11}}},
-    x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:16,font:{size:11}}}}}
- });
-}
+function render(){
+ charts.forEach(c=>c.destroy());charts=[];
+ document.getElementById("root").innerHTML=shell();
+ wire();
+ const C=calc();
+ ({overview:tOverview,kpi:tKPI,revenue:tRevenue,customers:tCustomers,costs:tCosts}[TAB]||tOverview)(C);}
 
 async function load(){
  const t=new URLSearchParams(location.search).get("t");
  if(!t)return fail("Thiếu mã truy cập","Đường dẫn không đầy đủ. Vui lòng dùng đúng link đã được gửi cho bạn.");
- let r;
- try{
-  r=await fetch(SUPABASE_URL+"/rest/v1/rpc/finance_report",{
-   method:"POST",
-   headers:{apikey:ANON_KEY,Authorization:"Bearer "+ANON_KEY,"Content-Type":"application/json"},
-   body:JSON.stringify({p_token:t})});
- }catch(e){return fail("Không kết nối được","Vui lòng kiểm tra mạng rồi thử lại.");}
+ let r,lastErr;
+ for(let i=0;i<3;i++){
+  try{
+   r=await fetch(SUPABASE_URL+"/rest/v1/rpc/finance_report",{
+    method:"POST",
+    headers:{apikey:ANON_KEY,Authorization:"Bearer "+ANON_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify({p_token:t})});
+   if(r.ok)break;
+   if(r.status>=400&&r.status<500)break;
+  }catch(e){lastErr=e;}
+  await new Promise(res=>setTimeout(res,700*(i+1)));
+ }
+ if(!r)return fail("Không kết nối được","Vui lòng kiểm tra mạng rồi thử lại.");
  if(!r.ok)return fail("Link không còn hiệu lực","Đường dẫn này đã bị thu hồi hoặc hết hạn. Liên hệ Bùi Khánh Thiện để lấy link mới.");
  D=await r.json();
- render();
-}
+ render();}
 load();
 </script>
 </body>
