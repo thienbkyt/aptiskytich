@@ -305,63 +305,52 @@ export default function Dictation() {
     setScreen("setup");
   };
 
-  /* ---------------- Screen 1: mode ---------------- */
-  if (screen === "mode") {
+  /* ---------------- Screen 1: kiểu luyện + lộ trình ---------------- */
+  if (screen === "home") {
     const cards: Array<{
       key: PracticeMode;
       title: string;
       desc: string;
       icon: typeof Headphones;
-      soon: boolean;
     }> = [
-      { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones, soon: false },
-      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio (Shadowing)", icon: Mic, soon: false },
-      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles, soon: false },
+      { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones },
+      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio (Shadowing)", icon: Mic },
+      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles },
     ];
     return (
-      <Shell>
+      <Shell onBack={() => navigate("/dashboard")}>
         <h1 className="text-2xl sm:text-3xl font-bold">Luyện nghe chép chính tả</h1>
-        <p className="text-muted-foreground mt-2">
-          Chọn kiểu luyện tập bạn muốn bắt đầu.
-        </p>
+        <p className="text-muted-foreground mt-2">Chọn kiểu luyện tập, rồi chọn lộ trình để bắt đầu.</p>
+
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {cards.map((c) => (
             <button
               key={c.key}
               type="button"
-              disabled={c.soon}
-              onClick={() => {
-                setMode(c.key);
-                setScreen("level");
-              }}
+              onClick={() => setMode(c.key)}
               className={cn(
-                "text-left rounded-xl border p-6 transition",
-                c.soon
-                  ? "opacity-60 cursor-not-allowed bg-muted/40"
-                  : "hover:border-primary hover:shadow-md bg-card",
+                "text-left rounded-xl border p-6 transition bg-card",
+                mode === c.key
+                  ? "border-primary ring-2 ring-primary/30 shadow-md"
+                  : "hover:border-primary/60 hover:shadow-md",
               )}
             >
               <c.icon className="w-9 h-9 text-primary" />
               <div className="mt-4 flex items-center gap-2">
                 <span className="font-semibold text-lg">{c.title}</span>
-                {c.soon && <Badge variant="secondary">Sắp có</Badge>}
+                {mode === c.key && <Badge variant="secondary">Đang chọn</Badge>}
               </div>
               <p className="text-sm text-muted-foreground mt-1">{c.desc}</p>
             </button>
           ))}
         </div>
-      </Shell>
-    );
-  }
 
-  /* ---------------- Screen 2: level ---------------- */
-  if (screen === "level") {
-    return (
-      <Shell onBack={() => setScreen("mode")}>
-        <h1 className="text-2xl sm:text-3xl font-bold">Chọn lộ trình</h1>
-        <p className="text-muted-foreground mt-2">Ba cấp độ tăng dần theo độ khó bài thi thật.</p>
+        <h2 className="text-xl font-bold mt-10">Chọn lộ trình</h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Ba cấp độ tăng dần theo độ khó bài thi thật.
+        </p>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-4 space-y-4">
           {[1, 2, 3].map((lv) => {
             const row = levels.find((r) => Number(r.level) === lv);
             const cau = Number(row?.cau ?? 0);
@@ -373,6 +362,7 @@ export default function Dictation() {
                 type="button"
                 onClick={() => {
                   setLevel(lv);
+                  setSettings((s) => ({ ...s, blankRatio: LEVEL_DEFAULT_RATIO[lv] ?? s.blankRatio }));
                   setScreen("setup");
                 }}
                 className="w-full text-left rounded-xl border bg-card p-5 hover:border-primary hover:shadow-md transition"
@@ -413,11 +403,12 @@ export default function Dictation() {
     );
   }
 
-  /* ---------------- Screen 3: setup ---------------- */
+  /* ---------------- Screen 2: setup ---------------- */
   if (screen === "setup") {
     return (
-      <Shell onBack={() => setScreen("level")}>
+      <Shell onBack={() => setScreen("home")}>
         <h1 className="text-2xl sm:text-3xl font-bold">Thiết lập phiên luyện</h1>
+
         <p className="text-muted-foreground mt-2">{LEVEL_META[level].title}</p>
 
         <Card className="mt-6 p-5 space-y-6">
