@@ -1023,10 +1023,24 @@ function SentenceTask({
             ) : (
               <Lightbulb className="w-5 h-5 text-[#FEAD5F]" />
             )}
-            <p className="font-semibold">
-              Kết quả: {res.correct}/{res.total} từ đúng
-              <span className="text-muted-foreground font-normal"> · {shownAccuracy}%</span>
+            <p className="font-semibold">Lần này: {res.correct}/{res.total} từ đúng</p>
+          </div>
+          <div className="mt-1">
+            <p className="text-sm">
+              <span className="font-semibold">Điểm ghi nhận: {shownAccuracy}%</span>
+              {hintUsed && (
+                <span className="ml-2 text-xs text-muted-foreground">(đã dùng gợi ý, trần 90%)</span>
+              )}
             </p>
+            {(() => {
+              const rawLatest = res.total ? Math.round((res.correct / res.total) * 100) : 0;
+              const latestAcc = hintUsed ? Math.min(rawLatest, 90) : rawLatest;
+              return latestAcc !== shownAccuracy ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Lần đầu bạn đạt {shownAccuracy}% — điểm ghi nhận tính theo lần chấm đầu.
+                </p>
+              ) : null;
+            })()}
           </div>
           <div className="mt-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Đáp án đúng</p>
