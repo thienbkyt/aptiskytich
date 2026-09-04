@@ -162,7 +162,7 @@ export default function ShadowPanel({
         extra: Array.isArray((data as any).extra) ? (data as any).extra : [],
       };
       setResult(r);
-      onScored(r.score);
+      onScored({ score: r.score, transcript: r.transcript });
     } finally {
       setGrading(false);
     }
