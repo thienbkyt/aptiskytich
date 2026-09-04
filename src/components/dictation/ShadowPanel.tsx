@@ -203,16 +203,19 @@ export default function ShadowPanel({
 
       <div className="mt-5">
         <p className="text-sm font-semibold mb-2">Luyện nói</p>
-        <Button
-          size="lg"
-          variant={isRecording ? "secondary" : "default"}
-          className="w-full"
-          disabled={!revealed || isRequestingMic}
-          onClick={isRecording ? stopRecording : startRecording}
-        >
-          <Mic className="w-4 h-4 mr-2" />
-          {isRecording ? `Dừng ghi âm · ${timeLeft}s` : "Bắt đầu ghi âm"}
-        </Button>
+        <div className={cn(!revealed && "opacity-50 pointer-events-none")}>
+        <AudioRecorder
+          isRecording={isRecording}
+          onStartRecording={startRecording}
+          onStopRecording={stopRecording}
+          audioUrl={audioUrl}
+          timeLeft={timeLeft}
+          totalTime={MAX_RECORD_SEC}
+          label="Thu âm câu nói của bạn"
+          micError={micError}
+          isRequestingMic={isRequestingMic}
+        />
+        </div>
 
         {/* Waveform ghi âm — trang trí tĩnh */}
         <div className="mt-4 rounded-xl border bg-muted/30 p-4">
@@ -220,10 +223,7 @@ export default function ShadowPanel({
             {bars.map((b, i) => (
               <span
                 key={i}
-                className={cn(
-                  "flex-1 rounded-full",
-                  isRecording ? "bg-primary/60" : "bg-primary/25",
-                )}
+                className={cn("flex-1 rounded-full", isRecording ? "bg-primary/60" : "bg-primary/25")}
                 style={{ height: `${b}%` }}
               />
             ))}
@@ -238,20 +238,6 @@ export default function ShadowPanel({
           Bản ghi chỉ lưu trên thiết bị, trừ khi bạn bấm Phân tích bài nói — lúc đó audio được gửi
           lên máy chủ để phân tích rồi không lưu lại.
         </p>
-      </div>
-
-      <div className="mt-4">
-        <AudioRecorder
-          isRecording={isRecording}
-          onStartRecording={startRecording}
-          onStopRecording={stopRecording}
-          audioUrl={audioUrl}
-          timeLeft={timeLeft}
-          totalTime={MAX_RECORD_SEC}
-          label="Thu âm câu nói của bạn"
-          micError={micError}
-          isRequestingMic={isRequestingMic}
-        />
       </div>
 
       {audioUrl && !isRecording && (
