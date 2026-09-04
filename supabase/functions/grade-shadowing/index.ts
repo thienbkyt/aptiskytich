@@ -402,7 +402,20 @@ serve(async (req) => {
     }
 
     const transcript = (await transcribe(audio)).trim();
-    const { score, missed, extra } = scoreShadowing(text, transcript);
+    const { score, words, extra } = scoreShadowing(text, transcript);
+
+    // IPA cho các từ chưa đạt — best effort, lỗi thì bỏ qua.
+    const needIpa = Array.from(
+      new Set(words.filter((w) => w && w.status !== "correct").map((w) => w.expected)),
+    );
+    if (needIpa.length > 0) {
+      const ipaMap = await fetchIpa(needIpa);
+      for (const w of words) {
+        if (!w || w.status === "correct") continue;
+        const ipa = ipaMap[normWord(w.expected)];
+        if (ipa) w.ipa = ipa;
+      }
+    }
 
     try {
       await userClient.rpc("log_feature_usage", { p_key: "ai_shadowing" });
@@ -411,8 +424,7 @@ serve(async (req) => {
       // vẫn trả kết quả chấm cho học viên, không chặn vì lỗi ghi usage
     }
 
-
-    return json({ transcript, score, missed, extra });
+    return json({ transcript, score, words, extra });
   } catch (e) {
     console.error("[grade-shadowing] error:", e);
     return json({ error: "Không chấm được bản thu, vui lòng thử lại." }, 500);
