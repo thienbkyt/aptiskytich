@@ -18,7 +18,7 @@ import type { ReadingPartType } from "@/components/reading/ReadingExamEngine";
 import { toast } from "sonner";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredDialog from "@/components/pro/PlanExpiredDialog";
-import { isExamEmptyError, isExpiredPlanBlock, examLoadReason } from "@/lib/examLoadError";
+import { isExpiredPlanBlock, examLoadReason } from "@/lib/examLoadError";
 import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import { useExamSets, fetchExamQuestions, normalizePart, isNewSet, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
@@ -298,11 +298,6 @@ const Reading = () => {
         supabase.from("exam_sets").select("full_test_id").eq("id", set.id).maybeSingle()
           .then((r) => r, () => ({ data: null } as any)),
       ]);
-      if (!questions || questions.length === 0) {
-        setLoadBlock({ reason: "empty_result", accessTier: (set as any).access_tier ?? null, retry: () => { setLoadBlock(null); void handleStartFromDB(set, opts); } });
-        setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
-        return;
-      }
       const fullTestId = (fullRow?.data as any)?.full_test_id ?? null;
       const sourceQuestionIds = questions.map((q: any) => q.id);
       let engineData: any = { sourceQuestionIds };

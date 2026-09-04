@@ -6,7 +6,8 @@ import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import SignedImage from "@/components/exam/SignedImage";
 import { fetchExamQuestions, type ExamSetRow, type ExamQuestionRow } from "@/hooks/useExamSets";
 import type { SpeakingPartType } from "@/data/speakingQuestions";
-import { toast } from "sonner";
+import { examLoadReason } from "@/lib/examLoadError";
+import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 
 interface Props {
   sets: ExamSetRow[];
@@ -27,6 +28,8 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
   const [questions, setQuestions] = useState<ExamQuestionRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [showSamples, setShowSamples] = useState(false);
+  const [loadErr, setLoadErr] = useState<ExamLoadErrorState | null>(null);
+  const [loadTick, setLoadTick] = useState(0);
   const [sampleLevel, setSampleLevel] = useState<"basic" | "advanced">("basic");
 
   const currentSet = sets[activeIdx];
@@ -36,7 +39,8 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
     let cancelled = false;
     setLoading(true);
     setQuestions(null);
-    fetchExamQuestions(currentSet.id, { allowEmpty: true })
+    setLoadErr(null);
+    fetchExamQuestions(currentSet.id)
       .then((rows) => {
         if (cancelled) return;
         setQuestions(rows || []);
@@ -44,14 +48,13 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
       .catch((e) => {
         if (cancelled) return;
         console.error("[SpeakingBrowseViewer] load failed", e);
-        toast.error("Không tải được đề. Vui lòng thử lại.");
-        setQuestions([]);
+        setLoadErr({ reason: examLoadReason(e) ?? "fetch_failed", accessTier: (currentSet as any)?.access_tier ?? null });
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [currentSet?.id]);
+  }, [currentSet?.id, loadTick]);
 
   // Scroll to top when switching sets
   useEffect(() => {
@@ -113,7 +116,20 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
     );
   }
 
+  if (loadErr) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <ExamLoadErrorModal
+          state={loadErr}
+          onClose={() => { setLoadErr(null); onExit(); }}
+          onRetry={() => { setLoadErr(null); setLoadTick((t) => t + 1); }}
+        />
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">

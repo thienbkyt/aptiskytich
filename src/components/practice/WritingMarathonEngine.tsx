@@ -3,6 +3,8 @@ import WritingExamEngine, { type WritingPartType } from "@/components/writing/Wr
 import ExamHeader from "@/components/exam/ExamHeader";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
+import { examLoadReason } from "@/lib/examLoadError";
+import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import {
   toWritingPart1, toWritingPart2, toWritingPart3, toWritingPart4,
 } from "@/lib/examTransformers";
@@ -117,6 +119,8 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   const [phase, setPhase] = useState<Phase>("loading");
   const [engineData, setEngineData] = useState<any>(null);
   const [attempt, setAttempt] = useState(0);
+  const [loadErr, setLoadErr] = useState<ExamLoadErrorState | null>(null);
+  const [loadTick, setLoadTick] = useState(0);
 
   // Written answers per set id (persisted). Truthy entry with non-empty content = "written".
   const [answersMap, setAnswersMap] = useState<Record<string, WritingAnswers>>(() => (savedInit?.drafts as any) ?? {});
@@ -159,9 +163,10 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     let cancelled = false;
     setPhase("loading");
     setEngineData(null);
+    setLoadErr(null);
     (async () => {
       try {
-        const qs = await fetchExamQuestions(set.id, { allowEmpty: true });
+        const qs = await fetchExamQuestions(set.id);
         if (cancelled) return;
         questionsCacheRef.current.set(set.id, qs);
         setEngineData(buildEngineData(qs));
@@ -170,10 +175,13 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
         if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
           fetchExamQuestions(nextSet.id, { allowEmpty: true }).then((q2) => { if (!cancelled) questionsCacheRef.current.set(nextSet.id, q2); }).catch(() => {});
         }
-      } catch { /* noop */ }
+      } catch (e) {
+        if (cancelled) return;
+        setLoadErr({ reason: examLoadReason(e) ?? "fetch_failed", accessTier: (set as any)?.access_tier ?? null });
+      }
     })();
     return () => { cancelled = true; };
-  }, [activeSetIndex, sets, buildEngineData, attempt]);
+  }, [activeSetIndex, sets, buildEngineData, attempt, loadTick]);
 
   // Commit current set's live answers into the persistent map (if non-empty).
   const commitCurrent = useCallback((idx: number) => {
@@ -323,6 +331,19 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
 
   const isReviewingSet = reviewIndex !== null && !!answersMap[sets[reviewIndex]?.id];
 
+
+  if (loadErr) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName(partType)}`} onExit={handleExit} />
+        <ExamLoadErrorModal
+          state={loadErr}
+          onClose={() => { setLoadErr(null); handleExit(); }}
+          onRetry={() => { setLoadErr(null); setLoadTick((t) => t + 1); }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">

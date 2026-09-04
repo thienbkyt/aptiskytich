@@ -5,6 +5,8 @@ import HistoryReviewRenderer from "@/components/history/HistoryReviewRenderer";
 import { Button } from "@/components/ui/button";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
+import { examLoadReason } from "@/lib/examLoadError";
+import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
@@ -70,6 +72,8 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   const [engineData, setEngineData] = useState<any>(null);
   const [savedOnce, setSavedOnce] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [loadErr, setLoadErr] = useState<ExamLoadErrorState | null>(null);
+  const [loadTick, setLoadTick] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, any>>(() => savedInit?.drafts ?? {});
   const [results, setResults] = useState<(ResultEntry | undefined)[]>(() => {
     const base = new Array(sets.length).fill(undefined);
@@ -189,22 +193,28 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     let cancelled = false;
     setPhase("loading");
     setEngineData(null);
+    setLoadErr(null);
     (async () => {
-      const questions = await fetchExamQuestions(set.id, { allowEmpty: true });
-      if (cancelled) return;
-      questionsCacheRef.current.set(set.id, questions);
-      setEngineData(buildEngineData(questions));
-      setPhase("exam");
-      // Prefetch neighbor after first paint.
-      const nextSet = sets[currentIndex + 1];
-      if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
-        fetchExamQuestions(nextSet.id, { allowEmpty: true })
-          .then((qs) => { if (!cancelled) questionsCacheRef.current.set(nextSet.id, qs); })
-          .catch(() => { /* noop */ });
+      try {
+        const questions = await fetchExamQuestions(set.id);
+        if (cancelled) return;
+        questionsCacheRef.current.set(set.id, questions);
+        setEngineData(buildEngineData(questions));
+        setPhase("exam");
+        // Prefetch neighbor after first paint.
+        const nextSet = sets[currentIndex + 1];
+        if (nextSet && !questionsCacheRef.current.has(nextSet.id)) {
+          fetchExamQuestions(nextSet.id, { allowEmpty: true })
+            .then((qs) => { if (!cancelled) questionsCacheRef.current.set(nextSet.id, qs); })
+            .catch(() => { /* noop */ });
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setLoadErr({ reason: examLoadReason(e) ?? "fetch_failed", accessTier: (set as any)?.access_tier ?? null });
       }
     })();
     return () => { cancelled = true; };
-  }, [currentIndex, sets, partType, buildEngineData]);
+  }, [currentIndex, sets, partType, buildEngineData, loadTick]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
@@ -461,6 +471,19 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           pageBase={page.ri * pagesPerSet}
           pageTotal={pages.length}
           initialSection={page.section}
+        />
+      </div>
+    );
+  }
+
+  if (loadErr) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamLoadErrorModal
+          state={loadErr}
+          onClose={() => { setLoadErr(null); onExit(); }}
+          onRetry={() => { setLoadErr(null); setLoadTick((t) => t + 1); }}
         />
       </div>
     );
