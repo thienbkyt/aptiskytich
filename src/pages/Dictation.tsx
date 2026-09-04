@@ -1192,35 +1192,68 @@ function ResultScreen({
         </div>
       </Card>
 
-      <Accordion type="single" collapsible className="mt-5">
-        {answers.map((a, i) => (
-          <AccordionItem key={a.sentenceId} value={a.sentenceId}>
-            <AccordionTrigger className="text-left">
-              <span className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground">Câu {i + 1}</span>
-                <span
+      {/* Bảng chi tiết từng câu (ẩn trên mobile) */}
+      <div className="mt-5 hidden sm:block rounded-xl border overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/50">
+            <tr className="text-left">
+              <th className="px-3 py-2 w-16 font-semibold">Câu</th>
+              <th className="px-3 py-2 font-semibold">Câu gốc</th>
+              <th className="px-3 py-2 font-semibold">Bạn đã gõ</th>
+              <th className="px-3 py-2 w-16 text-right font-semibold">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {answers.map((a, i) => (
+              <tr key={a.sentenceId} className="border-t align-top">
+                <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                <td className="px-3 py-2 whitespace-pre-wrap break-words">{a.text}</td>
+                <td className="px-3 py-2 whitespace-pre-wrap break-words">
+                  {a.typed ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+                </td>
+                <td
                   className={cn(
-                    "text-sm font-semibold",
+                    "px-3 py-2 text-right font-semibold",
                     a.accuracy === 100 ? "text-green-600" : "text-amber-600",
                   )}
                 >
                   {a.accuracy}%
-                </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Danh sách thẻ dọc trên màn hình hẹp */}
+      <div className="mt-5 space-y-3 sm:hidden">
+        {answers.map((a, i) => (
+          <div key={a.sentenceId} className="rounded-xl border p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Câu {i + 1}</span>
+              <span
+                className={cn(
+                  "text-sm font-semibold",
+                  a.accuracy === 100 ? "text-green-600" : "text-amber-600",
+                )}
+              >
+                {a.accuracy}%
               </span>
-            </AccordionTrigger>
-            <AccordionContent className="space-y-3">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Câu gốc</p>
-                <p className="text-sm">{a.text}</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã gõ</p>
-                <p className="text-sm">{a.typed || "(để trống)"}</p>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+            </div>
+            <div className="mt-2">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Câu gốc</p>
+              <p className="text-sm whitespace-pre-wrap break-words">{a.text}</p>
+            </div>
+            <div className="mt-2">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã gõ</p>
+              <p className="text-sm whitespace-pre-wrap break-words">
+                {a.typed ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+              </p>
+            </div>
+          </div>
         ))}
-      </Accordion>
+      </div>
+
 
       <div className="mt-6 flex flex-wrap gap-2">
         <Button onClick={onNewSession}>Luyện tiếp bài mới</Button>
