@@ -564,8 +564,25 @@ Deno.serve(async (req) => {
 
     for (const job of (jobs || []) as any[]) {
       try {
-        const payload = job.payload || {};
+        // Step 1 (speaking only): transcribe, cached on the job payload.
+        const step1 = await ensureSpeakingTranscript(job);
+        if (step1.error) {
+          const errMsg = `transcribe: ${String(step1.error.body?.error || `HTTP ${step1.error.status}`)}`;
+          const permanent = isPermanentFailure(step1.error.status, step1.error.body);
+          const isFinal = permanent || (job.attempts || 0) >= (job.max_attempts || 3);
+          await admin.from("grading_jobs").update({
+            status: isFinal ? "failed" : "pending",
+            claimed_at: null,
+            last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
+            finished_at: isFinal ? new Date().toISOString() : null,
+          }).eq("id", job.id);
+          results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+          continue;
+        }
+        // Step 2: rubric grading (unchanged prompt), separate 60s budget.
+        const payload = step1.payload;
         const { ok, status, body } = await invokeGradeExam(payload, job.user_id);
+
 
         if (ok && body && !body.error) {
           // Persist BEFORE marking done. If persist throws, the job goes back
