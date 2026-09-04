@@ -264,7 +264,7 @@ export default function Dictation() {
     setAnswers((prev) => {
       const i = prev.findIndex((p) => p.sentenceId === a.sentenceId);
       if (i === -1) return [...prev, a];
-      // Đã ghi nhận lần chấm đầu — chỉ bổ sung điểm nói đuổi.
+      // Đã ghi nhận lần chấm đầu — chỉ bổ sung điểm nói nhại.
       const next = [...prev];
       next[i] = { ...next[i], speakingScore: a.speakingScore ?? next[i].speakingScore ?? null };
       return next;
@@ -294,12 +294,12 @@ export default function Dictation() {
       icon: typeof Headphones;
     }> = [
       { key: "dictation", title: "Nghe chép", desc: "Nghe rồi gõ lại câu", icon: Headphones },
-      { key: "shadow", title: "Nói đuổi", desc: "Nghe rồi nhắc lại theo audio (Shadowing)", icon: Mic },
-      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói đuổi", icon: Sparkles },
+      { key: "shadow", title: "Nói nhại", desc: "Nghe rồi nhắc lại theo audio (Shadowing)", icon: Mic },
+      { key: "combo", title: "Kết hợp", desc: "Vừa chép vừa nói nhại", icon: Sparkles },
     ];
     return (
       <Shell onBack={() => navigate("/dashboard")}>
-        <h1 className="text-2xl sm:text-3xl font-bold">Nghe chép & nói đuổi (Dictation & Shadowing)</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Nghe chép & nói nhại (Dictation & Shadowing)</h1>
         <p className="text-muted-foreground mt-2">Chọn kiểu luyện tập, rồi chọn level để bắt đầu.</p>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -539,7 +539,7 @@ export default function Dictation() {
       mode === "dictation"
         ? { icon: Headphones, label: "Nghe & điền từ" }
         : mode === "shadow"
-          ? { icon: Mic, label: "Nghe & nói đuổi" }
+          ? { icon: Mic, label: "Nghe & nói nhại" }
           : { icon: Sparkles, label: "Chế độ Kết hợp" };
     const ModeIcon = modeMeta.icon;
     return (
