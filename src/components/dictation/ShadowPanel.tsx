@@ -186,7 +186,7 @@ export default function ShadowPanel({
       <div className="mt-5">
         <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Pronunciation</p>
         {revealed ? (
-          <p className="text-lg sm:text-xl font-bold leading-relaxed">
+          <p className="text-lg sm:text-xl font-bold leading-relaxed flex flex-wrap gap-x-1.5 gap-y-1">
             {sentence.text
               .split(/\s+/)
               .filter(Boolean)
@@ -194,7 +194,7 @@ export default function ShadowPanel({
                 const norm = w.toLowerCase().replace(/[^a-z0-9']/gi, "");
                 const bad = missedSet.has(norm);
                 return (
-                  <span key={`${w}-${i}`} className={cn("mr-1.5", bad && "text-destructive underline")}>
+                  <span key={`${w}-${i}`} className={cn(bad && "text-destructive underline")}>
                     {w}
                   </span>
                 );
