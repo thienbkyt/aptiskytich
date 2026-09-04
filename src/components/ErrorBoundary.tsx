@@ -22,6 +22,23 @@ export default class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: unknown) {
     // eslint-disable-next-line no-console
     console.error("[ErrorBoundary]", error, info);
+    try {
+      const msg = String(error?.message ?? error ?? "").slice(0, 2000);
+      const now = Date.now();
+      const prev = lastLogged.get(msg);
+      if (prev && now - prev < DEDUPE_MS) return;
+      lastLogged.set(msg, now);
+      if (lastLogged.size > 50) {
+        for (const [k, t] of lastLogged) if (now - t > DEDUPE_MS) lastLogged.delete(k);
+      }
+      logClientError("react_error_boundary", error, {
+        stack: error?.stack?.slice(0, 2000) ?? null,
+        componentStack: (info as any)?.componentStack?.slice(0, 2000) ?? null,
+        url: typeof window !== "undefined" ? window.location.pathname : null,
+      });
+    } catch {
+      /* logging must never break the error screen */
+    }
   }
 
   render() {
