@@ -116,8 +116,8 @@ function loadSettings(): Settings {
 
 const LEVEL_META: Record<number, { title: string; desc: string }> = {
   1: { title: "Level 1 · Foundation", desc: "Câu ngắn, tốc độ chậm — dựng phản xạ (Listening câu 1 - 13) " },
-  2: { title: "Level 2 · Momentum", desc: "Đoạn dài, nhiều thông tin — tập giữ mạch khi thông tin dồn dập (Listening câu 14 - 15)" },
-  3: { title: "Level 3 · Mastery", desc: "Hội thoại nêu quan điểm và bài nói học thuật khó (Listening câu 16 - 17)" },
+  2: { title: "Level 2 · Momentum", desc: "Đoạn dài, nhiều thông tin — tập giữ mạch khi thông tin dồn dập (Listening câu 14)" },
+  3: { title: "Level 3 · Mastery", desc: "Hội thoại nêu quan điểm và bài nói học thuật khó (Listening câu 15 - 17)" },
 };
 
 
