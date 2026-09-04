@@ -87,6 +87,7 @@ export default function ShadowPanel({
   } = useAudioRecording({
     maxDuration: MAX_RECORD_SEC,
     questionKey: sentence.sentence_id,
+    minBlobBytes: 2000,
     onComplete: async (url: string) => {
       try {
         const res = await fetch(url);
