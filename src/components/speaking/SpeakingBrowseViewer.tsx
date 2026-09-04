@@ -116,7 +116,20 @@ const SpeakingBrowseViewer = ({ sets, partType, partLabel, onExit }: Props) => {
     );
   }
 
+  if (loadErr) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <ExamLoadErrorModal
+          state={loadErr}
+          onClose={() => { setLoadErr(null); onExit(); }}
+          onRetry={() => { setLoadErr(null); setLoadTick((t) => t + 1); }}
+        />
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
