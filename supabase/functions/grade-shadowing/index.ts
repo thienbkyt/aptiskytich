@@ -257,6 +257,93 @@ async function transcribe(audioBase64: string): Promise<string> {
 }
 
 /* ------------------------------------------------------------------ */
+/* IPA lookup (text-only, best effort — never breaks grading)          */
+/* ------------------------------------------------------------------ */
+const IPA_TOOL = {
+  type: "function",
+  function: {
+    name: "submit_ipa",
+    description: "Return British English (RP) IPA transcriptions for the given words.",
+    parameters: {
+      type: "object",
+      properties: {
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              word: { type: "string" },
+              ipa: { type: "string" },
+            },
+            required: ["word", "ipa"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["items"],
+      additionalProperties: false,
+    },
+  },
+};
+
+async function fetchIpa(words: string[]): Promise<Record<string, string>> {
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey || words.length === 0) return {};
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20_000);
+  try {
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You provide British English (Received Pronunciation) IPA transcriptions. " +
+              "Return IPA characters only, without slashes or brackets. Keep each input word unchanged in the `word` field.",
+          },
+          {
+            role: "user",
+            content: `Give the RP IPA for each of these words: ${words.join(", ")}`,
+          },
+        ],
+        tools: [IPA_TOOL],
+        tool_choice: { type: "function", function: { name: "submit_ipa" } },
+      }),
+      signal: controller.signal,
+    });
+    if (!resp.ok) return {};
+    const data = await resp.json();
+    logAIUsage({
+      model: MODEL,
+      usage: data?.usage,
+      source_function: "grade-shadowing-ipa",
+      finishReason: data?.choices?.[0]?.finish_reason ?? null,
+    }).catch(() => {});
+    const raw = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+    if (typeof raw !== "string") return {};
+    const parsed = JSON.parse(raw);
+    const out: Record<string, string> = {};
+    for (const it of Array.isArray(parsed?.items) ? parsed.items : []) {
+      const w = typeof it?.word === "string" ? it.word : "";
+      const ipa = typeof it?.ipa === "string" ? it.ipa.replace(/[/[\]]/g, "").trim() : "";
+      if (w && ipa) out[normWord(w)] = ipa;
+    }
+    return out;
+  } catch {
+    return {};
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+
+
+/* ------------------------------------------------------------------ */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
