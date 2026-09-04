@@ -254,6 +254,8 @@ export default function Dictation() {
     setSentences(rows);
     setIndex(0);
     setAnswers([]);
+    taskStatesRef.current = new Map();
+    leaveRef.current = null;
     setStartedAt(Date.now());
     setScreen("practice");
   };
