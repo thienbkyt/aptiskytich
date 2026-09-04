@@ -341,10 +341,7 @@ export async function saveWritingSkillResult(
     // Graded successfully — clear the pending payload marker.
     if (args.testResultId) {
       try {
-        await (supabase as any)
-          .from("test_results")
-          .update({ grade_payload: null })
-          .eq("id", args.testResultId);
+        await persistWritingGradePayload(args.testResultId, null);
       } catch (e) {
         console.warn("[saveWritingSkillResult] failed to clear grade_payload:", e);
       }
