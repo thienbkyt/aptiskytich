@@ -18,7 +18,8 @@ import type { ReadingPartType } from "@/components/reading/ReadingExamEngine";
 import { toast } from "sonner";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredDialog from "@/components/pro/PlanExpiredDialog";
-import { isExamEmptyError, isExpiredPlanBlock } from "@/lib/examLoadError";
+import { isExamEmptyError, isExpiredPlanBlock, examLoadReason } from "@/lib/examLoadError";
+import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import { useExamSets, fetchExamQuestions, normalizePart, isNewSet, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4 } from "@/lib/examTransformers";
@@ -286,6 +287,7 @@ const Reading = () => {
 
   const { tier: userTier, proUntil } = useIsPro();
   const [planExpiredOpen, setPlanExpiredOpen] = useState(false);
+  const [loadBlock, setLoadBlock] = useState<(ExamLoadErrorState & { retry?: () => void }) | null>(null);
 
   const handleStartFromDB = async (set: ExamSetRow, opts?: { skipIntro?: boolean }) => {
     const partType = normalizePart(set.part) as ReadingPartType;
@@ -297,7 +299,7 @@ const Reading = () => {
           .then((r) => r, () => ({ data: null } as any)),
       ]);
       if (!questions || questions.length === 0) {
-        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+        setLoadBlock({ reason: "empty_result", accessTier: (set as any).access_tier ?? null, retry: () => { setLoadBlock(null); void handleStartFromDB(set, opts); } });
         setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
         return;
       }
@@ -321,10 +323,12 @@ const Reading = () => {
       // (typically an expired Pro plan). Never open the exam room in that case.
       if (isExpiredPlanBlock(e, userTier, (set as any).access_tier)) {
         setPlanExpiredOpen(true);
-      } else if (isExamEmptyError(e)) {
-        toast.error("Không tải được đề, vui lòng thử lại");
       } else {
-        toast.error("Không tải được đề. Vui lòng kiểm tra mạng và thử lại.");
+        setLoadBlock({
+          reason: examLoadReason(e) ?? "fetch_failed",
+          accessTier: (set as any).access_tier ?? null,
+          retry: () => { setLoadBlock(null); void handleStartFromDB(set, opts); },
+        });
       }
       setExam({ active: false, partType: "part1", testTitle: "", showResults: false, correct: 0, total: 0, loadingExam: false });
     } finally {
@@ -770,6 +774,7 @@ const Reading = () => {
       <Footer />
       <LockModal />
       <PlanExpiredDialog open={planExpiredOpen} onOpenChange={setPlanExpiredOpen} proUntil={proUntil} />
+      <ExamLoadErrorModal state={loadBlock} onClose={() => setLoadBlock(null)} onRetry={loadBlock?.retry} />
     </div>
   );
 };

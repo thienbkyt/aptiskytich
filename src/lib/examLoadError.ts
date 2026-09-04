@@ -10,6 +10,18 @@ export function isExamEmptyError(e: unknown): boolean {
   return !!e && typeof e === "object" && (e as any).code === "EXAM_EMPTY";
 }
 
+/** Network / timeout failure while fetching questions (logged reason "fetch_failed"). */
+export function isExamFetchFailedError(e: unknown): boolean {
+  return !!e && typeof e === "object" && (e as any).code === "EXAM_FETCH_FAILED";
+}
+
+/** Maps a load failure to the reason value written to client_error_logs. */
+export function examLoadReason(e: unknown): "empty_result" | "fetch_failed" | null {
+  if (isExamEmptyError(e)) return "empty_result";
+  if (isExamFetchFailedError(e)) return "fetch_failed";
+  return null;
+}
+
 /** Pro/premium-only content that a "free" (expired) account can no longer read. */
 export function isExpiredPlanBlock(
   e: unknown,

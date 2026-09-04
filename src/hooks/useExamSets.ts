@@ -120,6 +120,9 @@ export const fetchExamQuestions = async (
   if (error || !data) {
     console.error("[fetchExamQuestions] failed", { examSetId, error });
     logClientError("exam_questions_empty", new Error("fetch_failed"), { examSetId, reason: "fetch_failed", online: navigator?.onLine ?? null });
+    if (!opts?.allowEmpty) {
+      throw Object.assign(new Error("exam_fetch_failed"), { code: "EXAM_FETCH_FAILED", examSetId });
+    }
     return [];
   }
   if (data.length === 0) {
