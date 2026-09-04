@@ -619,7 +619,17 @@ export default function Dictation() {
 /* ------------------------------------------------------------------ */
 /* Layout & small UI helpers                                          */
 /* ------------------------------------------------------------------ */
-function Shell({ children, onBack }: { children: React.ReactNode; onBack?: () => void }) {
+function Shell({
+  children,
+  onBack,
+  backLabel = "Quay lại",
+  backIcon: BackIcon = ArrowLeft,
+}: {
+  children: React.ReactNode;
+  onBack?: () => void;
+  backLabel?: string;
+  backIcon?: typeof ArrowLeft;
+}) {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
@@ -630,13 +640,14 @@ function Shell({ children, onBack }: { children: React.ReactNode; onBack?: () =>
           onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại
+          <BackIcon className="w-4 h-4" /> {backLabel}
         </button>
         {children}
       </main>
     </div>
   );
 }
+
 
 function OptionRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
