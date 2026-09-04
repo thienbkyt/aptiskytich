@@ -129,6 +129,8 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   /** Gắn phiên làm bài với bộ đề tự tạo (không đổi schema: ghi vào skill_scores). */
   const customSetExtra = customSetId ? { customSetId, customSetTitle: testTitle } : undefined;
   const [phase, setPhase] = useState<FlowPhase>("loading");
+  const [loadDone, setLoadDone] = useState(0);
+  const [loadTotal, setLoadTotal] = useState(0);
   const [skillData, setSkillData] = useState<SkillData>({
     speaking: [], listening: [], grammar: [], reading: [], writing: [],
   });
