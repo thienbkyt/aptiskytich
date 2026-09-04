@@ -1032,9 +1032,27 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
       const tf = Math.max(0, Math.min(5, Math.round(Number(b.tf ?? 0))));
       const gra = Math.max(0, Math.min(5, Math.round(Number(b.gra ?? 0))));
       const vra = Math.max(0, Math.min(5, Math.round(Number(b.vra ?? 0))));
-      const pro = Math.max(0, Math.min(5, Math.round(Number(b.pro ?? 0))));
+      // Recording longer than 60s → graded without audio. PRO comes from the
+      // shorter parts of the same attempt when available; otherwise it is the
+      // model's transcript-based estimate and gets labelled as such below.
+      const proEstimatedFromText = textOnly && proBandOverride === null;
+      const pro = textOnly && proBandOverride !== null
+        ? proBandOverride
+        : Math.max(0, Math.min(5, Math.round(Number(b.pro ?? 0))));
       const fc = Math.max(0, Math.min(5, Math.round(Number(b.fc ?? 0))));
       const raw_part = tf * 2 + gra + vra + pro + fc;
+      if (textOnly) {
+        const note = proEstimatedFromText
+          ? "Phát âm ước lượng từ bản chữ."
+          : "Phát âm lấy trung bình từ các phần ghi âm ngắn trong cùng lượt làm bài.";
+        parsed.criteriaAnalysis = parsed.criteriaAnalysis || {};
+        const prev = String(parsed.criteriaAnalysis.pro ?? "").trim();
+        parsed.criteriaAnalysis.pro = prev ? `${note} ${prev}` : note;
+        const prevAnalysis = String(parsed.analysis ?? "").trim();
+        parsed.analysis = prevAnalysis ? `${prevAnalysis} ${note}` : note;
+        parsed.bands = { ...(parsed.bands || {}), pro };
+      }
+
 
       try {
         await logAIUsage({
