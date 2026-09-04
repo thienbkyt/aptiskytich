@@ -182,9 +182,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
               break;
             }
           }
+          if (!cancelled) setLoadProgress((n) => n + 1);
           return { engineData: data, pageCount } as LoadedSet;
-        })
-      );
+        });
       if (cancelled) return;
       setLoaded(allLoaded);
       setPhase("exam");
