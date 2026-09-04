@@ -1233,7 +1233,7 @@ function ResultScreen({
                 <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                 <td className="px-3 py-2 whitespace-pre-wrap break-words">{a.text}</td>
                 <td className="px-3 py-2 whitespace-pre-wrap break-words">
-                  {a.typed ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+                  {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
                 </td>
                 <td
                   className={cn(
