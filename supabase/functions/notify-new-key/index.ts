@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EmailAPIError } from "npm:@lovable.dev/email-js@0.1.0";
+import { sendTemplateEmail } from "../_shared/transactional-email-templates/send-email.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,31 +8,12 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SITE_URL = "https://aptiskytich.vn";
+const TEMPLATE_NAME = "key-update";
 
-function esc(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
-function buildEmail(name: string, keyDate: string, unsubscribeUrl: string) {
-  const safeName = esc(name || "bạn");
-  const safeDate = esc(keyDate);
-  const subject = `Key dự đoán Aptis ngày ${keyDate} đã có — vào ôn ngay`;
-  const html =
-    `<div style="font-family:Arial,sans-serif;font-size:15px;color:#0F0F10;line-height:1.6;max-width:560px;margin:0 auto">
-  <h2 style="color:#CC1C01;margin:0 0 12px">🔑 Key dự đoán ngày ${safeDate} đã cập nhật</h2>
-  <p>Chào ${safeName},</p>
-  <p>Đội ngũ <b>Aptis Kỳ Tích</b> vừa cập nhật bộ đề trọng tâm theo key dự đoán mới nhất. Hãy vào ôn ngay để bám sát đề thi sắp tới!</p>
-  <p style="margin:22px 0">
-    <a href="${SITE_URL}/key-du-doan" style="background:#CC1C01;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Vào ôn theo key</a>
-  </p>
-  <p style="color:#6b7280;font-size:13px;margin-top:24px">— Đội ngũ Aptis Kỳ Tích</p>
-  <hr style="border:none;border-top:1px solid #eee;margin:20px 0"/>
-  <p style="color:#9ca3af;font-size:12px">Không muốn nhận email này? <a href="${unsubscribeUrl}" style="color:#9ca3af">Hủy đăng ký</a>.</p>
-</div>`;
-  const text = `Chào ${name || "bạn"}, Key dự đoán ngày ${keyDate} đã cập nhật. Vào ôn ngay: ${SITE_URL}/key-du-doan`;
-  return { subject, html, text };
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
