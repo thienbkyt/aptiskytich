@@ -815,6 +815,7 @@ function SentenceTask({
     let acc = result.total ? Math.round((result.correct / result.total) * 100) : 0;
     if (hintUsed) acc = Math.min(acc, 90);
     resRef.current = result;
+    if (firstResultRef.current === null) firstResultRef.current = result;
     setRes(result);
     setChecked(true);
     if (firstAccuracyRef.current === null) firstAccuracyRef.current = acc;
