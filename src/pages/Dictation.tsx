@@ -571,7 +571,7 @@ export default function Dictation() {
           <Badge variant="secondary" className="mx-1">
             {index + 1}/{sentences.length}
           </Badge>
-          <Button size="sm" onClick={goNext}>
+          <Button size="sm" onClick={() => (leaveRef.current ? leaveRef.current() : goNext())}>
             {index + 1 >= sentences.length ? "Xem kết quả" : "Câu tiếp theo"}
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
@@ -585,6 +585,11 @@ export default function Dictation() {
           mode={mode}
           userId={user?.id}
           isLast={index + 1 >= sentences.length}
+          initialState={taskStatesRef.current.get(s.sentence_id) ?? null}
+          onPersistState={(st) => taskStatesRef.current.set(s.sentence_id, st)}
+          onRegisterLeave={(fn) => {
+            leaveRef.current = fn;
+          }}
           onDone={handleSentenceDone}
           onNext={goNext}
         />
