@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import { fetchExamQuestions, type ExamSetRow } from "@/hooks/useExamSets";
 import { examLoadReason } from "@/lib/examLoadError";
+import { mapWithLimit } from "@/lib/concurrency";
 import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/ExamLoadErrorModal";
 import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
