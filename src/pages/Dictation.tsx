@@ -284,7 +284,7 @@ export default function Dictation() {
     ];
     return (
       <Shell onBack={() => navigate("/dashboard")}>
-        <h1 className="text-2xl sm:text-3xl font-bold">Luyện nghe chép chính tả</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Luyện nghe chép & nói đuổi</h1>
         <p className="text-muted-foreground mt-2">Chọn kiểu luyện tập, rồi chọn lộ trình để bắt đầu.</p>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -310,7 +310,7 @@ export default function Dictation() {
           ))}
         </div>
 
-        <h2 className="text-xl font-bold mt-10">Chọn lộ trình</h2>
+        <h2 className="text-xl font-bold mt-10">Chọn Level </h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Ba cấp độ tăng dần theo độ khó bài thi thật.
         </p>
