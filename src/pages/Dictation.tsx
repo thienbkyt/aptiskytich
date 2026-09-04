@@ -428,6 +428,24 @@ export default function Dictation() {
             ))}
           </OptionRow>
 
+          <OptionRow label="Độ khó (số từ phải điền)">
+            {[
+              { v: 0.3, l: "Dễ · ẩn 30%" },
+              { v: 0.5, l: "Vừa · 50%" },
+              { v: 0.7, l: "Khó · 70%" },
+              { v: 1, l: "Chép hết · 100%" },
+            ].map((o) => (
+              <Chip
+                key={o.v}
+                active={settings.blankRatio === o.v}
+                onClick={() => setSettings((s) => ({ ...s, blankRatio: o.v }))}
+              >
+                {o.l}
+              </Chip>
+            ))}
+          </OptionRow>
+
+
           <OptionRow label="Số lần nghe tối đa mỗi câu">
             {[
               { v: 3, l: "3 lần" },
