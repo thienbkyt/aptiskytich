@@ -1117,8 +1117,8 @@ function SentenceTask({
   if (mode === "combo") {
     return (
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-        <Card className="p-5 sm:p-6">{fillColumn}</Card>
-        <div className="space-y-4">
+        <Card className="p-5 sm:p-6 min-w-0">{fillColumn}</Card>
+        <div className="space-y-4 min-w-0">
           {shadowPanel}
           <div className="flex justify-end">{nextButton}</div>
         </div>
