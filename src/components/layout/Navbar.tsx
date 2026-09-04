@@ -33,7 +33,7 @@ const skillLinks: { label: string; path: string; icon: LucideIcon; desc: string 
 
 const toolLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
   { label: "Học từ vựng", path: "/vocabulary", icon: BookText, desc: "Kho từ vựng & flashcard" },
-  { label: "Nghe chép chính tả", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe & chép lại câu" },
+  { label: "Dictation & Shadowing", path: "/nghe-chep", icon: Ear, desc: "Luyện nghe chép & nói đuổi" },
 ];
 
 const moreLinks: { label: string; path: string; icon: LucideIcon; desc: string }[] = [
