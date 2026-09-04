@@ -4881,6 +4881,7 @@ export type Database = {
         Args: { p_report_id: string }
         Returns: number
       }
+      retry_failed_grading_job: { Args: { p_job_id: string }; Returns: string }
       save_dictation_result: {
         Args: {
           p_accuracy: number
