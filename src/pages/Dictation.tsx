@@ -208,9 +208,10 @@ export default function Dictation() {
     safeLocalStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [settings]);
 
-  /* --- load level stats when entering screen 2 --- */
+  /* --- load level stats on the merged first screen --- */
   useEffect(() => {
-    if (screen !== "level") return;
+    if (screen !== "home") return;
+
     let cancelled = false;
     setLevelsLoading(true);
     (async () => {
