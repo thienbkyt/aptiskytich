@@ -867,9 +867,20 @@ function SentenceTask({
     return { correct, total: hidden.length, filled, filledSentence };
   };
 
-  const handleScored = (score: number) => {
+  const handleScored = ({ score, transcript }: { score: number; transcript: string }) => {
     speakingScoreRef.current = score;
-    if (mode === "shadow") saveOnce(0, score);
+    spokenRef.current = transcript;
+    if (savedRef.current) {
+      // Đã ghi bản chấm chính — chỉ bổ sung điểm & lời nói.
+      onDone({
+        sentenceId: sentence.sentence_id,
+        text: sentence.text,
+        typed: firstResultRef.current?.filledSentence ?? "",
+        accuracy: firstAccuracyRef.current ?? 0,
+        speakingScore: score,
+        spoken: transcript,
+      });
+    } else if (mode === "shadow") saveOnce(0, score);
     else saveOnce(firstAccuracyRef.current ?? 0, score);
     persistRef.current();
   };
