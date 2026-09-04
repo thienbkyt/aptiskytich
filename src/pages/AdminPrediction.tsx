@@ -17,7 +17,7 @@ const NotifyKeyButton = ({ keyDate }: NotifyKeyButtonProps) => {
       if (data?.already_sent) {
         toast.info(`Key ngày ${keyDate} đã được gửi trước đó (${data.email_count} email).`);
       } else {
-        toast.success(`Đã gửi thông báo · ${data?.enqueued ?? 0} email đang được đưa vào hàng đợi (${data?.failed ?? 0} lỗi).`);
+        toast.success(`Đã gửi thông báo · ${data?.sent ?? 0} email đã gửi (${data?.failed ?? 0} lỗi).`);
       }
     } catch (e: any) {
       toast.error("Không gửi được: " + (e?.message || e));
