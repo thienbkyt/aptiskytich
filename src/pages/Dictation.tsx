@@ -1073,11 +1073,15 @@ function SentenceTask({
             variant="secondary"
             size="sm"
             onClick={() => {
+              const snapshot = gradeFromInputs();
               setChecked(true);
               setRevealed(true);
               if (firstAccuracyRef.current === null) firstAccuracyRef.current = 0;
-              resRef.current = resRef.current ?? { correct: 0, total: 0, filled: [] };
-              setRes((r) => r ?? { correct: 0, total: 0, filled: [] });
+              const fallback: FillBlanksResult =
+                snapshot ?? { correct: 0, total: 0, filled: [], filledSentence: "" };
+              resRef.current = resRef.current ?? fallback;
+              if (firstResultRef.current === null) firstResultRef.current = resRef.current;
+              setRes((r) => r ?? fallback);
               if (mode === "dictation") saveOnce(0, null);
             }}
           >
