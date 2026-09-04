@@ -28,6 +28,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import SegmentPlayer, { type SegmentPlayerHandle } from "@/components/dictation/SegmentPlayer";
 import FillBlanks, { type FillBlanksResult } from "@/components/dictation/FillBlanks";
+import ShadowPanel from "@/components/dictation/ShadowPanel";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
