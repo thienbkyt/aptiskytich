@@ -41,42 +41,6 @@ import { useIsPro } from "@/hooks/useIsPro";
 /* ------------------------------------------------------------------ */
 /* Word-level diff (case & punctuation insensitive)                    */
 /* ------------------------------------------------------------------ */
-type WordDiffPart = { word: string; ok: boolean };
-
-function normalizeWordCore(w: string) {
-  return w.toLowerCase().replace(/[^a-z0-9']/gi, "");
-}
-
-function diffWords(expected: string, got: string): WordDiffPart[] {
-  const expRaw = expected.split(/\s+/).filter(Boolean);
-  const gotRaw = got.split(/\s+/).filter(Boolean);
-  const a = expRaw.map(normalizeWordCore);
-  const b = gotRaw.map(normalizeWordCore);
-  const m = a.length, n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] = a[i - 1] && a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1] + 1
-        : Math.max(dp[i - 1][j], dp[i][j - 1]);
-    }
-  }
-  const matched = new Array<boolean>(m).fill(false);
-  let i = m, j = n;
-  while (i > 0 && j > 0) {
-    if (a[i - 1] && a[i - 1] === b[j - 1]) { matched[i - 1] = true; i--; j--; }
-    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
-    else j--;
-  }
-  return expRaw.map((w, k) => ({ word: w, ok: matched[k] }));
-}
-
-function wordAccuracyPct(parts: WordDiffPart[]) {
-  if (!parts.length) return 0;
-  const ok = parts.filter((p) => p.ok).length;
-  return Math.round((ok / parts.length) * 100);
-}
-
 /* ------------------------------------------------------------------ */
 /* Types & settings                                                    */
 /* ------------------------------------------------------------------ */
