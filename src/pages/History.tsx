@@ -159,6 +159,20 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  // Bài mà AI chấm lỗi hẳn → hiện nút "Chấm lại" thay cho dấu "—".
+  const { jobsByResult: failedJobs, retry: retryGrading, retryingId } =
+    useFailedGradingJobs(Boolean(user));
+  const handleRetryGrading = async (jobId: string) => {
+    const { ok, reason } = await retryGrading(jobId);
+    if (ok) {
+      toast({ title: "Đã gửi chấm lại", description: "Bài của bạn đang được chấm lại, kết quả cập nhật sau ít phút." });
+    } else if (reason?.includes("retry_limit_reached")) {
+      toast({ title: "Đã hết lượt chấm lại", description: "Mỗi bài chỉ được chấm lại tối đa 2 lần.", variant: "destructive" });
+    } else {
+      toast({ title: "Chưa gửi được", description: "Thử lại sau ít phút nhé.", variant: "destructive" });
+    }
+  };
+
 
   useEffect(() => {
     if (!user) return;
