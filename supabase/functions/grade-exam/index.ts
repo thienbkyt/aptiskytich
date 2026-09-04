@@ -782,35 +782,39 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
         ? questions.map((q, i) => `${i + 1}. ${q}`).join("\n")
         : questions.map((q, i) => `${i + 1}. ${q}${spokenMask[i] ? "" : "  [NO AUDIO — student did not record]"}`).join("\n");
 
-      const audioOrderNote = isPart4
-        ? "ONE monologue audio follows."
-        : `${spokenAudios.length} audio file(s) follow, IN ORDER, for question number(s): ${spokenIdx.map((i) => i + 1).join(", ")}. Other questions have NO AUDIO and MUST be returned with empty transcript and onTopic=false.`;
+      const audioOrderNote = textOnly
+        ? "NO AUDIO IS ATTACHED (the recording is longer than 60 seconds and was already transcribed). Grade from the transcripts below only."
+        : isPart4
+          ? "ONE monologue audio follows."
+          : `${spokenAudios.length} audio file(s) follow, IN ORDER, for question number(s): ${spokenIdx.map((i) => i + 1).join(", ")}. Other questions have NO AUDIO and MUST be returned with empty transcript and onTopic=false.`;
 
       const userParts: any[] = [
         { type: "text", text: `Exam Part: ${partType}\n${isPart4 ? "Sub-questions" : "Questions"}:\n${questionListText}\n\n${audioOrderNote}` },
       ];
-      for (const a of spokenAudios) {
-        userParts.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
+      if (!textOnly) {
+        for (const a of spokenAudios) {
+          userParts.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
+        }
       }
       // STEP 2 of the two-step worker flow: transcripts already produced by the
-      // `speaking_transcribe` step are attached as a REFERENCE so this call does
-      // not have to redo the transcription work. The rubric and the system
-      // prompt above are untouched.
+      // `speaking_transcribe` step are attached. For recordings ≤ 60s the audio
+      // is attached as well (they are a REFERENCE only); for longer recordings
+      // (textOnly) they are the ONLY evidence available. The rubric and the
+      // system prompt above are untouched.
       {
-        const pre: string[] = Array.isArray((body as any).precomputedTranscripts)
-          ? (body as any).precomputedTranscripts.map((t: any) => String(t ?? ""))
-          : [];
-        const preFull = typeof (body as any).precomputedFullTranscript === "string"
-          ? (body as any).precomputedFullTranscript
-          : "";
-        if (pre.some((t) => t.trim().length > 0)) {
+        const pre = preTranscripts;
+        const preFull = preFullTranscript;
+        if (pre.some((t) => t.trim().length > 0) || (textOnly && preFull.trim())) {
           const lines = pre.map((t, i) => `${i + 1}. ${t.trim() ? t : "(nothing audible)"}`).join("\n");
           userParts.push({
             type: "text",
-            text: `REFERENCE TRANSCRIPTS (already transcribed verbatim from the SAME audio in a previous step — reuse them as the transcript values instead of re-transcribing; still LISTEN to the audio to judge pronunciation):\n${lines}${preFull ? `\n\nFULL RECORDING:\n${preFull}` : ""}`,
+            text: textOnly
+              ? `TRANSCRIPTS (verbatim, transcribed from the student's recording in a previous step — this is the ONLY evidence; no audio is attached):\n${lines}${preFull ? `\n\nFULL RECORDING TRANSCRIPT:\n${preFull}` : ""}`
+              : `REFERENCE TRANSCRIPTS (already transcribed verbatim from the SAME audio in a previous step — reuse them as the transcript values instead of re-transcribing; still LISTEN to the audio to judge pronunciation):\n${lines}${preFull ? `\n\nFULL RECORDING:\n${preFull}` : ""}`,
           });
         }
       }
+
 
 
 
