@@ -624,7 +624,7 @@ ${isP4T
       });
       (questions as any).length = 0;
       (questions as any).push(...questionStrings);
-      if (!audios.length) {
+      if (!audios.length && !textOnly) {
         return new Response(JSON.stringify({ error: "No audios provided" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -639,8 +639,15 @@ ${isP4T
       const isPart4 = partType === "part4";
       const MIN_AUDIO_LEN = 40000; // ~30KB nhị phân; dưới mức này là khoảng lặng, KHÔNG gửi cho AI
       // Treat very short / empty base64 strings as "silent" (no recording).
-      const spokenMask: boolean[] = audios.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN);
-      const anySpoken = spokenMask.some(Boolean);
+      // In textOnly mode there is no audio at all: "spoken" is decided by whether
+      // the transcript produced in step 1 has any words.
+      const spokenMask: boolean[] = textOnly
+        ? (preTranscripts.length
+            ? preTranscripts.map((t) => t.trim().length > 0)
+            : questionStrings.map((_, i) => i === 0 && preFullTranscript.trim().length > 0))
+        : audios.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN);
+      const anySpoken = spokenMask.some(Boolean) || (textOnly && preFullTranscript.trim().length > 0);
+
       const itemCount = isPart4 ? Math.max(questions.length, 1) : questions.length;
 
       // No audio at all → don't call AI, return zeroed grading.
