@@ -751,6 +751,8 @@ function SentenceTask({
   const savedRef = useRef(initialState?.saved ?? false);
   const speakingScoreRef = useRef<number | null>(initialState?.speakingScore ?? null);
   const resRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
+  /** Bản chụp kết quả lần chấm ĐẦU TIÊN — không bao giờ bị null hoá. */
+  const firstResultRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
   /** Câu đã chấm ở lần trước → hiển thị chỉ đọc. */
   const readOnly = !!initialState?.checked;
 
