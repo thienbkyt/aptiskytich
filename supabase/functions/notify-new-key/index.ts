@@ -115,64 +115,70 @@ Deno.serve(async (req) => {
       if (page > 50) break;
     }
 
-    // 3. Filter out suppressed
-    const { data: suppressed } = await admin
-      .from("suppressed_emails")
-      .select("email");
-    const suppressedSet = new Set(
-      (suppressed ?? []).map((r: any) => String(r.email).toLowerCase()),
-    );
-    const targets = emails.filter((e) => !suppressedSet.has(e.email));
-
-    // 4. Enqueue emails
+    // 3. Send emails (suppression is enforced server-side at send time)
+    const targets = emails;
     let ok = 0;
     let fail = 0;
-    for (const t of targets) {
-      const idem = `newkey-${keyDate}-${t.email}`;
-      // Try to get / create unsubscribe token
-      let token: string | null = null;
-      const { data: existTok } = await admin
-        .from("email_unsubscribe_tokens")
-        .select("token")
-        .eq("email", t.email)
-        .maybeSingle();
-      if (existTok?.token) {
-        token = existTok.token;
-      } else {
-        const newTok = crypto.randomUUID().replace(/-/g, "");
-        const { data: inserted } = await admin
-          .from("email_unsubscribe_tokens")
-          .insert({ email: t.email, token: newTok })
-          .select("token")
-          .maybeSingle();
-        token = inserted?.token ?? newTok;
-      }
-      const unsubUrl = `${SITE_URL}/unsubscribe?token=${token}`;
-      const { subject, html, text } = buildEmail(t.name, keyDate, unsubUrl);
+    let suppressedCount = 0;
 
-      const payload = {
-        message_id: idem,
-        to: t.email,
-        from: "aptiskytich <noreply@aptiskytich.vn>",
-        sender_domain: "notify.aptiskytich.vn",
-        subject,
-        html,
-        text,
-        purpose: "transactional",
-        label: "key-update",
-        idempotency_key: idem,
-        queued_at: new Date().toISOString(),
-      };
-
-      const { error } = await admin.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload,
+    async function logSend(
+      email: string,
+      status: "sent" | "suppressed" | "failed",
+      errorMessage?: string,
+    ) {
+      const { error } = await admin.from("email_send_log").insert({
+        template_name: TEMPLATE_NAME,
+        recipient_email: email,
+        status,
+        error_message: errorMessage ? errorMessage.slice(0, 1000) : null,
       });
-      if (error) fail++;
-      else ok++;
+      if (error) {
+        console.error("Failed to write email_send_log row", {
+          code: error.code,
+          message: error.message,
+        });
+      }
     }
 
-    // 5. Log
+    for (const t of targets) {
+      const idem = `newkey-${keyDate}-${t.email}`;
+      let attempt = 0;
+
+      while (true) {
+        try {
+          const result = await sendTemplateEmail(TEMPLATE_NAME, t.email, {
+            templateData: { name: t.name, keyDate },
+            idempotencyKey: idem,
+          });
+
+          if (result.sent) {
+            ok++;
+            await logSend(t.email, "sent");
+          } else {
+            suppressedCount++;
+            await logSend(t.email, "suppressed", "Recipient suppressed");
+          }
+          break;
+        } catch (error) {
+          if (
+            error instanceof EmailAPIError &&
+            error.status === 429 &&
+            attempt === 0
+          ) {
+            attempt++;
+            await sleep((error.retryAfterSeconds ?? 60) * 1000);
+            continue;
+          }
+
+          const msg = error instanceof Error ? error.message : String(error);
+          fail++;
+          await logSend(t.email, "failed", msg);
+          break;
+        }
+      }
+    }
+
+    // 4. Log
     await admin
       .from("key_notify_log")
       .insert({ key_date: keyDate, email_count: ok });
@@ -182,11 +188,13 @@ Deno.serve(async (req) => {
         already_sent: false,
         total_users: emails.length,
         targeted: targets.length,
-        enqueued: ok,
+        sent: ok,
+        suppressed: suppressedCount,
         failed: fail,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e) {
     return new Response(
       JSON.stringify({ error: String((e as Error)?.message || e) }),
