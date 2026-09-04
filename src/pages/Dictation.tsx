@@ -895,9 +895,27 @@ function SentenceTask({
     playerRef.current?.play({ silentCount: true });
   };
 
-  const cycleSpeed = () => {
-    setSpeed((s) => (s === 0.75 ? 1 : s === 1 ? 1.25 : 0.75));
-  };
+  const speedButtons = (
+    <div className="flex items-center gap-1">
+      {[0.75, 1, 1.25].map((v) => (
+        <Button
+          key={v}
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setSpeed(v)}
+          className={cn(
+            "h-7 px-2 text-xs font-medium",
+            speed === v
+              ? "bg-primary text-primary-foreground border-primary hover:bg-primary hover:text-primary-foreground"
+              : "bg-muted/50 text-muted-foreground hover:border-primary",
+          )}
+        >
+          {v}x
+        </Button>
+      ))}
+    </div>
+  );
 
   const audioRow = hasAudio ? (
     <>
@@ -933,20 +951,16 @@ function SentenceTask({
         <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
           0:00 / 0:{String(segLen).padStart(2, "0")}
         </span>
-        <button
-          type="button"
-          onClick={cycleSpeed}
-          className="shrink-0 px-2.5 py-1 rounded-full border text-xs font-medium hover:border-primary"
-        >
-          {speed}x
-        </button>
       </div>
-      <p className="text-xs text-muted-foreground mt-2">
-        {settings.maxPlays > 0
-          ? `Đã nghe ${Math.min(plays, settings.maxPlays)}/${settings.maxPlays} lần`
-          : `Đã nghe ${plays} lần`}
-        {limitReached && " · đã hết lượt nghe"}
-      </p>
+      <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          {settings.maxPlays > 0
+            ? `Đã nghe ${Math.min(plays, settings.maxPlays)}/${settings.maxPlays} lần`
+            : `Đã nghe ${plays} lần`}
+          {limitReached && " · đã hết lượt nghe"}
+        </p>
+        {speedButtons}
+      </div>
     </>
   ) : (
     <p className="mt-4 text-sm text-destructive">Câu này chưa có dữ liệu audio.</p>
