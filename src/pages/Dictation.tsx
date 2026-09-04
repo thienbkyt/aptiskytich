@@ -1245,11 +1245,17 @@ function ResultScreen({
           {isShadow ? (
             <div>
               <p className="text-lg font-semibold">
-                {goodSpeaking}/{total}
+                {goodSpeaking}/{spokenScores.length}
               </p>
-              <p className="text-xs text-muted-foreground">câu phát âm tốt</p>
+              <p className="text-xs text-muted-foreground">câu phát âm tốt / đã chấm</p>
+              {spokenScores.length < total && (
+                <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                  Bạn bỏ qua {total - spokenScores.length} câu chưa chấm
+                </p>
+              )}
             </div>
           ) : (
+
             <div>
               <p className="text-lg font-semibold">
                 {correct}/{total}
