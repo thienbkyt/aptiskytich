@@ -27,21 +27,17 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import SegmentPlayer, { type SegmentPlayerHandle } from "@/components/dictation/SegmentPlayer";
-import FillBlanks, { type FillBlanksResult } from "@/components/dictation/FillBlanks";
+import FillBlanks, {
+  type FillBlanksResult,
+  seededPickIndices,
+} from "@/components/dictation/FillBlanks";
 import ShadowPanel from "@/components/dictation/ShadowPanel";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { toast } from "@/hooks/use-toast";
-import { useAudioRecording } from "@/hooks/useAudioRecording";
-import AudioRecorder from "@/components/speaking/AudioRecorder";
-import UpgradeLock from "@/components/pro/UpgradeLock";
-import { useIsPro } from "@/hooks/useIsPro";
 
-/* ------------------------------------------------------------------ */
-/* Word-level diff (case & punctuation insensitive)                    */
-/* ------------------------------------------------------------------ */
 /* ------------------------------------------------------------------ */
 /* Types & settings                                                    */
 /* ------------------------------------------------------------------ */
