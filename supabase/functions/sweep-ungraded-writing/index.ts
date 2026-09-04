@@ -14,7 +14,7 @@ import { buildWritingPayloadFromDb } from "../_shared/writingPayloadRebuild.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -47,18 +47,21 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  // Internal scheduler only: cron shared secret, or a service_role JWT.
+  const cronSecret = Deno.env.get("GRADING_CRON_SECRET");
+  const cronHeader = req.headers.get("x-cron-secret");
+  if (!(cronSecret && cronHeader === cronSecret)) {
+    const authHeader = req.headers.get("Authorization");
+    const claims = authHeader?.startsWith("Bearer ")
+      ? parseJwtClaims(authHeader.slice("Bearer ".length).trim())
+      : null;
+    if (claims?.role !== "service_role") {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
-  const claims = parseJwtClaims(authHeader.slice("Bearer ".length).trim());
-  if (claims?.role !== "service_role") {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+
 
   try {
     const now = Date.now();

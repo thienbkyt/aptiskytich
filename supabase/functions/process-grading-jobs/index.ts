@@ -15,7 +15,7 @@ import { mapWritingRowsToParts, resolveWritingRawParts } from "../_shared/writin
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -458,19 +458,23 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // Only the internal scheduler (service_role JWT) may claim + run grading jobs.
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  // Only the internal scheduler may claim + run grading jobs: either the cron
+  // shared secret (x-cron-secret) or a service_role JWT.
+  const cronSecret = Deno.env.get("GRADING_CRON_SECRET");
+  const cronHeader = req.headers.get("x-cron-secret");
+  const isCron = !!cronSecret && cronHeader === cronSecret;
+  if (!isCron) {
+    const authHeader = req.headers.get("Authorization");
+    const claims = authHeader?.startsWith("Bearer ")
+      ? parseJwtClaims(authHeader.slice("Bearer ".length).trim())
+      : null;
+    if (claims?.role !== "service_role") {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
-  const claims = parseJwtClaims(authHeader.slice("Bearer ".length).trim());
-  if (claims?.role !== "service_role") {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+
 
   try {
     // Overlap guard: NOT needed at this layer. claim_grading_jobs() is already
