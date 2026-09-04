@@ -717,12 +717,20 @@ function waveformBars(seed: string) {
   return bars;
 }
 
+/** Chuẩn hoá từ giống FillBlanks (bỏ dấu câu, không phân biệt hoa/thường). */
+function normWord(w: string) {
+  return w.toLowerCase().replace(/[^a-z0-9']/gi, "");
+}
+
 function SentenceTask({
   sentence,
   settings,
   mode,
   userId,
   isLast,
+  initialState,
+  onPersistState,
+  onRegisterLeave,
   onDone,
   onNext,
 }: {
@@ -731,18 +739,26 @@ function SentenceTask({
   mode: PracticeMode;
   userId?: string;
   isLast: boolean;
+  initialState: TaskState | null;
+  onPersistState: (state: TaskState) => void;
+  onRegisterLeave: (fn: () => void) => void;
   onDone: (a: Answer) => void;
   onNext: () => void;
 }) {
   const playerRef = useRef<SegmentPlayerHandle | null>(null);
-  const [plays, setPlays] = useState(0);
+  const fillWrapRef = useRef<HTMLDivElement | null>(null);
+  const [plays, setPlays] = useState(initialState?.plays ?? 0);
   const [speed, setSpeed] = useState(settings.speed);
-  const [hintUsed, setHintUsed] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  const [res, setRes] = useState<FillBlanksResult | null>(null);
-  const firstAccuracyRef = useRef<number | null>(null);
-  const savedRef = useRef(false);
+  const [hintUsed, setHintUsed] = useState(initialState?.hintUsed ?? false);
+  const [checked, setChecked] = useState(initialState?.checked ?? false);
+  const [revealed, setRevealed] = useState(initialState?.checked ?? false);
+  const [res, setRes] = useState<FillBlanksResult | null>(initialState?.res ?? null);
+  const firstAccuracyRef = useRef<number | null>(initialState?.accuracy ?? null);
+  const savedRef = useRef(initialState?.saved ?? false);
+  const speakingScoreRef = useRef<number | null>(initialState?.speakingScore ?? null);
+  const resRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
+  /** Câu đã chấm ở lần trước → hiển thị chỉ đọc. */
+  const readOnly = !!initialState?.checked;
 
   const limitReached = settings.maxPlays > 0 && plays >= settings.maxPlays;
   const shownAccuracy = firstAccuracyRef.current ?? 0;
@@ -752,17 +768,38 @@ function SentenceTask({
   const hasAudio = !!sentence.audio_url && sentence.start_sec != null && sentence.end_sec != null;
   const segLen = Math.max(1, Math.round(Number(sentence.end_sec ?? 0) - Number(sentence.start_sec ?? 0)));
 
+  /** Đẩy state hiện tại lên cha để quay lại câu này không mất bài. */
+  const persist = () => {
+    onPersistState({
+      checked: checked || savedRef.current,
+      hintUsed,
+      accuracy: firstAccuracyRef.current,
+      res: resRef.current,
+      speakingScore: speakingScoreRef.current,
+      plays,
+      saved: savedRef.current,
+    });
+  };
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
+
+  useEffect(() => {
+    persistRef.current();
+  }, [checked, hintUsed, res, plays]);
+
   /** Ghi kết quả — chỉ MỘT lần cho mỗi câu. */
   const saveOnce = (accuracy: number, speakingScore: number | null) => {
     if (savedRef.current) return;
     savedRef.current = true;
+    speakingScoreRef.current = speakingScore ?? speakingScoreRef.current;
     onDone({
       sentenceId: sentence.sentence_id,
       text: sentence.text,
-      typed: res?.filled.join(" ") ?? "",
+      typed: resRef.current?.filled.join(" ") ?? "",
       accuracy,
       speakingScore,
     });
+    persistRef.current();
     if (!userId) return;
     void (async () => {
       try {
@@ -778,27 +815,80 @@ function SentenceTask({
     })();
   };
 
-  const handleCheck = (result: FillBlanksResult) => {
+  const applyResult = (result: FillBlanksResult) => {
     let acc = result.total ? Math.round((result.correct / result.total) * 100) : 0;
     if (hintUsed) acc = Math.min(acc, 90);
+    resRef.current = result;
     setRes(result);
     setChecked(true);
     if (firstAccuracyRef.current === null) firstAccuracyRef.current = acc;
+    return firstAccuracyRef.current;
+  };
+
+  const handleCheck = (result: FillBlanksResult) => {
+    const acc = applyResult(result);
     // Nghe chép thuần: ghi ngay. Kết hợp: chờ điểm nói (hoặc lúc sang câu khác).
-    if (mode === "dictation") saveOnce(firstAccuracyRef.current, null);
+    if (mode === "dictation") saveOnce(acc, null);
+  };
+
+  /** Chấm từ những gì đang gõ trong ô nhập (khi học viên chưa bấm "Kiểm tra"). */
+  const gradeFromInputs = (): FillBlanksResult | null => {
+    const el = fillWrapRef.current;
+    if (!el) return null;
+    const inputs = Array.from(el.querySelectorAll("input")) as HTMLInputElement[];
+    if (!inputs.length) return null;
+    const words = sentence.text.match(/[A-Za-z0-9']+/g) ?? [];
+    if (!words.length) return null;
+    const count = Math.max(1, Math.round(words.length * settings.blankRatio));
+    const hidden = seededPickIndices(
+      words.length,
+      count,
+      `${sentence.sentence_id}:${settings.blankRatio}`,
+    );
+    const filled = inputs.map((i) => i.value);
+    let correct = 0;
+    hidden.forEach((wi, slot) => {
+      const expected = normWord(words[wi] ?? "");
+      if (expected && normWord(filled[slot] ?? "") === expected) correct++;
+    });
+    return { correct, total: hidden.length, filled };
   };
 
   const handleScored = (score: number) => {
+    speakingScoreRef.current = score;
     if (mode === "shadow") saveOnce(0, score);
     else saveOnce(firstAccuracyRef.current ?? 0, score);
+    persistRef.current();
   };
 
-  const handleNext = () => {
-    if (mode === "shadow") saveOnce(0, null);
-    else if (mode === "combo" && firstAccuracyRef.current !== null) {
-      saveOnce(firstAccuracyRef.current, null);
+  /** Chốt câu hiện tại (tự chấm nếu cần) rồi mới đi tiếp. */
+  const commitAndNext = () => {
+    if (!savedRef.current) {
+      if (mode === "shadow") {
+        saveOnce(0, speakingScoreRef.current);
+      } else {
+        let acc = firstAccuracyRef.current;
+        if (acc === null) {
+          const auto = gradeFromInputs();
+          acc = auto ? applyResult(auto) : 0;
+        }
+        saveOnce(acc ?? 0, speakingScoreRef.current);
+      }
     }
+    persistRef.current();
     onNext();
+  };
+
+  const commitRef = useRef(commitAndNext);
+  commitRef.current = commitAndNext;
+
+  useEffect(() => {
+    onRegisterLeave(() => commitRef.current());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sentence.sentence_id]);
+
+  const handleNext = () => {
+    commitRef.current();
   };
 
   const handleRelisten = () => {
