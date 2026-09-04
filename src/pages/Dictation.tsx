@@ -1181,6 +1181,18 @@ function ResultScreen({
     ? Math.round(answers.reduce((sum, a) => sum + a.accuracy, 0) / answers.length)
     : 0;
   const correct = answers.filter((a) => a.accuracy === 100).length;
+  const spokenScores = answers
+    .map((a) => a.speakingScore)
+    .filter((s): s is number => typeof s === "number");
+  const avgSpeaking = spokenScores.length
+    ? Math.round(spokenScores.reduce((s, v) => s + v, 0) / spokenScores.length)
+    : 0;
+  const goodSpeaking = spokenScores.filter((s) => s >= 80).length;
+  const isShadow = mode === "shadow";
+  const isCombo = mode === "combo";
+  const circleValue = isShadow ? avgSpeaking : avg;
+  const circleLabel = isShadow ? "điểm phát âm" : "chính xác";
+  const noSpeakingGraded = isShadow && spokenScores.length === 0;
 
   useEffect(() => {
     if (finishedRef.current) return;
