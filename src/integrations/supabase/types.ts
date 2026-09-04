@@ -4789,6 +4789,10 @@ export type Database = {
         }[]
       }
       get_user_bootstrap: { Args: never; Returns: Json }
+      has_review: {
+        Args: { t: Database["public"]["Tables"]["test_results"]["Row"] }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
