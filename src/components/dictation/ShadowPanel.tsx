@@ -107,15 +107,27 @@ export default function ShadowPanel({
     },
   });
 
-  const missedSet = useMemo(
+  const normKey = (s: string) => s.toLowerCase().replace(/[^a-z0-9']/gi, "");
+
+  /** Từ sai hẳn / bị bỏ mất → đỏ. */
+  const wrongSet = useMemo(
     () =>
       new Set(
         (result?.words ?? [])
-          .filter((w) => w.status !== "correct")
-          .map((w) => w.expected.toLowerCase().replace(/[^a-z0-9']/gi, "")),
+          .filter((w) => w.status === "wrong" || w.status === "missing")
+          .map((w) => normKey(w.expected)),
       ),
     [result],
   );
+  /** Từ chỉ hơi lệch → hổ phách. */
+  const closeSet = useMemo(
+    () =>
+      new Set(
+        (result?.words ?? []).filter((w) => w.status === "close").map((w) => normKey(w.expected)),
+      ),
+    [result],
+  );
+
 
   const handleGrade = async () => {
     if (!blob) return;
@@ -191,13 +203,21 @@ export default function ShadowPanel({
               .split(/\s+/)
               .filter(Boolean)
               .map((w, i) => {
-                const norm = w.toLowerCase().replace(/[^a-z0-9']/gi, "");
-                const bad = missedSet.has(norm);
+                const norm = normKey(w);
+                const bad = wrongSet.has(norm);
+                const close = !bad && closeSet.has(norm);
                 return (
-                  <span key={`${w}-${i}`} className={cn(bad && "text-destructive underline")}>
+                  <span
+                    key={`${w}-${i}`}
+                    className={cn(
+                      bad && "text-destructive underline",
+                      close && "text-amber-600 underline decoration-amber-500",
+                    )}
+                  >
                     {w}
                   </span>
                 );
+
               })}
           </p>
         ) : (
