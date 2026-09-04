@@ -661,8 +661,11 @@ Deno.serve(async (req) => {
           continue;
         }
         // Step 2: rubric grading (unchanged prompt), separate 60s budget.
-        const payload = step1.payload;
+        // Recordings over 60s are graded from the transcript only (see
+        // buildGradePayload) — everything ≤ 60s still goes in with its audio.
+        const payload = await buildGradePayload(job, step1.payload);
         const { ok, status, body } = await invokeGradeExam(payload, job.user_id);
+
 
 
         if (ok && body && !body.error) {
