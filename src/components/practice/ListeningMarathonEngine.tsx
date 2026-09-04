@@ -138,16 +138,16 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     [results]
   );
 
-  // Preload all sets in parallel
+  // Preload sets theo lô (giới hạn 4 request đồng thời)
   useEffect(() => {
     let cancelled = false;
     setPhase("loading");
     setLoaded(null);
     setLoadErr(null);
+    setLoadProgress(0);
     (async () => {
       try {
-      const allLoaded = await Promise.all(
-        sets.map(async (set) => {
+      const allLoaded = await mapWithLimit(sets, 4, async (set) => {
           let questions = await fetchExamQuestions(set.id);
           const wrongIds = wrongQuestionIdsBySet?.[set.id];
           if (partType === "part1" && wrongIds?.length) {
