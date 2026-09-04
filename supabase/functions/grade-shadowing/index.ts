@@ -26,7 +26,41 @@ function tokenize(s: string) {
   return s.split(/\s+/).filter(Boolean);
 }
 
-/** LCS by word (case & punctuation insensitive). */
+type WordStatus = "correct" | "close" | "wrong" | "missing";
+type WordResult = { expected: string; spoken: string | null; status: WordStatus; ipa?: string };
+
+function levenshtein(a: string, b: string) {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = new Array(n + 1).fill(0).map((_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = new Array(n + 1).fill(0);
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(
+        prev[j] + 1,
+        cur[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function similarity(a: string, b: string) {
+  if (!a && !b) return 1;
+  const max = Math.max(a.length, b.length);
+  if (max === 0) return 1;
+  return 1 - levenshtein(a, b) / max;
+}
+
+/**
+ * LCS theo từ để cố định các mốc khớp tuyệt đối, sau đó ghép các đoạn chưa khớp
+ * theo thứ tự và chấm bằng Levenshtein chuẩn hoá.
+ */
 function scoreShadowing(expected: string, got: string) {
   const expRaw = tokenize(expected);
   const gotRaw = tokenize(got);
@@ -42,14 +76,13 @@ function scoreShadowing(expected: string, got: string) {
         : Math.max(dp[i - 1][j], dp[i][j - 1]);
     }
   }
-  const matchedExp = new Array<boolean>(m).fill(false);
-  const matchedGot = new Array<boolean>(n).fill(false);
+  // Truy vết ra danh sách cặp khớp tuyệt đối (theo thứ tự tăng).
+  const anchors: Array<[number, number]> = [];
   let i = m;
   let j = n;
   while (i > 0 && j > 0) {
     if (a[i - 1] && a[i - 1] === b[j - 1]) {
-      matchedExp[i - 1] = true;
-      matchedGot[j - 1] = true;
+      anchors.push([i - 1, j - 1]);
       i--;
       j--;
     } else if (dp[i - 1][j] >= dp[i][j - 1]) {
@@ -58,14 +91,52 @@ function scoreShadowing(expected: string, got: string) {
       j--;
     }
   }
-  const hit = matchedExp.filter(Boolean).length;
-  const score = m > 0 ? Math.round((hit / m) * 100) : 0;
-  return {
-    score,
-    missed: expRaw.filter((_, k) => !matchedExp[k]),
-    extra: gotRaw.filter((_, k) => !matchedGot[k]),
+  anchors.reverse();
+
+  const words: WordResult[] = new Array(m);
+  const extra: string[] = [];
+
+  let expCursor = 0;
+  let gotCursor = 0;
+
+  const handleGap = (expEnd: number, gotEnd: number) => {
+    const expIdx: number[] = [];
+    for (let k = expCursor; k < expEnd; k++) expIdx.push(k);
+    const gotIdx: number[] = [];
+    for (let k = gotCursor; k < gotEnd; k++) gotIdx.push(k);
+
+    const pairCount = Math.min(expIdx.length, gotIdx.length);
+    for (let p = 0; p < pairCount; p++) {
+      const e = expIdx[p];
+      const g = gotIdx[p];
+      const sim = similarity(a[e], b[g]);
+      const status: WordStatus = sim >= 0.99 ? "correct" : sim >= 0.6 ? "close" : "wrong";
+      words[e] = { expected: expRaw[e], spoken: gotRaw[g], status };
+    }
+    for (let p = pairCount; p < expIdx.length; p++) {
+      const e = expIdx[p];
+      words[e] = { expected: expRaw[e], spoken: null, status: "missing" };
+    }
+    for (let p = pairCount; p < gotIdx.length; p++) {
+      extra.push(gotRaw[gotIdx[p]]);
+    }
   };
+
+  for (const [ei, gi] of anchors) {
+    handleGap(ei, gi);
+    words[ei] = { expected: expRaw[ei], spoken: gotRaw[gi], status: "correct" };
+    expCursor = ei + 1;
+    gotCursor = gi + 1;
+  }
+  handleGap(m, n);
+
+  const correctCount = words.filter((w) => w?.status === "correct").length;
+  const closeCount = words.filter((w) => w?.status === "close").length;
+  const score = m > 0 ? Math.round(((correctCount + 0.5 * closeCount) / m) * 100) : 0;
+
+  return { score, words, extra };
 }
+
 
 /* ------------------------------------------------------------------ */
 /* AI transcription                                                    */
