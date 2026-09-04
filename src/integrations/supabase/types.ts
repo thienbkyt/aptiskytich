@@ -282,6 +282,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_dictation_aligned_20260903: {
+        Row: {
+          audio_url: string
+          batch: number | null
+          end_sec: number | null
+          sort: number
+          start_sec: number | null
+          text: string
+        }
+        Insert: {
+          audio_url: string
+          batch?: number | null
+          end_sec?: number | null
+          sort: number
+          start_sec?: number | null
+          text: string
+        }
+        Update: {
+          audio_url?: string
+          batch?: number | null
+          end_sec?: number | null
+          sort?: number
+          start_sec?: number | null
+          text?: string
+        }
+        Relationships: []
+      }
       backup_exam_review_items_20260817: {
         Row: {
           id: string | null
@@ -1851,33 +1878,6 @@ export type Database = {
           skill?: string | null
           title?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      dictation_import_stage: {
-        Row: {
-          audio_url: string
-          batch: number | null
-          end_sec: number | null
-          sort: number
-          start_sec: number | null
-          text: string
-        }
-        Insert: {
-          audio_url: string
-          batch?: number | null
-          end_sec?: number | null
-          sort: number
-          start_sec?: number | null
-          text: string
-        }
-        Update: {
-          audio_url?: string
-          batch?: number | null
-          end_sec?: number | null
-          sort?: number
-          start_sec?: number | null
-          text?: string
         }
         Relationships: []
       }

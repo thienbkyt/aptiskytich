@@ -21,6 +21,8 @@ function speakAsync(text: string): Promise<void> {
 const withTimeout = <T,>(p: Promise<T>, ms: number) =>
   Promise.race([p, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
 
+const PAUSE_AFTER_SPEAK_MS = 1500;
+
 // Module-level guard: if the same intro text was already spoken in the last 60s
 // (e.g. parent re-rendered and remounted this screen because a tier/auth hook
 // finally resolved), skip the TTS sequence and go straight to onNext so we
@@ -45,12 +47,15 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
         if (!recentlySpoken) {
           SPOKEN_AT.set(key, Date.now());
           await withTimeout(speakAsync(instructions), 15000);
+          await new Promise((r) => setTimeout(r, PAUSE_AFTER_SPEAK_MS));
+          if (advancedRef.current) return;
           await withTimeout(playBeep(), 1000);
           await new Promise((r) => setTimeout(r, 800));
         }
       } catch {
         /* Always advance, even if mobile audio is blocked. */
       }
+      if (advancedRef.current) return;
       advancedRef.current = true;
       onNext();
     };
@@ -60,6 +65,7 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
     // starts the question TTS — stopping there would kill that new audio.
     return () => {
       if (!advancedRef.current) stopTTS();
+      advancedRef.current = true;
     };
   }, []);
 

@@ -119,6 +119,8 @@ function speakAsync(text: string): Promise<void> {
 const withTimeout = <T,>(p: Promise<T>, ms: number) =>
   Promise.race([p, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
 
+const PAUSE_AFTER_SPEAK_MS = 1500;
+
 const PART_PROMPTS: Record<SpeakingPartType, string> = {
   part1: "Part One - In this part, I am going to ask you three short questions about yourself and your interests. You will have 30 seconds to reply to each question.\n\nBegin speaking when you hear this sound.",
   part2: "Part Two - In this part, I'm going to ask you to describe a picture. Then I will ask you two questions about it. You will have 45 seconds for each response.\n\nBegin speaking when you hear this sound.",
@@ -606,6 +608,14 @@ const SpeakingExamEngine = ({
     if (token !== flowTokenRef.current) {
       console.warn("[Speaking] flow aborted - stale token after speakAsync");
       return;
+    }
+
+    if (questionText) {
+      await new Promise(r => setTimeout(r, PAUSE_AFTER_SPEAK_MS));
+      if (token !== flowTokenRef.current) {
+        console.warn("[Speaking] flow aborted - stale token after post-speak pause");
+        return;
+      }
     }
 
     const prepTime = getPrepTime();
@@ -1654,6 +1664,11 @@ const SpeakingExamEngine = ({
 
             {/* Question text */}
             {partType !== "part4" && <p className="text-sm text-gray-800 mt-4">{question}</p>}
+            {isReading && (
+              <p className="text-xs text-gray-400 mt-3 animate-pulse">
+                Chuẩn bị ghi âm…
+              </p>
+            )}
           </div>
 
 
