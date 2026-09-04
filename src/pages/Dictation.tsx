@@ -168,6 +168,12 @@ export default function Dictation() {
   const [startedAt, setStartedAt] = useState<number>(0);
   const [durationSec, setDurationSec] = useState(0);
 
+  /* --- state từng câu (giữ khi quay lại câu trước) --- */
+  const taskStatesRef = useRef<Map<string, TaskState>>(new Map());
+  /* --- hàm "chốt câu hiện tại rồi đi tiếp" do SentenceTask đăng ký --- */
+  const leaveRef = useRef<(() => void) | null>(null);
+
+
   /* --- chọn bài cụ thể --- */
   const [setRows, setSetRows] = useState<SetRow[]>([]);
   const [setsLoading, setSetsLoading] = useState(false);
