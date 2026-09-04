@@ -556,19 +556,26 @@ export default function Dictation() {
     const s = sentences[index];
     if (!s) return null;
     return (
-      <Shell>
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-semibold truncate">{s.set_title}</p>
-            <p className="text-xs text-muted-foreground">
-              Câu {index + 1}/{sentences.length}
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={exitPractice}>
-            <X className="w-4 h-4 mr-1" /> Thoát
+      <Shell onBack={exitPractice} backLabel="Thoát" backIcon={X}>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={index === 0}
+            onClick={() => setIndex((i) => Math.max(0, i - 1))}
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" /> Câu trước
           </Button>
+          <Badge variant="secondary" className="mx-1">
+            {index + 1}/{sentences.length}
+          </Badge>
+          <Button size="sm" onClick={goNext}>
+            {index + 1 >= sentences.length ? "Xem kết quả" : "Câu tiếp theo"}
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+          <p className="text-xs text-muted-foreground ml-auto truncate max-w-[45%]">{s.set_title}</p>
         </div>
-        <Progress value={((index + 1) / sentences.length) * 100} className="h-2 mt-3" />
+        <Progress value={((index + 1) / sentences.length) * 100} className="h-1 mt-3" />
 
         <SentenceTask
           key={s.sentence_id}
@@ -586,7 +593,7 @@ export default function Dictation() {
 
   /* ---------------- Screen 5: result ---------------- */
   return (
-    <Shell>
+    <Shell onBack={() => setScreen("home")}>
       <ResultScreen
         answers={answers}
         total={sentences.length}
@@ -596,6 +603,7 @@ export default function Dictation() {
         setId={chosenSetId ?? setId ?? null}
         userId={user?.id}
         onNewSession={() => setScreen("setup")}
+
         onRetry={() => {
           setIndex(0);
           setAnswers([]);
