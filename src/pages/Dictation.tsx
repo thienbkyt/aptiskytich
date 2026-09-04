@@ -1271,7 +1271,7 @@ function ResultScreen({
             <div className="mt-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã gõ</p>
               <p className="text-sm whitespace-pre-wrap break-words">
-                {a.typed ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+                {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
               </p>
             </div>
           </div>
