@@ -613,6 +613,8 @@ export default function Dictation() {
         onRetry={() => {
           setIndex(0);
           setAnswers([]);
+          taskStatesRef.current = new Map();
+          leaveRef.current = null;
           setStartedAt(Date.now());
           setScreen("practice");
         }}
