@@ -35,7 +35,7 @@ function bytesToBase64(bytes: Uint8Array): string {
 }
 
 async function hydrateAudioPaths(payload: any): Promise<any> {
-  if (!payload || payload.type !== "speaking_v2") return payload;
+  if (!payload || (payload.type !== "speaking_v2" && payload.type !== "speaking_transcribe")) return payload;
   const paths: Array<string | null | undefined> = Array.isArray(payload.audioPaths)
     ? payload.audioPaths
     : null;
@@ -57,25 +57,92 @@ async function hydrateAudioPaths(payload: any): Promise<any> {
 
 // ─── grade-exam invocation ──────────────────────────────────────────────────
 
+// Per-step wall clock. The speaking flow is split into two independent steps
+// (transcribe, then grade) so a hang in one of them can never strand the job:
+// the fetch is aborted, the job goes back to pending, and the next run resumes
+// from the step that has not completed yet.
+const STEP_TIMEOUT_MS = 60_000;
+
 async function invokeGradeExam(
   payload: any,
   userId: string,
+  timeoutMs: number = STEP_TIMEOUT_MS,
 ): Promise<{ ok: boolean; status: number; body: any }> {
   const hydrated = await hydrateAudioPaths(payload);
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/grade-exam`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${SERVICE_ROLE}`,
-      "x-internal-key": SERVICE_ROLE,
-      "x-internal-user-id": userId,
-    },
-    body: JSON.stringify(hydrated),
-  });
-  let body: any = null;
-  try { body = await res.json(); } catch { body = null; }
-  return { ok: res.ok, status: res.status, body };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/grade-exam`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SERVICE_ROLE}`,
+        "x-internal-key": SERVICE_ROLE,
+        "x-internal-user-id": userId,
+      },
+      body: JSON.stringify(hydrated),
+    });
+    let body: any = null;
+    try { body = await res.json(); } catch { body = null; }
+    return { ok: res.ok, status: res.status, body };
+  } catch (e) {
+    const isAbort = (e as any)?.name === "AbortError";
+    return {
+      ok: false,
+      status: isAbort ? 504 : 500,
+      body: { error: isAbort ? `step timeout after ${Math.round(timeoutMs / 1000)}s` : String((e as any)?.message || e) },
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }
+
+// ─── speaking step 1: transcribe once, reuse forever ────────────────────────
+// Stores the transcripts on grading_jobs.payload so a retry skips straight to
+// grading. Returns the payload to grade with (unchanged for non-speaking jobs).
+async function ensureSpeakingTranscript(
+  job: any,
+): Promise<{ payload: any; error?: { status: number; body: any } }> {
+  const payload = job.payload || {};
+  if (job.skill !== "speaking" || payload.type !== "speaking_v2") return { payload };
+
+  const existing = Array.isArray(payload.precomputedTranscripts)
+    ? payload.precomputedTranscripts
+    : null;
+  // Already transcribed on a previous attempt → skip step 1 entirely.
+  if (existing) return { payload };
+
+  const { ok, status, body } = await invokeGradeExam(
+    {
+      type: "speaking_transcribe",
+      partType: payload.partType,
+      questions: payload.questions,
+      audioPaths: payload.audioPaths,
+      audios: payload.audios,
+      gradingSessionId: payload.gradingSessionId ?? null,
+    },
+    job.user_id,
+    STEP_TIMEOUT_MS,
+  );
+  if (!ok || !body || body.error || !Array.isArray(body.transcripts)) {
+    return {
+      payload,
+      error: { status: status || 502, body: body ?? { error: "transcribe failed" } },
+    };
+  }
+
+  const next = {
+    ...payload,
+    precomputedTranscripts: body.transcripts,
+    precomputedFullTranscript: typeof body.fullTranscript === "string" ? body.fullTranscript : "",
+  };
+  // Persist so the (expensive) audio pass is never repeated.
+  await admin.from("grading_jobs").update({ payload: next, updated_at: new Date().toISOString() })
+    .eq("id", job.id);
+  return { payload: next };
+}
+
 
 // ─── permanent-failure detection ────────────────────────────────────────────
 // Never retry quota / rate / credit / validation errors — they never succeed
@@ -497,8 +564,25 @@ Deno.serve(async (req) => {
 
     for (const job of (jobs || []) as any[]) {
       try {
-        const payload = job.payload || {};
+        // Step 1 (speaking only): transcribe, cached on the job payload.
+        const step1 = await ensureSpeakingTranscript(job);
+        if (step1.error) {
+          const errMsg = `transcribe: ${String(step1.error.body?.error || `HTTP ${step1.error.status}`)}`;
+          const permanent = isPermanentFailure(step1.error.status, step1.error.body);
+          const isFinal = permanent || (job.attempts || 0) >= (job.max_attempts || 3);
+          await admin.from("grading_jobs").update({
+            status: isFinal ? "failed" : "pending",
+            claimed_at: null,
+            last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
+            finished_at: isFinal ? new Date().toISOString() : null,
+          }).eq("id", job.id);
+          results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+          continue;
+        }
+        // Step 2: rubric grading (unchanged prompt), separate 60s budget.
+        const payload = step1.payload;
         const { ok, status, body } = await invokeGradeExam(payload, job.user_id);
+
 
         if (ok && body && !body.error) {
           // Persist BEFORE marking done. If persist throws, the job goes back

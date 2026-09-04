@@ -24,6 +24,9 @@ import {
   Pagination, PaginationContent, PaginationItem, PaginationLink,
   PaginationPrevious, PaginationNext, PaginationEllipsis,
 } from "@/components/ui/pagination";
+import { useFailedGradingJobs } from "@/hooks/useFailedGradingJobs";
+import { toast } from "@/hooks/use-toast";
+
 
 interface HistoryRow {
   id: string;
@@ -159,6 +162,20 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  // Bài mà AI chấm lỗi hẳn → hiện nút "Chấm lại" thay cho dấu "—".
+  const { jobsByResult: failedJobs, retry: retryGrading, retryingId } =
+    useFailedGradingJobs(Boolean(user));
+  const handleRetryGrading = async (jobId: string) => {
+    const { ok, reason } = await retryGrading(jobId);
+    if (ok) {
+      toast({ title: "Đã gửi chấm lại", description: "Bài của bạn đang được chấm lại, kết quả cập nhật sau ít phút." });
+    } else if (reason?.includes("retry_limit_reached")) {
+      toast({ title: "Đã hết lượt chấm lại", description: "Mỗi bài chỉ được chấm lại tối đa 2 lần.", variant: "destructive" });
+    } else {
+      toast({ title: "Chưa gửi được", description: "Thử lại sau ít phút nhé.", variant: "destructive" });
+    }
+  };
+
 
   useEffect(() => {
     if (!user) return;
@@ -909,7 +926,30 @@ const History = () => {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-foreground">{r.displayScore}</TableCell>
+                        <TableCell className="text-right font-semibold text-foreground">
+                          {(() => {
+                            const fj = failedJobs[r.id];
+                            const ungraded = !r.displayScore || r.displayScore === "—";
+                            if (fj && ungraded) {
+                              return fj.canRetry ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1.5"
+                                  disabled={retryingId === fj.id}
+                                  onClick={() => handleRetryGrading(fj.id)}
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                  {retryingId === fj.id ? "Đang gửi…" : "Chấm lại"}
+                                </Button>
+                              ) : (
+                                <span className="text-xs font-normal text-muted-foreground">Hết lượt chấm lại</span>
+                              );
+                            }
+                            return r.displayScore;
+                          })()}
+                        </TableCell>
+
                         <TableCell className="text-right">
                           {r.displayBand && r.displayBand !== "—" ? (
                             <Badge className="bg-primary/10 text-primary hover:bg-primary/15 border-0 font-bold">{r.displayBand}</Badge>
