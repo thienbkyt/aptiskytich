@@ -47,12 +47,15 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
         if (!recentlySpoken) {
           SPOKEN_AT.set(key, Date.now());
           await withTimeout(speakAsync(instructions), 15000);
+          await new Promise((r) => setTimeout(r, PAUSE_AFTER_SPEAK_MS));
+          if (advancedRef.current) return;
           await withTimeout(playBeep(), 1000);
           await new Promise((r) => setTimeout(r, 800));
         }
       } catch {
         /* Always advance, even if mobile audio is blocked. */
       }
+      if (advancedRef.current) return;
       advancedRef.current = true;
       onNext();
     };
@@ -62,6 +65,7 @@ const SpeakingPromptScreen = ({ partNumber, totalParts, title, instructions, onN
     // starts the question TTS — stopping there would kill that new audio.
     return () => {
       if (!advancedRef.current) stopTTS();
+      advancedRef.current = true;
     };
   }, []);
 
