@@ -751,6 +751,8 @@ function SentenceTask({
   const savedRef = useRef(initialState?.saved ?? false);
   const speakingScoreRef = useRef<number | null>(initialState?.speakingScore ?? null);
   const resRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
+  /** Bản chụp kết quả lần chấm ĐẦU TIÊN — không bao giờ bị null hoá. */
+  const firstResultRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
   /** Câu đã chấm ở lần trước → hiển thị chỉ đọc. */
   const readOnly = !!initialState?.checked;
 
@@ -789,7 +791,7 @@ function SentenceTask({
     onDone({
       sentenceId: sentence.sentence_id,
       text: sentence.text,
-      typed: resRef.current?.filled.join(" ") ?? "",
+      typed: firstResultRef.current?.filledSentence ?? "",
       accuracy,
       speakingScore,
     });
@@ -813,6 +815,7 @@ function SentenceTask({
     let acc = result.total ? Math.round((result.correct / result.total) * 100) : 0;
     if (hintUsed) acc = Math.min(acc, 90);
     resRef.current = result;
+    if (firstResultRef.current === null) firstResultRef.current = result;
     setRes(result);
     setChecked(true);
     if (firstAccuracyRef.current === null) firstAccuracyRef.current = acc;
@@ -845,7 +848,16 @@ function SentenceTask({
       const expected = normWord(words[wi] ?? "");
       if (expected && normWord(filled[slot] ?? "") === expected) correct++;
     });
-    return { correct, total: hidden.length, filled };
+    const slotOf = new Map<number, number>();
+    hidden.forEach((wi, slot) => slotOf.set(wi, slot));
+    let wi = -1;
+    const filledSentence = sentence.text.replace(/[A-Za-z0-9']+/g, (m) => {
+      wi++;
+      const slot = slotOf.get(wi);
+      if (slot === undefined) return m;
+      return (filled[slot] ?? "").trim() || "___";
+    });
+    return { correct, total: hidden.length, filled, filledSentence };
   };
 
   const handleScored = (score: number) => {
@@ -1061,11 +1073,15 @@ function SentenceTask({
             variant="secondary"
             size="sm"
             onClick={() => {
+              const snapshot = gradeFromInputs();
               setChecked(true);
               setRevealed(true);
               if (firstAccuracyRef.current === null) firstAccuracyRef.current = 0;
-              resRef.current = resRef.current ?? { correct: 0, total: 0, filled: [] };
-              setRes((r) => r ?? { correct: 0, total: 0, filled: [] });
+              const fallback: FillBlanksResult =
+                snapshot ?? { correct: 0, total: 0, filled: [], filledSentence: "" };
+              resRef.current = resRef.current ?? fallback;
+              if (firstResultRef.current === null) firstResultRef.current = resRef.current;
+              setRes((r) => r ?? fallback);
               if (mode === "dictation") saveOnce(0, null);
             }}
           >
@@ -1101,8 +1117,8 @@ function SentenceTask({
   if (mode === "combo") {
     return (
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-        <Card className="p-5 sm:p-6">{fillColumn}</Card>
-        <div className="space-y-4">
+        <Card className="p-5 sm:p-6 min-w-0">{fillColumn}</Card>
+        <div className="space-y-4 min-w-0">
           {shadowPanel}
           <div className="flex justify-end">{nextButton}</div>
         </div>
@@ -1217,7 +1233,7 @@ function ResultScreen({
                 <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                 <td className="px-3 py-2 whitespace-pre-wrap break-words">{a.text}</td>
                 <td className="px-3 py-2 whitespace-pre-wrap break-words">
-                  {a.typed ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+                  {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
                 </td>
                 <td
                   className={cn(
@@ -1255,7 +1271,7 @@ function ResultScreen({
             <div className="mt-2">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Bạn đã gõ</p>
               <p className="text-sm whitespace-pre-wrap break-words">
-                {a.typed ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
+                {a.typed?.trim() ? a.typed : <span className="text-muted-foreground">(để trống)</span>}
               </p>
             </div>
           </div>
