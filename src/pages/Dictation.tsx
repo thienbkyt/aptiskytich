@@ -261,7 +261,11 @@ export default function Dictation() {
       if (i === -1) return [...prev, a];
       // Đã ghi nhận lần chấm đầu — chỉ bổ sung điểm nói nhại.
       const next = [...prev];
-      next[i] = { ...next[i], speakingScore: a.speakingScore ?? next[i].speakingScore ?? null };
+      next[i] = {
+        ...next[i],
+        speakingScore: a.speakingScore ?? next[i].speakingScore ?? null,
+        spoken: a.spoken ?? next[i].spoken ?? null,
+      };
       return next;
     });
   };
