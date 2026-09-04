@@ -2806,6 +2806,24 @@ export type Database = {
           },
         ]
       }
+      internal_service_tokens: {
+        Row: {
+          created_at: string
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       key_notify_log: {
         Row: {
           email_count: number
