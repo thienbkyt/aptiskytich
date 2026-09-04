@@ -62,11 +62,24 @@ Deno.serve(async (req) => {
     return json({ error: "method_not_allowed" }, 405);
   }
 
-  // Only the database (service role key) may trigger these sends.
+  // Only the database may trigger these sends: either with the service role key
+  // or with the internal bridge token stored in public.internal_service_tokens
+  // (readable by the service role only).
   const auth = req.headers.get("Authorization") ?? "";
-  if (auth !== `Bearer ${SERVICE_ROLE_KEY}`) {
+  const bridgeToken = req.headers.get("x-internal-token") ?? "";
+  let authorized = auth === `Bearer ${SERVICE_ROLE_KEY}`;
+  if (!authorized && bridgeToken) {
+    const { data } = await admin
+      .from("internal_service_tokens")
+      .select("token")
+      .eq("name", "email_bridge")
+      .maybeSingle();
+    authorized = !!data?.token && data.token === bridgeToken;
+  }
+  if (!authorized) {
     return json({ error: "unauthorized" }, 401);
   }
+
 
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) {

@@ -2806,6 +2806,24 @@ export type Database = {
           },
         ]
       }
+      internal_service_tokens: {
+        Row: {
+          created_at: string
+          name: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          token?: string
+        }
+        Relationships: []
+      }
       key_notify_log: {
         Row: {
           email_count: number
@@ -4640,6 +4658,10 @@ export type Database = {
       }
       current_user_is_pro: { Args: never; Returns: boolean }
       current_user_tier: { Args: never; Returns: string }
+      enqueue_email: {
+        Args: { p_channel: string; p_payload: Json }
+        Returns: number
+      }
       enqueue_grading_job: {
         Args: {
           p_last_error?: string
