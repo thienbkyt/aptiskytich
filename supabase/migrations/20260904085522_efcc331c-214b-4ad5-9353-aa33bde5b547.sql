@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.backup_auth_pass_20260815;
