@@ -1064,7 +1064,7 @@ function SentenceTask({
     />
   );
 
-  /* ---- Nói nhại: một cột ---- */
+  /* ---- Nói đuổi: một cột ---- */
   if (mode === "shadow") {
     return (
       <Card className="mt-5 p-5 sm:p-6">
