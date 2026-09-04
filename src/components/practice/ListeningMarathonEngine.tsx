@@ -543,7 +543,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
         <main className="flex-1 flex items-center justify-center">
           <div className="space-y-4 text-center">
             <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
-            <TechSkeleton variant="text" className="w-40 mx-auto" />
+            <p className="text-sm text-muted-foreground">
+              Đang tải đề... {Math.min(loadProgress, sets.length)}/{sets.length}
+            </p>
           </div>
         </main>
       </div>
