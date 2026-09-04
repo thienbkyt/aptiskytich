@@ -127,7 +127,16 @@ export default function FillBlanks({
       const expected = normalize(words[wi]?.text ?? "");
       if (expected && normalize(values[slot] ?? "") === expected) correct++;
     });
-    onCheck({ correct, total: hiddenWordIdx.length, filled: values.slice() });
+    const filledSentence = tokens
+      .map((t) => {
+        if (!t.isWord) return t.text;
+        const slot = slotOf.get(t.wordIndex);
+        if (slot === undefined) return t.text;
+        const v = (values[slot] ?? "").trim();
+        return v || "___";
+      })
+      .join("");
+    onCheck({ correct, total: hiddenWordIdx.length, filled: values.slice(), filledSentence });
   };
 
   const handleHint = () => {
