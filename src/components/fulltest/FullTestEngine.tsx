@@ -259,15 +259,16 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       return;
     }
 
-    // Load all questions for all sets in parallel
+    // Load questions theo lô (giới hạn 4 request đồng thời)
     let setsWithQuestions: any[];
+    setLoadTotal(sets.length);
+    setLoadDone(0);
     try {
-      setsWithQuestions = await Promise.all(
-        sets.map(async (s) => {
-          const questions = await fetchExamQuestions(s.id);
-          return { ...s, questions, partNorm: normalizePart(s.part) };
-        })
-      );
+      setsWithQuestions = await mapWithLimit(sets as any[], 4, async (s: any) => {
+        const questions = await fetchExamQuestions(s.id);
+        setLoadDone((n) => n + 1);
+        return { ...s, questions, partNorm: normalizePart(s.part) };
+      });
     } catch (e) {
       // A published set always has questions: an empty result means the rows are
       // hidden (RLS), typically because the learner's Pro plan expired.
