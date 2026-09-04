@@ -373,7 +373,12 @@ serve(async (req) => {
 
     // Too short / silent → no AI call, no usage logged.
     if (approxBytes < 2000) {
-      return json({ transcript: "", score: 0, missed: tokenize(text), extra: [] });
+      return json({
+        transcript: "",
+        score: 0,
+        words: tokenize(text).map((w) => ({ expected: w, spoken: null, status: "missing" })),
+        extra: [],
+      });
     }
 
     // --- Feature gate (Pro / quota) ---
