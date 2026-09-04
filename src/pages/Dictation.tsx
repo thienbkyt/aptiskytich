@@ -800,6 +800,7 @@ function SentenceTask({
       typed: firstResultRef.current?.filledSentence ?? "",
       accuracy,
       speakingScore,
+      spoken: mode === "dictation" ? null : spokenRef.current,
     });
     persistRef.current();
     if (!userId) return;
