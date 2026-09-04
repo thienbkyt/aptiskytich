@@ -598,7 +598,7 @@ function Shell({
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
+      <main className="max-w-3xl mx-auto px-4 pt-20 pb-10 sm:pt-24">
         <button
           type="button"
           onClick={() => (onBack ? onBack() : navigate("/dashboard"))}
