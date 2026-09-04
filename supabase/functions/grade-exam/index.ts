@@ -584,6 +584,28 @@ ${isP4T
 
     if ((type as string) === "speaking_v2") {
       const audios: string[] = Array.isArray((body as any).audios) ? (body as any).audios : [];
+      // ── 60-SECOND THRESHOLD (two-step worker flow) ───────────────────────────
+      // Recordings ≤ 60s are still graded WITH the audio, so PRO stays audio-based.
+      // Longer recordings (Part 4 monologues) are graded from the transcript only —
+      // the worker sets `textOnly` and, when the same attempt has shorter parts
+      // already graded, passes their averaged PRO band as `proBandOverride`.
+      const textOnly = (body as any).textOnly === true;
+      const proOverrideNum = Number((body as any).proBandOverride);
+      const proBandOverride = Number.isFinite(proOverrideNum)
+        ? Math.max(0, Math.min(5, Math.round(proOverrideNum)))
+        : null;
+      const preTranscripts: string[] = Array.isArray((body as any).precomputedTranscripts)
+        ? (body as any).precomputedTranscripts.map((t: any) => String(t ?? ""))
+        : [];
+      const preFullTranscript = typeof (body as any).precomputedFullTranscript === "string"
+        ? (body as any).precomputedFullTranscript
+        : "";
+      if (textOnly && !preTranscripts.some((t) => t.trim().length > 0) && !preFullTranscript.trim()) {
+        return new Response(JSON.stringify({ error: "textOnly grading requires precomputedTranscripts" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (!Array.isArray(questions) || questions.length === 0 || questions.length > 20) {
         return new Response(JSON.stringify({ error: "Invalid questions" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
