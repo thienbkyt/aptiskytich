@@ -74,7 +74,7 @@ export default function ShadowPanel({
   sentence: ShadowSentence;
   speed: number;
   revealed: boolean;
-  onScored: (score: number) => void;
+  onScored: (result: { score: number; transcript: string }) => void;
   onPlayModel?: () => void;
 }) {
   const { isPro } = useIsPro();
