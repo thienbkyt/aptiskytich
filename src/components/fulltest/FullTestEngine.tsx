@@ -13,6 +13,7 @@ import { fetchExamQuestions, type ExamQuestionRow } from "@/hooks/useExamSets";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredNotice from "@/components/pro/PlanExpiredNotice";
 import { isExamEmptyError } from "@/lib/examLoadError";
+import { mapWithLimit } from "@/lib/concurrency";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
