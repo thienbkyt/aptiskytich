@@ -300,7 +300,7 @@ export default function Dictation() {
     return (
       <Shell onBack={() => navigate("/dashboard")}>
         <h1 className="text-2xl sm:text-3xl font-bold">Nghe chép & nói đuổi (Dictation & Shadowing)</h1>
-        <p className="text-muted-foreground mt-2">Chọn kiểu luyện tập, rồi chọn lộ trình để bắt đầu.</p>
+        <p className="text-muted-foreground mt-2">Chọn kiểu luyện tập, rồi chọn level để bắt đầu.</p>
 
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {cards.map((c) => (
