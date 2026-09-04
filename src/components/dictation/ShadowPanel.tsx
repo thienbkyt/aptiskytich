@@ -203,13 +203,21 @@ export default function ShadowPanel({
               .split(/\s+/)
               .filter(Boolean)
               .map((w, i) => {
-                const norm = w.toLowerCase().replace(/[^a-z0-9']/gi, "");
-                const bad = missedSet.has(norm);
+                const norm = normKey(w);
+                const bad = wrongSet.has(norm);
+                const close = !bad && closeSet.has(norm);
                 return (
-                  <span key={`${w}-${i}`} className={cn(bad && "text-destructive underline")}>
+                  <span
+                    key={`${w}-${i}`}
+                    className={cn(
+                      bad && "text-destructive underline",
+                      close && "text-amber-600 underline decoration-amber-500",
+                    )}
+                  >
                     {w}
                   </span>
                 );
+
               })}
           </p>
         ) : (
