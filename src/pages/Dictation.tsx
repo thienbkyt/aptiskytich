@@ -848,7 +848,16 @@ function SentenceTask({
       const expected = normWord(words[wi] ?? "");
       if (expected && normWord(filled[slot] ?? "") === expected) correct++;
     });
-    return { correct, total: hidden.length, filled };
+    const slotOf = new Map<number, number>();
+    hidden.forEach((wi, slot) => slotOf.set(wi, slot));
+    let wi = -1;
+    const filledSentence = sentence.text.replace(/[A-Za-z0-9']+/g, (m) => {
+      wi++;
+      const slot = slotOf.get(wi);
+      if (slot === undefined) return m;
+      return (filled[slot] ?? "").trim() || "___";
+    });
+    return { correct, total: hidden.length, filled, filledSentence };
   };
 
   const handleScored = (score: number) => {
