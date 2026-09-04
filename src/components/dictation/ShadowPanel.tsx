@@ -108,7 +108,12 @@ export default function ShadowPanel({
   });
 
   const missedSet = useMemo(
-    () => new Set((result?.missed ?? []).map((w) => w.toLowerCase().replace(/[^a-z0-9']/gi, ""))),
+    () =>
+      new Set(
+        (result?.words ?? [])
+          .filter((w) => w.status !== "correct")
+          .map((w) => w.expected.toLowerCase().replace(/[^a-z0-9']/gi, "")),
+      ),
     [result],
   );
 
