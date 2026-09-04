@@ -755,6 +755,7 @@ function SentenceTask({
   const firstAccuracyRef = useRef<number | null>(initialState?.accuracy ?? null);
   const savedRef = useRef(initialState?.saved ?? false);
   const speakingScoreRef = useRef<number | null>(initialState?.speakingScore ?? null);
+  const spokenRef = useRef<string | null>(null);
   const resRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
   /** Bản chụp kết quả lần chấm ĐẦU TIÊN — không bao giờ bị null hoá. */
   const firstResultRef = useRef<FillBlanksResult | null>(initialState?.res ?? null);
