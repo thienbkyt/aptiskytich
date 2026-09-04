@@ -412,6 +412,176 @@ ${studentText}`;
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ============================================================
+    // SPEAKING — STEP 1 of 2: TRANSCRIBE ONLY (no rubric, no bands).
+    // The background worker (process-grading-jobs) calls this first and stores
+    // the transcripts on grading_jobs.payload, so a later retry never has to
+    // redo the expensive audio pass. Step 2 is the unchanged `speaking_v2`
+    // rubric grading, which receives these transcripts as a reference.
+    // ============================================================
+    if ((type as string) === "speaking_transcribe") {
+      const audiosT: string[] = Array.isArray((body as any).audios) ? (body as any).audios : [];
+      const qsT: string[] = (Array.isArray(questions) ? questions : []).map((q: any) => {
+        if (typeof q === "string") return q;
+        if (q && typeof q === "object") return String(q.questionText ?? q.question_text ?? q.text ?? "");
+        return q == null ? "" : String(q);
+      });
+      if (qsT.length === 0 || qsT.length > 20) {
+        return new Response(JSON.stringify({ error: "Invalid questions" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!audiosT.length) {
+        return new Response(JSON.stringify({ error: "No audios provided" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const totalBytesT = audiosT.reduce((s, a) => s + (a?.length || 0), 0);
+      if (totalBytesT > 30_000_000) {
+        return new Response(JSON.stringify({ error: "Audio payload too large" }), {
+          status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const isP4T = partType === "part4";
+      const MIN_AUDIO_LEN_T = 40000;
+      const spokenMaskT: boolean[] = audiosT.map((a) => typeof a === "string" && a.length > MIN_AUDIO_LEN_T);
+      const itemCountT = isP4T ? Math.max(qsT.length, 1) : qsT.length;
+
+      // Nothing audible → return empty transcripts without calling AI.
+      if (!spokenMaskT.some(Boolean)) {
+        return new Response(JSON.stringify({
+          transcripts: Array.from({ length: itemCountT }, () => ""),
+          fullTranscript: "",
+          silent: true,
+        }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const spokenAudiosT = audiosT.filter((_, i) => spokenMaskT[i]);
+      const spokenIdxT = audiosT.map((_, i) => i).filter((i) => spokenMaskT[i]);
+      const sysT = `You are a strict verbatim transcriber for an English speaking exam. You ONLY transcribe; you never grade, never comment, never translate.
+
+RULES:
+- Transcribe EXACTLY what is audibly spoken, including grammatical errors and false starts. Do not correct anything.
+- If an audio is silent, unintelligible, or contains only background noise (fan, static, breathing), return an EMPTY string for that item.
+- NEVER infer, guess, or compose an answer from the question text. A plausible answer is NOT evidence of speech.
+${isP4T
+  ? `- ONE monologue audio follows. Return fullTranscript = the ENTIRE recording verbatim, from the first word to the LAST word. Then split it into EXACTLY ${itemCountT} consecutive, non-overlapping segments (one per sub-question, in order) that together reproduce the whole monologue; the final segment must run to the very end. Use content and the speaker's transition phrases to decide boundaries. Return an empty segment only when the monologue genuinely never addresses that sub-question.`
+  : `- One audio per question. Return EXACTLY ${itemCountT} transcripts, in the original question order. Questions marked "[NO AUDIO]" must be returned as empty strings.`}`;
+
+      const questionListT = isP4T
+        ? qsT.map((q, i) => `${i + 1}. ${q}`).join("\n")
+        : qsT.map((q, i) => `${i + 1}. ${q}${spokenMaskT[i] ? "" : "  [NO AUDIO — student did not record]"}`).join("\n");
+      const orderNoteT = isP4T
+        ? "ONE monologue audio follows."
+        : `${spokenAudiosT.length} audio file(s) follow, IN ORDER, for question number(s): ${spokenIdxT.map((i) => i + 1).join(", ")}.`;
+
+      const userPartsT: any[] = [
+        { type: "text", text: `Exam Part: ${partType}\n${isP4T ? "Sub-questions" : "Questions"}:\n${questionListT}\n\n${orderNoteT}` },
+      ];
+      for (const a of spokenAudiosT) {
+        userPartsT.push({ type: "input_audio", input_audio: { data: a, format: "webm" } });
+      }
+
+      const toolT = {
+        type: "function",
+        function: {
+          name: "submit_transcripts",
+          description: "Submit verbatim transcripts of the exam recording(s).",
+          parameters: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              transcripts: {
+                type: "array",
+                minItems: itemCountT,
+                maxItems: itemCountT,
+                items: { type: "string" },
+                description: `EXACTLY ${itemCountT} verbatim transcripts, in order. Empty string when nothing audible.`,
+              },
+              fullTranscript: { type: "string", description: "Verbatim transcription of the ENTIRE audio, uncut." },
+            },
+            required: ["transcripts", "fullTranscript"],
+          },
+        },
+      };
+
+      const MODEL_T = "google/gemini-2.5-flash";
+      let transcribeResp: Response | null = null;
+      let attemptT = 0;
+      for (let i = 0; i < 2; i++) {
+        attemptT = i + 1;
+        try {
+          const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: MODEL_T,
+              reasoning_effort: "low",
+              temperature: 0,
+              messages: [
+                { role: "system", content: sysT },
+                { role: "user", content: userPartsT },
+              ],
+              tools: [toolT],
+              tool_choice: { type: "function", function: { name: "submit_transcripts" } },
+            }),
+          });
+          if (r.status >= 500 && i === 0) continue;
+          transcribeResp = r;
+          break;
+        } catch (e) {
+          console.error("[grade-exam transcribe] fetch failed", (e as any)?.message || e);
+          if (i === 0) continue;
+        }
+      }
+      if (!transcribeResp) {
+        return new Response(JSON.stringify({ error: "AI timeout, thử lại.", notGraded: true }), {
+          status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!transcribeResp.ok) {
+        const txt = await transcribeResp.text().catch(() => "");
+        console.error("[grade-exam transcribe] AI error", transcribeResp.status, txt.slice(0, 300));
+        const st = transcribeResp.status === 429 ? 429 : transcribeResp.status === 402 ? 402 : 502;
+        return new Response(JSON.stringify({
+          error: st === 429 ? "AI đang quá tải, thử lại sau." : st === 402 ? "Hết credit AI." : "Không tách được lời nói, thử lại.",
+        }), { status: st, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const jsonT = await transcribeResp.json();
+      const tcT = jsonT?.choices?.[0]?.message?.tool_calls?.[0];
+      let parsedT: any = null;
+      try { parsedT = tcT?.function?.arguments ? JSON.parse(tcT.function.arguments) : null; } catch { parsedT = null; }
+      if (!parsedT) {
+        return new Response(JSON.stringify({ error: "Phản hồi AI không hợp lệ" }), {
+          status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      try {
+        await logAIUsage({
+          model: MODEL_T,
+          usage: jsonT?.usage,
+          source_function: "grade-exam",
+          finishReason: jsonT?.choices?.[0]?.finish_reason ?? null,
+          attempt: attemptT,
+          gradingSessionId,
+          metadata: { mode: "speaking_transcribe", partType },
+        });
+      } catch { /* ignore */ }
+
+      const arrT = Array.isArray(parsedT.transcripts) ? parsedT.transcripts : [];
+      const outT = Array.from({ length: itemCountT }, (_, i) => {
+        if (!isP4T && !spokenMaskT[i]) return "";
+        return String(arrT[i] ?? "");
+      });
+      return new Response(JSON.stringify({
+        transcripts: outT,
+        fullTranscript: typeof parsedT.fullTranscript === "string" ? parsedT.fullTranscript : "",
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+
+
     if ((type as string) === "speaking_v2") {
       const audios: string[] = Array.isArray((body as any).audios) ? (body as any).audios : [];
       if (!Array.isArray(questions) || questions.length === 0 || questions.length > 20) {
