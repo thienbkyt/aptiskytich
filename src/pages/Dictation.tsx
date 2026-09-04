@@ -791,7 +791,7 @@ function SentenceTask({
     onDone({
       sentenceId: sentence.sentence_id,
       text: sentence.text,
-      typed: resRef.current?.filled.join(" ") ?? "",
+      typed: firstResultRef.current?.filledSentence ?? "",
       accuracy,
       speakingScore,
     });
