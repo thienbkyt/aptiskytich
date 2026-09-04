@@ -296,9 +296,9 @@ export default function ShadowPanel({
           <div className="mt-3">
             <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Bạn đã nói</p>
             {result.words.length > 0 ? (
-              <p className="leading-loose">
+              <p className="leading-loose flex flex-wrap gap-x-1.5 gap-y-1">
                 {result.words.map((w, i) => (
-                  <span key={`${w.expected}-${i}`} className="mr-2 inline-block">
+                  <span key={`${w.expected}-${i}`}>
                     <span
                       className={cn(
                         "font-medium",
