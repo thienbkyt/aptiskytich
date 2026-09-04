@@ -80,7 +80,7 @@ function wordAccuracyPct(parts: WordDiffPart[]) {
 /* ------------------------------------------------------------------ */
 /* Types & settings                                                    */
 /* ------------------------------------------------------------------ */
-type Screen = "mode" | "level" | "setup" | "sets" | "practice" | "result";
+type Screen = "home" | "setup" | "sets" | "practice" | "result";
 
 type PracticeMode = "dictation" | "shadow" | "combo";
 
@@ -119,10 +119,20 @@ type Settings = {
   speed: number;
   maxPlays: number; // 0 = unlimited
   onlyTodo: boolean;
+  blankRatio: number;
 };
 
 const SETTINGS_KEY = "dict:v2:settings";
-const DEFAULT_SETTINGS: Settings = { size: 10, speed: 1, maxPlays: 5, onlyTodo: true };
+const BLANK_RATIOS = [0.3, 0.5, 0.7, 1];
+const DEFAULT_SETTINGS: Settings = {
+  size: 10,
+  speed: 1,
+  maxPlays: 5,
+  onlyTodo: true,
+  blankRatio: 0.3,
+};
+
+const LEVEL_DEFAULT_RATIO: Record<number, number> = { 1: 0.3, 2: 0.5, 3: 0.7 };
 
 function loadSettings(): Settings {
   try {
@@ -134,6 +144,9 @@ function loadSettings(): Settings {
       speed: [0.75, 1, 1.25].includes(parsed?.speed) ? parsed.speed : DEFAULT_SETTINGS.speed,
       maxPlays: [0, 3, 5].includes(parsed?.maxPlays) ? parsed.maxPlays : DEFAULT_SETTINGS.maxPlays,
       onlyTodo: typeof parsed?.onlyTodo === "boolean" ? parsed.onlyTodo : DEFAULT_SETTINGS.onlyTodo,
+      blankRatio: BLANK_RATIOS.includes(parsed?.blankRatio)
+        ? parsed.blankRatio
+        : DEFAULT_SETTINGS.blankRatio,
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -145,6 +158,7 @@ const LEVEL_META: Record<number, { title: string; desc: string }> = {
   2: { title: "Level 2 · Tăng tốc", desc: "Đoạn dài, nhiều thông tin — Listening Part 2" },
   3: { title: "Level 3 · Thử thách", desc: "Học thuật, tốc độ thi thật — Listening Part 3 & 4" },
 };
+
 
 type Answer = {
   sentenceId: string;
