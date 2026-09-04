@@ -610,6 +610,14 @@ const SpeakingExamEngine = ({
       return;
     }
 
+    if (questionText) {
+      await new Promise(r => setTimeout(r, PAUSE_AFTER_SPEAK_MS));
+      if (token !== flowTokenRef.current) {
+        console.warn("[Speaking] flow aborted - stale token after post-speak pause");
+        return;
+      }
+    }
+
     const prepTime = getPrepTime();
     // Beep after reading question: signals start of prep (if any) or start of recording
 
