@@ -6,6 +6,7 @@ interface UseAudioRecordingOptions {
   onComplete: (url: string) => void;
   questionKey: string | number;
   autoStart?: boolean;
+  minBlobBytes?: number;
 }
 
 export const useAudioRecording = ({
@@ -13,6 +14,7 @@ export const useAudioRecording = ({
   onComplete,
   questionKey,
   autoStart = false,
+  minBlobBytes = 30000,
 }: UseAudioRecordingOptions) => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -92,7 +94,7 @@ export const useAudioRecording = ({
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: mime || "audio/webm" });
-        if (blob.size < 30000) {
+        if (blob.size < minBlobBytes) {
           toast.warning("Không nhận được âm thanh", {
             description: "Micro có vẻ không thu được tiếng. Kiểm tra micro rồi thu lại — bài không thu được tiếng sẽ không chấm được.",
             duration: 8000,
