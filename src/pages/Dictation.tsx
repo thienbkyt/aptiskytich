@@ -975,19 +975,36 @@ function SentenceTask({
 
       {audioRow}
 
-      <div className="mt-6 rounded-xl border bg-muted/30 p-4 sm:p-5">
-        <FillBlanks
-          text={sentence.text}
-          ratio={settings.blankRatio}
-          sentenceId={sentence.sentence_id}
-          hintUsed={hintUsed}
-          onHint={() => setHintUsed(true)}
-          onReset={() => {
-            setChecked(false);
-            setRes(null);
-          }}
-          onCheck={handleCheck}
-        />
+      <div ref={fillWrapRef} className="mt-6 rounded-xl border bg-muted/30 p-4 sm:p-5">
+        {readOnly ? (
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+              Bạn đã điền (chỉ đọc)
+            </p>
+            <p className="leading-relaxed font-semibold">
+              {res?.filled.some((v) => v.trim())
+                ? res.filled.map((v) => (v.trim() ? v : "___")).join(" · ")
+                : "(để trống)"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-3">
+              Câu này đã được chấm — kết quả đã lưu, không thể sửa lại.
+            </p>
+          </div>
+        ) : (
+          <FillBlanks
+            text={sentence.text}
+            ratio={settings.blankRatio}
+            sentenceId={sentence.sentence_id}
+            hintUsed={hintUsed}
+            onHint={() => setHintUsed(true)}
+            onReset={() => {
+              setChecked(false);
+              resRef.current = null;
+              setRes(null);
+            }}
+            onCheck={handleCheck}
+          />
+        )}
       </div>
 
       {checked && res && (
