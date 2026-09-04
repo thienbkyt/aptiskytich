@@ -1664,11 +1664,6 @@ const SpeakingExamEngine = ({
 
             {/* Question text */}
             {partType !== "part4" && <p className="text-sm text-gray-800 mt-4">{question}</p>}
-            {isReading && (
-              <p className="text-xs text-gray-400 mt-3 animate-pulse">
-                Chuẩn bị ghi âm…
-              </p>
-            )}
           </div>
 
 
