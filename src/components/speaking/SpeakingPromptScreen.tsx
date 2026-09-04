@@ -21,6 +21,8 @@ function speakAsync(text: string): Promise<void> {
 const withTimeout = <T,>(p: Promise<T>, ms: number) =>
   Promise.race([p, new Promise<void>((resolve) => setTimeout(resolve, ms))]);
 
+const PAUSE_AFTER_SPEAK_MS = 1500;
+
 // Module-level guard: if the same intro text was already spoken in the last 60s
 // (e.g. parent re-rendered and remounted this screen because a tier/auth hook
 // finally resolved), skip the TTS sequence and go straight to onNext so we
