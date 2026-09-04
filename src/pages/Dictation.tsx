@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -28,6 +27,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import SegmentPlayer, { type SegmentPlayerHandle } from "@/components/dictation/SegmentPlayer";
+import FillBlanks, { type FillBlanksResult } from "@/components/dictation/FillBlanks";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
