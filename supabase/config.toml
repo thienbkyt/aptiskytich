@@ -28,3 +28,6 @@ project_id = "bacoamhbatqpxatrrflz"
     verify_jwt = true
   [functions.grading-queue-alert]
     verify_jwt = false
+  [functions.reconcile-email-delivery]
+    verify_jwt = false
+
