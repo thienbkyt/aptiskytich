@@ -291,6 +291,27 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_dictation_moc_moi_20260904: {
+        Row: {
+          audio_url: string
+          e: number | null
+          s: number | null
+          thash: string
+        }
+        Insert: {
+          audio_url: string
+          e?: number | null
+          s?: number | null
+          thash: string
+        }
+        Update: {
+          audio_url?: string
+          e?: number | null
+          s?: number | null
+          thash?: string
+        }
+        Relationships: []
+      }
       backup_exam_review_items_20260817: {
         Row: {
           id: string | null
@@ -1194,6 +1215,39 @@ export type Database = {
           question_type?: string | null
           response_time?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      backup_s2_de03_20260905: {
+        Row: {
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      backup_sp_anh_20260905: {
+        Row: {
+          extra_data: Json | null
+          id: string | null
+          title: string | null
+        }
+        Insert: {
+          extra_data?: Json | null
+          id?: string | null
+          title?: string | null
+        }
+        Update: {
+          extra_data?: Json | null
+          id?: string | null
+          title?: string | null
         }
         Relationships: []
       }
