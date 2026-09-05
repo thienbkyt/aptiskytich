@@ -147,6 +147,27 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_auth_confirm_20260905: {
+        Row: {
+          email: string | null
+          email_confirmed_at_cu: string | null
+          ghi_luc: string | null
+          user_id: string
+        }
+        Insert: {
+          email?: string | null
+          email_confirmed_at_cu?: string | null
+          ghi_luc?: string | null
+          user_id: string
+        }
+        Update: {
+          email?: string | null
+          email_confirmed_at_cu?: string | null
+          ghi_luc?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       backup_band_c_20260903: {
         Row: {
           bang: string | null
