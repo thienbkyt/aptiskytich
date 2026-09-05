@@ -1,0 +1,12 @@
+REVOKE ALL ON public.backup_s2_de03_20260905 FROM anon;
+REVOKE ALL ON public.backup_sp_anh_20260905 FROM anon;
+GRANT ALL ON public.backup_s2_de03_20260905 TO service_role;
+GRANT ALL ON public.backup_sp_anh_20260905 TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.backup_s2_de03_20260905 TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.backup_sp_anh_20260905 TO authenticated;
+ALTER TABLE public.backup_s2_de03_20260905 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.backup_sp_anh_20260905 ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS admin_only ON public.backup_s2_de03_20260905;
+DROP POLICY IF EXISTS admin_only ON public.backup_sp_anh_20260905;
+CREATE POLICY admin_only ON public.backup_s2_de03_20260905 FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin'::app_role)) WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
+CREATE POLICY admin_only ON public.backup_sp_anh_20260905 FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin'::app_role)) WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
