@@ -1152,6 +1152,21 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_rp4_4day_exp_20260905: {
+        Row: {
+          explanation: string | null
+          id: string | null
+        }
+        Insert: {
+          explanation?: string | null
+          id?: string | null
+        }
+        Update: {
+          explanation?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_rp5_de27_20260819: {
         Row: {
           backed_up_at: string | null
