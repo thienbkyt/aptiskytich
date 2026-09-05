@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 const SITE_NAME = "Aptis Kỳ Tích";
-const SENDER_DOMAIN = "notify.aptiskytich.vn";
+const SENDER_DOMAIN = "notify.mail.aptiskytich.vn";
 const FROM_DOMAIN = "aptiskytich.vn";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
