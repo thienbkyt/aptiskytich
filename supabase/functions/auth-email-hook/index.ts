@@ -182,6 +182,49 @@ const handler = createAuthEmailHandler({
   },
 })
 
+// Audit trail: every auth email attempt is recorded in public.email_send_log so
+// a silent failure always leaves a trace. Logging must never break sending.
+const logClient = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+)
+
+async function logAuthEmail(
+  rawBody: string,
+  status: 'sent' | 'failed',
+  errorMessage?: string,
+) {
+  try {
+    let actionType = 'auth'
+    let recipient = ''
+    try {
+      const parsed = JSON.parse(rawBody)
+      const data = parsed?.data ?? parsed?.user ?? {}
+      actionType = String(
+        parsed?.data?.action_type ?? parsed?.email_data?.email_action_type ?? 'auth',
+      )
+      recipient = String(data?.email ?? parsed?.user?.email ?? '').toLowerCase()
+    } catch {
+      // keep defaults
+    }
+    if (!recipient) return
+    const { error } = await logClient.from('email_send_log').insert({
+      template_name: actionType,
+      recipient_email: recipient,
+      status,
+      error_message: errorMessage ? errorMessage.slice(0, 1000) : null,
+    })
+    if (error) {
+      console.error('Failed to write auth email log row', {
+        code: error.code,
+        message: error.message,
+      })
+    }
+  } catch (e) {
+    console.error('Auth email logging threw', e instanceof Error ? e.message : String(e))
+  }
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url)
 
@@ -195,5 +238,41 @@ Deno.serve(async (req) => {
     return handlePreview(req)
   }
 
-  return handler(req)
+  // Read the body once, then hand an identical request to the SDK handler so
+  // signature verification still sees the exact raw bytes.
+  let rawBody = ''
+  let forwarded = req
+  try {
+    rawBody = await req.text()
+    forwarded = new Request(req.url, {
+      method: req.method,
+      headers: req.headers,
+      body: rawBody,
+    })
+  } catch {
+    forwarded = req
+  }
+
+  let response: Response
+  try {
+    response = await handler(forwarded)
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    await logAuthEmail(rawBody, 'failed', msg)
+    throw e
+  }
+
+  if (response.ok) {
+    await logAuthEmail(rawBody, 'sent')
+  } else {
+    let detail = `HTTP ${response.status}`
+    try {
+      detail = `HTTP ${response.status}: ${await response.clone().text()}`
+    } catch {
+      // ignore
+    }
+    await logAuthEmail(rawBody, 'failed', detail)
+  }
+
+  return response
 })
