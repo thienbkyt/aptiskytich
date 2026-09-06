@@ -35,6 +35,8 @@ interface Props {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   onSubmitTest?: () => void;
+  /** True while the submit is in flight — locks the submit button. */
+  isSubmitting?: boolean;
   highlights?: Record<string, string>;
   highlightLoading?: boolean;
   hideTimer?: boolean;
@@ -47,7 +49,7 @@ interface Props {
 const ListeningPart4Monologue = ({
   questions, currentIndex, answers, timeLeft, totalTime,
   submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit, isFirst, isLast, sections = [],
-  isBookmarked = false, onToggleBookmark, onSubmitTest,
+  isBookmarked = false, onToggleBookmark, onSubmitTest, isSubmitting,
   highlights = {}, highlightLoading, hideTimer, pageNumber, pageTotal, hideBottomNav, audioKeyPrefix,
 }: Props) => {
   const reveal = submitted || !!revealAnswers;
@@ -198,6 +200,7 @@ const ListeningPart4Monologue = ({
           isLast={isLast}
           sections={sections}
           onSubmitTest={onSubmitTest}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>
