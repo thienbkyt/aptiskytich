@@ -34,6 +34,7 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="vi" dir="ltr">
     <Head>
+      <meta charSet="utf-8" />
       <style>{darkModeCss}</style>
     </Head>
     <Preview>Xác nhận đổi email tại {siteName}</Preview>

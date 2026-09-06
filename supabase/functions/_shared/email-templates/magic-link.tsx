@@ -24,6 +24,7 @@ export const MagicLinkEmail = ({
 }: MagicLinkEmailProps) => (
   <Html lang="vi" dir="ltr">
     <Head>
+      <meta charSet="utf-8" />
       <style>{darkModeCss}</style>
     </Head>
     <Preview>Liên kết đăng nhập {siteName}</Preview>

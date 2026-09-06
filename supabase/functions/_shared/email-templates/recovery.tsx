@@ -24,6 +24,7 @@ export const RecoveryEmail = ({
 }: RecoveryEmailProps) => (
   <Html lang="vi" dir="ltr">
     <Head>
+      <meta charSet="utf-8" />
       <style>{darkModeCss}</style>
     </Head>
     <Preview>Đặt lại mật khẩu {siteName}</Preview>

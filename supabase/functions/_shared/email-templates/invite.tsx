@@ -27,6 +27,7 @@ export const InviteEmail = ({
 }: InviteEmailProps) => (
   <Html lang="vi" dir="ltr">
     <Head>
+      <meta charSet="utf-8" />
       <style>{darkModeCss}</style>
     </Head>
     <Preview>Bạn được mời tham gia {siteName}</Preview>

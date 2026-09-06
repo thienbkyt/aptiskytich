@@ -19,7 +19,7 @@ const corsHeaders = {
 const SITE_NAME = "Aptis Kỳ Tích"
 const SENDER_DOMAIN = "notify.mail.aptiskytich.vn"
 const ROOT_DOMAIN = "aptiskytich.vn"
-const FROM_DOMAIN = "aptiskytich.vn"
+const FROM_DOMAIN = "mail.aptiskytich.vn"
 const SITE_URL = `https://${ROOT_DOMAIN}`
 
 // Template mapping for preview mode
@@ -130,7 +130,7 @@ const handler = createAuthEmailHandler({
   sendUrl: Deno.env.get('LOVABLE_SEND_URL'),
   emails: {
     signup: {
-      subject: 'Confirm your email',
+      subject: 'Xác nhận email — Aptis Kỳ Tích',
       render: (data) =>
         React.createElement(SignupEmail, {
           siteName: SITE_NAME,
@@ -140,7 +140,7 @@ const handler = createAuthEmailHandler({
         }),
     },
     invite: {
-      subject: "You've been invited",
+      subject: 'Lời mời tham gia Aptis Kỳ Tích',
       render: (data) =>
         React.createElement(InviteEmail, {
           siteName: SITE_NAME,
@@ -149,7 +149,7 @@ const handler = createAuthEmailHandler({
         }),
     },
     magiclink: {
-      subject: 'Your login link',
+      subject: 'Liên kết đăng nhập — Aptis Kỳ Tích',
       render: (data) =>
         React.createElement(MagicLinkEmail, {
           siteName: SITE_NAME,
@@ -157,7 +157,7 @@ const handler = createAuthEmailHandler({
         }),
     },
     recovery: {
-      subject: 'Reset your password',
+      subject: 'Đặt lại mật khẩu — Aptis Kỳ Tích',
       render: (data) =>
         React.createElement(RecoveryEmail, {
           siteName: SITE_NAME,
@@ -165,7 +165,7 @@ const handler = createAuthEmailHandler({
         }),
     },
     email_change: {
-      subject: 'Confirm your new email',
+      subject: 'Xác nhận địa chỉ email mới — Aptis Kỳ Tích',
       render: (data) =>
         React.createElement(EmailChangeEmail, {
           siteName: SITE_NAME,
@@ -176,7 +176,7 @@ const handler = createAuthEmailHandler({
         }),
     },
     reauthentication: {
-      subject: 'Your verification code',
+      subject: 'Mã xác thực — Aptis Kỳ Tích',
       render: (data) =>
         React.createElement(ReauthenticationEmail, { token: data.token ?? '' }),
     },
@@ -275,5 +275,15 @@ Deno.serve(async (req) => {
     await logAuthEmail(rawBody, 'failed', detail)
   }
 
-  return response
+  const headers = new Headers(response.headers)
+  const contentType = headers.get('Content-Type')
+  if (contentType?.includes('text/') || contentType?.includes('json')) {
+    headers.set('Content-Type', contentType.replace(/;\s*charset=[^;]+/i, '') + '; charset=utf-8')
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
 })
