@@ -115,9 +115,18 @@ async function handlePreview(req: Request): Promise<Response> {
   const sampleData = SAMPLE_DATA[type] || {}
   const html = await renderAsync(React.createElement(EmailTemplate, sampleData))
 
-  return new Response(html, {
+  // Send exact UTF-8 bytes with an explicit length so no consumer can split a
+  // multi-byte Vietnamese character across chunk boundaries (which showed up as
+  // "nh??n" in the preview).
+  const bytes = new TextEncoder().encode(html)
+
+  return new Response(bytes, {
     status: 200,
-    headers: { ...previewCorsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+    headers: {
+      ...previewCorsHeaders,
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Length': String(bytes.byteLength),
+    },
   })
 }
 
