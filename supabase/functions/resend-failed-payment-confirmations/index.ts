@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     const { data: existing } = await admin
       .from('email_send_log')
       .select('id')
-      .eq('message_id', retryId)
+      .contains('metadata', { original_message_id: originalId })
       .eq('status', 'sent')
       .limit(1)
     if (existing?.length) {
