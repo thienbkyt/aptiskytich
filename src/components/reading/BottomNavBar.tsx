@@ -39,13 +39,15 @@ interface BottomNavBarProps {
   onProceedFromInstructions?: () => void;
   /** Called when user confirms "Submit test" in the Exit submission flow */
   onSubmitTest?: () => void;
+  /** True while a submit is in flight — disables the submit buttons and shows "Đang nộp…". */
+  isSubmitting?: boolean;
   reviewScopeNote?: string;
 }
 
 const BottomNavBar = ({
   onPrevious, onNext, onSubmit, isFirst, isLast, submitLabel = "Submit",
   sections = [], bookmarkedCount,
-  isInstructionsPhase = false, onProceedFromInstructions, onSubmitTest,
+  isInstructionsPhase = false, onProceedFromInstructions, onSubmitTest, isSubmitting = false,
   reviewScopeNote,
 }: BottomNavBarProps) => {
   const [showQuestionList, setShowQuestionList] = useState(false);
@@ -509,8 +511,12 @@ const BottomNavBar = ({
               </Button>
             )}
             {isLast && onSubmit ? (
-              <Button onClick={() => runNavLocked(onSubmit)} className="exam-nav-submit exam-nav-next-button gap-2 px-6">
-                {submitLabel} <ArrowRight className="w-4 h-4" />
+              <Button
+                onClick={() => runNavLocked(onSubmit)}
+                disabled={isSubmitting}
+                className="exam-nav-submit exam-nav-next-button gap-2 px-6"
+              >
+                {isSubmitting ? "Đang nộp…" : submitLabel} <ArrowRight className="w-4 h-4" />
               </Button>
             ) : onNext ? (
               <Button onClick={() => runNavLocked(onNext)} className="exam-nav-prev-next exam-nav-next-button gap-2 px-6">
@@ -626,9 +632,10 @@ const BottomNavBar = ({
               <button
                 type="button"
                 onClick={() => { setShowReviewModal(false); setShowSubmitConfirm(true); }}
-                className="w-full px-6 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
+                disabled={isSubmitting}
+                className="w-full px-6 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 text-sm font-semibold transition-colors"
               >
-                Submit
+                {isSubmitting ? "Đang nộp…" : "Submit"}
               </button>
             </div>
           </div>
@@ -638,7 +645,8 @@ const BottomNavBar = ({
       {/* Submit confirmation */}
       {showSubmitConfirm && (
         <ExamFinishScreen
-          onSubmit={() => { setShowSubmitConfirm(false); onSubmitTest?.(); }}
+          onSubmit={() => { if (isSubmitting) return; setShowSubmitConfirm(false); onSubmitTest?.(); }}
+          buttonText={isSubmitting ? "Đang nộp…" : undefined}
           onCancel={() => setShowSubmitConfirm(false)}
         />
       )}
