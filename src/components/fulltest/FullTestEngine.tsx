@@ -39,7 +39,7 @@ import {
   saveSpeakingSkillResult,
   type SpeakingPartResultV2,
 } from "@/components/speaking/speakingGradingV2";
-import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
+import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult, persistWritingGradePayload } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
 import WritingGradingLiveStatus from "@/components/writing/WritingGradingLiveStatus";
