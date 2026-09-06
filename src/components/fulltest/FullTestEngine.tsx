@@ -1204,11 +1204,37 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     const isLastWritingPart = currentPartIndex >= partsForSkill.length - 1;
 
     const handleWritingPartAnswers = (data: { partType: string; text: string; questions: string[] }) => {
+      const prev = writingSubmissionsByPartRef.current[currentPartIndex];
       writingSubmissionsByPartRef.current[currentPartIndex] = {
+        ...(prev
+          ? { partId: prev.partId, perQuestion: prev.perQuestion, testResultId: (prev as any).testResultId }
+          : {}),
         ...data,
         partId: currentPart.id ?? null,
         partLabel: currentPart.part,
-      };
+      } as any;
+    };
+
+    /** Build the grade payload for a submitted part from the latest raw answers. */
+    const buildPayloadForPart = async (origIdx: number) => {
+      const e = writingSubmissionsByPartRef.current[origIdx];
+      if (!e) return null;
+      const raw = writingRawAnswersByPartRef.current[origIdx] || ({} as any);
+      const pInput: any = {};
+      if (e.partType === "task1") pInput.shortAnswers = raw.shortAnswers;
+      else if (e.partType === "task3") pInput.threeAnswers = raw.part3Answers;
+      else if (e.partType === "task4") {
+        pInput.informalText = raw.informalAnswer;
+        pInput.formalText = raw.formalAnswer;
+      }
+      const { buildWritingGradePayload } = await import("@/components/writing/writingGradingV2");
+      return buildWritingGradePayload(
+        e.partType as any,
+        e.questions || [],
+        e.text || "",
+        pInput,
+        sessionIdRef.current,
+      );
     };
 
     /**
@@ -1220,9 +1246,24 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
      */
     const ensureWritingPartRow = async (origIdx: number): Promise<string | null> => {
       const cached = writingRowIdByPartRef.current[origIdx];
-      if (cached) return cached;
+      if (cached) {
+        // Bài có thể đã được sửa lại → cập nhật grade_payload mới nhất cho row cũ.
+        try {
+          const payload = await buildPayloadForPart(origIdx);
+          if (payload) {
+            await (supabase as any)
+              .from("test_results")
+              .update({ grade_payload: payload })
+              .eq("id", cached);
+          }
+        } catch (err) {
+          console.warn("[FullTest v2] refresh grade_payload failed", err);
+        }
+        return cached;
+      }
       const e = writingSubmissionsByPartRef.current[origIdx];
       if (!e) return null;
+
       try {
         const { buildReviewSnapshot: buildSnap } = await import("@/lib/reviewSnapshot");
         const placeholderSnap = buildSnap({
