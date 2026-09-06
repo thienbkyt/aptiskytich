@@ -1254,6 +1254,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_s2_de01_q2_20260906: {
+        Row: {
+          extra_data: Json | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Relationships: []
+      }
       backup_s2_de03_20260905: {
         Row: {
           extra_data: Json | null
@@ -1350,6 +1368,21 @@ export type Database = {
           backed_up_at?: string | null
           extra_data?: Json | null
           id?: string | null
+        }
+        Relationships: []
+      }
+      backup_sp1_q_20260906: {
+        Row: {
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          id?: string | null
+          question_text?: string | null
         }
         Relationships: []
       }
