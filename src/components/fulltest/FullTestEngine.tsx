@@ -1252,10 +1252,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         try {
           const payload = await buildPayloadForPart(origIdx);
           if (payload) {
-            await (supabase as any)
-              .from("test_results")
-              .update({ grade_payload: payload })
-              .eq("id", cached);
+            await persistWritingGradePayload(cached, payload);
           }
         } catch (err) {
           console.warn("[FullTest v2] refresh grade_payload failed", err);
