@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { render as renderEmail } from 'npm:@react-email/render@1.3.1'
+import { renderEmailHtml } from '../_shared/render-email.ts'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-      const html = await renderEmail(
+      const html = renderEmailHtml(
         React.createElement(entry.component, entry.previewData)
       )
       const resolvedSubject =

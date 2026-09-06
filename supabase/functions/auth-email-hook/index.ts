@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { render as renderEmail } from 'npm:@react-email/render@1.3.1'
+import { renderEmailHtml } from '../_shared/render-email.ts'
 import { createAuthEmailHandler } from 'npm:@lovable.dev/email-js@0.1.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { SignupEmail } from '../_shared/email-templates/signup.tsx'
@@ -113,7 +113,7 @@ async function handlePreview(req: Request): Promise<Response> {
   }
 
   const sampleData = SAMPLE_DATA[type] || {}
-  const html = await renderEmail(React.createElement(EmailTemplate, sampleData))
+  const html = renderEmailHtml(React.createElement(EmailTemplate, sampleData))
 
   // Send exact UTF-8 bytes with an explicit length so no consumer can split a
   // multi-byte Vietnamese character across chunk boundaries (which showed up as
