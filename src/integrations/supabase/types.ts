@@ -1305,6 +1305,21 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_sp_baimau_20260906: {
+        Row: {
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_sp_hieu_de17_20260828: {
         Row: {
           cefr: string | null
@@ -4066,39 +4081,6 @@ export type Database = {
           part?: string | null
           skill?: string | null
           ten?: string | null
-        }
-        Relationships: []
-      }
-      tmp_sp_all: {
-        Row: {
-          adv: string | null
-          basic: string | null
-          oi: number | null
-          part: string | null
-          q_id: string | null
-          qt: string | null
-          st: number | null
-          title: string | null
-        }
-        Insert: {
-          adv?: string | null
-          basic?: string | null
-          oi?: number | null
-          part?: string | null
-          q_id?: string | null
-          qt?: string | null
-          st?: number | null
-          title?: string | null
-        }
-        Update: {
-          adv?: string | null
-          basic?: string | null
-          oi?: number | null
-          part?: string | null
-          q_id?: string | null
-          qt?: string | null
-          st?: number | null
-          title?: string | null
         }
         Relationships: []
       }
