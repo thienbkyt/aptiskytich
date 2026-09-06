@@ -59,6 +59,8 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
     if (correctRaw > total && total > 0) {
       console.warn("[saveExamResult] correct > total; clamped", { skill: opts.skill, correct: correctRaw, total });
     }
+    const level = total > 0 ? getLevel(correct, total) : "A1";
+
 
     // ---- Double-submit guard (Reading & Listening only) ----------------------
     // Reading/Listening insert a new row per submit, so a fast double click used
