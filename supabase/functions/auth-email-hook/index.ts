@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { renderEmailHtml } from '../_shared/render-email.ts'
 import { createAuthEmailHandler } from 'npm:@lovable.dev/email-js@0.1.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { SignupEmail } from '../_shared/email-templates/signup.tsx'
@@ -113,11 +113,20 @@ async function handlePreview(req: Request): Promise<Response> {
   }
 
   const sampleData = SAMPLE_DATA[type] || {}
-  const html = await renderAsync(React.createElement(EmailTemplate, sampleData))
+  const html = renderEmailHtml(React.createElement(EmailTemplate, sampleData))
 
-  return new Response(html, {
+  // Send exact UTF-8 bytes with an explicit length so no consumer can split a
+  // multi-byte Vietnamese character across chunk boundaries (which showed up as
+  // "nh??n" in the preview).
+  const bytes = new TextEncoder().encode(html)
+
+  return new Response(bytes, {
     status: 200,
-    headers: { ...previewCorsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+    headers: {
+      ...previewCorsHeaders,
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Length': String(bytes.byteLength),
+    },
   })
 }
 
