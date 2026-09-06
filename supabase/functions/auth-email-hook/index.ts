@@ -275,5 +275,15 @@ Deno.serve(async (req) => {
     await logAuthEmail(rawBody, 'failed', detail)
   }
 
-  return response
+  const headers = new Headers(response.headers)
+  const contentType = headers.get('Content-Type')
+  if (contentType?.includes('text/') || contentType?.includes('json')) {
+    headers.set('Content-Type', contentType.replace(/;\s*charset=[^;]+/i, '') + '; charset=utf-8')
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
 })
