@@ -372,6 +372,7 @@ const ReadingExamEngine = ({
   // Marathon: parent bumps submitSignal to auto-submit current set before jumping.
   // Guard with a ref so a stale non-zero value at mount doesn't auto-submit a fresh set.
   const submitLockRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSubmitSignalRef = useRef<number>(submitSignal ?? 0);
   useEffect(() => {
     const s = submitSignal ?? 0;
