@@ -13,7 +13,7 @@ const SITE_NAME = "Aptis Kỳ Tích"
 const SENDER_DOMAIN = "notify.mail.aptiskytich.vn"
 // FROM_DOMAIN is the domain shown in the From: header (e.g., "example.com").
 // Can be the root domain when display_from_root is enabled — this is cosmetic only.
-const FROM_DOMAIN = "aptiskytich.vn"
+const FROM_DOMAIN = "mail.aptiskytich.vn"
 
 export type SendTemplateEmailResult =
   | { sent: true }

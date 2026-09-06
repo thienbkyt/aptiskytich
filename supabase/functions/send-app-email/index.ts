@@ -14,7 +14,7 @@ const corsHeaders = {
 
 const SITE_NAME = "Aptis Kỳ Tích";
 const SENDER_DOMAIN = "notify.mail.aptiskytich.vn";
-const FROM_DOMAIN = "aptiskytich.vn";
+const FROM_DOMAIN = "mail.aptiskytich.vn";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

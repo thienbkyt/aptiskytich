@@ -19,7 +19,7 @@ const corsHeaders = {
 const SITE_NAME = "Aptis Kỳ Tích"
 const SENDER_DOMAIN = "notify.mail.aptiskytich.vn"
 const ROOT_DOMAIN = "aptiskytich.vn"
-const FROM_DOMAIN = "aptiskytich.vn"
+const FROM_DOMAIN = "mail.aptiskytich.vn"
 const SITE_URL = `https://${ROOT_DOMAIN}`
 
 // Template mapping for preview mode
