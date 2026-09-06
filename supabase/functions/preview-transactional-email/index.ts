@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { render as renderEmail } from 'npm:@react-email/render@2.1.0'
+import { render as renderEmail } from 'npm:@react-email/render@1.3.1'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 
