@@ -39,7 +39,7 @@ import {
   saveSpeakingSkillResult,
   type SpeakingPartResultV2,
 } from "@/components/speaking/speakingGradingV2";
-import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult } from "@/components/writing/writingGradingV2";
+import { gradeWritingPartV2, finalizeWriting, saveWritingSkillResult, persistWritingGradePayload } from "@/components/writing/writingGradingV2";
 import { useExamGrading, type WritingGradingResult } from "@/hooks/useExamGrading";
 import PracticeScoreReport, { type PracticeScoreReportHandle } from "@/components/fulltest/PracticeScoreReport";
 import WritingGradingLiveStatus from "@/components/writing/WritingGradingLiveStatus";
@@ -1252,10 +1252,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         try {
           const payload = await buildPayloadForPart(origIdx);
           if (payload) {
-            await (supabase as any)
-              .from("test_results")
-              .update({ grade_payload: payload })
-              .eq("id", cached);
+            await persistWritingGradePayload(cached, payload);
           }
         } catch (err) {
           console.warn("[FullTest v2] refresh grade_payload failed", err);
