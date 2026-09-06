@@ -29,6 +29,7 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="vi" dir="ltr">
     <Head>
+      <meta charSet="utf-8" />
       <style>{darkModeCss}</style>
     </Head>
     <Preview>Xác nhận email của bạn tại {siteName}</Preview>
