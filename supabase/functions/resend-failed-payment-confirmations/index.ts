@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
   for (const row of failed ?? []) {
     const originalId = String(row.message_id ?? '')
     const paymentId = originalId.replace('payment-paid-', '')
-    const retryId = `resend-v3-${originalId}`
+    const retryId = `resend-v4-${originalId}`
 
     const { data: existing } = await admin
       .from('email_send_log')
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       failedCount++
     }
 
-    await sleep(3000)
+    await sleep(8000)
   }
 
   return Response.json({ sent, skipped, failed: failedCount })
