@@ -4069,6 +4069,39 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_sp_all: {
+        Row: {
+          adv: string | null
+          basic: string | null
+          oi: number | null
+          part: string | null
+          q_id: string | null
+          qt: string | null
+          st: number | null
+          title: string | null
+        }
+        Insert: {
+          adv?: string | null
+          basic?: string | null
+          oi?: number | null
+          part?: string | null
+          q_id?: string | null
+          qt?: string | null
+          st?: number | null
+          title?: string | null
+        }
+        Update: {
+          adv?: string | null
+          basic?: string | null
+          oi?: number | null
+          part?: string | null
+          q_id?: string | null
+          qt?: string | null
+          st?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       trash_audio_20260826: {
         Row: {
           f: string | null

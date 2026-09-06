@@ -389,8 +389,11 @@ const ListeningExamEngine = ({
     }
     const done = onComplete?.(correct, totalForScore, perQuestion) as unknown;
     Promise.resolve(done)
-      .catch(() => { submitLockRef.current = false; })
-      .finally(() => { setIsSubmitting(false); });
+      .then(() => { setIsSubmitting(false); })
+      .catch(() => {
+        submitLockRef.current = false;
+        setIsSubmitting(false);
+      });
   }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {

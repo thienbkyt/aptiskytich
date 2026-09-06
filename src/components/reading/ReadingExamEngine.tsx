@@ -443,8 +443,11 @@ const ReadingExamEngine = ({
     }
     const done = onComplete?.(correct, scoredTotal, perQuestion) as unknown;
     Promise.resolve(done)
-      .catch(() => { submitLockRef.current = false; })
-      .finally(() => { setIsSubmitting(false); });
+      .then(() => { setIsSubmitting(false); })
+      .catch(() => {
+        submitLockRef.current = false;
+        setIsSubmitting(false);
+      });
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, p1ScoredIdx, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
