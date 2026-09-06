@@ -1681,7 +1681,9 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
         {adminOverlay}
         <WritingExamEngine
           key="writing-full"
+          initialAnswers={[...(Object.values(writingRawAnswersByPartRef.current) as any[])].reverse().find(Boolean)}
           partType={partType}
+
           testTitle={`${testTitle} – Writing ${currentPart.part}`}
           timeLimit={SKILL_TIMES.writing}
           externalTimeLeft={writingTimeLeft}
