@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { renderEmailHtml, renderEmailText } from './render-email.ts'
+import { renderEmailHtml, renderEmailText } from '../render-email.ts'
 import { EmailAPIError, sendLovableEmail } from 'npm:@lovable.dev/email-js@0.1.0'
 import { TEMPLATES } from './registry.ts'
 
