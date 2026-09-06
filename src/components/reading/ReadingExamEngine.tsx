@@ -371,6 +371,8 @@ const ReadingExamEngine = ({
 
   // Marathon: parent bumps submitSignal to auto-submit current set before jumping.
   // Guard with a ref so a stale non-zero value at mount doesn't auto-submit a fresh set.
+  const submitLockRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSubmitSignalRef = useRef<number>(submitSignal ?? 0);
   useEffect(() => {
     const s = submitSignal ?? 0;
@@ -383,6 +385,10 @@ const ReadingExamEngine = ({
   }, [submitSignal]);
 
   const handleSubmit = useCallback(() => {
+    // Ref flag (not state) — two clicks in the same tick would both pass a state check.
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+    setIsSubmitting(true);
     setSubmitted(true);
     setPhase("review");
     setCurrentIndex(0);
@@ -435,10 +441,15 @@ const ReadingExamEngine = ({
         is_correct: correct === scoredTotal && scoredTotal > 0,
       }];
     }
-    onComplete?.(correct, scoredTotal, perQuestion);
+    const done = onComplete?.(correct, scoredTotal, perQuestion) as unknown;
+    Promise.resolve(done)
+      .catch(() => { submitLockRef.current = false; })
+      .finally(() => { setIsSubmitting(false); });
   }, [partType, part1Question, part2Question, part3Question, part4Question, p1Answers, p2Placements, p3Answers, p4Answers, totalQuestions, p1ScoredIdx, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
+    submitLockRef.current = false;
+    setIsSubmitting(false);
     setSubmitted(false);
     setResultStats(null);
     setPhase("practice");
@@ -491,6 +502,7 @@ const ReadingExamEngine = ({
   const goNextQuestion = useCallback(() => setCurrentIndex((p) => p + 1), []);
 
   const navProps = useMemo(() => ({
+    isSubmitting,
     onPrevious: currentIndex > 0 ? goPrevQuestion : goToPrevPhase,
     onNext: currentIndex < totalQuestions - 1
       ? goNextQuestion

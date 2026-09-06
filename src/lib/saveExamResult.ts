@@ -61,10 +61,58 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
     }
     const level = total > 0 ? getLevel(correct, total) : "A1";
 
+
+    // ---- Double-submit guard (Reading & Listening only) ----------------------
+    // Reading/Listening insert a new row per submit, so a fast double click used
+    // to create TWO rows inside the same fullPartSession and inflate the totals
+    // on the grouped results screen. If a row for the SAME exam_set inside the
+    // SAME session already exists and is younger than 5 minutes, update it
+    // instead (same approach Writing/Speaking use via finalize). Older than that
+    // = a deliberate retake, so keep inserting a new row.
+    const dedupSkills = new Set(["reading", "listening"]);
+    if (opts.fullTestSessionId && opts.examSetId && dedupSkills.has(opts.skill)) {
+      try {
+        const { data: recent } = await supabase
+          .from("test_results")
+          .select("id, created_at")
+          .eq("user_id", user.id)
+          .eq("exam_set_id", opts.examSetId)
+          .eq("full_test_session_id", opts.fullTestSessionId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const prev: any = recent?.[0];
+        if (prev?.id) {
+          const prevMs = new Date(String(prev.created_at).replace(" ", "T")).getTime();
+          if (Number.isFinite(prevMs) && Date.now() - prevMs < 5 * 60 * 1000) {
+            const { error: finErr } = await supabase.rpc("finalize_skill_test_result", {
+              p_test_result_id: prev.id,
+              p_score: correct,
+              p_total: total || 1,
+              p_level: level,
+              p_correct_answers: correct,
+              p_review_snapshot: opts.reviewSnapshot ?? null,
+            } as any);
+            if (!finErr) {
+              try {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("exam-result-saved", { detail: { skill: opts.skill, examSetId: opts.examSetId } }));
+                }
+              } catch { /* noop */ }
+              return prev.id as string;
+            }
+            console.warn("[saveExamResult] dedup update failed, inserting new row:", finErr);
+          }
+        }
+      } catch (e) {
+        console.warn("[saveExamResult] dedup check skipped:", e);
+      }
+    }
+
     // Always insert a new test_results row per attempt (no best-score dedup).
     // History pages support multiple attempts and need a non-null test_result_id
     // for per-question detail lookup.
     let testResultId: string | null = null;
+
     {
       const { data: inserted, error } = await (supabase as any).rpc("insert_test_result", {
         p_user_id: user.id,

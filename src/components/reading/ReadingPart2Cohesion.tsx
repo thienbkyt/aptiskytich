@@ -21,6 +21,8 @@ interface Props {
   onExitToSections?: () => void;
   sections: any[];
   onSubmitTest?: () => void;
+  /** True while the submit is in flight — locks the submit button. */
+  isSubmitting?: boolean;
   currentSection?: number;
   onSectionChange?: (idx: number) => void;
   isBookmarked?: boolean;
@@ -40,7 +42,7 @@ interface Props {
 
 const ReadingPart2Cohesion = ({
   question, placements, onPlacementsChange,
-  timeLeft, totalTime, submitted, revealAnswers, onSubmit, onPrevious, sections, onSubmitTest,
+  timeLeft, totalTime, submitted, revealAnswers, onSubmit, onPrevious, sections, onSubmitTest, isSubmitting,
   currentSection: currentSectionProp, onSectionChange,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading,
@@ -375,6 +377,7 @@ const ReadingPart2Cohesion = ({
           isLast={false}
           sections={sections}
           onSubmitTest={onSubmitTest}
+          isSubmitting={isSubmitting}
         />
       )}
       {hideBottomNav && (

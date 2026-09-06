@@ -78,6 +78,8 @@ interface Props {
   isLast: boolean;
   sections: any[];
   onSubmitTest?: () => void;
+  /** True while the submit is in flight — locks the submit button. */
+  isSubmitting?: boolean;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   reviewData?: ReadingReviewData | null;
@@ -92,7 +94,7 @@ interface Props {
 const ReadingPart4Long = ({
   question, answers, currentIndex, timeLeft, totalTime,
   submitted, revealAnswers, onAnswer, onPrevious, onNext, onSubmit,
-  isFirst, isLast, sections, onSubmitTest,
+  isFirst, isLast, sections, onSubmitTest, isSubmitting,
   isBookmarked = false, onToggleBookmark,
   reviewData, reviewDataLoading, hideTimer = false,
   lockedIndices, hideBottomNav = false,
@@ -320,6 +322,7 @@ const ReadingPart4Long = ({
           submitLabel="Submit"
           sections={sections}
           onSubmitTest={onSubmitTest}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

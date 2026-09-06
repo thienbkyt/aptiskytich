@@ -285,6 +285,8 @@ const ListeningExamEngine = ({
 
   // Marathon: parent bumps submitSignal to auto-submit current set before jumping.
   // Guard with a ref so a stale non-zero value at mount doesn't auto-submit a fresh set.
+  const submitLockRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const lastSubmitSignalRef = useRef<number>(submitSignal ?? 0);
   useEffect(() => {
     const s = submitSignal ?? 0;
@@ -297,6 +299,10 @@ const ListeningExamEngine = ({
   }, [submitSignal]);
 
   const handleSubmit = useCallback(() => {
+    // Ref flag (not state) — two clicks in the same tick would both pass a state check.
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+    setIsSubmitting(true);
     setSubmitted(true);
     setPhase("review");
     setCurrentIndex(0);
@@ -381,10 +387,15 @@ const ListeningExamEngine = ({
         });
       }
     }
-    onComplete?.(correct, totalForScore, perQuestion);
+    const done = onComplete?.(correct, totalForScore, perQuestion) as unknown;
+    Promise.resolve(done)
+      .catch(() => { submitLockRef.current = false; })
+      .finally(() => { setIsSubmitting(false); });
   }, [partType, part1Questions, part2Questions, part3Questions, part4Questions, answers, totalQuestions, onComplete, sourceQuestionIds]);
 
   const handleRetry = () => {
+    submitLockRef.current = false;
+    setIsSubmitting(false);
     setSubmitted(false);
     setResultStats(null);
     setPhase("practice");
@@ -492,6 +503,7 @@ const ListeningExamEngine = ({
   ];
 
   const navProps = {
+    isSubmitting,
     onPrevious: currentIndex > 0 ? () => setCurrentIndex((p) => p - 1) : (onPreviousPart ?? (() => setPhase("listening_intro"))),
     onNext: currentIndex < totalQuestions - 1
       ? () => setCurrentIndex((p) => p + 1)
