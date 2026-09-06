@@ -498,8 +498,9 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     timeUpRef.current = false;
     notAttemptedPartsRef.current.delete(`${sk}-${partIdx}`);
     if (sk === "listening") setListeningTimeLeft(SKILL_TIMES.listening);
-    if (sk === "writing") setWritingTimeLeft(SKILL_TIMES.writing);
+    // Writing: 50 phút chạy liên tục cho cả 4 part — không đặt lại khi lùi/tiến part.
     if (sk === "reading") setReadingTimeLeft(SKILL_TIMES.reading);
+
   };
 
   const handleAdminBackPart = () => {
