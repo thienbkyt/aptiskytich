@@ -58,7 +58,7 @@ interface WritingExamEngineProps {
   fullFlow?: boolean;
   isLastPart?: boolean;
   onExit: () => void;
-  onComplete?: (perQuestion?: WritingPerQuestion[]) => void | Promise<string | null | void>;
+  onComplete?: (perQuestion?: WritingPerQuestion[]) => void | boolean | string | null | Promise<void | boolean | string | null>;
   /** DB exam_sets.id this engine is rendering — forwarded to grading persistence. */
   examSetId?: string | null;
   onPrevious?: () => void;
@@ -258,10 +258,11 @@ const WritingExamEngine = ({
 
     // Full-practice mode (parent collects answers and grades all parts together)
     if (onPartAnswers) {
+      setSubmitted(true);
       const { text, questions } = getTextAndQuestions();
       onPartAnswers({ partType, text, questions });
-      setSubmitted(true);
-      await onComplete?.(perQuestion);
+      const ok = await onComplete?.(perQuestion);
+      if (ok === false) setSubmitted(false);
       return;
     }
 
