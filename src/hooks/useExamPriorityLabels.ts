@@ -32,28 +32,12 @@ export function useExamPriorityLabels(): ExamPriorityData {
     queryKey: ["examPriorityLabels", "currentKey"],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
-      const { data: keyRow, error: keyErr } = await supabase
-        .from("prediction_keys")
-        .select("id, date")
-        .eq("is_published", true)
-        .lte("date", todayStr)
-        .order("date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (keyErr) throw keyErr;
-      if (!keyRow) return { labels: new Map<string, ExamPriorityInfo>(), keyId: null, keyDate: null };
-
-      const { data: items, error: itemErr } = await supabase
-        .from("prediction_items")
-        .select("exam_set_id, priority")
-        .eq("key_id", keyRow.id);
-      if (itemErr) throw itemErr;
+      const { data: rows, error } = await supabase.rpc("get_current_key_labels");
+      if (error) throw error;
+      if (!rows?.length) return { labels: new Map<string, ExamPriorityInfo>(), keyId: null, keyDate: null };
 
       const labels = new Map<string, ExamPriorityInfo>();
-      (items ?? []).forEach((it: any) => {
+      (rows as any[]).forEach((it: any) => {
         const label = PRIORITY_FROM_DB[String(it?.priority ?? "").toLowerCase()];
         if (!it?.exam_set_id || !label) return;
         const existing = labels.get(it.exam_set_id)?.label;
@@ -62,7 +46,7 @@ export function useExamPriorityLabels(): ExamPriorityData {
           labels.set(it.exam_set_id, { label });
         }
       });
-      return { labels, keyId: keyRow.id as string, keyDate: keyRow.date as string };
+      return { labels, keyId: rows[0].key_id as string, keyDate: rows[0].key_date as string };
     },
   });
 
