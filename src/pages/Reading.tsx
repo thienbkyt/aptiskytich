@@ -763,7 +763,8 @@ const Reading = () => {
                           <span className="flex items-center gap-1.5">📖 {set.description || "Đề luyện tập"}</span>
                         </div>
                         <div className="flex-1" />
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] text-muted-foreground">Update {format(new Date(set.created_at), "dd/MM/yyyy")}</p>
                           <Button variant="ghost" size="sm" onClick={() => guard(set, () => handleStartFromDB(set))} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
                             {locked ? "Mở khóa" : "Luyện tập"}<ArrowRight className="w-4 h-4" />
                           </Button>
