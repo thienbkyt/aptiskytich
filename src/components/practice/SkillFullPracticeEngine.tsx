@@ -1452,6 +1452,30 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           fullTestSessionId: fullPartSessionRef.current,
           extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
         });
+        // Retry once — mất mạng chốc lát không được làm mất bài.
+        if (!trid) {
+          trid = await saveExamResult({
+            examSetId: currentPart.id,
+            skill: "writing",
+            correct: 0,
+            total: perQuestion?.length || 0,
+            perQuestion,
+            reviewSnapshot: snap,
+            fullTestSessionId: fullPartSessionRef.current,
+            extraSkillScores: { fullPartSession: fullPartSessionRef.current, label: testTitle, ...customSetExtra },
+          });
+        }
+        if (!trid) {
+          toast.error("Chưa lưu được bài, kiểm tra mạng/đăng nhập rồi bấm Nộp lại");
+          const { logClientError } = await import("@/lib/clientErrorLog");
+          logClientError("writing_fullpart_save_failed", new Error("saveExamResult returned null after retry"), {
+            partIndex: currentPartIndex,
+            partType: currentPart.partNorm,
+            sessionId: fullPartSessionRef.current,
+            examSetId: currentPart.id,
+          });
+          return;
+        }
       }
 
       // Ghi grade_payload NGAY khi nộp — server luôn "thấy" bài này để cứu
