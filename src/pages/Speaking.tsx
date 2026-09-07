@@ -23,6 +23,7 @@ import ExamLoadErrorModal, { type ExamLoadErrorState } from "@/components/exam/E
 import { useExamSets, fetchExamQuestions, normalizePart, isNewSet, type ExamSetRow } from "@/hooks/useExamSets";
 import { useSkillFullSets, type SkillFullSetItem } from "@/hooks/useSkillFullSets";
 import { toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4 } from "@/lib/examTransformers";
+import { supabase } from "@/integrations/supabase/client";
 import { TechSkeleton } from "@/components/ui/tech-skeleton";
 import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
@@ -123,7 +124,7 @@ const Speaking = () => {
   useEffect(() => {
     const setId = searchParams.get("set");
     const jump = searchParams.get("jump") === "1";
-    if (!setId || loading || autoStartedRef.current === setId) return;
+    if (!setId || autoStartedRef.current === setId) return;
     const target = examSets.find((s) => s.id === setId);
     if (target) {
       autoStartedRef.current = setId;
@@ -132,7 +133,27 @@ const Speaking = () => {
       next.delete("set");
       next.delete("jump");
       setSearchParams(next, { replace: true });
+      return;
     }
+    // Clone sets (clone_of != null) are filtered out by useExamSets; fetch directly by id.
+    autoStartedRef.current = setId;
+    (async () => {
+      const { data: row, error } = await supabase
+        .from("exam_sets")
+        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until, question_count")
+        .eq("id", setId)
+        .eq("is_published", true)
+        .maybeSingle();
+      if (error || !row) {
+        toast.error("Không tìm thấy đề");
+      } else {
+        handleStartFromDB(row as ExamSetRow, { skipIntro: jump });
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete("set");
+      next.delete("jump");
+      setSearchParams(next, { replace: true });
+    })();
   }, [searchParams, examSets, loading]);
 
   const partSets = useMemo(() => {

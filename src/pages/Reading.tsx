@@ -135,17 +135,37 @@ const Reading = () => {
   const autoStartedRef = useRef<string | null>(null);
   useEffect(() => {
     const setId = searchParams.get("set");
-    if (!setId || loading || autoStartedRef.current === setId) return;
+    const jump = searchParams.get("jump") === "1";
+    if (!setId || autoStartedRef.current === setId) return;
     const target = examSets.find((s) => s.id === setId);
     if (target) {
       autoStartedRef.current = setId;
-      const jump = searchParams.get("jump") === "1";
       handleStartFromDB(target, { skipIntro: jump });
       const next = new URLSearchParams(searchParams);
       next.delete("set");
       next.delete("jump");
       setSearchParams(next, { replace: true });
+      return;
     }
+    // Clone sets (clone_of != null) are filtered out by useExamSets; fetch directly by id.
+    autoStartedRef.current = setId;
+    (async () => {
+      const { data: row, error } = await supabase
+        .from("exam_sets")
+        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until, question_count")
+        .eq("id", setId)
+        .eq("is_published", true)
+        .maybeSingle();
+      if (error || !row) {
+        toast.error("Không tìm thấy đề");
+      } else {
+        handleStartFromDB(row as ExamSetRow, { skipIntro: jump });
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete("set");
+      next.delete("jump");
+      setSearchParams(next, { replace: true });
+    })();
   }, [searchParams, examSets, loading]);
 
   // Auto-start marathon via ?marathon=partN(&keyId=<uuid>)
