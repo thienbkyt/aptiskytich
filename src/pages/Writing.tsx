@@ -179,8 +179,8 @@ const Writing = () => {
     const rank = (id: string) => { const l = priorityLabels.get(id)?.label; return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
     const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
     return [...list].sort((a, b) => {
-      const ga = a.access_tier === "free" ? 0 : 1;
-      const gb = b.access_tier === "free" ? 0 : 1;
+      const ga = a.access_tier === "free" ? 0 : isNewSet(a) ? 1 : 2;
+      const gb = b.access_tier === "free" ? 0 : isNewSet(b) ? 1 : 2;
       if (ga !== gb) return ga - gb;
       const ra = rank(a.id), rb = rank(b.id);
       if (ra !== rb) return ra - rb;
