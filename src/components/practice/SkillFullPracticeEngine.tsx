@@ -1391,8 +1391,8 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         }
       : undefined;
 
-    const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>) => {
-      if (adminNavigationRef.current) return;
+    const handleWritingPartComplete = async (perQuestion?: Array<{ exam_question_id: string; user_answer: string | null; is_correct: boolean }>): Promise<boolean> => {
+      if (adminNavigationRef.current) return true;
       const { buildReviewSnapshot } = await import("@/lib/reviewSnapshot");
       const sub = (writingSubmissionsByPartRef.current[currentPartIndex] || {}) as any;
       const userText = (perQuestion?.[0]?.user_answer) || sub.text || "";
@@ -1474,7 +1474,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sessionId: fullPartSessionRef.current,
             examSetId: currentPart.id,
           });
-          return;
+          return false;
         }
       }
 
@@ -1526,7 +1526,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       if (!isLastPart) {
         lastNavDirectionRef.current = "forward";
         setCurrentPartIndex((p) => p + 1);
-        return;
+        return true;
       }
 
       // Last part → grade all sequentially using v2 analytic rubric
@@ -1673,6 +1673,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       setWritingCefr(allFour ? cefr : "");
       setScores({ correct: scale50, total: 50 });
       setWritingPhase("results");
+      return true;
     };
 
 
