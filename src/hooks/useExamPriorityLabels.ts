@@ -18,6 +18,7 @@ export interface ExamPriorityData {
 const PRIORITY_FROM_DB: Record<string, PriorityLabel> = {
   high: "high",
   medium: "medium",
+  low: "low",
   backup: "low",
 };
 
