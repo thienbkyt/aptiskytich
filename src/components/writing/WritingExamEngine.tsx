@@ -260,7 +260,8 @@ const WritingExamEngine = ({
     if (onPartAnswers) {
       const { text, questions } = getTextAndQuestions();
       onPartAnswers({ partType, text, questions });
-      onComplete?.(perQuestion);
+      setSubmitted(true);
+      await onComplete?.(perQuestion);
       return;
     }
 

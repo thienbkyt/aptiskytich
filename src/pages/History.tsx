@@ -481,6 +481,14 @@ const History = () => {
         }
         const fpGroups = Array.from(fpMap.values()).map((g) => {
           const isGrammar = g.skill === "grammar";
+
+          // Writing/Speaking Full Part chỉ có điểm /50 khi đủ 4 phần.
+          if ((g.skill === "writing" || g.skill === "speaking") && g.partCount < 4) {
+            g.displayScore = `Chưa đủ 4 phần (${g.partCount}/4)`;
+            g.displayBand = "—";
+            g.ungradedCount = 0;
+            return g;
+          }
           const official =
             g.skill === "writing" ? writingOfficialBySession[g.sessionId]
             : g.skill === "speaking" ? speakingOfficialBySession[g.sessionId]
