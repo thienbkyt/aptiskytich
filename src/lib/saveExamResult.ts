@@ -49,7 +49,15 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
   inFlight.add(lockKey);
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) {
+      const { logClientError } = await import("@/lib/clientErrorLog");
+      logClientError("save_no_session", new Error("no auth session when saving exam result"), {
+        skill: opts.skill,
+        examSetId: opts.examSetId ?? null,
+        fullTestSessionId: opts.fullTestSessionId ?? null,
+      });
+      return null;
+    }
 
 
     const total = Math.max(opts.total, 0);
