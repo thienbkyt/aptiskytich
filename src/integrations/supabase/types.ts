@@ -207,6 +207,57 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_dethi0409_20260907: {
+        Row: {
+          audio_url: string | null
+          correct_answer: number | null
+          created_at: string | null
+          exam_set_id: string | null
+          explanation: string | null
+          extra_data: Json | null
+          id: string | null
+          image_url: string | null
+          options: Json | null
+          order_index: number | null
+          question_text: string | null
+          question_type: string | null
+          response_time: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          correct_answer?: number | null
+          created_at?: string | null
+          exam_set_id?: string | null
+          explanation?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          image_url?: string | null
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string | null
+          question_type?: string | null
+          response_time?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       backup_dictation_20260903_progress: {
         Row: {
           best_accuracy: number | null
@@ -1098,6 +1149,27 @@ export type Database = {
           extra_data?: Json | null
           id?: string | null
           options?: Json | null
+        }
+        Relationships: []
+      }
+      backup_reading_p1_gach_20260906: {
+        Row: {
+          backed_at: string | null
+          extra_data: Json | null
+          id: string | null
+          question_text: string | null
+        }
+        Insert: {
+          backed_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
+        }
+        Update: {
+          backed_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+          question_text?: string | null
         }
         Relationships: []
       }
@@ -4852,6 +4924,15 @@ export type Database = {
           p_total: number
         }
         Returns: string
+      }
+      get_current_key_labels: {
+        Args: never
+        Returns: {
+          exam_set_id: string
+          key_date: string
+          key_id: string
+          priority: string
+        }[]
       }
       get_db_size_mb: { Args: never; Returns: number }
       get_dictation_levels: {
