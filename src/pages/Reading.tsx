@@ -40,6 +40,7 @@ import { useExamPriorityLabels } from "@/hooks/useExamPriorityLabels";
 import PriorityBadge from "@/components/practice/PriorityBadge";
 import PriorityFilter, { type PriorityFilterValue } from "@/components/practice/PriorityFilter";
 import DoneFilter, { type DoneFilterValue } from "@/components/practice/DoneFilter";
+import { format } from "date-fns";
 
 
 
@@ -237,8 +238,8 @@ const Reading = () => {
     const rank = (id: string) => { const l = priorityLabels.get(id)?.label; return l === "high" ? 0 : l === "medium" ? 1 : l === "low" ? 2 : 3; };
     const num = (t: string) => { const m = (t || "").match(/\d+/); return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER; };
     return [...list].sort((a, b) => {
-      const ga = a.access_tier === "free" ? 0 : 1;
-      const gb = b.access_tier === "free" ? 0 : 1;
+      const ga = a.access_tier === "free" ? 0 : isNewSet(a) ? 1 : 2;
+      const gb = b.access_tier === "free" ? 0 : isNewSet(b) ? 1 : 2;
       if (ga !== gb) return ga - gb;
       const ra = rank(a.id), rb = rank(b.id);
       if (ra !== rb) return ra - rb;
@@ -762,7 +763,8 @@ const Reading = () => {
                           <span className="flex items-center gap-1.5">📖 {set.description || "Đề luyện tập"}</span>
                         </div>
                         <div className="flex-1" />
-                        <div className="flex justify-end">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] text-muted-foreground">Update {format(new Date(set.created_at), "dd/MM/yyyy")}</p>
                           <Button variant="ghost" size="sm" onClick={() => guard(set, () => handleStartFromDB(set))} className="text-primary hover:text-primary hover:bg-primary/10 font-semibold gap-1 group-hover:gap-2 transition-all">
                             {locked ? "Mở khóa" : "Luyện tập"}<ArrowRight className="w-4 h-4" />
                           </Button>
