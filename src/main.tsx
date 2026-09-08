@@ -17,7 +17,11 @@ try {
   const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID;
   const storageKey = projectId ? `sb-${projectId}-auth-token` : null;
   if (storageKey && typeof localStorage !== "undefined" && localStorage.getItem(storageKey)) {
-    (window as any).__ktBootstrapPromise = (supabase as any).rpc("get_user_bootstrap");
+    // Only fire the RPC once the session token is actually restored/refreshed,
+    // otherwise the call lands as anon and caches a bogus "free" bootstrap.
+    (window as any).__ktBootstrapPromise = supabase.auth
+      .getSession()
+      .then(({ data }) => (data.session ? (supabase as any).rpc("get_user_bootstrap") : null));
   }
 } catch {
   /* ignore */
