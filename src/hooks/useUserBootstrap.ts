@@ -99,7 +99,8 @@ export function useUserBootstrap() {
     loading:
       authLoading ||
       (!!userId &&
-        (query.isPending || query.isRefetching || query.isRetrying ||
+        (query.isPending ||
+          query.isRefetching ||
           (query.isError && query.fetchStatus !== "idle"))),
     refetch,
     setUnread,
