@@ -21,28 +21,38 @@ const DEFAULT: UserBootstrap = {
  * Fires the get_user_bootstrap RPC. Awaits any early prefetch fired in main.tsx.
  * Never called for anon users — landing page stays at 0 Supabase calls when
  * signed out.
+ *
+ * Throws on error or when the returned uid is missing/mismatched (token not
+ * restored yet) so React Query retries instead of caching a bogus "free"
+ * bootstrap for 10 minutes.
  */
-async function fetchBootstrap(): Promise<UserBootstrap> {
+async function fetchBootstrap(expectedUserId: string): Promise<UserBootstrap> {
   const early = (window as any).__ktBootstrapPromise as
-    | Promise<{ data: any; error: any }>
+    | Promise<{ data: any; error: any } | null>
     | undefined;
-  const p = early ?? (supabase as any).rpc("get_user_bootstrap");
-  // Consume the early promise once.
-  if (early) delete (window as any).__ktBootstrapPromise;
-  try {
-    const { data, error } = await p;
-    if (error || !data) return DEFAULT;
-    const d = data as any;
-    const tier: UserTier =
-      d.tier === "premium" || d.tier === "pro" ? d.tier : "free";
-    return {
-      tier,
-      subscription: d.subscription ?? null,
-      unread_notification_count: Number(d.unread_notification_count) || 0,
-    };
-  } catch {
-    return DEFAULT;
+  let result: { data: any; error: any } | null;
+  if (early) {
+    delete (window as any).__ktBootstrapPromise;
+    result = await early;
+    // Early prefetch ran before the session was ready — fire a fresh call.
+    if (result == null) {
+      result = await (supabase as any).rpc("get_user_bootstrap");
+    }
+  } else {
+    result = await (supabase as any).rpc("get_user_bootstrap");
   }
+  const { data, error } = result;
+  if (error) throw error;
+  if (!data) throw new Error("bootstrap_no_data");
+  const d = data as any;
+  if (!d.uid || d.uid !== expectedUserId) throw new Error("bootstrap_no_uid");
+  const tier: UserTier =
+    d.tier === "premium" || d.tier === "pro" ? d.tier : "free";
+  return {
+    tier,
+    subscription: d.subscription ?? null,
+    unread_notification_count: Number(d.unread_notification_count) || 0,
+  };
 }
 
 export function useUserBootstrap() {
@@ -52,11 +62,14 @@ export function useUserBootstrap() {
 
   const query = useQuery({
     queryKey: ["userBootstrap", userId],
-    queryFn: fetchBootstrap,
+    queryFn: () => fetchBootstrap(userId!),
     enabled: !authLoading && !!userId,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
     staleTime: 10 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const data: UserBootstrap = !userId ? DEFAULT : query.data ?? DEFAULT;
@@ -83,7 +96,11 @@ export function useUserBootstrap() {
     ...data,
     isPro: data.tier === "pro" || data.tier === "premium",
     isPremium: data.tier === "premium",
-    loading: authLoading || (!!userId && query.isPending && query.fetchStatus !== "idle"),
+    loading:
+      authLoading ||
+      (!!userId &&
+        (query.isPending || query.isRefetching || query.isRetrying ||
+          (query.isError && query.fetchStatus !== "idle"))),
     refetch,
     setUnread,
   };
