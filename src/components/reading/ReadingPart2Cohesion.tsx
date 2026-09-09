@@ -86,7 +86,8 @@ const ReadingPart2Cohesion = ({
   };
   const handleSlotTap = (pos: number) => {
     if (reveal) return;
-    const isDoneForYou = currentSection === 0 && pos === 1;
+    const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
+
     if (isDoneForYou) return;
     const placed = current[pos];
     if (selectedText) {
