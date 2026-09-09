@@ -86,10 +86,8 @@ const ReadingPart2Cohesion = ({
   };
   const handleSlotTap = (pos: number) => {
     if (reveal) return;
-    const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
-
-    if (isDoneForYou) return;
     const placed = current[pos];
+
     if (selectedText) {
       // If tapping the same placed item, deselect (send back to pool)
       if (placed && placed === selectedText) {
