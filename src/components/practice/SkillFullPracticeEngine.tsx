@@ -83,12 +83,12 @@ const expectedReadingTotal = (partType: string, rows: ExamQuestionRow[]): number
       const q = toReadingPart2(rows);
       if (!q) return 0;
       let t = 0;
-      q.sections.forEach((sec, sIdx) => {
-        sec.sentences.forEach((s) => {
-          if (sIdx === 0 && s.correctPosition === 1) return;
+      q.sections.forEach((sec) => {
+        sec.sentences.forEach(() => {
           t += 1;
         });
       });
+
       return t;
     }
     if (partType === "part3") {
