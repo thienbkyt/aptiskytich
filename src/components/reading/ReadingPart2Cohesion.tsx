@@ -219,6 +219,11 @@ const ReadingPart2Cohesion = ({
             {section?.title ? (
               <p className="text-base md:text-lg font-bold text-left text-foreground mb-3">{section.title}</p>
             ) : null}
+            {givenText ? (
+              <div className="rounded-md bg-muted px-4 py-3 text-sm text-foreground select-none">
+                {givenText}
+              </div>
+            ) : null}
             {[1, 2, 3, 4, 5].map((pos) => {
               const placed = current[pos];
               const correctText = correctTextForPosition(pos);
@@ -231,7 +236,8 @@ const ReadingPart2Cohesion = ({
                   : "border-border";
 
               // First slot of first section is "done for you" — show the correctPosition=1 sentence read-only
-              const isDoneForYou = currentSection === 0 && pos === 1;
+              const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
+
               const fixedText = isDoneForYou ? correctTextForPosition(1) : null;
 
               if (isDoneForYou && fixedText) {
