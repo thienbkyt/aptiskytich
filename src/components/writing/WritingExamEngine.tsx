@@ -126,6 +126,7 @@ const WritingExamEngine = ({
   const isPaused = allowPause === false ? false : (isPausedProp ?? isPausedInternal);
   const togglePause = allowPause === false ? undefined : (onTogglePauseProp ?? (() => setIsPausedInternal((p) => !p)));
   const [submitted, setSubmitted] = useState(!!reviewMode);
+  useEffect(() => { if (!reviewMode) setSubmitted(false); }, [partType]);
   useExitWarning(hasStarted && !submitted && !reviewMode);
   const [isReviewing, setIsReviewing] = useState(false);
   const [bookmarked, setBookmarked] = useState<Set<WritingPartType>>(new Set());
