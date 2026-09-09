@@ -65,17 +65,30 @@ export const toReadingPart2 = (rows: ExamQuestionRow[]): ReadingCohesionQuestion
   const group2 = raw
     .filter((s) => s.correctPosition >= 6 && s.correctPosition <= 10)
     .map((s) => ({ text: s.text, correctPosition: s.correctPosition - 5 }));
+  const givenList: string[] = Array.isArray(ed.givenSentences) ? ed.givenSentences : [];
+  const given1 = typeof givenList[0] === "string" && givenList[0].trim() ? givenList[0].trim() : undefined;
+  const given2 = typeof givenList[1] === "string" && givenList[1].trim() ? givenList[1].trim() : undefined;
+  const hasGiven = Boolean(given1 || given2);
+
+  const DONE_CLAUSE = "The first sentence is done for you.";
+  const baseInstruction = (ed.instruction || `The sentences below are from ${ed.taskTitle || "some instructions"}. Put the sentences in the right order.`)
+    .replace(DONE_CLAUSE, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  const instruction = hasGiven ? `${baseInstruction} ${DONE_CLAUSE}` : baseInstruction;
+
   return {
     id: 1,
     type: "text-cohesion" as const,
-    instruction: ed.instruction || "The sentences below are from some instructions. Put the sentences in the right order. The first sentence is done for you.",
+    instruction,
     sections: [
-      { title: ed.sectionTitles?.[0] ?? "", sentences: group1 },
-      { title: ed.sectionTitles?.[1] ?? "", sentences: group2 },
+      { title: ed.sectionTitles?.[0] ?? "", given: given1, sentences: group1 },
+      { title: ed.sectionTitles?.[1] ?? "", given: given2, sentences: group2 },
     ],
     explanation: first.explanation || "",
   };
 };
+
 
 export const toReadingPart3 = (rows: ExamQuestionRow[]): ReadingOpinionQuestion | null => {
   if (rows.length === 0) return null;
