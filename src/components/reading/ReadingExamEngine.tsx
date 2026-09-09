@@ -405,10 +405,10 @@ const ReadingExamEngine = ({
       part2Question.sections.forEach((sec, sIdx) => {
         const pl = p2Placements[sIdx] || {};
         sec.sentences.forEach((s) => {
+          if (sIdx === 0 && s.correctPosition === 1) return; // câu cho sẵn, không chấm
           p2total += 1;
           if (pl[s.correctPosition] === s.text) p2correct += 1;
         });
-
       });
       correct = p2correct;
       scoredTotal = p2total;

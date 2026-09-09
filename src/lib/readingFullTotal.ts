@@ -43,12 +43,12 @@ export const computeReadingFullTotal = async (
     } else if (partType === "part2") {
       const q = toReadingPart2(qs);
       if (q) {
-        q.sections.forEach((sec) => {
-          sec.sentences.forEach(() => {
+        q.sections.forEach((sec, sIdx) => {
+          sec.sentences.forEach((s) => {
+            if (sIdx === 0 && s.correctPosition === 1) return;
             total += 1;
           });
         });
-
       }
     } else if (partType === "part3") {
       const q = toReadingPart3(qs);

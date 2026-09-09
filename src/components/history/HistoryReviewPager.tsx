@@ -176,8 +176,9 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
           if (Array.isArray(secs) && secs.length > 0) {
             let cursor = 0;
             navItems = secs.map((sec: any, sIdx: number) => {
-              const size = (sec?.sentences || []).length;
-
+              const size = (sec?.sentences || []).filter(
+                (s: any) => !(sIdx === 0 && s?.correctPosition === 1),
+              ).length;
               const slice = items.slice(cursor, cursor + size);
               cursor += size;
               const allCorrect = slice.length > 0 && slice.every((it) => it.isCorrect === true);
