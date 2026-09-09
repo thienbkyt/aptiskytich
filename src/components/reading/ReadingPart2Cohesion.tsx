@@ -229,26 +229,8 @@ const ReadingPart2Cohesion = ({
                   ? "border-destructive bg-destructive/10"
                   : "border-border";
 
-              // First slot of first section is "done for you" — show the correctPosition=1 sentence read-only
-              const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
 
-              const fixedText = isDoneForYou ? correctTextForPosition(1) : null;
 
-              if (isDoneForYou && fixedText) {
-                return (
-                <div
-                  key={pos}
-                  className="relative border border-border rounded-md px-4 py-3 bg-muted/40 text-sm text-foreground"
-                >
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground select-none">
-                    {pos}
-                  </span>
-                  <div className="pl-6 flex items-center gap-2 flex-wrap">
-                    <span>{fixedText}</span>
-                  </div>
-                </div>
-                );
-              }
 
               return (
                 <div
