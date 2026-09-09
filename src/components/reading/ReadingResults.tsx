@@ -217,6 +217,10 @@ const Part2Review = ({ q, placements }: { q: ReadingCohesionQuestion; placements
         return (
           <div key={sIdx} className="space-y-2">
             <p className="text-sm font-semibold text-foreground">Đoạn {sIdx + 1}</p>
+            {(sec as any).given ? (
+              <div className="text-sm rounded-md p-3 bg-muted text-foreground">{(sec as any).given}</div>
+            ) : null}
+
             {sorted.map((s) => {
               const userAtPos = p[s.correctPosition];
 
