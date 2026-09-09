@@ -488,7 +488,7 @@ const parseListeningPart3 = (rows: any[]): ParseResult => {
       order_index: i,
       question_text: qt,
       question_type: "opinion_matching",
-      options: ["The man", "The woman", "Both"],
+      options: ["Man", "Woman", "Both"],
       correct_answer: validOps.indexOf(ans),
       explanation: r.explanation?.toString().trim() || "",
       audio_url: r.audio_filename?.toString().trim() || audioUrl,
