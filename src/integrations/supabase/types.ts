@@ -1086,6 +1086,30 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_p3_options_20260909: {
+        Row: {
+          correct_answer: number | null
+          exam_set_id: string | null
+          id: string | null
+          options: Json | null
+          order_index: number | null
+        }
+        Insert: {
+          correct_answer?: number | null
+          exam_set_id?: string | null
+          id?: string | null
+          options?: Json | null
+          order_index?: number | null
+        }
+        Update: {
+          correct_answer?: number | null
+          exam_set_id?: string | null
+          id?: string | null
+          options?: Json | null
+          order_index?: number | null
+        }
+        Relationships: []
+      }
       backup_phu_speaking_20260819: {
         Row: {
           backed_up_at: string | null
