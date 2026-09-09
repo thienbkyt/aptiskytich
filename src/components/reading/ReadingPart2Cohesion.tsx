@@ -86,10 +86,8 @@ const ReadingPart2Cohesion = ({
   };
   const handleSlotTap = (pos: number) => {
     if (reveal) return;
-    const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
-
-    if (isDoneForYou) return;
     const placed = current[pos];
+
     if (selectedText) {
       // If tapping the same placed item, deselect (send back to pool)
       if (placed && placed === selectedText) {
@@ -116,12 +114,8 @@ const ReadingPart2Cohesion = ({
   // Sentences already placed (in this section)
   const placedTexts = useMemo(() => new Set(Object.values(current)), [current]);
   const givenText = (section as any)?.given as string | undefined;
-  const doneForYouText = !givenText && currentSection === 0
-    ? section.sentences.find((s) => s.correctPosition === 1)?.text
-    : undefined;
-  const unplaced = (section.sentences || []).filter(
-    (s) => !placedTexts.has(s.text) && s.text !== doneForYouText
-  );
+  const unplaced = (section.sentences || []).filter((s) => !placedTexts.has(s.text));
+
 
 
   const correctTextForPosition = (pos: number) =>
@@ -235,26 +229,8 @@ const ReadingPart2Cohesion = ({
                   ? "border-destructive bg-destructive/10"
                   : "border-border";
 
-              // First slot of first section is "done for you" — show the correctPosition=1 sentence read-only
-              const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
 
-              const fixedText = isDoneForYou ? correctTextForPosition(1) : null;
 
-              if (isDoneForYou && fixedText) {
-                return (
-                <div
-                  key={pos}
-                  className="relative border border-border rounded-md px-4 py-3 bg-muted/40 text-sm text-foreground"
-                >
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground select-none">
-                    {pos}
-                  </span>
-                  <div className="pl-6 flex items-center gap-2 flex-wrap">
-                    <span>{fixedText}</span>
-                  </div>
-                </div>
-                );
-              }
 
               return (
                 <div
@@ -314,7 +290,6 @@ const ReadingPart2Cohesion = ({
               {[1, 2, 3, 4, 5].map((pos) => {
                 const correct = section.sentences.find((s) => s.correctPosition === pos);
                 if (!correct) return null;
-                const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
                 const translation = reviewData?.translations?.[part2ItemId(currentSection, pos)];
                 return (
                   <div key={pos} className="bg-background border border-border rounded-md px-3 py-2 text-sm">
@@ -322,13 +297,9 @@ const ReadingPart2Cohesion = ({
                       <span className="text-xs font-bold text-primary mt-0.5">{pos}.</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          {isDoneForYou && (
-                            <span className="inline-flex items-center rounded px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium">
-                              Cho sẵn
-                            </span>
-                          )}
                           <p className="text-foreground">{correct.text}</p>
                         </div>
+
                         {translation ? (
                           <p className="mt-1 text-xs text-muted-foreground">{translation}</p>
                         ) : reviewDataLoading ? (
