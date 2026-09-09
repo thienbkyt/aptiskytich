@@ -86,7 +86,8 @@ const ReadingPart2Cohesion = ({
   };
   const handleSlotTap = (pos: number) => {
     if (reveal) return;
-    const isDoneForYou = currentSection === 0 && pos === 1;
+    const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
+
     if (isDoneForYou) return;
     const placed = current[pos];
     if (selectedText) {
@@ -114,12 +115,14 @@ const ReadingPart2Cohesion = ({
 
   // Sentences already placed (in this section)
   const placedTexts = useMemo(() => new Set(Object.values(current)), [current]);
-  const doneForYouText = currentSection === 0
+  const givenText = (section as any)?.given as string | undefined;
+  const doneForYouText = !givenText && currentSection === 0
     ? section.sentences.find((s) => s.correctPosition === 1)?.text
     : undefined;
   const unplaced = (section.sentences || []).filter(
     (s) => !placedTexts.has(s.text) && s.text !== doneForYouText
   );
+
 
   const correctTextForPosition = (pos: number) =>
     section.sentences.find((s) => s.correctPosition === pos)?.text;
@@ -216,6 +219,11 @@ const ReadingPart2Cohesion = ({
             {section?.title ? (
               <p className="text-base md:text-lg font-bold text-left text-foreground mb-3">{section.title}</p>
             ) : null}
+            {givenText ? (
+              <div className="rounded-md bg-muted px-4 py-3 text-sm text-foreground select-none">
+                {givenText}
+              </div>
+            ) : null}
             {[1, 2, 3, 4, 5].map((pos) => {
               const placed = current[pos];
               const correctText = correctTextForPosition(pos);
@@ -228,7 +236,8 @@ const ReadingPart2Cohesion = ({
                   : "border-border";
 
               // First slot of first section is "done for you" — show the correctPosition=1 sentence read-only
-              const isDoneForYou = currentSection === 0 && pos === 1;
+              const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
+
               const fixedText = isDoneForYou ? correctTextForPosition(1) : null;
 
               if (isDoneForYou && fixedText) {
@@ -305,7 +314,7 @@ const ReadingPart2Cohesion = ({
               {[1, 2, 3, 4, 5].map((pos) => {
                 const correct = section.sentences.find((s) => s.correctPosition === pos);
                 if (!correct) return null;
-                const isDoneForYou = currentSection === 0 && pos === 1;
+                const isDoneForYou = !givenText && currentSection === 0 && pos === 1;
                 const translation = reviewData?.translations?.[part2ItemId(currentSection, pos)];
                 return (
                   <div key={pos} className="bg-background border border-border rounded-md px-3 py-2 text-sm">

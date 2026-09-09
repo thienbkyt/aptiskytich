@@ -233,8 +233,13 @@ const parseReadingPart2 = (rows: any[]): ParseResult => {
         rows[0].title_1?.toString().trim() || "",
         rows[0].title_2?.toString().trim() || "",
       ],
+      givenSentences: [
+        rows[0].given_1?.toString().trim() || "",
+        rows[0].given_2?.toString().trim() || "",
+      ],
       instruction: "The sentences below make a complete text. Put them in the correct order.",
     },
+
   }];
 
   return { questions, errors };

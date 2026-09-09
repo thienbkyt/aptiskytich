@@ -17,8 +17,11 @@ export interface ReadingPart2Sentence {
 }
 export interface ReadingPart2Section {
   title?: string;
+  /** Fixed "given" sentence shown above the slots (not draggable, not scored). */
+  given?: string;
   sentences: ReadingPart2Sentence[];
 }
+
 export interface ReadingCohesionQuestion {
   id: number;
   type: "text-cohesion";
