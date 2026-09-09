@@ -71,11 +71,9 @@ export const toReadingPart2 = (rows: ExamQuestionRow[]): ReadingCohesionQuestion
   const hasGiven = Boolean(given1 || given2);
 
   const DONE_CLAUSE = "The first sentence is done for you.";
-  const baseInstruction = (ed.instruction || `The sentences below are from ${ed.taskTitle || "some instructions"}. Put the sentences in the right order.`)
-    .replace(DONE_CLAUSE, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  const baseInstruction = "The sentences below make a complete text. Put them in the correct order.";
   const instruction = hasGiven ? `${baseInstruction} ${DONE_CLAUSE}` : baseInstruction;
+
 
   return {
     id: 1,
