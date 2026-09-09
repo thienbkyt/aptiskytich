@@ -114,12 +114,14 @@ const ReadingPart2Cohesion = ({
 
   // Sentences already placed (in this section)
   const placedTexts = useMemo(() => new Set(Object.values(current)), [current]);
-  const doneForYouText = currentSection === 0
+  const givenText = (section as any)?.given as string | undefined;
+  const doneForYouText = !givenText && currentSection === 0
     ? section.sentences.find((s) => s.correctPosition === 1)?.text
     : undefined;
   const unplaced = (section.sentences || []).filter(
     (s) => !placedTexts.has(s.text) && s.text !== doneForYouText
   );
+
 
   const correctTextForPosition = (pos: number) =>
     section.sentences.find((s) => s.correctPosition === pos)?.text;
