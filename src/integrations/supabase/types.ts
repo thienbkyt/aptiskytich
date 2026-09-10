@@ -2265,6 +2265,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_wp4_travel3_20260910: {
+        Row: {
+          backed_at: string | null
+          extra_data: Json | null
+          id: string | null
+        }
+        Insert: {
+          backed_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Update: {
+          backed_at?: string | null
+          extra_data?: Json | null
+          id?: string | null
+        }
+        Relationships: []
+      }
       backup_wr_trangkun_20260831: {
         Row: {
           cefr: string | null
