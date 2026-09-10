@@ -42,15 +42,7 @@ type IntroVideo = {
   since: string | null;
 };
 
-const toEmbedUrl = (raw: string): string => {
-  const url = raw.trim();
-  const m =
-    url.match(/[?&]v=([\w-]{6,})/) ||
-    url.match(/youtu\.be\/([\w-]{6,})/) ||
-    url.match(/youtube\.com\/(?:embed|shorts|live)\/([\w-]{6,})/);
-  const base = m ? `https://www.youtube.com/embed/${m[1]}` : url;
-  return base.includes("?") ? `${base}&rel=0&modestbranding=1` : `${base}?rel=0&modestbranding=1`;
-};
+const toEmbedUrl = (raw: string): string => getYouTubeEmbedUrl(raw);
 
 const PostLoginFBGroupModal = () => {
   const [open, setOpen] = useState(false);
