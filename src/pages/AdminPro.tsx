@@ -185,7 +185,10 @@ const PromoSection = () => {
         promo_label: settings.promo_label,
         promo_from: settings.promo_from,
         promo_until: settings.promo_until,
-      })
+        intro_video_enabled: settings.intro_video_enabled,
+        intro_video_url: settings.intro_video_url ? toYouTubeEmbed(settings.intro_video_url) : null,
+        intro_video_title: settings.intro_video_title,
+      } as any)
       .eq("id", 1);
     setSaving(false);
     if (error) toast.error("Lưu thất bại: " + error.message);
