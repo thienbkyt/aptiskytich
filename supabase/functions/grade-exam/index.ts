@@ -2238,6 +2238,7 @@ Trước khi cho điểm nội dung, xác định bài có ĐÚNG chủ đề v�
 
 SCENARIO RULE (task4 và bất kỳ part nào có "SCENARIO" trong phần Prompt/Questions):
 Phần Prompt/Questions có thể bắt đầu bằng một mục "SCENARIO" — đó là BỐI CẢNH/CHỦ ĐỀ BẮT BUỘC mà mọi email/câu trả lời PHẢI bám sát. Với task4: cả email1 (Informal) và email2 (Formal) PHẢI trả lời đúng scenario chung này, đồng thời tuân thủ instruction riêng của từng email. Nếu nội dung email/câu nói về chủ đề KHÁC với SCENARIO (dù trôi chảy, đủ dài, đúng ngữ pháp) → addressPercent của email/câu đó = 0. Tuyệt đối không cho điểm nội dung cao cho bài lạc scenario.
+ƯU TIÊN YÊU CẦU CỤ THỂ CỦA SCENARIO: nếu email kịch bản (SCENARIO) nêu yêu cầu cụ thể (ví dụ: apply/explain why you are suitable, suggest a topic, name two benefits, volunteer to be a speaker, choose an option and explain), thì Task Fulfilment chấm theo yêu cầu đó. Câu hướng dẫn mẫu "Write about your feelings and what you think the club should do about the situation" chỉ là khung chung của Aptis — KHÔNG trừ điểm TF vì học viên không đề xuất "club nên làm gì" khi scenario không hỏi điều đó. Chỉ khi scenario không có yêu cầu cụ thể mới chấm theo feelings + suggestions.
 
 COHERENCE: coherenceLacking = true if ideas don't flow linearly with linking words (disjointed, jumping). Else false. (For task1 ignored.)
 
