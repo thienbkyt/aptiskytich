@@ -165,6 +165,7 @@ const PromoSection = () => {
       if (error) toast.error("Không tải được cấu hình");
       setSettings((data as any) ?? {
         id: 1, promo_free_all: false, promo_label: null, promo_from: null, promo_until: null,
+        intro_video_url: null, intro_video_title: null, intro_video_enabled: false,
       });
       setLoading(false);
     })();
