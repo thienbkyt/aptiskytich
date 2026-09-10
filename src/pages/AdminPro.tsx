@@ -269,6 +269,41 @@ const PromoSection = () => {
               />
             </div>
 
+            <div className="space-y-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-foreground">Video giới thiệu</p>
+                  <p className="text-sm text-muted-foreground">
+                    Hiện video trong popup sau khi học viên đăng nhập lần đầu (chỉ hiện 1 lần / học viên).
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.intro_video_enabled}
+                  onCheckedChange={(v) => update("intro_video_enabled", v)}
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="intro_video_url">Link YouTube</Label>
+                  <Input
+                    id="intro_video_url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={settings.intro_video_url ?? ""}
+                    onChange={(e) => update("intro_video_url", e.target.value || null)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="intro_video_title">Tiêu đề popup</Label>
+                  <Input
+                    id="intro_video_title"
+                    placeholder="Xem nhanh cách dùng Aptis Kỳ Tích"
+                    value={settings.intro_video_title ?? ""}
+                    onChange={(e) => update("intro_video_title", e.target.value || null)}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={saving} className="gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
