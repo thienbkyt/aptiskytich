@@ -58,6 +58,19 @@ const CategoryBadge = ({ category }: { category: BlogCategory }) => (
   </span>
 );
 
+const VideoBadge = () => (
+  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/70 text-xs font-semibold">
+    ▶ Video
+  </span>
+);
+
+const CardTags = ({ post }: { post: BlogPost }) => (
+  <div className="flex items-center gap-2 flex-wrap">
+    <CategoryBadge category={post.category} />
+    {hasYouTubeLink(post.content) && <VideoBadge />}
+  </div>
+);
+
 const FeaturedCard = ({ post }: { post: BlogPost }) => (
   <Link
     to={`/meo-thi-aptis/${post.slug}`}
@@ -173,7 +186,7 @@ const BlogIndex = () => {
     setPosts(null);
     supabase
       .from("blog_posts" as any)
-      .select("id, title, slug, excerpt, cover_image_url, category, published_at")
+      .select("id, title, slug, excerpt, cover_image_url, category, published_at, content")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {
