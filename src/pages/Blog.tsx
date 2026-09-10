@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
+import { hasYouTubeLink } from "@/lib/youtube";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +59,19 @@ const CategoryBadge = ({ category }: { category: BlogCategory }) => (
   </span>
 );
 
+const VideoBadge = () => (
+  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-foreground/5 text-foreground/70 text-xs font-semibold">
+    ▶ Video
+  </span>
+);
+
+const CardTags = ({ post }: { post: BlogPost }) => (
+  <div className="flex items-center gap-2 flex-wrap">
+    <CategoryBadge category={post.category} />
+    {hasYouTubeLink(post.content) && <VideoBadge />}
+  </div>
+);
+
 const FeaturedCard = ({ post }: { post: BlogPost }) => (
   <Link
     to={`/meo-thi-aptis/${post.slug}`}
@@ -76,7 +90,7 @@ const FeaturedCard = ({ post }: { post: BlogPost }) => (
       </div>
     </div>
     <div className="p-6 md:p-8 flex flex-col justify-center">
-      <CategoryBadge category={post.category} />
+      <CardTags post={post} />
       <h2 className="mt-3 text-2xl md:text-3xl font-heading font-extrabold text-foreground leading-tight line-clamp-3 group-hover:text-[#CC1C01] transition-colors">
         {post.title}
       </h2>
@@ -117,7 +131,7 @@ const PostCard = ({ post }: { post: BlogPost }) => (
       />
     </div>
     <div className="p-5 flex flex-col flex-1">
-      <CategoryBadge category={post.category} />
+      <CardTags post={post} />
       <h3 className="mt-3 text-lg font-heading font-bold text-foreground leading-snug line-clamp-2 group-hover:text-[#CC1C01] transition-colors">
         {post.title}
       </h3>
@@ -173,7 +187,7 @@ const BlogIndex = () => {
     setPosts(null);
     supabase
       .from("blog_posts" as any)
-      .select("id, title, slug, excerpt, cover_image_url, category, published_at")
+      .select("id, title, slug, excerpt, cover_image_url, category, published_at, content")
       .eq("status", "published")
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {

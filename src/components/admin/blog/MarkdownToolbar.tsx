@@ -1,5 +1,5 @@
 import { RefObject } from "react";
-import { Bold, Heading2, Heading3, List, ListOrdered, Quote, Link as LinkIcon, Image as ImageIcon } from "lucide-react";
+import { Bold, Heading2, Heading3, List, ListOrdered, Quote, Link as LinkIcon, Image as ImageIcon, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
@@ -46,6 +46,22 @@ const prefixLines = (
   requestAnimationFrame(() => ta.focus());
 };
 
+const insertBlock = (
+  ta: HTMLTextAreaElement,
+  block: string,
+  onChange: (v: string) => void,
+) => {
+  const start = ta.selectionStart;
+  const value = ta.value;
+  const next = value.slice(0, start) + block + value.slice(start);
+  onChange(next);
+  requestAnimationFrame(() => {
+    ta.focus();
+    const pos = start + block.length;
+    ta.setSelectionRange(pos, pos);
+  });
+};
+
 const MarkdownToolbar = ({ textareaRef, onChange }: Props) => {
   const ta = () => textareaRef.current;
   const btn = "h-8 w-8 p-0";
@@ -76,6 +92,22 @@ const MarkdownToolbar = ({ textareaRef, onChange }: Props) => {
       </Button>
       <Button type="button" variant="ghost" size="sm" className={btn} onClick={() => { const t = ta(); if (t) wrapSelection(t, "![", "](https://)", "mô tả ảnh", onChange); }} title="Chèn ảnh">
         <ImageIcon className="w-4 h-4" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className={btn}
+        onClick={() => {
+          const t = ta();
+          if (!t) return;
+          const link = window.prompt("Dán link YouTube (youtube.com/watch?v=... hoặc youtu.be/...)");
+          if (!link || !link.trim()) return;
+          insertBlock(t, `\n\n${link.trim()}\n\n`, onChange);
+        }}
+        title="Dán link YouTube, video sẽ hiện trong bài"
+      >
+        <Video className="w-4 h-4" />
       </Button>
     </div>
   );
