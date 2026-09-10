@@ -108,6 +108,10 @@ export type Database = {
       app_settings: {
         Row: {
           id: number
+          intro_video_enabled: boolean
+          intro_video_since: string
+          intro_video_title: string | null
+          intro_video_url: string | null
           promo_free_all: boolean
           promo_from: string | null
           promo_label: string | null
@@ -116,6 +120,10 @@ export type Database = {
         }
         Insert: {
           id?: number
+          intro_video_enabled?: boolean
+          intro_video_since?: string
+          intro_video_title?: string | null
+          intro_video_url?: string | null
           promo_free_all?: boolean
           promo_from?: string | null
           promo_label?: string | null
@@ -124,6 +132,10 @@ export type Database = {
         }
         Update: {
           id?: number
+          intro_video_enabled?: boolean
+          intro_video_since?: string
+          intro_video_title?: string | null
+          intro_video_url?: string | null
           promo_free_all?: boolean
           promo_from?: string | null
           promo_label?: string | null
@@ -3800,6 +3812,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          intro_video_seen_at: string | null
           last_active_at: string | null
           updated_at: string
           user_id: string
@@ -3809,6 +3822,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          intro_video_seen_at?: string | null
           last_active_at?: string | null
           updated_at?: string
           user_id: string
@@ -3818,6 +3832,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          intro_video_seen_at?: string | null
           last_active_at?: string | null
           updated_at?: string
           user_id?: string
@@ -5381,6 +5396,7 @@ export type Database = {
         }[]
       }
       get_full_tests: { Args: { p_category: string }; Returns: Json }
+      get_intro_video: { Args: never; Returns: Json }
       get_site_stats: { Args: never; Returns: Json }
       get_storage_size_mb: {
         Args: never

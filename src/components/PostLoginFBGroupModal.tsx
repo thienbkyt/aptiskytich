@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   Dialog,
@@ -11,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ArrowRight, Sparkles, Users, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const FB_GROUP_URL = "https://www.facebook.com/groups/1551779633112657";
 const ZALO_GROUP_URL = "https://zalo.me/g/ql84r9dxlh0ygjz8950u";
@@ -32,11 +35,62 @@ const ZaloIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+type IntroVideo = {
+  url: string | null;
+  title: string | null;
+  enabled: boolean;
+  since: string | null;
+};
+
+const toEmbedUrl = (raw: string): string => {
+  const url = raw.trim();
+  const m =
+    url.match(/[?&]v=([\w-]{6,})/) ||
+    url.match(/youtu\.be\/([\w-]{6,})/) ||
+    url.match(/youtube\.com\/(?:embed|shorts|live)\/([\w-]{6,})/);
+  const base = m ? `https://www.youtube.com/embed/${m[1]}` : url;
+  return base.includes("?") ? `${base}&rel=0&modestbranding=1` : `${base}?rel=0&modestbranding=1`;
+};
+
 const PostLoginFBGroupModal = () => {
   const [open, setOpen] = useState(false);
   const shownRef = useRef(false);
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  const { data: intro } = useQuery({
+    queryKey: ["intro-video"],
+    queryFn: async (): Promise<IntroVideo | null> => {
+      const { data, error } = await supabase.rpc("get_intro_video" as any);
+      if (error) throw error;
+      return (data as unknown as IntroVideo) ?? null;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: seenAt } = useQuery({
+    queryKey: ["intro-video-seen", user?.id],
+    enabled: !!user?.id && !!intro?.enabled && !!intro?.url,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("intro_video_seen_at")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as any)?.intro_video_seen_at ?? null;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const createdAt = user?.created_at ? new Date(user.created_at).getTime() : 0;
+  const sinceAt = intro?.since ? new Date(intro.since).getTime() : Number.POSITIVE_INFINITY;
+  const showVideo =
+    !!intro?.enabled &&
+    !!intro?.url &&
+    !!user &&
+    createdAt >= sinceAt &&
+    seenAt === null;
 
   useEffect(() => {
     if (shownRef.current) return;
@@ -55,14 +109,34 @@ const PostLoginFBGroupModal = () => {
     }
   }, [user, loading, location.pathname]);
 
+  const markVideoSeen = async () => {
+    if (!showVideo || !user) return;
+    try {
+      await supabase
+        .from("profiles")
+        .update({ intro_video_seen_at: new Date().toISOString() } as any)
+        .eq("user_id", user.id);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) void markVideoSeen();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogPortal>
         <DialogOverlay className="bg-black/60 backdrop-blur-sm" />
         <DialogPrimitive.Content
-          className="fixed left-[50%] top-[50%] z-50 w-[calc(100%-2rem)] max-w-[420px] translate-x-[-50%] translate-y-[-50%] rounded-3xl border-0 bg-transparent p-0 shadow-none outline-none duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]"
+          className={cn(
+            "fixed left-[50%] top-[50%] z-50 w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] rounded-3xl border-0 bg-transparent p-0 shadow-none outline-none duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+            showVideo ? "max-w-[560px]" : "max-w-[420px]",
+          )}
         >
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] p-6 text-center text-white shadow-2xl md:p-8">
+          <div className="relative max-h-[92dvh] overflow-y-auto overflow-x-hidden rounded-3xl bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] p-6 text-center text-white shadow-2xl md:p-8">
             {/* Decorative glows */}
             <div className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-white/15 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
@@ -77,24 +151,41 @@ const PostLoginFBGroupModal = () => {
             />
 
             {/* Close button */}
-            <DialogClose className="absolute right-4 top-4 z-10 rounded-full p-1.5 text-white/80 transition-colors hover:bg-white/15 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50">
+            <DialogClose className="absolute right-4 top-4 z-10 rounded-full bg-black/20 p-1.5 text-white/90 transition-colors hover:bg-white/25 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/50">
               <X className="h-5 w-5" />
               <span className="sr-only">Đóng</span>
             </DialogClose>
 
             {/* Content */}
             <div className="relative z-10 flex flex-col items-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/10 backdrop-blur-sm">
-                <Users className="h-8 w-8 text-white" />
-              </div>
+              {showVideo ? (
+                <div className="w-full overflow-hidden rounded-2xl bg-black/30 shadow-lg">
+                  <iframe
+                    src={toEmbedUrl(intro!.url!)}
+                    title={intro?.title ?? "Video giới thiệu"}
+                    className="aspect-video w-full"
+                    allow="autoplay; encrypted-media; fullscreen"
+                    allowFullScreen
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 ring-4 ring-white/10 backdrop-blur-sm">
+                    <Users className="h-8 w-8 text-white" />
+                  </div>
 
-              <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
-                <Sparkles className="h-3.5 w-3.5" />
-                APTIS KỲ TÍCH
-              </div>
+                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    APTIS KỲ TÍCH
+                  </div>
+                </>
+              )}
 
               <DialogTitle className="mt-4 text-center font-heading text-xl font-bold leading-tight text-white md:text-2xl">
-                Tham gia nhóm học tập & Review đề
+                {showVideo
+                  ? intro?.title || "Xem nhanh cách dùng Aptis Kỳ Tích"
+                  : "Tham gia nhóm học tập & Review đề"}
               </DialogTitle>
 
               <DialogDescription className="mt-3 text-center text-sm text-white/90 md:text-base">
