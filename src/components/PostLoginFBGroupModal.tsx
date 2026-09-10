@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   Dialog,

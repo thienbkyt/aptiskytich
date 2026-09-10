@@ -30,6 +30,22 @@ import {
 import BlogCTA from "@/components/blog/BlogCTA";
 import { toast } from "@/hooks/use-toast";
 
+import { getYouTubeId } from "@/lib/youtube";
+
+/** Return the YouTube id when a paragraph node holds nothing but one YouTube link. */
+const soleYouTubeId = (node: any): string | null => {
+  const kids = (node?.children ?? []).filter(
+    (c: any) => !(c.type === "text" && !String(c.value ?? "").trim()),
+  );
+  if (kids.length !== 1) return null;
+  const k = kids[0];
+  if (k.type === "text") return getYouTubeId(String(k.value ?? ""));
+  if (k.type === "element" && k.tagName === "a") {
+    return getYouTubeId(String(k.properties?.href ?? ""));
+  }
+  return null;
+};
+
 const SITE = "https://aptiskytich.vn";
 const BLOG_BASE = "/meo-thi-aptis";
 const BLOG_LABEL = "Mẹo thi Aptis";
@@ -467,11 +483,28 @@ const BlogPostPage = () => {
         {p.children}
       </h4>
     ),
-    p: (p: any) => (
-      <p className="mb-4 text-[17px] leading-[1.8] font-normal text-foreground">
-        {p.children}
-      </p>
-    ),
+    p: (p: any) => {
+      const videoId = soleYouTubeId(p.node);
+      if (videoId) {
+        return (
+          <div className="my-6 overflow-hidden rounded-2xl border border-border shadow-sm">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+              className="aspect-video w-full"
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+              loading="lazy"
+              title="Video"
+            />
+          </div>
+        );
+      }
+      return (
+        <p className="mb-4 text-[17px] leading-[1.8] font-normal text-foreground">
+          {p.children}
+        </p>
+      );
+    },
     strong: (p: any) => (
       <strong className="font-semibold text-[#CC1C01]">{p.children}</strong>
     ),
