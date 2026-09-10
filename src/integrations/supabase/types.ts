@@ -5380,6 +5380,7 @@ export type Database = {
           title: string
         }[]
       }
+      get_full_tests: { Args: { p_category: string }; Returns: Json }
       get_site_stats: { Args: never; Returns: Json }
       get_storage_size_mb: {
         Args: never
