@@ -49,6 +49,20 @@ type AppSettings = {
   promo_label: string | null;
   promo_from: string | null;
   promo_until: string | null;
+  intro_video_url: string | null;
+  intro_video_title: string | null;
+  intro_video_enabled: boolean;
+};
+
+// Chuẩn hoá link YouTube (watch?v= / youtu.be / shorts) sang dạng embed
+const toYouTubeEmbed = (raw: string): string => {
+  const url = raw.trim();
+  if (!url) return "";
+  const m =
+    url.match(/[?&]v=([\w-]{6,})/) ||
+    url.match(/youtu\.be\/([\w-]{6,})/) ||
+    url.match(/youtube\.com\/(?:embed|shorts|live)\/([\w-]{6,})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : url;
 };
 
 type FeatureFlag = {
