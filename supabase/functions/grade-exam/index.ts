@@ -1499,6 +1499,7 @@ Trả về:
 - forcedComplexity: boolean.
 
 SCENARIO RULE: nếu email trả lời sai scenario → TF của email đó = 0.
+ƯU TIÊN YÊU CẦU CỤ THỂ CỦA SCENARIO: nếu email kịch bản (SCENARIO) nêu yêu cầu cụ thể (ví dụ: apply/explain why you are suitable, suggest a topic, name two benefits, volunteer to be a speaker, choose an option and explain), thì Task Fulfilment chấm theo yêu cầu đó. Câu hướng dẫn mẫu "Write about your feelings and what you think the club should do about the situation" chỉ là khung chung của Aptis — KHÔNG trừ điểm TF vì học viên không đề xuất "club nên làm gì" khi scenario không hỏi điều đó. Chỉ khi scenario không có yêu cầu cụ thể mới chấm theo feelings + suggestions.
 ${SHARED_RUBRIC}`;
         userText = `partType: task4
 Prompts:
