@@ -104,7 +104,8 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
   const skillBands = [bandListening, bandReading, bandSpeaking, bandWriting].filter(
     (b): b is string => !!b,
   );
-  const overallBand = skillBands.length > 0
+  // Band tổng chỉ hiện khi đủ 4 kỹ năng (Speaking/Writing đã chấm xong).
+  const overallBand = skillBands.length === 4
     ? NUM_TO_BAND[
         Math.max(0, Math.min(5, Math.round(
           skillBands.reduce((s, b) => s + (BAND_TO_NUM[b] ?? 0), 0) / skillBands.length
