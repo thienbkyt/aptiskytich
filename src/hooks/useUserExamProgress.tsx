@@ -36,12 +36,14 @@ export const useUserExamProgress = () => {
     queryFn: async (): Promise<ExamProgressMap> => {
       const { data } = await supabase
         .from("test_results")
-        .select("exam_set_id,score,total")
+        .select("exam_set_id,score,total,skill_scores")
         .eq("user_id", user!.id)
         .not("exam_set_id", "is", null);
       const map: ExamProgressMap = new Map();
       (data || []).forEach((r: any) => {
         if (!r.exam_set_id) return;
+        // Lượt "Ôn câu sai" không tính là đã làm đề.
+        if (((r.skill_scores || {}) as any)?.mode === "wrong-retry") return;
         if (r.total <= 0 || r.score > r.total) return;
         const prev = map.get(r.exam_set_id);
         const pct = r.total > 0 ? Math.round((r.score / r.total) * 100) : 0;
