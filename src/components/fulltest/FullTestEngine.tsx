@@ -495,7 +495,12 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   }, [currentSkillIndex, currentPartIndex, skillData]);
 
   const handleNextSkill = () => {
-    setCurrentSkillIndex(prev => prev + 1);
+    const nextSkillIndex = findSkillIndex(currentSkillIndex, 1);
+    if (nextSkillIndex < 0) {
+      setPhase("completed");
+      return;
+    }
+    setCurrentSkillIndex(nextSkillIndex);
     setCurrentPartIndex(0);
     setEngineKey(prev => prev + 1);
     setPhase("exam");
@@ -575,12 +580,15 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       return <PlanExpiredNotice proUntil={proUntil} onExit={onExit} />;
     }
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
-        <p className="text-base font-semibold text-foreground">Không tải được đề, vui lòng thử lại</p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onExit}>Về danh sách đề</Button>
-          <Button onClick={() => loadAllData()}>Thử lại</Button>
-        </div>
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel="Full Test" partLabel="APTIS GENERAL" onExit={onExit} immediateExit />
+        <main className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-4">
+          <p className="text-base font-semibold text-foreground">Không tải được đề, thử lại</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onExit}>Thoát</Button>
+            <Button onClick={() => loadAllData()}>Thử lại</Button>
+          </div>
+        </main>
       </div>
     );
   }

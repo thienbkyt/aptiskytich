@@ -325,6 +325,8 @@ const GrammarExamEngine = ({
     },
   ];
 
+  if (questions.length === 0) return renderFallback("Đề này không còn câu hỏi", onExit);
+
   if (phase === "instructions") {
     return (
       <div className="min-h-screen bg-white flex flex-col">
@@ -426,7 +428,6 @@ const GrammarExamEngine = ({
     );
   }
 
-  if (questions.length === 0) return renderFallback("Đề này không còn câu hỏi", onExit);
   const q = questions[currentIndex];
   if (!q) return renderFallback("Đề này không còn câu hỏi", onExit);
 

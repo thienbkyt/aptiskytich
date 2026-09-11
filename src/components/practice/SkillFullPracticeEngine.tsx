@@ -509,16 +509,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
   // ── Questions unavailable (hidden by RLS / expired plan) ──
   if (loadBlocked) {
+    logClientError("blank_screen_guard", new Error("SkillFullPracticeEngine"), { reason: `load_${loadBlocked}` });
     if (loadBlocked === "empty" && blockedNeedsPro && userTier === "free") {
       return <PlanExpiredNotice proUntil={proUntil} onExit={onExit} />;
     }
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
-        <p className="text-base font-semibold text-foreground">Không tải được đề, vui lòng thử lại</p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onExit}>Về danh sách đề</Button>
-          <Button onClick={() => loadData()}>Thử lại</Button>
-        </div>
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel="Full Practice" onExit={onExit} immediateExit />
+        <main className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-4">
+          <p className="text-base font-semibold text-foreground">Không tải được đề, thử lại</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onExit}>Thoát</Button>
+            <Button onClick={() => loadData()}>Thử lại</Button>
+          </div>
+        </main>
       </div>
     );
   }
