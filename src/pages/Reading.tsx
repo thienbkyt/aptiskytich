@@ -30,6 +30,7 @@ import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { useUserMarathonProgress } from "@/hooks/useUserMarathonProgress";
+import { useWrongQuestions } from "@/hooks/useWrongQuestions";
 import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
@@ -94,6 +95,7 @@ const Reading = () => {
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const { progress } = useUserExamProgress();
   const { progress: marathonProgress } = useUserMarathonProgress("reading");
+  const { sets: wrongSets, totalWrongQuestions, refetch: refetchWrong } = useWrongQuestions("reading", activeTab);
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
