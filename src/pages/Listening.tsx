@@ -108,6 +108,7 @@ const Listening = () => {
   const [keyPrio, setKeyPrio] = useState<Map<string, string>>(new Map());
   /** exam_set_id -> position in the key, so a run follows the same order as the key list. */
   const [keyOrder, setKeyOrder] = useState<Map<string, number>>(new Map());
+  const [retryFetchedSets, setRetryFetchedSets] = useState<Map<string, ExamSetRow>>(new Map());
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
@@ -244,16 +245,22 @@ const Listening = () => {
   }, [partSets, priorityFilter, priorityLabels, doneFilter, progress]);
 
   const marathonSets = useMemo(() => {
+    if (marathon.retryWrongSetIds?.length) {
+      const byId = new Map<string, ExamSetRow>([
+        ...examSets.map((s) => [s.id, s] as const),
+        ...retryFetchedSets,
+      ]);
+      const seen = new Set<string>();
+      return marathon.retryWrongSetIds
+        .map((id) => byId.get(id))
+        .filter((s): s is ExamSetRow => !!s && !seen.has(s.id) && (seen.add(s.id), true));
+    }
     let base = examSets.filter((s) =>
       normalizePart(s.part) === marathon.partType
       && (!marathon.keyId || (keySetIds?.has(s.id) ?? false))
       && (!marathon.prio || keyPrio.get(s.id) === marathon.prio)
       && (!marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel)
     );
-    if (marathon.retryWrongSetIds?.length) {
-      const ids = new Set(marathon.retryWrongSetIds);
-      base = base.filter((s) => ids.has(s.id));
-    }
     if (marathon.keyId) {
       base = [...base].sort(
         (a, b) =>
@@ -263,7 +270,33 @@ const Listening = () => {
     }
     const seen = new Set<string>();
     return base.filter((s) => (s.id && !seen.has(s.id) ? (seen.add(s.id), true) : false));
-  }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels]);
+  }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, keySetIds, keyPrio, priorityLabels, retryFetchedSets]);
+
+  useEffect(() => {
+    const retryIds = marathon.retryWrongSetIds ?? [];
+    if (!retryIds.length) {
+      setRetryFetchedSets(new Map());
+      return;
+    }
+    const knownIds = new Set(examSets.map((s) => s.id));
+    const missingIds = retryIds.filter((id) => !knownIds.has(id) && !retryFetchedSets.has(id));
+    if (!missingIds.length) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("exam_sets")
+        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until, question_count")
+        .in("id", missingIds)
+        .eq("is_published", true);
+      if (cancelled || !data?.length) return;
+      setRetryFetchedSets((prev) => {
+        const next = new Map(prev);
+        (data as ExamSetRow[]).forEach((set) => next.set(set.id, set));
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [examSets, marathon.retryWrongSetIds, retryFetchedSets]);
 
 
   // Freeze the đề list for the whole run: async sources (prediction items, priority
@@ -443,6 +476,7 @@ const Listening = () => {
         resume={marathon.resume}
         persist={!marathon.retryWrongSetIds}
         wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
+        retryWrongSetIds={marathon.retryWrongSetIds}
         onExit={() => {
           setProgressTick((t) => t + 1);
           if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
@@ -676,7 +710,6 @@ const Listening = () => {
                                 partType: activeTab as ListeningPartType,
                                 retryWrongSetIds: wrongSetIds,
                                 wrongQuestionIdsBySet: isPart1 ? wrongQMap : undefined,
-                                priorityLabel: activePrio,
                               }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                               className="gap-1.5 font-semibold"
                             >
