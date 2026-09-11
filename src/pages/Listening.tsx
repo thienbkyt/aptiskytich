@@ -722,6 +722,64 @@ const Listening = () => {
 
                     );
                   })()}
+                  {wrongSets.length > 0 && (() => {
+                    const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
+                    const maxTier = filteredSets.reduce((acc, s) => {
+                      const rt = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
+                      return rankT(rt) > rankT(acc) ? rt : acc;
+                    }, "free" as "free" | "pro" | "premium");
+                    const wrongLocked = isLocked({ access_tier: maxTier } as any);
+                    const isPart1 = activeTab === "part1";
+                    const wrongMap: Record<string, string[]> = {};
+                    wrongSets.forEach((s) => { wrongMap[s.exam_set_id] = s.wrong_question_ids; });
+                    const setIds = wrongSets.map((s) => s.exam_set_id);
+                    const nums = wrongSets.map((s) => (s.title || "").match(/\d+/)?.[0] ?? (s.title || "?"));
+                    const shown = nums.slice(0, 8);
+                    const extra = nums.length - shown.length;
+                    return (
+                      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                        <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/40 bg-card">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
+                              Ôn câu sai
+                            </Badge>
+                            <ExamTierBadge tier={maxTier} locked={wrongLocked} />
+                          </div>
+                          <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
+                            Câu sai từ đề lẻ {activePartInfo?.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            {isPart1
+                              ? `${totalWrongQuestions} câu sai · từ ${wrongSets.length} đề bạn đã làm`
+                              : `${wrongSets.length} đề có câu sai`}
+                          </p>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Lấy theo lần làm gần nhất của mỗi đề. Làm đúng là tự rời danh sách.
+                          </p>
+                          <p className="text-xs text-muted-foreground/80">
+                            Đề {shown.join(" · ")}{extra > 0 ? ` +${extra}` : ""}
+                          </p>
+                          <div className="flex-1" />
+                          <div className="flex flex-wrap justify-end gap-2 mt-4">
+                            <Button
+                              size="sm"
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
+                                active: true,
+                                partType: activeTab as ListeningPartType,
+                                retryWrongSetIds: setIds,
+                                wrongQuestionIdsBySet: isPart1 ? wrongMap : undefined,
+                                wrongRetrySource: "single",
+                              }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds })}
+                              className="gap-1.5 font-semibold"
+                            >
+                              {wrongLocked ? "Mở khóa" : (isPart1 ? `Ôn ${totalWrongQuestions} câu sai` : `Ôn ${wrongSets.length} đề`)}
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
                   {filteredSets.map((set, index) => {
                     const locked = isLocked(set);
                     return (
