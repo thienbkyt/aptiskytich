@@ -29,6 +29,7 @@ import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { useUserMarathonProgress } from "@/hooks/useUserMarathonProgress";
+import { useWrongQuestions } from "@/hooks/useWrongQuestions";
 import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
@@ -90,6 +91,7 @@ const Listening = () => {
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("listening");
   const { progress } = useUserExamProgress();
   const { progress: marathonProgress } = useUserMarathonProgress("listening");
+  const { sets: wrongSets, totalWrongQuestions, refetch: refetchWrong } = useWrongQuestions("listening", activeTab);
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
@@ -97,7 +99,7 @@ const Listening = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ListeningPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null; wrongRetrySource?: "single" }>({
     active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null,
   });
   const [progressTick, setProgressTick] = useState(0);
@@ -477,8 +479,10 @@ const Listening = () => {
         persist={!marathon.retryWrongSetIds}
         wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
         retryWrongSetIds={marathon.retryWrongSetIds}
+        wrongRetrySource={marathon.wrongRetrySource}
         onExit={() => {
           setProgressTick((t) => t + 1);
+          if (marathon.wrongRetrySource === "single") void refetchWrong();
           if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
           setMarathon({ active: false, partType: marathon.partType });
         }}
