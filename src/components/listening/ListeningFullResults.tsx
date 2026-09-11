@@ -10,6 +10,7 @@ import type {
   ListeningPart3Question,
   ListeningPart4Clip,
 } from "@/data/listeningQuestions";
+import { logClientError } from "@/lib/clientErrorLog";
 
 export interface ListeningFullPartResult {
   partType: ListeningPartType;
@@ -186,7 +187,14 @@ const ListeningFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
     );
   }
 
-  if (!current) return null;
+  if (!current) {
+    logClientError("blank_screen_guard", new Error("ListeningFullResults"), { reason: "missing_current_part" });
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <Button variant="outline" onClick={() => setView("summary")}>Về tổng kết</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

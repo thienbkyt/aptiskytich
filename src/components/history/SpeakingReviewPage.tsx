@@ -20,6 +20,8 @@ import {
 } from "@/components/speaking/speakingGrading";
 import { safeSessionStorage } from "@/lib/safeStorage";
 import { toTimeSafe } from "@/lib/safeDate";
+import { Button } from "@/components/ui/button";
+import { logClientError } from "@/lib/clientErrorLog";
 
 interface Props {
   userId: string;
@@ -66,6 +68,7 @@ const SpeakingReviewPage = ({
   const [reviewIndex, setReviewIndex] = useState(0);
   const [promptCount, setPromptCount] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!loading) onQuestionCount?.(promptCount);
@@ -76,7 +79,9 @@ const SpeakingReviewPage = ({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setError(false);
     (async () => {
+      try {
       // 1. Resolve part type + data from the exam_set's questions.
       const { data: setRow } = await supabase
         .from("exam_sets").select("part").eq("id", examSetId).maybeSingle();
@@ -119,7 +124,7 @@ const SpeakingReviewPage = ({
       // recordings.part is like "part1_q1"; index by question position
       const recByIdx: (any | null)[] = new Array(Math.max(promptCount, 1)).fill(null);
       for (const r of recsRaw) {
-        const m = (r.part as string).match(/_q(\d+)/);
+        const m = String(r.part ?? "").match(/_q(\d+)/);
         const idx = m ? parseInt(m[1], 10) - 1 : -1;
         if (idx >= 0 && idx < recByIdx.length) recByIdx[idx] = r;
       }
@@ -216,7 +221,12 @@ const SpeakingReviewPage = ({
       setV2Cefr(v2Row?.cefr ?? null);
       setReviewIndex(0);
       setPromptCount(Math.max(promptCount, 1));
-      setLoading(false);
+      } catch (e) {
+        console.error("[SpeakingReviewPage] load failed", e);
+        if (!cancelled) setError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => { cancelled = true; };
   }, [userId, examSetId, attemptCreatedAt, partLabel, testResultId]);
@@ -224,6 +234,19 @@ const SpeakingReviewPage = ({
   const skillHeader = useMemo(() => (
     <ExamHeader skillLabel="Speaking" partLabel={partLabel} onExit={onExit} />
   ), [partLabel, onExit]);
+
+  if (error) {
+    logClientError("blank_screen_guard", new Error("SpeakingReviewPage"), { reason: "load_error" });
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        {skillHeader}
+        <main className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
+          <p className="text-base font-semibold text-foreground">Không tải được bài này</p>
+          <Button variant="outline" onClick={onExit}>Về lịch sử</Button>
+        </main>
+      </div>
+    );
+  }
 
   if (loading || !partType) {
     return (

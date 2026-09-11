@@ -12,6 +12,8 @@ import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { saveMarathonProgress, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { upsertMarathonResult } from "@/lib/saveExamResult";
 import { useMarathonArrowKeys } from "@/hooks/useMarathonArrowKeys";
+import { Button } from "@/components/ui/button";
+import { logClientError } from "@/lib/clientErrorLog";
 
 interface Props {
   /** Isolates saved progress per source (e.g. a specific prediction key + priority). */
@@ -102,6 +104,19 @@ const Checklist = ({ partType }: { partType: WritingPartType }) => {
   );
 };
 
+const renderFallback = (message: string, onExit: () => void, reason: string) => {
+  logClientError("blank_screen_guard", new Error("WritingMarathonEngine"), { reason });
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <ExamHeader skillLabel="Writing" partLabel="Marathon" onExit={onExit} immediateExit />
+      <main className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-semibold text-foreground">{message}</p>
+        <Button variant="outline" onClick={onExit}>Thoát</Button>
+      </main>
+    </div>
+  );
+};
+
 const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true }: Props) => {
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
@@ -121,6 +136,11 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   const [attempt, setAttempt] = useState(0);
   const [loadErr, setLoadErr] = useState<ExamLoadErrorState | null>(null);
   const [loadTick, setLoadTick] = useState(0);
+
+  useEffect(() => {
+    if (sets.length === 0) return;
+    setCurrentIndex((index) => Math.min(Math.max(0, index), sets.length - 1));
+  }, [sets.length]);
 
   // Written answers per set id (persisted). Truthy entry with non-empty content = "written".
   const [answersMap, setAnswersMap] = useState<Record<string, WritingAnswers>>(() => (savedInit?.drafts as any) ?? {});
@@ -333,6 +353,7 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
 
 
   if (loadErr) {
+    logClientError("blank_screen_guard", new Error("WritingMarathonEngine"), { reason: "load_error" });
     return (
       <div className="min-h-screen flex flex-col">
         <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName(partType)}`} onExit={handleExit} />
@@ -344,6 +365,8 @@ const WritingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       </div>
     );
   }
+
+  if (sets.length === 0) return renderFallback("Không có đề phù hợp bộ lọc", handleExit, "empty_sets");
 
   return (
     <div className="lg:flex lg:items-stretch min-h-screen">

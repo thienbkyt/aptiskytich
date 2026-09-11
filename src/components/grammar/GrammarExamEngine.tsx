@@ -25,6 +25,21 @@ import type { QuestionItem } from "@/components/reading/BottomNavBar";
 import type { Question } from "@/data/questions";
 import { setCoachExamContext } from "@/stores/coachStore";
 import RotateDeviceOverlay from "@/components/exam/RotateDeviceOverlay";
+import { Button } from "@/components/ui/button";
+import { logClientError } from "@/lib/clientErrorLog";
+
+const renderFallback = (message: string, onExit: () => void) => {
+  logClientError("blank_screen_guard", new Error("GrammarExamEngine"), { reason: "empty_questions" });
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <ExamHeader skillLabel="Grammar & Vocabulary" partLabel="APTIS GENERAL" onExit={onExit} immediateExit />
+      <main className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-semibold text-foreground">{message}</p>
+        <Button variant="outline" onClick={onExit}>Thoát</Button>
+      </main>
+    </div>
+  );
+};
 
 interface GrammarExamEngineProps {
   questions: Question[];
@@ -411,8 +426,9 @@ const GrammarExamEngine = ({
     );
   }
 
+  if (questions.length === 0) return renderFallback("Đề này không còn câu hỏi", onExit);
   const q = questions[currentIndex];
-  if (!q) return null;
+  if (!q) return renderFallback("Đề này không còn câu hỏi", onExit);
 
   const selected = answers[currentIndex];
   const isFillBlank = q.question_type === "fill-in-blank";

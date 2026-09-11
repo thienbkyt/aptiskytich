@@ -6,6 +6,7 @@ import { useExitWarning } from "@/hooks/useExitWarning";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Eye, Loader2, CheckCircle2, Mic, Headphones, Brain, BookOpen, PenLine, Trophy, Download } from "lucide-react";
 import ExamFinishScreen from "@/components/exam/ExamFinishScreen";
+import ExamHeader from "@/components/exam/ExamHeader";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCoreGVBand } from "@/lib/coreGV";
@@ -49,6 +50,7 @@ import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
 import { safeLocalStorage } from "@/lib/safeStorage";
 import { safeText } from "@/lib/safeText";
+import { logClientError } from "@/lib/clientErrorLog";
 
 /**
  * Full Test session id must SURVIVE a reload / re-entry mid-attempt, otherwise
@@ -120,6 +122,19 @@ interface PartSet {
   partNorm: string;
   questions: ExamQuestionRow[];
 }
+
+const renderFallback = (message: string, onExit: () => void, reason = "missing_data") => {
+  logClientError("blank_screen_guard", new Error("FullTestEngine"), { reason });
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <ExamHeader skillLabel="Full Test" partLabel="APTIS GENERAL" onExit={onExit} immediateExit />
+      <main className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-semibold text-foreground">{message}</p>
+        <Button variant="outline" onClick={onExit}>Thoát</Button>
+      </main>
+    </div>
+  );
+};
 
 type SkillData = Record<SkillStep, PartSet[]>;
 
@@ -225,6 +240,15 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
   const currentSkill = SKILL_ORDER[currentSkillIndex];
 
+  const findSkillIndex = (from: number, dir: 1 | -1, data: SkillData = skillData): number => {
+    let i = from + dir;
+    while (i >= 0 && i < SKILL_ORDER.length) {
+      if (data[SKILL_ORDER[i]].length > 0) return i;
+      i += dir;
+    }
+    return -1;
+  };
+
   // Load ALL skill data upfront
   useEffect(() => {
     loadAllData();
@@ -235,7 +259,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     setLoadBlocked(null);
 
     // Member exam_set_ids: custom set (user-built) or official full_test_members.
-    const { data: members } = customSetId
+    const { data: members, error: membersError } = customSetId
       ? await supabase
           .from("custom_set_members")
           .select("exam_set_id, position")
@@ -247,18 +271,23 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
           .eq("full_test_id", testId);
 
     const memberIds = (members || []).map((m: any) => m.exam_set_id);
-    const { data: sets } = memberIds.length
+    if (membersError) {
+      console.error("[FullTestEngine.loadAllData] members failed", membersError);
+      setLoadBlocked("error");
+      return;
+    }
+    const { data: sets, error: setsError } = memberIds.length
       ? await supabase
           .from("exam_sets")
           .select("id, part, skill, created_at, access_tier")
           .in("id", memberIds)
           .eq("is_published", true)
           .order("created_at", { ascending: true })
-      : { data: [] as any[] };
+      : { data: [] as any[], error: null };
 
-
-    if (!sets || sets.length === 0) {
-      setPhase("completed");
+    if (setsError || !sets || sets.length === 0) {
+      if (setsError) console.error("[FullTestEngine.loadAllData] sets failed", setsError);
+      setLoadBlocked("error");
       return;
     }
 
@@ -307,7 +336,14 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       grouped[skill].sort((a, b) => a.part.localeCompare(b.part));
     }
 
+    const firstSkillIndex = findSkillIndex(-1, 1, grouped);
     setSkillData(grouped);
+    if (firstSkillIndex < 0) {
+      setLoadBlocked("error");
+      return;
+    }
+    setCurrentSkillIndex(firstSkillIndex);
+    setCurrentPartIndex(0);
     setPhase("exam");
   };
 
@@ -439,10 +475,11 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     if (skill === "grammar" || skillTimeUp || currentPartIndex >= parts.length - 1) {
       // Skill completed - auto advance to next skill or finish
       timeUpRef.current = false;
-      if (currentSkillIndex >= SKILL_ORDER.length - 1) {
+      const nextSkillIndex = findSkillIndex(currentSkillIndex, 1);
+      if (nextSkillIndex < 0) {
         setPhase("completed");
       } else {
-        setCurrentSkillIndex(prev => prev + 1);
+        setCurrentSkillIndex(nextSkillIndex);
         setCurrentPartIndex(0);
         setEngineKey(prev => prev + 1);
         setPhase("exam");
@@ -474,16 +511,6 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   const handleExit = () => onExit();
 
   // ===== Admin-only cross-skill navigation (part-level) =====
-  // Find next/previous non-empty skill index relative to a starting index.
-  const findSkillIndex = (from: number, dir: 1 | -1): number => {
-    let i = from + dir;
-    while (i >= 0 && i < SKILL_ORDER.length) {
-      if (skillData[SKILL_ORDER[i]].length > 0) return i;
-      i += dir;
-    }
-    return -1;
-  };
-
   const goToPart = (skillIdx: number, partIdx: number) => {
     adminNavigationRef.current = true;
     window.setTimeout(() => { adminNavigationRef.current = false; }, 800);
@@ -767,7 +794,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
   }
 
   // ── Exam Phase ──
-  if (partsForSkill.length === 0) return null;
+  if (partsForSkill.length === 0) return renderFallback("Phần này chưa có dữ liệu", handleExit, "empty_skill");
 
   // For grammar: merge ALL parts into a single question list
   if (currentSkill === "grammar") {
@@ -794,7 +821,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
   // For other skills: render current part
   const currentPart = partsForSkill[currentPartIndex];
-  if (!currentPart) return null;
+  if (!currentPart) return renderFallback("Phần này chưa có dữ liệu", handleExit, "missing_current_part");
 
   const partNorm = currentPart.partNorm;
 
@@ -1194,7 +1221,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       part1: "task1", part2: "task2", part3: "task3", part4: "task4",
     };
     const partType = partMap[partNorm];
-    if (!partType) return null;
+    if (!partType) return renderFallback("Phần này chưa có dữ liệu", handleExit, "invalid_writing_part");
     const writingProps: any = { sourceQuestionIds: currentPart.questions.map(q => q.id), examSetId: currentPart.id };
     switch (partType) {
       case "task1": writingProps.part1Data = toWritingPart1(currentPart.questions); break;

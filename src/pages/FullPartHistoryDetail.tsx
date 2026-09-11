@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
+import Navbar from "@/components/layout/Navbar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SKILL_LABELS: Record<string, string> = {
   speaking: "Speaking",
@@ -29,6 +31,7 @@ const FullPartHistoryDetail = () => {
     if (!user || !sessionId) return;
     let cancelled = false;
     (async () => {
+      try {
       let rows: any[] = [];
       const { data: rs } = await supabase
         .from("test_results")
@@ -80,13 +83,24 @@ const FullPartHistoryDetail = () => {
         .sort((a, b) => partNum(a.part) - partNum(b.part));
 
       if (!cancelled) setPages(built);
+      } catch (e) {
+        console.error("[FullPartHistoryDetail] load failed", e);
+        if (!cancelled) setPages([]);
+      }
     })();
     return () => {
       cancelled = true;
     };
   }, [user, sessionId]);
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-[144px] md:pt-24 pb-20 section-container"><Skeleton className="h-64 w-full" /></div>
+      </div>
+    );
+  }
   if (!user) return <Navigate to="/auth" replace />;
   if (!pages) {
     return (
