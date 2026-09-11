@@ -17,6 +17,8 @@ import WritingExamEngine, { type WritingPartType } from "@/components/writing/Wr
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
 import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
+import { Button } from "@/components/ui/button";
+import { logClientError } from "@/lib/clientErrorLog";
 
 
 interface QResult {
@@ -402,7 +404,15 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
 
   }
 
-  return null;
+  logClientError("blank_screen_guard", new Error("HistoryReviewRenderer"), { reason: "unsupported_or_removed_exam" });
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="max-w-md rounded-lg border border-border bg-card p-6 text-center space-y-4">
+        <p className="font-semibold text-foreground">Không xem lại được phần này (đề đã bị gỡ)</p>
+        <Button variant="outline" onClick={onExit}>Về lịch sử</Button>
+      </div>
+    </div>
+  );
 };
 
 export default HistoryReviewRenderer;

@@ -13,6 +13,7 @@ import ReviewAnswerPanel, { type ReviewQuestion } from "@/components/history/Rev
 import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import ReviewNavigator, { type PageStatus, type SkillMeta } from "@/components/history/ReviewNavigator";
 import useReviewKeyboard from "@/hooks/useReviewKeyboard";
+import { logClientError } from "@/lib/clientErrorLog";
 
 
 export interface ReviewPage {
@@ -396,9 +397,11 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
 
 
   if (!current) {
+    logClientError("blank_screen_guard", new Error("HistoryReviewPager"), { reason: "missing_current_page" });
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background px-4 text-center">
         <p className="text-sm text-muted-foreground">Không có nội dung để xem.</p>
+        <Button variant="outline" onClick={onExit}>Về lịch sử</Button>
       </div>
     );
   }

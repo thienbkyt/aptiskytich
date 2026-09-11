@@ -13,6 +13,7 @@ import type {
   ReadingLongQuestion,
 } from "@/data/readingQuestions";
 import { useReadingReviewData } from "@/hooks/useReadingReviewData";
+import { logClientError } from "@/lib/clientErrorLog";
 
 export interface ReadingFullPartResult {
   partType: ReadingPartType;
@@ -188,7 +189,14 @@ const ReadingFullResults = ({ parts, score50, onExit, onRetry }: Props) => {
     );
   }
 
-  if (!current) return null;
+  if (!current) {
+    logClientError("blank_screen_guard", new Error("ReadingFullResults"), { reason: "missing_current_part" });
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <Button variant="outline" onClick={() => setView("summary")}>Về tổng kết</Button>
+      </div>
+    );
+  }
 
 
 

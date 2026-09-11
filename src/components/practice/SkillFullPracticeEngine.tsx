@@ -46,6 +46,8 @@ import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import { gradableGrammarQuestions } from "@/lib/grammarGroups";
 import { toast } from "sonner";
 import { safeRandomId } from "@/lib/browserCompat";
+import ExamHeader from "@/components/exam/ExamHeader";
+import { logClientError } from "@/lib/clientErrorLog";
 
 type SkillType = "speaking" | "listening" | "grammar_vocab" | "reading" | "writing";
 
@@ -63,6 +65,19 @@ const SKILL_TIMES: Record<string, number> = {
   grammar_vocab: 1500,
   reading: 2100,
   writing: WRITING_TOTAL_TIME,
+};
+
+const renderFallback = (message: string, onExit: () => void, skillLabel: string, reason: string) => {
+  logClientError("blank_screen_guard", new Error("SkillFullPracticeEngine"), { reason });
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <ExamHeader skillLabel={skillLabel} partLabel="Full Practice" onExit={onExit} immediateExit />
+      <main className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-semibold text-foreground">{message}</p>
+        <Button variant="outline" onClick={onExit}>Thoát</Button>
+      </main>
+    </div>
+  );
 };
 
 /**
@@ -234,35 +249,50 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     let orderMap: Record<string, number> | null = null;
 
     if (customSetId) {
-      const { data: members } = await supabase
+      const { data: members, error: membersError } = await supabase
         .from("custom_set_members")
         .select("exam_set_id, position")
         .eq("custom_set_id", customSetId)
         .order("position", { ascending: true });
+      if (membersError) {
+        console.error("[SkillFullPracticeEngine.loadData] members failed", membersError);
+        setLoadBlocked("error");
+        return;
+      }
       const ids = (members || []).map((m: any) => m.exam_set_id);
       orderMap = Object.fromEntries((members || []).map((m: any) => [m.exam_set_id, m.position]));
       if (ids.length) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("exam_sets")
           .select("id, part, skill, access_tier")
           .in("id", ids)
           .eq("skill", skill)
           .eq("is_published", true);
+        if (error) {
+          console.error("[SkillFullPracticeEngine.loadData] sets failed", error);
+          setLoadBlocked("error");
+          return;
+        }
         sets = data as any[] | null;
       }
     } else {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("exam_sets")
         .select("id, part, skill, access_tier")
         .eq("full_test_id", fullTestId)
         .eq("skill", skill)
         .eq("is_published", true)
         .order("part", { ascending: true });
+      if (error) {
+        console.error("[SkillFullPracticeEngine.loadData] sets failed", error);
+        setLoadBlocked("error");
+        return;
+      }
       sets = data as any[] | null;
     }
 
     if (!sets || sets.length === 0) {
-      setPhase("completed");
+      setLoadBlocked("error");
       return;
     }
 
@@ -479,16 +509,20 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
 
   // ── Questions unavailable (hidden by RLS / expired plan) ──
   if (loadBlocked) {
+    logClientError("blank_screen_guard", new Error("SkillFullPracticeEngine"), { reason: `load_${loadBlocked}` });
     if (loadBlocked === "empty" && blockedNeedsPro && userTier === "free") {
       return <PlanExpiredNotice proUntil={proUntil} onExit={onExit} />;
     }
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
-        <p className="text-base font-semibold text-foreground">Không tải được đề, vui lòng thử lại</p>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onExit}>Về danh sách đề</Button>
-          <Button onClick={() => loadData()}>Thử lại</Button>
-        </div>
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel="Full Practice" onExit={onExit} immediateExit />
+        <main className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-4">
+          <p className="text-base font-semibold text-foreground">Không tải được đề, thử lại</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onExit}>Thoát</Button>
+            <Button onClick={() => loadData()}>Thử lại</Button>
+          </div>
+        </main>
       </div>
     );
   }
@@ -546,7 +580,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   } : undefined;
 
   // ── Exam Phase ──
-  if (parts.length === 0) return null;
+  if (parts.length === 0) return renderFallback("Phần này chưa có dữ liệu", onExit, skillLabel, "empty_parts");
 
   const headerTitle = skill === "reading" ? (testTitle || "Reading") : `${skillLabel} - Full Practice`;
 
@@ -574,7 +608,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   }
 
   const currentPart = parts[currentPartIndex];
-  if (!currentPart) return null;
+  if (!currentPart) return renderFallback("Phần này chưa có dữ liệu", onExit, skillLabel, "missing_current_part");
   const partNorm = currentPart.partNorm;
   const isLastPart = currentPartIndex >= parts.length - 1;
 
@@ -1704,7 +1738,7 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
     );
   }
 
-  return null;
+  return renderFallback("Phần này chưa có dữ liệu", onExit, skillLabel, "unsupported_skill");
 };
 
 export default SkillFullPracticeEngine;
