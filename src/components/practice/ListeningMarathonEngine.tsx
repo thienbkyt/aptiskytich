@@ -54,7 +54,10 @@ const HUGE_TIME = 24 * 60 * 60;
 
 const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet, retryWrongSetIds, wrongRetrySource }: Props) => {
   const isSingleWrongRetry = wrongRetrySource === "single";
+  /** Wrong-question map for the current round; recomputed when the user retries. */
+  const [wrongIdsBySet, setWrongIdsBySet] = useState<Record<string, string[]> | undefined>(wrongQuestionIdsBySet);
   const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
+
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
     const seen = new Set<string>();
