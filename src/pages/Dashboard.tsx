@@ -387,7 +387,7 @@ const Dashboard = () => {
         const weeklyActivity = weekDayKeys.map((k) => (activeDayKeys.has(k) ? 1 : 0));
 
         // Build recent tests with proper skill/part labels + display score/band
-        const recentRaw = tests as any[];
+        const recentRaw = (tests as any[]).filter((t) => (t?.skill_scores as any)?.mode !== "wrong-retry");
         const recentSetIds = Array.from(new Set(recentRaw.map((t) => t.exam_set_id).filter(Boolean)));
         const recentIds = recentRaw.map((t) => t.id);
         const setsMap: Record<string, { skill: string; part: string; title: string }> = {};
