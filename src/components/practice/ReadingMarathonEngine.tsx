@@ -307,7 +307,9 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   // Build a snapshot + upsert the single per-session History row. Called from
   // completed effect and from exit — same row is updated across both paths.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
+    if (isSingleWrongRetry) return;
     if (savingRef.current) return;
+
     const list = resultsRef.current;
     const reviewable_ = list.filter((r): r is ResultEntry => !!r);
     if (reviewable_.length === 0) return;
