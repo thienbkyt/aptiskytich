@@ -28,6 +28,8 @@ interface Props {
   persist?: boolean;
   retryWrongSetIds?: string[];
   wrongQuestionIdsBySet?: Record<string, string[]>;
+  /** "single" = ôn câu sai từ các đề lẻ (không phải Marathon). */
+  wrongRetrySource?: "single";
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -45,8 +47,9 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet }: Props) => {
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet, wrongRetrySource }: Props) => {
   const isRetryMode = !!retryWrongSetIds?.length;
+  const isSingleWrongRetry = wrongRetrySource === "single";
   const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
