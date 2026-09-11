@@ -29,6 +29,8 @@ interface Props {
   persist?: boolean;
   wrongQuestionIdsBySet?: Record<string, string[]>;
   retryWrongSetIds?: string[];
+  /** "single" = ôn câu sai từ các đề lẻ (không phải Marathon). */
+  wrongRetrySource?: "single";
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -50,7 +52,8 @@ type LoadedSet = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet, retryWrongSetIds }: Props) => {
+const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet, retryWrongSetIds, wrongRetrySource }: Props) => {
+  const isSingleWrongRetry = wrongRetrySource === "single";
   const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
@@ -222,7 +225,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     const qResults: QResult[] = Array.isArray(perQuestion) ? (perQuestion as QResult[]) : [];
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults };
     // Also save a per-set record so this exam shows as "Đã làm" in the part list.
-    if (persist) {
+    if (persist || isSingleWrongRetry) {
       const edSnapshot = loaded?.[currentIndex]?.engineData ?? null;
       (async () => {
         let snap: any = null;
@@ -246,7 +249,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           correct, total,
           perQuestion,
           reviewSnapshot: snap,
-          extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
+          extraSkillScores: isSingleWrongRetry
+            ? { mode: "wrong-retry", source: "single", part: set.part }
+            : { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
         });
       })();
     }
