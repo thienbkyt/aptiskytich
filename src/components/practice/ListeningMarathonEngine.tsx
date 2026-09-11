@@ -160,7 +160,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       try {
       const allLoaded = await mapWithLimit(sets, 4, async (set) => {
           let questions = await fetchExamQuestions(set.id);
-          const wrongIds = wrongQuestionIdsBySet?.[set.id];
+          const wrongIds = wrongIdsBySet?.[set.id];
           if (partType === "part1" && wrongIds?.length) {
             const wset = new Set(wrongIds);
             questions = questions.filter((q: any) => wset.has(q.id));
@@ -197,7 +197,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           return { engineData: data, pageCount } as LoadedSet;
         });
       if (cancelled) return;
-      if (partType === "part1" && wrongQuestionIdsBySet) {
+      if (partType === "part1" && wrongIdsBySet) {
         const emptyIds = sets
           .filter((_, index) => allLoaded[index]?.pageCount === 0)
           .map((set) => set.id)
@@ -216,7 +216,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       }
     })();
     return () => { cancelled = true; };
-  }, [setsKey, partType, attempt, loadTick, wrongQuestionIdsBySet, invalidRetrySetIds]);
+  }, [setsKey, partType, attempt, loadTick, wrongIdsBySet, invalidRetrySetIds]);
 
   // Mục lục theo ĐỀ → pageBase = chỉ số đề hiện tại, pageTotal = tổng số đề.
   const pageTotal = sets.length;
@@ -297,7 +297,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
 
   // Upsert single "Marathon · Part X" History row for this session.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
+    if (isSingleWrongRetry) return;
     if (savingHistoryRef.current) return;
+
     const list = resultsRef.current;
     const reviewable_ = list.filter((r): r is ResultEntry => !!r);
     if (reviewable_.length === 0) return;
