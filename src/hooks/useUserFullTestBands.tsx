@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toScaledScore, getSkillBand } from "@/data/questions";
 
-const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C1: 5 };
-const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C1"];
+const BAND_TO_NUM: Record<string, number> = { A0: 0, A1: 1, A2: 2, B1: 3, B2: 4, C: 5, C1: 5 };
+const NUM_TO_BAND = ["A0", "A1", "A2", "B1", "B2", "C"];
 
 type SkillAgg = { correct: number; total: number };
 type OfficialScore = { s50: number; cefr: string | null };
