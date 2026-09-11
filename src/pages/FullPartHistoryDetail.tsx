@@ -7,6 +7,8 @@ import HistoryReviewPager, { type ReviewPage } from "@/components/history/Histor
 import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
 import Navbar from "@/components/layout/Navbar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { logClientError } from "@/lib/clientErrorLog";
 
 const SKILL_LABELS: Record<string, string> = {
   speaking: "Speaking",
@@ -110,9 +112,14 @@ const FullPartHistoryDetail = () => {
     );
   }
   if (pages.length === 0) {
+    logClientError("blank_screen_guard", new Error("FullPartHistoryDetail"), { reason: "empty_pages" });
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">Không tìm thấy lượt làm này.</p>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-[144px] md:pt-24 min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
+          <p className="text-sm text-muted-foreground">Không tìm thấy lượt làm này.</p>
+          <Button variant="outline" onClick={() => navigate("/history")}>Về lịch sử</Button>
+        </main>
       </div>
     );
   }

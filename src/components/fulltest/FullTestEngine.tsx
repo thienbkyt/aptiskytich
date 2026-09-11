@@ -570,6 +570,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
 
   // ── Questions unavailable (hidden by RLS / expired plan) ──
   if (loadBlocked) {
+    logClientError("blank_screen_guard", new Error("FullTestEngine"), { reason: `load_${loadBlocked}` });
     if (loadBlocked === "empty" && blockedNeedsPro && userTier === "free") {
       return <PlanExpiredNotice proUntil={proUntil} onExit={onExit} />;
     }
@@ -1727,7 +1728,7 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
     );
   }
 
-  return null;
+  return renderFallback("Phần này chưa có dữ liệu", handleExit, "unsupported_skill");
 };
 
 export default FullTestEngine;
