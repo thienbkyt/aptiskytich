@@ -118,7 +118,7 @@ const FullTestScoreTable = ({ scores, overrides }: Props) => {
                       r.band ? getLevelColor(r.band) : "text-muted-foreground"
                     } ${isOverall ? "text-base font-extrabold" : ""}`}
                   >
-                    {r.band ?? "—"}
+                    {r.band ?? (isOverall ? "Đang chấm…" : "—")}
                   </span>
                 </li>
               );
