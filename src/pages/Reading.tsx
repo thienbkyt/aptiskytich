@@ -101,7 +101,7 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
     active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null, setIds: null,
   });
   const [progressTick, setProgressTick] = useState(0);
@@ -112,6 +112,7 @@ const Reading = () => {
   const [keyPrio, setKeyPrio] = useState<Map<string, string>>(new Map());
   /** exam_set_id -> position in the key, so a run follows the same order as the key list. */
   const [keyOrder, setKeyOrder] = useState<Map<string, number>>(new Map());
+  const [retryFetchedSets, setRetryFetchedSets] = useState<Map<string, ExamSetRow>>(new Map());
   const { user: authUser, loading: authLoading } = useAuth();
 
   // Rehydrate engineData after remount (HMR / Fast Refresh) if exam was active.
@@ -250,16 +251,22 @@ const Reading = () => {
   }, [partSets, priorityFilter, priorityLabels, doneFilter, progress]);
 
   const marathonSets = useMemo(() => {
+    if (marathon.retryWrongSetIds?.length) {
+      const byId = new Map<string, ExamSetRow>([
+        ...examSets.map((s) => [s.id, s] as const),
+        ...retryFetchedSets,
+      ]);
+      const seen = new Set<string>();
+      return marathon.retryWrongSetIds
+        .map((id) => byId.get(id))
+        .filter((s): s is ExamSetRow => !!s && !seen.has(s.id) && (seen.add(s.id), true));
+    }
     // When a snapshot of exam IDs was captured at click time, use it as the
     // authoritative set list (preserves the exact filtered order shown on the card).
     if (marathon.setIds && marathon.setIds.length) {
       const wanted = new Set(marathon.setIds);
       const byId = new Map(examSets.map((s) => [s.id, s] as const));
       let base = marathon.setIds.map((id) => byId.get(id)).filter((s): s is ExamSetRow => !!s);
-      if (marathon.retryWrongSetIds?.length) {
-        const ids = new Set(marathon.retryWrongSetIds);
-        base = base.filter((s) => ids.has(s.id));
-      }
       void wanted;
       return base;
     }
@@ -269,10 +276,6 @@ const Reading = () => {
       && (!marathon.prio || keyPrio.get(s.id) === marathon.prio)
       && (!marathon.priorityLabel || priorityLabels.get(s.id)?.label === marathon.priorityLabel)
     );
-    if (marathon.retryWrongSetIds?.length) {
-      const ids = new Set(marathon.retryWrongSetIds);
-      base = base.filter((s) => ids.has(s.id));
-    }
     if (marathon.keyId) {
       base = [...base].sort(
         (a, b) =>
@@ -282,7 +285,33 @@ const Reading = () => {
     }
     const seen = new Set<string>();
     return base.filter((s) => (s.id && !seen.has(s.id) ? (seen.add(s.id), true) : false));
-  }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, marathon.setIds, keySetIds, keyPrio, priorityLabels]);
+  }, [examSets, marathon.partType, keyOrder, marathon.keyId, marathon.prio, marathon.priorityLabel, marathon.retryWrongSetIds, marathon.setIds, keySetIds, keyPrio, priorityLabels, retryFetchedSets]);
+
+  useEffect(() => {
+    const retryIds = marathon.retryWrongSetIds ?? [];
+    if (!retryIds.length) {
+      setRetryFetchedSets(new Map());
+      return;
+    }
+    const knownIds = new Set(examSets.map((s) => s.id));
+    const missingIds = retryIds.filter((id) => !knownIds.has(id) && !retryFetchedSets.has(id));
+    if (!missingIds.length) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("exam_sets")
+        .select("id, title, exam_type, skill, part, time_limit, description, is_published, created_at, access_tier, new_until, question_count")
+        .in("id", missingIds)
+        .eq("is_published", true);
+      if (cancelled || !data?.length) return;
+      setRetryFetchedSets((prev) => {
+        const next = new Map(prev);
+        (data as ExamSetRow[]).forEach((set) => next.set(set.id, set));
+        return next;
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [examSets, marathon.retryWrongSetIds, retryFetchedSets]);
 
   // Freeze the đề list for the whole run: async sources (prediction items, priority
   // labels, progress) resolve at different times and must never reorder or shrink a
@@ -474,6 +503,8 @@ const Reading = () => {
         skillLabel={`Reading · Marathon ${partLabel}`}
         resume={marathon.resume}
         persist={!marathon.retryWrongSetIds}
+        retryWrongSetIds={marathon.retryWrongSetIds}
+        wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
         onExit={() => {
           setProgressTick((t) => t + 1);
           if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
@@ -634,7 +665,18 @@ const Reading = () => {
                     const lastRun = !activePrio ? loadMarathonLast("reading", activeTab) : null;
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
                     const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
-                    const progWrongIds = (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
+                    const wrongQMap: Record<string, string[]> = {};
+                    (savedProg?.results ?? []).forEach((r: any) => {
+                      if (!r?.qResults) return;
+                      const wrongIds = r.qResults.filter((q: any) => !q.is_correct).map((q: any) => q.exam_question_id);
+                      if (wrongIds.length) wrongQMap[r.examSetId] = wrongIds;
+                    });
+                    if (Object.keys(wrongQMap).length === 0 && lastRun?.wrongQuestionsBySet) {
+                      Object.assign(wrongQMap, lastRun.wrongQuestionsBySet);
+                    }
+                    const progWrongIds = Object.keys(wrongQMap).length
+                      ? Object.keys(wrongQMap)
+                      : (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
                     const wrongSetIds = progWrongIds.length ? progWrongIds : (lastRun?.wrongSetIds ?? []);
                     const wrongCount = wrongSetIds.length;
                     return (
@@ -696,7 +738,7 @@ const Reading = () => {
                                     active: true,
                                     partType: activeTab as ReadingPartType,
                                     retryWrongSetIds: wrongSetIds,
-                                    priorityLabel: activePrio, setIds: filteredSetIds,
+                                     wrongQuestionIdsBySet: activeTab === "part1" ? wrongQMap : undefined,
                                   }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                   className="text-primary hover:underline font-medium"
                                 >
@@ -729,7 +771,7 @@ const Reading = () => {
                                   active: true,
                                   partType: activeTab as ReadingPartType,
                                   retryWrongSetIds: wrongSetIds,
-                                  priorityLabel: activePrio, setIds: filteredSetIds,
+                                   wrongQuestionIdsBySet: activeTab === "part1" ? wrongQMap : undefined,
                                 }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                 className="gap-1.5 font-semibold"
                               >

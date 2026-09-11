@@ -16,6 +16,7 @@ import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMara
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
+import { logClientError } from "@/lib/clientErrorLog";
 
 interface Props {
   sets: ExamSetRow[];
@@ -27,6 +28,7 @@ interface Props {
   resume?: boolean;
   persist?: boolean;
   wrongQuestionIdsBySet?: Record<string, string[]>;
+  retryWrongSetIds?: string[];
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -48,16 +50,17 @@ type LoadedSet = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet }: Props) => {
+const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet, retryWrongSetIds }: Props) => {
+  const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
     const seen = new Set<string>();
     return (setsInput || []).filter((s) => {
-      if (!s?.id || seen.has(s.id)) return false;
+      if (!s?.id || seen.has(s.id) || invalidRetrySetIds.has(s.id)) return false;
       seen.add(s.id);
       return true;
     });
-  }, [setsInput]);
+  }, [setsInput, invalidRetrySetIds]);
   /** Stable identity of the run's đề list — avoids reloading everything on re-render. */
   const setsKey = sets.map((s) => s.id).join(",");
   /** Progress storage key: scoped so two different key days never share progress. */
@@ -104,7 +107,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const savingHistoryRef = useRef(false);
   const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
   useEffect(() => { resultsRef.current = results; }, [results]);
-  const isRetryMode = !!wrongQuestionIdsBySet;
+  const isRetryMode = !!retryWrongSetIds?.length;
 
   // Reset current-set answered tracking when the active set changes.
   useEffect(() => { setCurrentAnswers([]); setCurrentLocked([]); }, [currentIndex, attempt]);
@@ -188,6 +191,16 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           return { engineData: data, pageCount } as LoadedSet;
         });
       if (cancelled) return;
+      if (partType === "part1" && wrongQuestionIdsBySet) {
+        const emptyIds = sets
+          .filter((_, index) => allLoaded[index]?.pageCount === 0)
+          .map((set) => set.id)
+          .filter((id) => !invalidRetrySetIds.has(id));
+        if (emptyIds.length) {
+          setInvalidRetrySetIds((prev) => new Set([...prev, ...emptyIds]));
+          return;
+        }
+      }
       setLoaded(allLoaded);
       setPhase("exam");
       } catch (e) {
@@ -197,7 +210,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       }
     })();
     return () => { cancelled = true; };
-  }, [setsKey, partType, attempt, loadTick]);
+  }, [setsKey, partType, attempt, loadTick, wrongQuestionIdsBySet, invalidRetrySetIds]);
 
   // Mục lục theo ĐỀ → pageBase = chỉ số đề hiện tại, pageTotal = tổng số đề.
   const pageTotal = sets.length;
@@ -364,6 +377,16 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     onExit();
   }, [persistHistoryRow, onExit]);
 
+  const emptyState = sets.length === 0 || (phase !== "loading" && !!loaded && !loaded[currentIndex]?.engineData);
+  const emptyLoggedRef = useRef(false);
+  useEffect(() => {
+    if (!emptyState || emptyLoggedRef.current) return;
+    emptyLoggedRef.current = true;
+    logClientError("marathon_empty_sets", new Error("marathon_empty_sets"), {
+      skill: "listening", partType, retry: !!retryWrongSetIds?.length, setCount: sets.length,
+    });
+  }, [emptyState, partType, retryWrongSetIds, sets.length]);
+
   const pendingExitRef = useRef<{ index: number; timer?: any } | null>(null);
 
   const handleMarathonSaveExit = useCallback(() => {
@@ -491,6 +514,20 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     );
   }
 
+  if (emptyState) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} immediateExit />
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+          <div className="max-w-lg text-center space-y-6">
+            <p className="text-base text-muted-foreground">Không còn đề/câu sai để làm lại (danh sách đề đã thay đổi). Bấm Thoát để về trang luyện tập.</p>
+            <Button variant="outline" onClick={onExit}>Thoát</Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (phase === "completed") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -553,7 +590,6 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   }
 
   const engineData = loaded[currentIndex]?.engineData;
-  if (!engineData) return null;
 
   const currentSetId = sets[currentIndex]?.id;
   const draftForSet = currentSetId ? drafts[currentSetId] : undefined;

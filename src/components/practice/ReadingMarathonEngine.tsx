@@ -15,6 +15,7 @@ import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMara
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
+import { logClientError } from "@/lib/clientErrorLog";
 
 interface Props {
   sets: ExamSetRow[];
@@ -25,7 +26,8 @@ interface Props {
   onExit: () => void;
   resume?: boolean;
   persist?: boolean;
-  isRetryMode?: boolean;
+  retryWrongSetIds?: string[];
+  wrongQuestionIdsBySet?: Record<string, string[]>;
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -43,16 +45,18 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, isRetryMode = false }: Props) => {
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet }: Props) => {
+  const isRetryMode = !!retryWrongSetIds?.length;
+  const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
     const seen = new Set<string>();
     return (setsInput || []).filter((s) => {
-      if (!s?.id || seen.has(s.id)) return false;
+      if (!s?.id || seen.has(s.id) || invalidRetrySetIds.has(s.id)) return false;
       seen.add(s.id);
       return true;
     });
-  }, [setsInput]);
+  }, [setsInput, invalidRetrySetIds]);
   /** Stable identity of the run's đề list — avoids reloading everything on re-render. */
   const setsKey = sets.map((s) => s.id).join(",");
   /** Progress storage key: scoped so two different key days never share progress. */
@@ -196,7 +200,16 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     setLoadErr(null);
     (async () => {
       try {
-        const questions = await fetchExamQuestions(set.id);
+        let questions = await fetchExamQuestions(set.id);
+        const wrongIds = wrongQuestionIdsBySet?.[set.id];
+        if (partType === "part1" && wrongQuestionIdsBySet) {
+          const wanted = new Set(wrongIds ?? []);
+          questions = questions.filter((question: any) => wanted.has(question.id));
+          if (questions.length === 0) {
+            setInvalidRetrySetIds((prev) => new Set([...prev, set.id]));
+            return;
+          }
+        }
         if (cancelled) return;
         questionsCacheRef.current.set(set.id, questions);
         setEngineData(buildEngineData(questions));
@@ -214,7 +227,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       }
     })();
     return () => { cancelled = true; };
-  }, [currentIndex, sets, partType, buildEngineData, loadTick]);
+  }, [currentIndex, sets, partType, buildEngineData, loadTick, wrongQuestionIdsBySet]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
@@ -349,7 +362,12 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       }
       if (opts?.finalize && persist) {
         const wrongSetIds = reviewable_.filter((r) => r.correct < r.total).map((r) => r.examSetId);
-        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
+        const wrongQBySet: Record<string, string[]> = {};
+        reviewable_.forEach((r) => {
+          const wrongIds = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
+          if (wrongIds.length) wrongQBySet[r.examSetId] = wrongIds;
+        });
+        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
         clearMarathonProgress("reading", progPart);
       }
     } finally {
@@ -369,6 +387,16 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     persistHistoryRow();
     onExit();
   }, [persistHistoryRow, onExit]);
+
+  const emptyState = sets.length === 0 || (phase !== "loading" && !engineData);
+  const emptyLoggedRef = useRef(false);
+  useEffect(() => {
+    if (!emptyState || emptyLoggedRef.current) return;
+    emptyLoggedRef.current = true;
+    logClientError("marathon_empty_sets", new Error("marathon_empty_sets"), {
+      skill: "reading", partType, retry: !!retryWrongSetIds?.length, setCount: sets.length,
+    });
+  }, [emptyState, partType, retryWrongSetIds, sets.length]);
 
   // "Lưu & thoát": if the in-progress set has at least one answer, submit+grade
   // it first so it lands in resultsRef before persistHistoryRow() runs.
@@ -485,6 +513,20 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           onClose={() => { setLoadErr(null); onExit(); }}
           onRetry={() => { setLoadErr(null); setLoadTick((t) => t + 1); }}
         />
+      </div>
+    );
+  }
+
+  if (emptyState) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} immediateExit />
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+          <div className="max-w-lg text-center space-y-6">
+            <p className="text-base text-muted-foreground">Không còn đề/câu sai để làm lại (danh sách đề đã thay đổi). Bấm Thoát để về trang luyện tập.</p>
+            <Button variant="outline" onClick={onExit}>Thoát</Button>
+          </div>
+        </main>
       </div>
     );
   }
