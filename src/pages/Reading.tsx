@@ -95,7 +95,7 @@ const Reading = () => {
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const { progress } = useUserExamProgress();
   const { progress: marathonProgress } = useUserMarathonProgress("reading");
-  const { sets: wrongSets, totalWrongQuestions, refetch: refetchWrong } = useWrongQuestions("reading", activeTab);
+  const { sets: wrongSets, refetch: refetchWrong } = useWrongQuestions("reading", activeTab);
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,

@@ -508,7 +508,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   if (loadErr) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} />
         <ExamLoadErrorModal
           state={loadErr}
           onClose={() => { setLoadErr(null); onExit(); }}
@@ -521,7 +521,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   if (emptyState) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} immediateExit />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} immediateExit />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg text-center space-y-6">
             <p className="text-base text-muted-foreground">Không còn đề/câu sai để làm lại (danh sách đề đã thay đổi). Bấm Thoát để về trang luyện tập.</p>
@@ -535,7 +535,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   if (phase === "completed") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg w-full bg-card border border-border rounded-2xl p-8 text-center shadow-lg">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -580,7 +580,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   if (phase === "loading" || !loaded) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center">
           <div className="space-y-4 text-center">
             <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />
