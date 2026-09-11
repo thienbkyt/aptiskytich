@@ -500,7 +500,7 @@ const Reading = () => {
         sets={runSets}
         scopeId={marathon.keyId ? `key:${marathon.keyId}:${marathon.prio ?? "all"}` : undefined}
         partType={marathon.partType}
-        skillLabel={`Reading · Marathon ${partLabel}`}
+        skillLabel={marathon.wrongRetrySource === "single" ? `Reading · Ôn câu sai ${partLabel}` : `Reading · Marathon ${partLabel}`}
         resume={marathon.resume}
         persist={!marathon.retryWrongSetIds}
         retryWrongSetIds={marathon.retryWrongSetIds}

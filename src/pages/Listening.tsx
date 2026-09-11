@@ -474,7 +474,7 @@ const Listening = () => {
         sets={runSets}
         scopeId={marathon.keyId ? `key:${marathon.keyId}:${marathon.prio ?? "all"}` : undefined}
         partType={marathon.partType}
-        skillLabel={`Listening · Marathon ${partLabel}`}
+        skillLabel={marathon.wrongRetrySource === "single" ? `Listening · Ôn câu sai ${partLabel}` : `Listening · Marathon ${partLabel}`}
         resume={marathon.resume}
         persist={!marathon.retryWrongSetIds}
         wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
