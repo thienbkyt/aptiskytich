@@ -595,7 +595,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
                     setAttempt((a) => a + 1);
                   }}
                 >
-                  Ôn lại {stillWrong} câu
+                  Ôn lại {wrongSetCount} đề
                 </Button>
               )}
               <Button variant="outline" onClick={onExit}>Thoát</Button>
