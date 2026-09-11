@@ -180,6 +180,9 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     : partType === "part3" ? "Part 4"
     : "Part 5";
 
+  const headerPartLabel = isSingleWrongRetry ? `Ôn câu sai · ${partName}` : `Marathon · ${partName}`;
+
+
   useEffect(() => {
     if (currentIndex >= sets.length) return;
     const set = sets[currentIndex];
@@ -242,7 +245,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     } catch { /* noop */ }
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults, answers } as any;
     // Also save a per-set record so this exam shows as "Đã làm" in the part list.
-    if (persist) {
+    if (persist || isSingleWrongRetry) {
       const edSnapshot = engineData;
       (async () => {
         let snap: any = null;
@@ -266,7 +269,9 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           correct, total,
           perQuestion,
           reviewSnapshot: snap,
-          extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
+          extraSkillScores: isSingleWrongRetry
+            ? { mode: "wrong-retry", source: "single", part: set.part }
+            : { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
         });
       })();
     }
