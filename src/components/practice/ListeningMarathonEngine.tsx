@@ -12,7 +12,7 @@ import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
 } from "@/lib/examTransformers";
 import { upsertMarathonResult, saveExamResult } from "@/lib/saveExamResult";
-import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
@@ -385,7 +385,11 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     logClientError("marathon_empty_sets", new Error("marathon_empty_sets"), {
       skill: "listening", partType, retry: !!retryWrongSetIds?.length, setCount: sets.length,
     });
-  }, [emptyState, partType, retryWrongSetIds, sets.length]);
+    if (isRetryMode) {
+      clearMarathonProgress("listening", progPart);
+      clearMarathonLast("listening", progPart);
+    }
+  }, [emptyState, isRetryMode, partType, progPart, retryWrongSetIds, sets.length]);
 
   const pendingExitRef = useRef<{ index: number; timer?: any } | null>(null);
 

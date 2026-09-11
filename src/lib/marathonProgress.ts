@@ -38,6 +38,9 @@ export function saveMarathonLast(skill: string, part: string, data: MarathonLast
 export function loadMarathonLast(skill: string, part: string): MarathonLast | null {
   try { const r = localStorage.getItem(lastKey(skill, part)); return r ? JSON.parse(r) : null; } catch { return null; }
 }
+export function clearMarathonLast(skill: string, part: string) {
+  try { localStorage.removeItem(lastKey(skill, part)); } catch { /* noop */ }
+}
 
 /** Cryptographically-random enough session id. */
 export function newMarathonSessionId(): string {

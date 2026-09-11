@@ -11,7 +11,7 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
 import { upsertMarathonResult, saveExamResult } from "@/lib/saveExamResult";
-import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
@@ -396,7 +396,11 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     logClientError("marathon_empty_sets", new Error("marathon_empty_sets"), {
       skill: "reading", partType, retry: !!retryWrongSetIds?.length, setCount: sets.length,
     });
-  }, [emptyState, partType, retryWrongSetIds, sets.length]);
+    if (isRetryMode) {
+      clearMarathonProgress("reading", progPart);
+      clearMarathonLast("reading", progPart);
+    }
+  }, [emptyState, isRetryMode, partType, progPart, retryWrongSetIds, sets.length]);
 
   // "Lưu & thoát": if the in-progress set has at least one answer, submit+grade
   // it first so it lands in resultsRef before persistHistoryRow() runs.
