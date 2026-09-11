@@ -209,7 +209,7 @@ const Dashboard = () => {
           if (!ss || typeof ss !== "object") return;
           // Marathon lưu 2 loại row: row tổng (mode "marathon") và row per-set
           // (mode "marathon-set"). Chỉ tính row per-set để không nhân đôi.
-          if (ss.mode === "marathon") return;
+          if (ss.mode === "marathon" || ss.mode === "wrong-retry") return;
           const skill = ss.skill;
           const correct = Number(ss.correct) || 0;
           const total = Number(ss.total) || 0;
@@ -255,7 +255,7 @@ const Dashboard = () => {
           writingFallbackRows = allResults.filter((row: any) => {
             const ss = row.skill_scores;
             if (!ss || typeof ss !== "object") return false;
-            if (ss.mode === "marathon") return false;
+            if (ss.mode === "marathon" || ss.mode === "wrong-retry") return false;
             return ss.skill === "writing" && row.total === 30;
           });
           if (writingFallbackRows.length > 0) {
@@ -277,7 +277,7 @@ const Dashboard = () => {
         // Loại row tổng kết marathon để không đếm hai lần.
         const scoreRows = allResults.filter((row: any) => {
           const ss = row.skill_scores;
-          return ss && typeof ss === "object" && ss.mode !== "marathon" && ss.skill;
+          return ss && typeof ss === "object" && ss.mode !== "marathon" && ss.mode !== "wrong-retry" && ss.skill;
         });
 
         const scaledBySkill: Partial<Record<typeof BAND_SKILLS[number], number>> = {};

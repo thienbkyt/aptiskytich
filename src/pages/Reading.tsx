@@ -30,6 +30,7 @@ import ProgressBanner from "@/components/practice/ProgressBanner";
 import CornerResultBadge from "@/components/practice/CornerResultBadge";
 import { useUserExamProgress } from "@/hooks/useUserExamProgress";
 import { useUserMarathonProgress } from "@/hooks/useUserMarathonProgress";
+import { useWrongQuestions } from "@/hooks/useWrongQuestions";
 import { saveExamResult } from "@/lib/saveExamResult";
 import ParticlesBackground from "@/components/ui/particles-background";
 import GradientOrb from "@/components/ui/gradient-orb";
@@ -94,6 +95,7 @@ const Reading = () => {
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("reading");
   const { progress } = useUserExamProgress();
   const { progress: marathonProgress } = useUserMarathonProgress("reading");
+  const { sets: wrongSets, refetch: refetchWrong } = useWrongQuestions("reading", activeTab);
   const [exam, setExam] = useState<ExamState>({
     active: false, partType: "part1", testTitle: "", showResults: false,
     correct: 0, total: 0, loadingExam: false,
@@ -101,7 +103,7 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null; wrongRetrySource?: "single" }>({
     active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null, setIds: null,
   });
   const [progressTick, setProgressTick] = useState(0);
@@ -500,13 +502,15 @@ const Reading = () => {
         sets={runSets}
         scopeId={marathon.keyId ? `key:${marathon.keyId}:${marathon.prio ?? "all"}` : undefined}
         partType={marathon.partType}
-        skillLabel={`Reading · Marathon ${partLabel}`}
+        skillLabel={marathon.wrongRetrySource === "single" ? `Reading · Ôn câu sai ${partLabel}` : `Reading · Marathon ${partLabel}`}
         resume={marathon.resume}
         persist={!marathon.retryWrongSetIds}
         retryWrongSetIds={marathon.retryWrongSetIds}
         wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
+        wrongRetrySource={marathon.wrongRetrySource}
         onExit={() => {
           setProgressTick((t) => t + 1);
+          if (marathon.wrongRetrySource === "single") void refetchWrong();
           if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
           setMarathon({ active: false, partType: marathon.partType });
         }}
@@ -783,6 +787,60 @@ const Reading = () => {
                       </div>
                     </motion.div>
 
+                    );
+                  })()}
+                  {wrongSets.length > 0 && (() => {
+                    const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
+                    const maxTier = filteredSets.reduce((acc, s) => {
+                      const rt = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
+                      return rankT(rt) > rankT(acc) ? rt : acc;
+                    }, "free" as "free" | "pro" | "premium");
+                    const wrongLocked = isLocked({ access_tier: maxTier } as any);
+                    const wrongMap: Record<string, string[]> = {};
+                    wrongSets.forEach((s) => { wrongMap[s.exam_set_id] = s.wrong_question_ids; });
+                    const setIds = wrongSets.map((s) => s.exam_set_id);
+                    const nums = wrongSets.map((s) => (s.title || "").match(/\d+/)?.[0] ?? (s.title || "?"));
+                    const shown = nums.slice(0, 8);
+                    const extra = nums.length - shown.length;
+                    return (
+                      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+                        <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/40 bg-card">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
+                              Ôn câu sai
+                            </Badge>
+                            <ExamTierBadge tier={maxTier} locked={wrongLocked} />
+                          </div>
+                          <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
+                            Câu sai từ đề lẻ {activePartInfo?.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            {wrongSets.length} đề có câu sai
+                          </p>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Lấy theo lần làm gần nhất của mỗi đề. Làm đúng là tự rời danh sách.
+                          </p>
+                          <p className="text-xs text-muted-foreground/80">
+                            Đề {shown.join(" · ")}{extra > 0 ? ` +${extra}` : ""}
+                          </p>
+                          <div className="flex-1" />
+                          <div className="flex flex-wrap justify-end gap-2 mt-4">
+                            <Button
+                              size="sm"
+                              onClick={() => guard({ access_tier: maxTier } as any, () => setMarathon({
+                                active: true,
+                                partType: activeTab as ReadingPartType,
+                                retryWrongSetIds: setIds,
+                                wrongRetrySource: "single",
+                              }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds })}
+                              className="gap-1.5 font-semibold"
+                            >
+                              {wrongLocked ? "Mở khóa" : `Ôn ${wrongSets.length} đề`}
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </motion.div>
                     );
                   })()}
                   {filteredSets.map((set, index) => {

@@ -28,6 +28,8 @@ interface Props {
   persist?: boolean;
   retryWrongSetIds?: string[];
   wrongQuestionIdsBySet?: Record<string, string[]>;
+  /** "single" = ôn câu sai từ các đề lẻ (không phải Marathon). */
+  wrongRetrySource?: "single";
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -45,8 +47,9 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet }: Props) => {
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet, wrongRetrySource }: Props) => {
   const isRetryMode = !!retryWrongSetIds?.length;
+  const isSingleWrongRetry = wrongRetrySource === "single";
   const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
@@ -177,6 +180,9 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     : partType === "part3" ? "Part 4"
     : "Part 5";
 
+  const headerPartLabel = isSingleWrongRetry ? `Ôn câu sai · ${partName}` : `Marathon · ${partName}`;
+
+
   useEffect(() => {
     if (currentIndex >= sets.length) return;
     const set = sets[currentIndex];
@@ -239,7 +245,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     } catch { /* noop */ }
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults, answers } as any;
     // Also save a per-set record so this exam shows as "Đã làm" in the part list.
-    if (persist) {
+    if (persist || isSingleWrongRetry) {
       const edSnapshot = engineData;
       (async () => {
         let snap: any = null;
@@ -263,7 +269,9 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           correct, total,
           perQuestion,
           reviewSnapshot: snap,
-          extraSkillScores: { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
+          extraSkillScores: isSingleWrongRetry
+            ? { mode: "wrong-retry", source: "single", part: set.part }
+            : { mode: "marathon-set", marathonSessionId: sessionIdRef.current, part: set.part },
         });
       })();
     }
@@ -511,7 +519,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   if (loadErr) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} />
         <ExamLoadErrorModal
           state={loadErr}
           onClose={() => { setLoadErr(null); onExit(); }}
@@ -524,7 +532,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   if (emptyState) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} immediateExit />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} immediateExit />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg text-center space-y-6">
             <p className="text-base text-muted-foreground">Không còn đề/câu sai để làm lại (danh sách đề đã thay đổi). Bấm Thoát để về trang luyện tập.</p>
@@ -535,10 +543,69 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     );
   }
 
+  if (phase === "completed" && isSingleWrongRetry) {
+    const fixed = accCorrect;
+    const stillWrong = Math.max(accTotal - accCorrect, 0);
+    const cleanIds = reviewable.filter((r) => r.total > 0 && r.correct >= r.total).map((r) => r.examSetId);
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} immediateExit />
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+          <div className="max-w-lg w-full bg-card border-2 border-primary/40 rounded-2xl p-8 text-center shadow-lg">
+            <p className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-3">
+              Đã sửa {fixed}/{accTotal} câu sai
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Còn {stillWrong} câu vẫn sai — giữ lại để ôn lần sau. Lượt này không tính vào Lịch sử.
+            </p>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{fixed}</p>
+                <p className="text-[11px] text-muted-foreground">Đã sửa</p>
+              </div>
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{stillWrong}</p>
+                <p className="text-[11px] text-muted-foreground">Vẫn sai</p>
+              </div>
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{cleanIds.length}/{sets.length}</p>
+                <p className="text-[11px] text-muted-foreground">Đề đã sạch</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+              {reviewable.length > 0 && (
+                <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
+                  <Eye className="w-4 h-4" /> Xem lại từng câu →
+                </Button>
+              )}
+              {stillWrong > 0 && cleanIds.length < sets.length && (
+                <Button
+                  onClick={() => {
+                    setInvalidRetrySetIds((prev) => new Set([...prev, ...cleanIds]));
+                    setResults([]);
+                    setReviewIndex(null);
+                    setCurrentIndex(0);
+                    setEnterAtLast(false);
+                    setSavedOnce(false);
+                    setPhase("loading");
+                    setAttempt((a) => a + 1);
+                  }}
+                >
+                  Ôn lại {stillWrong} câu
+                </Button>
+              )}
+              <Button variant="outline" onClick={onExit}>Thoát</Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (phase === "completed") {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={handleExitMarathon} />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={handleExitMarathon} />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg w-full bg-card border border-border rounded-2xl p-8 text-center shadow-lg">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -584,7 +651,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   if (phase === "loading" || !engineData) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <ExamHeader skillLabel={skillLabel} partLabel={`Marathon · ${partName}`} onExit={onExit} />
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} />
         <main className="flex-1 flex items-center justify-center">
           <div className="space-y-4 text-center">
             <TechSkeleton variant="circle" className="h-12 w-12 mx-auto" />

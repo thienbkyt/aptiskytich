@@ -5475,6 +5475,10 @@ export type Database = {
         }[]
       }
       get_user_bootstrap: { Args: never; Returns: Json }
+      get_wrong_questions: {
+        Args: { p_part: string; p_skill: string }
+        Returns: Json
+      }
       has_review: {
         Args: { t: Database["public"]["Tables"]["test_results"]["Row"] }
         Returns: boolean
