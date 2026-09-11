@@ -289,6 +289,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     : partType === "part3" ? "Part 3"
     : "Part 4";
 
+  const headerPartLabel = isSingleWrongRetry ? `Ôn câu sai · ${partName}` : `Marathon · ${partName}`;
+
+
   // Upsert single "Marathon · Part X" History row for this session.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
     if (savingHistoryRef.current) return;
