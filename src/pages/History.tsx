@@ -322,7 +322,10 @@ const History = () => {
 
 
 
-        const merged: HistoryRow[] = (results || []).map((r: any) => {
+        const merged: HistoryRow[] = (results || [])
+          // Lượt "Ôn câu sai từ đề lẻ" không hiện trong Lịch sử.
+          .filter((r: any) => ((r.skill_scores || {}) as any).mode !== "wrong-retry")
+          .map((r: any) => {
           const setInfo = r.exam_set_id ? setsMap[r.exam_set_id] : undefined;
           const ss = (r.skill_scores || {}) as any;
           let skill = setInfo?.skill || ss.skill || "unknown";
