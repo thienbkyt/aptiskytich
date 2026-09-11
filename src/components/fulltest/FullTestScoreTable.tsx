@@ -37,13 +37,14 @@ const FullTestScoreTable = ({ scores, overrides }: Props) => {
   };
 
 
-  const bands = (["listening", "reading", "speaking", "writing"] as const)
-    .map((sk) => bandFor(sk))
-    .filter((b): b is string => !!b);
-
+  const allBands = (["listening", "reading", "speaking", "writing"] as const).map((sk) => bandFor(sk));
+  const bands = allBands.filter((b): b is string => !!b);
+  // Chỉ tính band tổng khi đã có đủ 4 kỹ năng (Speaking/Writing chấm AI xong),
+  // tránh hiện band tạm cao hơn rồi tụt xuống sau khi chấm xong.
+  const isComplete = bands.length === 4;
 
   let overall: string = "—";
-  if (bands.length > 0) {
+  if (isComplete) {
     const avg = Math.round(
       bands.reduce((s, b) => s + (BAND_TO_NUM[b] ?? 0), 0) / bands.length
     );
