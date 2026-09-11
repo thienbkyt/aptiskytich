@@ -54,7 +54,10 @@ const HUGE_TIME = 24 * 60 * 60;
 
 const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, wrongQuestionIdsBySet, retryWrongSetIds, wrongRetrySource }: Props) => {
   const isSingleWrongRetry = wrongRetrySource === "single";
+  /** Wrong-question map for the current round; recomputed when the user retries. */
+  const [wrongIdsBySet, setWrongIdsBySet] = useState<Record<string, string[]> | undefined>(wrongQuestionIdsBySet);
   const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
+
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
     const seen = new Set<string>();
@@ -157,7 +160,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       try {
       const allLoaded = await mapWithLimit(sets, 4, async (set) => {
           let questions = await fetchExamQuestions(set.id);
-          const wrongIds = wrongQuestionIdsBySet?.[set.id];
+          const wrongIds = wrongIdsBySet?.[set.id];
           if (partType === "part1" && wrongIds?.length) {
             const wset = new Set(wrongIds);
             questions = questions.filter((q: any) => wset.has(q.id));
@@ -194,7 +197,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           return { engineData: data, pageCount } as LoadedSet;
         });
       if (cancelled) return;
-      if (partType === "part1" && wrongQuestionIdsBySet) {
+      if (partType === "part1" && wrongIdsBySet) {
         const emptyIds = sets
           .filter((_, index) => allLoaded[index]?.pageCount === 0)
           .map((set) => set.id)
@@ -213,7 +216,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       }
     })();
     return () => { cancelled = true; };
-  }, [setsKey, partType, attempt, loadTick, wrongQuestionIdsBySet, invalidRetrySetIds]);
+  }, [setsKey, partType, attempt, loadTick, wrongIdsBySet, invalidRetrySetIds]);
 
   // Mục lục theo ĐỀ → pageBase = chỉ số đề hiện tại, pageTotal = tổng số đề.
   const pageTotal = sets.length;
@@ -294,7 +297,9 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
 
   // Upsert single "Marathon · Part X" History row for this session.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
+    if (isSingleWrongRetry) return;
     if (savingHistoryRef.current) return;
+
     const list = resultsRef.current;
     const reviewable_ = list.filter((r): r is ResultEntry => !!r);
     if (reviewable_.length === 0) return;
@@ -372,7 +377,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     } finally {
       savingHistoryRef.current = false;
     }
-  }, [partType, partName, sets, loaded, currentIndex, drafts, persist]);
+  }, [partType, partName, sets, loaded, currentIndex, drafts, persist, isSingleWrongRetry]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
@@ -541,16 +546,23 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   }
 
   if (phase === "completed" && isSingleWrongRetry) {
+    const perQuestionMode = partType === "part1" && !!wrongIdsBySet;
     const fixed = accCorrect;
     const stillWrong = Math.max(accTotal - accCorrect, 0);
     const cleanIds = reviewable.filter((r) => r.total > 0 && r.correct >= r.total).map((r) => r.examSetId);
+    const wrongSetCount = Math.max(sets.length - cleanIds.length, 0);
+    const retryWrongQBySet: Record<string, string[]> = {};
+    reviewable.forEach((r) => {
+      const wq = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id).filter(Boolean);
+      if (wq.length) retryWrongQBySet[r.examSetId] = wq;
+    });
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} immediateExit />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg w-full bg-card border-2 border-primary/40 rounded-2xl p-8 text-center shadow-lg">
             <p className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-3">
-              Đã sửa {fixed}/{accTotal} câu sai
+              {perQuestionMode ? `Đã sửa ${fixed}/${accTotal} câu sai` : `Đúng ${fixed}/${accTotal} câu`}
             </p>
             <p className="text-sm text-muted-foreground mb-6">
               Còn {stillWrong} câu vẫn sai — giữ lại để ôn lần sau. Lượt này không tính vào Lịch sử.
@@ -558,11 +570,11 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
             <div className="grid grid-cols-3 gap-3 mb-6">
               <div className="rounded-xl border border-border p-3">
                 <p className="text-xl font-extrabold text-foreground">{fixed}</p>
-                <p className="text-[11px] text-muted-foreground">Đã sửa</p>
+                <p className="text-[11px] text-muted-foreground">{perQuestionMode ? "Đã sửa" : "Đúng"}</p>
               </div>
               <div className="rounded-xl border border-border p-3">
-                <p className="text-xl font-extrabold text-foreground">{stillWrong}</p>
-                <p className="text-[11px] text-muted-foreground">Vẫn sai</p>
+                <p className="text-xl font-extrabold text-foreground">{perQuestionMode ? stillWrong : wrongSetCount}</p>
+                <p className="text-[11px] text-muted-foreground">{perQuestionMode ? "Vẫn sai" : "Đề còn sai"}</p>
               </div>
               <div className="rounded-xl border border-border p-3">
                 <p className="text-xl font-extrabold text-foreground">{cleanIds.length}/{sets.length}</p>
@@ -578,6 +590,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
               {stillWrong > 0 && cleanIds.length < sets.length && (
                 <Button
                   onClick={() => {
+                    if (perQuestionMode) setWrongIdsBySet(retryWrongQBySet);
                     setInvalidRetrySetIds((prev) => new Set([...prev, ...cleanIds]));
                     setResults([]);
                     setReviewIndex(null);
@@ -588,7 +601,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
                     setAttempt((a) => a + 1);
                   }}
                 >
-                  Ôn lại {stillWrong} câu
+                  {perQuestionMode ? `Ôn lại ${stillWrong} câu` : `Ôn lại ${wrongSetCount} đề`}
                 </Button>
               )}
               <Button variant="outline" onClick={onExit}>Thoát</Button>
@@ -598,6 +611,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
       </div>
     );
   }
+
 
   if (phase === "completed") {
     return (
