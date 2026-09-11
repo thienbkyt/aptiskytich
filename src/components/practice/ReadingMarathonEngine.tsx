@@ -27,6 +27,7 @@ interface Props {
   resume?: boolean;
   persist?: boolean;
   retryWrongSetIds?: string[];
+  wrongQuestionIdsBySet?: Record<string, string[]>;
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -44,17 +45,18 @@ type ResultEntry = {
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds }: Props) => {
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet }: Props) => {
   const isRetryMode = !!retryWrongSetIds?.length;
+  const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
     const seen = new Set<string>();
     return (setsInput || []).filter((s) => {
-      if (!s?.id || seen.has(s.id)) return false;
+      if (!s?.id || seen.has(s.id) || invalidRetrySetIds.has(s.id)) return false;
       seen.add(s.id);
       return true;
     });
-  }, [setsInput]);
+  }, [setsInput, invalidRetrySetIds]);
   /** Stable identity of the run's đề list — avoids reloading everything on re-render. */
   const setsKey = sets.map((s) => s.id).join(",");
   /** Progress storage key: scoped so two different key days never share progress. */
@@ -198,7 +200,16 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     setLoadErr(null);
     (async () => {
       try {
-        const questions = await fetchExamQuestions(set.id);
+        let questions = await fetchExamQuestions(set.id);
+        const wrongIds = wrongQuestionIdsBySet?.[set.id];
+        if (partType === "part1" && wrongQuestionIdsBySet) {
+          const wanted = new Set(wrongIds ?? []);
+          questions = questions.filter((question: any) => wanted.has(question.id));
+          if (questions.length === 0) {
+            setInvalidRetrySetIds((prev) => new Set([...prev, set.id]));
+            return;
+          }
+        }
         if (cancelled) return;
         questionsCacheRef.current.set(set.id, questions);
         setEngineData(buildEngineData(questions));
@@ -216,7 +227,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       }
     })();
     return () => { cancelled = true; };
-  }, [currentIndex, sets, partType, buildEngineData, loadTick]);
+  }, [currentIndex, sets, partType, buildEngineData, loadTick, wrongQuestionIdsBySet]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
@@ -351,7 +362,12 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       }
       if (opts?.finalize && persist) {
         const wrongSetIds = reviewable_.filter((r) => r.correct < r.total).map((r) => r.examSetId);
-        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, updatedAt: Date.now() });
+        const wrongQBySet: Record<string, string[]> = {};
+        reviewable_.forEach((r) => {
+          const wrongIds = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
+          if (wrongIds.length) wrongQBySet[r.examSetId] = wrongIds;
+        });
+        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
         clearMarathonProgress("reading", progPart);
       }
     } finally {

@@ -101,7 +101,7 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null }>({
     active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null, setIds: null,
   });
   const [progressTick, setProgressTick] = useState(0);
@@ -504,6 +504,7 @@ const Reading = () => {
         resume={marathon.resume}
         persist={!marathon.retryWrongSetIds}
         retryWrongSetIds={marathon.retryWrongSetIds}
+        wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
         onExit={() => {
           setProgressTick((t) => t + 1);
           if (searchParams.get("from") === "key") { navigate("/key-du-doan"); return; }
@@ -664,7 +665,18 @@ const Reading = () => {
                     const lastRun = !activePrio ? loadMarathonLast("reading", activeTab) : null;
                     const doneCount = savedProg?.results?.filter(Boolean).length ?? 0;
                     const hasResume = !!savedProg && doneCount > 0 && doneCount < filteredSets.length;
-                    const progWrongIds = (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
+                    const wrongQMap: Record<string, string[]> = {};
+                    (savedProg?.results ?? []).forEach((r: any) => {
+                      if (!r?.qResults) return;
+                      const wrongIds = r.qResults.filter((q: any) => !q.is_correct).map((q: any) => q.exam_question_id);
+                      if (wrongIds.length) wrongQMap[r.examSetId] = wrongIds;
+                    });
+                    if (Object.keys(wrongQMap).length === 0 && lastRun?.wrongQuestionsBySet) {
+                      Object.assign(wrongQMap, lastRun.wrongQuestionsBySet);
+                    }
+                    const progWrongIds = Object.keys(wrongQMap).length
+                      ? Object.keys(wrongQMap)
+                      : (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
                     const wrongSetIds = progWrongIds.length ? progWrongIds : (lastRun?.wrongSetIds ?? []);
                     const wrongCount = wrongSetIds.length;
                     return (
@@ -726,6 +738,7 @@ const Reading = () => {
                                     active: true,
                                     partType: activeTab as ReadingPartType,
                                     retryWrongSetIds: wrongSetIds,
+                                     wrongQuestionIdsBySet: activeTab === "part1" ? wrongQMap : undefined,
                                   }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                   className="text-primary hover:underline font-medium"
                                 >
@@ -758,6 +771,7 @@ const Reading = () => {
                                   active: true,
                                   partType: activeTab as ReadingPartType,
                                   retryWrongSetIds: wrongSetIds,
+                                   wrongQuestionIdsBySet: activeTab === "part1" ? wrongQMap : undefined,
                                 }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds: filteredSets.map((s) => s.id) })}
                                 className="gap-1.5 font-semibold"
                               >
