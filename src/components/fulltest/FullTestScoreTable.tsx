@@ -66,7 +66,7 @@ const FullTestScoreTable = ({ scores, overrides }: Props) => {
     { label: "Reading", band: bandFor("reading") },
     { label: "Speaking", band: bandFor("speaking") },
     { label: "Writing", band: bandFor("writing") },
-    { label: "Overall", band: bands.length > 0 ? overall : null },
+    { label: "Overall", band: isComplete ? overall : null },
   ];
 
   return (
