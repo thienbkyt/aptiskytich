@@ -383,7 +383,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     } finally {
       savingRef.current = false;
     }
-  }, [partType, partName, sets.length, currentIndex, drafts, persist]);
+  }, [partType, partName, sets.length, currentIndex, drafts, persist, isSingleWrongRetry]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
@@ -549,13 +549,14 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     const fixed = accCorrect;
     const stillWrong = Math.max(accTotal - accCorrect, 0);
     const cleanIds = reviewable.filter((r) => r.total > 0 && r.correct >= r.total).map((r) => r.examSetId);
+    const wrongSetCount = Math.max(sets.length - cleanIds.length, 0);
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} immediateExit />
         <main className="flex-1 flex items-center justify-center px-4 py-10">
           <div className="max-w-lg w-full bg-card border-2 border-primary/40 rounded-2xl p-8 text-center shadow-lg">
             <p className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-3">
-              Đã sửa {fixed}/{accTotal} câu sai
+              Đúng {fixed}/{accTotal} câu
             </p>
             <p className="text-sm text-muted-foreground mb-6">
               Còn {stillWrong} câu vẫn sai — giữ lại để ôn lần sau. Lượt này không tính vào Lịch sử.
@@ -563,12 +564,13 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
             <div className="grid grid-cols-3 gap-3 mb-6">
               <div className="rounded-xl border border-border p-3">
                 <p className="text-xl font-extrabold text-foreground">{fixed}</p>
-                <p className="text-[11px] text-muted-foreground">Đã sửa</p>
+                <p className="text-[11px] text-muted-foreground">Đúng</p>
               </div>
               <div className="rounded-xl border border-border p-3">
-                <p className="text-xl font-extrabold text-foreground">{stillWrong}</p>
-                <p className="text-[11px] text-muted-foreground">Vẫn sai</p>
+                <p className="text-xl font-extrabold text-foreground">{wrongSetCount}</p>
+                <p className="text-[11px] text-muted-foreground">Đề còn sai</p>
               </div>
+
               <div className="rounded-xl border border-border p-3">
                 <p className="text-xl font-extrabold text-foreground">{cleanIds.length}/{sets.length}</p>
                 <p className="text-[11px] text-muted-foreground">Đề đã sạch</p>
