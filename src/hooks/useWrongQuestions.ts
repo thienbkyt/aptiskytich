@@ -8,7 +8,10 @@ export interface WrongQuestionSet {
   score: number;
   total: number;
   wrong_question_ids: string[];
+  /** Reading Part 2+3 only: indexes (0-based) of the đoạn còn xếp sai. */
+  wrong_section_indexes: number[] | null;
 }
+
 
 /**
  * Wrong answers from the student's latest standalone attempt of each đề
@@ -36,12 +39,20 @@ export const useWrongQuestions = (skill: string, partTab: string) => {
         score: Number(r.score ?? 0),
         total: Number(r.total ?? 0),
         wrong_question_ids: Array.isArray(r.wrong_question_ids) ? r.wrong_question_ids.map(String) : [],
+        wrong_section_indexes: Array.isArray(r.wrong_section_indexes)
+          ? r.wrong_section_indexes.map((n: any) => Number(n)).filter((n: number) => Number.isFinite(n))
+          : null,
       }));
     },
   });
 
   const sets = enabled ? (data ?? []) : [];
-  const totalWrongQuestions = sets.reduce((s, x) => s + x.wrong_question_ids.length, 0);
+  const isSectionMode = skill === "reading" && part === "part2";
+  const totalWrongQuestions = sets.reduce(
+    (s, x) => s + (isSectionMode ? (x.wrong_section_indexes?.length ?? 0) : x.wrong_question_ids.length),
+    0
+  );
 
   return { sets, totalWrongQuestions, loading: isLoading, refetch };
 };
+

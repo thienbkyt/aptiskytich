@@ -28,8 +28,11 @@ interface Props {
   persist?: boolean;
   retryWrongSetIds?: string[];
   wrongQuestionIdsBySet?: Record<string, string[]>;
+  /** Reading Part 2+3: chỉ ôn các đoạn (section index gốc) còn sai của từng đề. */
+  wrongSectionsBySet?: Record<string, number[]>;
   /** "single" = ôn câu sai từ các đề lẻ (không phải Marathon). */
   wrongRetrySource?: "single";
+
 }
 
 type Phase = "loading" | "exam" | "completed";
@@ -43,14 +46,22 @@ type ResultEntry = {
   part: string;
   qResults: QResult[];
   answers: any;
+  /** Part 2 section retry: original section indexes played + those still wrong. */
+  sectionsDone?: number[];
+  wrongSections?: number[];
 };
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet, wrongRetrySource }: Props) => {
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet, wrongSectionsBySet, wrongRetrySource }: Props) => {
   const isRetryMode = !!retryWrongSetIds?.length;
   const isSingleWrongRetry = wrongRetrySource === "single";
+  const isSectionRetry = partType === "part2" && !!wrongSectionsBySet;
+  const [sectionsBySet, setSectionsBySet] = useState<Record<string, number[]>>(() => wrongSectionsBySet ?? {});
+  const sectionsBySetRef = useRef(sectionsBySet);
+  useEffect(() => { sectionsBySetRef.current = sectionsBySet; }, [sectionsBySet]);
   const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
+
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
     const seen = new Set<string>();
@@ -106,7 +117,10 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
   useEffect(() => { resultsRef.current = results; }, [results]);
 
-  const buildEngineData = useCallback((questions: any[]) => {
+  /** Original section indexes rendered for the current set (part 2 section retry). */
+  const activeSectionIdsRef = useRef<number[] | null>(null);
+
+  const buildEngineData = useCallback((questions: any[], setId?: string) => {
     const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
     switch (partType) {
       case "part1": data.part1Question = toReadingPart1(questions); break;
@@ -114,8 +128,20 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       case "part3": data.part3Question = toReadingPart3(questions); break;
       case "part4": data.part4Question = toReadingPart4(questions); break;
     }
+    activeSectionIdsRef.current = null;
+    if (partType === "part2" && isSectionRetry && setId && data.part2Question) {
+      const all: any[] = data.part2Question.sections ?? [];
+      const wanted = (sectionsBySetRef.current[setId] ?? [])
+        .filter((i) => i >= 0 && i < all.length)
+        .sort((a, b) => a - b);
+      if (wanted.length > 0 && wanted.length < all.length) {
+        data.part2Question = { ...data.part2Question, sections: wanted.map((i) => all[i]) };
+      }
+      activeSectionIdsRef.current = wanted.length > 0 ? wanted : all.map((_, i) => i);
+    }
     return data;
-  }, [partType]);
+  }, [partType, isSectionRetry]);
+
 
   useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
@@ -189,7 +215,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     const cached = questionsCacheRef.current.get(set.id);
     if (cached) {
       // Instant switch — no loading state, no network.
-      setEngineData(buildEngineData(cached));
+      setEngineData(buildEngineData(cached, set.id));
       setPhase("exam");
       // Prefetch the next set into cache for an instant next hop.
       const nextSet = sets[currentIndex + 1];
@@ -218,7 +244,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
         }
         if (cancelled) return;
         questionsCacheRef.current.set(set.id, questions);
-        setEngineData(buildEngineData(questions));
+        setEngineData(buildEngineData(questions, set.id));
         setPhase("exam");
         // Prefetch neighbor after first paint.
         const nextSet = sets[currentIndex + 1];
@@ -233,7 +259,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       }
     })();
     return () => { cancelled = true; };
-  }, [currentIndex, sets, partType, buildEngineData, loadTick, wrongQuestionIdsBySet]);
+  }, [currentIndex, sets, partType, buildEngineData, loadTick, wrongQuestionIdsBySet, attempt]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
@@ -244,6 +270,23 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       if (raw) { const parsed = JSON.parse(raw); answers = parsed?.answers ?? []; }
     } catch { /* noop */ }
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults, answers } as any;
+    // Part 2 section retry: figure out which đoạn (original index) is still wrong.
+    if (isSectionRetry) {
+      const rendered: any[] = engineData?.part2Question?.sections ?? [];
+      const ids = activeSectionIdsRef.current ?? rendered.map((_, i) => i);
+      const wrong: number[] = [];
+      rendered.forEach((sec: any, j: number) => {
+        const pl = Array.isArray(answers) ? (answers[j] || {}) : {};
+        const bad = (sec?.sentences || []).some((s: any) => {
+          if (j === 0 && s.correctPosition === 1) return false;
+          return pl?.[s.correctPosition] !== s.text;
+        });
+        if (bad && ids[j] !== undefined) wrong.push(ids[j]);
+      });
+      entry.sectionsDone = ids.slice(0, rendered.length);
+      entry.wrongSections = wrong;
+    }
+
     // Also save a per-set record so this exam shows as "Đã làm" in the part list.
     if (persist || isSingleWrongRetry) {
       const edSnapshot = engineData;
@@ -302,7 +345,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     } else {
       setPhase("completed");
     }
-  }, [currentIndex, sets, results, persist, partType, engineData, partName, drafts]);
+  }, [currentIndex, sets, results, persist, partType, engineData, partName, drafts, isSectionRetry, isSingleWrongRetry]);
 
   // Build a snapshot + upsert the single per-session History row. Called from
   // completed effect and from exit — same row is updated across both paths.
@@ -545,6 +588,72 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     );
   }
 
+  if (phase === "completed" && isSingleWrongRetry && isSectionRetry) {
+    const sectionsPlayed = reviewable.reduce((s, r) => s + (r.sectionsDone?.length ?? 0), 0);
+    const sectionsWrong = reviewable.reduce((s, r) => s + (r.wrongSections?.length ?? 0), 0);
+    const sectionsFixed = Math.max(sectionsPlayed - sectionsWrong, 0);
+    const nextSections: Record<string, number[]> = {};
+    reviewable.forEach((r) => {
+      if (r.wrongSections?.length) nextSections[r.examSetId] = r.wrongSections;
+    });
+    const cleanIds = reviewable.filter((r) => !(r.wrongSections?.length)).map((r) => r.examSetId);
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} immediateExit />
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+          <div className="max-w-lg w-full bg-card border-2 border-primary/40 rounded-2xl p-8 text-center shadow-lg">
+            <p className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-3">
+              Đã sửa {sectionsFixed}/{sectionsPlayed} đoạn sai
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Còn {sectionsWrong} đoạn vẫn sai — giữ lại để ôn lần sau. Lượt này không tính vào Lịch sử.
+            </p>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{sectionsFixed}</p>
+                <p className="text-[11px] text-muted-foreground">Đã sửa</p>
+              </div>
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{sectionsWrong}</p>
+                <p className="text-[11px] text-muted-foreground">Vẫn sai</p>
+              </div>
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{cleanIds.length}/{sets.length}</p>
+                <p className="text-[11px] text-muted-foreground">Đề đã sạch</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+              {reviewable.length > 0 && (
+                <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
+                  <Eye className="w-4 h-4" /> Xem lại từng câu →
+                </Button>
+              )}
+              {sectionsWrong > 0 && (
+                <Button
+                  onClick={() => {
+                    setSectionsBySet(nextSections);
+                    sectionsBySetRef.current = nextSections;
+                    setInvalidRetrySetIds((prev) => new Set([...prev, ...cleanIds]));
+                    setResults([]);
+                    setReviewIndex(null);
+                    setCurrentIndex(0);
+                    setEnterAtLast(false);
+                    setSavedOnce(false);
+                    setPhase("loading");
+                    setAttempt((a) => a + 1);
+                  }}
+                >
+                  Ôn lại {sectionsWrong} đoạn
+                </Button>
+              )}
+              <Button variant="outline" onClick={onExit}>Thoát</Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (phase === "completed" && isSingleWrongRetry) {
     const fixed = accCorrect;
     const stillWrong = Math.max(accTotal - accCorrect, 0);
@@ -605,6 +714,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       </div>
     );
   }
+
 
   if (phase === "completed") {
     return (

@@ -5603,6 +5603,7 @@ export type Database = {
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
       touch_last_active: { Args: never; Returns: undefined }
+      try_jsonb: { Args: { p_text: string }; Returns: Json }
       try_open_item: {
         Args: {
           p_feature: string
