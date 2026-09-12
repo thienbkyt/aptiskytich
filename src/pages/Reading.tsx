@@ -103,7 +103,7 @@ const Reading = () => {
   const [fullPractice, setFullPractice] = useState<FullPracticeState>({
     active: false, fullTestId: "", title: "",
   });
-  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null; wrongRetrySource?: "single" }>({
+  const [marathon, setMarathon] = useState<{ active: boolean; partType: ReadingPartType; keyId?: string | null; prio?: string | null; resume?: boolean; retryWrongSetIds?: string[]; wrongQuestionIdsBySet?: Record<string, string[]>; wrongSectionsBySet?: Record<string, number[]>; priorityLabel?: "high" | "medium" | "low" | null; setIds?: string[] | null; wrongRetrySource?: "single" }>({
     active: false, partType: "part1", keyId: null, prio: null, priorityLabel: null, setIds: null,
   });
   const [progressTick, setProgressTick] = useState(0);
