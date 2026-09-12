@@ -856,11 +856,8 @@ const Reading = () => {
                           </div>
                         </div>
                       </motion.div>
-
-                          </div>
-                        </div>
-                      </motion.div>
                     );
+
                   })()}
                   {filteredSets.map((set, index) => {
                     const locked = isLocked(set);
