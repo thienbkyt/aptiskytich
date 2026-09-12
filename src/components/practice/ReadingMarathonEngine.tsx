@@ -46,14 +46,22 @@ type ResultEntry = {
   part: string;
   qResults: QResult[];
   answers: any;
+  /** Part 2 section retry: original section indexes played + those still wrong. */
+  sectionsDone?: number[];
+  wrongSections?: number[];
 };
 
 const HUGE_TIME = 24 * 60 * 60;
 
-const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet, wrongRetrySource }: Props) => {
+const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel, onExit, resume = false, persist = true, retryWrongSetIds, wrongQuestionIdsBySet, wrongSectionsBySet, wrongRetrySource }: Props) => {
   const isRetryMode = !!retryWrongSetIds?.length;
   const isSingleWrongRetry = wrongRetrySource === "single";
+  const isSectionRetry = partType === "part2" && !!wrongSectionsBySet;
+  const [sectionsBySet, setSectionsBySet] = useState<Record<string, number[]>>(() => wrongSectionsBySet ?? {});
+  const sectionsBySetRef = useRef(sectionsBySet);
+  useEffect(() => { sectionsBySetRef.current = sectionsBySet; }, [sectionsBySet]);
   const [invalidRetrySetIds, setInvalidRetrySetIds] = useState<Set<string>>(new Set());
+
   /** Never let a duplicated exam_set_id create two rounds of the same đề. */
   const sets = useMemo(() => {
     const seen = new Set<string>();
