@@ -215,7 +215,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     const cached = questionsCacheRef.current.get(set.id);
     if (cached) {
       // Instant switch — no loading state, no network.
-      setEngineData(buildEngineData(cached));
+      setEngineData(buildEngineData(cached, set.id));
       setPhase("exam");
       // Prefetch the next set into cache for an instant next hop.
       const nextSet = sets[currentIndex + 1];
@@ -244,7 +244,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
         }
         if (cancelled) return;
         questionsCacheRef.current.set(set.id, questions);
-        setEngineData(buildEngineData(questions));
+        setEngineData(buildEngineData(questions, set.id));
         setPhase("exam");
         // Prefetch neighbor after first paint.
         const nextSet = sets[currentIndex + 1];
