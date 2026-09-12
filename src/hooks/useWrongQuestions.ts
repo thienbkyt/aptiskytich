@@ -8,7 +8,10 @@ export interface WrongQuestionSet {
   score: number;
   total: number;
   wrong_question_ids: string[];
+  /** Reading Part 2+3 only: indexes (0-based) of the đoạn còn xếp sai. */
+  wrong_section_indexes: number[] | null;
 }
+
 
 /**
  * Wrong answers from the student's latest standalone attempt of each đề
