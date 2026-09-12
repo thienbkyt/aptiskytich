@@ -259,7 +259,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       }
     })();
     return () => { cancelled = true; };
-  }, [currentIndex, sets, partType, buildEngineData, loadTick, wrongQuestionIdsBySet]);
+  }, [currentIndex, sets, partType, buildEngineData, loadTick, wrongQuestionIdsBySet, attempt]);
 
   const handleComplete = useCallback((correct: number, total: number, perQuestion?: any[]) => {
     const set = sets[currentIndex];
@@ -270,6 +270,23 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       if (raw) { const parsed = JSON.parse(raw); answers = parsed?.answers ?? []; }
     } catch { /* noop */ }
     const entry: ResultEntry = { correct, total, examSetId: set.id, part: set.part, qResults, answers } as any;
+    // Part 2 section retry: figure out which đoạn (original index) is still wrong.
+    if (isSectionRetry) {
+      const rendered: any[] = engineData?.part2Question?.sections ?? [];
+      const ids = activeSectionIdsRef.current ?? rendered.map((_, i) => i);
+      const wrong: number[] = [];
+      rendered.forEach((sec: any, j: number) => {
+        const pl = Array.isArray(answers) ? (answers[j] || {}) : {};
+        const bad = (sec?.sentences || []).some((s: any) => {
+          if (j === 0 && s.correctPosition === 1) return false;
+          return pl?.[s.correctPosition] !== s.text;
+        });
+        if (bad && ids[j] !== undefined) wrong.push(ids[j]);
+      });
+      entry.sectionsDone = ids.slice(0, rendered.length);
+      entry.wrongSections = wrong;
+    }
+
     // Also save a per-set record so this exam shows as "Đã làm" in the part list.
     if (persist || isSingleWrongRetry) {
       const edSnapshot = engineData;
