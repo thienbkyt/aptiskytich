@@ -117,7 +117,10 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
   useEffect(() => { resultsRef.current = results; }, [results]);
 
-  const buildEngineData = useCallback((questions: any[]) => {
+  /** Original section indexes rendered for the current set (part 2 section retry). */
+  const activeSectionIdsRef = useRef<number[] | null>(null);
+
+  const buildEngineData = useCallback((questions: any[], setId?: string) => {
     const data: any = { sourceQuestionIds: questions.map((q: any) => q.id) };
     switch (partType) {
       case "part1": data.part1Question = toReadingPart1(questions); break;
@@ -125,8 +128,20 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       case "part3": data.part3Question = toReadingPart3(questions); break;
       case "part4": data.part4Question = toReadingPart4(questions); break;
     }
+    activeSectionIdsRef.current = null;
+    if (partType === "part2" && isSectionRetry && setId && data.part2Question) {
+      const all: any[] = data.part2Question.sections ?? [];
+      const wanted = (sectionsBySetRef.current[setId] ?? [])
+        .filter((i) => i >= 0 && i < all.length)
+        .sort((a, b) => a - b);
+      if (wanted.length > 0 && wanted.length < all.length) {
+        data.part2Question = { ...data.part2Question, sections: wanted.map((i) => all[i]) };
+      }
+      activeSectionIdsRef.current = wanted.length > 0 ? wanted : all.map((_, i) => i);
+    }
     return data;
-  }, [partType]);
+  }, [partType, isSectionRetry]);
+
 
   useEffect(() => { setCurrentAnswers(null); setCurrentLocked([]); setActiveSection(0); }, [currentIndex, attempt]);
 
