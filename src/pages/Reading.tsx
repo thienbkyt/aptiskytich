@@ -507,6 +507,7 @@ const Reading = () => {
         persist={!marathon.retryWrongSetIds}
         retryWrongSetIds={marathon.retryWrongSetIds}
         wrongQuestionIdsBySet={marathon.wrongQuestionIdsBySet}
+        wrongSectionsBySet={marathon.wrongSectionsBySet}
         wrongRetrySource={marathon.wrongRetrySource}
         onExit={() => {
           setProgressTick((t) => t + 1);
