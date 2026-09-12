@@ -28,8 +28,11 @@ interface Props {
   persist?: boolean;
   retryWrongSetIds?: string[];
   wrongQuestionIdsBySet?: Record<string, string[]>;
+  /** Reading Part 2+3: chỉ ôn các đoạn (section index gốc) còn sai của từng đề. */
+  wrongSectionsBySet?: Record<string, number[]>;
   /** "single" = ôn câu sai từ các đề lẻ (không phải Marathon). */
   wrongRetrySource?: "single";
+
 }
 
 type Phase = "loading" | "exam" | "completed";
