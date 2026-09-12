@@ -588,6 +588,72 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     );
   }
 
+  if (phase === "completed" && isSingleWrongRetry && isSectionRetry) {
+    const sectionsPlayed = reviewable.reduce((s, r) => s + (r.sectionsDone?.length ?? 0), 0);
+    const sectionsWrong = reviewable.reduce((s, r) => s + (r.wrongSections?.length ?? 0), 0);
+    const sectionsFixed = Math.max(sectionsPlayed - sectionsWrong, 0);
+    const nextSections: Record<string, number[]> = {};
+    reviewable.forEach((r) => {
+      if (r.wrongSections?.length) nextSections[r.examSetId] = r.wrongSections;
+    });
+    const cleanIds = reviewable.filter((r) => !(r.wrongSections?.length)).map((r) => r.examSetId);
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <ExamHeader skillLabel={skillLabel} partLabel={headerPartLabel} onExit={onExit} immediateExit />
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+          <div className="max-w-lg w-full bg-card border-2 border-primary/40 rounded-2xl p-8 text-center shadow-lg">
+            <p className="text-3xl md:text-4xl font-heading font-extrabold text-foreground mb-3">
+              Đã sửa {sectionsFixed}/{sectionsPlayed} đoạn sai
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Còn {sectionsWrong} đoạn vẫn sai — giữ lại để ôn lần sau. Lượt này không tính vào Lịch sử.
+            </p>
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{sectionsFixed}</p>
+                <p className="text-[11px] text-muted-foreground">Đã sửa</p>
+              </div>
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{sectionsWrong}</p>
+                <p className="text-[11px] text-muted-foreground">Vẫn sai</p>
+              </div>
+              <div className="rounded-xl border border-border p-3">
+                <p className="text-xl font-extrabold text-foreground">{cleanIds.length}/{sets.length}</p>
+                <p className="text-[11px] text-muted-foreground">Đề đã sạch</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+              {reviewable.length > 0 && (
+                <Button variant="secondary" onClick={() => setReviewIndex(0)} className="gap-2">
+                  <Eye className="w-4 h-4" /> Xem lại từng câu →
+                </Button>
+              )}
+              {sectionsWrong > 0 && (
+                <Button
+                  onClick={() => {
+                    setSectionsBySet(nextSections);
+                    sectionsBySetRef.current = nextSections;
+                    setInvalidRetrySetIds((prev) => new Set([...prev, ...cleanIds]));
+                    setResults([]);
+                    setReviewIndex(null);
+                    setCurrentIndex(0);
+                    setEnterAtLast(false);
+                    setSavedOnce(false);
+                    setPhase("loading");
+                    setAttempt((a) => a + 1);
+                  }}
+                >
+                  Ôn lại {sectionsWrong} đoạn
+                </Button>
+              )}
+              <Button variant="outline" onClick={onExit}>Thoát</Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (phase === "completed" && isSingleWrongRetry) {
     const fixed = accCorrect;
     const stillWrong = Math.max(accTotal - accCorrect, 0);
@@ -648,6 +714,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
       </div>
     );
   }
+
 
   if (phase === "completed") {
     return (
