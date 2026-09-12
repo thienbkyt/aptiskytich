@@ -792,16 +792,26 @@ const Reading = () => {
                   })()}
                   {wrongSets.length > 0 && (() => {
                     const rankT = (t: string) => t === "premium" ? 2 : t === "pro" ? 1 : 0;
+                    const sectionMode = activeTab === "part2";
+                    const usableSets = sectionMode
+                      ? wrongSets.filter((s) => (s.wrong_section_indexes?.length ?? 0) > 0)
+                      : wrongSets;
+                    if (usableSets.length === 0) return null;
                     const wrongMap: Record<string, string[]> = {};
-                    wrongSets.forEach((s) => { wrongMap[s.exam_set_id] = s.wrong_question_ids; });
-                    const setIds = wrongSets.map((s) => s.exam_set_id);
+                    usableSets.forEach((s) => { wrongMap[s.exam_set_id] = s.wrong_question_ids; });
+                    const sectionsMap: Record<string, number[]> = {};
+                    if (sectionMode) {
+                      usableSets.forEach((s) => { sectionsMap[s.exam_set_id] = s.wrong_section_indexes ?? []; });
+                    }
+                    const sectionTotal = usableSets.reduce((sum, s) => sum + (s.wrong_section_indexes?.length ?? 0), 0);
+                    const setIds = usableSets.map((s) => s.exam_set_id);
                     const maxTier = filteredSets.filter((s) => setIds.includes(s.id)).reduce((acc, s) => {
                       const rt = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
                       return rankT(rt) > rankT(acc) ? rt : acc;
                     }, "free" as "free" | "pro" | "premium");
                     const wrongLocked = isLocked({ access_tier: maxTier } as any);
 
-                    const nums = wrongSets.map((s) => (s.title || "").match(/\d+/)?.[0] ?? (s.title || "?"));
+                    const nums = usableSets.map((s) => (s.title || "").match(/\d+/)?.[0] ?? (s.title || "?"));
                     const shown = nums.slice(0, 8);
                     const extra = nums.length - shown.length;
                     return (
@@ -817,7 +827,9 @@ const Reading = () => {
                             Câu sai từ đề lẻ {activePartInfo?.label}
                           </h3>
                           <p className="text-sm text-muted-foreground mb-1">
-                            {wrongSets.length} đề có câu sai
+                            {sectionMode
+                              ? `${sectionTotal} đoạn sai · từ ${usableSets.length} đề`
+                              : `${usableSets.length} đề có câu sai`}
                           </p>
                           <p className="text-xs text-muted-foreground mb-2">
                             Lấy theo lần làm gần nhất của mỗi đề. Làm đúng là tự rời danh sách.
@@ -833,13 +845,18 @@ const Reading = () => {
                                 active: true,
                                 partType: activeTab as ReadingPartType,
                                 retryWrongSetIds: setIds,
+                                wrongSectionsBySet: sectionMode ? sectionsMap : undefined,
                                 wrongRetrySource: "single",
                               }), { feature: 'marathon', itemKey: crypto.randomUUID(), setIds })}
                               className="gap-1.5 font-semibold"
                             >
-                              {wrongLocked ? "Mở khóa" : `Ôn ${wrongSets.length} đề`}
+                              {wrongLocked ? "Mở khóa" : (sectionMode ? `Ôn ${sectionTotal} đoạn` : `Ôn ${usableSets.length} đề`)}
                               <ArrowRight className="w-4 h-4" />
                             </Button>
+                          </div>
+                        </div>
+                      </motion.div>
+
                           </div>
                         </div>
                       </motion.div>
