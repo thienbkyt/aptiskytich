@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useSystemVocabSets, useSystemVocabWords } from "@/hooks/useSystemVocabSets";
+import { useSystemVocabSets, useSystemVocabWords, type SystemVocabWord } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
