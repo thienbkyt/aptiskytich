@@ -1104,43 +1104,7 @@ const SpeakingExamEngine = ({
       } catch { /* swallow */ }
     } catch { /* swallow */ }
 
-    // Best-effort upload of all recordings — never block UI on failure. Collect paths
-    // so we can bake them into the snapshot items.
-    const uploadedPaths: (string | null)[] = [];
-    try {
-      const currentRecordings = recordingsRef.current.map((blob, index) =>
-        silentByQuestionRef.current[index] ? null : blob,
-      );
-      await Promise.all(
-        currentRecordings.map(async (blob, idx) => {
-          if (!blob) { uploadedPaths[idx] = null; return; }
-          try {
-            const path = await saveSpeakingRecording({
-              examSetId: examSetId ?? null,
-              part: `${partType}_q${idx + 1}`,
-              blob,
-              durationSeconds: durationsRef.current[idx] ?? undefined,
-              testResultId: testResultIdRef.current,
-            });
-            uploadedPaths[idx] = path;
-          } catch { uploadedPaths[idx] = null; }
-        })
-      );
-    } catch { /* swallow */ }
-
-    // Bake recordingPath into snapshot items now that uploads are done.
-    try {
-      if (testResultIdRef.current) {
-        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-        const aiByIndex: Record<number, any> = {};
-        uploadedPaths.forEach((p, idx) => {
-          if (p) aiByIndex[idx] = { recordingPath: p };
-        });
-        if (Object.keys(aiByIndex).length > 0) {
-          await mergeSnapshotAI(testResultIdRef.current, aiByIndex);
-        }
-      }
-    } catch { /* swallow */ }
+    await runUploadAndMerge();
 
     onComplete?.();
     setPhase("done");
