@@ -1650,6 +1650,75 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_rp1_csm_20260913: {
+        Row: {
+          custom_set_id: string | null
+          exam_set_id: string | null
+          id: string | null
+          position: number | null
+        }
+        Insert: {
+          custom_set_id?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          position?: number | null
+        }
+        Update: {
+          custom_set_id?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          position?: number | null
+        }
+        Relationships: []
+      }
+      backup_rp1_ftm_20260913: {
+        Row: {
+          created_at: string | null
+          exam_set_id: string | null
+          full_test_id: string | null
+          id: string | null
+          position: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          full_test_id?: string | null
+          id?: string | null
+          position?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          full_test_id?: string | null
+          id?: string | null
+          position?: number | null
+        }
+        Relationships: []
+      }
+      backup_rp1_trung_20260913: {
+        Row: {
+          at_time: string | null
+          dup_id: string | null
+          dup_title: string | null
+          keep_id: string | null
+          keep_title: string | null
+        }
+        Insert: {
+          at_time?: string | null
+          dup_id?: string | null
+          dup_title?: string | null
+          keep_id?: string | null
+          keep_title?: string | null
+        }
+        Update: {
+          at_time?: string | null
+          dup_id?: string | null
+          dup_title?: string | null
+          keep_id?: string | null
+          keep_title?: string | null
+        }
+        Relationships: []
+      }
       backup_rp2_exp_20260829: {
         Row: {
           explanation: string | null
