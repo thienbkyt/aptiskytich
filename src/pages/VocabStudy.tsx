@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useSystemVocabSets, useSystemVocabWords } from "@/hooks/useSystemVocabSets";
+import { useSystemVocabSets, useSystemVocabWords, type SystemVocabWord } from "@/hooks/useSystemVocabSets";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -109,28 +109,35 @@ const VocabStudy = () => {
   }, [user, id]);
 
   const markLearned = useCallback(
-    async (wordText: string) => {
+    async (w: SystemVocabWord | string) => {
       if (!user) {
         toast({ title: "Vui lòng đăng nhập để lưu tiến độ", variant: "destructive" });
         return;
       }
+      const wordObj = typeof w === "string" ? words.find((x) => x.word === w) : w;
+      if (!wordObj) return;
       const { error } = await supabase.from("vocab_items").upsert(
         {
           user_id: user.id,
-          word: wordText,
+          word: wordObj.word,
           vocab_set_id: id!,
           status: "learned",
           review_count: 1,
           last_reviewed_at: new Date().toISOString(),
+          phonetic: wordObj.phonetic ?? "",
+          meaning: wordObj.meaning ?? "",
+          example_en: wordObj.example_en ?? "",
+          example_vi: wordObj.example_vi ?? "",
+          word_family: wordObj.word_family ?? [],
         },
         { onConflict: "user_id,word,vocab_set_id" },
       );
       if (!error) {
-        setLearnedWords((prev) => new Set(prev).add(wordText));
-        toast({ title: `Đã đánh dấu "${wordText}" là đã thuộc ✓` });
+        setLearnedWords((prev) => new Set(prev).add(wordObj.word));
+        toast({ title: `Đã đánh dấu "${wordObj.word}" là đã thuộc ✓` });
       }
     },
-    [user, id],
+    [user, id, words],
   );
 
   const saveToList = useCallback(
@@ -393,7 +400,7 @@ const VocabStudy = () => {
               <div className="flex items-center gap-2 flex-wrap justify-center">
                 <Button
                   variant={isLearned ? "secondary" : "default"}
-                  onClick={() => markLearned(word.word)}
+                  onClick={() => markLearned(word)}
                   disabled={isLearned}
                   className={isLearned ? "" : "bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"}
                 >
