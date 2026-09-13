@@ -1111,6 +1111,8 @@ const SpeakingExamEngine = ({
       return;
     }
 
+    setIsSaving(true);
+
     // Create the aggregate test_results row FIRST so each recording can be linked
     // by test_result_id (review page no longer relies on time-window matching).
     const promptsList: string[] = getPromptList();
