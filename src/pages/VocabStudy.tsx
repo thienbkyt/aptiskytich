@@ -129,7 +129,6 @@ const VocabStudy = () => {
           example_en: wordObj.example_en ?? "",
           example_vi: wordObj.example_vi ?? "",
           word_family: wordObj.word_family ?? [],
-          word_type: wordObj.word_type ?? "",
         },
         { onConflict: "user_id,word,vocab_set_id" },
       );
