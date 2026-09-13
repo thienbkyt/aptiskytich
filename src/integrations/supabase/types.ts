@@ -198,6 +198,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_cel_counts_20260913: {
+        Row: {
+          context: string | null
+          d: string | null
+          n: number | null
+        }
+        Insert: {
+          context?: string | null
+          d?: string | null
+          n?: number | null
+        }
+        Update: {
+          context?: string | null
+          d?: string | null
+          n?: number | null
+        }
+        Relationships: []
+      }
       backup_de0909_20260909: {
         Row: {
           audio_url: string | null
@@ -825,6 +843,21 @@ export type Database = {
           id?: string | null
           note?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      backup_fn_can_sign_audio_20260913: {
+        Row: {
+          backed_at: string | null
+          def: string | null
+        }
+        Insert: {
+          backed_at?: string | null
+          def?: string | null
+        }
+        Update: {
+          backed_at?: string | null
+          def?: string | null
         }
         Relationships: []
       }
@@ -2181,6 +2214,84 @@ export type Database = {
           extra_data?: Json | null
           id?: string | null
           title?: string | null
+        }
+        Relationships: []
+      }
+      backup_vocab_20260913: {
+        Row: {
+          created_at: string | null
+          example_en: string | null
+          example_vi: string | null
+          id: string | null
+          meaning: string | null
+          order_index: number | null
+          phonetic: string | null
+          vocab_set_id: string | null
+          word: string | null
+          word_family: Json | null
+          word_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          example_en?: string | null
+          example_vi?: string | null
+          id?: string | null
+          meaning?: string | null
+          order_index?: number | null
+          phonetic?: string | null
+          vocab_set_id?: string | null
+          word?: string | null
+          word_family?: Json | null
+          word_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          example_en?: string | null
+          example_vi?: string | null
+          id?: string | null
+          meaning?: string | null
+          order_index?: number | null
+          phonetic?: string | null
+          vocab_set_id?: string | null
+          word?: string | null
+          word_family?: Json | null
+          word_type?: string | null
+        }
+        Relationships: []
+      }
+      backup_vocab_items_blank_20260913: {
+        Row: {
+          example_en: string | null
+          example_vi: string | null
+          id: string | null
+          meaning: string | null
+          phonetic: string | null
+          user_id: string | null
+          vocab_set_id: string | null
+          word: string | null
+          word_family: Json | null
+        }
+        Insert: {
+          example_en?: string | null
+          example_vi?: string | null
+          id?: string | null
+          meaning?: string | null
+          phonetic?: string | null
+          user_id?: string | null
+          vocab_set_id?: string | null
+          word?: string | null
+          word_family?: Json | null
+        }
+        Update: {
+          example_en?: string | null
+          example_vi?: string | null
+          id?: string | null
+          meaning?: string | null
+          phonetic?: string | null
+          user_id?: string | null
+          vocab_set_id?: string | null
+          word?: string | null
+          word_family?: Json | null
         }
         Relationships: []
       }
