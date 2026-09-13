@@ -980,6 +980,88 @@ const SpeakingExamEngine = ({
     doStopAndAdvance();
   }, [canFinish, doStopAndAdvance]);
 
+  /**
+   * Uploads every non-silent recording (up to 3 attempts each) and bakes the
+   * resulting storage paths into the review snapshot. Returns false when every
+   * recording failed to upload, so the caller can offer a manual retry.
+   */
+  const runUploadAndMerge = async (): Promise<boolean> => {
+    const currentRecordings = recordingsRef.current.map((blob, index) =>
+      silentByQuestionRef.current[index] ? null : blob,
+    );
+    const uploadedPaths: (string | null)[] = [...uploadedPathsRef.current];
+
+    try {
+      await Promise.all(
+        currentRecordings.map(async (blob, idx) => {
+          if (!blob) { uploadedPaths[idx] = null; return; }
+          if (uploadedPaths[idx]) return;
+          let path: string | null = null;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1000));
+            try {
+              path = await saveSpeakingRecording({
+                examSetId: examSetId ?? null,
+                part: `${partType}_q${idx + 1}`,
+                blob,
+                durationSeconds: durationsRef.current[idx] ?? undefined,
+                testResultId: testResultIdRef.current,
+              });
+            } catch { path = null; }
+            if (path) break;
+          }
+          if (!path) {
+            logClientError("speaking_upload_failed", new Error("upload null"), {
+              examSetId: examSetId ?? null,
+              partType,
+              idx,
+              size: blob.size,
+              type: blob.type,
+            });
+          }
+          uploadedPaths[idx] = path;
+        })
+      );
+    } catch { /* swallow */ }
+
+    uploadedPathsRef.current = uploadedPaths;
+
+    const hadBlobs = currentRecordings.some(Boolean);
+    const allFailed = hadBlobs && currentRecordings.every((b, i) => !b || !uploadedPaths[i]);
+    if (allFailed) {
+      setV2Error(
+        "Không tải được file ghi âm lên máy chủ (mạng yếu). Bấm 'Tải lại ghi âm' để thử lại.",
+      );
+    }
+
+    // Bake recordingPath into snapshot items now that uploads are done.
+    try {
+      if (testResultIdRef.current) {
+        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+        const aiByIndex: Record<number, any> = {};
+        uploadedPaths.forEach((p, idx) => {
+          if (p) aiByIndex[idx] = { recordingPath: p };
+        });
+        if (Object.keys(aiByIndex).length > 0) {
+          await mergeSnapshotAI(testResultIdRef.current, aiByIndex);
+        }
+      }
+    } catch { /* swallow */ }
+
+    return !allFailed;
+  };
+
+  const handleRetryUpload = async () => {
+    setV2Error(null);
+    setIsSaving(true);
+    const ok = await runUploadAndMerge();
+    setIsSaving(false);
+    if (ok) {
+      v2RanRef.current = false;
+      setUploadRetryTick((t) => t + 1);
+    }
+  };
+
   const handleFinish = async () => {
     // Guard: ensure onComplete fires exactly once per part
     if (finishedRef.current) return;
@@ -1106,6 +1188,7 @@ const SpeakingExamEngine = ({
 
     await runUploadAndMerge();
 
+    setIsSaving(false);
     onComplete?.();
     setPhase("done");
   };
