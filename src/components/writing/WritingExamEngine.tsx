@@ -372,10 +372,10 @@ const WritingExamEngine = ({
       // Poll every 6s, up to 5 minutes.
       const { supabase } = await import("@/integrations/supabase/client");
       const deadline = Date.now() + 5 * 60 * 1000;
-      // Improved version / upgrade tips live in test_results.review_snapshot
-      // (items[0].ai), not in writing_question_gradings. Allow up to 2 extra
-      // poll rounds for the snapshot to be written, then show without them.
-      let snapshotRetriesLeft = 2;
+      // Improved version / upgrade tips live in writing_skill_results.parts,
+      // not in writing_question_gradings. Allow up to 2 extra poll rounds for
+      // the skill result row to be written, then show without them.
+      let skillResultRetriesLeft = 2;
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 6000));
         const { data, error: gradingQueryError } = await (supabase as any)
@@ -387,16 +387,18 @@ const WritingExamEngine = ({
           .maybeSingle();
         if (gradingQueryError) continue;
         if (!data) continue;
-        const { data: trRow } = await (supabase as any)
-          .from("test_results")
-          .select("review_snapshot")
-          .eq("id", trid)
+        const { data: wsrRow } = await (supabase as any)
+          .from("writing_skill_results")
+          .select("parts")
+          .eq("test_result_id", trid)
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
-        const snapshotAi = (trRow?.review_snapshot as any)?.items?.[0]?.ai ?? null;
-        const improvedVersion = snapshotAi?.improvedVersion || "";
-        const upgradeTips = snapshotAi?.upgradeTips || "";
-        if (!improvedVersion && snapshotRetriesLeft > 0) {
-          snapshotRetriesLeft -= 1;
+        const parts = (wsrRow?.parts as any) ?? null;
+        const improvedVersion = parts?.[partType]?.improvedVersion || "";
+        const upgradeTips = parts?.[partType]?.upgradeTips || "";
+        if (!improvedVersion && skillResultRetriesLeft > 0) {
+          skillResultRetriesLeft -= 1;
           continue;
         }
         setV2Grading({
