@@ -53,7 +53,7 @@ import {
 } from "./speakingGradingV2";
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
 import UpgradeLock from "@/components/pro/UpgradeLock";
-import { uploadSpeakingBlobs } from "@/lib/speakingUpload";
+import { uploadSpeakingBlob } from "@/lib/speakingUpload";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 
@@ -173,6 +173,12 @@ const SpeakingExamEngine = ({
   // Background-queue grading state (single-part mode).
   const [queuePending, setQueuePending] = useState(false);
   const [queueTimedOut, setQueueTimedOut] = useState(false);
+  // Single-part mode: true while the part is being persisted + recordings uploaded.
+  const [isSaving, setIsSaving] = useState(false);
+  // Bumped by the "Tải lại ghi âm" button to re-run upload + grading.
+  const [uploadRetryTick, setUploadRetryTick] = useState(0);
+  // Paths already uploaded during handleFinish, reused by the grading effect.
+  const uploadedPathsRef = useRef<(string | null)[]>([]);
 
 
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
@@ -490,10 +496,21 @@ const SpeakingExamEngine = ({
     (async () => {
       try {
         const testResultId = testResultIdRef.current ?? null;
-        const audioPaths = await uploadSpeakingBlobs(
-          blobs,
-          testResultId || examSetId || "adhoc",
-          partType,
+        const knownPaths = uploadedPathsRef.current;
+        const audioPaths = await Promise.all(
+          blobs.map(async (b, idx) => {
+            const existing = knownPaths[idx] ?? null;
+            if (existing) return existing;
+            if (!b) return null;
+            const p = await uploadSpeakingBlob(
+              b,
+              testResultId || examSetId || "adhoc",
+              partType,
+              idx,
+            );
+            if (p) knownPaths[idx] = p;
+            return p;
+          }),
         );
 
         const queued = await enqueueGradingFallback({
@@ -583,7 +600,7 @@ const SpeakingExamEngine = ({
     })();
 
     return () => { cancelled = true; };
-  }, [phase, fullFlow, partType, part1Data, part2Data, part3Data, part4Data, examSetId, fullTestSessionId]);
+  }, [phase, fullFlow, partType, part1Data, part2Data, part3Data, part4Data, examSetId, fullTestSessionId, uploadRetryTick]);
 
 
 
@@ -963,6 +980,88 @@ const SpeakingExamEngine = ({
     doStopAndAdvance();
   }, [canFinish, doStopAndAdvance]);
 
+  /**
+   * Uploads every non-silent recording (up to 3 attempts each) and bakes the
+   * resulting storage paths into the review snapshot. Returns false when every
+   * recording failed to upload, so the caller can offer a manual retry.
+   */
+  const runUploadAndMerge = async (): Promise<boolean> => {
+    const currentRecordings = recordingsRef.current.map((blob, index) =>
+      silentByQuestionRef.current[index] ? null : blob,
+    );
+    const uploadedPaths: (string | null)[] = [...uploadedPathsRef.current];
+
+    try {
+      await Promise.all(
+        currentRecordings.map(async (blob, idx) => {
+          if (!blob) { uploadedPaths[idx] = null; return; }
+          if (uploadedPaths[idx]) return;
+          let path: string | null = null;
+          for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1000));
+            try {
+              path = await saveSpeakingRecording({
+                examSetId: examSetId ?? null,
+                part: `${partType}_q${idx + 1}`,
+                blob,
+                durationSeconds: durationsRef.current[idx] ?? undefined,
+                testResultId: testResultIdRef.current,
+              });
+            } catch { path = null; }
+            if (path) break;
+          }
+          if (!path) {
+            logClientError("speaking_upload_failed", new Error("upload null"), {
+              examSetId: examSetId ?? null,
+              partType,
+              idx,
+              size: blob.size,
+              type: blob.type,
+            });
+          }
+          uploadedPaths[idx] = path;
+        })
+      );
+    } catch { /* swallow */ }
+
+    uploadedPathsRef.current = uploadedPaths;
+
+    const hadBlobs = currentRecordings.some(Boolean);
+    const allFailed = hadBlobs && currentRecordings.every((b, i) => !b || !uploadedPaths[i]);
+    if (allFailed) {
+      setV2Error(
+        "Không tải được file ghi âm lên máy chủ (mạng yếu). Bấm 'Tải lại ghi âm' để thử lại.",
+      );
+    }
+
+    // Bake recordingPath into snapshot items now that uploads are done.
+    try {
+      if (testResultIdRef.current) {
+        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+        const aiByIndex: Record<number, any> = {};
+        uploadedPaths.forEach((p, idx) => {
+          if (p) aiByIndex[idx] = { recordingPath: p };
+        });
+        if (Object.keys(aiByIndex).length > 0) {
+          await mergeSnapshotAI(testResultIdRef.current, aiByIndex);
+        }
+      }
+    } catch { /* swallow */ }
+
+    return !allFailed;
+  };
+
+  const handleRetryUpload = async () => {
+    setV2Error(null);
+    setIsSaving(true);
+    const ok = await runUploadAndMerge();
+    setIsSaving(false);
+    if (ok) {
+      v2RanRef.current = false;
+      setUploadRetryTick((t) => t + 1);
+    }
+  };
+
   const handleFinish = async () => {
     // Guard: ensure onComplete fires exactly once per part
     if (finishedRef.current) return;
@@ -1011,6 +1110,8 @@ const SpeakingExamEngine = ({
       onComplete?.();
       return;
     }
+
+    setIsSaving(true);
 
     // Create the aggregate test_results row FIRST so each recording can be linked
     // by test_result_id (review page no longer relies on time-window matching).
@@ -1087,44 +1188,9 @@ const SpeakingExamEngine = ({
       } catch { /* swallow */ }
     } catch { /* swallow */ }
 
-    // Best-effort upload of all recordings — never block UI on failure. Collect paths
-    // so we can bake them into the snapshot items.
-    const uploadedPaths: (string | null)[] = [];
-    try {
-      const currentRecordings = recordingsRef.current.map((blob, index) =>
-        silentByQuestionRef.current[index] ? null : blob,
-      );
-      await Promise.all(
-        currentRecordings.map(async (blob, idx) => {
-          if (!blob) { uploadedPaths[idx] = null; return; }
-          try {
-            const path = await saveSpeakingRecording({
-              examSetId: examSetId ?? null,
-              part: `${partType}_q${idx + 1}`,
-              blob,
-              durationSeconds: durationsRef.current[idx] ?? undefined,
-              testResultId: testResultIdRef.current,
-            });
-            uploadedPaths[idx] = path;
-          } catch { uploadedPaths[idx] = null; }
-        })
-      );
-    } catch { /* swallow */ }
+    await runUploadAndMerge();
 
-    // Bake recordingPath into snapshot items now that uploads are done.
-    try {
-      if (testResultIdRef.current) {
-        const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
-        const aiByIndex: Record<number, any> = {};
-        uploadedPaths.forEach((p, idx) => {
-          if (p) aiByIndex[idx] = { recordingPath: p };
-        });
-        if (Object.keys(aiByIndex).length > 0) {
-          await mergeSnapshotAI(testResultIdRef.current, aiByIndex);
-        }
-      }
-    } catch { /* swallow */ }
-
+    setIsSaving(false);
     onComplete?.();
     setPhase("done");
   };
@@ -1458,8 +1524,17 @@ const SpeakingExamEngine = ({
 
 
             {v2Error && (
-              <div className="bg-card border border-rose-500/30 rounded-2xl p-6 text-center">
+              <div className="bg-card border border-rose-500/30 rounded-2xl p-6 text-center space-y-4">
                 <p className="text-sm text-rose-600 dark:text-rose-400">{v2Error}</p>
+                {!fullFlow && v2Error.includes("Không tải được file ghi âm") && (
+                  <button
+                    onClick={handleRetryUpload}
+                    disabled={isSaving}
+                    className="bg-[#24085a] text-white hover:bg-[#1a0640] disabled:opacity-50 rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+                  >
+                    Tải lại ghi âm
+                  </button>
+                )}
               </div>
             )}
 
@@ -1765,7 +1840,7 @@ const SpeakingExamEngine = ({
           )}
 
           {/* Finish Recording button - only shows after 10s of recording */}
-          {isRec && (
+          {isRec && !isSaving && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: canFinish ? 1 : 0.3, y: 0 }}
@@ -1798,6 +1873,15 @@ const SpeakingExamEngine = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isSaving && (
+        <div className="fixed inset-0 z-50 bg-white/80 flex flex-col items-center justify-center gap-3 px-6 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#24085a]" />
+          <p className="text-sm font-medium text-[#24085a]">
+            Đang lưu bài nói của bạn, vui lòng không tải lại trang...
+          </p>
+        </div>
+      )}
 
       {exitDialog}
     </div>
