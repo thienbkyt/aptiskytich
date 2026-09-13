@@ -401,7 +401,7 @@ const VocabStudy = () => {
               <div className="flex items-center gap-2 flex-wrap justify-center">
                 <Button
                   variant={isLearned ? "secondary" : "default"}
-                  onClick={() => markLearned(word.word)}
+                  onClick={() => markLearned(word)}
                   disabled={isLearned}
                   className={isLearned ? "" : "bg-[hsl(170,55%,40%)] hover:bg-[hsl(170,55%,34%)] text-white"}
                 >
