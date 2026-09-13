@@ -53,7 +53,7 @@ import {
 } from "./speakingGradingV2";
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
 import UpgradeLock from "@/components/pro/UpgradeLock";
-import { uploadSpeakingBlobs } from "@/lib/speakingUpload";
+import { uploadSpeakingBlob } from "@/lib/speakingUpload";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 
@@ -173,6 +173,12 @@ const SpeakingExamEngine = ({
   // Background-queue grading state (single-part mode).
   const [queuePending, setQueuePending] = useState(false);
   const [queueTimedOut, setQueueTimedOut] = useState(false);
+  // Single-part mode: true while the part is being persisted + recordings uploaded.
+  const [isSaving, setIsSaving] = useState(false);
+  // Bumped by the "Tải lại ghi âm" button to re-run upload + grading.
+  const [uploadRetryTick, setUploadRetryTick] = useState(0);
+  // Paths already uploaded during handleFinish, reused by the grading effect.
+  const uploadedPathsRef = useRef<(string | null)[]>([]);
 
 
   useExitWarning(phase !== "start" && phase !== "instructions" && phase !== "grading" && phase !== "done");
@@ -490,10 +496,21 @@ const SpeakingExamEngine = ({
     (async () => {
       try {
         const testResultId = testResultIdRef.current ?? null;
-        const audioPaths = await uploadSpeakingBlobs(
-          blobs,
-          testResultId || examSetId || "adhoc",
-          partType,
+        const knownPaths = uploadedPathsRef.current;
+        const audioPaths = await Promise.all(
+          blobs.map(async (b, idx) => {
+            const existing = knownPaths[idx] ?? null;
+            if (existing) return existing;
+            if (!b) return null;
+            const p = await uploadSpeakingBlob(
+              b,
+              testResultId || examSetId || "adhoc",
+              partType,
+              idx,
+            );
+            if (p) knownPaths[idx] = p;
+            return p;
+          }),
         );
 
         const queued = await enqueueGradingFallback({
@@ -583,7 +600,7 @@ const SpeakingExamEngine = ({
     })();
 
     return () => { cancelled = true; };
-  }, [phase, fullFlow, partType, part1Data, part2Data, part3Data, part4Data, examSetId, fullTestSessionId]);
+  }, [phase, fullFlow, partType, part1Data, part2Data, part3Data, part4Data, examSetId, fullTestSessionId, uploadRetryTick]);
 
 
 
