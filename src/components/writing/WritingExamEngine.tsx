@@ -372,28 +372,33 @@ const WritingExamEngine = ({
       // Poll every 6s, up to 5 minutes.
       const { supabase } = await import("@/integrations/supabase/client");
       const deadline = Date.now() + 5 * 60 * 1000;
+      // Improved version / upgrade tips live in test_results.review_snapshot
+      // (items[0].ai), not in writing_question_gradings. Allow up to 2 extra
+      // poll rounds for the snapshot to be written, then show without them.
+      let snapshotRetriesLeft = 2;
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 6000));
-        let { data, error: gradingQueryError } = await (supabase as any)
+        const { data, error: gradingQueryError } = await (supabase as any)
           .from("writing_question_gradings")
-          .select("part_score, max_points, grammar_errors, spelling_errors, feedback, improved_version, upgrade_tips")
+          .select("part_score, max_points, grammar_errors, spelling_errors, feedback")
           .eq("test_result_id", trid)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (gradingQueryError && /improved_version|upgrade_tips/i.test(gradingQueryError.message || "")) {
-          const fallback = await (supabase as any)
-            .from("writing_question_gradings")
-            .select("part_score, max_points, grammar_errors, spelling_errors, feedback")
-            .eq("test_result_id", trid)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          data = fallback.data;
-          gradingQueryError = fallback.error;
-        }
         if (gradingQueryError) continue;
         if (!data) continue;
+        const { data: trRow } = await (supabase as any)
+          .from("test_results")
+          .select("review_snapshot")
+          .eq("id", trid)
+          .maybeSingle();
+        const snapshotAi = (trRow?.review_snapshot as any)?.items?.[0]?.ai ?? null;
+        const improvedVersion = snapshotAi?.improvedVersion || "";
+        const upgradeTips = snapshotAi?.upgradeTips || "";
+        if (!improvedVersion && snapshotRetriesLeft > 0) {
+          snapshotRetriesLeft -= 1;
+          continue;
+        }
         setV2Grading({
           partType,
           partScore: Math.round(Number(data.part_score) || 0),
@@ -403,8 +408,8 @@ const WritingExamEngine = ({
           grammarErrors: (data.grammar_errors as any) || [],
           spellingErrors: (data.spelling_errors as any) || [],
           feedback: data.feedback || "",
-          improvedVersion: data.improved_version || "",
-          upgradeTips: data.upgrade_tips || "",
+          improvedVersion,
+          upgradeTips,
         } as WritingGradingResult);
         setQueuePending(false);
         setV2Loading(false);
