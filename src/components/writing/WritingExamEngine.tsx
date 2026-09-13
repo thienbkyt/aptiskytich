@@ -12,6 +12,7 @@ import WritingPart2Social from "@/components/writing/WritingPart2Social";
 import WritingPart3Questions from "@/components/writing/WritingPart3Questions";
 import WritingPart4TwoEmails from "@/components/writing/WritingPart4TwoEmails";
 import WritingResults from "@/components/writing/WritingResults";
+import WritingGradingReview from "@/components/writing/WritingGradingReview";
 import SpeakingFooter from "@/components/speaking/SpeakingFooter";
 import BottomNavBar from "@/components/reading/BottomNavBar";
 import AdminExamControls from "@/components/exam/AdminExamControls";
@@ -373,13 +374,25 @@ const WritingExamEngine = ({
       const deadline = Date.now() + 5 * 60 * 1000;
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 6000));
-        const { data } = await (supabase as any)
+        let { data, error: gradingQueryError } = await (supabase as any)
           .from("writing_question_gradings")
-          .select("part_score, max_points, grammar_errors, spelling_errors, feedback")
+          .select("part_score, max_points, grammar_errors, spelling_errors, feedback, improved_version, upgrade_tips")
           .eq("test_result_id", trid)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
+        if (gradingQueryError && /improved_version|upgrade_tips/i.test(gradingQueryError.message || "")) {
+          const fallback = await (supabase as any)
+            .from("writing_question_gradings")
+            .select("part_score, max_points, grammar_errors, spelling_errors, feedback")
+            .eq("test_result_id", trid)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          data = fallback.data;
+          gradingQueryError = fallback.error;
+        }
+        if (gradingQueryError) continue;
         if (!data) continue;
         setV2Grading({
           partType,
@@ -390,7 +403,8 @@ const WritingExamEngine = ({
           grammarErrors: (data.grammar_errors as any) || [],
           spellingErrors: (data.spelling_errors as any) || [],
           feedback: data.feedback || "",
-          improvedVersion: "",
+          improvedVersion: data.improved_version || "",
+          upgradeTips: data.upgrade_tips || "",
         } as WritingGradingResult);
         setQueuePending(false);
         setV2Loading(false);
@@ -778,108 +792,11 @@ const WritingExamEngine = ({
         )}
 
 
-        {(reviewMode || isReviewing) && effectiveGrading && (() => {
-          const allErrors = [
-            ...(effectiveGrading.grammarErrors || []).map((e) => ({ ...e, kind: "Ngữ pháp" })),
-            ...(effectiveGrading.spellingErrors || []).map((e) => ({ ...e, kind: "Chính tả" })),
-          ];
-          return (
-            <div className="mt-4 space-y-4">
-              <div className="bg-card border border-border rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-heading font-bold text-foreground">Nhận xét của AI Kỳ Tích</h3>
-                  <span className="px-3 py-1 rounded-full text-sm font-bold bg-primary/10 text-primary">
-                    {effectiveGrading.partScore}/{effectiveGrading.maxPoints}
-                  </span>
-                </div>
-                {effectiveGrading.feedback && (() => {
-                  const raw = String(effectiveGrading.feedback);
-                  const SECTIONS: { label: string; icon: string; cls: string }[] = [
-                    { label: "Hoàn thành nhiệm vụ", icon: "🎯", cls: "bg-blue-500/5 border-blue-500/20" },
-                    { label: "Ngữ pháp & chính tả", icon: "📝", cls: "bg-rose-500/5 border-rose-500/20" },
-                    { label: "Từ vựng", icon: "📚", cls: "bg-emerald-500/5 border-emerald-500/20" },
-                    { label: "Mạch lạc", icon: "🔗", cls: "bg-violet-500/5 border-violet-500/20" },
-                    { label: "Gợi ý nâng cao", icon: "🚀", cls: "bg-amber-500/5 border-amber-500/20" },
-                  ];
-                  // Match "**Label**" (with optional trailing colon) anywhere; split into segments.
-                  const pattern = new RegExp(`\\*\\*\\s*(${SECTIONS.map(s => s.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\s*\\*\\*[\\s:：]*`, "gi");
-                  const matches = Array.from(raw.matchAll(pattern));
-                  if (matches.length === 0) {
-                    // Fallback: render **bold** markers so any labels the model produced still pop.
-                    const parts = raw.split(/(\*\*[^*]+\*\*)/g);
-                    return (
-                      <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                        {parts.map((p, i) => {
-                          const m = p.match(/^\*\*([^*]+)\*\*$/);
-                          return m ? <strong key={i} className="text-foreground font-semibold">{m[1]}</strong> : <span key={i}>{p}</span>;
-                        })}
-                      </p>
-                    );
-                  }
-                  const chunks: { label: string; content: string }[] = [];
-                  for (let i = 0; i < matches.length; i++) {
-                    const m = matches[i];
-                    const start = (m.index ?? 0) + m[0].length;
-                    const end = i + 1 < matches.length ? (matches[i + 1].index ?? raw.length) : raw.length;
-                    chunks.push({ label: m[1], content: raw.slice(start, end).trim() });
-                  }
-                  return (
-                    <div className="space-y-3">
-                      {chunks.map((c, idx) => {
-                        const meta = SECTIONS.find(s => s.label.toLowerCase() === c.label.toLowerCase()) ?? SECTIONS[0];
-                        return (
-                          <div key={idx} className={`rounded-xl border p-4 ${meta.cls}`}>
-                            <p className="text-sm font-heading font-bold text-foreground mb-1.5 flex items-center gap-2">
-                              <span aria-hidden>{meta.icon}</span>
-                              <span>{meta.label}</span>
-                            </p>
-                            <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-wrap">{c.content}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              <div className="bg-card border border-border rounded-2xl p-6">
-                <h3 className="text-sm font-heading font-bold text-foreground mb-4">❌ Lỗi cần sửa</h3>
-                {allErrors.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">Không phát hiện lỗi ngữ pháp/chính tả.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {allErrors.map((m, i) => (
-                      <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">{m.kind}</p>
-                        <p className="text-sm text-red-600 dark:text-red-400 line-through mb-1">&ldquo;{m.original}&rdquo;</p>
-                        <p className="text-sm text-green-600 dark:text-green-400 font-medium mb-1">→ &ldquo;{m.corrected}&rdquo;</p>
-                        <p className="text-xs text-muted-foreground">{m.explanation}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {(effectiveGrading.improvedVersion || effectiveGrading.upgradeTips) && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 space-y-3">
-                  {effectiveGrading.improvedVersion && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-400 mb-1">📝 Bài mẫu Kỳ Tích — viết lại từ bài của bạn</p>
-                      <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{effectiveGrading.improvedVersion}</p>
-                    </div>
-                  )}
-                  {effectiveGrading.upgradeTips && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase text-primary mb-1">🎯 Mẹo đạt điểm cao Aptis</p>
-                      <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{effectiveGrading.upgradeTips}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-            </div>
-          );
-        })()}
+        {(reviewMode || isReviewing) && effectiveGrading && (
+          <div className="mt-4">
+            <WritingGradingReview grading={effectiveGrading} />
+          </div>
+        )}
       </div>
     </div>
     </TimerProvider>
