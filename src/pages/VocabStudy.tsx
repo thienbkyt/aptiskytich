@@ -109,28 +109,36 @@ const VocabStudy = () => {
   }, [user, id]);
 
   const markLearned = useCallback(
-    async (wordText: string) => {
+    async (w: SystemVocabWord | string) => {
       if (!user) {
         toast({ title: "Vui lòng đăng nhập để lưu tiến độ", variant: "destructive" });
         return;
       }
+      const wordObj = typeof w === "string" ? words.find((x) => x.word === w) : w;
+      if (!wordObj) return;
       const { error } = await supabase.from("vocab_items").upsert(
         {
           user_id: user.id,
-          word: wordText,
+          word: wordObj.word,
           vocab_set_id: id!,
           status: "learned",
           review_count: 1,
           last_reviewed_at: new Date().toISOString(),
+          phonetic: wordObj.phonetic ?? "",
+          meaning: wordObj.meaning ?? "",
+          example_en: wordObj.example_en ?? "",
+          example_vi: wordObj.example_vi ?? "",
+          word_family: wordObj.word_family ?? [],
+          word_type: wordObj.word_type ?? "",
         },
         { onConflict: "user_id,word,vocab_set_id" },
       );
       if (!error) {
-        setLearnedWords((prev) => new Set(prev).add(wordText));
-        toast({ title: `Đã đánh dấu "${wordText}" là đã thuộc ✓` });
+        setLearnedWords((prev) => new Set(prev).add(wordObj.word));
+        toast({ title: `Đã đánh dấu "${wordObj.word}" là đã thuộc ✓` });
       }
     },
-    [user, id],
+    [user, id, words],
   );
 
   const saveToList = useCallback(
