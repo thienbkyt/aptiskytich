@@ -374,13 +374,25 @@ const WritingExamEngine = ({
       const deadline = Date.now() + 5 * 60 * 1000;
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 6000));
-        const { data } = await (supabase as any)
+        let { data, error: gradingQueryError } = await (supabase as any)
           .from("writing_question_gradings")
           .select("part_score, max_points, grammar_errors, spelling_errors, feedback, improved_version, upgrade_tips")
           .eq("test_result_id", trid)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
+        if (gradingQueryError && /improved_version|upgrade_tips/i.test(gradingQueryError.message || "")) {
+          const fallback = await (supabase as any)
+            .from("writing_question_gradings")
+            .select("part_score, max_points, grammar_errors, spelling_errors, feedback")
+            .eq("test_result_id", trid)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          data = fallback.data;
+          gradingQueryError = fallback.error;
+        }
+        if (gradingQueryError) continue;
         if (!data) continue;
         setV2Grading({
           partType,
