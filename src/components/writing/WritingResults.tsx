@@ -1,9 +1,9 @@
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import { Eye, Loader2 } from "lucide-react";
 import UpgradeLock from "@/components/pro/UpgradeLock";
-import { splitWritingErrors } from "@/lib/writingErrorFilter";
 import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
 import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
+import WritingGradingReview from "@/components/writing/WritingGradingReview";
 
 
 interface SubmissionPart {
@@ -79,13 +79,6 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
     );
   }
 
-  const clean = splitWritingErrors(grading.grammarErrors, grading.spellingErrors);
-  const allErrors = [
-    ...clean.grammarErrors.map((e) => ({ ...e, kind: "Ngữ pháp" })),
-    ...clean.spellingErrors.map((e) => ({ ...e, kind: "Chính tả" })),
-  ];
-
-
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Overall Score */}
@@ -102,10 +95,9 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
             Trừ mạch lạc: −{grading.coherencePenaltyPercent}%
           </p>
         )}
-        {grading.feedback && (
-          <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{grading.feedback}</p>
-        )}
       </div>
+
+      <WritingGradingReview grading={grading} />
 
       {/* Submission display */}
       {submission && submission.length > 0 && (
@@ -128,27 +120,10 @@ const WritingResults = ({ isGrading, grading, onExit, submission, onReview, quot
                 </div>
                 {s.sampleAnswer && (
                   <div className="bg-success/5 border border-success/20 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-success mb-1">💡 Bài viết mẫu</p>
+                    <p className="text-xs font-semibold text-success mb-1">💡 Bài mẫu tham khảo của đề</p>
                     <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{s.sampleAnswer}</p>
                   </div>
                 )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Errors */}
-      {allErrors.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-6">
-          <h3 className="text-sm font-heading font-bold text-foreground mb-4">❌ Lỗi cần sửa</h3>
-          <div className="space-y-3">
-            {allErrors.map((m, i) => (
-              <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-xl p-4">
-                <p className="text-xs font-semibold text-muted-foreground mb-1">{m.kind}</p>
-                <p className="text-sm text-red-600 dark:text-red-400 line-through mb-1">"{m.original}"</p>
-                <p className="text-sm text-green-600 dark:text-green-400 font-medium mb-1">→ "{m.corrected}"</p>
-                <p className="text-xs text-muted-foreground">{m.explanation}</p>
               </div>
             ))}
           </div>
