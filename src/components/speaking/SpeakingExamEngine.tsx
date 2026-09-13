@@ -1524,8 +1524,17 @@ const SpeakingExamEngine = ({
 
 
             {v2Error && (
-              <div className="bg-card border border-rose-500/30 rounded-2xl p-6 text-center">
+              <div className="bg-card border border-rose-500/30 rounded-2xl p-6 text-center space-y-4">
                 <p className="text-sm text-rose-600 dark:text-rose-400">{v2Error}</p>
+                {!fullFlow && v2Error.includes("Không tải được file ghi âm") && (
+                  <button
+                    onClick={handleRetryUpload}
+                    disabled={isSaving}
+                    className="bg-[#24085a] text-white hover:bg-[#1a0640] disabled:opacity-50 rounded-lg px-6 py-2.5 text-sm font-medium transition-colors"
+                  >
+                    Tải lại ghi âm
+                  </button>
+                )}
               </div>
             )}
 
@@ -1831,7 +1840,7 @@ const SpeakingExamEngine = ({
           )}
 
           {/* Finish Recording button - only shows after 10s of recording */}
-          {isRec && (
+          {isRec && !isSaving && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: canFinish ? 1 : 0.3, y: 0 }}
@@ -1864,6 +1873,15 @@ const SpeakingExamEngine = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isSaving && (
+        <div className="fixed inset-0 z-50 bg-white/80 flex flex-col items-center justify-center gap-3 px-6 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#24085a]" />
+          <p className="text-sm font-medium text-[#24085a]">
+            Đang lưu bài nói của bạn, vui lòng không tải lại trang...
+          </p>
+        </div>
+      )}
 
       {exitDialog}
     </div>
