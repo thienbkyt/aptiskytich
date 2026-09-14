@@ -8,6 +8,20 @@ import { logClientError } from "@/lib/clientErrorLog";
 
 registerPWA();
 
+// Re-save any exam result that failed to persist (no session / offline).
+try {
+  const flush = () =>
+    import("@/lib/saveExamResult")
+      .then((m) => m.flushPendingExamResults())
+      .catch(() => {});
+  flush();
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") flush();
+  });
+} catch {
+  /* ignore */
+}
+
 // Kick the bootstrap RPC as early as possible if a Supabase session already
 // lives in localStorage. This fires in parallel with the rest of the JS bundle
 // loading so React Query can consume the resolved promise instead of issuing a
