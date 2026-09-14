@@ -143,13 +143,13 @@ Deno.serve(async (req) => {
   // ── 4) How much of the backlog is left for the next hourly run ───────────
   let remaining = 0;
   {
-    const { count, error } = await objects
-      .select("id", { count: "exact", head: true })
-      .eq("bucket_id", BUCKET)
-      .lt("created_at", cutoff);
+    const { data, error } = await supabase.rpc("count_old_speaking_recordings", {
+      _cutoff: cutoff,
+    });
     if (error) errors.push("remaining: " + error.message);
-    remaining = count ?? 0;
+    remaining = typeof data === "number" ? data : 0;
   }
+
 
   return new Response(
     JSON.stringify({ cutoff, cutoffV2, scanned, v2Candidates, deleted, remaining, errors }),
