@@ -655,14 +655,7 @@ Deno.serve(async (req) => {
         if (step1.error) {
           const errMsg = `transcribe: ${String(step1.error.body?.error || `HTTP ${step1.error.status}`)}`;
           const permanent = isPermanentFailure(step1.error.status, step1.error.body);
-          const isFinal = permanent || (job.attempts || 0) >= (job.max_attempts || 3);
-          await admin.from("grading_jobs").update({
-            status: isFinal ? "failed" : "pending",
-            claimed_at: null,
-            last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
-            finished_at: isFinal ? new Date().toISOString() : null,
-          }).eq("id", job.id);
-          results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
           continue;
         }
         // Step 2: rubric grading (unchanged prompt), separate 60s budget.
@@ -689,40 +682,19 @@ Deno.serve(async (req) => {
           } catch (persistErr: any) {
             const errMsg = `persist: ${persistErr?.message || String(persistErr)}`;
             console.error("[worker] persist error:", errMsg);
-            const isFinal = (job.attempts || 0) >= (job.max_attempts || 3);
-            await admin.from("grading_jobs").update({
-              status: isFinal ? "failed" : "pending",
-              claimed_at: null,
-              last_error: errMsg,
-              // Keep raw_response so operators can inspect / retry persist manually.
-              raw_response: body,
-              finished_at: isFinal ? new Date().toISOString() : null,
-            }).eq("id", job.id);
-            results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+            // Keep raw_response so operators can inspect / retry persist manually.
+            results.push({ id: job.id, status: await settleFailure(job, errMsg, false, { raw_response: body }) });
           }
         } else {
           const errMsg = (body && body.error) ? String(body.error) : `HTTP ${status}`;
           const permanent = isPermanentFailure(status, body);
-          const isFinal = permanent || (job.attempts || 0) >= (job.max_attempts || 3);
-          await admin.from("grading_jobs").update({
-            status: isFinal ? "failed" : "pending",
-            claimed_at: null,
-            last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
-            finished_at: isFinal ? new Date().toISOString() : null,
-          }).eq("id", job.id);
-          results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
         }
       } catch (e: any) {
         const errMsg = e?.message || String(e);
-        const isFinal = (job.attempts || 0) >= (job.max_attempts || 3);
-        await admin.from("grading_jobs").update({
-          status: isFinal ? "failed" : "pending",
-          claimed_at: null,
-          last_error: errMsg,
-          finished_at: isFinal ? new Date().toISOString() : null,
-        }).eq("id", job.id);
-        results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+        results.push({ id: job.id, status: await settleFailure(job, errMsg, false) });
       }
+
     }
 
     return new Response(JSON.stringify({ processed: results.length, results }), {
