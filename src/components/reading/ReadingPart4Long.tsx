@@ -125,7 +125,7 @@ const ReadingPart4Long = ({
     const rect = triggerEl.getBoundingClientRect();
     const bottomSpace = window.innerHeight - rect.bottom;
     const topSpace = rect.top;
-    if (bottomSpace < 280 && topSpace > bottomSpace) {
+    if (bottomSpace < 360 && topSpace > bottomSpace) {
       setDropdownDir("up");
     } else {
       setDropdownDir("down");
@@ -243,7 +243,7 @@ const ReadingPart4Long = ({
                       </button>
                       {openDropdown === pIdx && (
                         <div
-                          className={`absolute z-50 left-0 right-0 max-h-64 overflow-y-auto bg-popover border border-border rounded-lg shadow-lg ${
+                          className={`absolute z-50 left-0 right-0 max-h-[min(70vh,480px)] overflow-y-auto overscroll-contain bg-popover border border-border rounded-lg shadow-lg ${
                             dropdownDir === "up" ? "bottom-full mb-1" : "top-full mt-1"
                           }`}
                         >
