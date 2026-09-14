@@ -595,10 +595,11 @@ async function persistJobResult(job: any, body: any) {
 // ─── failure handling: back off instead of losing the submission ────────────
 /**
  * A transient failure (timeout, 504, network, transient persist error) NEVER
- * strands a submission: the job returns to 'pending' with a 10-minute × attempts
- * backoff. Only a [permanent] error or RETRY_CEILING spent attempts settle it as
- * 'failed', and then the reason is mirrored into test_results.grade_payload so
- * the History screen can offer "chấm lại" instead of showing a 0.
+ * strands a submission: the job returns to 'pending' with a backoff that ramps up
+ * with attempts — 1 minute, 3 minutes, then 10 minutes × attempts. Only a
+ * [permanent] error or RETRY_CEILING spent attempts settle it as 'failed', and
+ * then the reason is mirrored into test_results.grade_payload so the History
+ * screen can offer "chấm lại" instead of showing a 0.
  */
 async function settleFailure(
   job: any,
@@ -636,7 +637,10 @@ async function settleFailure(
     return "failed";
   }
 
-  const nextRunAt = new Date(Date.now() + 10 * 60_000 * Math.max(attempts, 1)).toISOString();
+  let delayMinutes = 1;
+  if (attempts === 2) delayMinutes = 3;
+  else if (attempts >= 3) delayMinutes = 10 * attempts;
+  const nextRunAt = new Date(Date.now() + delayMinutes * 60_000).toISOString();
   await admin.from("grading_jobs").update({
     status: "pending",
     claimed_at: null,
