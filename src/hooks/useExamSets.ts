@@ -129,9 +129,11 @@ export const fetchExamQuestionsForSets = async (
 ): Promise<ExamQuestionRow[]> => {
   const ids = Array.from(new Set(setIds.filter(Boolean)));
   if (ids.length === 0) return [];
-  const { data, error } = await withTimeout(
+  const res: any = await withTimeout<any>(
     (supabase as any).rpc("get_exam_questions", { _set_ids: ids }),
   );
+  const data = res?.data, error = res?.error;
+
   if (error) {
     if (isAccessLimit(error)) {
       toast.error("Bạn mở đề quá nhanh, thử lại sau 1 giờ");
