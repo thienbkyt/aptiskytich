@@ -395,8 +395,9 @@ const WritingExamEngine = ({
           .limit(1)
           .maybeSingle();
         const parts = (wsrRow?.parts as any) ?? null;
-        const improvedVersion = parts?.[partType]?.improvedVersion || "";
-        const upgradeTips = parts?.[partType]?.upgradeTips || "";
+        const taskKey = partType.startsWith("task") ? partType : "task" + partType.replace("part", "");
+        const improvedVersion = parts?.[taskKey]?.improvedVersion || "";
+        const upgradeTips = parts?.[taskKey]?.upgradeTips || "";
         if (!improvedVersion && skillResultRetriesLeft > 0) {
           skillResultRetriesLeft -= 1;
           continue;
