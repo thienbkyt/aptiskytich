@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getDeviceType } from "@/lib/deviceInfo";
+import { getAudioDiag } from "@/components/exam/LimitedAudioPlayer";
 
 type Category = "content" | "functional";
 type ContentReason = "wrong_answer" | "audio" | "image" | "content" | "other";
