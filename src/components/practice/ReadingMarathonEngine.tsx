@@ -420,8 +420,36 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           const wrongIds = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
           if (wrongIds.length) wrongQBySet[r.examSetId] = wrongIds;
         });
-        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
+        const setResults = Object.fromEntries(reviewable_.map((r) => [r.examSetId, { correct: r.correct, total: r.total }]));
+        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, updatedAt: Date.now() });
         clearMarathonProgress("reading", progPart);
+        window.dispatchEvent(new Event("exam-result-saved"));
+      } else if (opts?.finalize && isRetryMode && !persist && !isSingleWrongRetry) {
+        // Retry-only run ("Làm lại câu sai" without persisting): merge into the
+        // previous marathon result instead of standing alone.
+        const merged = mergeMarathonLastAfterRetry("reading", progPart, reviewable_.map((r) => ({
+          examSetId: r.examSetId,
+          correct: r.correct,
+          total: r.total,
+          wrongQuestionIds: r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id),
+        })));
+        if (merged) {
+          await upsertMarathonResult({
+            testResultId: testResultIdRef.current,
+            sessionId: sessionIdRef.current,
+            skill: "reading",
+            correct: merged.correct,
+            total: merged.total,
+            extraSkillScores: {
+              label: `Marathon · ${partName} · sửa câu sai`,
+              partType,
+              done: reviewable_.length,
+              totalSets: Object.keys(merged.setResults ?? {}).length || sets.length,
+            },
+            reviewSnapshot: snap,
+          });
+          window.dispatchEvent(new Event("exam-result-saved"));
+        }
       }
     } finally {
       savingRef.current = false;
