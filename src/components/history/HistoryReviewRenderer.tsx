@@ -389,6 +389,11 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       <>
         {writingGrading === null && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
+            <GradingFailedRetryBox
+              testResultId={testResultId}
+              skill="writing"
+              hasResult={false}
+            />
             <WritingGradingStatusBanner
               pendingParts={writingStatus.pendingParts}
               failedParts={writingStatus.failedParts}
