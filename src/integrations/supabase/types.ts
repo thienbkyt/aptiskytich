@@ -912,6 +912,66 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_grading_jobs_defer2_20260914: {
+        Row: {
+          attempts: number | null
+          claimed_at: string | null
+          created_at: string | null
+          finished_at: string | null
+          id: string | null
+          last_error: string | null
+          max_attempts: number | null
+          next_run_at: string | null
+          part: string | null
+          payload: Json | null
+          raw_response: Json | null
+          requeue_count: number | null
+          skill: string | null
+          status: string | null
+          test_result_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          claimed_at?: string | null
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          next_run_at?: string | null
+          part?: string | null
+          payload?: Json | null
+          raw_response?: Json | null
+          requeue_count?: number | null
+          skill?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          claimed_at?: string | null
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string | null
+          last_error?: string | null
+          max_attempts?: number | null
+          next_run_at?: string | null
+          part?: string | null
+          payload?: Json | null
+          raw_response?: Json | null
+          requeue_count?: number | null
+          skill?: string | null
+          status?: string | null
+          test_result_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_grading_jobs_retry_20260914: {
         Row: {
           at_time: string | null
