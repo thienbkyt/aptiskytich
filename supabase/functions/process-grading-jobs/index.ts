@@ -709,9 +709,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const results: Array<{ id: string; status: string }> = [];
-
-    for (const job of (jobs || []) as any[]) {
+    // Grade every claimed job in parallel: each job's steps are independent and
+    // the wall-clock budget of one run is shared by all of them.
+    const runJob = async (job: any): Promise<{ id: string; status: string }> => {
       try {
         // Step 1 (speaking only): transcribe, cached on the job payload.
         const step1 = await ensureSpeakingTranscript(job);
