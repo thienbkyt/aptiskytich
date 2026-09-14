@@ -487,6 +487,12 @@ const SpeakingExamEngine = ({
       return;
     }
 
+    const known = uploadedPathsRef.current;
+    if (known.length > 0 && !known.some(Boolean)) {
+      setIsGrading(false);
+      return;
+    }
+
     let cancelled = false;
     setIsGrading(true);
     setV2Error(null);
