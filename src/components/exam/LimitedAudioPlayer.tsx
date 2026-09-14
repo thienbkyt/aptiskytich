@@ -49,6 +49,34 @@ const releaseIfMine = (el: HTMLAudioElement | null) => {
 const storeKey = (qk: string | number | undefined, src: string) =>
   `${qk ?? "_"}::${src}`;
 
+/** Diagnostics snapshot of the most recently rendered player on the page. */
+export type AudioDiag = {
+  src: string;
+  playCount: number;
+  maxPlays: number | null;
+  disabled: boolean;
+  isPlaying: boolean;
+  loadingAudio: boolean;
+  loadPercent: number | null;
+  errorMsg: string;
+  blocked: boolean;
+  readyState: number | null;
+  networkState: number | null;
+  currentTime: number | null;
+  duration: number | null;
+  srcKind: "blob" | "stream" | null;
+};
+
+let lastDiagRef: (() => AudioDiag) | null = null;
+
+export function getAudioDiag(): AudioDiag | null {
+  try {
+    return lastDiagRef ? lastDiagRef() : null;
+  } catch {
+    return null;
+  }
+}
+
 const readCount = (key: string): number => {
   const mem = playCountStore.get(key);
   if (typeof mem === "number") return mem;
