@@ -1,4 +1,21 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logClientError } from "@/lib/clientErrorLog";
+
+/**
+ * The `audio` bucket is private → signing needs a live session. Right after a
+ * reload the session may still be hydrating, so wait briefly for it.
+ */
+async function waitForSession(maxMs = 3000) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) return session;
+  const deadline = Date.now() + maxMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 250));
+    const { data: { session: s } } = await supabase.auth.getSession();
+    if (s) return s;
+  }
+  return null;
+}
 
 /**
  * Resolves an audio_url value to a playable URL.
