@@ -189,6 +189,7 @@ function calc(){
  const nuF=(D.new_users||[]).filter(x=>inRange(x.d));
  const nuR=nuF.reduce((a,x)=>a+x.n,0);
  const buyF=(D.buyers_daily||[]).filter(x=>inRange(x.d));
+ const visF=(D.traffic_daily||[]).filter(x=>inRange(x.d));
  const fdF=(D.funnel_daily||[]).filter(x=>inRange(x.d));
  const linkTao=fdF.reduce((a,x)=>a+ +x.tao,0),linkTra=fdF.reduce((a,x)=>a+ +x.tra,0),boDo=linkTao-linkTra;
  const doneRate=linkTao?linkTra/linkTao:0;
@@ -198,7 +199,7 @@ function calc(){
  const linkTaoM=fdM.reduce((a,x)=>a+ +x.tao,0),linkTraM=fdM.reduce((a,x)=>a+ +x.tra,0);
  return {S,subs,fn,daily,today,curM,prevM,dayN,daysM,rev,ord,expPaid,expUnpaid,fund0,expAll,fundNow,fundAfter,
   pnl,arpu,dF,eF,revR,ordR,expR,arpuR,revPerDay,revM,ordM,projRev,revByM,ordByM,expByM,months,byCat,byGroup,
-  planAgg,nuM,nuR,nuF,buyF,linkTao,linkTra,boDo,doneRate,phutTb,linkTaoM,linkTraM,
+  planAgg,nuM,nuR,nuF,buyF,visF,linkTao,linkTra,boDo,doneRate,phutTb,linkTaoM,linkTraM,
   unpaid:D.unpaid||[],byHour:(D.by_hour||[]).slice(0,5)};}
 
 function tOverview(C){
@@ -219,10 +220,13 @@ function tOverview(C){
  </div>
  <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${vnd(C.revR)}</b> · ${num(C.ordR)} đơn</span></div>
  <div class="chart"><canvas id="c1"></canvas></div>
+ <div class="sec-h"><h2>Lượt truy cập web theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${num(C.visF.reduce((a,x)=>a+ +x.n,0))}</b> · dữ liệu có từ 01/08</span></div>
+ <div class="chart"><canvas id="c_vis"></canvas></div>
  <div class="sec-h"><h2>User mới theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${num(C.nuR)}</b></span></div>
  <div class="chart"><canvas id="c_nu"></canvas></div>
  <div class="sec-h"><h2>Số người trả phí theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${num(C.buyF.reduce((a,x)=>a+ +x.n,0))}</b> lượt · người riêng biệt, không phải số đơn</span></div>
  <div class="chart"><canvas id="c_buy"></canvas></div>`;
+ barSm("c_vis",C.visF,C.today,"#2f6ea5","lượt truy cập");
  barSm("c_nu",C.nuF,C.today,"#0e7490","user mới");
  barSm("c_buy",C.buyF,C.today,"#047857","người trả phí");
  mkChart("c1",{type:"bar",
