@@ -125,7 +125,16 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
   }
   inFlight.add(lockKey);
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    let user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+      // One refresh attempt — a stale/expired token is the common cause.
+      try {
+        await supabase.auth.refreshSession();
+        user = (await supabase.auth.getUser()).data.user;
+      } catch {
+        /* noop */
+      }
+    }
     if (!user) {
       const { logClientError } = await import("@/lib/clientErrorLog");
       logClientError("save_no_session", new Error("no auth session when saving exam result"), {
@@ -133,6 +142,7 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
         examSetId: opts.examSetId ?? null,
         fullTestSessionId: opts.fullTestSessionId ?? null,
       });
+      if (!(opts as any).__skipQueue) queuePendingResult(opts);
       return null;
     }
 
