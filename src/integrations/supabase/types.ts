@@ -3224,30 +3224,6 @@ export type Database = {
         }
         Relationships: []
       }
-      exam_access_log: {
-        Row: {
-          day: string
-          exam_set_id: string
-          first_at: string
-          hits: number
-          user_id: string
-        }
-        Insert: {
-          day: string
-          exam_set_id: string
-          first_at?: string
-          hits?: number
-          user_id: string
-        }
-        Update: {
-          day?: string
-          exam_set_id?: string
-          first_at?: string
-          hits?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
       exam_gradings: {
         Row: {
           created_at: string
@@ -5896,41 +5872,6 @@ export type Database = {
           sort: number
           title: string
         }[]
-      }
-      get_exam_access_alerts: {
-        Args: never
-        Returns: {
-          day: string
-          email: string
-          set_count: number
-          submissions: number
-          user_id: string
-        }[]
-      }
-      get_exam_questions: {
-        Args: { _set_ids: string[] }
-        Returns: {
-          audio_url: string | null
-          correct_answer: number | null
-          created_at: string
-          exam_set_id: string
-          explanation: string | null
-          extra_data: Json | null
-          id: string
-          image_url: string | null
-          options: Json | null
-          order_index: number
-          question_text: string
-          question_type: string
-          response_time: number | null
-          updated_at: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "exam_questions"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       get_full_tests: { Args: { p_category: string }; Returns: Json }
       get_intro_video: { Args: never; Returns: Json }

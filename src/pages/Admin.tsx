@@ -8,7 +8,6 @@ import ImportCenter from "@/components/admin/import/ImportCenter";
 import VocabManager from "@/components/admin/VocabManager";
 import MergeManager from "@/components/admin/merge/MergeManager";
 import BlogManager from "@/components/admin/blog/BlogManager";
-import ExamScrapeAlertCard from "@/components/admin/ExamScrapeAlertCard";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -88,12 +87,7 @@ const Admin = () => {
             </div>
           </div>
 
-          <div className="mb-6">
-            <ExamScrapeAlertCard />
-          </div>
-
           <Tabs defaultValue="import-center" className="space-y-6">
-
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="import-center" className="gap-2">
                 <FileSpreadsheet className="w-4 h-4" /> Import Center

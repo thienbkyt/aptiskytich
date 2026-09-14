@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ListChecks, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { readingPartLabel, normalizePart, fetchExamQuestionsForSets } from "@/hooks/useExamSets";
+import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
 import { toReadingPart2 } from "@/lib/examTransformers";
 import { grammarGroupIndices } from "@/lib/grammarGroups";
 import { getSkillBand, toScaledScore } from "@/data/questions";
@@ -292,12 +292,12 @@ const HistoryReviewPager = ({ pages, initialPageIdx = 0, userId, onExit }: Props
         ? (snapshotQuestions as ReviewQuestion[])
         : [];
       if (!snapshotQuestions && qIds.length > 0) {
-        const setIds = [current?.examSetId].filter(Boolean) as string[];
-        const qs = await fetchExamQuestionsForSets(setIds).catch(() => []);
-        const wanted = new Set(qIds);
-        questions = ((qs || []) as any[]).filter((q) => wanted.has(q.id)) as ReviewQuestion[];
+        const { data: qs } = await supabase
+          .from("exam_questions")
+          .select("id,question_text,options,correct_answer,explanation,order_index,question_type,extra_data")
+          .in("id", qIds);
+        questions = (qs || []) as ReviewQuestion[];
       }
-
       if (cancelled) return;
       setDataByPage((prev) => ({
         ...prev,
