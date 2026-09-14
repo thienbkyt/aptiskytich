@@ -740,24 +740,30 @@ Deno.serve(async (req) => {
               raw_response: body,
               last_error: null,
             }).eq("id", job.id);
-            results.push({ id: job.id, status: "done" });
+            return { id: job.id, status: "done" };
           } catch (persistErr: any) {
             const errMsg = `persist: ${persistErr?.message || String(persistErr)}`;
             console.error("[worker] persist error:", errMsg);
             // Keep raw_response so operators can inspect / retry persist manually.
-            results.push({ id: job.id, status: await settleFailure(job, errMsg, false, { raw_response: body }) });
+            return { id: job.id, status: await settleFailure(job, errMsg, false, { raw_response: body }) };
           }
-        } else {
-          const errMsg = (body && body.error) ? String(body.error) : `HTTP ${status}`;
-          const permanent = isPermanentFailure(status, body);
-          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
         }
+        const errMsg = (body && body.error) ? String(body.error) : `HTTP ${status}`;
+        const permanent = isPermanentFailure(status, body);
+        return { id: job.id, status: await settleFailure(job, errMsg, permanent) };
       } catch (e: any) {
         const errMsg = e?.message || String(e);
-        results.push({ id: job.id, status: await settleFailure(job, errMsg, false) });
+        return { id: job.id, status: await settleFailure(job, errMsg, false) };
       }
+    };
 
-    }
+    const settled = await Promise.allSettled(((jobs || []) as any[]).map(runJob));
+    const results = settled.map((s, i) =>
+      s.status === "fulfilled"
+        ? s.value
+        : { id: ((jobs || []) as any[])[i]?.id, status: "error" }
+    );
+
 
     return new Response(JSON.stringify({ processed: results.length, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
