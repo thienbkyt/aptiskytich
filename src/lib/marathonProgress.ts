@@ -17,6 +17,8 @@ export interface MarathonLast {
   total: number;
   wrongSetIds: string[];
   wrongQuestionsBySet?: Record<string, string[]>;
+  /** Per-set score of the latest attempt for each set (merged across retries). */
+  setResults?: Record<string, { correct: number; total: number }>;
   updatedAt: number;
 }
 
