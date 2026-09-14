@@ -65,11 +65,21 @@ export async function resolveAudioUrls(paths: (string | null | undefined)[]): Pr
   );
   if (todo.length === 0) return;
 
+  const session = await waitForSession();
+
   try {
     const { data, error } = await withTimeout(
       supabase.storage.from("audio").createSignedUrls(todo, SIGN_TTL_SEC)
     );
-    if (error || !data) return;
+    if (error) {
+      logClientError("audio_sign_failed", error, {
+        path: todo.join(","),
+        hasSession: !!session,
+        status: (error as any)?.status ?? null,
+      });
+      return;
+    }
+    if (!data) return;
     const at = Date.now() + CACHE_TTL_MS;
     for (const item of data) {
       if (item?.signedUrl && item?.path) cache.set(item.path, { url: item.signedUrl, expiresAt: at });
