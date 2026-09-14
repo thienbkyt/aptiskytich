@@ -1,4 +1,21 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logClientError } from "@/lib/clientErrorLog";
+
+/**
+ * The `audio` bucket is private → signing needs a live session. Right after a
+ * reload the session may still be hydrating, so wait briefly for it.
+ */
+async function waitForSession(maxMs = 3000) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) return session;
+  const deadline = Date.now() + maxMs;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 250));
+    const { data: { session: s } } = await supabase.auth.getSession();
+    if (s) return s;
+  }
+  return null;
+}
 
 /**
  * Resolves an audio_url value to a playable URL.
@@ -48,11 +65,21 @@ export async function resolveAudioUrls(paths: (string | null | undefined)[]): Pr
   );
   if (todo.length === 0) return;
 
+  const session = await waitForSession();
+
   try {
     const { data, error } = await withTimeout(
       supabase.storage.from("audio").createSignedUrls(todo, SIGN_TTL_SEC)
     );
-    if (error || !data) return;
+    if (error) {
+      logClientError("audio_sign_failed", error, {
+        path: todo.join(","),
+        hasSession: !!session,
+        status: (error as any)?.status ?? null,
+      });
+      return;
+    }
+    if (!data) return;
     const at = Date.now() + CACHE_TTL_MS;
     for (const item of data) {
       if (item?.signedUrl && item?.path) cache.set(item.path, { url: item.signedUrl, expiresAt: at });
@@ -74,7 +101,10 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
   const cached = cache.get(audioUrl);
   if (cached && cached.expiresAt > now) return cached.url;
 
+  const session = await waitForSession();
+
   for (let attempt = 0; attempt < 4; attempt++) {
+    const isLast = attempt === 3;
     try {
       const { data, error } = await withTimeout(
         supabase.storage.from("audio").createSignedUrl(audioUrl, SIGN_TTL_SEC)
@@ -83,8 +113,21 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
         cache.set(audioUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
         return data.signedUrl;
       }
-    } catch {
-      /* network blip — retry */
+      if (error && isLast) {
+        logClientError("audio_sign_failed", error, {
+          path: audioUrl,
+          hasSession: !!session,
+          status: (error as any)?.status ?? null,
+        });
+      }
+    } catch (e) {
+      if (isLast) {
+        logClientError("audio_sign_failed", e, {
+          path: audioUrl,
+          hasSession: !!session,
+          status: (e as any)?.status ?? null,
+        });
+      }
     }
     if (attempt < 3) {
       await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));

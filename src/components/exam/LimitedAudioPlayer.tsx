@@ -49,6 +49,34 @@ const releaseIfMine = (el: HTMLAudioElement | null) => {
 const storeKey = (qk: string | number | undefined, src: string) =>
   `${qk ?? "_"}::${src}`;
 
+/** Diagnostics snapshot of the most recently rendered player on the page. */
+export type AudioDiag = {
+  src: string;
+  playCount: number;
+  maxPlays: number | null;
+  disabled: boolean;
+  isPlaying: boolean;
+  loadingAudio: boolean;
+  loadPercent: number | null;
+  errorMsg: string;
+  blocked: boolean;
+  readyState: number | null;
+  networkState: number | null;
+  currentTime: number | null;
+  duration: number | null;
+  srcKind: "blob" | "stream" | null;
+};
+
+let lastDiagRef: (() => AudioDiag) | null = null;
+
+export function getAudioDiag(): AudioDiag | null {
+  try {
+    return lastDiagRef ? lastDiagRef() : null;
+  } catch {
+    return null;
+  }
+}
+
 const readCount = (key: string): number => {
   const mem = playCountStore.get(key);
   if (typeof mem === "number") return mem;
@@ -110,6 +138,28 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
   const needsLogin = !authLoading && !session && !!src && !isExternal;
   const goLogin = () => {
     navigate(`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`);
+  };
+
+  // Diagnostics: this player becomes the "latest" snapshot source on each render.
+  lastDiagRef = () => {
+    const a = audioRef.current;
+    const elSrc = a?.src ?? "";
+    return {
+      src,
+      playCount,
+      maxPlays: Number.isFinite(effectiveMax) ? (effectiveMax as number) : null,
+      disabled,
+      isPlaying,
+      loadingAudio,
+      loadPercent,
+      errorMsg,
+      blocked,
+      readyState: a?.readyState ?? null,
+      networkState: a?.networkState ?? null,
+      currentTime: a?.currentTime ?? null,
+      duration: a && Number.isFinite(a.duration) ? a.duration : null,
+      srcKind: elSrc ? (elSrc.startsWith("blob:") ? "blob" : "stream") : null,
+    };
   };
 
   // Mutable snapshot of log metadata so logAudioError can be identity-stable.

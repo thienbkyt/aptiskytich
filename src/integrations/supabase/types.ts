@@ -1089,6 +1089,24 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_lp2_thutu_20260914: {
+        Row: {
+          extra_data: Json | null
+          qid: string | null
+          title: string | null
+        }
+        Insert: {
+          extra_data?: Json | null
+          qid?: string | null
+          title?: string | null
+        }
+        Update: {
+          extra_data?: Json | null
+          qid?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       backup_lp2_upgrade_20260814: {
         Row: {
           backed_up_at: string | null

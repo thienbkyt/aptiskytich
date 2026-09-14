@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getDeviceType } from "@/lib/deviceInfo";
+import { getAudioDiag } from "@/components/exam/LimitedAudioPlayer";
 
 type Category = "content" | "functional";
 type ContentReason = "wrong_answer" | "audio" | "image" | "content" | "other";
@@ -78,6 +79,14 @@ export default function ExamReportButton({
     setSubmitting(true);
     try {
       const reason = category === "content" ? contentReason : functionalReason;
+      let deviceInfo = getDeviceInfo();
+      if (reason === "audio") {
+        try {
+          deviceInfo = JSON.stringify({ device: deviceInfo, audio: getAudioDiag() });
+        } catch {
+          /* keep plain device info */
+        }
+      }
       const { error } = await supabase.from("question_reports").insert({
         exam_question_id: examQuestionId ?? null,
         exam_set_id: examSetId ?? null,
@@ -90,7 +99,7 @@ export default function ExamReportButton({
         status: "new",
         report_category: category,
         page_url: getPageUrl(),
-        device_info: getDeviceInfo(),
+        device_info: deviceInfo,
         device_type: getDeviceType(),
       });
       if (error) throw error;
