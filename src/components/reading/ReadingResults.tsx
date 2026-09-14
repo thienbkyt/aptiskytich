@@ -137,7 +137,21 @@ const Part1Review = ({ q, answers }: { q: ReadingSentenceQuestion; answers: (num
   const exampleGapIdx = usedGapIdx[0];
 
   // Split passage into sentences (keep ending punctuation with each sentence)
-  const sentences = q.passage.split(/(?<=[.!?])\s+/).filter((s) => s.length > 0);
+  // Split into sentences without regex lookbehind (unsupported on older Safari):
+  // capture the ending punctuation, then re-attach it to the preceding chunk.
+  const sentences = q.passage
+    .split(/([.!?])\s+/)
+    .reduce<string[]>((acc, piece, i) => {
+      if (i % 2 === 1) {
+        // punctuation captured group → append to previous sentence
+        if (acc.length > 0) acc[acc.length - 1] += piece;
+        else acc.push(piece);
+      } else if (piece) {
+        acc.push(piece);
+      }
+      return acc;
+    }, [])
+    .filter((s) => s.length > 0);
 
   const renderGap = (gi: number, key: string) => {
     const gap = q.gaps[gi];
