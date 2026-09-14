@@ -101,7 +101,10 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
   const cached = cache.get(audioUrl);
   if (cached && cached.expiresAt > now) return cached.url;
 
+  const session = await waitForSession();
+
   for (let attempt = 0; attempt < 4; attempt++) {
+    const isLast = attempt === 3;
     try {
       const { data, error } = await withTimeout(
         supabase.storage.from("audio").createSignedUrl(audioUrl, SIGN_TTL_SEC)
@@ -110,8 +113,21 @@ export async function resolveAudioUrl(audioUrl: string): Promise<string | null> 
         cache.set(audioUrl, { url: data.signedUrl, expiresAt: Date.now() + CACHE_TTL_MS });
         return data.signedUrl;
       }
-    } catch {
-      /* network blip — retry */
+      if (error && isLast) {
+        logClientError("audio_sign_failed", error, {
+          path: audioUrl,
+          hasSession: !!session,
+          status: (error as any)?.status ?? null,
+        });
+      }
+    } catch (e) {
+      if (isLast) {
+        logClientError("audio_sign_failed", e, {
+          path: audioUrl,
+          hasSession: !!session,
+          status: (e as any)?.status ?? null,
+        });
+      }
     }
     if (attempt < 3) {
       await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
