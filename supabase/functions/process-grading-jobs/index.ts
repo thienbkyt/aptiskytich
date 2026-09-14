@@ -718,8 +718,7 @@ Deno.serve(async (req) => {
         if (step1.error) {
           const errMsg = `transcribe: ${String(step1.error.body?.error || `HTTP ${step1.error.status}`)}`;
           const permanent = isPermanentFailure(step1.error.status, step1.error.body);
-          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
-          continue;
+          return { id: job.id, status: await settleFailure(job, errMsg, permanent) };
         }
         // Step 2: rubric grading (unchanged prompt), separate 60s budget.
         // Recordings over 60s are graded from the transcript only (see
