@@ -140,6 +140,28 @@ const LimitedAudioPlayer = ({ src, src2, maxPlays = 2, questionKey, introText, i
     navigate(`/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`);
   };
 
+  // Diagnostics: this player becomes the "latest" snapshot source on each render.
+  lastDiagRef = () => {
+    const a = audioRef.current;
+    const elSrc = a?.src ?? "";
+    return {
+      src,
+      playCount,
+      maxPlays: Number.isFinite(effectiveMax) ? (effectiveMax as number) : null,
+      disabled,
+      isPlaying,
+      loadingAudio,
+      loadPercent,
+      errorMsg,
+      blocked,
+      readyState: a?.readyState ?? null,
+      networkState: a?.networkState ?? null,
+      currentTime: a?.currentTime ?? null,
+      duration: a && Number.isFinite(a.duration) ? a.duration : null,
+      srcKind: elSrc ? (elSrc.startsWith("blob:") ? "blob" : "stream") : null,
+    };
+  };
+
   // Mutable snapshot of log metadata so logAudioError can be identity-stable.
   const metaRef = useRef({ questionKey, playCount, maxPlays: effectiveMax, reviewMode });
   metaRef.current = { questionKey, playCount, maxPlays: effectiveMax, reviewMode };
