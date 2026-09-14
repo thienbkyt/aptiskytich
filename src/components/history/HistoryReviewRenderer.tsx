@@ -17,6 +17,7 @@ import WritingExamEngine, { type WritingPartType } from "@/components/writing/Wr
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
 import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
+import GradingFailedRetryBox from "@/components/history/GradingFailedRetryBox";
 import { Button } from "@/components/ui/button";
 import { logClientError } from "@/lib/clientErrorLog";
 
