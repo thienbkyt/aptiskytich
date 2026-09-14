@@ -3707,9 +3707,11 @@ export type Database = {
           id: string
           last_error: string | null
           max_attempts: number
+          next_run_at: string
           part: string | null
           payload: Json
           raw_response: Json | null
+          requeue_count: number
           skill: string
           status: string
           test_result_id: string | null
@@ -3724,9 +3726,11 @@ export type Database = {
           id?: string
           last_error?: string | null
           max_attempts?: number
+          next_run_at?: string
           part?: string | null
           payload?: Json
           raw_response?: Json | null
+          requeue_count?: number
           skill: string
           status?: string
           test_result_id?: string | null
@@ -3741,9 +3745,11 @@ export type Database = {
           id?: string
           last_error?: string | null
           max_attempts?: number
+          next_run_at?: string
           part?: string | null
           payload?: Json
           raw_response?: Json | null
+          requeue_count?: number
           skill?: string
           status?: string
           test_result_id?: string | null
@@ -5584,9 +5590,11 @@ export type Database = {
           id: string
           last_error: string | null
           max_attempts: number
+          next_run_at: string
           part: string | null
           payload: Json
           raw_response: Json | null
+          requeue_count: number
           skill: string
           status: string
           test_result_id: string | null
@@ -5600,6 +5608,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      cleanup_logs_ttl: { Args: never; Returns: Json }
       consume_ai_quota: {
         Args: { _action: string; _limit: number; _user_id: string }
         Returns: Json
@@ -5866,6 +5875,10 @@ export type Database = {
       register_device: {
         Args: { p_device_id: string; p_label: string; p_type: string }
         Returns: undefined
+      }
+      requeue_grading_jobs: {
+        Args: { _test_result_id: string }
+        Returns: number
       }
       resolve_question_report: {
         Args: { p_report_id: string }
