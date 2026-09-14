@@ -1,5 +1,82 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getLevel } from "@/data/questions";
+import { toast } from "@/hooks/use-toast";
+import { safeLocalStorage } from "@/lib/safeStorage";
+
+/** localStorage queue of exam results that could not be saved (no session yet). */
+const PENDING_KEY = "pending_exam_results";
+
+function readPending(): SaveExamResultOpts[] {
+  try {
+    const raw = safeLocalStorage.getItem(PENDING_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePending(items: SaveExamResultOpts[]) {
+  try {
+    safeLocalStorage.setItem(PENDING_KEY, JSON.stringify(items));
+  } catch {
+    /* noop */
+  }
+}
+
+function queuePendingResult(opts: SaveExamResultOpts) {
+  const items = readPending();
+  items.push(opts);
+  writePending(items.slice(-20));
+  try {
+    toast({
+      title: "Đang lưu kết quả",
+      description: "Sẽ tự đồng bộ khi có mạng/đăng nhập.",
+    });
+  } catch {
+    /* noop */
+  }
+}
+
+let flushing = false;
+
+/**
+ * Retry every queued exam result. Called on app mount and on
+ * SIGNED_IN / TOKEN_REFRESHED auth events.
+ */
+export async function flushPendingExamResults(): Promise<void> {
+  if (flushing) return;
+  const items = readPending();
+  if (items.length === 0) return;
+  flushing = true;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const remaining: SaveExamResultOpts[] = [];
+    for (const item of items) {
+      let saved: string | null = null;
+      try {
+        saved = await saveExamResult({ ...item, __skipQueue: true } as any);
+      } catch {
+        saved = null;
+      }
+      if (saved) {
+        try {
+          const { logFeatureUsage } = await import("@/hooks/useFeature");
+          void logFeatureUsage("save_recovered", saved, item.skill);
+        } catch {
+          /* noop */
+        }
+      } else {
+        remaining.push(item);
+      }
+    }
+    writePending(remaining);
+  } finally {
+    flushing = false;
+  }
+}
 
 export interface PerQuestionResult {
   exam_question_id: string;
@@ -48,7 +125,16 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
   }
   inFlight.add(lockKey);
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    let user = (await supabase.auth.getUser()).data.user;
+    if (!user) {
+      // One refresh attempt — a stale/expired token is the common cause.
+      try {
+        await supabase.auth.refreshSession();
+        user = (await supabase.auth.getUser()).data.user;
+      } catch {
+        /* noop */
+      }
+    }
     if (!user) {
       const { logClientError } = await import("@/lib/clientErrorLog");
       logClientError("save_no_session", new Error("no auth session when saving exam result"), {
@@ -56,6 +142,7 @@ export async function saveExamResult(opts: SaveExamResultOpts): Promise<string |
         examSetId: opts.examSetId ?? null,
         fullTestSessionId: opts.fullTestSessionId ?? null,
       });
+      if (!(opts as any).__skipQueue) queuePendingResult(opts);
       return null;
     }
 

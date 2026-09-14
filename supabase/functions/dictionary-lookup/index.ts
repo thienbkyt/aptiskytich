@@ -38,11 +38,45 @@ serve(async (req) => {
 
     const clean = word.trim().toLowerCase();
 
-    // Check DB cache first
+    // Reject scraping-shaped input: too long or non-word characters
+    if (clean.length === 0 || clean.length > 40 || !/^[a-z' -]+$/.test(clean)) {
+      return new Response(JSON.stringify({ error: "Từ không hợp lệ" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Daily quota is charged on EVERY lookup, including cache hits.
+    const quota = await enforceDailyQuota(auth.userId, "dictionary-lookup", 200, corsHeaders);
+    if (quota) return quota;
+
+    // Per-minute rate limit: max 30 lookups / 60s / user
+    try {
+      const { data: rl, error: rlErr } = await supabase.rpc("consume_ai_rate_limit", {
+        _user_id: auth.userId,
+        _action: "dictionary-lookup:min",
+        _window_seconds: 60,
+        _limit: 30,
+      });
+      if (rlErr) console.error("[dictionary-lookup] rate limit rpc error:", rlErr);
+      if (!rlErr && (rl as any)?.ok === false) {
+        return new Response(
+          JSON.stringify({ error: "Tra quá nhanh, thử lại sau 1 phút" }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" },
+          },
+        );
+      }
+    } catch (e) {
+      console.error("[dictionary-lookup] rate limit failed:", e);
+    }
+
+    // DB cache
     const { data: cached } = await supabase
       .from("dictionary_cache")
       .select("result")
@@ -55,9 +89,6 @@ serve(async (req) => {
       });
     }
 
-    // Not cached — enforce daily quota before calling AI
-    const quota = await enforceDailyQuota(auth.userId, "dictionary-lookup", 200, corsHeaders);
-    if (quota) return quota;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");

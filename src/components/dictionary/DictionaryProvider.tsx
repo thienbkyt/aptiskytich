@@ -215,7 +215,18 @@ export const DictionaryProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (e: any) {
         console.error("Dictionary lookup failed:", e);
         const msg = e?.message || "";
-        setError(/giới hạn hôm nay/i.test(msg) ? msg : "Không thể tra từ này. Thử lại sau.");
+        const status = Number((e as any)?.context?.status ?? (e as any)?.status ?? 0);
+        // 429 → rate limited / out of daily quota: show a toast, never auto-retry.
+        if (status === 429 || /quá nhanh|giới hạn hôm nay|quá nhiều yêu cầu/i.test(msg)) {
+          toast({
+            title: "Tạm dừng tra từ",
+            description: msg || "Tra quá nhanh, thử lại sau 1 phút",
+            variant: "destructive",
+          });
+          setError(msg || "Tra quá nhanh, thử lại sau 1 phút");
+        } else {
+          setError("Không thể tra từ này. Thử lại sau.");
+        }
       } finally {
         setLoading(false);
       }
