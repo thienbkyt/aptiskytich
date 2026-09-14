@@ -99,7 +99,7 @@ export default function ExamReportButton({
         status: "new",
         report_category: category,
         page_url: getPageUrl(),
-        device_info: getDeviceInfo(),
+        device_info: deviceInfo,
         device_type: getDeviceType(),
       });
       if (error) throw error;
