@@ -1,6 +1,6 @@
 import { lazy, Suspense, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams, useLocation } from "react-router-dom";
 import { FEATURES } from "@/config/features";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -115,6 +115,41 @@ const PostLoginMobileNotice = () => {
 const BlogSlugRedirect = () => {
   const { slug } = useParams();
   return <Navigate to={`/meo-thi-aptis/${slug ?? ""}`} replace />;
+};
+
+/**
+ * Google Translate rewrites text nodes and breaks React's DOM on exam screens.
+ * Mark those routes as untranslatable (in addition to the global opt-out in
+ * index.html) by tagging the app root container.
+ */
+const EXAM_ROUTE_PREFIXES = [
+  "/thi-thu",
+  "/listening",
+  "/reading",
+  "/grammar",
+  "/writing",
+  "/speaking",
+  "/my-sets",
+  "/key-du-doan",
+  "/nghe-chep",
+  "/history",
+];
+
+const NoTranslateExamRoutes = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const isExam = EXAM_ROUTE_PREFIXES.some(
+      (p) => pathname === p || pathname.startsWith(`${p}/`),
+    );
+    const root = document.getElementById("root");
+    [document.body, root].forEach((el) => {
+      if (!el) return;
+      el.classList.toggle("notranslate", isExam);
+      if (isExam) el.setAttribute("translate", "no");
+      else el.removeAttribute("translate");
+    });
+  }, [pathname]);
+  return null;
 };
 
 const App = () => (
