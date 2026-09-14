@@ -696,10 +696,11 @@ Deno.serve(async (req) => {
     // atomic — it only selects status='pending' rows with FOR UPDATE SKIP LOCKED
     // and flips them to 'processing' in the same statement, so two concurrent
     // runs (cron now fires every minute) can never claim the same job. Stuck
-    // 'processing' rows are reclaimed only after _reclaim_after (10 minutes).
+    // 'processing' rows are reclaimed only after _reclaim_after (3 minutes) and
+    // get their attempt refunded, because they were never actually graded.
     const { data: jobs, error } = await admin.rpc("claim_grading_jobs", {
-      _limit: 5,
-      _reclaim_after: "10 minutes",
+      _limit: 8,
+      _reclaim_after: "3 minutes",
     });
     if (error) {
       console.error("[worker] claim error:", error);
