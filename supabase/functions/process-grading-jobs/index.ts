@@ -592,6 +592,64 @@ async function persistJobResult(job: any, body: any) {
   }
 }
 
+// ─── failure handling: back off instead of losing the submission ────────────
+/**
+ * A transient failure (timeout, 504, network, transient persist error) NEVER
+ * strands a submission: the job returns to 'pending' with a 10-minute × attempts
+ * backoff. Only a [permanent] error or RETRY_CEILING spent attempts settle it as
+ * 'failed', and then the reason is mirrored into test_results.grade_payload so
+ * the History screen can offer "chấm lại" instead of showing a 0.
+ */
+async function settleFailure(
+  job: any,
+  errMsg: string,
+  permanent: boolean,
+  extra: Record<string, any> = {},
+): Promise<"failed" | "retry"> {
+  const attempts = Number(job.attempts || 0);
+  const isFinal = permanent || attempts >= RETRY_CEILING;
+  const nowIso = new Date().toISOString();
+
+  if (isFinal) {
+    await admin.from("grading_jobs").update({
+      status: "failed",
+      claimed_at: null,
+      last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
+      finished_at: nowIso,
+      updated_at: nowIso,
+      ...extra,
+    }).eq("id", job.id);
+
+    if (job.test_result_id) {
+      try {
+        await admin.from("test_results").update({
+          grade_payload: {
+            status: "failed",
+            reason: permanent ? `[permanent] ${errMsg}` : errMsg,
+            part: job.part ?? null,
+          },
+        } as any).eq("id", job.test_result_id);
+      } catch (e) {
+        console.warn("[worker] grade_payload failure marker failed:", (e as any)?.message || e);
+      }
+    }
+    return "failed";
+  }
+
+  const nextRunAt = new Date(Date.now() + 10 * 60_000 * Math.max(attempts, 1)).toISOString();
+  await admin.from("grading_jobs").update({
+    status: "pending",
+    claimed_at: null,
+    last_error: errMsg,
+    finished_at: null,
+    next_run_at: nextRunAt,
+    max_attempts: Math.max(Number(job.max_attempts || 0), RETRY_CEILING),
+    updated_at: nowIso,
+    ...extra,
+  }).eq("id", job.id);
+  return "retry";
+}
+
 // ─── main handler ───────────────────────────────────────────────────────────
 
 function parseJwtClaims(token: string): Record<string, unknown> | null {
