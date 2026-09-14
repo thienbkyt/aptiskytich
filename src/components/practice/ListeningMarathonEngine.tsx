@@ -405,7 +405,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
     } finally {
       savingHistoryRef.current = false;
     }
-  }, [partType, partName, sets, loaded, currentIndex, drafts, persist, isSingleWrongRetry]);
+  }, [partType, partName, sets, loaded, currentIndex, drafts, persist, isSingleWrongRetry, isRetryMode]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;

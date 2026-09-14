@@ -454,7 +454,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
     } finally {
       savingRef.current = false;
     }
-  }, [partType, partName, sets.length, currentIndex, drafts, persist, isSingleWrongRetry]);
+  }, [partType, partName, sets.length, currentIndex, drafts, persist, isSingleWrongRetry, isRetryMode]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
