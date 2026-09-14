@@ -73,6 +73,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_rate_limits: {
+        Row: {
+          action: string
+          updated_at: string
+          used: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          updated_at?: string
+          used?: number
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          action?: string
+          updated_at?: string
+          used?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       answers: {
         Row: {
           answer_text: string
@@ -5632,6 +5656,15 @@ export type Database = {
       cleanup_logs_ttl: { Args: never; Returns: Json }
       consume_ai_quota: {
         Args: { _action: string; _limit: number; _user_id: string }
+        Returns: Json
+      }
+      consume_ai_rate_limit: {
+        Args: {
+          _action: string
+          _limit: number
+          _user_id: string
+          _window_seconds: number
+        }
         Returns: Json
       }
       count_old_speaking_recordings: {
