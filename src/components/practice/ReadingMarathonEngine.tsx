@@ -11,7 +11,7 @@ import {
   toReadingPart1, toReadingPart2, toReadingPart3, toReadingPart4,
 } from "@/lib/examTransformers";
 import { upsertMarathonResult, saveExamResult } from "@/lib/saveExamResult";
-import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId, mergeMarathonLastAfterRetry } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
