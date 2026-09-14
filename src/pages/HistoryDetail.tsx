@@ -193,12 +193,15 @@ const HistoryDetail = () => {
           .eq("test_result_id", id);
         const qIds = (qResults || []).map((q: any) => q.exam_question_id);
         if (qIds.length > 0) {
-          const { data: qs } = await supabase
-            .from("exam_questions")
-            .select("id,question_text,options,correct_answer,explanation,order_index")
-            .in("id", qIds);
+          const setIds = Array.from(new Set([
+            r.exam_set_id,
+            ...((reviewPages as any[]) || []).map((p: any) => p?.examSetId),
+          ].filter(Boolean))) as string[];
+          const qs = await fetchExamQuestionsForSets(setIds).catch(() => []);
+          const wanted = new Set(qIds);
           const qMap: Record<string, any> = {};
-          (qs || []).forEach((q: any) => { qMap[q.id] = q; });
+          (qs || []).forEach((q: any) => { if (wanted.has(q.id)) qMap[q.id] = q; });
+
           const merged: QuestionDetail[] = (qResults || [])
             .map((qr: any) => {
               const q = qMap[qr.exam_question_id];
