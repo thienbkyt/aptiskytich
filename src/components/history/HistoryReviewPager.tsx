@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ListChecks, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { readingPartLabel, normalizePart } from "@/hooks/useExamSets";
+import { readingPartLabel, normalizePart, fetchExamQuestionsForSets } from "@/hooks/useExamSets";
 import { toReadingPart2 } from "@/lib/examTransformers";
 import { grammarGroupIndices } from "@/lib/grammarGroups";
 import { getSkillBand, toScaledScore } from "@/data/questions";
