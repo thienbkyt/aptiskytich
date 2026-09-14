@@ -63,18 +63,25 @@ Deno.serve(async (req) => {
 
   // ── 1) Candidates come from a SECURITY DEFINER RPC: PostgREST does not
   //       expose the storage schema, so direct table reads always fail.
-  const toDelete: string[] = [];
+  //       PostgREST caps a response at 1000 rows, so run several passes until
+  //       the per-run cap is reached (deleted files never come back).
   let scanned = 0;
   let v2Candidates = 0;
-  {
+  let deleted = 0;
+
+  for (let pass = 0; pass < 4 && deleted < MAX_DELETE_PER_RUN; pass++) {
+    const room = MAX_DELETE_PER_RUN - deleted;
+    const toDelete: string[] = [];
+
     const { data, error } = await supabase.rpc("list_old_speaking_recordings", {
       _cutoff: cutoff,
       _cutoff_v2: cutoffV2,
-      _limit: MAX_DELETE_PER_RUN * 2,
+      _limit: Math.min(room * 2, 1000),
     });
-    if (error) errors.push("list: " + error.message);
+    if (error) { errors.push("list: " + error.message); break; }
 
     const rows = ((data || []) as any[]).filter((r) => r?.name);
+    if (!rows.length) break;
     const oldNames: string[] = rows.filter((r) => !r.is_v2).map((r) => r.name as string);
     const v2Names: string[] = rows
       .filter((r) => r.is_v2)
@@ -82,12 +89,12 @@ Deno.serve(async (req) => {
       .filter((n) => isV2Path(n));
 
     for (const n of oldNames) {
-      if (toDelete.length >= MAX_DELETE_PER_RUN) break;
+      if (toDelete.length >= room) break;
       scanned += 1;
       toDelete.push(n);
     }
 
-    if (toDelete.length < MAX_DELETE_PER_RUN && v2Names.length) {
+    if (toDelete.length < room && v2Names.length) {
       // Never touch a file whose owner still has grading work in flight.
       const userIds = [...new Set(v2Names.map((n) => n.split("/")[0]))];
       const busyUsers = new Set<string>();
@@ -114,7 +121,7 @@ Deno.serve(async (req) => {
       }
 
       for (const n of v2Names) {
-        if (toDelete.length >= MAX_DELETE_PER_RUN) break;
+        if (toDelete.length >= room) break;
         if (tracked.has(n)) continue;
         if (busyUsers.has(n.split("/")[0])) continue;
         v2Candidates += 1;
@@ -122,23 +129,27 @@ Deno.serve(async (req) => {
         toDelete.push(n);
       }
     }
+
+    if (!toDelete.length) break;
+
+    // ── 2) Remove via the storage API (never DELETE storage.objects) ─────────
+    let deletedThisPass = 0;
+    for (let i = 0; i < toDelete.length; i += 100) {
+      const batch = toDelete.slice(i, i + 100);
+      const { data: removed, error: remErr } = await supabase.storage.from(BUCKET).remove(batch);
+      if (remErr) { errors.push("remove: " + remErr.message); continue; }
+      deletedThisPass += removed?.length ?? 0;
+
+      const { error: rowErr } = await supabase
+        .from("speaking_recordings")
+        .delete()
+        .in("audio_url", batch);
+      if (rowErr) errors.push("row_delete: " + rowErr.message);
+    }
+    deleted += deletedThisPass;
+    if (!deletedThisPass) break;
   }
 
-
-  // ── 3) Remove via the storage API (never DELETE storage.objects) ──────────
-  let deleted = 0;
-  for (let i = 0; i < toDelete.length; i += 100) {
-    const batch = toDelete.slice(i, i + 100);
-    const { data, error } = await supabase.storage.from(BUCKET).remove(batch);
-    if (error) { errors.push("remove: " + error.message); continue; }
-    deleted += data?.length ?? 0;
-
-    const { error: rowErr } = await supabase
-      .from("speaking_recordings")
-      .delete()
-      .in("audio_url", batch);
-    if (rowErr) errors.push("row_delete: " + rowErr.message);
-  }
 
   // ── 4) How much of the backlog is left for the next hourly run ───────────
   let remaining = 0;
