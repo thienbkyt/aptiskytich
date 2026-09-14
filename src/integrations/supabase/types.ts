@@ -3608,6 +3608,27 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_traffic: {
+        Row: {
+          d: string
+          pageviews: number
+          updated_at: string
+          visitors: number
+        }
+        Insert: {
+          d: string
+          pageviews?: number
+          updated_at?: string
+          visitors?: number
+        }
+        Update: {
+          d?: string
+          pageviews?: number
+          updated_at?: string
+          visitors?: number
+        }
+        Relationships: []
+      }
       full_test_members: {
         Row: {
           created_at: string

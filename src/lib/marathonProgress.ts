@@ -17,6 +17,8 @@ export interface MarathonLast {
   total: number;
   wrongSetIds: string[];
   wrongQuestionsBySet?: Record<string, string[]>;
+  /** Per-set score of the latest attempt for each set (merged across retries). */
+  setResults?: Record<string, { correct: number; total: number }>;
   updatedAt: number;
 }
 
@@ -40,6 +42,49 @@ export function loadMarathonLast(skill: string, part: string): MarathonLast | nu
 }
 export function clearMarathonLast(skill: string, part: string) {
   try { localStorage.removeItem(lastKey(skill, part)); } catch { /* noop */ }
+}
+
+/**
+ * Merge a "Làm lại câu sai" (retry) run into the previous marathon result so the
+ * History row reflects the latest state instead of a standalone partial run.
+ * Returns the merged MarathonLast (also persisted), or null when there is no
+ * previous run to merge into.
+ */
+export function mergeMarathonLastAfterRetry(
+  skill: string,
+  part: string,
+  retried: { examSetId: string; correct: number; total: number; wrongQuestionIds: string[] }[],
+): MarathonLast | null {
+  const last = loadMarathonLast(skill, part);
+  if (!last) return null;
+
+  const setResults: Record<string, { correct: number; total: number }> = { ...(last.setResults ?? {}) };
+  for (const r of retried) setResults[r.examSetId] = { correct: r.correct, total: r.total };
+
+  const retriedClean = new Set(retried.filter((r) => r.correct >= r.total).map((r) => r.examSetId));
+  const wrongSetIds = last.wrongSetIds.filter((id) => !retriedClean.has(id));
+  for (const r of retried) {
+    if (r.correct < r.total && !wrongSetIds.includes(r.examSetId)) wrongSetIds.push(r.examSetId);
+  }
+
+  const wrongQuestionsBySet: Record<string, string[]> = { ...(last.wrongQuestionsBySet ?? {}) };
+  for (const r of retried) {
+    if (r.wrongQuestionIds.length) wrongQuestionsBySet[r.examSetId] = r.wrongQuestionIds;
+    else delete wrongQuestionsBySet[r.examSetId];
+  }
+
+  const total = last.total;
+  // If the original run tracked per-set results, the score is the merged sum;
+  // otherwise fall back for legacy data saved before setResults existed.
+  const correct = last.setResults
+    ? Object.values(setResults).reduce((s, x) => s + x.correct, 0)
+    : wrongSetIds.length === 0
+      ? total
+      : last.correct;
+
+  const merged: MarathonLast = { ...last, correct, wrongSetIds, wrongQuestionsBySet, setResults, updatedAt: Date.now() };
+  saveMarathonLast(skill, part, merged);
+  return merged;
 }
 
 /** Cryptographically-random enough session id. */

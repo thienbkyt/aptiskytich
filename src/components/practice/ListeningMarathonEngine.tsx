@@ -12,7 +12,7 @@ import {
   toListeningPart1, toListeningPart2, toListeningPart3, toListeningPart4,
 } from "@/lib/examTransformers";
 import { upsertMarathonResult, saveExamResult } from "@/lib/saveExamResult";
-import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId } from "@/lib/marathonProgress";
+import { saveMarathonProgress, clearMarathonProgress, saveMarathonLast, clearMarathonLast, loadMarathonProgress, newMarathonSessionId, mergeMarathonLastAfterRetry } from "@/lib/marathonProgress";
 import { Trophy, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import MarathonNavigator from "@/components/practice/MarathonNavigator";
 import { recordMarathonOpenedSets } from "@/lib/marathonOpenSets";
@@ -371,13 +371,41 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           const wq = r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id);
           if (wq.length) wrongQBySet[r.examSetId] = wq;
         });
-        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, updatedAt: Date.now() });
+        const setResults = Object.fromEntries(reviewable_.map((r) => [r.examSetId, { correct: r.correct, total: r.total }]));
+        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, updatedAt: Date.now() });
         clearMarathonProgress("listening", progPart);
+        window.dispatchEvent(new Event("exam-result-saved"));
+      } else if (opts?.finalize && isRetryMode && !persist && !isSingleWrongRetry) {
+        // Retry-only run ("Làm lại câu sai" without persisting): merge into the
+        // previous marathon result instead of standing alone.
+        const merged = mergeMarathonLastAfterRetry("listening", progPart, reviewable_.map((r) => ({
+          examSetId: r.examSetId,
+          correct: r.correct,
+          total: r.total,
+          wrongQuestionIds: r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id),
+        })));
+        if (merged) {
+          await upsertMarathonResult({
+            testResultId: testResultIdRef.current,
+            sessionId: sessionIdRef.current,
+            skill: "listening",
+            correct: merged.correct,
+            total: merged.total,
+            extraSkillScores: {
+              label: `Marathon · ${partName} · sửa câu sai`,
+              partType,
+              done: reviewable_.length,
+              totalSets: Object.keys(merged.setResults ?? {}).length || sets.length,
+            },
+            reviewSnapshot: snap,
+          });
+          window.dispatchEvent(new Event("exam-result-saved"));
+        }
       }
     } finally {
       savingHistoryRef.current = false;
     }
-  }, [partType, partName, sets, loaded, currentIndex, drafts, persist, isSingleWrongRetry]);
+  }, [partType, partName, sets, loaded, currentIndex, drafts, persist, isSingleWrongRetry, isRetryMode]);
 
   useEffect(() => {
     if (phase !== "completed" || savedOnce) return;
