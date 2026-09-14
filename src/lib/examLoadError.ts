@@ -20,6 +20,11 @@ export function isNeedUpgradeError(e: unknown): boolean {
   return !!e && typeof e === "object" && (e as any).code === "NEED_UPGRADE";
 }
 
+/** Too many exam sets opened in a short window → anti-scraping cap. */
+export function isExamAccessLimitError(e: unknown): boolean {
+  return !!e && typeof e === "object" && (e as any).code === "EXAM_ACCESS_LIMIT";
+}
+
 /** Maps a load failure to the reason value written to client_error_logs. */
 export function examLoadReason(e: unknown): "empty_result" | "fetch_failed" | "need_upgrade" | null {
   if (isNeedUpgradeError(e)) return "need_upgrade";
