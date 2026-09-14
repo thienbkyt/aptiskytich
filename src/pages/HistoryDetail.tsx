@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Calendar, Clock, CheckCircle2, XCircle, RotateCcw, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { readingPartLabel } from "@/hooks/useExamSets";
+import { readingPartLabel, fetchExamQuestionsForSets } from "@/hooks/useExamSets";
 import { useAuth } from "@/hooks/useAuth";
 import HistoryReviewPager, { type ReviewPage } from "@/components/history/HistoryReviewPager";
 import ReviewErrorBoundary from "@/components/history/ReviewErrorBoundary";
@@ -193,14 +193,12 @@ const HistoryDetail = () => {
           .eq("test_result_id", id);
         const qIds = (qResults || []).map((q: any) => q.exam_question_id);
         if (qIds.length > 0) {
-          const setIds = Array.from(new Set([
-            r.exam_set_id,
-            ...((reviewPages as any[]) || []).map((p: any) => p?.examSetId),
-          ].filter(Boolean))) as string[];
+          const setIds = [r.exam_set_id].filter(Boolean) as string[];
           const qs = await fetchExamQuestionsForSets(setIds).catch(() => []);
           const wanted = new Set(qIds);
           const qMap: Record<string, any> = {};
           (qs || []).forEach((q: any) => { if (wanted.has(q.id)) qMap[q.id] = q; });
+
 
           const merged: QuestionDetail[] = (qResults || [])
             .map((qr: any) => {
