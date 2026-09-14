@@ -74,13 +74,9 @@ export function mergeMarathonLastAfterRetry(
   }
 
   const total = last.total;
-  // If every set has a setResults entry, the score is the merged sum; otherwise
-  // fall back for legacy data saved before setResults existed.
-  const coversAll =
-    Object.keys(setResults).length > 0 &&
-    Object.values(setResults).every((s) => typeof s.correct === "number") &&
-    (last.setResults ? Object.keys(last.setResults).every((id) => setResults[id]) : false);
-  const correct = coversAll
+  // If the original run tracked per-set results, the score is the merged sum;
+  // otherwise fall back for legacy data saved before setResults existed.
+  const correct = last.setResults
     ? Object.values(setResults).reduce((s, x) => s + x.correct, 0)
     : wrongSetIds.length === 0
       ? total
