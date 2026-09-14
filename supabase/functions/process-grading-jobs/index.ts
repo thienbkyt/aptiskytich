@@ -128,7 +128,7 @@ async function ensureSpeakingTranscript(
       gradingSessionId: payload.gradingSessionId ?? null,
     },
     job.user_id,
-    STEP_TIMEOUT_MS,
+    TRANSCRIBE_TIMEOUT_MS,
   );
   if (!ok || !body || body.error || !Array.isArray(body.transcripts)) {
     return {
