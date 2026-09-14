@@ -13,7 +13,7 @@ import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, type ExamQuestionRow } from "@/hooks/useExamSets";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredNotice from "@/components/pro/PlanExpiredNotice";
-import { isExamEmptyError } from "@/lib/examLoadError";
+import { isExamEmptyError, isNeedUpgradeError } from "@/lib/examLoadError";
 import { mapWithLimit } from "@/lib/concurrency";
 import {
   toSpeakingPart1, toSpeakingPart2, toSpeakingPart3, toSpeakingPart4,

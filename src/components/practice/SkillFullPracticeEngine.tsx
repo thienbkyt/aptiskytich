@@ -11,7 +11,7 @@ import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredNotice from "@/components/pro/PlanExpiredNotice";
-import { isExamEmptyError } from "@/lib/examLoadError";
+import { isExamEmptyError, isNeedUpgradeError } from "@/lib/examLoadError";
 import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
   collectSampleAnswers,
