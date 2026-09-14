@@ -189,11 +189,17 @@ function calc(){
  const nuF=(D.new_users||[]).filter(x=>inRange(x.d));
  const nuR=nuF.reduce((a,x)=>a+x.n,0);
  const buyF=(D.buyers_daily||[]).filter(x=>inRange(x.d));
- const linkTao=+fn.link_tao||0,linkTra=+fn.link_tra||0,boDo=linkTao-linkTra;
+ const fdF=(D.funnel_daily||[]).filter(x=>inRange(x.d));
+ const linkTao=fdF.reduce((a,x)=>a+ +x.tao,0),linkTra=fdF.reduce((a,x)=>a+ +x.tra,0),boDo=linkTao-linkTra;
  const doneRate=linkTao?linkTra/linkTao:0;
+ const pSum=fdF.reduce((a,x)=>a+ +x.ps,0),pN=fdF.reduce((a,x)=>a+ +x.pn,0);
+ const phutTb=pN?pSum/pN:null;
+ const fdM=(D.funnel_daily||[]).filter(x=>mk(x.d)===curM);
+ const linkTaoM=fdM.reduce((a,x)=>a+ +x.tao,0),linkTraM=fdM.reduce((a,x)=>a+ +x.tra,0);
  return {S,subs,fn,daily,today,curM,prevM,dayN,daysM,rev,ord,expPaid,expUnpaid,fund0,expAll,fundNow,fundAfter,
   pnl,arpu,dF,eF,revR,ordR,expR,arpuR,revPerDay,revM,ordM,projRev,revByM,ordByM,expByM,months,byCat,byGroup,
-  planAgg,nuM,nuR,nuF,buyF,linkTao,linkTra,boDo,doneRate,unpaid:D.unpaid||[],byHour:(D.by_hour||[]).slice(0,5)};}
+  planAgg,nuM,nuR,nuF,buyF,linkTao,linkTra,boDo,doneRate,phutTb,linkTaoM,linkTraM,
+  unpaid:D.unpaid||[],byHour:(D.by_hour||[]).slice(0,5)};}
 
 function tOverview(C){
  const show=C.dF.slice(-62);
@@ -211,11 +217,11 @@ function tOverview(C){
   ${card("Quỹ sau khi trả hết nợ",vnd(C.fundAfter),C.expUnpaid?`còn ${vnd(C.expUnpaid)} chưa TT`:"không còn công nợ")}
   ${card("Người dùng mới trong kỳ",num(C.nuR),"đăng ký tài khoản")}
  </div>
- <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
+ <div class="sec-h"><h2>Doanh thu theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${vnd(C.revR)}</b> · ${num(C.ordR)} đơn</span></div>
  <div class="chart"><canvas id="c1"></canvas></div>
- <div class="sec-h"><h2>User mới theo ngày</h2><span class="tag">${rangeLabel()}</span></div>
+ <div class="sec-h"><h2>User mới theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${num(C.nuR)}</b></span></div>
  <div class="chart"><canvas id="c_nu"></canvas></div>
- <div class="sec-h"><h2>Số người trả phí theo ngày</h2><span class="tag">${rangeLabel()} · người riêng biệt, không phải số đơn</span></div>
+ <div class="sec-h"><h2>Số người trả phí theo ngày</h2><span class="tag">${rangeLabel()} · Tổng: <b>${num(C.buyF.reduce((a,x)=>a+ +x.n,0))}</b> lượt · người riêng biệt, không phải số đơn</span></div>
  <div class="chart"><canvas id="c_buy"></canvas></div>`;
  barSm("c_nu",C.nuF,C.today,"#0e7490","user mới");
  barSm("c_buy",C.buyF,C.today,"#047857","người trả phí");
@@ -240,7 +246,7 @@ function tKPI(C){
  const prevCum=prevDaily.filter(x=>+x.d.slice(8,10)<=C.dayN).reduce((a,x)=>a+ +x.dt,0);
  const paceExp=prevTot?prevCum/prevTot:C.dayN/C.daysM;
  const onPace=C.revM/(KPI*paceExp);
- const L=C.linkTao,P=C.linkTra;
+ const L=C.linkTaoM,P=C.linkTraM;
  const arpuM=C.ordM?C.revM/C.ordM:0;
  const b=C.nuM?L/C.nuM:0,c=L?P/L:0;
  const chain=[
@@ -315,15 +321,15 @@ function tCustomers(C){
   <div class="fn-side">${side}</div></div>`;
  document.getElementById("body").innerHTML=`
  <div class="split s64">
-  <div><div class="sec-h"><h2>Phễu khách hàng</h2><span class="tag">tháng ${C.curM}</span></div>
+  <div><div class="sec-h"><h2>Phễu khách hàng</h2><span class="tag">${rangeLabel()}</span></div>
    <div class="fn">
-    ${fnRow("Đăng ký mới",C.nuM,"người dùng mới trong tháng")}
+    ${fnRow("Đăng ký mới",C.nuR,"người dùng mới trong kỳ")}
     ${fnRow("Bấm mua",C.linkTao,"tạo link thanh toán")}
     ${fnRow("Trả tiền",C.linkTra,`<b>${pct(C.doneRate)}</b> hoàn tất`)}
    </div>
-   <div class="note-box"><b>${num(C.boDo)} lượt bấm mua rồi bỏ</b> trong tháng, trung bình ${C.fn.phut_tb||"–"} phút từ tạo link đến trả tiền.
-   Kéo thêm 10% số này về ≈ thêm <b>${vnd(0.10*C.boDo*C.arpu)}</b>.</div></div>
-  <div><div class="sec-h"><h2>Thuê bao &amp; gia hạn</h2></div>
+   <div class="note-box"><b>${num(C.boDo)} lượt bấm mua rồi bỏ</b> trong kỳ, trung bình ${C.phutTb==null?"–":C.phutTb.toFixed(1)} phút từ tạo link đến trả tiền.
+   Kéo thêm 10% số này về ≈ thêm <b>${vnd(0.10*C.boDo*C.arpuR)}</b>.</div></div>
+  <div><div class="sec-h"><h2>Thuê bao &amp; gia hạn</h2><span class="tag">số hiện tại, không theo kỳ</span></div>
    <div class="row c2">
     ${card("Tổng người dùng",num(s.tong_user))}
     ${card("Đang còn hạn",num(s.con_han),"Pro/Premium")}
