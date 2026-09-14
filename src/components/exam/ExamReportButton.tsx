@@ -78,6 +78,14 @@ export default function ExamReportButton({
     setSubmitting(true);
     try {
       const reason = category === "content" ? contentReason : functionalReason;
+      let deviceInfo = getDeviceInfo();
+      if (reason === "audio") {
+        try {
+          deviceInfo = JSON.stringify({ device: deviceInfo, audio: getAudioDiag() });
+        } catch {
+          /* keep plain device info */
+        }
+      }
       const { error } = await supabase.from("question_reports").insert({
         exam_question_id: examQuestionId ?? null,
         exam_set_id: examSetId ?? null,
