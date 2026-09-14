@@ -61,73 +61,69 @@ Deno.serve(async (req) => {
   const cutoff = new Date(Date.now() - RETENTION_DAYS * 86400_000).toISOString();
   const cutoffV2 = new Date(Date.now() - V2_RETENTION_DAYS * 86400_000).toISOString();
 
-  const objects = (supabase as any).schema("storage").from("objects");
-
-  // ── 1) Everything past the 45-day retention window ────────────────────────
+  // ── 1) Candidates come from a SECURITY DEFINER RPC: PostgREST does not
+  //       expose the storage schema, so direct table reads always fail.
   const toDelete: string[] = [];
   let scanned = 0;
-  {
-    const { data, error } = await objects
-      .select("name")
-      .eq("bucket_id", BUCKET)
-      .lt("created_at", cutoff)
-      .order("created_at", { ascending: true })
-      .limit(MAX_DELETE_PER_RUN);
-    if (error) errors.push("query: " + error.message);
-    for (const row of (data || []) as any[]) {
-      scanned += 1;
-      if (row.name) toDelete.push(row.name);
-    }
-  }
-
-  // ── 2) V2 grading uploads older than 7 days with no live grading job ──────
   let v2Candidates = 0;
-  if (toDelete.length < MAX_DELETE_PER_RUN) {
-    const room = MAX_DELETE_PER_RUN - toDelete.length;
-    const { data, error } = await objects
-      .select("name")
-      .eq("bucket_id", BUCKET)
-      .lt("created_at", cutoffV2)
-      .gte("created_at", cutoff)
-      .order("created_at", { ascending: true })
-      .limit(room * 2);
-    if (error) errors.push("v2_query: " + error.message);
+  {
+    const { data, error } = await supabase.rpc("list_old_speaking_recordings", {
+      _cutoff: cutoff,
+      _cutoff_v2: cutoffV2,
+      _limit: MAX_DELETE_PER_RUN * 2,
+    });
+    if (error) errors.push("list: " + error.message);
 
-    const names = ((data || []) as any[]).map((r) => r.name).filter((n: string) => n && isV2Path(n));
-    // Never touch a file whose owner still has grading work in flight.
-    const userIds = [...new Set(names.map((n: string) => n.split("/")[0]))];
-    const busyUsers = new Set<string>();
-    if (userIds.length) {
-      const { data: jobs, error: jobErr } = await supabase
-        .from("grading_jobs")
-        .select("user_id")
-        .in("status", ["pending", "processing"])
-        .in("user_id", userIds)
-        .gte("created_at", cutoffV2);
-      if (jobErr) errors.push("jobs_query: " + jobErr.message);
-      for (const j of ((jobs || []) as any[])) if (j.user_id) busyUsers.add(j.user_id);
-    }
+    const rows = ((data || []) as any[]).filter((r) => r?.name);
+    const oldNames: string[] = rows.filter((r) => !r.is_v2).map((r) => r.name as string);
+    const v2Names: string[] = rows
+      .filter((r) => r.is_v2)
+      .map((r) => r.name as string)
+      .filter((n) => isV2Path(n));
 
-    // Rows tracked in speaking_recordings are handled by the 45-day rule only.
-    const tracked = new Set<string>();
-    for (let i = 0; i < names.length; i += 200) {
-      const batch = names.slice(i, i + 200);
-      const { data: recs } = await supabase
-        .from("speaking_recordings")
-        .select("audio_url")
-        .in("audio_url", batch);
-      for (const r of ((recs || []) as any[])) if (r.audio_url) tracked.add(r.audio_url);
-    }
-
-    for (const n of names) {
+    for (const n of oldNames) {
       if (toDelete.length >= MAX_DELETE_PER_RUN) break;
-      if (tracked.has(n)) continue;
-      if (busyUsers.has(n.split("/")[0])) continue;
-      v2Candidates += 1;
       scanned += 1;
       toDelete.push(n);
     }
+
+    if (toDelete.length < MAX_DELETE_PER_RUN && v2Names.length) {
+      // Never touch a file whose owner still has grading work in flight.
+      const userIds = [...new Set(v2Names.map((n) => n.split("/")[0]))];
+      const busyUsers = new Set<string>();
+      if (userIds.length) {
+        const { data: jobs, error: jobErr } = await supabase
+          .from("grading_jobs")
+          .select("user_id")
+          .in("status", ["pending", "processing"])
+          .in("user_id", userIds)
+          .gte("created_at", cutoffV2);
+        if (jobErr) errors.push("jobs_query: " + jobErr.message);
+        for (const j of ((jobs || []) as any[])) if (j.user_id) busyUsers.add(j.user_id);
+      }
+
+      // Rows tracked in speaking_recordings are handled by the 45-day rule only.
+      const tracked = new Set<string>();
+      for (let i = 0; i < v2Names.length; i += 200) {
+        const batch = v2Names.slice(i, i + 200);
+        const { data: recs } = await supabase
+          .from("speaking_recordings")
+          .select("audio_url")
+          .in("audio_url", batch);
+        for (const r of ((recs || []) as any[])) if (r.audio_url) tracked.add(r.audio_url);
+      }
+
+      for (const n of v2Names) {
+        if (toDelete.length >= MAX_DELETE_PER_RUN) break;
+        if (tracked.has(n)) continue;
+        if (busyUsers.has(n.split("/")[0])) continue;
+        v2Candidates += 1;
+        scanned += 1;
+        toDelete.push(n);
+      }
+    }
   }
+
 
   // ── 3) Remove via the storage API (never DELETE storage.objects) ──────────
   let deleted = 0;
