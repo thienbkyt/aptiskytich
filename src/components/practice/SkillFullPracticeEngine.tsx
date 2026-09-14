@@ -11,7 +11,7 @@ import { fetchCoreGVBand } from "@/lib/coreGV";
 import { fetchExamQuestions, normalizePart, type ExamQuestionRow } from "@/hooks/useExamSets";
 import { useIsPro } from "@/hooks/useIsPro";
 import PlanExpiredNotice from "@/components/pro/PlanExpiredNotice";
-import { isExamEmptyError } from "@/lib/examLoadError";
+import { isExamEmptyError, isNeedUpgradeError } from "@/lib/examLoadError";
 import type { ReadingAnswersState } from "@/components/reading/ReadingExamEngine";
 import {
   collectSampleAnswers,
@@ -308,7 +308,10 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
       // A published set never has zero questions: the rows are hidden (RLS), which
       // usually means the learner's Pro plan expired. Block before any answering.
       console.error("[SkillFullPracticeEngine.loadData] failed", e);
-      if (isExamEmptyError(e)) {
+      if (isNeedUpgradeError(e)) {
+        setBlockedNeedsPro(true);
+        setLoadBlocked("empty");
+      } else if (isExamEmptyError(e)) {
         setBlockedNeedsPro((sets as any[]).some((s) => s.access_tier && s.access_tier !== "free"));
         setLoadBlocked("empty");
       } else {

@@ -10,7 +10,7 @@ import {
 import UpgradeLock from "@/components/pro/UpgradeLock";
 import { useIsPro, tierRank } from "@/hooks/useIsPro";
 
-export type ExamLoadFailReason = "empty_result" | "fetch_failed";
+export type ExamLoadFailReason = "empty_result" | "fetch_failed" | "need_upgrade";
 
 export interface ExamLoadErrorState {
   /** Which of the two branches logged in client_error_logs. */
@@ -42,7 +42,7 @@ export default function ExamLoadErrorModal({
   const req = state.accessTier === "premium" ? "premium" : state.accessTier === "pro" ? "pro" : "free";
   const tierBlocked = req !== "free" && tierRank(tier) < tierRank(req);
 
-  if (state.reason === "empty_result" && tierBlocked) {
+  if (state.reason === "need_upgrade" || (state.reason === "empty_result" && tierBlocked)) {
     return (
       <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
         <DialogContent className="max-w-md">
@@ -66,8 +66,8 @@ export default function ExamLoadErrorModal({
           </DialogTitle>
           <DialogDescription>
             {state.reason === "fetch_failed"
-              ? "Kết nối mạng bị ngắt khi tải câu hỏi. Bấm “Thử lại” để tải lại đề — bài đang làm không bị mất."
-              : "Đề này hiện không có câu hỏi hiển thị được. Vui lòng thử lại hoặc chọn đề khác."}
+              ? "Mất kết nối, thử lại. Bấm “Thử lại” để tải lại đề — bài đang làm không bị mất."
+              : "Đề này chưa sẵn sàng (chưa có câu hỏi). Vui lòng thử lại hoặc chọn đề khác."}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col sm:flex-row gap-2 pt-2">

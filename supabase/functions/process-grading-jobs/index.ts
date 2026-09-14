@@ -62,6 +62,11 @@ async function hydrateAudioPaths(payload: any): Promise<any> {
 // the fetch is aborted, the job goes back to pending, and the next run resumes
 // from the step that has not completed yet.
 const STEP_TIMEOUT_MS = 60_000;
+// Transcription is the slow step (audio download + STT), so it gets 120s.
+const TRANSCRIBE_TIMEOUT_MS = 120_000;
+// A transient failure never kills the job: it goes back to pending with a
+// 10-minute × attempts backoff until this many attempts are spent.
+const RETRY_CEILING = 6;
 
 async function invokeGradeExam(
   payload: any,
@@ -123,7 +128,7 @@ async function ensureSpeakingTranscript(
       gradingSessionId: payload.gradingSessionId ?? null,
     },
     job.user_id,
-    STEP_TIMEOUT_MS,
+    TRANSCRIBE_TIMEOUT_MS,
   );
   if (!ok || !body || body.error || !Array.isArray(body.transcripts)) {
     return {
@@ -587,6 +592,64 @@ async function persistJobResult(job: any, body: any) {
   }
 }
 
+// ─── failure handling: back off instead of losing the submission ────────────
+/**
+ * A transient failure (timeout, 504, network, transient persist error) NEVER
+ * strands a submission: the job returns to 'pending' with a 10-minute × attempts
+ * backoff. Only a [permanent] error or RETRY_CEILING spent attempts settle it as
+ * 'failed', and then the reason is mirrored into test_results.grade_payload so
+ * the History screen can offer "chấm lại" instead of showing a 0.
+ */
+async function settleFailure(
+  job: any,
+  errMsg: string,
+  permanent: boolean,
+  extra: Record<string, any> = {},
+): Promise<"failed" | "retry"> {
+  const attempts = Number(job.attempts || 0);
+  const isFinal = permanent || attempts >= RETRY_CEILING;
+  const nowIso = new Date().toISOString();
+
+  if (isFinal) {
+    await admin.from("grading_jobs").update({
+      status: "failed",
+      claimed_at: null,
+      last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
+      finished_at: nowIso,
+      updated_at: nowIso,
+      ...extra,
+    }).eq("id", job.id);
+
+    if (job.test_result_id) {
+      try {
+        await admin.from("test_results").update({
+          grade_payload: {
+            status: "failed",
+            reason: permanent ? `[permanent] ${errMsg}` : errMsg,
+            part: job.part ?? null,
+          },
+        } as any).eq("id", job.test_result_id);
+      } catch (e) {
+        console.warn("[worker] grade_payload failure marker failed:", (e as any)?.message || e);
+      }
+    }
+    return "failed";
+  }
+
+  const nextRunAt = new Date(Date.now() + 10 * 60_000 * Math.max(attempts, 1)).toISOString();
+  await admin.from("grading_jobs").update({
+    status: "pending",
+    claimed_at: null,
+    last_error: errMsg,
+    finished_at: null,
+    next_run_at: nextRunAt,
+    max_attempts: Math.max(Number(job.max_attempts || 0), RETRY_CEILING),
+    updated_at: nowIso,
+    ...extra,
+  }).eq("id", job.id);
+  return "retry";
+}
+
 // ─── main handler ───────────────────────────────────────────────────────────
 
 function parseJwtClaims(token: string): Record<string, unknown> | null {
@@ -650,14 +713,7 @@ Deno.serve(async (req) => {
         if (step1.error) {
           const errMsg = `transcribe: ${String(step1.error.body?.error || `HTTP ${step1.error.status}`)}`;
           const permanent = isPermanentFailure(step1.error.status, step1.error.body);
-          const isFinal = permanent || (job.attempts || 0) >= (job.max_attempts || 3);
-          await admin.from("grading_jobs").update({
-            status: isFinal ? "failed" : "pending",
-            claimed_at: null,
-            last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
-            finished_at: isFinal ? new Date().toISOString() : null,
-          }).eq("id", job.id);
-          results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
           continue;
         }
         // Step 2: rubric grading (unchanged prompt), separate 60s budget.
@@ -684,40 +740,19 @@ Deno.serve(async (req) => {
           } catch (persistErr: any) {
             const errMsg = `persist: ${persistErr?.message || String(persistErr)}`;
             console.error("[worker] persist error:", errMsg);
-            const isFinal = (job.attempts || 0) >= (job.max_attempts || 3);
-            await admin.from("grading_jobs").update({
-              status: isFinal ? "failed" : "pending",
-              claimed_at: null,
-              last_error: errMsg,
-              // Keep raw_response so operators can inspect / retry persist manually.
-              raw_response: body,
-              finished_at: isFinal ? new Date().toISOString() : null,
-            }).eq("id", job.id);
-            results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+            // Keep raw_response so operators can inspect / retry persist manually.
+            results.push({ id: job.id, status: await settleFailure(job, errMsg, false, { raw_response: body }) });
           }
         } else {
           const errMsg = (body && body.error) ? String(body.error) : `HTTP ${status}`;
           const permanent = isPermanentFailure(status, body);
-          const isFinal = permanent || (job.attempts || 0) >= (job.max_attempts || 3);
-          await admin.from("grading_jobs").update({
-            status: isFinal ? "failed" : "pending",
-            claimed_at: null,
-            last_error: permanent ? `[permanent] ${errMsg}` : errMsg,
-            finished_at: isFinal ? new Date().toISOString() : null,
-          }).eq("id", job.id);
-          results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
         }
       } catch (e: any) {
         const errMsg = e?.message || String(e);
-        const isFinal = (job.attempts || 0) >= (job.max_attempts || 3);
-        await admin.from("grading_jobs").update({
-          status: isFinal ? "failed" : "pending",
-          claimed_at: null,
-          last_error: errMsg,
-          finished_at: isFinal ? new Date().toISOString() : null,
-        }).eq("id", job.id);
-        results.push({ id: job.id, status: isFinal ? "failed" : "retry" });
+        results.push({ id: job.id, status: await settleFailure(job, errMsg, false) });
       }
+
     }
 
     return new Response(JSON.stringify({ processed: results.length, results }), {

@@ -128,6 +128,26 @@ export const fetchExamQuestions = async (
   if (data.length === 0) {
     logClientError("exam_questions_empty", new Error("empty_result"), { examSetId, online: navigator?.onLine ?? null });
     if (!opts?.allowEmpty) {
+      // A Pro set read by a non-Pro account returns zero rows by design (RLS).
+      // Say "nâng cấp Pro", never "đề chưa sẵn sàng".
+      try {
+        const [{ data: setRow }, { data: tier }] = await Promise.all([
+          supabase.from("exam_sets").select("access_tier").eq("id", examSetId).maybeSingle(),
+          (supabase as any).rpc("current_user_tier"),
+        ]);
+        const accessTier = String((setRow as any)?.access_tier ?? "free");
+        const userTier = String(tier ?? "free");
+        if (accessTier !== "free" && userTier === "free") {
+          throw Object.assign(new Error("need_upgrade"), {
+            code: "NEED_UPGRADE",
+            examSetId,
+            accessTier,
+          });
+        }
+      } catch (e) {
+        if ((e as any)?.code === "NEED_UPGRADE") throw e;
+        // Tier probe failed → fall through to the generic empty error.
+      }
       throw Object.assign(new Error("exam_empty"), { code: "EXAM_EMPTY", examSetId });
     }
   }

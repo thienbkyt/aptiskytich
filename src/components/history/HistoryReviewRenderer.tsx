@@ -17,6 +17,7 @@ import WritingExamEngine, { type WritingPartType } from "@/components/writing/Wr
 import type { WritingGradingResult } from "@/hooks/useExamGrading";
 import useWritingGradingStatus from "@/hooks/useWritingGradingStatus";
 import WritingGradingStatusBanner from "@/components/writing/WritingGradingStatusBanner";
+import GradingFailedRetryBox from "@/components/history/GradingFailedRetryBox";
 import { Button } from "@/components/ui/button";
 import { logClientError } from "@/lib/clientErrorLog";
 
@@ -389,6 +390,11 @@ const HistoryReviewRenderer = ({ examSetId, skill, part, testTitle, qResults, on
       <>
         {writingGrading === null && (
           <div className="max-w-3xl mx-auto px-4 pt-4">
+            <GradingFailedRetryBox
+              testResultId={testResultId}
+              skill="writing"
+              hasResult={false}
+            />
             <WritingGradingStatusBanner
               pendingParts={writingStatus.pendingParts}
               failedParts={writingStatus.failedParts}
