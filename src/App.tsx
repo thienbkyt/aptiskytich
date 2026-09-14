@@ -164,6 +164,7 @@ const App = () => (
               <MobileNoticeProvider>
               <LoginGateProvider>
                 <RouteProgressBar />
+                <NoTranslateExamRoutes />
                 <Suspense fallback={<PageLoadingSkeleton />}>
                   <PageTransition>
                     <Routes>
