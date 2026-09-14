@@ -63,7 +63,7 @@ async function hydrateAudioPaths(payload: any): Promise<any> {
 // from the step that has not completed yet.
 const STEP_TIMEOUT_MS = 60_000;
 // Transcription is the slow step (audio download + STT), so it gets 120s.
-const TRANSCRIBE_TIMEOUT_MS = 120_000;
+const TRANSCRIBE_TIMEOUT_MS = 90_000;
 // A transient failure never kills the job: it goes back to pending with a
 // 10-minute × attempts backoff until this many attempts are spent.
 const RETRY_CEILING = 6;
@@ -696,10 +696,11 @@ Deno.serve(async (req) => {
     // atomic — it only selects status='pending' rows with FOR UPDATE SKIP LOCKED
     // and flips them to 'processing' in the same statement, so two concurrent
     // runs (cron now fires every minute) can never claim the same job. Stuck
-    // 'processing' rows are reclaimed only after _reclaim_after (10 minutes).
+    // 'processing' rows are reclaimed only after _reclaim_after (3 minutes) and
+    // get their attempt refunded, because they were never actually graded.
     const { data: jobs, error } = await admin.rpc("claim_grading_jobs", {
-      _limit: 5,
-      _reclaim_after: "10 minutes",
+      _limit: 8,
+      _reclaim_after: "3 minutes",
     });
     if (error) {
       console.error("[worker] claim error:", error);
@@ -708,17 +709,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    const results: Array<{ id: string; status: string }> = [];
-
-    for (const job of (jobs || []) as any[]) {
+    // Grade every claimed job in parallel: each job's steps are independent and
+    // the wall-clock budget of one run is shared by all of them.
+    const runJob = async (job: any): Promise<{ id: string; status: string }> => {
       try {
         // Step 1 (speaking only): transcribe, cached on the job payload.
         const step1 = await ensureSpeakingTranscript(job);
         if (step1.error) {
           const errMsg = `transcribe: ${String(step1.error.body?.error || `HTTP ${step1.error.status}`)}`;
           const permanent = isPermanentFailure(step1.error.status, step1.error.body);
-          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
-          continue;
+          return { id: job.id, status: await settleFailure(job, errMsg, permanent) };
         }
         // Step 2: rubric grading (unchanged prompt), separate 60s budget.
         // Recordings over 60s are graded from the transcript only (see
@@ -740,24 +740,30 @@ Deno.serve(async (req) => {
               raw_response: body,
               last_error: null,
             }).eq("id", job.id);
-            results.push({ id: job.id, status: "done" });
+            return { id: job.id, status: "done" };
           } catch (persistErr: any) {
             const errMsg = `persist: ${persistErr?.message || String(persistErr)}`;
             console.error("[worker] persist error:", errMsg);
             // Keep raw_response so operators can inspect / retry persist manually.
-            results.push({ id: job.id, status: await settleFailure(job, errMsg, false, { raw_response: body }) });
+            return { id: job.id, status: await settleFailure(job, errMsg, false, { raw_response: body }) };
           }
-        } else {
-          const errMsg = (body && body.error) ? String(body.error) : `HTTP ${status}`;
-          const permanent = isPermanentFailure(status, body);
-          results.push({ id: job.id, status: await settleFailure(job, errMsg, permanent) });
         }
+        const errMsg = (body && body.error) ? String(body.error) : `HTTP ${status}`;
+        const permanent = isPermanentFailure(status, body);
+        return { id: job.id, status: await settleFailure(job, errMsg, permanent) };
       } catch (e: any) {
         const errMsg = e?.message || String(e);
-        results.push({ id: job.id, status: await settleFailure(job, errMsg, false) });
+        return { id: job.id, status: await settleFailure(job, errMsg, false) };
       }
+    };
 
-    }
+    const settled = await Promise.allSettled(((jobs || []) as any[]).map(runJob));
+    const results = settled.map((s, i) =>
+      s.status === "fulfilled"
+        ? s.value
+        : { id: ((jobs || []) as any[])[i]?.id, status: "error" }
+    );
+
 
     return new Response(JSON.stringify({ processed: results.length, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

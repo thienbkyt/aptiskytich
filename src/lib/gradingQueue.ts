@@ -23,6 +23,14 @@ export async function enqueueGradingFallback(args: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { id: null };
 
+    // A writing job without a test_result_id can never be persisted by the
+    // worker (it fails with "writing job missing test_result_id"), so refuse to
+    // create it and let the caller surface a real error instead.
+    if (args.skill === "writing" && !args.testResultId) {
+      console.error("[enqueueGradingFallback] refusing writing job without test_result_id");
+      return { id: null, errorCode: "missing_test_result_id" };
+    }
+
     const enrichedPayload = {
       ...args.payload,
       _meta: {
