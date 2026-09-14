@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { compareExamItems } from "@/lib/sortExamSets";
 import { logClientError } from "@/lib/clientErrorLog";
+import { toast } from "sonner";
 
 const withTimeout = <T,>(p: PromiseLike<T>, ms = 15000): Promise<T> =>
   Promise.race([
@@ -100,12 +101,49 @@ export const useExamSets = (skill: string) => {
 /**
  * Fetch all exam_questions for a given exam_set_id.
  *
+ * Reads go through the SECURITY DEFINER RPC `get_exam_questions`, which enforces
+ * exactly the same visibility rules the old exam_questions SELECT policies did,
+ * logs access per user/set/day and rate-limits bulk scraping.
+ *
  * A published exam set always has questions, so an EMPTY result is never normal —
  * it means the rows were hidden (e.g. RLS after a Pro plan expired) or the fetch
  * silently under-delivered. In that case we throw an error tagged EXAM_EMPTY so
  * call sites can block entering the exam room instead of showing a blank test.
  * Read-only call sites (review/history/prefetch) can opt out with allowEmpty.
  */
+const isAccessLimit = (e: any): boolean =>
+  typeof e?.message === "string" && e.message.includes("exam_access_limit");
+
+const mapQuestions = (rows: any[]): ExamQuestionRow[] =>
+  rows.map((q: any) => ({
+    ...q,
+    options: (q.options as string[]) || [],
+    extra_data: (q.extra_data as Record<string, any>) || {},
+  })) as ExamQuestionRow[];
+
+/**
+ * Fetch questions for several exam sets at once (grouped by set, ordered by order_index).
+ */
+export const fetchExamQuestionsForSets = async (
+  setIds: string[],
+): Promise<ExamQuestionRow[]> => {
+  const ids = Array.from(new Set(setIds.filter(Boolean)));
+  if (ids.length === 0) return [];
+  const res: any = await withTimeout<any>(
+    (supabase as any).rpc("get_exam_questions", { _set_ids: ids }),
+  );
+  const data = res?.data, error = res?.error;
+
+  if (error) {
+    if (isAccessLimit(error)) {
+      toast.error("Bạn mở đề quá nhanh, thử lại sau 1 giờ");
+      throw Object.assign(new Error("exam_access_limit"), { code: "EXAM_ACCESS_LIMIT" });
+    }
+    throw Object.assign(new Error("exam_fetch_failed"), { code: "EXAM_FETCH_FAILED" });
+  }
+  return mapQuestions((data as any[]) || []);
+};
+
 export const fetchExamQuestions = async (
   examSetId: string,
   opts?: { allowEmpty?: boolean },
@@ -113,10 +151,14 @@ export const fetchExamQuestions = async (
   let data: any = null, error: any = null;
   try {
     const res = await withTimeout(
-      supabase.from("exam_questions").select("*").eq("exam_set_id", examSetId).order("order_index", { ascending: true }) as any
+      (supabase as any).rpc("get_exam_questions", { _set_ids: [examSetId] }),
     );
     data = (res as any).data; error = (res as any).error;
   } catch (e) { error = e; }
+  if (error && isAccessLimit(error)) {
+    toast.error("Bạn mở đề quá nhanh, thử lại sau 1 giờ");
+    throw Object.assign(new Error("exam_access_limit"), { code: "EXAM_ACCESS_LIMIT", examSetId });
+  }
   if (error || !data) {
     console.error("[fetchExamQuestions] failed", { examSetId, error });
     logClientError("exam_questions_empty", new Error("fetch_failed"), { examSetId, reason: "fetch_failed", online: navigator?.onLine ?? null });
@@ -128,7 +170,7 @@ export const fetchExamQuestions = async (
   if (data.length === 0) {
     logClientError("exam_questions_empty", new Error("empty_result"), { examSetId, online: navigator?.onLine ?? null });
     if (!opts?.allowEmpty) {
-      // A Pro set read by a non-Pro account returns zero rows by design (RLS).
+      // A Pro set read by a non-Pro account returns zero rows by design.
       // Say "nâng cấp Pro", never "đề chưa sẵn sàng".
       try {
         const [{ data: setRow }, { data: tier }] = await Promise.all([
@@ -151,23 +193,23 @@ export const fetchExamQuestions = async (
       throw Object.assign(new Error("exam_empty"), { code: "EXAM_EMPTY", examSetId });
     }
   }
-  return data.map((q: any) => ({
-    ...q,
-    options: (q.options as string[]) || [],
-    extra_data: (q.extra_data as Record<string, any>) || {},
-  })) as ExamQuestionRow[];
+  return mapQuestions(data as any[]);
 };
 
 
 /**
- * Fetch question count per exam set (for card display)
+ * Fetch question count per exam set (for card display).
+ * Uses the denormalised counter on exam_sets — students no longer read
+ * exam_questions directly.
  */
 export const fetchExamSetQuestionCount = async (examSetId: string): Promise<number> => {
-  const { count, error } = await supabase
-    .from("exam_questions")
-    .select("id", { count: "exact", head: true })
-    .eq("exam_set_id", examSetId);
+  const { data, error } = await supabase
+    .from("exam_sets")
+    .select("question_count")
+    .eq("id", examSetId)
+    .maybeSingle();
 
-  if (error || count === null) return 0;
-  return count;
+  if (error || !data) return 0;
+  return Number((data as any).question_count ?? 0);
 };
+
