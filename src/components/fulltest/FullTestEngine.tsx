@@ -305,7 +305,10 @@ const FullTestEngine = ({ testId, testTitle, onExit, customSetId }: FullTestEngi
       // A published set always has questions: an empty result means the rows are
       // hidden (RLS), typically because the learner's Pro plan expired.
       console.error("[FullTestEngine.loadAllData] failed", e);
-      if (isExamEmptyError(e)) {
+      if (isNeedUpgradeError(e)) {
+        setBlockedNeedsPro(true);
+        setLoadBlocked("empty");
+      } else if (isExamEmptyError(e)) {
         setBlockedNeedsPro((sets as any[]).some((s: any) => s.access_tier && s.access_tier !== "free"));
         setLoadBlocked("empty");
       } else {
