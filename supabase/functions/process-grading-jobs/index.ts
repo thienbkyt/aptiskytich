@@ -62,6 +62,11 @@ async function hydrateAudioPaths(payload: any): Promise<any> {
 // the fetch is aborted, the job goes back to pending, and the next run resumes
 // from the step that has not completed yet.
 const STEP_TIMEOUT_MS = 60_000;
+// Transcription is the slow step (audio download + STT), so it gets 120s.
+const TRANSCRIBE_TIMEOUT_MS = 120_000;
+// A transient failure never kills the job: it goes back to pending with a
+// 10-minute × attempts backoff until this many attempts are spent.
+const RETRY_CEILING = 6;
 
 async function invokeGradeExam(
   payload: any,
