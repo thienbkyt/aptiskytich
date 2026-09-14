@@ -5634,6 +5634,10 @@ export type Database = {
         Args: { _action: string; _limit: number; _user_id: string }
         Returns: Json
       }
+      count_old_speaking_recordings: {
+        Args: { _cutoff: string }
+        Returns: number
+      }
       create_custom_set: {
         Args: {
           p_exam_set_ids: string[]
@@ -5865,6 +5869,13 @@ export type Database = {
           items: Json
           note: string
           user_id: string
+        }[]
+      }
+      list_old_speaking_recordings: {
+        Args: { _cutoff: string; _cutoff_v2: string; _limit: number }
+        Returns: {
+          is_v2: boolean
+          name: string
         }[]
       }
       list_student_feedback: {
