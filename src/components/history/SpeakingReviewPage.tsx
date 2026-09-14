@@ -22,6 +22,7 @@ import { safeSessionStorage } from "@/lib/safeStorage";
 import { toTimeSafe } from "@/lib/safeDate";
 import { Button } from "@/components/ui/button";
 import { logClientError } from "@/lib/clientErrorLog";
+import GradingFailedRetryBox from "@/components/history/GradingFailedRetryBox";
 
 interface Props {
   userId: string;
@@ -360,6 +361,11 @@ const SpeakingReviewPage = ({
     <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
       {skillHeader}
       <div className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
+        <GradingFailedRetryBox
+          testResultId={testResultId}
+          skill="speaking"
+          hasResult={!!v2Part || gradings.some(Boolean)}
+        />
         <SpeakingReviewView
           partType={partType}
           part1Data={part1Data}
