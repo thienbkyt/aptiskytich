@@ -299,6 +299,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   // Upsert single "Marathon · Part X" History row for this session.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
     if (isSingleWrongRetry) return;
+    if (!opts?.finalize && retryFinalizedRef.current) return;
     if (savingHistoryRef.current) return;
 
     const list = resultsRef.current;
