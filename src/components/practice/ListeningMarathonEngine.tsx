@@ -111,6 +111,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
   const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
   const savingHistoryRef = useRef(false);
+  const retryFinalizedRef = useRef(false);
   const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
   useEffect(() => { resultsRef.current = results; }, [results]);
   const isRetryMode = !!retryWrongSetIds?.length;
