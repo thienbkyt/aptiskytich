@@ -679,10 +679,14 @@ const Reading = () => {
                     if (Object.keys(wrongQMap).length === 0 && lastRun?.wrongQuestionsBySet) {
                       Object.assign(wrongQMap, lastRun.wrongQuestionsBySet);
                     }
-                    const progWrongIds = Object.keys(wrongQMap).length
-                      ? Object.keys(wrongQMap)
-                      : (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
-                    const wrongSetIds = progWrongIds.length ? progWrongIds : (lastRun?.wrongSetIds ?? []);
+                    const isPart1 = activeTab === "part1";
+                    let wrongSetIds: string[];
+                    if (isPart1) {
+                      wrongSetIds = Object.keys(wrongQMap).length ? Object.keys(wrongQMap) : (lastRun?.wrongSetIds ?? []);
+                    } else {
+                      wrongSetIds = (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
+                      if (!wrongSetIds.length) wrongSetIds = lastRun?.wrongSetIds ?? [];
+                    }
                     const wrongCount = wrongSetIds.length;
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>

@@ -114,6 +114,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
   const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
   const savingRef = useRef(false);
+  const retryFinalizedRef = useRef(false);
   const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
   useEffect(() => { resultsRef.current = results; }, [results]);
 
@@ -351,6 +352,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   // completed effect and from exit — same row is updated across both paths.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
     if (isSingleWrongRetry) return;
+    if (!opts?.finalize && retryFinalizedRef.current) return;
     if (savingRef.current) return;
 
     const list = resultsRef.current;
@@ -421,7 +423,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           if (wrongIds.length) wrongQBySet[r.examSetId] = wrongIds;
         });
         const setResults = Object.fromEntries(reviewable_.map((r) => [r.examSetId, { correct: r.correct, total: r.total }]));
-        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, updatedAt: Date.now() });
+        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, setCount: reviewable_.length, updatedAt: Date.now() });
         clearMarathonProgress("reading", progPart);
         window.dispatchEvent(new Event("exam-result-saved"));
       } else if (opts?.finalize && isRetryMode && !persist && !isSingleWrongRetry) {
@@ -433,7 +435,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           total: r.total,
           wrongQuestionIds: r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id),
         })));
-        if (merged) {
+          if (merged) {
           await upsertMarathonResult({
             testResultId: testResultIdRef.current,
             sessionId: sessionIdRef.current,
@@ -448,6 +450,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
             },
             reviewSnapshot: snap,
           });
+          retryFinalizedRef.current = true;
           window.dispatchEvent(new Event("exam-result-saved"));
         }
       }

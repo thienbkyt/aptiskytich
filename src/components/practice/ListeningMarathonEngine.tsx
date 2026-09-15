@@ -111,6 +111,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   const sessionIdRef = useRef<string>(savedInit?.sessionId ?? newMarathonSessionId());
   const testResultIdRef = useRef<string | null>(savedInit?.testResultId ?? null);
   const savingHistoryRef = useRef(false);
+  const retryFinalizedRef = useRef(false);
   const resultsRef = useRef<(ResultEntry | undefined)[]>(results);
   useEffect(() => { resultsRef.current = results; }, [results]);
   const isRetryMode = !!retryWrongSetIds?.length;
@@ -298,6 +299,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
   // Upsert single "Marathon · Part X" History row for this session.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
     if (isSingleWrongRetry) return;
+    if (!opts?.finalize && retryFinalizedRef.current) return;
     if (savingHistoryRef.current) return;
 
     const list = resultsRef.current;
@@ -372,7 +374,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           if (wq.length) wrongQBySet[r.examSetId] = wq;
         });
         const setResults = Object.fromEntries(reviewable_.map((r) => [r.examSetId, { correct: r.correct, total: r.total }]));
-        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, updatedAt: Date.now() });
+        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, setCount: reviewable_.length, updatedAt: Date.now() });
         clearMarathonProgress("listening", progPart);
         window.dispatchEvent(new Event("exam-result-saved"));
       } else if (opts?.finalize && isRetryMode && !persist && !isSingleWrongRetry) {
@@ -399,6 +401,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
             },
             reviewSnapshot: snap,
           });
+          retryFinalizedRef.current = true;
           window.dispatchEvent(new Event("exam-result-saved"));
         }
       }
