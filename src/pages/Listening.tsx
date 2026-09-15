@@ -646,9 +646,15 @@ const Listening = () => {
                     if (Object.keys(wrongQMap).length === 0 && lastRun?.wrongQuestionsBySet) {
                       Object.assign(wrongQMap, lastRun.wrongQuestionsBySet);
                     }
-                    const wrongSetIds = Object.keys(wrongQMap);
-                    const wrongQTotal = Object.values(wrongQMap).reduce((s, a) => s + a.length, 0);
                     const isPart1 = activeTab === "part1";
+                    let wrongSetIds: string[];
+                    if (isPart1) {
+                      wrongSetIds = Object.keys(wrongQMap);
+                    } else {
+                      wrongSetIds = (savedProg?.results ?? []).filter((r: any) => r && r.correct < r.total).map((r: any) => r.examSetId);
+                      if (!wrongSetIds.length) wrongSetIds = lastRun?.wrongSetIds ?? [];
+                    }
+                    const wrongQTotal = Object.values(wrongQMap).reduce((s, a) => s + a.length, 0);
                     const wrongCount = isPart1 ? wrongQTotal : wrongSetIds.length;
                     return (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
