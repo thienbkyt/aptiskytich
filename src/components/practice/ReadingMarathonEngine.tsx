@@ -423,7 +423,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           if (wrongIds.length) wrongQBySet[r.examSetId] = wrongIds;
         });
         const setResults = Object.fromEntries(reviewable_.map((r) => [r.examSetId, { correct: r.correct, total: r.total }]));
-        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, updatedAt: Date.now() });
+        saveMarathonLast("reading", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, setCount: reviewable_.length, updatedAt: Date.now() });
         clearMarathonProgress("reading", progPart);
         window.dispatchEvent(new Event("exam-result-saved"));
       } else if (opts?.finalize && isRetryMode && !persist && !isSingleWrongRetry) {
