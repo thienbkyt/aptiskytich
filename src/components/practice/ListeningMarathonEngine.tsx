@@ -401,6 +401,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
             },
             reviewSnapshot: snap,
           });
+          retryFinalizedRef.current = true;
           window.dispatchEvent(new Event("exam-result-saved"));
         }
       }
