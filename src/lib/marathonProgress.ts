@@ -94,15 +94,21 @@ export function mergeMarathonLastAfterRetry(
   }
 
   const total = last.total;
-  // If the original run tracked per-set results, the score is the merged sum;
-  // otherwise fall back for legacy data saved before setResults existed.
-  const correct = last.setResults
+  const complete = !!last.setCount && Object.keys(setResults).length >= last.setCount;
+  const correct = complete
     ? Object.values(setResults).reduce((s, x) => s + x.correct, 0)
     : wrongSetIds.length === 0
       ? total
       : last.correct;
 
-  const merged: MarathonLast = { ...last, correct, wrongSetIds, wrongQuestionsBySet, setResults, updatedAt: Date.now() };
+  const merged: MarathonLast = {
+    ...last,
+    correct,
+    wrongSetIds,
+    wrongQuestionsBySet,
+    setResults: complete ? setResults : last.setResults,
+    updatedAt: Date.now(),
+  };
   saveMarathonLast(skill, part, merged);
   return merged;
 }
