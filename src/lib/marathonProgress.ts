@@ -37,10 +37,28 @@ export function clearMarathonProgress(skill: string, part: string) {
   try { localStorage.removeItem(key(skill, part)); } catch { /* noop */ }
 }
 export function saveMarathonLast(skill: string, part: string, data: MarathonLast) {
-  try { localStorage.setItem(lastKey(skill, part), JSON.stringify(data)); } catch { /* noop */ }
+  try { localStorage.setItem(lastKey(skill, part), JSON.stringify(normalizeMarathonLast(data))); } catch { /* noop */ }
+}
+export function normalizeMarathonLast(l: MarathonLast): MarathonLast {
+  const wrongSetIds = l.wrongSetIds || [];
+  let correct = l.correct;
+  let wrongQuestionsBySet = l.wrongQuestionsBySet ? { ...l.wrongQuestionsBySet } : {};
+  if (wrongSetIds.length === 0) {
+    correct = l.total;
+    wrongQuestionsBySet = {};
+  } else {
+    Object.keys(wrongQuestionsBySet).forEach((k) => {
+      if (!wrongSetIds.includes(k)) delete wrongQuestionsBySet[k];
+    });
+  }
+  return { ...l, correct, wrongSetIds, wrongQuestionsBySet };
 }
 export function loadMarathonLast(skill: string, part: string): MarathonLast | null {
-  try { const r = localStorage.getItem(lastKey(skill, part)); return r ? JSON.parse(r) : null; } catch { return null; }
+  try {
+    const r = localStorage.getItem(lastKey(skill, part));
+    if (!r) return null;
+    return normalizeMarathonLast(JSON.parse(r));
+  } catch { return null; }
 }
 export function clearMarathonLast(skill: string, part: string) {
   try { localStorage.removeItem(lastKey(skill, part)); } catch { /* noop */ }
