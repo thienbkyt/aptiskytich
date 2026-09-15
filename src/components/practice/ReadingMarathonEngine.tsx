@@ -435,7 +435,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
           total: r.total,
           wrongQuestionIds: r.qResults.filter((q) => !q.is_correct).map((q) => q.exam_question_id),
         })));
-        if (merged) {
+          if (merged) {
           await upsertMarathonResult({
             testResultId: testResultIdRef.current,
             sessionId: sessionIdRef.current,
@@ -450,6 +450,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
             },
             reviewSnapshot: snap,
           });
+          retryFinalizedRef.current = true;
           window.dispatchEvent(new Event("exam-result-saved"));
         }
       }
