@@ -6129,6 +6129,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      send_signup_nurture_emails: { Args: never; Returns: number }
       send_subscription_reminder_emails: { Args: never; Returns: number }
       slugify_vi: { Args: { _input: string }; Returns: string }
       tier_rank: { Args: { t: string }; Returns: number }
