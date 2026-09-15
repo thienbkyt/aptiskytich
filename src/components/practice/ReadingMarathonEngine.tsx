@@ -352,6 +352,7 @@ const ReadingMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabel,
   // completed effect and from exit — same row is updated across both paths.
   const persistHistoryRow = useCallback(async (opts?: { finalize?: boolean }) => {
     if (isSingleWrongRetry) return;
+    if (!opts?.finalize && retryFinalizedRef.current) return;
     if (savingRef.current) return;
 
     const list = resultsRef.current;
