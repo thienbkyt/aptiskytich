@@ -374,7 +374,7 @@ const ListeningMarathonEngine = ({ sets: setsInput, scopeId, partType, skillLabe
           if (wq.length) wrongQBySet[r.examSetId] = wq;
         });
         const setResults = Object.fromEntries(reviewable_.map((r) => [r.examSetId, { correct: r.correct, total: r.total }]));
-        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, updatedAt: Date.now() });
+        saveMarathonLast("listening", progPart, { correct: accCorrect_, total: accTotal_, wrongSetIds, wrongQuestionsBySet: wrongQBySet, setResults, setCount: reviewable_.length, updatedAt: Date.now() });
         clearMarathonProgress("listening", progPart);
         window.dispatchEvent(new Event("exam-result-saved"));
       } else if (opts?.finalize && isRetryMode && !persist && !isSingleWrongRetry) {
