@@ -724,11 +724,17 @@ Deno.serve(async (req) => {
           const permanent = isPermanentFailure(step1.error.status, step1.error.body);
           return { id: job.id, status: await settleFailure(job, errMsg, permanent) };
         }
-        // Step 2: rubric grading (unchanged prompt), separate 60s budget.
+        // Step 2: rubric grading (unchanged prompt), separate per-skill budget.
         // Recordings over 60s are graded from the transcript only (see
         // buildGradePayload) — everything ≤ 60s still goes in with its audio.
         const payload = await buildGradePayload(job, step1.payload);
-        const { ok, status, body } = await invokeGradeExam(payload, job.user_id);
+        const { ok, status, body } = await invokeGradeExam(
+          payload,
+          job.user_id,
+          job.skill === "writing" ? WRITING_STEP_TIMEOUT_MS : STEP_TIMEOUT_MS,
+        );
+
+
 
 
 
