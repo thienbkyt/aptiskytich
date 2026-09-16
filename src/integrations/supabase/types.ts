@@ -5059,6 +5059,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_cham_ca_0916: {
+        Row: {
+          d: number | null
+          ids: number[] | null
+          idx: number | null
+          kp: string | null
+        }
+        Insert: {
+          d?: number | null
+          ids?: number[] | null
+          idx?: number | null
+          kp?: string | null
+        }
+        Update: {
+          d?: number | null
+          ids?: number[] | null
+          idx?: number | null
+          kp?: string | null
+        }
+        Relationships: []
+      }
+      tmp_cham_ten_0916: {
+        Row: {
+          i: number | null
+          ten: string | null
+        }
+        Insert: {
+          i?: number | null
+          ten?: string | null
+        }
+        Update: {
+          i?: number | null
+          ten?: string | null
+        }
+        Relationships: []
+      }
       tmp_key13: {
         Row: {
           diem: number | null
