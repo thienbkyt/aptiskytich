@@ -151,16 +151,28 @@ export async function gradeSpeakingPartV2(
     // Upload audio blobs to storage so the queue payload stays small (no base64
     // in jsonb) and the worker can re-download when it retries.
     let audioPaths: Array<string | null> = [];
+    let missing: number[] = [];
 
     try {
-      audioPaths = await uploadSpeakingBlobs(
+      const res = await uploadSpeakingBlobsWithRetry(
         audioBlobs,
         opts?.sessionId || opts?.testResultId || "adhoc",
         partType
       );
+      audioPaths = res.paths;
+      missing = res.missing;
     } catch (e) {
       console.warn("[gradeSpeakingPartV2] audio upload for queue failed:", e);
+      missing = audioBlobs.map((b, i) => (b ? i : -1)).filter((i) => i >= 0);
     }
+
+    // No job is created while a recording is still missing from storage.
+    if (missing.length > 0) {
+      throw new Error(
+        `Ghi âm chưa tải lên được, hãy ghi lại câu ${missing.map((i) => i + 1).join(", ")}`
+      );
+    }
+
     const enqueuePayload = {
       type: "speaking_v2",
       partType,
