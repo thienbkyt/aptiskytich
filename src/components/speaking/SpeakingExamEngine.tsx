@@ -191,6 +191,8 @@ const SpeakingExamEngine = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const readingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [readingSecsLeft, setReadingSecsLeft] = useState(0);
   const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -621,7 +623,14 @@ const SpeakingExamEngine = ({
 
     if (questionText) {
       const words = questionText.trim().split(/\s+/).filter(Boolean).length;
-      const speakTimeout = Math.max(30000, words * 900 + 8000);
+      const speakTimeout = Math.max(12000, words * 600 + 5000);
+      // Reading countdown shown in the right panel while TTS plays.
+      const readingEndAt = Date.now() + speakTimeout;
+      setReadingSecsLeft(Math.ceil(speakTimeout / 1000));
+      if (readingTimerRef.current) clearInterval(readingTimerRef.current);
+      readingTimerRef.current = setInterval(() => {
+        setReadingSecsLeft(Math.max(0, Math.ceil((readingEndAt - Date.now()) / 1000)));
+      }, 500);
       let finished = false;
       try {
         await withTimeout(
@@ -631,7 +640,9 @@ const SpeakingExamEngine = ({
       } catch {
         finished = true; /* Continue even if mobile audio is blocked. */
       }
+      if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
       if (!finished) {
+        logClientError("speaking_tts_stall", new Error("tts_timeout"), { partType, examSetId: examSetId ?? null, words, timeoutMs: speakTimeout, fullFlow });
         // Timed out: cut the voice so it never overlaps the prep timer.
         try { stopTTS(); } catch { /* noop */ }
       }
@@ -696,6 +707,13 @@ const SpeakingExamEngine = ({
       }
     }, 250);
   }, [partType, part1Data, part2Data, part3Data, part4Data]);
+
+  // Stop the reading countdown when the phase moves on or the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
+    };
+  }, [phase]);
 
   // Start recording
   const startRecording = useCallback(async () => {
@@ -1833,6 +1851,9 @@ const SpeakingExamEngine = ({
               </p>
               <p className="text-xs text-gray-500 text-center mt-2">
                 Nghe xong sẽ có tiếng bíp rồi bắt đầu ghi âm
+              </p>
+              <p className="text-xs text-[#24085a]/70 text-center mt-3">
+                Đang đọc đề… tối đa {readingSecsLeft}s
               </p>
             </div>
           ) : (

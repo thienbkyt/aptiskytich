@@ -1167,6 +1167,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_key1709_bump_20260916: {
+        Row: {
+          created_at: string | null
+          exam_set_id: string | null
+          id: string | null
+          key_id: string | null
+          priority: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          key_id?: string | null
+          priority?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       backup_lp1_chuanhoa_20260826: {
         Row: {
           audio_url: string | null

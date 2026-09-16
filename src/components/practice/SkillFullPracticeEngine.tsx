@@ -202,6 +202,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
   // Speaking full-practice grading state
   const speakingSubmissionsByPartRef = useRef<Record<number, SpeakingPartSubmission>>({});
   const speakingTestResultIdByPartRef = useRef<Record<number, string | null>>({});
+  // Storage paths of recordings uploaded right after each part finished —
+  // lets the final-part upload step skip parts that were already uploaded.
+  const speakingAudioPathsByPartRef = useRef<Record<number, Array<string | null>>>({});
   const speakingSessionStartIsoRef = useRef<string>(new Date().toISOString());
   const speakingGradingPromisesByPartRef = useRef<
     Record<number, Promise<Awaited<ReturnType<typeof gradeSpeakingSpec>>[]>>
@@ -774,6 +777,36 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         }
       } catch { /* swallow */ }
 
+      // Upload this part's recordings right away (best-effort). Wrapped so any
+      // failure never blocks the part-transition flow.
+      try {
+        const subNow = speakingSubmissionsByPartRef.current[currentPartIndex];
+        if (subNow && !speakingAudioPathsByPartRef.current[currentPartIndex]) {
+          const paths: Array<string | null> = new Array(subNow.items.length).fill(null);
+          await Promise.all(subNow.items.map(async (item, idx) => {
+            if (!item.blob) return;
+            try {
+              paths[idx] = (await saveSpeakingRecording({
+                examSetId: currentPart.id,
+                part: `${currentPart.partNorm}_q${idx + 1}`,
+                blob: item.blob,
+                durationSeconds: item.actualSpoken,
+                testResultId: _trId ?? null,
+              })) ?? null;
+            } catch { /* noop */ }
+          }));
+          speakingAudioPathsByPartRef.current[currentPartIndex] = paths;
+          if (_trId && paths.some(Boolean)) {
+            const { mergeSnapshotAI } = await import("@/lib/reviewItemsBuilder");
+            const aiByIndex: Record<number, { recordingPath: string }> = {};
+            paths.forEach((p, i) => { if (p) aiByIndex[i] = { recordingPath: p }; });
+            await mergeSnapshotAI(_trId, aiByIndex);
+          }
+        }
+      } catch (e) {
+        console.warn("[SkillFullPractice] per-part recording upload failed", e);
+      }
+
       // Kick off V2 grading IN BACKGROUND for the part just finished,
       // so by the time the student reaches the last part most grading is done.
       try {
@@ -826,6 +859,12 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           const originalPartIdx = orderedIndices[oi];
           const originalPart = parts[originalPartIdx];
           if (!originalPart) return;
+          // Skip parts already uploaded right after they finished.
+          const preUploaded = speakingAudioPathsByPartRef.current[originalPartIdx];
+          if (preUploaded) {
+            audioPathsByPart[originalPartIdx] = preUploaded;
+            return;
+          }
           const paths: Array<string | null> = new Array(sub.items.length).fill(null);
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
