@@ -62,6 +62,10 @@ async function hydrateAudioPaths(payload: any): Promise<any> {
 // the fetch is aborted, the job goes back to pending, and the next run resumes
 // from the step that has not completed yet.
 const STEP_TIMEOUT_MS = 60_000;
+// Writing grading is one long AI call (4 parts of text to grade in one pass),
+// so it gets a wider budget than the default step — failures loop as
+// "step timeout after 60s" otherwise.
+const WRITING_STEP_TIMEOUT_MS = 110_000;
 // Transcription is the slow step (audio download + STT), so it gets 120s.
 const TRANSCRIBE_TIMEOUT_MS = 90_000;
 // A transient failure never kills the job: it goes back to pending with a
@@ -720,11 +724,17 @@ Deno.serve(async (req) => {
           const permanent = isPermanentFailure(step1.error.status, step1.error.body);
           return { id: job.id, status: await settleFailure(job, errMsg, permanent) };
         }
-        // Step 2: rubric grading (unchanged prompt), separate 60s budget.
+        // Step 2: rubric grading (unchanged prompt), separate per-skill budget.
         // Recordings over 60s are graded from the transcript only (see
         // buildGradePayload) — everything ≤ 60s still goes in with its audio.
         const payload = await buildGradePayload(job, step1.payload);
-        const { ok, status, body } = await invokeGradeExam(payload, job.user_id);
+        const { ok, status, body } = await invokeGradeExam(
+          payload,
+          job.user_id,
+          job.skill === "writing" ? WRITING_STEP_TIMEOUT_MS : STEP_TIMEOUT_MS,
+        );
+
+
 
 
 

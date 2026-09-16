@@ -1376,7 +1376,10 @@ Chia feedback thành các mục, MỖI mục bắt đầu bằng nhãn in đậm
 **Gợi ý nâng cao**
 Sau mỗi nhãn xuống dòng rồi viết nội dung 1–3 câu tiếng Việt tự nhiên. Part 1 KHÔNG dùng mục **Gợi ý nâng cao**.
 
-RETURN VIA TOOL CALL. Mọi lỗi liệt kê ĐẦY ĐỦ, mỗi lỗi 1 dòng {original, corrected, explanation (tiếng Việt)}.`;
+GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
+- Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
+
+RETURN VIA TOOL CALL.`;
 
       // Rubric rút gọn RIÊNG cho Part 1 (không band anchors, không 5 tiêu chí, không forced complexity)
       const PART1_RUBRIC = `
@@ -1409,6 +1412,9 @@ RÀNG BUỘC FEEDBACK (bắt buộc):
 - feedback PHẢI nhất quán với items: nếu có bất kỳ item nào tooManyWords=true hoặc grammarCorrect=false thì TUYỆT ĐỐI không được viết những câu như "trả lời đúng và đầy đủ tất cả các câu hỏi".
 - nếu grammarErrors và spellingErrors đều rỗng thì KHÔNG được nhắc tới lỗi ngữ pháp/chính tả nào trong feedback (kể cả lỗi viết hoa).
 - mỗi lỗi nêu trong feedback phải tương ứng với một phần tử có thật trong grammarErrors hoặc spellingErrors.
+
+GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
+- Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
 
 RETURN VIA TOOL CALL.`;
 
