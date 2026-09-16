@@ -17,7 +17,7 @@ import { ArrowRight, Sparkles, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FB_GROUP_URL = "https://www.facebook.com/groups/1551779633112657";
-const ZALO_GROUP_URL = "https://zalo.me/g/ql84r9dxlh0ygjz8950u";
+const ZALO_GROUP_URL = "https://zalo.me/g/ejlneoganpxg6mk54whf";
 const SESSION_SHOWN_KEY = "kt_group_popup_shown";
 
 const FacebookIcon = ({ className }: { className?: string }) => (
