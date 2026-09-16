@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchCoreGVBand } from "@/lib/coreGV";
 import { safeText } from "@/lib/safeText";
 import { logClientError } from "@/lib/clientErrorLog";
+import { toast } from "sonner";
 import AdminExamControls from "@/components/exam/AdminExamControls";
 import ExamReportButton from "@/components/exam/ExamReportButton";
 import RevealAnswerButton from "@/components/exam/RevealAnswerButton";
