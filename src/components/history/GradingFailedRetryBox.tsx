@@ -30,12 +30,14 @@ export default function GradingFailedRetryBox({
     if (!testResultId || hasResult) { setFailed(false); return; }
     const { data } = await (supabase as any)
       .from("grading_jobs")
-      .select("id,status")
+      .select("id,status,part")
       .eq("test_result_id", testResultId)
       .eq("skill", skill)
-      .eq("status", "failed")
-      .limit(1);
-    setFailed(Array.isArray(data) && data.length > 0);
+      .in("status", ["failed", "done"]);
+    const rows = (Array.isArray(data) ? data : []) as any[];
+    // A part that already has a 'done' job is graded — ignore its failed twin.
+    const donePart = new Set(rows.filter((r) => r.status === "done").map((r) => r.part ?? ""));
+    setFailed(rows.some((r) => r.status === "failed" && !donePart.has(r.part ?? "")));
   }, [testResultId, skill, hasResult]);
 
   useEffect(() => { void check(); }, [check]);

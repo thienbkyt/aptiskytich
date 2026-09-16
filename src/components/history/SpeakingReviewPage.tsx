@@ -129,6 +129,26 @@ const SpeakingReviewPage = ({
         const idx = m ? parseInt(m[1], 10) - 1 : -1;
         if (idx >= 0 && idx < recByIdx.length) recByIdx[idx] = r;
       }
+      // Fallback: the V2 grading queue uploads its own copies. The newest
+      // successfully graded job for this attempt+part is the source of truth —
+      // failed jobs are ignored whenever a 'done' one exists.
+      if (testResultId && recByIdx.some((r) => !r)) {
+        const { data: doneJobs } = await (supabase as any)
+          .from("grading_jobs")
+          .select("id,payload,created_at")
+          .eq("test_result_id", testResultId)
+          .eq("skill", "speaking")
+          .eq("status", "done")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const jobPaths = (doneJobs?.[0]?.payload?.audioPaths ?? []) as (string | null)[];
+        jobPaths.forEach((p, idx) => {
+          if (p && idx < recByIdx.length && !recByIdx[idx]) {
+            recByIdx[idx] = { id: `job:${doneJobs[0].id}:${idx}`, audio_url: p };
+          }
+        });
+      }
+
       const signed = await Promise.all(
         recByIdx.map(async (r) => {
           if (!r) return null;

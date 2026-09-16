@@ -37,8 +37,8 @@ export function useFailedGradingJobs(enabled: boolean) {
     (async () => {
       const { data, error } = await (supabase as any)
         .from("grading_jobs")
-        .select("id,skill,part,test_result_id,payload,created_at")
-        .eq("status", "failed")
+        .select("id,skill,part,test_result_id,payload,created_at,status")
+        .in("status", ["failed", "done"])
         .not("test_result_id", "is", null)
         .order("created_at", { ascending: true });
       if (cancelled) return;
