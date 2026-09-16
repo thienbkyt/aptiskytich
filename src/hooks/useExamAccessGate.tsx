@@ -20,8 +20,11 @@ export interface GateOpts {
 const FEATURE_LABEL: Record<GateFeature, string> = {
   full_part: "Luyện Full Part (miễn phí 3 đề)",
   full_test: "Thi thử Full Test (miễn phí 1 đề)",
-  marathon: "Marathon (miễn phí 2 lượt)",
+  marathon: "Marathon",
 };
+
+/** Features that are Pro-only (free_quota = 0 in feature_flags). */
+const PRO_ONLY_FEATURES: GateFeature[] = ["marathon"];
 
 
 interface MinimalSet {
