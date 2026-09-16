@@ -754,7 +754,7 @@ const Listening = () => {
                             <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
                               Ôn câu sai
                             </Badge>
-                            <ExamTierBadge tier={maxTier} locked={wrongLocked} />
+                            <ExamTierBadge tier={wrongLocked ? "pro" : maxTier} locked={wrongLocked} />
                           </div>
                           <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
                             Câu sai từ đề lẻ {activePartInfo?.label}
