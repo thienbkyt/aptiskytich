@@ -1413,6 +1413,9 @@ RÀNG BUỘC FEEDBACK (bắt buộc):
 - nếu grammarErrors và spellingErrors đều rỗng thì KHÔNG được nhắc tới lỗi ngữ pháp/chính tả nào trong feedback (kể cả lỗi viết hoa).
 - mỗi lỗi nêu trong feedback phải tương ứng với một phần tử có thật trong grammarErrors hoặc spellingErrors.
 
+GIỚI HẠN SỐ LỖI LIỆT KÊ (bắt buộc):
+- Liệt kê tối đa 10 lỗi ngữ pháp (grammarErrors) và 6 lỗi chính tả (spellingErrors) quan trọng nhất, ưu tiên lỗi ảnh hưởng nghĩa; các lỗi còn lại gộp thành một câu nhận xét chung trong feedback.
+
 RETURN VIA TOOL CALL.`;
 
       let systemPromptV2 = "";
