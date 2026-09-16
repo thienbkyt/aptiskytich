@@ -53,7 +53,7 @@ import {
 } from "./speakingGradingV2";
 import { QuotaExceededError, type QuotaInfo } from "@/lib/quotaError";
 import UpgradeLock from "@/components/pro/UpgradeLock";
-import { uploadSpeakingBlob } from "@/lib/speakingUpload";
+import { uploadSpeakingBlob, uploadSpeakingBlobsWithRetry } from "@/lib/speakingUpload";
 import { enqueueGradingFallback } from "@/lib/gradingQueue";
 import AiQuotaBadge from "@/components/pro/AiQuotaBadge";
 
