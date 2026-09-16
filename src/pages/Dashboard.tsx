@@ -566,6 +566,32 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
+          {/* NEWCOMER GUIDE */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-primary/30 bg-card p-4 md:p-5"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-heading font-extrabold text-foreground text-base md:text-lg leading-tight">
+                  Lần đầu vào web, chưa biết học thế nào?
+                </h3>
+                <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+                  Xem ngay hướng dẫn lộ trình học trên Aptis Kỳ Tích — có video ngắn và các bước nên làm theo thứ tự.
+                </p>
+              </div>
+              <Button asChild variant="outline" className="shrink-0 border-primary text-primary hover:bg-primary/10 hover:text-primary font-bold gap-1.5">
+                <Link to="/meo-thi-aptis/huong-dan-lo-trinh-hoc-tren-aptis-ky-tich-cho-nguoi-moi">
+                  Xem hướng dẫn <ArrowRight className="w-4 h-4" />
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+
           {/* GOAL & EXAM COUNTDOWN */}
           <GoalCountdownCard />
 
