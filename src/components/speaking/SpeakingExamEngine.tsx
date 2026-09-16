@@ -505,21 +505,33 @@ const SpeakingExamEngine = ({
       try {
         const testResultId = testResultIdRef.current ?? null;
         const knownPaths = uploadedPathsRef.current;
-        const audioPaths = await Promise.all(
-          blobs.map(async (b, idx) => {
-            const existing = knownPaths[idx] ?? null;
-            if (existing) return existing;
-            if (!b) return null;
-            const p = await uploadSpeakingBlob(
-              b,
-              testResultId || examSetId || "adhoc",
-              partType,
-              idx,
-            );
-            if (p) knownPaths[idx] = p;
-            return p;
-          }),
+        const { paths: audioPaths, missing } = await uploadSpeakingBlobsWithRetry(
+          blobs,
+          testResultId || examSetId || "adhoc",
+          partType,
+          knownPaths,
         );
+        uploadedPathsRef.current = audioPaths;
+
+        // Never grade a part with missing recordings — ask for a re-record.
+        if (missing.length > 0) {
+          if (cancelled) return;
+          logClientError("speaking_upload_failed", new Error("upload null"), {
+            examSetId: examSetId ?? null,
+            partType,
+            missing,
+          });
+          toast.error(
+            `Ghi âm chưa tải lên được, hãy ghi lại câu ${missing.map((i) => i + 1).join(", ")}`,
+          );
+          setV2Error(
+            `Ghi âm chưa tải lên được, hãy ghi lại câu ${missing.map((i) => i + 1).join(", ")}.`,
+          );
+          setQueuePending(false);
+          setIsGrading(false);
+          return;
+        }
+
 
         const queued = await enqueueGradingFallback({
           skill: "speaking",
