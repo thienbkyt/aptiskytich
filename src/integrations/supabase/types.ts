@@ -240,6 +240,42 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_csm_actors_20260915: {
+        Row: {
+          custom_set_id: string | null
+          exam_set_id: string | null
+          id: string | null
+          position: number | null
+        }
+        Insert: {
+          custom_set_id?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          position?: number | null
+        }
+        Update: {
+          custom_set_id?: string | null
+          exam_set_id?: string | null
+          id?: string | null
+          position?: number | null
+        }
+        Relationships: []
+      }
+      backup_de07_mountain_20260915: {
+        Row: {
+          data: Json | null
+          src: string | null
+        }
+        Insert: {
+          data?: Json | null
+          src?: string | null
+        }
+        Update: {
+          data?: Json | null
+          src?: string | null
+        }
+        Relationships: []
+      }
       backup_de0909_20260909: {
         Row: {
           audio_url: string | null
@@ -2157,6 +2193,36 @@ export type Database = {
         Update: {
           extra_data?: Json | null
           id?: string | null
+        }
+        Relationships: []
+      }
+      backup_sets_clone_20260915: {
+        Row: {
+          at_time: string | null
+          clone_of: string | null
+          clone_source_label: string | null
+          id: string | null
+          is_published: boolean | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          at_time?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          at_time?: string | null
+          clone_of?: string | null
+          clone_source_label?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          title?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
