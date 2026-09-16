@@ -51,7 +51,7 @@ const PostLoginFBGroupModal = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  const { data: intro } = useQuery({
+  const { data: intro, isLoading: introLoading } = useQuery({
     queryKey: ["intro-video"],
     queryFn: async (): Promise<IntroVideo | null> => {
       const { data, error } = await supabase.rpc("get_intro_video" as any);
@@ -61,9 +61,9 @@ const PostLoginFBGroupModal = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const { data: seenAt } = useQuery({
+  const { data: seenAt, isLoading: seenLoading } = useQuery({
     queryKey: ["intro-video-seen", user?.id],
-    enabled: !!user?.id && !!intro?.enabled && !!intro?.url,
+    enabled: !!user?.id,
     queryFn: async (): Promise<string | null> => {
       const { data, error } = await supabase
         .from("profiles")
@@ -76,20 +76,16 @@ const PostLoginFBGroupModal = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  const createdAt = user?.created_at ? new Date(user.created_at).getTime() : 0;
-  const sinceAt = intro?.since ? new Date(intro.since).getTime() : Number.POSITIVE_INFINITY;
-  const showVideo =
-    !!intro?.enabled &&
-    !!intro?.url &&
-    !!user &&
-    createdAt >= sinceAt &&
-    seenAt === null;
+  const videoUnseen =
+    !seenAt || (intro?.since ? new Date(seenAt) < new Date(intro.since) : false);
+  const showVideo = !!intro?.enabled && !!intro?.url && !!user && videoUnseen;
 
   useEffect(() => {
     if (shownRef.current) return;
     if (typeof window === "undefined") return;
     if (loading) return;
     if (!user) return;
+    if (introLoading || seenLoading) return;
     if (location.pathname.startsWith("/auth")) return;
     try {
       if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return;
@@ -100,7 +96,7 @@ const PostLoginFBGroupModal = () => {
     } catch {
       // ignore storage errors
     }
-  }, [user, loading, location.pathname]);
+  }, [user, loading, location.pathname, introLoading, seenLoading]);
 
   const markVideoSeen = async () => {
     if (!showVideo || !user) return;
