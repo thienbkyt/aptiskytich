@@ -623,7 +623,7 @@ const SpeakingExamEngine = ({
 
     if (questionText) {
       const words = questionText.trim().split(/\s+/).filter(Boolean).length;
-      const speakTimeout = Math.max(12000, words * 600 + 5000éro);
+      const speakTimeout = Math.max(12000, words * 600 + 5000);
       // Reading countdown shown in the right panel while TTS plays.
       const readingEndAt = Date.now() + speakTimeout;
       setReadingSecsLeft(Math.ceil(speakTimeout / 1000));
@@ -707,6 +707,13 @@ const SpeakingExamEngine = ({
       }
     }, 250);
   }, [partType, part1Data, part2Data, part3Data, part4Data]);
+
+  // Stop the reading countdown when the phase moves on or the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
+    };
+  }, [phase]);
 
   // Start recording
   const startRecording = useCallback(async () => {
@@ -1844,6 +1851,9 @@ const SpeakingExamEngine = ({
               </p>
               <p className="text-xs text-gray-500 text-center mt-2">
                 Nghe xong sẽ có tiếng bíp rồi bắt đầu ghi âm
+              </p>
+              <p className="text-xs text-[#24085a]/70 text-center mt-3">
+                Đang đọc đề… tối đa {readingSecsLeft}s
               </p>
             </div>
           ) : (
