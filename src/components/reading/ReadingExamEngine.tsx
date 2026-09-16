@@ -239,15 +239,18 @@ const ReadingExamEngine = ({
   }, [partType, part2SectionCount, onPageCount]);
 
   // When initialSection changes (review pager navigates pages), sync currentIndex.
+  const lastInitialSectionRef = useRef<number | null>(null);
   useEffect(() => {
     if (initialSection == null) return;
-    if (partType === "part2" && part2Question) {
-      const total = part2Question.sections?.length ?? 1;
+    if (lastInitialSectionRef.current === initialSection) return;
+    lastInitialSectionRef.current = initialSection;
+    if (partType === "part2") {
+      const total = Math.max(1, part2SectionCount);
       setCurrentIndex(Math.max(0, Math.min(initialSection, total - 1)));
       return;
     }
     setCurrentIndex(initialSection);
-  }, [initialSection, partType, part2Question]);
+  }, [initialSection, partType, part2SectionCount]);
 
 
   // Notify parent whenever the active section changes.
