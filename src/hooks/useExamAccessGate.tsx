@@ -50,6 +50,7 @@ export function useExamAccessGate() {
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
   const [quota, setQuota] = useState<{ feature: GateFeature; cap: number } | null>(null);
+  const [proFeature, setProFeature] = useState<GateFeature | null>(null);
   const inFlightRef = useRef(false);
 
   const isLocked = useCallback(
@@ -61,6 +62,17 @@ export function useExamAccessGate() {
     },
     [tier, loading],
   );
+
+  /** Pro-only features (e.g. Marathon) are locked for free accounts. */
+  const isFeatureLocked = useCallback(
+    (feature: GateFeature) => {
+      if (loading) return false;
+      if (!PRO_ONLY_FEATURES.includes(feature)) return false;
+      return tierRank(tier) < tierRank("pro");
+    },
+    [tier, loading],
+  );
+
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void, opts?: GateOpts) => {
