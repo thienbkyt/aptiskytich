@@ -965,6 +965,17 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             // Technical failure (network blip, 5xx, timeout) → hand this part to
             // the background worker instead of scoring it 0.
             speakingV2PromisesByPartRef.current[originalIdx] = undefined as any;
+            // Only queue when every recording of this part reached storage.
+            const partPaths = audioPathsByPart[originalIdx] ?? [];
+            const missingIdx: number[] = [];
+            sub.items.forEach((it, i) => { if (it.blob && !partPaths[i]) missingIdx.push(i); });
+            if (missingIdx.length > 0) {
+              toast.error(
+                `Ghi âm chưa tải lên được, hãy ghi lại câu ${missingIdx.map((i) => i + 1).join(", ")}`,
+              );
+              queuedParts.push({ originalIdx, sub, promptTexts });
+              continue;
+            }
             try {
               await enqueueGradingFallback({
                 skill: "speaking",
