@@ -46,8 +46,16 @@ export function useFailedGradingJobs(enabled: boolean) {
         console.warn("[useFailedGradingJobs] read failed", error);
         return;
       }
+      const rows = (data || []) as any[];
+      // An attempt+part that has a successful job is graded — its failed twin
+      // (a double-submitted job) must not show a "Chấm lại" button.
+      const doneKeys = new Set(
+        rows.filter((j) => j.status === "done").map((j) => `${j.test_result_id}|${j.part ?? ""}`)
+      );
       const map: Record<string, FailedGradingJob> = {};
-      ((data || []) as any[]).forEach((j) => {
+      rows.forEach((j) => {
+        if (j.status !== "failed") return;
+        if (doneKeys.has(`${j.test_result_id}|${j.part ?? ""}`)) return;
         const retries = Number(j?.payload?._manualRetries ?? 0) || 0;
         // Latest failed job per attempt wins (rows are ordered oldest first).
         map[j.test_result_id] = {
