@@ -97,6 +97,16 @@ export function useExamAccessGate() {
         return;
       }
 
+      // Pro-only feature (Marathon): show the upgrade invite right away,
+      // without calling try_open_item just to be refused.
+      if (isFeatureLocked(opts.feature)) {
+        setQuota(null);
+        setProFeature(opts.feature);
+        setNeedTier("pro");
+        setOpen(true);
+        return;
+      }
+
       if (!isLocked(set)) {
         openMobileNotice(() => action());
         return;
