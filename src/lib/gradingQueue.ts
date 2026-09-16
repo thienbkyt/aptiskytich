@@ -78,8 +78,22 @@ export async function enqueueGradingFallback(args: {
     });
 
     if (error) {
+      const msg = String((error as any)?.message || "enqueue_failed");
+      // The DB-level unique index blocked a duplicate active job → reuse it.
+      if (/duplicate key|grading_jobs_active_unique/i.test(msg) && args.testResultId) {
+        const { data: existing } = await (supabase as any)
+          .from("grading_jobs")
+          .select("id")
+          .eq("test_result_id", args.testResultId)
+          .eq("part", args.partType)
+          .in("status", ["pending", "processing"])
+          .limit(1);
+        if (Array.isArray(existing) && existing.length > 0) {
+          return { id: existing[0].id as string };
+        }
+      }
       console.warn("[enqueueGradingFallback] enqueue rpc failed:", error);
-      return { id: null, errorCode: String((error as any)?.message || "enqueue_failed") };
+      return { id: null, errorCode: msg };
     }
 
 
