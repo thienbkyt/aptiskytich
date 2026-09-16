@@ -87,7 +87,7 @@ const Listening = () => {
   const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("listening");
-  const { guard, isLocked, LockModal } = useExamAccessGate();
+  const { guard, isLocked, isFeatureLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("listening");
   const { progress } = useUserExamProgress();
   const { progress: marathonProgress } = useUserMarathonProgress("listening");
@@ -629,7 +629,7 @@ const Listening = () => {
                       const rt = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
                       return rankT(rt) > rankT(acc) ? rt : acc;
                     }, "free" as "free" | "pro" | "premium");
-                    const marathonLocked = isLocked({ access_tier: maxTier } as any);
+                    const marathonLocked = isLocked({ access_tier: maxTier } as any) || isFeatureLocked("marathon");
                     void progressTick;
                     const activePrio = priorityFilter === "all" ? null : priorityFilter as "high" | "medium" | "low";
                     const prioName = activePrio === "high" ? "ưu tiên cao" : activePrio === "medium" ? "ưu tiên vừa" : activePrio === "low" ? "ưu tiên thấp" : null;
@@ -664,7 +664,7 @@ const Listening = () => {
                           <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
                             <InfinityIcon className="w-3 h-3" /> Marathon
                           </Badge>
-                          <ExamTierBadge tier={maxTier} locked={marathonLocked} />
+                          <ExamTierBadge tier="pro" locked={marathonLocked} />
                         </div>
                         <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
                           {prioName ? `Luyện đề ${prioName} ${activePartInfo?.label}` : `Luyện tất cả đề ${activePartInfo?.label}`}
@@ -742,7 +742,7 @@ const Listening = () => {
                       const rt = (s.access_tier === "free" || s.access_tier === "pro" || s.access_tier === "premium") ? s.access_tier : "pro";
                       return rankT(rt) > rankT(acc) ? rt : acc;
                     }, "free" as "free" | "pro" | "premium");
-                    const wrongLocked = isLocked({ access_tier: maxTier } as any);
+                    const wrongLocked = isLocked({ access_tier: maxTier } as any) || isFeatureLocked("marathon");
 
                     const nums = wrongSets.map((s) => (s.title || "").match(/\d+/)?.[0] ?? (s.title || "?"));
                     const shown = nums.slice(0, 8);
@@ -754,7 +754,7 @@ const Listening = () => {
                             <Badge className="w-fit text-[11px] font-semibold bg-primary text-primary-foreground border-0 gap-1">
                               Ôn câu sai
                             </Badge>
-                            <ExamTierBadge tier={maxTier} locked={wrongLocked} />
+                            <ExamTierBadge tier={wrongLocked ? "pro" : maxTier} locked={wrongLocked} />
                           </div>
                           <h3 className="text-xl font-heading font-extrabold text-foreground mb-2">
                             Câu sai từ đề lẻ {activePartInfo?.label}

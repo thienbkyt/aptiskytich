@@ -20,8 +20,11 @@ export interface GateOpts {
 const FEATURE_LABEL: Record<GateFeature, string> = {
   full_part: "Luyện Full Part (miễn phí 3 đề)",
   full_test: "Thi thử Full Test (miễn phí 1 đề)",
-  marathon: "Marathon (miễn phí 2 lượt)",
+  marathon: "Marathon",
 };
+
+/** Features that are Pro-only (free_quota = 0 in feature_flags). */
+const PRO_ONLY_FEATURES: GateFeature[] = ["marathon"];
 
 
 interface MinimalSet {
@@ -47,6 +50,7 @@ export function useExamAccessGate() {
   const [open, setOpen] = useState(false);
   const [needTier, setNeedTier] = useState<"pro" | "premium">("pro");
   const [quota, setQuota] = useState<{ feature: GateFeature; cap: number } | null>(null);
+  const [proFeature, setProFeature] = useState<GateFeature | null>(null);
   const inFlightRef = useRef(false);
 
   const isLocked = useCallback(
@@ -58,6 +62,17 @@ export function useExamAccessGate() {
     },
     [tier, loading],
   );
+
+  /** Pro-only features (e.g. Marathon) are locked for free accounts. */
+  const isFeatureLocked = useCallback(
+    (feature: GateFeature) => {
+      if (loading) return false;
+      if (!PRO_ONLY_FEATURES.includes(feature)) return false;
+      return tierRank(tier) < tierRank("pro");
+    },
+    [tier, loading],
+  );
+
 
   const guard = useCallback(
     <T extends MinimalSet>(set: T, action: () => void, opts?: GateOpts) => {
@@ -79,6 +94,16 @@ export function useExamAccessGate() {
           return;
         }
         openMobileNotice(() => action());
+        return;
+      }
+
+      // Pro-only feature (Marathon): show the upgrade invite right away,
+      // without calling try_open_item just to be refused.
+      if (isFeatureLocked(opts.feature)) {
+        setQuota(null);
+        setProFeature(opts.feature);
+        setNeedTier("pro");
+        setOpen(true);
         return;
       }
 
@@ -106,7 +131,15 @@ export function useExamAccessGate() {
           } as any);
           const res = (data ?? {}) as { allowed?: boolean; cap?: number };
           if (error || !res.allowed) {
-            setQuota({ feature: opts.feature, cap: Number(res.cap ?? 0) });
+            const cap = Number(res.cap ?? 0);
+            if (cap === 0) {
+              // No free quota at all → it is a Pro-only feature, not "out of tries".
+              setQuota(null);
+              setProFeature(opts.feature);
+            } else {
+              setProFeature(null);
+              setQuota({ feature: opts.feature, cap });
+            }
             setNeedTier("pro");
             setOpen(true);
             return;
@@ -118,24 +151,26 @@ export function useExamAccessGate() {
       })();
 
     },
-    [isLocked, loading, user, authLoading, navigate, location.pathname, location.search, openMobileNotice],
+    [isLocked, isFeatureLocked, loading, user, authLoading, navigate, location.pathname, location.search, openMobileNotice],
   );
 
   const LockModal = () => (
     <UpgradeLock
       asModal
       open={open}
-      onOpenChange={(v) => { setOpen(v); if (!v) setQuota(null); }}
+      onOpenChange={(v) => { setOpen(v); if (!v) { setQuota(null); setProFeature(null); } }}
       reason={quota ? "quota_exceeded" : needTier}
       need={quota ? "pro" : needTier}
       freeQuota={quota ? quota.cap : undefined}
       remaining={quota ? 0 : undefined}
-      featureLabel={quota ? FEATURE_LABEL[quota.feature] : "Đề này"}
+      title={proFeature === "marathon" ? "Marathon là tính năng của gói Pro" : undefined}
+      description={proFeature === "marathon" ? "Luyện Marathon dành cho thành viên Pro. Nâng cấp để làm liên tục toàn bộ đề." : undefined}
+      featureLabel={quota ? FEATURE_LABEL[quota.feature] : proFeature ? FEATURE_LABEL[proFeature] : "Đề này"}
     />
   );
 
 
-  return { isPro, isProLoading: loading, guard, isLocked, LockModal, tier };
+  return { isPro, isProLoading: loading, guard, isLocked, isFeatureLocked, LockModal, tier };
 }
 
 /** Tier badge for an exam-set card. */
