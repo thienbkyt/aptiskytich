@@ -83,7 +83,7 @@ const Writing = () => {
   const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") || "full");
   const [searchQuery, setSearchQuery] = useState("");
   const { examSets, loading } = useExamSets("writing");
-  const { guard, isLocked, LockModal } = useExamAccessGate();
+  const { guard, isLocked, isFeatureLocked, LockModal } = useExamAccessGate();
   const { sets: fullSets, loading: fullLoading } = useSkillFullSets("writing");
   const { progress } = useUserExamProgress();
   const { progress: gradedProgress, bandBySetId: writingBandBySetId } = useUserGradedProgress("writing");
@@ -462,7 +462,7 @@ const Writing = () => {
                     const hasResume = doneCount > 0 && doneCount < filteredSets.length;
                     // Marathon Writing luôn yêu cầu PRO.
                     const fakeSet = { access_tier: "pro" } as any;
-                    const marathonLocked = isLocked(fakeSet);
+                    const marathonLocked = isLocked(fakeSet) || isFeatureLocked("marathon");
                     return (
                       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
                         <div className="group relative rounded-xl p-5 flex flex-col h-full border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-accent/5 to-background shadow-lg shadow-primary/10">
