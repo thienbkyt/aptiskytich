@@ -2484,6 +2484,36 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_sub_fix_20260916: {
+        Row: {
+          ai_daily_cap: number | null
+          at_time: string | null
+          plan_key: string | null
+          pro_until: string | null
+          tier: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_daily_cap?: number | null
+          at_time?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_daily_cap?: number | null
+          at_time?: string | null
+          plan_key?: string | null
+          pro_until?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_sub_giaupham_20260825: {
         Row: {
           ai_daily_cap: number | null

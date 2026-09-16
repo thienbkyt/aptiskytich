@@ -59,3 +59,36 @@ export async function uploadSpeakingBlobs(
     blobs.map((b, i) => (b ? uploadSpeakingBlob(b, sessionId, partType, i) : Promise.resolve(null)))
   );
 }
+
+/**
+ * Upload every recording of a part with up to `attempts` tries each (1s, 2s
+ * backoff). Slots that already have a known path are skipped.
+ *
+ * `missing` lists the question indexes that HAVE a recording but could not be
+ * uploaded — the caller must NOT enqueue a grading job in that case, otherwise
+ * the worker grades a part with silent gaps.
+ */
+export async function uploadSpeakingBlobsWithRetry(
+  blobs: Array<Blob | null | undefined>,
+  sessionId: string,
+  partType: string,
+  known: Array<string | null> = [],
+  attempts = 3
+): Promise<{ paths: Array<string | null>; missing: number[] }> {
+  const paths: Array<string | null> = blobs.map((_, i) => known[i] ?? null);
+
+  await Promise.all(
+    blobs.map(async (b, idx) => {
+      if (!b || paths[idx]) return;
+      for (let a = 0; a < attempts; a++) {
+        if (a > 0) await new Promise((r) => setTimeout(r, a * 1000));
+        const p = await uploadSpeakingBlob(b, sessionId, partType, idx);
+        if (p) { paths[idx] = p; return; }
+      }
+    })
+  );
+
+  const missing: number[] = [];
+  blobs.forEach((b, i) => { if (b && !paths[i]) missing.push(i); });
+  return { paths, missing };
+}

@@ -627,6 +627,16 @@ async function settleFailure(
 
     if (job.test_result_id) {
       try {
+        // Never overwrite a result that a sibling job already graded successfully.
+        const { data: doneJobs } = await admin
+          .from("grading_jobs")
+          .select("id")
+          .eq("test_result_id", job.test_result_id)
+          .eq("part", job.part)
+          .eq("status", "done")
+          .limit(1);
+        if (Array.isArray(doneJobs) && doneJobs.length > 0) return "failed";
+
         await admin.from("test_results").update({
           grade_payload: {
             status: "failed",
@@ -717,6 +727,21 @@ Deno.serve(async (req) => {
     // the wall-clock budget of one run is shared by all of them.
     const runJob = async (job: any): Promise<{ id: string; status: string }> => {
       try {
+        // Guard: a speaking job whose recordings never reached storage can only
+        // be graded as silence. Settle it permanently without spending AI.
+        if (job.skill === "speaking") {
+          const p = job.payload || {};
+          const paths = Array.isArray(p.audioPaths) ? p.audioPaths : null;
+          const hasAudios = Array.isArray(p.audios) && p.audios.some((a: any) => !!a);
+          const hasTranscripts = Array.isArray(p.precomputedTranscripts)
+            && p.precomputedTranscripts.some((t: any) => !!t);
+          if (paths && !paths.some(Boolean) && !hasAudios && !hasTranscripts) {
+            return {
+              id: job.id,
+              status: await settleFailure(job, "Không có file ghi âm", true),
+            };
+          }
+        }
         // Step 1 (speaking only): transcribe, cached on the job payload.
         const step1 = await ensureSpeakingTranscript(job);
         if (step1.error) {
