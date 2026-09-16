@@ -868,17 +868,22 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
           const paths: Array<string | null> = new Array(sub.items.length).fill(null);
           await Promise.all(sub.items.map(async (item, idx) => {
             if (!item.blob) return;
-            try {
-              const path = await saveSpeakingRecording({
-                examSetId: originalPart.id,
-                part: `${originalPart.partNorm}_q${idx + 1}`,
-                blob: item.blob,
-                durationSeconds: item.actualSpoken,
-                testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
-              });
-              paths[idx] = path ?? null;
-            } catch (e) {
-              console.warn("[SkillFullPractice V2] saveSpeakingRecording failed", e);
+            // Up to 3 attempts (1s, 2s backoff) — a missing upload means the
+            // part cannot be queued for grading at all.
+            for (let attempt = 0; attempt < 3; attempt++) {
+              if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 1000));
+              try {
+                const path = await saveSpeakingRecording({
+                  examSetId: originalPart.id,
+                  part: `${originalPart.partNorm}_q${idx + 1}`,
+                  blob: item.blob,
+                  durationSeconds: item.actualSpoken,
+                  testResultId: speakingTestResultIdByPartRef.current[originalPartIdx] ?? null,
+                });
+                if (path) { paths[idx] = path; return; }
+              } catch (e) {
+                console.warn("[SkillFullPractice V2] saveSpeakingRecording failed", e);
+              }
             }
           }));
           audioPathsByPart[originalPartIdx] = paths;
