@@ -1536,7 +1536,7 @@ Trả về:
 - criteriaAnalysis: giải thích ngắn (VN) cho từng tiêu chí.
 - grammarErrors, spellingErrors (liệt kê đầy đủ).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giữ giọng informal).
-- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (đúng 20-30 từ của Part 2, đủ ý, đúng register informal). Nếu bài học viên quá ngắn hoặc thiếu ý → PHÁT TRIỂN thêm ý theo đúng hướng học viên đang viết để đủ số từ và đủ task. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, bám chủ đề và scenario của đề; dùng lại ý/câu của học viên nếu dùng được; nếu học viên viết quá ngắn hoặc bỏ trống một phần thì PHẢI viết bổ sung cho ĐỦ độ dài và ĐỦ task — độ dài theo đề là bắt buộc, không phải gợi ý. Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (đúng 20-30 từ của Part 2, đủ ý, đúng register informal). Trình độ B2, British English, tự nhiên, có từ nối, không sáo rỗng. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
 - forcedComplexity: boolean.
 ${SHARED_RUBRIC}`;
         userText = `partType: task2
@@ -1553,7 +1553,7 @@ Trả về:
 - criteriaAnalysis (VN).
 - grammarErrors, spellingErrors: mỗi lỗi có questionIndex (0..2).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giọng informal, dùng "you should…").
-- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (mỗi câu đủ 30–40 từ, đủ ý, đúng register informal); gộp 3 câu thành một bản, đánh số rõ 1., 2., 3. Nếu bài học viên quá ngắn hoặc thiếu ý → PHÁT TRIỂN thêm ý theo đúng hướng học viên đang viết để đủ số từ và đủ task. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, bám chủ đề và scenario của đề; dùng lại ý/câu của học viên nếu dùng được; nếu học viên viết quá ngắn hoặc bỏ trống một phần thì PHẢI viết bổ sung cho ĐỦ độ dài và ĐỦ task — độ dài theo đề là bắt buộc, không phải gợi ý. Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (mỗi câu đủ 30–40 từ, đủ ý, đúng register informal); gộp 3 câu thành một bản, đánh số rõ 1., 2., 3. — câu nào học viên bỏ trống vẫn PHẢI có bài mẫu đầy đủ. Trình độ B2, British English, tự nhiên, có từ nối, không sáo rỗng. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
 - forcedComplexity: boolean.
 ${SHARED_RUBRIC}`;
         userText = `partType: task3
@@ -1571,7 +1571,7 @@ Trả về:
   { bands: { tf, gra, vra, cc, reg } (0-5) — TF theo NỘI DUNG (chưa áp word-count), criteriaAnalysis: {tf,gra,vra,cc,reg}, reason: VN ngắn }.
 - grammarErrors, spellingErrors: mỗi lỗi có emailIndex (0 informal, 1 formal).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; chỉ email FORMAL mới gợi ý cấu trúc trang trọng).
-- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH cho CẢ 2 email, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới, bám SCENARIO). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề. RÀNG BUỘC SỐ TỪ NGHIÊM NGẶT: Informal 40–50 từ; Formal 120–150 từ (TUYỆT ĐỐI không vượt 155 từ, không dưới 120, KHÔNG lan man thừa ý — cắt bỏ chi tiết không cần thiết để về khung). ĐẾM số từ trước khi trả về; nếu ngoài khung, chỉnh lại. Đúng register cho từng email. Nếu bài học viên quá ngắn hoặc thiếu ý → phát triển thêm theo đúng hướng học viên đang viết cho đủ khung. Đánh dấu rõ hai phần bằng "Informal:" và "Formal:". Đây là bản tham khảo DUY NHẤT cho học viên.
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH cho CẢ 2 email, bám chủ đề và SCENARIO của đề; dùng lại ý/câu của học viên nếu dùng được; nếu học viên viết quá ngắn hoặc bỏ trống một phần thì PHẢI viết bổ sung cho ĐỦ độ dài và ĐỦ task — độ dài theo đề là bắt buộc, không phải gợi ý (email nào học viên bỏ trống vẫn phải có bài mẫu đầy đủ). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề. RÀNG BUỘC SỐ TỪ NGHIÊM NGẶT: Informal 40–55 từ; Formal 120–150 từ (TUYỆT ĐỐI không vượt 155 từ, không dưới 120, KHÔNG lan man thừa ý — cắt bỏ chi tiết không cần thiết để về khung). ĐẾM số từ trước khi trả về; nếu ngoài khung, chỉnh lại. Đúng register cho từng email. Trình độ B2, British English, tự nhiên, có từ nối, không sáo rỗng. Đánh dấu rõ hai phần bằng "Informal:" và "Formal:". Đây là bản tham khảo DUY NHẤT cho học viên.
 - forcedComplexity: boolean.
 
 SCENARIO RULE: nếu email trả lời sai scenario → TF của email đó = 0.
@@ -2255,7 +2255,7 @@ Return via the tool call:
 5. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (Vietnamese explanation). Empty array if none.
 6. pronunciationErrors: only flag words whose pronunciation makes meaning unclear/wrong (holistic), as { word, note } (Vietnamese). If audio received but transcript empty/unreadable, treat pronunciation as failing and add at least one entry.
 7. feedback: ≤3 short sentences in Vietnamese — chỉ 1–2 điểm yếu cụ thể NHẤT + 1 việc làm ngay. Tránh khen chung chung.
-8. improvedVersion: a rewritten upgraded English version of the STUDENT'S OWN monologue (one combined version). KEEP ideas, fix errors, upgrade vocab/structure, add linking words.${calibration}${leniencyRules}
+8. improvedVersion: ONE COMPLETE model monologue (200–250 words) that a strong candidate would give in the FULL allotted time (120s), covering ALL sub-questions IN ORDER — intro → personal experience → reasons + examples → conclusion. Build on the student's own ideas and wording where usable; where the student said little or nothing, EXPAND with relevant ideas, reasons and examples so the answer is complete. B2 level, British English, natural, with linking words, no clichés. Empty string ONLY if the student was completely silent.${calibration}${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       } else {
@@ -2275,7 +2275,7 @@ Return via the tool call:
 4. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (Vietnamese). Empty array if none.
 5. pronunciationErrors: only flag words whose pronunciation makes meaning unclear/wrong (holistic), as { word, note } (Vietnamese). If audio received but transcript empty/unreadable, treat pronunciation as failing and add at least one entry.
 6. feedback: ≤3 short sentences in Vietnamese — chỉ 1–2 điểm yếu cụ thể NHẤT + 1 việc làm ngay. Tránh khen chung chung.
-7. improvedVersion: upgraded English rewrite of THE STUDENT'S OWN answer (same ideas, fixed errors, richer vocab/structure, linking words). Empty if silent.${pictureExtra}${calibration}${leniencyRules}
+7. improvedVersion: a COMPLETE model answer for THIS question that a strong candidate would give in the FULL allotted time (Part 1 ≈ 60–80 words / 30s; Part 2 and Part 3 ≈ 90–120 words / 45s), built on the student's own ideas and wording where usable; where the student said little, EXPAND with relevant ideas, reasons and examples. B2 level, British English, natural, with linking words, no clichés. For picture questions, describe the picture exactly as presented — never invent details that contradict it. Empty string ONLY if the student was silent.${pictureExtra}${calibration}${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       }
@@ -2393,7 +2393,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
             pictureLogicIssue: { type: "boolean", description: "Picture items only: description not logically ordered" },
             pictureNoAction: { type: "boolean", description: "Picture items only: only appearance described, no action" },
             feedback: { type: "string", description: "Vietnamese, max 3 short sentences, 1-2 specific weaknesses + 1 actionable tip" },
-            improvedVersion: { type: "string", description: "Upgraded English rewrite of THE STUDENT'S OWN answer (same ideas, fixed errors, richer vocab/structure, linking words). Empty string if silent." },
+            improvedVersion: { type: "string", description: "COMPLETE model answer for THIS question for the FULL allotted time (Part 1 ≈ 60–80 words; Part 2/3 ≈ 90–120 words), built on the student's ideas and EXPANDED with relevant ideas/reasons/examples where the student said too little. Empty string only if silent." },
           },
           required: ["transcript", "analysis", "addressPercent", "grammarErrors", "pronunciationErrors", "feedback", "improvedVersion"],
           additionalProperties: false,
@@ -2424,7 +2424,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
             grammarErrors: { type: "array", items: errorItemSchema },
             pronunciationErrors: { type: "array", items: pronunciationItemSchema },
             feedback: { type: "string", description: "Vietnamese, max 3 short sentences, 1-2 specific weaknesses + 1 actionable tip" },
-            improvedVersion: { type: "string", description: "ONE upgraded English rewrite of the student's whole monologue (same ideas, fixed errors, richer vocab/structure, linking words)." },
+            improvedVersion: { type: "string", description: "ONE COMPLETE model monologue of 200–250 words covering ALL sub-questions in order, built on the student's ideas and EXPANDED where the student said too little. Empty string only if completely silent." },
           },
           required: ["transcript", "analyses", "addressPercents", "usedConnectors", "grammarErrors", "pronunciationErrors", "feedback", "improvedVersion"],
           additionalProperties: false,
