@@ -751,6 +751,12 @@ const SpeakingExamEngine = ({
     setMicError(null);
     setPhase("recording");
 
+    // Always-visible start cue (beep may be blocked by the browser).
+    setRecFlash(true);
+    if (recFlashTimerRef.current) clearTimeout(recFlashTimerRef.current);
+    recFlashTimerRef.current = setTimeout(() => setRecFlash(false), 1000);
+    try { navigator.vibrate?.(200); } catch { /* noop */ }
+
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
