@@ -1498,7 +1498,7 @@ const SpeakingExamEngine = ({
         </div>
         <BottomNavBar
           onPrevious={() => setPhase("start")}
-          onNext={() => { unlockAudio(); setPhase("prompt"); }}
+          onNext={() => { unlockBeepAudio(); unlockAudio(); setPhase("prompt"); }}
           isFirst={false}
           isLast={false}
         />
