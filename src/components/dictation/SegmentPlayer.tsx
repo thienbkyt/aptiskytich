@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "re
 import { Play, Pause, Loader2 } from "lucide-react";
 import { resolveAudioBlobUrl } from "@/lib/audioUrl";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 export type SegmentPlayerHandle = {
   play: (opts?: { silentCount?: boolean }) => void;
@@ -111,7 +112,9 @@ const SegmentPlayer = forwardRef<SegmentPlayerHandle, Props>(function SegmentPla
       a.playbackRate = speed;
       a.currentTime = startSec;
       setPct(0);
-      void a.play();
+      // NotAllowedError (autoplay bị chặn) trả về qua promise — bắt để không
+      // crash app, hướng dẫn học viên bấm nút Play thủ công.
+      a.play().catch(() => toast({ title: "Bấm vào nút Play để nghe" }));
     } catch {
       /* ignore */
     }
