@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
 import { cn } from "@/lib/utils";
+import { trackPixel, trackOnce } from "@/lib/metaPixel";
 import { toast } from "sonner";
 
 type PricingPlan = {
@@ -152,6 +153,8 @@ export default function PricingPage() {
 
   useEffect(() => {
     if (params.get("paid") === "1") {
+      // Lấy user id trước khi params.delete("paid") chạy
+      const uid = user?.id ?? null;
       toast.success("Đang xác nhận thanh toán...", { description: "Trạng thái gói sẽ tự cập nhật trong giây lát." });
       // Poll tier a few times
       let n = 0;
@@ -160,9 +163,46 @@ export default function PricingPage() {
         n += 1;
         if (n >= 6) clearInterval(t);
       }, 2500);
+      // Meta Pixel Purchase: poll riêng (tối đa 8 lần × 2.5s) tìm payment 'paid'
+      // trong 2 giờ gần nhất rồi trackOnce theo id giao dịch.
+      let m = 0;
+      const tp = setInterval(() => {
+        m += 1;
+        if (m > 8) {
+          clearInterval(tp);
+          return;
+        }
+        (async () => {
+          try {
+            // user?.id có thể chưa hydrate khi redirect về — fallback session
+            const userId = uid ?? (await supabase.auth.getUser()).data.user?.id ?? null;
+            if (!userId) return;
+            const { data } = await (supabase as any)
+              .from("payments")
+              .select("id, amount_vnd, plan_key")
+              .eq("user_id", userId)
+              .eq("status", "paid")
+              .gte("paid_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+              .order("paid_at", { ascending: false })
+              .limit(1);
+            const row = Array.isArray(data) ? data[0] : null;
+            if (row?.id) {
+              clearInterval(tp);
+              trackOnce(
+                `purchase_${row.id}`,
+                "Purchase",
+                { value: row.amount_vnd, currency: "VND", content_name: row.plan_key },
+                String(row.id),
+              );
+            }
+          } catch {
+            /* ignore */
+          }
+        })();
+      }, 2500);
       params.delete("paid");
       setParams(params, { replace: true });
-      return () => clearInterval(t);
+      return () => { clearInterval(t); clearInterval(tp); };
     }
     if (params.get("cancel") === "1") {
       toast.info("Bạn đã hủy thanh toán");
@@ -203,6 +243,11 @@ export default function PricingPage() {
     if (!user) { navigate("/auth"); return; }
     setBuying(p.key);
     try {
+      trackPixel("InitiateCheckout", {
+        value: p.price_vnd,
+        currency: "VND",
+        content_name: p.key,
+      });
       const { data, error } = await supabase.functions.invoke("create-payment", {
         body: {
           plan_key: p.key,

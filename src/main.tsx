@@ -5,6 +5,7 @@ import "./index.css";
 import { registerPWA } from "./lib/registerPWA";
 import { supabase } from "@/integrations/supabase/client";
 import { logClientError } from "@/lib/clientErrorLog";
+import { trackOnce } from "@/lib/metaPixel";
 
 registerPWA();
 
@@ -15,8 +16,21 @@ try {
       .then((m) => m.flushPendingExamResults())
       .catch(() => {});
   flush();
-  supabase.auth.onAuthStateChange((event) => {
+  supabase.auth.onAuthStateChange((event, session) => {
     if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") flush();
+    // Meta Pixel: bắn CompleteRegistration một lần cho tài khoản mới (< 24h),
+    // áp dụng cho cả đăng ký email lẫn Google.
+    if (event === "SIGNED_IN" && session?.user?.id && session.user.created_at) {
+      const ageMs = Date.now() - new Date(session.user.created_at).getTime();
+      if (ageMs >= 0 && ageMs < 24 * 60 * 60 * 1000) {
+        trackOnce(
+          `reg_${session.user.id}`,
+          "CompleteRegistration",
+          { status: true },
+          session.user.id,
+        );
+      }
+    }
   });
 } catch {
   /* ignore */
