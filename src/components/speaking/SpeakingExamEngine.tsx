@@ -217,6 +217,7 @@ const SpeakingExamEngine = ({
   const silentByQuestionRef = useRef<boolean[]>([]);
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
+  const ttsUnavailableRef = useRef(false);
   const adminNavLockedRef = useRef(false);
   const suppressRecordingSaveRef = useRef(false);
   // Guards to prevent doStopAndAdvance / handleFinish firing twice
@@ -666,6 +667,7 @@ const SpeakingExamEngine = ({
       }
       if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
       if (!finished) {
+        ttsUnavailableRef.current = true;
         logClientError("speaking_tts_stall", new Error("tts_timeout"), { partType, examSetId: examSetId ?? null, words, timeoutMs: speakTimeout, fullFlow });
         // Timed out: cut the voice so it never overlaps the prep timer.
         try { stopTTS(); } catch { /* noop */ }
