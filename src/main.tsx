@@ -240,10 +240,37 @@ function isThirdParty(msg: string, filename?: string, stack?: string): boolean {
   );
 }
 
+function isChunkLoadError(msg: string): boolean {
+  return (
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("Importing a module script failed") ||
+    msg.includes("error loading dynamically imported module")
+  );
+}
+
+// Chunk load failure = bundle mới đè bundle cũ sau deploy. Ưu tiên tự tải lại
+// trang để lấy bundle mới (giống cơ chế vite:preloadError); nếu đã reload trong
+// 10 giây mà vẫn lỗi (mạng đứt thật) thì mới hiện banner.
+function handleChunkLoadError(msg: string) {
+  try {
+    logClientError("chunk_load_failed", new Error(msg), { href: location.href });
+  } catch {
+    /* ignore */
+  }
+  const KEY = "chunk-reload-at";
+  const last = Number(safeSessionStorage.getItem(KEY) || 0);
+  if (Date.now() - last > 10000) {
+    safeSessionStorage.setItem(KEY, String(Date.now()));
+    window.location.reload();
+    return;
+  }
+  showUpdateBanner();
+}
+
 window.addEventListener("error", (e) => {
   const msg = e?.message || "";
-  if (msg.includes("Failed to fetch dynamically imported module")) {
-    showUpdateBanner();
+  if (isChunkLoadError(msg)) {
+    handleChunkLoadError(msg);
     return;
   }
   const filename = e?.filename || "";
@@ -271,8 +298,8 @@ window.addEventListener("error", (e) => {
 window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
   const msg = String(reason?.message || reason || "");
-  if (msg.includes("Failed to fetch dynamically imported module")) {
-    showUpdateBanner();
+  if (isChunkLoadError(msg)) {
+    handleChunkLoadError(msg);
     return;
   }
   // Quota exhaustion is a product state, not a crash: never show the red overlay.
