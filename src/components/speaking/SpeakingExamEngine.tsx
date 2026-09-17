@@ -646,7 +646,22 @@ const SpeakingExamEngine = ({
     // Get the question text for current index
     const questionText = getSpokenTextForIndex(currentIndexRef.current);
 
-    if (questionText) {
+    if (ttsUnavailableRef.current) {
+      // TTS đã từng stall (server lẫn speechSynthesis): không gọi lại TTS,
+      // chỉ hiển thị đề trong 5 giây rồi đi tiếp beep/ghi âm như bình thường.
+      setReadingSecsLeft(5);
+      if (readingTimerRef.current) clearInterval(readingTimerRef.current);
+      const fallbackReadingEndAt = Date.now() + 5000;
+      readingTimerRef.current = setInterval(() => {
+        setReadingSecsLeft(Math.max(0, Math.ceil((fallbackReadingEndAt - Date.now()) / 1000)));
+      }, 500);
+      await new Promise(r => setTimeout(r, 5000));
+      if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
+      if (token !== flowTokenRef.current) {
+        console.warn("[Speaking] flow aborted - stale token after fallback reading");
+        return;
+      }
+    } else if (questionText) {
       const words = questionText.trim().split(/\s+/).filter(Boolean).length;
       const speakTimeout = Math.max(12000, words * 600 + 5000);
       // Reading countdown shown in the right panel while TTS plays.
