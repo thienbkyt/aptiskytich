@@ -166,6 +166,13 @@ const SpeakingExamEngine = ({
 
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
+  // Beep/visual cue state: the browser can silently block the audio beep, so the
+  // recording start must ALWAYS have a visible signal too.
+  const [beepBlocked, setBeepBlocked] = useState(false);
+  const [recFlash, setRecFlash] = useState(false);
+  const recFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Sound check (once per browser session) — the click unlocks the AudioContext.
+  const [soundChecked, setSoundChecked] = useState(soundCheckDone);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
   const [v2Scale, setV2Scale] = useState<number | null>(null);
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
@@ -678,7 +685,8 @@ const SpeakingExamEngine = ({
     // Beep after reading question: signals start of prep (if any) or start of recording
 
     try {
-      await withTimeout(playBeep(), 1000);
+      const played = await withTimeout(playBeep(), 1000);
+      setBeepBlocked(played === false);
     } catch {
       /* Continue even if mobile audio is blocked. */
     }
@@ -714,7 +722,8 @@ const SpeakingExamEngine = ({
         prepEndAtRef.current = null;
         withTimeout(playBeep(), 1000)
           .catch(() => undefined)
-          .then(() => {
+          .then((played) => {
+            setBeepBlocked(played === false);
             startRecording();
           });
       }
