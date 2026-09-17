@@ -751,13 +751,8 @@ HOW TO APPLY:
 
 SILENT/MISSING ITEMS: Questions explicitly marked "[NO AUDIO]" have no recording. For those items you MUST return transcript="", onTopic=false, improvedVersion="" and NEVER invent content. Bands must reflect only the questions that actually have audio (missing items hurt TF as "no answer").
 
-=== improvedVersion = MODEL ANSWER (separate from grading — never affects bands) ===
-improvedVersion is NOT a minimal correction of what the student said. It is a COMPLETE model answer for THIS question that a strong candidate would give in the FULL allotted time, built on the student's own ideas and wording where usable; if the student's answer is short or missing parts, EXPAND with relevant ideas, reasons and examples. Target length: Part 1 ≈ 60–80 words per question (30s); Part 2 and Part 3 ≈ 90–120 words per question (45s); Part 4 ≈ 200–250 words for the WHOLE monologue covering ALL sub-questions in order (120s). Empty string only if the student was silent for this item.
-Style: B2 level, British English, natural, well organised, with linking words; no empty clichés, no padding. The evidence/quoting rules above apply to analysis, criteriaAnalysis and upgradeTips ONLY — improvedVersion is allowed (and required) to add content the student never said.
-For Part 2 / Part 3 picture-description questions, the model answer MUST describe the picture as it is presented in the question/prompt (and the attached image if any) — never invent details that contradict it.
-
 OUTPUT (via the tool, in this order — write "analysis" and "criteriaAnalysis" BEFORE choosing bands):
-- perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = the COMPLETE model monologue as defined above — 200–250 words total, structured intro → personal experience → reasons + examples → conclusion, answering ALL ${itemCount} sub-questions IN ORDER (sub-questions the student never touched MUST still be answered in the model answer). Put this whole monologue in the FIRST item's improvedVersion and leave the other items' improvedVersion empty (ONLY improvedVersion may be consolidated this way; this permission NEVER applies to transcript). transcript is MANDATORY for every item. Split the monologue into segments — one per sub-question — using content and the student's transition phrases (for example 'moving to the next question', 'as for the last one', 'regarding'). SEGMENTATION RULE (MANDATORY): split the FULL monologue into EXACTLY ${itemCount} consecutive, non-overlapping segments covering the WHOLE recording from the first word to the LAST word — the final segment MUST run to the very end of the monologue, never cut mid-sentence or mid-word. Concatenating the ${itemCount} transcripts must reproduce essentially the entire monologue (no dropped middle or tail). Only return an empty transcript when the monologue genuinely never addresses that sub-question, and even then the remaining segments must still cover the whole recording. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = the COMPLETE model answer for THAT question as defined above (Part 1 ≈ 60–80 words, Part 2/3 ≈ 90–120 words), built on the student's ideas and EXPANDED with relevant reasons/examples when the student said too little — empty ONLY if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
+- perItem: ${isPart4 ? `EXACTLY ${itemCount} entries — ONE per SUB-QUESTION, IN ORIGINAL ORDER (do NOT skip, do NOT merge two sub-questions into one entry, do NOT return fewer than ${itemCount}). For each sub-question: transcript = the segment of the monologue addressing THIS sub-question (or "" if the monologue does NOT address it); onTopic = true only if the monologue actually addresses THIS sub-question, otherwise false; improvedVersion = upgraded English rewrite of THAT segment (ONLY improvedVersion — and nothing else — may be consolidated into the FIRST item with the rest left empty; this permission NEVER applies to transcript). transcript is MANDATORY for every item. Split the monologue into segments — one per sub-question — using content and the student's transition phrases (for example 'moving to the next question', 'as for the last one', 'regarding'). SEGMENTATION RULE (MANDATORY): split the FULL monologue into EXACTLY ${itemCount} consecutive, non-overlapping segments covering the WHOLE recording from the first word to the LAST word — the final segment MUST run to the very end of the monologue, never cut mid-sentence or mid-word. Concatenating the ${itemCount} transcripts must reproduce essentially the entire monologue (no dropped middle or tail). Only return an empty transcript when the monologue genuinely never addresses that sub-question, and even then the remaining segments must still cover the whole recording. upgradeTips (Vietnamese, 2-4 sentences) = mẹo cụ thể để câu trả lời này đạt band cao hơn trong kỳ thi Aptis.` : "one entry per QUESTION in ORIGINAL ORDER (including [NO AUDIO] items as empty). Each item: transcript, onTopic, improvedVersion = upgraded English rewrite of THAT SPECIFIC answer (keep the student's ideas, fix grammar/vocab, upgrade structure, add linking words) — empty if silent. upgradeTips (Vietnamese, 2-4 sentences) = mẹo CỤ THỂ để câu trả lời này đạt band cao hơn trong Aptis: cấu trúc ngữ pháp phức tạp nên dùng, từ nối, cách triển khai ý + ví dụ, paraphrase, đa dạng từ vựng. Để rỗng nếu không có audio."}.
 - analysis: Vietnamese, 4-6 câu — phân tích tổng quan TRƯỚC khi cho band.
 - criteriaAnalysis: object với 5 trường tiếng Việt { tf, gra, vra, pro, fc }. MỖI tiêu chí 2-3 câu: VÌ SAO được band đó + cách CẢI THIỆN CỤ THỂ.
   • vra (Từ vựng): gợi ý từ TỰ NHIÊN, CHÍNH XÁC trong ngữ cảnh (không phải từ hiếm/kêu); tập trung sửa dùng sai + lặp từ (vd: "do a mistake → make a mistake", thay từ lặp bằng paraphrase tự nhiên).
@@ -846,7 +841,7 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
                   properties: {
                     transcript: { type: "string", description: "Verbatim transcription of clearly audible speech ONLY. Empty string if the audio is silent or unintelligible. Never invent content." },
                     onTopic: { type: "boolean" },
-                    improvedVersion: { type: "string", description: "COMPLETE model answer for THIS question that a strong candidate would give in the FULL allotted time, built on the student's own ideas and wording where usable; if the student's answer is short or missing parts, EXPAND with relevant ideas, reasons and examples. Target length: Part 1 ≈ 60–80 words per question (30s); Part 2 and Part 3 ≈ 90–120 words per question (45s); Part 4 ≈ 200–250 words for the WHOLE monologue covering ALL sub-questions in order (120s). Empty string only if the student was silent for this item." },
+                    improvedVersion: { type: "string", description: "Upgraded English rewrite of THIS answer/sub-segment. Empty string if silent." },
                     upgradeTips: { type: "string", description: "Vietnamese, 2-4 sentences. Concrete Aptis-oriented tips to score higher on THIS answer (complex grammar, linking words, idea development, vocabulary upgrades). Empty if silent." },
                   },
                   required: ["transcript", "onTopic", "improvedVersion", "upgradeTips"],
@@ -918,9 +913,6 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
               model: MODEL_V2,
               reasoning_effort: isPart4 ? "low" : "medium",
               temperature: 0,
-              // Part 4 model answers are 200–250 words on top of the full
-              // transcript + segmentation, so the output cap must be generous.
-              max_tokens: isPart4 ? 6000 : 4000,
               messages: msgs,
               tools: [toolSchemaV2],
               tool_choice: { type: "function", function: { name: "submit_speaking_v2" } },
@@ -1036,68 +1028,6 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
           }
         }
       }
-
-      // ── MODEL ANSWER LENGTH CHECK ──────────────────────────────────────────
-      // improvedVersion must be a full-length model answer, not a rewrite of a
-      // 10-second reply. One repair retry; never blocks grading.
-      const ivWords = (s: any) => String(s ?? "").trim().split(/\s+/).filter(Boolean).length;
-      const IV_MIN = isPart4 ? 160 : partType === "part1" ? 45 : 70;
-      const IV_TARGET = isPart4 ? 200 : partType === "part1" ? 60 : 90;
-      const measureIv = (p: any): number => {
-        const arr = Array.isArray(p?.perItem) ? p.perItem : [];
-        if (isPart4) return arr.reduce((s: number, it: any) => s + ivWords(it?.improvedVersion), 0);
-        let worst = Infinity;
-        arr.forEach((it: any, i: number) => {
-          if (!spokenMask[i]) return;
-          worst = Math.min(worst, ivWords(it?.improvedVersion));
-        });
-        return Number.isFinite(worst) ? worst : IV_TARGET;
-      };
-      const ivHasSpeech = (Array.isArray(parsed?.perItem) ? parsed.perItem : [])
-        .some((it: any) => String(it?.transcript ?? "").trim().length > 0);
-      const ivBefore = measureIv(parsed);
-      if (ivHasSpeech && ivBefore < IV_MIN) {
-        const ivNote = `improvedVersion is too short (${ivBefore} words). Rewrite it as a COMPLETE answer of at least ${IV_TARGET} words${
-          isPart4
-            ? " for the WHOLE monologue, covering ALL sub-questions in order (put it in the FIRST item)"
-            : " for EVERY question that has audio"
-        }, keeping the student's ideas and adding relevant development (reasons, examples, linking words). Keep transcript, onTopic, bands, analysis, criteriaAnalysis and upgradeTips exactly as before.`;
-        try {
-          const ivResp = await callGatewaySpeak(ivNote);
-          if (ivResp.ok) {
-            const ivJson = await ivResp.json();
-            const ivTc = ivJson?.choices?.[0]?.message?.tool_calls?.[0];
-            if (ivTc?.function?.arguments) {
-              const ivParsed = JSON.parse(ivTc.function.arguments);
-              if (measureIv(ivParsed) > ivBefore && Array.isArray(ivParsed?.perItem) && Array.isArray(parsed?.perItem)) {
-                // Adopt ONLY the longer model answers — grading stays untouched.
-                parsed.perItem = parsed.perItem.map((it: any, i: number) => ({
-                  ...it,
-                  improvedVersion: String(ivParsed.perItem[i]?.improvedVersion ?? it?.improvedVersion ?? ""),
-                }));
-              }
-            }
-            try {
-              await logAIUsage({
-                model: MODEL_V2,
-                usage: ivJson?.usage,
-                source_function: "grade-exam",
-                finishReason: ivJson?.choices?.[0]?.finish_reason ?? null,
-                attempt: 2,
-                gradingSessionId,
-                metadata: { mode: "speaking_v2", partType, repair: "improved_version_length", durationMs: speakDurationMs, gatewayAttempts: speakGatewayAttempts },
-              });
-            } catch { /* ignore */ }
-          }
-        } catch (e) {
-          console.warn("[grade-exam v2] improvedVersion length retry failed", (e as any)?.message || e);
-        }
-        const ivAfter = measureIv(parsed);
-        if (ivAfter < IV_MIN) {
-          console.warn(`[grade-exam v2] improvedVersion still short after retry (${ivAfter} words, min ${IV_MIN}, part=${partType})`);
-        }
-      }
-
       const b = parsed.bands || {};
       const tf = Math.max(0, Math.min(5, Math.round(Number(b.tf ?? 0))));
       const gra = Math.max(0, Math.min(5, Math.round(Number(b.gra ?? 0))));
@@ -1536,7 +1466,7 @@ Trả về:
 - criteriaAnalysis: giải thích ngắn (VN) cho từng tiêu chí.
 - grammarErrors, spellingErrors (liệt kê đầy đủ).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giữ giọng informal).
-- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, bám chủ đề và scenario của đề; dùng lại ý/câu của học viên nếu dùng được; nếu học viên viết quá ngắn hoặc bỏ trống một phần thì PHẢI viết bổ sung cho ĐỦ độ dài và ĐỦ task — độ dài theo đề là bắt buộc, không phải gợi ý. Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (đúng 20-30 từ của Part 2, đủ ý, đúng register informal). Trình độ B2, British English, tự nhiên, có từ nối, không sáo rỗng. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (đúng 20-30 từ của Part 2, đủ ý, đúng register informal). Nếu bài học viên quá ngắn hoặc thiếu ý → PHÁT TRIỂN thêm ý theo đúng hướng học viên đang viết để đủ số từ và đủ task. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
 - forcedComplexity: boolean.
 ${SHARED_RUBRIC}`;
         userText = `partType: task2
@@ -1553,7 +1483,7 @@ Trả về:
 - criteriaAnalysis (VN).
 - grammarErrors, spellingErrors: mỗi lỗi có questionIndex (0..2).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; giọng informal, dùng "you should…").
-- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, bám chủ đề và scenario của đề; dùng lại ý/câu của học viên nếu dùng được; nếu học viên viết quá ngắn hoặc bỏ trống một phần thì PHẢI viết bổ sung cho ĐỦ độ dài và ĐỦ task — độ dài theo đề là bắt buộc, không phải gợi ý. Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (mỗi câu đủ 30–40 từ, đủ ý, đúng register informal); gộp 3 câu thành một bản, đánh số rõ 1., 2., 3. — câu nào học viên bỏ trống vẫn PHẢI có bài mẫu đầy đủ. Trình độ B2, British English, tự nhiên, có từ nối, không sáo rỗng. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề (mỗi câu đủ 30–40 từ, đủ ý, đúng register informal); gộp 3 câu thành một bản, đánh số rõ 1., 2., 3. Nếu bài học viên quá ngắn hoặc thiếu ý → PHÁT TRIỂN thêm ý theo đúng hướng học viên đang viết để đủ số từ và đủ task. Đây là bản tham khảo DUY NHẤT cho học viên (thay cho đáp án mẫu tĩnh).
 - forcedComplexity: boolean.
 ${SHARED_RUBRIC}`;
         userText = `partType: task3
@@ -1571,7 +1501,7 @@ Trả về:
   { bands: { tf, gra, vra, cc, reg } (0-5) — TF theo NỘI DUNG (chưa áp word-count), criteriaAnalysis: {tf,gra,vra,cc,reg}, reason: VN ngắn }.
 - grammarErrors, spellingErrors: mỗi lỗi có emailIndex (0 informal, 1 formal).
 - feedback (VN, thứ tự Task→Grammar/chính tả→Vocabulary; chỉ email FORMAL mới gợi ý cấu trúc trang trọng).
-- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH cho CẢ 2 email, bám chủ đề và SCENARIO của đề; dùng lại ý/câu của học viên nếu dùng được; nếu học viên viết quá ngắn hoặc bỏ trống một phần thì PHẢI viết bổ sung cho ĐỦ độ dài và ĐỦ task — độ dài theo đề là bắt buộc, không phải gợi ý (email nào học viên bỏ trống vẫn phải có bài mẫu đầy đủ). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề. RÀNG BUỘC SỐ TỪ NGHIÊM NGẶT: Informal 40–55 từ; Formal 120–150 từ (TUYỆT ĐỐI không vượt 155 từ, không dưới 120, KHÔNG lan man thừa ý — cắt bỏ chi tiết không cần thiết để về khung). ĐẾM số từ trước khi trả về; nếu ngoài khung, chỉnh lại. Đúng register cho từng email. Trình độ B2, British English, tự nhiên, có từ nối, không sáo rỗng. Đánh dấu rõ hai phần bằng "Informal:" và "Formal:". Đây là bản tham khảo DUY NHẤT cho học viên.
+- improvedVersion: viết MỘT BẢN MẪU HOÀN CHỈNH cho CẢ 2 email, dựa HOÀN TOÀN trên ý và nội dung học viên đã viết (KHÔNG bịa chủ đề mới, bám SCENARIO). Yêu cầu: sửa hết lỗi grammar/chính tả/từ vựng; cải thiện logic, mạch lạc và task fulfilment; ĐẠT yêu cầu đề. RÀNG BUỘC SỐ TỪ NGHIÊM NGẶT: Informal 40–50 từ; Formal 120–150 từ (TUYỆT ĐỐI không vượt 155 từ, không dưới 120, KHÔNG lan man thừa ý — cắt bỏ chi tiết không cần thiết để về khung). ĐẾM số từ trước khi trả về; nếu ngoài khung, chỉnh lại. Đúng register cho từng email. Nếu bài học viên quá ngắn hoặc thiếu ý → phát triển thêm theo đúng hướng học viên đang viết cho đủ khung. Đánh dấu rõ hai phần bằng "Informal:" và "Formal:". Đây là bản tham khảo DUY NHẤT cho học viên.
 - forcedComplexity: boolean.
 
 SCENARIO RULE: nếu email trả lời sai scenario → TF của email đó = 0.
@@ -1757,7 +1687,6 @@ ${partsIn.formalText ?? ""}`;
 
       type V2Attempt =
         | { kind: "ok"; parsed: any }
-        | { kind: "short"; why: string; parsed: any }
         | { kind: "truncated"; why: string }
         | { kind: "error"; status: number; message: string };
 
@@ -1830,31 +1759,6 @@ ${partsIn.formalText ?? ""}`;
           return { kind: "truncated", why: `improvedVersion too short (${iv.length} vs original ${originalLen})` };
         }
 
-        // The model answer must meet the task's own word requirement, even when
-        // the student wrote almost nothing. task1 keeps its old behaviour.
-        const wc = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
-        let shortWhy: string | null = null;
-        if (pt === "task2") {
-          const n = wc(iv);
-          if (n < 18) shortWhy = `task2 model answer ${n} words < 18`;
-        } else if (pt === "task3") {
-          const n = wc(iv);
-          if (n < 85) shortWhy = `task3 model answer ${n} words < 85`;
-          else if (!/(^|\n|\s)1\./.test(iv) || !/(^|\n|\s)2\./.test(iv) || !/(^|\n|\s)3\./.test(iv)) {
-            shortWhy = "task3 model answer missing numbered items 1./2./3.";
-          }
-        } else if (pt === "task4") {
-          // \b so the "Formal:" marker is not matched inside "Informal:".
-          const fi = iv.search(/\bformal\s*:/i);
-          const informalPart = fi > 0 ? iv.slice(0, fi) : iv;
-          const formalPart = fi >= 0 ? iv.slice(fi) : "";
-          const ni = wc(informalPart.replace(/informal\s*:/i, ""));
-          const nf = wc(formalPart.replace(/formal\s*:/i, ""));
-          if (ni < 35) shortWhy = `task4 informal ${ni} words < 35`;
-          else if (nf < 110) shortWhy = `task4 formal ${nf} words < 110`;
-        }
-        if (shortWhy) return { kind: "short", why: shortWhy, parsed: parsedOnce };
-
         return { kind: "ok", parsed: parsedOnce };
       };
 
@@ -1862,26 +1766,6 @@ ${partsIn.formalText ?? ""}`;
       if (v2.kind === "truncated") {
         console.warn(`[grade-exam writing_v2] truncated output (${v2.why}) — retrying with higher cap`);
         v2 = await runV2Once(RETRY_MAX_TOKENS, 2);
-      }
-      if (v2.kind === "short") {
-        console.warn(`[grade-exam writing_v2] model answer too short (${v2.why}) — one expansion retry`);
-        const shortNote = [
-          `improvedVersion is too short (${v2.why}).`,
-          "Rewrite improvedVersion as a COMPLETE model answer that FULLY meets the task's word requirement",
-          "(task2 20–30 từ; task3 mỗi câu 30–40 từ và đủ 3 câu đánh số 1./2./3.; task4 Informal 40–55 từ và Formal 120–150 từ),",
-          "bám chủ đề/scenario, giữ ý của học viên nếu dùng được và viết bổ sung phần học viên còn thiếu.",
-          "KHÔNG thay đổi band/điểm, grammarErrors, spellingErrors hay feedback.",
-        ].join(" ");
-        const retryShort = await runV2Once(RETRY_MAX_TOKENS, 2, shortNote);
-        if (retryShort.kind === "ok") {
-          v2 = retryShort;
-        } else if (retryShort.kind === "short") {
-          console.warn(`[grade-exam writing_v2] model answer still short after retry (${retryShort.why}) — saving anyway`);
-          v2 = { kind: "ok", parsed: retryShort.parsed };
-        } else {
-          console.warn("[grade-exam writing_v2] expansion retry failed — keeping first result");
-          v2 = { kind: "ok", parsed: v2.parsed };
-        }
       }
 
       if (v2.kind === "truncated") {
@@ -2301,7 +2185,7 @@ Return via the tool call:
 5. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (Vietnamese explanation). Empty array if none.
 6. pronunciationErrors: only flag words whose pronunciation makes meaning unclear/wrong (holistic), as { word, note } (Vietnamese). If audio received but transcript empty/unreadable, treat pronunciation as failing and add at least one entry.
 7. feedback: ≤3 short sentences in Vietnamese — chỉ 1–2 điểm yếu cụ thể NHẤT + 1 việc làm ngay. Tránh khen chung chung.
-8. improvedVersion: ONE COMPLETE model monologue (200–250 words) that a strong candidate would give in the FULL allotted time (120s), covering ALL sub-questions IN ORDER — intro → personal experience → reasons + examples → conclusion. Build on the student's own ideas and wording where usable; where the student said little or nothing, EXPAND with relevant ideas, reasons and examples so the answer is complete. B2 level, British English, natural, with linking words, no clichés. Empty string ONLY if the student was completely silent.${calibration}${leniencyRules}
+8. improvedVersion: a rewritten upgraded English version of the STUDENT'S OWN monologue (one combined version). KEEP ideas, fix errors, upgrade vocab/structure, add linking words.${calibration}${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       } else {
@@ -2321,7 +2205,7 @@ Return via the tool call:
 4. grammarErrors: every clear grammatical mistake as { original, corrected, explanation } (Vietnamese). Empty array if none.
 5. pronunciationErrors: only flag words whose pronunciation makes meaning unclear/wrong (holistic), as { word, note } (Vietnamese). If audio received but transcript empty/unreadable, treat pronunciation as failing and add at least one entry.
 6. feedback: ≤3 short sentences in Vietnamese — chỉ 1–2 điểm yếu cụ thể NHẤT + 1 việc làm ngay. Tránh khen chung chung.
-7. improvedVersion: a COMPLETE model answer for THIS question that a strong candidate would give in the FULL allotted time (Part 1 ≈ 60–80 words / 30s; Part 2 and Part 3 ≈ 90–120 words / 45s), built on the student's own ideas and wording where usable; where the student said little, EXPAND with relevant ideas, reasons and examples. B2 level, British English, natural, with linking words, no clichés. For picture questions, describe the picture exactly as presented — never invent details that contradict it. Empty string ONLY if the student was silent.${pictureExtra}${calibration}${leniencyRules}
+7. improvedVersion: upgraded English rewrite of THE STUDENT'S OWN answer (same ideas, fixed errors, richer vocab/structure, linking words). Empty if silent.${pictureExtra}${calibration}${leniencyRules}
 
 Be honest and strict but fair. Do not invent content the student didn't say.`;
       }
@@ -2439,7 +2323,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
             pictureLogicIssue: { type: "boolean", description: "Picture items only: description not logically ordered" },
             pictureNoAction: { type: "boolean", description: "Picture items only: only appearance described, no action" },
             feedback: { type: "string", description: "Vietnamese, max 3 short sentences, 1-2 specific weaknesses + 1 actionable tip" },
-            improvedVersion: { type: "string", description: "COMPLETE model answer for THIS question for the FULL allotted time (Part 1 ≈ 60–80 words; Part 2/3 ≈ 90–120 words), built on the student's ideas and EXPANDED with relevant ideas/reasons/examples where the student said too little. Empty string only if silent." },
+            improvedVersion: { type: "string", description: "Upgraded English rewrite of THE STUDENT'S OWN answer (same ideas, fixed errors, richer vocab/structure, linking words). Empty string if silent." },
           },
           required: ["transcript", "analysis", "addressPercent", "grammarErrors", "pronunciationErrors", "feedback", "improvedVersion"],
           additionalProperties: false,
@@ -2470,7 +2354,7 @@ FEEDBACK REQUIREMENTS (Vietnamese, detailed, NO length limit):
             grammarErrors: { type: "array", items: errorItemSchema },
             pronunciationErrors: { type: "array", items: pronunciationItemSchema },
             feedback: { type: "string", description: "Vietnamese, max 3 short sentences, 1-2 specific weaknesses + 1 actionable tip" },
-            improvedVersion: { type: "string", description: "ONE COMPLETE model monologue of 200–250 words covering ALL sub-questions in order, built on the student's ideas and EXPANDED where the student said too little. Empty string only if completely silent." },
+            improvedVersion: { type: "string", description: "ONE upgraded English rewrite of the student's whole monologue (same ideas, fixed errors, richer vocab/structure, linking words)." },
           },
           required: ["transcript", "analyses", "addressPercents", "usedConnectors", "grammarErrors", "pronunciationErrors", "feedback", "improvedVersion"],
           additionalProperties: false,
