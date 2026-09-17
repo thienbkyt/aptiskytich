@@ -81,6 +81,7 @@ export default function PricingPage() {
   const [buying, setBuying] = useState<string | null>(null);
   const [shortKey, setShortKey] = useState<"day" | "week">("day");
   const [showCompare, setShowCompare] = useState(false);
+  const [watchPaid, setWatchPaid] = useState(false);
   const [voucher, setVoucher] = useState<VoucherInfo | null>(null);
   const [voucherExpired, setVoucherExpired] = useState<{ code: string; message: string } | null>(null);
   const { user } = useAuth();
@@ -153,63 +154,110 @@ export default function PricingPage() {
 
   useEffect(() => {
     if (params.get("paid") === "1") {
-      // Lấy user id trước khi params.delete("paid") chạy
-      const uid = user?.id ?? null;
       toast.success("Đang xác nhận thanh toán...", { description: "Trạng thái gói sẽ tự cập nhật trong giây lát." });
-      // Poll tier a few times
-      let n = 0;
-      const t = setInterval(() => {
-        refetch?.();
-        n += 1;
-        if (n >= 6) clearInterval(t);
-      }, 2500);
-      // Meta Pixel Purchase: poll riêng (tối đa 8 lần × 2.5s) tìm payment 'paid'
-      // trong 2 giờ gần nhất rồi trackOnce theo id giao dịch.
-      let m = 0;
-      const tp = setInterval(() => {
-        m += 1;
-        if (m > 8) {
-          clearInterval(tp);
-          return;
-        }
-        (async () => {
-          try {
-            // user?.id có thể chưa hydrate khi redirect về — fallback session
-            const userId = uid ?? (await supabase.auth.getUser()).data.user?.id ?? null;
-            if (!userId) return;
-            const { data } = await (supabase as any)
-              .from("payments")
-              .select("id, amount_vnd, plan_key")
-              .eq("user_id", userId)
-              .eq("status", "paid")
-              .gte("paid_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
-              .order("paid_at", { ascending: false })
-              .limit(1);
-            const row = Array.isArray(data) ? data[0] : null;
-            if (row?.id) {
-              clearInterval(tp);
-              trackOnce(
-                `purchase_${row.id}`,
-                "Purchase",
-                { value: row.amount_vnd, currency: "VND", content_name: row.plan_key },
-                String(row.id),
-              );
-            }
-          } catch {
-            /* ignore */
-          }
-        })();
-      }, 2500);
+      setWatchPaid(true);
       params.delete("paid");
       setParams(params, { replace: true });
-      return () => { clearInterval(t); clearInterval(tp); };
+      return;
     }
     if (params.get("cancel") === "1") {
       toast.info("Bạn đã hủy thanh toán");
       params.delete("cancel");
       setParams(params, { replace: true });
     }
-  }, [params, refetch, setParams]);
+  }, [params, setParams]);
+
+  // Sau khi quay về từ ?paid=1: refetch tier + poll Meta Pixel Purchase
+  // theo user id (hoặc fallback session) — tách riêng để không bị cleanup
+  // khi params đổi.
+  useEffect(() => {
+    if (!watchPaid) return;
+    const uid = user?.id ?? null;
+    // Poll tier a few times
+    let n = 0;
+    const t = setInterval(() => {
+      refetch?.();
+      n += 1;
+      if (n >= 6) clearInterval(t);
+    }, 2500);
+    // Meta Pixel Purchase: poll riêng (tối đa 8 lần × 2.5s) tìm payment 'paid'
+    // trong 2 giờ gần nhất rồi trackOnce theo id giao dịch.
+    let m = 0;
+    const tp = setInterval(() => {
+      m += 1;
+      if (m > 8) {
+        clearInterval(tp);
+        return;
+      }
+      (async () => {
+        try {
+          // user?.id có thể chưa hydrate khi redirect về — fallback session
+          const userId = uid ?? (await supabase.auth.getUser()).data.user?.id ?? null;
+          if (!userId) return;
+          const { data } = await (supabase as any)
+            .from("payments")
+            .select("id, amount_vnd, plan_key")
+            .eq("user_id", userId)
+            .eq("status", "paid")
+            .gte("paid_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
+            .order("paid_at", { ascending: false })
+            .limit(1);
+          const row = Array.isArray(data) ? data[0] : null;
+          if (row?.id) {
+            clearInterval(tp);
+            trackOnce(
+              `purchase_${row.id}`,
+              "Purchase",
+              { value: row.amount_vnd, currency: "VND", content_name: row.plan_key },
+              String(row.id),
+            );
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    }, 2500);
+    return () => { clearInterval(t); clearInterval(tp); };
+  }, [watchPaid, user?.id, refetch]);
+
+  // Thanh toán trong popup chuyển khoản: poll đơn theo order_code,
+  // trackOnce Purchase khi payments có dòng status='paid'.
+  useEffect(() => {
+    if (picked == null || !payInfo?.orderCode) return;
+    const orderCode = payInfo.orderCode;
+    const maxRuns = Math.ceil((10 * 60 * 1000) / 4000); // tối đa 10 phút
+    let runs = 0;
+    const tp = setInterval(() => {
+      runs += 1;
+      if (runs > maxRuns) {
+        clearInterval(tp);
+        return;
+      }
+      (async () => {
+        try {
+          const { data } = await (supabase as any)
+            .from("payments")
+            .select("id, amount_vnd, plan_key")
+            .eq("order_code", orderCode)
+            .eq("status", "paid")
+            .limit(1);
+          const row = Array.isArray(data) ? data[0] : null;
+          if (row?.id) {
+            clearInterval(tp);
+            trackOnce(
+              `purchase_${row.id}`,
+              "Purchase",
+              { value: row.amount_vnd, currency: "VND", content_name: row.plan_key },
+              String(row.id),
+            );
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    }, 4000);
+    return () => clearInterval(tp);
+  }, [picked, payInfo?.orderCode]);
 
   useEffect(() => {
     (async () => {
