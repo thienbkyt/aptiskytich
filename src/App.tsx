@@ -136,6 +136,21 @@ const EXAM_ROUTE_PREFIXES = [
   "/history",
 ];
 
+// SPA PageView tracking: index.html fires the first PageView; this fires on
+// every subsequent route change.
+const MetaPixelRouteTracker = () => {
+  const { pathname } = useLocation();
+  const firstRef = useRef(true);
+  useEffect(() => {
+    if (firstRef.current) {
+      firstRef.current = false;
+      return;
+    }
+    trackPixel("PageView");
+  }, [pathname]);
+  return null;
+};
+
 const NoTranslateExamRoutes = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -165,6 +180,7 @@ const App = () => (
               <MobileNoticeProvider>
               <LoginGateProvider>
                 <RouteProgressBar />
+                <MetaPixelRouteTracker />
                 <NoTranslateExamRoutes />
                 <Suspense fallback={<PageLoadingSkeleton />}>
                   <PageTransition>
