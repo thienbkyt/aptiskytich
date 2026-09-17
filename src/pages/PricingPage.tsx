@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import ContactAdminLinks from "@/components/ContactAdminLinks";
 import { cn } from "@/lib/utils";
+import { trackPixel, trackOnce } from "@/lib/metaPixel";
 import { toast } from "sonner";
 
 type PricingPlan = {
