@@ -5,6 +5,7 @@ import "./index.css";
 import { registerPWA } from "./lib/registerPWA";
 import { supabase } from "@/integrations/supabase/client";
 import { logClientError } from "@/lib/clientErrorLog";
+import { safeSessionStorage } from "@/lib/safeStorage";
 import { trackOnce } from "@/lib/metaPixel";
 
 registerPWA();
