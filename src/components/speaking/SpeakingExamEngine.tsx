@@ -11,7 +11,8 @@ import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
-import { playBeep } from "@/lib/beep";
+import { playBeep, unlockBeepAudio } from "@/lib/beep";
+import SpeakingSoundCheck from "./SpeakingSoundCheck";
 import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio, warmTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -132,6 +133,9 @@ const PART_PROMPTS: Record<SpeakingPartType, string> = {
 const PART_NUMBERS: Record<SpeakingPartType, number> = {
   part1: 1, part2: 2, part3: 3, part4: 4,
 };
+
+// One sound check per browser session (module scope survives route changes).
+let soundCheckDone = false;
 
 const SpeakingExamEngine = ({
   partType, testTitle, timeLimit,
