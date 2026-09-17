@@ -1460,12 +1460,17 @@ const SpeakingExamEngine = ({
             <p className="text-lg font-bold text-gray-900 mb-4">{getTotalQuestions()}</p>
             <p className="text-sm font-bold text-gray-900 mb-4">Assessment Description</p>
             <SpeakingMicCheck />
+            <SpeakingSoundCheck onTested={() => { soundCheckDone = true; setSoundChecked(true); }} />
             <button
-              onClick={() => { unlockAudio(); setPhase("instructions"); }}
-              className="mt-6 bg-[#24085a] hover:bg-[#1a0640] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              onClick={() => { unlockBeepAudio(); unlockAudio(); setPhase("instructions"); }}
+              disabled={!soundChecked}
+              className="mt-6 bg-[#24085a] hover:bg-[#1a0640] text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Start Assessment
             </button>
+            {!soundChecked && (
+              <p className="text-xs text-gray-500 mt-2">Hãy bấm “Nghe thử tiếng bíp” trước khi bắt đầu.</p>
+            )}
           </div>
         </div>
         {exitDialog}
