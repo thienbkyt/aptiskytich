@@ -1757,6 +1757,7 @@ ${partsIn.formalText ?? ""}`;
 
       type V2Attempt =
         | { kind: "ok"; parsed: any }
+        | { kind: "short"; why: string; parsed: any }
         | { kind: "truncated"; why: string }
         | { kind: "error"; status: number; message: string };
 
@@ -1829,6 +1830,30 @@ ${partsIn.formalText ?? ""}`;
           return { kind: "truncated", why: `improvedVersion too short (${iv.length} vs original ${originalLen})` };
         }
 
+        // The model answer must meet the task's own word requirement, even when
+        // the student wrote almost nothing. task1 keeps its old behaviour.
+        const wc = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
+        let shortWhy: string | null = null;
+        if (pt === "task2") {
+          const n = wc(iv);
+          if (n < 18) shortWhy = `task2 model answer ${n} words < 18`;
+        } else if (pt === "task3") {
+          const n = wc(iv);
+          if (n < 85) shortWhy = `task3 model answer ${n} words < 85`;
+          else if (!/(^|\n|\s)1\./.test(iv) || !/(^|\n|\s)2\./.test(iv) || !/(^|\n|\s)3\./.test(iv)) {
+            shortWhy = "task3 model answer missing numbered items 1./2./3.";
+          }
+        } else if (pt === "task4") {
+          const fi = iv.search(/formal\s*:/i);
+          const informalPart = fi > 0 ? iv.slice(0, fi) : iv;
+          const formalPart = fi >= 0 ? iv.slice(fi) : "";
+          const ni = wc(informalPart.replace(/informal\s*:/i, ""));
+          const nf = wc(formalPart.replace(/formal\s*:/i, ""));
+          if (ni < 35) shortWhy = `task4 informal ${ni} words < 35`;
+          else if (nf < 110) shortWhy = `task4 formal ${nf} words < 110`;
+        }
+        if (shortWhy) return { kind: "short", why: shortWhy, parsed: parsedOnce };
+
         return { kind: "ok", parsed: parsedOnce };
       };
 
@@ -1836,6 +1861,26 @@ ${partsIn.formalText ?? ""}`;
       if (v2.kind === "truncated") {
         console.warn(`[grade-exam writing_v2] truncated output (${v2.why}) — retrying with higher cap`);
         v2 = await runV2Once(RETRY_MAX_TOKENS, 2);
+      }
+      if (v2.kind === "short") {
+        console.warn(`[grade-exam writing_v2] model answer too short (${v2.why}) — one expansion retry`);
+        const shortNote = [
+          `improvedVersion is too short (${v2.why}).`,
+          "Rewrite improvedVersion as a COMPLETE model answer that FULLY meets the task's word requirement",
+          "(task2 20–30 từ; task3 mỗi câu 30–40 từ và đủ 3 câu đánh số 1./2./3.; task4 Informal 40–55 từ và Formal 120–150 từ),",
+          "bám chủ đề/scenario, giữ ý của học viên nếu dùng được và viết bổ sung phần học viên còn thiếu.",
+          "KHÔNG thay đổi band/điểm, grammarErrors, spellingErrors hay feedback.",
+        ].join(" ");
+        const retryShort = await runV2Once(RETRY_MAX_TOKENS, 2, shortNote);
+        if (retryShort.kind === "ok") {
+          v2 = retryShort;
+        } else if (retryShort.kind === "short") {
+          console.warn(`[grade-exam writing_v2] model answer still short after retry (${retryShort.why}) — saving anyway`);
+          v2 = { kind: "ok", parsed: retryShort.parsed };
+        } else {
+          console.warn("[grade-exam writing_v2] expansion retry failed — keeping first result");
+          v2 = { kind: "ok", parsed: v2.parsed };
+        }
       }
 
       if (v2.kind === "truncated") {
