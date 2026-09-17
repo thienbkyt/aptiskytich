@@ -301,8 +301,8 @@ window.addEventListener("error", (e) => {
 window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
   const msg = String(reason?.message || reason || "");
-  if (msg.includes("Failed to fetch dynamically imported module")) {
-    showUpdateBanner();
+  if (isChunkLoadFailure(msg)) {
+    handleChunkLoadFailure(msg);
     return;
   }
   // Quota exhaustion is a product state, not a crash: never show the red overlay.
