@@ -1615,13 +1615,16 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
         testResultId: trid ?? null,
       } as any;
 
-      if (!isLastPart) {
+      if (!isLastPart && !timeUpRef.current) {
         lastNavDirectionRef.current = "forward";
         setCurrentPartIndex((p) => p + 1);
         return true;
       }
 
       // Last part → grade all sequentially using v2 analytic rubric
+      if (timeUpRef.current) {
+        toast.info("Hết giờ — hệ thống chấm các part bạn đã làm.");
+      }
       setWritingPhase("grading");
       setWritingGradedCount(0);
       const orderedIndices = Object.keys(writingSubmissionsByPartRef.current)
