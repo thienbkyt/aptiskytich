@@ -1036,6 +1036,68 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
           }
         }
       }
+
+      // ── MODEL ANSWER LENGTH CHECK ──────────────────────────────────────────
+      // improvedVersion must be a full-length model answer, not a rewrite of a
+      // 10-second reply. One repair retry; never blocks grading.
+      const ivWords = (s: any) => String(s ?? "").trim().split(/\s+/).filter(Boolean).length;
+      const IV_MIN = isPart4 ? 160 : partType === "part1" ? 45 : 70;
+      const IV_TARGET = isPart4 ? 200 : partType === "part1" ? 60 : 90;
+      const measureIv = (p: any): number => {
+        const arr = Array.isArray(p?.perItem) ? p.perItem : [];
+        if (isPart4) return arr.reduce((s: number, it: any) => s + ivWords(it?.improvedVersion), 0);
+        let worst = Infinity;
+        arr.forEach((it: any, i: number) => {
+          if (!spokenMask[i]) return;
+          worst = Math.min(worst, ivWords(it?.improvedVersion));
+        });
+        return Number.isFinite(worst) ? worst : IV_TARGET;
+      };
+      const ivHasSpeech = (Array.isArray(parsed?.perItem) ? parsed.perItem : [])
+        .some((it: any) => String(it?.transcript ?? "").trim().length > 0);
+      const ivBefore = measureIv(parsed);
+      if (ivHasSpeech && ivBefore < IV_MIN) {
+        const ivNote = `improvedVersion is too short (${ivBefore} words). Rewrite it as a COMPLETE answer of at least ${IV_TARGET} words${
+          isPart4
+            ? " for the WHOLE monologue, covering ALL sub-questions in order (put it in the FIRST item)"
+            : " for EVERY question that has audio"
+        }, keeping the student's ideas and adding relevant development (reasons, examples, linking words). Keep transcript, onTopic, bands, analysis, criteriaAnalysis and upgradeTips exactly as before.`;
+        try {
+          const ivResp = await callGatewaySpeak(ivNote);
+          if (ivResp.ok) {
+            const ivJson = await ivResp.json();
+            const ivTc = ivJson?.choices?.[0]?.message?.tool_calls?.[0];
+            if (ivTc?.function?.arguments) {
+              const ivParsed = JSON.parse(ivTc.function.arguments);
+              if (measureIv(ivParsed) > ivBefore && Array.isArray(ivParsed?.perItem) && Array.isArray(parsed?.perItem)) {
+                // Adopt ONLY the longer model answers — grading stays untouched.
+                parsed.perItem = parsed.perItem.map((it: any, i: number) => ({
+                  ...it,
+                  improvedVersion: String(ivParsed.perItem[i]?.improvedVersion ?? it?.improvedVersion ?? ""),
+                }));
+              }
+            }
+            try {
+              await logAIUsage({
+                model: MODEL_V2,
+                usage: ivJson?.usage,
+                source_function: "grade-exam",
+                finishReason: ivJson?.choices?.[0]?.finish_reason ?? null,
+                attempt: 2,
+                gradingSessionId,
+                metadata: { mode: "speaking_v2", partType, repair: "improved_version_length", durationMs: speakDurationMs, gatewayAttempts: speakGatewayAttempts },
+              });
+            } catch { /* ignore */ }
+          }
+        } catch (e) {
+          console.warn("[grade-exam v2] improvedVersion length retry failed", (e as any)?.message || e);
+        }
+        const ivAfter = measureIv(parsed);
+        if (ivAfter < IV_MIN) {
+          console.warn(`[grade-exam v2] improvedVersion still short after retry (${ivAfter} words, min ${IV_MIN}, part=${partType})`);
+        }
+      }
+
       const b = parsed.bands || {};
       const tf = Math.max(0, Math.min(5, Math.round(Number(b.tf ?? 0))));
       const gra = Math.max(0, Math.min(5, Math.round(Number(b.gra ?? 0))));
