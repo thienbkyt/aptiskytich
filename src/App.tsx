@@ -24,6 +24,7 @@ import RequireAdmin from "@/components/auth/RequireAdmin";
 import { LoginGateProvider } from "@/components/auth/LoginGate";
 import { MobileNoticeProvider, useMobileNotice } from "@/components/common/MobileNoticeGate";
 import useDeviceSession from "@/hooks/useDeviceSession";
+import { trackPixel } from "@/lib/metaPixel";
 import usePresenceHeartbeat from "@/hooks/usePresenceHeartbeat";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
