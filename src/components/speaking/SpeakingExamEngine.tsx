@@ -11,7 +11,8 @@ import SpeakingMicCheck from "./SpeakingMicCheck";
 import SignedImage from "@/components/exam/SignedImage";
 import { resolveImageUrl } from "@/lib/imageUrl";
 import MissingMediaNotice from "@/components/exam/MissingMediaNotice";
-import { playBeep } from "@/lib/beep";
+import { playBeep, unlockBeepAudio } from "@/lib/beep";
+import SpeakingSoundCheck from "./SpeakingSoundCheck";
 import { speakAsync as ttsSpeakAsync, stopTTS, unlockAudio, warmTTS } from "@/lib/tts";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -133,6 +134,9 @@ const PART_NUMBERS: Record<SpeakingPartType, number> = {
   part1: 1, part2: 2, part3: 3, part4: 4,
 };
 
+// One sound check per browser session (module scope survives route changes).
+let soundCheckDone = false;
+
 const SpeakingExamEngine = ({
   partType, testTitle, timeLimit,
   part1Data, part2Data, part3Data, part4Data,
@@ -166,6 +170,13 @@ const SpeakingExamEngine = ({
 
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
+  // Beep/visual cue state: the browser can silently block the audio beep, so the
+  // recording start must ALWAYS have a visible signal too.
+  const [beepBlocked, setBeepBlocked] = useState(false);
+  const [recFlash, setRecFlash] = useState(false);
+  const recFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Sound check (once per browser session) — the click unlocks the AudioContext.
+  const [soundChecked, setSoundChecked] = useState(soundCheckDone);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
   const [v2Scale, setV2Scale] = useState<number | null>(null);
   const [v2Cefr, setV2Cefr] = useState<string | null>(null);
@@ -678,7 +689,8 @@ const SpeakingExamEngine = ({
     // Beep after reading question: signals start of prep (if any) or start of recording
 
     try {
-      await withTimeout(playBeep(), 1000);
+      const played = await withTimeout(playBeep(), 1000);
+      setBeepBlocked(played === false);
     } catch {
       /* Continue even if mobile audio is blocked. */
     }
@@ -714,7 +726,8 @@ const SpeakingExamEngine = ({
         prepEndAtRef.current = null;
         withTimeout(playBeep(), 1000)
           .catch(() => undefined)
-          .then(() => {
+          .then((played) => {
+            setBeepBlocked(played === false);
             startRecording();
           });
       }
@@ -737,6 +750,12 @@ const SpeakingExamEngine = ({
     setCanFinish(false);
     setMicError(null);
     setPhase("recording");
+
+    // Always-visible start cue (beep may be blocked by the browser).
+    setRecFlash(true);
+    if (recFlashTimerRef.current) clearTimeout(recFlashTimerRef.current);
+    recFlashTimerRef.current = setTimeout(() => setRecFlash(false), 1000);
+    try { navigator.vibrate?.(200); } catch { /* noop */ }
 
     let stream: MediaStream;
     try {
@@ -1409,13 +1428,18 @@ const SpeakingExamEngine = ({
           <p className="text-sm font-bold text-black mb-4">Assessment Description</p>
           <div className="max-w-md mb-6">
             <SpeakingMicCheck />
+            <SpeakingSoundCheck onTested={() => { soundCheckDone = true; setSoundChecked(true); }} />
           </div>
           <button
-            onClick={() => { unlockAudio(); setPhase("instructions"); }}
-            className="bg-[#2D1B69] text-white text-sm rounded-md px-6 py-2.5 hover:bg-[#1f1149] transition-colors"
+            onClick={() => { unlockBeepAudio(); unlockAudio(); setPhase("instructions"); }}
+            disabled={!soundChecked}
+            className="bg-[#2D1B69] text-white text-sm rounded-md px-6 py-2.5 hover:bg-[#1f1149] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Start Assessment
           </button>
+          {!soundChecked && (
+            <p className="text-xs text-gray-500 mt-2">Hãy bấm “Nghe thử tiếng bíp” trước khi bắt đầu.</p>
+          )}
         </div>
         {exitDialog}
       </div>
@@ -1436,12 +1460,17 @@ const SpeakingExamEngine = ({
             <p className="text-lg font-bold text-gray-900 mb-4">{getTotalQuestions()}</p>
             <p className="text-sm font-bold text-gray-900 mb-4">Assessment Description</p>
             <SpeakingMicCheck />
+            <SpeakingSoundCheck onTested={() => { soundCheckDone = true; setSoundChecked(true); }} />
             <button
-              onClick={() => { unlockAudio(); setPhase("instructions"); }}
-              className="mt-6 bg-[#24085a] hover:bg-[#1a0640] text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              onClick={() => { unlockBeepAudio(); unlockAudio(); setPhase("instructions"); }}
+              disabled={!soundChecked}
+              className="mt-6 bg-[#24085a] hover:bg-[#1a0640] text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Start Assessment
             </button>
+            {!soundChecked && (
+              <p className="text-xs text-gray-500 mt-2">Hãy bấm “Nghe thử tiếng bíp” trước khi bắt đầu.</p>
+            )}
           </div>
         </div>
         {exitDialog}
@@ -1469,7 +1498,7 @@ const SpeakingExamEngine = ({
         </div>
         <BottomNavBar
           onPrevious={() => setPhase("start")}
-          onNext={() => { unlockAudio(); setPhase("prompt"); }}
+          onNext={() => { unlockBeepAudio(); unlockAudio(); setPhase("prompt"); }}
           isFirst={false}
           isLast={false}
         />
@@ -1854,6 +1883,22 @@ const SpeakingExamEngine = ({
 
         {/* Right: Timer panel */}
         <div className="w-[220px] shrink-0">
+          {isRec && (
+            <div
+              className={`mb-3 rounded-xl border-4 p-3 text-center transition-colors ${
+                recFlash ? "border-red-600 bg-red-600 animate-pulse" : "border-red-500 bg-white"
+              }`}
+            >
+              <p className={`text-base font-extrabold leading-tight ${recFlash ? "text-white" : "text-red-600"}`}>
+                ĐANG GHI ÂM — nói ngay
+              </p>
+              {beepBlocked && (
+                <p className={`text-[11px] mt-1 ${recFlash ? "text-white/90" : "text-gray-500"}`}>
+                  Trình duyệt chặn âm báo, hãy nhìn đèn đỏ
+                </p>
+              )}
+            </div>
+          )}
           {isReading ? (
             <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center min-h-[260px]">
               <div className="w-16 h-16 rounded-full bg-[#24085a]/10 flex items-center justify-center mb-4 animate-pulse">
