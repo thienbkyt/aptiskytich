@@ -217,6 +217,7 @@ const SpeakingExamEngine = ({
   const silentByQuestionRef = useRef<boolean[]>([]);
   const currentIndexRef = useRef(0);
   const flowTokenRef = useRef(0);
+  const ttsUnavailableRef = useRef(false);
   const adminNavLockedRef = useRef(false);
   const suppressRecordingSaveRef = useRef(false);
   // Guards to prevent doStopAndAdvance / handleFinish firing twice
@@ -645,7 +646,22 @@ const SpeakingExamEngine = ({
     // Get the question text for current index
     const questionText = getSpokenTextForIndex(currentIndexRef.current);
 
-    if (questionText) {
+    if (ttsUnavailableRef.current) {
+      // TTS đã từng stall (server lẫn speechSynthesis): không gọi lại TTS,
+      // chỉ hiển thị đề trong 5 giây rồi đi tiếp beep/ghi âm như bình thường.
+      setReadingSecsLeft(5);
+      if (readingTimerRef.current) clearInterval(readingTimerRef.current);
+      const fallbackReadingEndAt = Date.now() + 5000;
+      readingTimerRef.current = setInterval(() => {
+        setReadingSecsLeft(Math.max(0, Math.ceil((fallbackReadingEndAt - Date.now()) / 1000)));
+      }, 500);
+      await new Promise(r => setTimeout(r, 5000));
+      if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
+      if (token !== flowTokenRef.current) {
+        console.warn("[Speaking] flow aborted - stale token after fallback reading");
+        return;
+      }
+    } else if (questionText) {
       const words = questionText.trim().split(/\s+/).filter(Boolean).length;
       const speakTimeout = Math.max(12000, words * 600 + 5000);
       // Reading countdown shown in the right panel while TTS plays.
@@ -666,6 +682,7 @@ const SpeakingExamEngine = ({
       }
       if (readingTimerRef.current) { clearInterval(readingTimerRef.current); readingTimerRef.current = null; }
       if (!finished) {
+        ttsUnavailableRef.current = true;
         logClientError("speaking_tts_stall", new Error("tts_timeout"), { partType, examSetId: examSetId ?? null, words, timeoutMs: speakTimeout, fullFlow });
         // Timed out: cut the voice so it never overlaps the prep timer.
         try { stopTTS(); } catch { /* noop */ }
