@@ -168,16 +168,19 @@ export default function PricingPage() {
       let m = 0;
       const tp = setInterval(() => {
         m += 1;
-        if (m > 8 || !uid) {
+        if (m > 8) {
           clearInterval(tp);
           return;
         }
         (async () => {
           try {
+            // user?.id có thể chưa hydrate khi redirect về — fallback session
+            const userId = uid ?? (await supabase.auth.getUser()).data.user?.id ?? null;
+            if (!userId) return;
             const { data } = await (supabase as any)
               .from("payments")
               .select("id, amount_vnd, plan_key")
-              .eq("user_id", uid)
+              .eq("user_id", userId)
               .eq("status", "paid")
               .gte("paid_at", new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString())
               .order("paid_at", { ascending: false })
