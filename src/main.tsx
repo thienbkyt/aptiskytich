@@ -240,10 +240,40 @@ function isThirdParty(msg: string, filename?: string, stack?: string): boolean {
   );
 }
 
+// Chunk load failures — same bundle-stale cases as "vite:preloadError" but surfacing
+// as window errors (Chrome) or different messages on Safari / Firefox.
+const CHUNK_MSG_PATTERNS = [
+  "Failed to fetch dynamically imported module", // Chrome
+  "Importing a module script failed", // Safari
+  "error loading dynamically imported module", // Firefox
+];
+
+function isChunkLoadFailure(msg: string): boolean {
+  return CHUNK_MSG_PATTERNS.some((p) => msg.includes(p));
+}
+
+function handleChunkLoadFailure(msg: string) {
+  try {
+    logClientError("chunk_load_failed", new Error(msg), { href: location.href });
+  } catch {
+    /* logging must never break the reload */
+  }
+  // Same 10s reload guard as the vite:preloadError listener (shared key) so a
+  // genuinely broken network doesn't put us in a reload loop.
+  const KEY = "chunk-reload-at";
+  const last = Number(sessionStorage.getItem(KEY) || 0);
+  if (Date.now() - last > 10000) {
+    sessionStorage.setItem(KEY, String(Date.now()));
+    window.location.reload();
+  } else {
+    showUpdateBanner();
+  }
+}
+
 window.addEventListener("error", (e) => {
   const msg = e?.message || "";
-  if (msg.includes("Failed to fetch dynamically imported module")) {
-    showUpdateBanner();
+  if (isChunkLoadFailure(msg)) {
+    handleChunkLoadFailure(msg);
     return;
   }
   const filename = e?.filename || "";
@@ -271,8 +301,8 @@ window.addEventListener("error", (e) => {
 window.addEventListener("unhandledrejection", (e) => {
   const reason: any = (e as any)?.reason;
   const msg = String(reason?.message || reason || "");
-  if (msg.includes("Failed to fetch dynamically imported module")) {
-    showUpdateBanner();
+  if (isChunkLoadFailure(msg)) {
+    handleChunkLoadFailure(msg);
     return;
   }
   // Quota exhaustion is a product state, not a crash: never show the red overlay.
