@@ -1873,6 +1873,22 @@ const SpeakingExamEngine = ({
 
         {/* Right: Timer panel */}
         <div className="w-[220px] shrink-0">
+          {isRec && (
+            <div
+              className={`mb-3 rounded-xl border-4 p-3 text-center transition-colors ${
+                recFlash ? "border-red-600 bg-red-600 animate-pulse" : "border-red-500 bg-white"
+              }`}
+            >
+              <p className={`text-base font-extrabold leading-tight ${recFlash ? "text-white" : "text-red-600"}`}>
+                ĐANG GHI ÂM — nói ngay
+              </p>
+              {beepBlocked && (
+                <p className={`text-[11px] mt-1 ${recFlash ? "text-white/90" : "text-gray-500"}`}>
+                  Trình duyệt chặn âm báo, hãy nhìn đèn đỏ
+                </p>
+              )}
+            </div>
+          )}
           {isReading ? (
             <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center min-h-[260px]">
               <div className="w-16 h-16 rounded-full bg-[#24085a]/10 flex items-center justify-center mb-4 animate-pulse">
