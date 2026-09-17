@@ -1844,7 +1844,8 @@ ${partsIn.formalText ?? ""}`;
             shortWhy = "task3 model answer missing numbered items 1./2./3.";
           }
         } else if (pt === "task4") {
-          const fi = iv.search(/formal\s*:/i);
+          // \b so the "Formal:" marker is not matched inside "Informal:".
+          const fi = iv.search(/\bformal\s*:/i);
           const informalPart = fi > 0 ? iv.slice(0, fi) : iv;
           const formalPart = fi >= 0 ? iv.slice(fi) : "";
           const ni = wc(informalPart.replace(/informal\s*:/i, ""));
