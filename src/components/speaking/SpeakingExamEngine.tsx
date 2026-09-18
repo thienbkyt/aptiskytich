@@ -170,11 +170,6 @@ const SpeakingExamEngine = ({
 
   // Mic failure (permission denied / device removed) — pauses timer + shows retry UI.
   const [micError, setMicError] = useState<string | null>(null);
-  // Beep/visual cue state: the browser can silently block the audio beep, so the
-  // recording start must ALWAYS have a visible signal too.
-  const [beepBlocked, setBeepBlocked] = useState(false);
-  const [recFlash, setRecFlash] = useState(false);
-  const recFlashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Sound check (once per browser session) — the click unlocks the AudioContext.
   const [soundChecked, setSoundChecked] = useState(soundCheckDone);
   const [v2Result, setV2Result] = useState<SpeakingPartResultV2 | null>(null);
@@ -743,8 +738,7 @@ const SpeakingExamEngine = ({
         prepEndAtRef.current = null;
         withTimeout(playBeep(), 1000)
           .catch(() => undefined)
-          .then((played) => {
-            setBeepBlocked(played === false);
+          .then(() => {
             startRecording();
           });
       }
@@ -768,10 +762,6 @@ const SpeakingExamEngine = ({
     setMicError(null);
     setPhase("recording");
 
-    // Always-visible start cue (beep may be blocked by the browser).
-    setRecFlash(true);
-    if (recFlashTimerRef.current) clearTimeout(recFlashTimerRef.current);
-    recFlashTimerRef.current = setTimeout(() => setRecFlash(false), 1000);
     try { navigator.vibrate?.(200); } catch { /* noop */ }
 
     let stream: MediaStream;
@@ -1900,22 +1890,6 @@ const SpeakingExamEngine = ({
 
         {/* Right: Timer panel */}
         <div className="w-[220px] shrink-0">
-          {isRec && (
-            <div
-              className={`mb-3 rounded-xl border-4 p-3 text-center transition-colors ${
-                recFlash ? "border-red-600 bg-red-600 animate-pulse" : "border-red-500 bg-white"
-              }`}
-            >
-              <p className={`text-base font-extrabold leading-tight ${recFlash ? "text-white" : "text-red-600"}`}>
-                ĐANG GHI ÂM — nói ngay
-              </p>
-              {beepBlocked && (
-                <p className={`text-[11px] mt-1 ${recFlash ? "text-white/90" : "text-gray-500"}`}>
-                  Trình duyệt chặn âm báo, hãy nhìn đèn đỏ
-                </p>
-              )}
-            </div>
-          )}
           {isReading ? (
             <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center min-h-[260px]">
               <div className="w-16 h-16 rounded-full bg-[#24085a]/10 flex items-center justify-center mb-4 animate-pulse">
