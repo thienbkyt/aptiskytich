@@ -701,8 +701,7 @@ const SpeakingExamEngine = ({
     // Beep after reading question: signals start of prep (if any) or start of recording
 
     try {
-      const played = await withTimeout(playBeep(), 1000);
-      setBeepBlocked(played === false);
+      await withTimeout(playBeep(), 1000);
     } catch {
       /* Continue even if mobile audio is blocked. */
     }
