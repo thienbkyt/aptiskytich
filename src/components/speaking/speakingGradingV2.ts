@@ -113,6 +113,9 @@ export async function gradeSpeakingPartV2(
     partType,
     questions,
     audios,
+    ...(Array.isArray(opts?.durations) && opts!.durations!.length
+      ? { durations: opts!.durations }
+      : {}),
     gradingSessionId: opts?.fullTestSessionId ?? null,
   };
 
