@@ -1196,6 +1196,9 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
           pro: ca.pro ?? "",
           fc: ca.fc ?? "",
         },
+        ...(transcriptCoverage !== null && transcriptCoverage < 0.35
+          ? { transcriptShort: true, coverage: transcriptCoverage }
+          : {}),
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     // ============================================================

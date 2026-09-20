@@ -196,6 +196,22 @@ export async function gradeSpeakingPartV2(
     throw new Error("Empty response from grade-exam (speaking_v2)");
   }
 
+  // Background re-grade: when the AI transcribed only part of a long recording,
+  // the result is returned to the UI immediately and a second pass runs via the
+  // grading queue with _forceFullTranscript. Fire-and-forget — never blocks the
+  // UI, never surfaces an error, and does not consume an extra AI quota.
+  if ((data as any).transcriptShort === true) {
+    void enqueueGradingFallback({
+      skill: "speaking",
+      partType,
+      testResultId: opts?.testResultId ?? null,
+      examSetId: opts?.examSetId ?? null,
+      fullTestSessionId: opts?.fullTestSessionId ?? null,
+      payload: { ...gradePayload, _forceFullTranscript: true },
+      lastError: "transcript_short",
+    }).catch(() => { /* ignore */ });
+  }
+
   return {
     bands: data.bands ?? { tf: "", gra: "", vra: "", pro: "", fc: "" },
     rawPart: Number(data.rawPart ?? data.raw_part ?? 0),
