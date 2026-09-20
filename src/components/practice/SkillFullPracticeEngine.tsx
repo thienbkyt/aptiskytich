@@ -918,6 +918,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sessionId: fullPartSessionRef.current,
             fullTestSessionId: fullPartSessionRef.current,
             testResultId: speakingTestResultIdByPartRef.current[originalIdx] ?? null,
+            durations: sub.items.map((it) =>
+              typeof it.actualSpoken === "number" ? it.actualSpoken : 0,
+            ),
           });
           speakingV2PromisesByPartRef.current[originalIdx] = pending;
         }
