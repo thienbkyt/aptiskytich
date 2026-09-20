@@ -221,11 +221,15 @@ async function buildGradePayload(job: any, payload: any): Promise<any> {
   if (job.skill !== "speaking" || payload?.type !== "speaking_v2") return payload;
   // Pass per-recording durations (seconds) so the grader can detect a transcript
   // that covers only a fraction of the recording. Optional — missing is fine.
-  const rawDur = payload?.durationsSec ?? payload?.durationSeconds ?? null;
+  const rawDur = payload?.durations ?? payload?.durationsSec ?? payload?.durationSeconds ?? null;
+  // Keep positional alignment with the questions: a missing/invalid entry
+  // becomes 0 (no audio) instead of being dropped from the array.
   const durList = (Array.isArray(rawDur) ? rawDur : rawDur == null ? [] : [rawDur])
-    .map((v: any) => Number(v))
-    .filter((n: number) => Number.isFinite(n) && n > 0);
-  if (durList.length && !Array.isArray(payload.durations)) {
+    .map((v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    });
+  if (durList.some((n: number) => n > 0)) {
     payload = { ...payload, durations: durList };
   }
   if (!isLongRecording(payload)) return payload;        // ≤ 60s → keep the audio
@@ -765,7 +769,9 @@ Deno.serve(async (req) => {
         const { ok, status, body } = await invokeGradeExam(
           payload,
           job.user_id,
-          job.skill === "writing" ? WRITING_STEP_TIMEOUT_MS : STEP_TIMEOUT_MS,
+          job.skill === "writing" || job.skill === "speaking"
+            ? WRITING_STEP_TIMEOUT_MS
+            : STEP_TIMEOUT_MS,
         );
 
 

@@ -819,6 +819,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sessionId: fullPartSessionRef.current,
             fullTestSessionId: fullPartSessionRef.current,
             testResultId: speakingTestResultIdByPartRef.current[currentPartIndex] ?? null,
+            durations: sub.items.map((it) =>
+              typeof it.actualSpoken === "number" ? it.actualSpoken : 0,
+            ),
           });
           // Attach a no-op handler so a rejection here (e.g. quota exhausted)
           // never surfaces as an unhandled promise rejection before the
@@ -915,6 +918,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sessionId: fullPartSessionRef.current,
             fullTestSessionId: fullPartSessionRef.current,
             testResultId: speakingTestResultIdByPartRef.current[originalIdx] ?? null,
+            durations: sub.items.map((it) =>
+              typeof it.actualSpoken === "number" ? it.actualSpoken : 0,
+            ),
           });
           speakingV2PromisesByPartRef.current[originalIdx] = pending;
         }
@@ -989,6 +995,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
                   questions,
                   audioPaths: audioPathsByPart[originalIdx] ?? [],
                   // Real recording lengths → the worker applies the 60s rule exactly.
+                  durations: sub.items.map((it) =>
+                    typeof it.actualSpoken === "number" ? it.actualSpoken : 0,
+                  ),
                   durationsSec: sub.items.map((it) =>
                     typeof it.actualSpoken === "number" ? it.actualSpoken : null,
                   ),

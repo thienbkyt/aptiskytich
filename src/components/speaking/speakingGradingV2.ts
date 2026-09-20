@@ -181,6 +181,9 @@ export async function gradeSpeakingPartV2(
       partType,
       questions,
       audioPaths, // worker resolves these -> base64 -> passes as `audios`
+      ...(Array.isArray(opts?.durations) && opts!.durations!.length
+        ? { durations: opts!.durations }
+        : {}),
     };
     await enqueueGradingFallback({
       skill: "speaking",

@@ -554,6 +554,7 @@ const SpeakingExamEngine = ({
             partType,
             questions,
             audioPaths,
+            durations: durationsRef.current.map((d) => (typeof d === "number" ? d : 0)),
             durationsSec: durationsRef.current.map((d) => (typeof d === "number" ? d : null)),
           },
 
