@@ -221,7 +221,7 @@ async function buildGradePayload(job: any, payload: any): Promise<any> {
   if (job.skill !== "speaking" || payload?.type !== "speaking_v2") return payload;
   // Pass per-recording durations (seconds) so the grader can detect a transcript
   // that covers only a fraction of the recording. Optional — missing is fine.
-  const rawDur = payload?.durationsSec ?? payload?.durationSeconds ?? null;
+  const rawDur = payload?.durations ?? payload?.durationsSec ?? payload?.durationSeconds ?? null;
   const durList = (Array.isArray(rawDur) ? rawDur : rawDur == null ? [] : [rawDur])
     .map((v: any) => Number(v))
     .filter((n: number) => Number.isFinite(n) && n > 0);
