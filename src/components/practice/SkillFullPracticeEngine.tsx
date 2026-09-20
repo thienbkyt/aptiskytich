@@ -819,6 +819,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
             sessionId: fullPartSessionRef.current,
             fullTestSessionId: fullPartSessionRef.current,
             testResultId: speakingTestResultIdByPartRef.current[currentPartIndex] ?? null,
+            durations: sub.items.map((it) =>
+              typeof it.actualSpoken === "number" ? it.actualSpoken : 0,
+            ),
           });
           // Attach a no-op handler so a rejection here (e.g. quota exhausted)
           // never surfaces as an unhandled promise rejection before the
