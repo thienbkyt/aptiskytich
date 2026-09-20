@@ -911,7 +911,8 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
             },
             body: JSON.stringify({
               model: MODEL_V2,
-              reasoning_effort: isPart4 ? "low" : "medium",
+              reasoning_effort: "medium",
+              max_tokens: isPart4 ? 6000 : 4000,
               temperature: 0,
               messages: msgs,
               tools: [toolSchemaV2],
