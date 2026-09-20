@@ -765,7 +765,9 @@ Deno.serve(async (req) => {
         const { ok, status, body } = await invokeGradeExam(
           payload,
           job.user_id,
-          job.skill === "writing" ? WRITING_STEP_TIMEOUT_MS : STEP_TIMEOUT_MS,
+          job.skill === "writing" || job.skill === "speaking"
+            ? WRITING_STEP_TIMEOUT_MS
+            : STEP_TIMEOUT_MS,
         );
 
 
