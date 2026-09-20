@@ -70,7 +70,7 @@ export async function gradeSpeakingPartV2(
   partType: string,
   questions: Array<{ questionText?: string; question_text?: string; [k: string]: any }>,
   audioBlobs: Array<Blob | null | undefined>,
-  opts?: { sessionId?: string; testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null }
+  opts?: { sessionId?: string; testResultId?: string | null; examSetId?: string | null; fullTestSessionId?: string | null; /** Recording length per item, in seconds (optional). */ durations?: number[] }
 ): Promise<SpeakingPartResultV2> {
   const audios: string[] = [];
   for (const b of audioBlobs) {
@@ -113,6 +113,9 @@ export async function gradeSpeakingPartV2(
     partType,
     questions,
     audios,
+    ...(Array.isArray(opts?.durations) && opts!.durations!.length
+      ? { durations: opts!.durations }
+      : {}),
     gradingSessionId: opts?.fullTestSessionId ?? null,
   };
 

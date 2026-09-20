@@ -219,6 +219,15 @@ async function peerProBand(job: any): Promise<number | null> {
 /** Payload for grading step 2, applying the 60s audio threshold. */
 async function buildGradePayload(job: any, payload: any): Promise<any> {
   if (job.skill !== "speaking" || payload?.type !== "speaking_v2") return payload;
+  // Pass per-recording durations (seconds) so the grader can detect a transcript
+  // that covers only a fraction of the recording. Optional — missing is fine.
+  const rawDur = payload?.durationsSec ?? payload?.durationSeconds ?? null;
+  const durList = (Array.isArray(rawDur) ? rawDur : rawDur == null ? [] : [rawDur])
+    .map((v: any) => Number(v))
+    .filter((n: number) => Number.isFinite(n) && n > 0);
+  if (durList.length && !Array.isArray(payload.durations)) {
+    payload = { ...payload, durations: durList };
+  }
   if (!isLongRecording(payload)) return payload;        // ≤ 60s → keep the audio
 
   const proBandOverride = await peerProBand(job);
