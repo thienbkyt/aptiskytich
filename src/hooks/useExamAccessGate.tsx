@@ -154,7 +154,9 @@ export function useExamAccessGate() {
     [isLocked, isFeatureLocked, loading, user, authLoading, navigate, location.pathname, location.search, openMobileNotice],
   );
 
-  const LockModal = () => (
+  // useCallback để giữ identity ổn định giữa các render — component inline mới
+  // mỗi render làm React unmount/mount lại modal, gây hiện tượng nhấp nháy.
+  const LockModal = useCallback(() => (
     <UpgradeLock
       asModal
       open={open}
@@ -167,7 +169,7 @@ export function useExamAccessGate() {
       description={proFeature === "marathon" ? "Luyện Marathon dành cho thành viên Pro. Nâng cấp để làm liên tục toàn bộ đề." : undefined}
       featureLabel={quota ? FEATURE_LABEL[quota.feature] : proFeature ? FEATURE_LABEL[proFeature] : "Đề này"}
     />
-  );
+  ), [open, needTier, quota, proFeature]);
 
 
   return { isPro, isProLoading: loading, guard, isLocked, isFeatureLocked, LockModal, tier };
