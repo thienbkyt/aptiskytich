@@ -995,6 +995,9 @@ const SkillFullPracticeEngine = ({ fullTestId, skill, testTitle, onExit, skipFir
                   questions,
                   audioPaths: audioPathsByPart[originalIdx] ?? [],
                   // Real recording lengths → the worker applies the 60s rule exactly.
+                  durations: sub.items.map((it) =>
+                    typeof it.actualSpoken === "number" ? it.actualSpoken : 0,
+                  ),
                   durationsSec: sub.items.map((it) =>
                     typeof it.actualSpoken === "number" ? it.actualSpoken : null,
                   ),
