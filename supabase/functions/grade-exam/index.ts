@@ -902,6 +902,9 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
             { role: "user", content: userParts },
           ];
           if (repairNote) msgs.push({ role: "user", content: [{ type: "text", text: repairNote }] });
+          if ((body as any)._forceFullTranscript === true) {
+            msgs.push({ role: "user", content: [{ type: "text", text: "Previous attempt transcribed only part of the recording. Transcribe the ENTIRE recording to the last word and re-grade from the full transcript." }] });
+          }
           return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             signal: controller.signal,
@@ -1029,11 +1032,13 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
           }
         }
       }
-      // ── TRANSCRIPT COVERAGE VALIDATION (vs real audio length) ──────────────
+      // ── TRANSCRIPT COVERAGE CHECK (vs real audio length) ───────────────────
       // Gemini sometimes transcribes only the first seconds of a long monologue
-      // while still returning finish_reason=tool_calls. Compare the transcript
-      // length against the recorded duration (~8 chars/second of speech) and ask
-      // for a full re-transcription + re-grade once when it is far too short.
+      // while still returning finish_reason=tool_calls. We do NOT re-call the AI
+      // here (that would double the wait and risk the worker timeout); instead we
+      // flag the result so the client can enqueue a background re-grade with
+      // _forceFullTranscript.
+      let transcriptCoverage: number | null = null;
       {
         const rawDurations = (body as any).durations;
         const durations: number[] = Array.isArray(rawDurations)
@@ -1044,53 +1049,16 @@ CRITICAL ANTI-HALLUCINATION RULE: The audio may be silent or contain only backgr
           0,
         );
         if (spokenSecs > 0) {
-          const totalCharsOf = (p: any) =>
-            (Array.isArray(p?.perItem) ? p.perItem : []).reduce(
-              (s: number, it: any) => s + String(it?.transcript ?? "").length,
-              0,
-            );
-          const totalChars = totalCharsOf(parsed);
+          const totalChars = (Array.isArray(parsed?.perItem) ? parsed.perItem : []).reduce(
+            (s: number, it: any) => s + String(it?.transcript ?? "").length,
+            0,
+          );
           const expectedChars = spokenSecs * 8;
+          transcriptCoverage = expectedChars > 0 ? totalChars / expectedChars : 1;
           if (totalChars < expectedChars * 0.35) {
-            const repairNote = `Your transcript covers only a small part of the recording. TRANSCRIBE THE WHOLE RECORDING from the first word to the very last word. The audio is about ${Math.round(spokenSecs)} seconds long, so the transcript must be substantially longer. Split it into exactly ${itemCount} consecutive segments, one per sub-question, and never return an empty transcript for a sub-question the student actually addressed. Then re-grade based on the full transcript.`;
-            try {
-              const retryResp = await callGatewaySpeak(repairNote);
-              if (retryResp.ok) {
-                const retryJson = await retryResp.json();
-                const rtc = retryJson?.choices?.[0]?.message?.tool_calls?.[0];
-                let after = totalChars;
-                if (rtc?.function?.arguments) {
-                  const retryParsed = JSON.parse(rtc.function.arguments);
-                  const retryChars = totalCharsOf(retryParsed);
-                  if (retryChars > totalChars) {
-                    parsed = retryParsed;
-                    after = retryChars;
-                  }
-                }
-                console.warn(
-                  `[grade-exam v2] transcript coverage repair (part=${partType}, audioSec=${Math.round(spokenSecs)}, chars before=${totalChars}, after=${after}, expected~${Math.round(expectedChars)})`,
-                );
-                try {
-                  await logAIUsage({
-                    model: MODEL_V2,
-                    usage: retryJson?.usage,
-                    source_function: "grade-exam",
-                    finishReason: retryJson?.choices?.[0]?.finish_reason ?? null,
-                    attempt: 2,
-                    gradingSessionId,
-                    metadata: {
-                      mode: "speaking_v2",
-                      partType,
-                      repair: "transcript_coverage",
-                      durationMs: speakDurationMs,
-                      gatewayAttempts: speakGatewayAttempts,
-                    },
-                  });
-                } catch { /* ignore */ }
-              }
-            } catch (e) {
-              console.warn("[grade-exam v2] transcript coverage retry failed", (e as any)?.message || e);
-            }
+            console.warn(
+              `[grade-exam v2] transcript short (part=${partType}, audioSec=${Math.round(spokenSecs)}, chars=${totalChars}, expected~${Math.round(expectedChars)}, coverage=${transcriptCoverage.toFixed(2)}) → background re-grade`,
+            );
           }
         }
       }
