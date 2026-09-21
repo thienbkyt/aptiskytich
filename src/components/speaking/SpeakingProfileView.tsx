@@ -124,7 +124,7 @@ const SpeakingProfileView = ({
               <PolarGrid />
               <PolarAngleAxis dataKey="criterion" tick={{ fontSize: 13 }} />
               <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
-              <Radar dataKey="value" stroke="#24085a" fill="#24085a" fillOpacity={0.35} isAnimationActive={false} />
+              <Radar dataKey="value" stroke="hsl(var(--exam-accent))" fill="hsl(var(--exam-accent))" fillOpacity={0.35} isAnimationActive={false} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -205,7 +205,7 @@ const SpeakingProfileView = ({
             </div>
 
             {it.audioUrl === "__EXPIRED__" ? (
-              <p className="text-xs text-gray-500 italic leading-relaxed">
+              <p className="text-xs text-muted-foreground italic leading-relaxed">
                 Bản ghi âm đã hết hạn lưu trữ (7 ngày). Điểm, nhận xét và transcript vẫn được giữ đầy đủ.
               </p>
             ) : it.audioUrl && (

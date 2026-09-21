@@ -285,46 +285,46 @@ body.history-review-mode .exam-light-bottom-bar {
   display: none !important;
 }
 
-/* Exam bottom bar must stay identical in light and dark exam modes. */
+/* Exam bottom bar — token-driven so it follows light/dark exam palette. */
 .exam-light-bottom-bar {
-  background-color: hsl(0 0% 100% / 0.95) !important;
-  border-top-color: hsl(260 83% 19%) !important;
-  color: hsl(0 0% 5%) !important;
+  background-color: hsl(var(--exam-surface) / 0.95);
+  border-top-color: hsl(var(--exam-accent));
+  color: hsl(var(--exam-text));
 }
 
 .exam-light-bottom-bar button[aria-label],
 .exam-light-bottom-bar .exam-nav-prev-next {
-  border-color: hsl(214 32% 91%) !important;
-  background-color: hsl(0 0% 100%) !important;
-  color: hsl(215 16% 47%) !important;
+  border-color: hsl(var(--exam-border));
+  background-color: hsl(var(--exam-surface));
+  color: hsl(var(--exam-text-muted));
 }
 
 .exam-light-bottom-bar button[aria-label]:hover {
-  background-color: hsl(210 40% 96%) !important;
+  background-color: hsl(var(--exam-accent-soft) / 0.1);
 }
 
 .exam-light-bottom-bar .exam-nav-previous-button {
-  border-color: hsl(0 0% 5%) !important;
-  background-color: hsl(0 0% 100%) !important;
-  color: hsl(0 0% 5%) !important;
+  border-color: hsl(var(--exam-text));
+  background-color: hsl(var(--exam-surface));
+  color: hsl(var(--exam-text));
 }
 
 .exam-light-bottom-bar .exam-nav-previous-button:hover {
-  background-color: hsl(0 0% 96%) !important;
-  color: hsl(0 0% 5%) !important;
+  background-color: hsl(var(--exam-accent-soft) / 0.1);
+  color: hsl(var(--exam-text));
 }
 
 .exam-light-bottom-bar .exam-nav-next-button,
 .exam-light-bottom-bar .exam-nav-submit {
-  background-color: hsl(260 83% 19%) !important;
-  color: hsl(0 0% 100%) !important;
-  border-color: hsl(260 83% 19%) !important;
+  background-color: hsl(var(--exam-accent));
+  color: hsl(var(--exam-accent-foreground));
+  border-color: hsl(var(--exam-accent));
 }
 
 .exam-light-bottom-bar .exam-nav-next-button:hover,
 .exam-light-bottom-bar .exam-nav-submit:hover {
-  background-color: hsl(260 83% 15%) !important;
-  color: hsl(0 0% 100%) !important;
+  background-color: hsl(var(--exam-accent) / 0.9);
+  color: hsl(var(--exam-accent-foreground));
 }
 
 @layer utilities {
@@ -541,114 +541,6 @@ body.exam-mode .particles-bg,
   display: none !important;
 }
 
-/* =====================================================================
-   EXAM UI — DARK MODE OVERRIDES
-   Chỉ áp khi <html class="dark">. Light mode KHÔNG bị ảnh hưởng.
-   ===================================================================== */
-
-/* 1. NỀN MÀN THI: trắng/#F3F3F3 → xám trung tính #262626 */
-html.dark .bg-\[\#F3F3F3\] {
-  background-color: #262626 !important;
-}
-html.dark body.exam-mode .bg-white {
-  background-color: #262626 !important;
-}
-
-/* 2. CHỮ hard-code đen → xám nhạt dễ đọc */
-html.dark body.exam-mode .text-black {
-  color: #E5E5E5 !important;
-}
-html.dark body.exam-mode .text-gray-900,
-html.dark body.exam-mode .text-gray-800,
-html.dark body.exam-mode .text-gray-700 {
-  color: #E5E5E5 !important;
-}
-html.dark body.exam-mode .text-gray-600,
-html.dark body.exam-mode .text-gray-500 {
-  color: #B5B5B5 !important;
-}
-
-/* 3. EXAM HEADER tím #24085a → xám tối #1C1C1C
-   (chỉ class đặc rỗng, không phải /5 /10 alpha) */
-html.dark .bg-\[\#24085a\]:not(.bg-\[\#24085a\]\/5):not(.bg-\[\#24085a\]\/10) {
-  background-color: #1C1C1C !important;
-}
-html.dark .hover\:bg-\[\#1a0640\]:hover {
-  background-color: #000000 !important;
-}
-
-/* 3b. Badge / panel mềm dùng alpha #24085a/5 /10 → indigo sáng */
-html.dark .bg-\[\#24085a\]\/10 {
-  background-color: rgba(129, 140, 248, 0.18) !important;
-}
-html.dark .bg-\[\#24085a\]\/5 {
-  background-color: rgba(129, 140, 248, 0.10) !important;
-}
-html.dark .text-\[\#24085a\] {
-  color: #A5B4FC !important;
-}
-html.dark .border-\[\#24085a\] {
-  border-color: #A5B4FC !important;
-}
-html.dark .border-\[\#24085a\]\/40 {
-  border-color: rgba(165, 180, 252, 0.55) !important;
-}
-
-/* 4. TIMER / PROGRESS bar #230859 → indigo sáng */
-html.dark .bg-\[\#230859\] {
-  background-color: #818CF8 !important;
-}
-html.dark .border-\[\#230859\] {
-  border-color: #3A3A3A !important;
-}
-
-/* 5. BOTTOM NAV BAR – nền hơi sáng hơn nền chính, viền mảnh */
-html.dark .exam-light-bottom-bar {
-  background-color: #1F1F1F !important;
-  border-top-color: #3A3A3A !important;
-}
-
-/* 6. KHUNG / CARD nội dung trong exam – tối hơn nền chính */
-html.dark body.exam-mode .bg-gray-50,
-html.dark body.exam-mode .bg-gray-100 {
-  background-color: #1E1E1E !important;
-}
-html.dark body.exam-mode .bg-gray-200 {
-  background-color: #2A2A2A !important;
-}
-html.dark body.exam-mode .border-gray-200,
-html.dark body.exam-mode .border-gray-300 {
-  border-color: #3A3A3A !important;
-}
-
-/* 7. DROPDOWN inline (native <select>) trong khu vực thi */
-html.dark body.exam-mode select {
-  background-color: #2A2A2A !important;
-  color: #E5E5E5 !important;
-  border-color: #555555 !important;
-}
-html.dark body.exam-mode select option {
-  background-color: #2A2A2A !important;
-  color: #E5E5E5 !important;
-}
-
-/* 8. Ô kéo-thả Part 2 – nét đứt xám nhạt */
-html.dark body.exam-mode .border-dashed {
-  border-color: #555555 !important;
-}
-
-/* 9. POPUP submit / finish – nền tối */
-html.dark .fixed.inset-0 > .bg-white {
-  background-color: #1E1E1E !important;
-}
-
-/* 10. Nút tím "Start Assessment" #2D1B69 → indigo dịu trong dark mode */
-html.dark body.exam-mode .bg-\[\#2D1B69\] {
-  background-color: #3B82F6 !important;
-}
-html.dark body.exam-mode .hover\:bg-\[\#1f1149\]:hover {
-  background-color: #2563EB !important;
-}
 
 
 /* Landscape phones (short viewports): move exam FABs out of the question area

@@ -16,7 +16,7 @@ export default function OutlineBuilderButton({ open, onToggle }: Props) {
     <button
       type="button"
       onClick={onToggle}
-      className="fixed z-[90] flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-slate-50"
+      className="fixed z-[90] flex items-center gap-1.5 rounded-full bg-exam-surface px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-exam-accent-soft/10"
       style={{ bottom: 160, left: 16, color: NAVY, borderColor: NAVY }}
       aria-label={open ? "Đóng nháp" : "Nháp"}
     >
