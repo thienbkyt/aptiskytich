@@ -456,7 +456,7 @@ const Navbar = () => {
           ) : (
             <>
               <Link to="/auth" {...prefetchHandlers("/auth")}>
-                <Button variant="outline" size="sm" className="gap-1.5 h-8 px-3 text-sm font-semibold bg-card text-foreground border-border hover:bg-muted">
+                <Button variant="outline" size="sm" className="gap-1.5 h-8 px-3 text-sm font-semibold bg-card text-foreground dark:text-foreground border-border hover:bg-muted">
                   <LogIn className="w-4 h-4" />
                   Đăng nhập
                 </Button>
@@ -741,7 +741,7 @@ const Navbar = () => {
                 ) : (
                   <>
                     <Link to="/auth">
-                      <Button variant="outline" className="w-full justify-center gap-2 text-sm font-semibold bg-card text-foreground border-border hover:bg-muted">
+                      <Button variant="outline" className="w-full justify-center gap-2 text-sm font-semibold bg-card text-foreground dark:text-foreground border-border hover:bg-muted">
                         <LogIn className="w-4 h-4" />
                         Đăng nhập
                       </Button>
