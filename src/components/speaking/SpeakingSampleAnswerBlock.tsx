@@ -31,7 +31,7 @@ const SpeakingSampleAnswerBlock = ({ pair, note }: Props) => {
   const cardCls = (active: boolean) =>
     `flex-1 text-left rounded-xl border p-3 transition-colors ${
       active
-        ? "bg-[#24085a] text-white border-[#24085a]"
+        ? "bg-exam-accent text-exam-accent-foreground border-exam-accent"
         : "bg-card text-muted-foreground border-border hover:border-foreground/20"
     }`;
 
@@ -43,7 +43,7 @@ const SpeakingSampleAnswerBlock = ({ pair, note }: Props) => {
         aria-expanded={open}
         className="w-full flex items-center justify-between gap-2 text-left"
       >
-        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#24085a] dark:text-foreground">
+        <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-exam-accent">
           <BookOpen className="w-3.5 h-3.5" />
           📖 Bài mẫu tham khảo{note ? ` ${note}` : ""}
         </span>
