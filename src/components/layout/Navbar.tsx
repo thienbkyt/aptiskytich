@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
-  BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
+  BookOpen, ClipboardCheck, Sparkles, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
   MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare,
@@ -115,7 +115,6 @@ const Navbar = () => {
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
     setSkillOpen(true);
-    setAdminOpen(false);
   };
   const handleSkillLeave = () => {
     hoverTimeout.current = setTimeout(() => setSkillOpen(false), 150);
@@ -124,7 +123,6 @@ const Navbar = () => {
     if (moreHoverTimeout.current) clearTimeout(moreHoverTimeout.current);
     setMoreOpen(true);
     setSkillOpen(false);
-    setAdminOpen(false);
   };
   const handleMoreLeave = () => {
     moreHoverTimeout.current = setTimeout(() => setMoreOpen(false), 150);
