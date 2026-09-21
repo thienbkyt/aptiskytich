@@ -113,7 +113,12 @@ const Index = () => {
   }
   return (
 
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background light"
+      style={{ colorScheme: "light" }}
+    >
+      {/* Force light palette on the landing page regardless of <html> theme */}
+      <style>{lightThemeCss}</style>
       <Navbar />
 
       {/* Hero — light theme (landing only) */}
