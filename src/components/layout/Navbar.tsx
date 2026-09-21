@@ -3,21 +3,33 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Menu, X, LogIn, Shield, Flame, ChevronDown,
-  BookOpen, ClipboardCheck, Sparkles, GraduationCap, Crown,
+  BookOpen, ClipboardCheck, Sparkles, Crown,
   Users, FileSpreadsheet, BarChart3, Mic, PenLine, Headphones, Book, BookText, Ear,
   History,
   MoreHorizontal, Lightbulb, Star, Newspaper, MessageSquare,
+  Bell, Sun, Moon, LogOut, UserCircle, Check,
   type LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo.webp";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsPro } from "@/hooks/useIsPro";
+import { useTheme } from "@/hooks/useTheme";
+import { useUserBootstrap } from "@/hooks/useUserBootstrap";
 import ThemeToggle from "@/components/ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { prefetchHandlers } from "@/lib/routePrefetch";
 import ProfileModal from "@/components/layout/ProfileModal";
 import NotificationBell from "@/components/layout/NotificationBell";
+import TierPill from "@/components/dashboard/TierPill";
 import { FEATURES } from "@/config/features";
 import FeatureSuggestionModal from "@/components/suggestions/FeatureSuggestionModal";
 import FeedbackModal from "@/components/feedback/FeedbackModal";
@@ -51,7 +63,6 @@ const adminLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [skillOpen, setSkillOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
@@ -61,12 +72,21 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const adminHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moreHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
-  const { user, isAdmin } = useAuth();
-  const { isPro, isPremium, tier, proUntil, loading: tierLoading } = useIsPro();
+  const { user, isAdmin, signOut } = useAuth();
+  const { isPro, isPremium, tier, proUntil } = useIsPro();
+  const { unread_notification_count } = useUserBootstrap();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const userDisplayName =
+    user?.user_metadata?.display_name ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "Học viên";
+  const unreadCount = Math.max(0, unread_notification_count || 0);
+  const unreadBadgeText = unreadCount > 9 ? "9+" : String(unreadCount);
 
   const isActive = (path: string) => location.pathname === path;
   const isSkillActive = [...skillLinks, ...toolLinks].some((l) => isActive(l.path));
@@ -94,7 +114,6 @@ const Navbar = () => {
   const handleSkillEnter = () => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
     setSkillOpen(true);
-    setAdminOpen(false);
   };
   const handleSkillLeave = () => {
     hoverTimeout.current = setTimeout(() => setSkillOpen(false), 150);
@@ -103,22 +122,16 @@ const Navbar = () => {
     if (moreHoverTimeout.current) clearTimeout(moreHoverTimeout.current);
     setMoreOpen(true);
     setSkillOpen(false);
-    setAdminOpen(false);
   };
   const handleMoreLeave = () => {
     moreHoverTimeout.current = setTimeout(() => setMoreOpen(false), 150);
   };
-  const handleAdminEnter = () => {
-    if (adminHoverTimeout.current) clearTimeout(adminHoverTimeout.current);
-    setAdminOpen(true);
-    setSkillOpen(false);
-  };
-  const handleAdminLeave = () => {
-    adminHoverTimeout.current = setTimeout(() => setAdminOpen(false), 150);
-  };
-
   const ctaBaseClass =
     "flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-full transition-transform duration-200 whitespace-nowrap shadow-[0_4px_14px_rgba(204,28,1,0.35)] hover:scale-105";
+
+  const openNotifications = () => {
+    window.dispatchEvent(new Event("kt-open-notifications"));
+  };
 
   return (
     <nav
@@ -348,110 +361,97 @@ const Navbar = () => {
 
         {/* ── Desktop right actions ── */}
         <div className="hidden xl:flex items-center gap-2 shrink-0">
-          <ThemeToggle />
-          {isAdmin && (
-            <div
-              className="relative inline-flex"
-              onMouseEnter={handleAdminEnter}
-              onMouseLeave={handleAdminLeave}
-            >
-              <button
-                className={`inline-flex items-center gap-1 h-8 px-3 text-sm font-semibold rounded-full transition-colors whitespace-nowrap ${
-                  isAdminActive || adminOpen
-                    ? "bg-primary/10 text-primary"
-                    : "text-foreground hover:bg-muted"
-                }`}
-              >
-                <Shield className="w-4 h-4" />
-                Admin
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${adminOpen ? "rotate-180" : ""}`} />
-              </button>
-
-              <AnimatePresence>
-                {adminOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full right-0 pt-2 z-50"
-                  >
-                    <div className="w-56 bg-popover border border-border rounded-xl shadow-lg p-2">
-                      {adminLinks.map((link) => (
-                        <Link
-                          key={link.path}
-                          to={link.path}
-                          className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                            isActive(link.path)
-                              ? "bg-primary/10 text-primary"
-                              : "text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <link.icon className="w-4 h-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold leading-tight">{link.label}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{link.desc}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
           {user ? (
             <>
-              {tierLoading ? (
-                <span
-                  aria-hidden
-                  className="inline-block h-8 w-20 rounded-full bg-muted/50 animate-pulse"
-                />
-              ) : (isPro || isPremium) ? (
-                <Link
-                  to="/pricing"
-                  {...prefetchHandlers("/pricing")}
-                  title="Tài khoản Pro — xem chi tiết gói"
-                  className="inline-flex items-center gap-1.5 rounded-full h-8 px-2.5 text-[11px] font-extrabold bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0 transition-all"
-                >
-                  <Crown className="w-3.5 h-3.5" />
-                  <span>PRO</span>
-                  {proUntil && (
-                    <span className="text-[10px] font-semibold opacity-90">
-                      · đến {new Date(proUntil).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
-                    </span>
-                  )}
-                </Link>
-              ) : (
-                <Link to="/pricing" {...prefetchHandlers("/pricing")}>
-                  <Button
-                    size="sm"
-                    className="rounded-full h-8 px-3.5 text-xs font-extrabold gap-1 bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] text-white hover:brightness-110 border-0"
+              <div className="absolute h-0 w-0 overflow-visible [&>div>button]:hidden">
+                <NotificationBell />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    aria-label="Mở menu tài khoản"
+                    className="relative w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
                   >
-                    <Crown className="w-3.5 h-3.5" /> Nâng cấp
-                  </Button>
-                </Link>
-              )}
-              <NotificationBell />
-              <Link to="/dashboard" {...prefetchHandlers("/dashboard")}>
-                <Button variant="ghost" size="sm" className="gap-1.5 text-sm h-8 px-3">
-                  <Flame className="w-4 h-4 text-primary" />
-                  Dashboard
-                </Button>
-              </Link>
-              <button
-                onClick={() => setProfileOpen(true)}
-                aria-label="Thông tin tài khoản"
-                className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-semibold flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden"
-              >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="avatar" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                ) : (
-                  (user.email?.[0] ?? "U").toUpperCase()
-                )}
-              </button>
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="avatar" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    ) : (
+                      (user.email?.[0] ?? "U").toUpperCase()
+                    )}
+                    {unreadCount > 0 && (
+                      <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={10} className="w-80 rounded-xl border-border bg-popover p-2 text-popover-foreground shadow-lg">
+                  <DropdownMenuLabel className="px-2 py-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-foreground">{userDisplayName}</p>
+                        <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>
+                      </div>
+                      {(isPro || isPremium) && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-[#CC1C01] to-[#FEAD5F] px-2 py-0.5 text-[10px] font-extrabold text-white">
+                          <Crown className="h-3 w-3" /> PRO
+                        </span>
+                      )}
+                    </div>
+                    {(isPro || isPremium) && (
+                      <TierPill
+                        tier={tier}
+                        isPro={isPro}
+                        isPremium={isPremium}
+                        proUntil={proUntil}
+                        className="mt-2 py-2"
+                      />
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" {...prefetchHandlers("/dashboard")} className="cursor-pointer gap-2 rounded-lg px-3 py-2">
+                      <Flame className="w-4 h-4 text-primary" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" {...prefetchHandlers("/admin")} className="cursor-pointer gap-2 rounded-lg px-3 py-2">
+                        <Shield className="w-4 h-4 text-primary" />
+                        Quản trị
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onSelect={openNotifications} className="cursor-pointer gap-2 rounded-lg px-3 py-2">
+                    <Bell className="w-4 h-4 text-primary" />
+                    <span>Thông báo</span>
+                    {unreadCount > 0 && (
+                      <span className="ml-auto min-w-[20px] rounded-full bg-primary px-1.5 py-0.5 text-center text-[10px] font-bold leading-none text-primary-foreground">
+                        {unreadBadgeText}
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="px-3 py-1.5 text-xs font-semibold text-muted-foreground">Giao diện</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={() => setTheme("light")} className="cursor-pointer gap-2 rounded-lg px-3 py-2">
+                    <Sun className="w-4 h-4 text-primary" />
+                    Sáng
+                    {theme === "light" && <Check className="ml-auto h-4 w-4 text-primary" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setTheme("dark")} className="cursor-pointer gap-2 rounded-lg px-3 py-2">
+                    <Moon className="w-4 h-4 text-primary" />
+                    Tối
+                    {resolvedTheme === "dark" && <Check className="ml-auto h-4 w-4 text-primary" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setProfileOpen(true)} className="cursor-pointer gap-2 rounded-lg px-3 py-2">
+                    <UserCircle className="w-4 h-4 text-primary" />
+                    Thông tin tài khoản
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={signOut} className="cursor-pointer gap-2 rounded-lg px-3 py-2 text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4" />
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <>
