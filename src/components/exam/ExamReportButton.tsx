@@ -234,7 +234,7 @@ export default function ExamReportButton({
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="rounded-md px-4 py-1.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+                className="rounded-md px-4 py-1.5 text-sm font-semibold text-exam-accent-foreground shadow-sm disabled:opacity-60"
                 style={{ backgroundColor: NAVY }}
               >
                 {submitting ? "Đang gửi..." : "Gửi báo lỗi"}
