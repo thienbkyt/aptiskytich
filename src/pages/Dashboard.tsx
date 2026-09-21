@@ -611,7 +611,7 @@ const Dashboard = () => {
                         Còn{" "}
                         <span
                           className="font-bold"
-                          style={creditsBalance <= 3 ? { color: "#CC1C01" } : undefined}
+                          style={creditsBalance <= 3 ? { color: "hsl(var(--primary))" } : undefined}
                         >
                           {creditsBalance} lượt
                         </span>

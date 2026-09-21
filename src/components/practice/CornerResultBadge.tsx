@@ -14,18 +14,7 @@ const CornerResultBadge = ({ item, label, done }: Props) => {
 
   if (value) {
     return (
-      <span
-        className="inline-flex items-center gap-1 select-none"
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: "#92400e",
-          background: "#fef3c7",
-          padding: "3px 9px",
-          borderRadius: 999,
-          border: "1px solid #fde68a",
-        }}
-      >
+      <span className="inline-flex items-center gap-1 select-none text-xs font-bold px-2.5 py-[3px] rounded-full bg-warning/20 text-brand-brown dark:text-warning border border-warning/40">
         <Trophy style={{ width: 13, height: 13 }} strokeWidth={2.25} />
         {value}
       </span>
@@ -34,18 +23,7 @@ const CornerResultBadge = ({ item, label, done }: Props) => {
 
   if (done) {
     return (
-      <span
-        className="inline-flex items-center gap-1 select-none"
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: "#047857",
-          background: "#ECFDF5",
-          padding: "3px 9px",
-          borderRadius: 999,
-          border: "1px solid #A7F3D0",
-        }}
-      >
+      <span className="inline-flex items-center gap-1 select-none text-xs font-bold px-2.5 py-[3px] rounded-full bg-success/15 text-success border border-success/30">
         <CheckCircle2 style={{ width: 13, height: 13 }} strokeWidth={2.25} />
         Đã làm
       </span>

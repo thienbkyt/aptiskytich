@@ -24,12 +24,12 @@ interface Props {
 }
 
 const CEFR_COLORS: Record<string, string> = {
-  A1: "bg-slate-100 text-slate-700",
-  A2: "bg-blue-100 text-blue-700",
-  B1: "bg-emerald-100 text-emerald-700",
-  B2: "bg-amber-100 text-amber-700",
-  C1: "bg-purple-100 text-purple-700",
-  C2: "bg-pink-100 text-pink-700",
+  A1: "bg-muted text-muted-foreground",
+  A2: "bg-info/15 text-info",
+  B1: "bg-success/15 text-success",
+  B2: "bg-warning/20 text-brand-brown dark:text-warning",
+  C1: "bg-primary/10 text-primary",
+  C2: "bg-accent/20 text-brand-brown dark:text-accent",
 };
 
 const CRITERIA_LABEL_VI: Record<string, string> = {
