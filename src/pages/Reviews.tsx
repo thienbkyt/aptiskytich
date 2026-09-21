@@ -373,7 +373,7 @@ const ReviewsPage = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
-        <main className="flex-1 pt-[112px] md:pt-16">
+        <main className="flex-1 pt-16">
           <div className="section-container py-20 text-center">
             <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
               <HeartHandshake className="w-6 h-6 text-primary" />
@@ -396,7 +396,7 @@ const ReviewsPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-[112px] md:pt-16">
+      <main className="flex-1 pt-16">
         <section className="border-b border-border bg-card">
           <div className="section-container py-10">
             <div className="flex flex-wrap items-start justify-between gap-4">
