@@ -575,11 +575,11 @@ const GrammarExamEngine = ({
                       <div className="flex items-center gap-3 mb-2 opacity-60">
                         <div className="w-24 text-xs text-exam-text-muted">Example</div>
                         <div className="flex-1 flex items-center gap-3">
-                          <div className={`w-32 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-exam-text`}>
+                          <div className={`w-32 px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text`}>
                             big
                           </div>
                           <span className="text-exam-text-muted whitespace-nowrap">{separator}</span>
-                          <div className="w-40 px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-exam-text">
+                          <div className="w-40 px-3 py-2 rounded border border-exam-border bg-exam-border/30 text-sm text-exam-text">
                             {isCollocation ? "house" : "large"}
                           </div>
                         </div>
