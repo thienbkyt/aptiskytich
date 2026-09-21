@@ -68,7 +68,7 @@ const TimerDisplay = ({
         {/* Progress bar under timer */}
         <div className="h-[3px] w-full bg-muted rounded-full mt-1 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-1000 ${isPausedEff ? "bg-amber-500" : "bg-[#230859]"}`}
+            className={`h-full rounded-full transition-all duration-1000 ${isPausedEff ? "bg-amber-500" : "bg-exam-accent"}`}
             style={{ width: `${progress}%` }}
           />
         </div>

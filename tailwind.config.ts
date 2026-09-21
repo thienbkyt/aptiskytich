@@ -69,6 +69,23 @@ export default {
           DEFAULT: "hsl(var(--on-dark))",
           muted: "hsl(var(--on-dark-muted) / 0.7)",
         },
+        "exam-bg": "hsl(var(--exam-bg))",
+        "exam-surface": "hsl(var(--exam-surface))",
+        "exam-text": {
+          DEFAULT: "hsl(var(--exam-text))",
+          muted: "hsl(var(--exam-text-muted))",
+        },
+        "exam-text-muted": "hsl(var(--exam-text-muted))",
+        "exam-border": "hsl(var(--exam-border))",
+        "exam-header": {
+          DEFAULT: "hsl(var(--exam-header))",
+          foreground: "hsl(var(--exam-header-foreground))",
+        },
+        "exam-accent": {
+          DEFAULT: "hsl(var(--exam-accent))",
+          foreground: "hsl(var(--exam-accent-foreground))",
+        },
+        "exam-accent-soft": "hsl(var(--exam-accent-soft))",
         "brand-red": "hsl(var(--brand-red))",
         "brand-orange": "hsl(var(--brand-orange))",
         "brand-brown": "hsl(var(--brand-brown))",

@@ -471,7 +471,7 @@ const BottomNavBar = ({
       </AnimatePresence>
 
       {/* Bottom bar */}
-      <div className="exam-light-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t-[3px] bg-background/95 backdrop-blur-sm border-[#230859]">
+      <div className="exam-light-bottom-bar fixed bottom-0 left-0 right-0 z-40 border-t-[3px] bg-background/95 backdrop-blur-sm border-exam-accent">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
@@ -533,23 +533,23 @@ const BottomNavBar = ({
           className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setShowProceedDialog(false); }}
         >
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-3">Proceed to the next section?</h2>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+          <div className="bg-exam-surface rounded-xl shadow-xl max-w-md w-full mx-4 p-8">
+            <h2 className="text-xl font-bold text-exam-text mb-3">Proceed to the next section?</h2>
+            <p className="text-sm text-exam-text-muted mb-6 leading-relaxed">
               The current section is timed and will be locked if you proceed. Please ensure you have reviewed each of your responses.
             </p>
             <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowProceedDialog(false)}
-                className="px-6 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
+                className="px-6 py-2.5 rounded-lg bg-exam-surface border border-exam-border hover:bg-exam-border/40 text-exam-text text-sm font-semibold transition-colors"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={() => { setShowProceedDialog(false); onProceedFromInstructions?.(); }}
-                className="px-6 py-2.5 rounded-lg bg-[#24085a] hover:bg-[#1a0640] text-white text-sm font-semibold transition-colors"
+                className="px-6 py-2.5 rounded-lg bg-exam-header hover:bg-exam-header/90 text-white text-sm font-semibold transition-colors"
               >
                 Proceed
               </button>
@@ -564,12 +564,12 @@ const BottomNavBar = ({
           className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setShowReviewModal(false); }}
         >
-          <div className="bg-white rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col">
+          <div className="bg-exam-surface rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] flex flex-col">
             <div className="p-6 pb-4">
-              <h2 className="text-lg font-bold text-gray-900">Question Review</h2>
-              <p className="text-sm text-gray-500 mt-1">Please review the following questions</p>
+              <h2 className="text-lg font-bold text-exam-text">Question Review</h2>
+              <p className="text-sm text-exam-text-muted mt-1">Please review the following questions</p>
               {reviewScopeNote && (
-                <p className="text-xs font-semibold text-[#24085a] mt-1">{reviewScopeNote}</p>
+                <p className="text-xs font-semibold text-exam-accent mt-1">{reviewScopeNote}</p>
               )}
             </div>
             <div className="flex-1 overflow-y-auto px-6 space-y-3">
@@ -577,18 +577,18 @@ const BottomNavBar = ({
                 const skill = title;
                 const expanded = reviewExpanded.has(sIdx);
                 return (
-                  <div key={sIdx} className="border border-gray-200 rounded-lg">
+                  <div key={sIdx} className="border border-exam-border rounded-lg">
                     <div className="flex items-center justify-between p-4">
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{skill}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{questions.length} Questions</p>
+                        <p className="text-sm font-bold text-exam-text">{skill}</p>
+                        <p className="text-xs text-exam-text-muted mt-0.5">{questions.length} Questions</p>
                       </div>
                       <button
                         onClick={() => toggleReviewSection(sIdx)}
-                        className="w-7 h-7 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded bg-exam-border/40 hover:bg-exam-border/60 transition-colors"
                         aria-label={expanded ? "Thu gọn" : "Mở rộng"}
                       >
-                        {expanded ? <Minus className="w-3.5 h-3.5 text-gray-700" /> : <Plus className="w-3.5 h-3.5 text-[#24085a]" />}
+                        {expanded ? <Minus className="w-3.5 h-3.5 text-exam-text" /> : <Plus className="w-3.5 h-3.5 text-exam-accent" />}
                       </button>
                     </div>
                     <AnimatePresence>
@@ -604,12 +604,12 @@ const BottomNavBar = ({
                               <button
                                 key={qi}
                                 onClick={() => { setShowReviewModal(false); q.onClick?.(); }}
-                                className="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-[#24085a]/40 hover:bg-gray-50 transition-colors"
+                                className="w-full text-left p-3 rounded-lg border border-exam-border hover:border-exam-accent/40 hover:bg-exam-border/40 transition-colors"
                               >
-                                <p className="text-sm font-bold text-gray-900">{q.label}</p>
+                                <p className="text-sm font-bold text-exam-text">{q.label}</p>
                                 <div className="flex items-center justify-between mt-1">
-                                  <span className="text-xs text-gray-500">{q.seen ? "Seen" : "Unseen"}</span>
-                                  <span className="text-xs text-gray-500">Not Attempted</span>
+                                  <span className="text-xs text-exam-text-muted">{q.seen ? "Seen" : "Unseen"}</span>
+                                  <span className="text-xs text-exam-text-muted">Not Attempted</span>
                                 </div>
                               </button>
                             ))}
@@ -625,7 +625,7 @@ const BottomNavBar = ({
               <button
                 type="button"
                 onClick={jumpToFirstUnanswered}
-                className="w-full px-6 py-3 rounded-lg bg-[#24085a] hover:bg-[#1a0640] text-white text-sm font-semibold transition-colors"
+                className="w-full px-6 py-3 rounded-lg bg-exam-header hover:bg-exam-header/90 text-white text-sm font-semibold transition-colors"
               >
                 Review Questions
               </button>
@@ -633,7 +633,7 @@ const BottomNavBar = ({
                 type="button"
                 onClick={() => { setShowReviewModal(false); setShowSubmitConfirm(true); }}
                 disabled={isSubmitting}
-                className="w-full px-6 py-3 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed text-gray-700 text-sm font-semibold transition-colors"
+                className="w-full px-6 py-3 rounded-lg bg-exam-surface border border-exam-border hover:bg-exam-border/40 disabled:opacity-60 disabled:cursor-not-allowed text-exam-text text-sm font-semibold transition-colors"
               >
                 {isSubmitting ? "Đang nộp…" : "Submit"}
               </button>

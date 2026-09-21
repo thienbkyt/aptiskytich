@@ -34,7 +34,7 @@ interface Props {
   questionNumber?: number | null;
 }
 
-const NAVY = "#002F5F";
+const NAVY = "hsl(var(--exam-accent))";
 
 function getDeviceInfo() {
   try {
@@ -126,7 +126,7 @@ export default function ExamReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="exam-fab-report fixed z-[90] flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-slate-50"
+        className="exam-fab-report fixed z-[90] flex items-center gap-1.5 rounded-full bg-exam-surface px-3 py-1.5 text-xs font-semibold shadow-md border transition-colors hover:bg-exam-border/40"
         style={{
           bottom: 80,
           left: 16,
@@ -145,9 +145,9 @@ export default function ExamReportButton({
           onClick={() => !submitting && setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl"
+            className="w-full max-w-md rounded-xl bg-exam-surface p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
-            style={{ color: "#111" }}
+            style={{ color: "hsl(var(--exam-text))" }}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-bold" style={{ color: NAVY }}>
@@ -156,7 +156,7 @@ export default function ExamReportButton({
               <button
                 type="button"
                 onClick={() => !submitting && setOpen(false)}
-                className="text-slate-500 hover:text-slate-800"
+                className="text-exam-text-muted hover:text-exam-text"
                 aria-label="Đóng"
               >
                 <X className="w-4 h-4" />
@@ -164,7 +164,7 @@ export default function ExamReportButton({
             </div>
 
             <div className="mb-3">
-              <div className="text-xs font-semibold mb-1.5 text-slate-600">Loại báo cáo</div>
+              <div className="text-xs font-semibold mb-1.5 text-exam-text-muted">Loại báo cáo</div>
               <div className="flex gap-2">
                 {([
                   { v: "content", l: "Lỗi nội dung câu hỏi" },
@@ -178,8 +178,8 @@ export default function ExamReportButton({
                       onClick={() => setCategory(c.v)}
                       className="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
                       style={{
-                        backgroundColor: active ? NAVY : "white",
-                        color: active ? "white" : NAVY,
+                        backgroundColor: active ? NAVY : "hsl(var(--exam-surface))",
+                        color: active ? "hsl(var(--exam-accent-foreground))" : NAVY,
                         borderColor: NAVY,
                       }}
                     >
@@ -190,7 +190,7 @@ export default function ExamReportButton({
               </div>
             </div>
 
-            <div className="text-xs font-semibold mb-1.5 text-slate-600">Chi tiết</div>
+            <div className="text-xs font-semibold mb-1.5 text-exam-text-muted">Chi tiết</div>
             <div className="flex flex-wrap gap-2 mb-3">
               {reasons.map((r) => {
                 const active = activeReason === r.value;
@@ -201,8 +201,8 @@ export default function ExamReportButton({
                     onClick={() => setActiveReason(r.value)}
                     className="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
                     style={{
-                      backgroundColor: active ? NAVY : "white",
-                      color: active ? "white" : NAVY,
+                      backgroundColor: active ? NAVY : "hsl(var(--exam-surface))",
+                      color: active ? "hsl(var(--exam-accent-foreground))" : NAVY,
                       borderColor: NAVY,
                     }}
                   >
@@ -217,8 +217,8 @@ export default function ExamReportButton({
               onChange={(e) => setNote(e.target.value)}
               placeholder="Mô tả thêm (không bắt buộc)"
               rows={3}
-              className="w-full rounded-md border border-slate-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
-              style={{ color: "#111" }}
+              className="w-full rounded-md border border-exam-border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0"
+              style={{ color: "hsl(var(--exam-text))" }}
             />
 
             <div className="mt-4 flex items-center justify-end gap-2">
@@ -226,7 +226,7 @@ export default function ExamReportButton({
                 type="button"
                 onClick={() => !submitting && setOpen(false)}
                 disabled={submitting}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-exam-text-muted hover:bg-exam-border/40"
               >
                 Hủy
               </button>
@@ -234,7 +234,7 @@ export default function ExamReportButton({
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="rounded-md px-4 py-1.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+                className="rounded-md px-4 py-1.5 text-sm font-semibold text-exam-accent-foreground shadow-sm disabled:opacity-60"
                 style={{ backgroundColor: NAVY }}
               >
                 {submitting ? "Đang gửi..." : "Gửi báo lỗi"}
