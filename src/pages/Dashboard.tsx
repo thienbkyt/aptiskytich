@@ -602,7 +602,7 @@ const Dashboard = () => {
               {creditsBalance > 0 ? (
                 <>
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#FEAD5F]/20 text-[#CC1C01] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-accent/20 text-primary flex items-center justify-center shrink-0">
                       <Gift className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
@@ -646,7 +646,7 @@ const Dashboard = () => {
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-2xl border border-[#CC1C01]/30 bg-gradient-to-r from-[#CC1C01]/10 via-[#FEAD5F]/10 to-transparent p-4 md:p-5"
+              className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-accent/10 to-transparent p-4 md:p-5"
             >
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#CC1C01] to-[#FEAD5F] text-white flex items-center justify-center shrink-0 shadow-sm">
@@ -662,7 +662,7 @@ const Dashboard = () => {
                 </div>
                 <Button
                   asChild
-                  className="shrink-0 bg-[#CC1C01] hover:bg-[#4D0D0D] text-white font-bold gap-1.5"
+                  className="shrink-0 bg-primary hover:bg-brand-brown text-primary-foreground font-bold gap-1.5"
                 >
                   <Link to="/pricing">
                     <Crown className="w-4 h-4" /> Nâng cấp Pro

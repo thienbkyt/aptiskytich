@@ -78,7 +78,7 @@ const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan
     : (CEFR_COLORS[overall] || "bg-[#24085a]/10 text-[#24085a]");
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
+    <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
       {/* Header */}
       <div className="p-5 border-b border-border">
         <div className="flex items-start gap-3">
@@ -132,7 +132,7 @@ const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan
           <ul className="space-y-1.5">
             {suggestions.slice(0, 6).map((s, i) => (
               <li key={i} className="text-sm text-foreground leading-relaxed flex gap-2">
-                <span className="text-[#FEAD5F] flex-shrink-0">•</span>
+                <span className="text-accent flex-shrink-0">•</span>
                 <span>{s}</span>
               </li>
             ))}
@@ -156,7 +156,7 @@ const AIGradingCard = ({ grading, title = "AI Kỳ Tích đánh giá tổng quan
                   <div className="text-destructive line-through decoration-destructive/50 mb-0.5">{m.original}</div>
                 )}
                 {m.correction && (
-                  <div className="text-emerald-600 font-medium">→ {m.correction}</div>
+                  <div className="text-success font-medium">→ {m.correction}</div>
                 )}
                 {m.explanation && (
                   <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{m.explanation}</div>

@@ -271,7 +271,7 @@ const SpeakingReviewPage = ({
 
   if (loading || !partType) {
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <div className="min-h-screen bg-muted flex flex-col">
         {skillHeader}
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -357,7 +357,7 @@ const SpeakingReviewPage = ({
     }));
 
     return (
-      <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+      <div className="min-h-screen bg-muted flex flex-col">
         {skillHeader}
         <div className="flex-1 px-4 py-6 max-w-3xl mx-auto w-full">
           <SpeakingProfileView
@@ -378,7 +378,7 @@ const SpeakingReviewPage = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+    <div className="min-h-screen bg-muted flex flex-col">
       {skillHeader}
       <div className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
         <GradingFailedRetryBox

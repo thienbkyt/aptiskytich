@@ -68,7 +68,7 @@ const isTextCohesion = (q: ReviewQuestion): boolean =>
 
 // ─── chip styles ──────────────────────────────────────────────────────────
 const chipCorrect =
-  "inline-flex items-center rounded px-1.5 py-0.5 mx-0.5 text-sm font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+  "inline-flex items-center rounded px-1.5 py-0.5 mx-0.5 text-sm font-semibold bg-success/15 text-success border border-success/30";
 const chipWrong =
   "inline-flex items-center rounded px-1.5 py-0.5 mx-0.5 text-sm font-semibold bg-destructive/10 text-destructive border border-destructive/20 line-through";
 const chipBlank =
@@ -146,7 +146,7 @@ const renderSubTable = (rows: SubRow[]): { node: JSX.Element; stats: SubStats } 
             {r.isBlank ? (
               <MinusCircle className="w-4 h-4 text-muted-foreground" />
             ) : r.isCorrect ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-success" />
             ) : (
               <XCircle className="w-4 h-4 text-destructive" />
             )}
@@ -241,7 +241,7 @@ const renderTextCohesion = (q: ReviewQuestion): { node: JSX.Element; stats: SubS
       <ol className="space-y-1.5 list-decimal list-inside text-sm text-foreground">
         {ordered.map((s, i) => (
           <li key={i} className="leading-relaxed">
-            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 rounded px-1.5 py-0.5">
+            <span className="bg-success/15 text-success border border-success/30 rounded px-1.5 py-0.5">
               {s.text}
             </span>
           </li>
@@ -321,7 +321,7 @@ const ReviewAnswerPanel = ({ questions, qResults, title = "Đáp án & Giải th
   });
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden mt-6">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mt-6">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -334,7 +334,7 @@ const ReviewAnswerPanel = ({ questions, qResults, title = "Đáp án & Giải th
           <div className="text-left">
             <p className="text-sm font-bold text-foreground">{title}</p>
             <div className="flex items-center gap-3 text-xs mt-0.5">
-              <span className="text-emerald-600 font-medium">Đúng {correctCount}</span>
+              <span className="text-success font-medium">Đúng {correctCount}</span>
               <span className="text-destructive font-medium">Sai {wrongCount}</span>
               <span className="text-muted-foreground">Bỏ trống {blankCount}</span>
             </div>
@@ -361,14 +361,14 @@ const ReviewAnswerPanel = ({ questions, qResults, title = "Đáp án & Giải th
                       {stats.blank === stats.total ? (
                         <MinusCircle className="w-5 h-5 text-muted-foreground" />
                       ) : allOk ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                        <CheckCircle2 className="w-5 h-5 text-success" />
                       ) : (
                         <XCircle className="w-5 h-5 text-destructive" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-muted-foreground mb-2">
-                        Câu {idx + 1} · <span className="text-emerald-600">Đúng {stats.correct}</span> · <span className="text-destructive">Sai {stats.wrong}</span> · Bỏ trống {stats.blank}
+                        Câu {idx + 1} · <span className="text-success">Đúng {stats.correct}</span> · <span className="text-destructive">Sai {stats.wrong}</span> · Bỏ trống {stats.blank}
                       </p>
                       {node}
                       {hasExplanation && (
@@ -396,14 +396,14 @@ const ReviewAnswerPanel = ({ questions, qResults, title = "Đáp án & Giải th
                       {stats.blank === stats.total ? (
                         <MinusCircle className="w-5 h-5 text-muted-foreground" />
                       ) : allOk ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                        <CheckCircle2 className="w-5 h-5 text-success" />
                       ) : (
                         <XCircle className="w-5 h-5 text-destructive" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-muted-foreground mb-2">
-                        Câu {idx + 1} · <span className="text-emerald-600">Đúng {stats.correct}</span> · <span className="text-destructive">Sai {stats.wrong}</span> · Bỏ trống {stats.blank}
+                        Câu {idx + 1} · <span className="text-success">Đúng {stats.correct}</span> · <span className="text-destructive">Sai {stats.wrong}</span> · Bỏ trống {stats.blank}
                       </p>
                       {node}
                       {hasExplanation && (
@@ -455,7 +455,7 @@ const ReviewAnswerPanel = ({ questions, qResults, title = "Đáp án & Giải th
                     {isBlank ? (
                       <MinusCircle className="w-5 h-5 text-muted-foreground" />
                     ) : ok ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <CheckCircle2 className="w-5 h-5 text-success" />
                     ) : (
                       <XCircle className="w-5 h-5 text-destructive" />
                     )}

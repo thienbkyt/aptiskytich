@@ -168,7 +168,7 @@ const MarathonNavigator = ({
       state === "done"
         ? "bg-muted-foreground/25 text-foreground border border-border hover:bg-muted-foreground/35 dark:bg-muted-foreground/20"
         : state === "answered"
-        ? "bg-muted text-foreground border-2 border-blue-500 dark:border-blue-400 hover:bg-muted"
+        ? "bg-muted text-foreground border-2 border-info hover:bg-muted"
         : "bg-muted text-muted-foreground border border-border";
 
     return (
@@ -192,7 +192,7 @@ const MarathonNavigator = ({
         className={cn(
           "w-[26px] h-[26px] rounded text-[11px] font-semibold transition-colors",
           cls,
-          isCurrentChip && "ring-2 ring-[#24085a] ring-offset-1",
+          isCurrentChip && "ring-2 ring-primary ring-offset-1",
           "cursor-pointer",
         )}
         title={`Đi tới đề ${si + 1}${(sets as any[])[si]?.title ? ` — ${(sets as any[])[si].title}` : ""}${chipLabelMode === "set" ? "" : ` · câu ${qi + 1}`}`}
@@ -249,7 +249,7 @@ const MarathonNavigator = ({
           </span>
           {!isWriting && (
             <span className="inline-flex items-center gap-1">
-              <span className="inline-block w-3 h-3 rounded border-2 border-blue-500 bg-muted dark:border-blue-400" /> đang làm dở
+              <span className="inline-block w-3 h-3 rounded border-2 border-info bg-muted" /> đang làm dở
             </span>
           )}
           <span className="inline-flex items-center gap-1">
@@ -263,7 +263,7 @@ const MarathonNavigator = ({
               <button
                 type="button"
                 onClick={() => onRetryQuestion(activeSetIndex, isReviewingMode ? (reviewingQ ?? 0) : (currentQ ?? 0))}
-                className="text-[11px] font-semibold text-[#CC1C01] hover:underline whitespace-nowrap shrink-0"
+                className="text-[11px] font-semibold text-primary hover:underline whitespace-nowrap shrink-0"
               >
                 Làm lại câu này
               </button>
@@ -274,7 +274,7 @@ const MarathonNavigator = ({
             <button
               type="button"
               onClick={() => onRetrySet(activeSetIndex)}
-              className="text-[11px] font-semibold text-[#CC1C01] hover:underline whitespace-nowrap shrink-0"
+              className="text-[11px] font-semibold text-primary hover:underline whitespace-nowrap shrink-0"
             >
               {isWriting ? "Làm lại đề này" : "Làm lại câu này"}
             </button>
@@ -304,7 +304,7 @@ const MarathonNavigator = ({
                   className={cn(
                     "min-w-[36px] h-[26px] px-1.5 rounded text-[11px] font-semibold transition-colors",
                     cls,
-                    isActive && "ring-2 ring-[#24085a] ring-offset-1",
+                    isActive && "ring-2 ring-primary ring-offset-1",
                     "cursor-pointer",
                   )}
                   title={`Đề ${si + 1}${(sets as any[])[si]?.title ? ` — ${(sets as any[])[si].title}` : ""}`}
