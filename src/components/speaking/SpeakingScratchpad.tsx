@@ -88,7 +88,7 @@ export default function SpeakingScratchpad({ outlineB1, outlineB2, currentQuesti
       </div>
 
       <textarea
-        className={`w-full min-h-0 resize-none border-0 outline-none px-4 py-3 text-sm leading-relaxed text-exam-text caret-exam-accent selection:bg-exam-accent/30 placeholder:text-exam-text-muted ${showOutline ? "shrink-0" : "flex-1"}`}
+        className={`w-full min-h-0 resize-none border border-exam-border bg-exam-surface outline-none px-4 py-3 text-sm leading-relaxed text-exam-text caret-exam-accent selection:bg-exam-accent/30 placeholder:text-exam-text-muted ${showOutline ? "shrink-0" : "flex-1"}`}
         style={showOutline ? { height: `${noteRatio}%` } : undefined}
         placeholder="Gõ ý tưởng của bạn ở đây…"
         value={note}

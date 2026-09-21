@@ -395,7 +395,7 @@ const ReadingPart2Cohesion = ({
             type="button"
             onClick={goPrevSection}
             disabled={isFirst}
-            className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
+            className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-60 disabled:cursor-not-allowed hover:bg-muted"
           >
             ← Đoạn trước
           </button>
@@ -407,7 +407,7 @@ const ReadingPart2Cohesion = ({
               type="button"
               onClick={goNextSection}
               disabled={isLast}
-              className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted"
+              className="px-3 py-2 text-xs font-semibold rounded-md border border-border bg-card text-foreground disabled:opacity-60 disabled:cursor-not-allowed hover:bg-muted"
             >
               Đoạn sau →
             </button>

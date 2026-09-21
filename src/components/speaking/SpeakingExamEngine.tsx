@@ -1440,7 +1440,7 @@ const SpeakingExamEngine = ({
           <button
             onClick={() => { unlockBeepAudio(); unlockAudio(); setPhase("instructions"); }}
             disabled={!soundChecked}
-            className="bg-exam-accent text-white text-sm rounded-md px-6 py-2.5 hover:bg-exam-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="bg-exam-accent text-exam-accent-foreground text-sm rounded-md px-6 py-2.5 hover:bg-exam-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Start Assessment
           </button>
@@ -1460,7 +1460,7 @@ const SpeakingExamEngine = ({
         <RotateDeviceOverlay />
         <SpeakingHeader partLabel={`Speaking`} partNumber={partNumber} totalParts={totalParts} onExit={handleExit} />
         <div className="flex-1 flex items-start justify-center px-4 pt-6 sm:pt-12 pb-28 sm:pb-24">
-          <div className="bg-exam-surface rounded-xl shadow-sm max-w-xl w-full p-8">
+          <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm max-w-xl w-full p-8">
             <p className="text-xs text-exam-text-muted">Aptis General Practice Test</p>
             <h2 className="text-lg font-bold text-exam-text mb-4">Speaking Practice Test – {testTitle}</h2>
             <p className="text-sm text-exam-text-muted mb-1">Number of Questions</p>
@@ -1471,7 +1471,7 @@ const SpeakingExamEngine = ({
             <button
               onClick={() => { unlockBeepAudio(); unlockAudio(); setPhase("instructions"); }}
               disabled={!soundChecked}
-              className="mt-6 bg-exam-accent hover:bg-exam-accent/90 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="mt-6 bg-exam-accent hover:bg-exam-accent/90 text-exam-accent-foreground px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Start Assessment
             </button>
@@ -1491,7 +1491,7 @@ const SpeakingExamEngine = ({
       <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         <div className="flex-1 flex items-start justify-center px-4 pt-6 sm:pt-12 pb-28 sm:pb-24">
-          <div className="bg-exam-surface rounded-xl shadow-sm max-w-3xl w-full p-8 md:p-12">
+          <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm max-w-3xl w-full p-8 md:p-12">
             <h2 className="text-xl font-bold text-exam-text mb-4">Aptis General Speaking Test Instructions</h2>
             <p className="text-sm font-bold text-exam-text mb-3">Speaking</p>
             <div className="text-sm text-exam-text leading-relaxed space-y-2">
@@ -1684,7 +1684,7 @@ const SpeakingExamEngine = ({
       <RotateDeviceOverlay />
       {micError && (
         <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center px-4">
-          <div role="alertdialog" aria-modal="true" className="bg-exam-surface rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+          <div role="alertdialog" aria-modal="true" className="bg-exam-surface rounded-2xl border border-exam-border shadow-xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">!</div>
               <div className="flex-1">
@@ -1741,7 +1741,7 @@ const SpeakingExamEngine = ({
       <div className="flex-1 flex px-4 pt-4 sm:pt-8 pb-28 sm:pb-24 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: Content */}
         <div className="flex-1">
-          <div className="bg-exam-surface rounded-xl shadow-sm p-4 sm:p-8 sm:min-h-[400px]">
+          <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-4 sm:p-8 sm:min-h-[400px]">
             <p className="text-xs text-exam-text-muted mb-1">Speaking</p>
             <p className="text-sm font-bold text-exam-text mb-6">
               {(partType === "part1" || partType === "part2" || partType === "part3") ? "Question" : "Part"} {(partType === "part1" || partType === "part2" || partType === "part3") ? currentIndex + 1 : partNumber} of {getTotalQuestions() > 1 ? getTotalQuestions() : totalParts}
@@ -1859,7 +1859,7 @@ const SpeakingExamEngine = ({
                   : "bg-exam-surface text-exam-text-muted border-exam-border hover:border-exam-border"
               }`;
             return (
-              <div className="mt-4 bg-exam-surface rounded-xl shadow-sm p-5 border-l-4 border-exam-accent">
+              <div className="mt-4 bg-exam-surface rounded-xl border border-exam-border border-l-4 border-l-exam-accent shadow-sm p-5">
                 <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-3">
                   💡 Bài nói mẫu
                 </p>
@@ -1891,7 +1891,7 @@ const SpeakingExamEngine = ({
         {/* Right: Timer panel */}
         <div className="w-[220px] shrink-0">
           {isReading ? (
-            <div className="bg-exam-surface rounded-xl shadow-sm p-6 flex flex-col items-center justify-center min-h-[260px]">
+            <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-6 flex flex-col items-center justify-center min-h-[260px]">
               <div className="w-16 h-16 rounded-full bg-exam-accent-soft/10 flex items-center justify-center mb-4 animate-pulse">
                 <span className="text-3xl">🔊</span>
               </div>
@@ -1925,7 +1925,7 @@ const SpeakingExamEngine = ({
               <button
                 onClick={handleFinishRecording}
                 disabled={!canFinish}
-                className="w-full py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-exam-accent text-white hover:bg-exam-accent/90"
+                className="w-full py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed bg-exam-accent text-exam-accent-foreground hover:bg-exam-accent/90"
               >
                 Finish Recording
               </button>

@@ -86,7 +86,7 @@ const SpeakingReviewView = ({
             <button
               onClick={() => onChangeIndex(Math.max(0, rIdx - 1))}
               disabled={!canPrev}
-              className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
+              className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-60 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
             >
               ← Câu trước
             </button>
@@ -96,7 +96,7 @@ const SpeakingReviewView = ({
             <button
               onClick={() => onChangeIndex(Math.min(reviewTotal - 1, rIdx + 1))}
               disabled={!canNext}
-              className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
+              className="text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-60 disabled:cursor-not-allowed text-foreground rounded-lg px-3 py-1.5 font-medium transition-colors"
             >
               Câu sau →
             </button>
@@ -115,7 +115,7 @@ const SpeakingReviewView = ({
       <div className="flex px-4 gap-6 max-w-6xl mx-auto w-full">
         {/* Left: same layout as exam-taking screen */}
         <div className="flex-1">
-          <div className="bg-exam-surface rounded-xl shadow-sm p-8 min-h-[400px]">
+          <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-8 min-h-[400px]">
             <p className="text-xs text-exam-text-muted mb-1">Speaking</p>
             <p className="text-sm font-bold text-exam-text mb-6">
               {isPart4 ? `Part ${partNumber} of ${totalParts}` : `Question ${rIdx + 1} of ${reviewTotal}`}
@@ -162,7 +162,7 @@ const SpeakingReviewView = ({
 
         {/* Right: review panel — audio + AI grading */}
         <div className="w-[340px] shrink-0 space-y-3">
-          <div className="bg-exam-surface rounded-xl shadow-sm p-4">
+          <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-4">
             <p className="text-xs font-semibold text-muted-foreground mb-2">Bài ghi âm của bạn</p>
             {audioUrl === "__EXPIRED__" ? (
               <p className="text-xs text-exam-text-muted italic leading-relaxed">
@@ -176,7 +176,7 @@ const SpeakingReviewView = ({
           </div>
 
           {(!g || "error" in g) ? (
-            <div className="bg-exam-surface rounded-xl shadow-sm p-4 space-y-3">
+            <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-4 space-y-3">
               <p className="text-xs text-muted-foreground italic">
                 {g && "error" in g ? `Không chấm được câu này: ${g.error}` : "Chưa có kết quả chấm cho câu này."}
               </p>
@@ -198,7 +198,7 @@ const SpeakingReviewView = ({
             </div>
           ) : (
             <>
-              <div className="bg-exam-surface rounded-xl shadow-sm p-4 space-y-3">
+              <div className="bg-exam-surface rounded-xl border border-exam-border shadow-sm p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-foreground">Điểm AI Kỳ Tích chấm</p>
                   <p className="text-sm font-bold text-primary">

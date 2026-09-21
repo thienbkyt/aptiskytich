@@ -65,7 +65,7 @@ const WritingPart4TwoEmails = ({
       {/* Scenario intro + email */}
       <div className="mb-8">
         <p className="text-sm font-bold text-foreground mb-3 leading-relaxed">{data.scenarioIntro}</p>
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-exam-surface border border-exam-border rounded-xl p-5">
           <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">{data.scenarioEmail}</p>
         </div>
       </div>
@@ -82,7 +82,7 @@ const WritingPart4TwoEmails = ({
           value={informalAnswer}
         />
         {showSample && informalSample && (
-          <div className="mt-4 bg-exam-surface rounded-xl shadow-sm p-5 border-l-4 border-exam-accent">
+          <div className="mt-4 bg-exam-surface rounded-xl border border-exam-border border-l-4 border-l-exam-accent shadow-sm p-5">
             <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-2">
               💡 Bài viết mẫu
             </p>
@@ -103,7 +103,7 @@ const WritingPart4TwoEmails = ({
           value={formalAnswer}
         />
         {showSample && formalSample && (
-          <div className="mt-4 bg-exam-surface rounded-xl shadow-sm p-5 border-l-4 border-exam-accent">
+          <div className="mt-4 bg-exam-surface rounded-xl border border-exam-border border-l-4 border-l-exam-accent shadow-sm p-5">
             <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-2">
               💡 Bài viết mẫu
             </p>

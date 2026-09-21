@@ -134,7 +134,7 @@ const SpeakingFullResultsV2 = ({
                 <button
                   onClick={() => setReviewPartIdx((i) => Math.max(0, i - 1))}
                   disabled={reviewPartIdx === 0}
-                  className="flex items-center gap-1 text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 text-foreground rounded-lg px-3 py-1.5 font-medium"
+                  className="flex items-center gap-1 text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-60 text-foreground rounded-lg px-3 py-1.5 font-medium"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" /> Part trước
                 </button>
@@ -144,7 +144,7 @@ const SpeakingFullResultsV2 = ({
                 <button
                   onClick={() => setReviewPartIdx((i) => Math.min(parts.length - 1, i + 1))}
                   disabled={reviewPartIdx >= parts.length - 1}
-                  className="flex items-center gap-1 text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-40 text-foreground rounded-lg px-3 py-1.5 font-medium"
+                  className="flex items-center gap-1 text-xs bg-card border border-border hover:bg-muted/50 disabled:opacity-60 text-foreground rounded-lg px-3 py-1.5 font-medium"
                 >
                   Part sau <ChevronRight className="w-3.5 h-3.5" />
                 </button>

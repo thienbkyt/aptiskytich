@@ -78,7 +78,7 @@ const WritingPart2Social = ({
       </div>
 
       {showSample && data.sampleAnswer && (
-        <div className="mt-4 bg-exam-surface rounded-xl shadow-sm p-5 border-l-4 border-exam-accent">
+        <div className="mt-4 bg-exam-surface rounded-xl border border-exam-border border-l-4 border-l-exam-accent shadow-sm p-5">
           <p className="text-xs font-bold text-exam-accent uppercase tracking-wide mb-2">
             💡 Bài viết mẫu
           </p>

@@ -85,7 +85,7 @@ const ReadingPart3Opinion = ({
       )}
 
       {/* People's opinions - plain text paragraphs like real exam */}
-      <div className="bg-exam-surface rounded-xl p-6 shadow-sm mb-6 space-y-5">
+      <div className="bg-exam-surface rounded-xl border border-exam-border p-6 shadow-sm mb-6 space-y-5">
         {question.people.map((person, pi) => {
           // Collect evidence sentences in this person's block (from AI), then render
           // the block text with each occurrence wrapped in a highlight.
@@ -143,7 +143,7 @@ const ReadingPart3Opinion = ({
       </div>
 
       {/* All statements with dropdowns */}
-      <div className="bg-exam-surface rounded-xl p-6 shadow-sm space-y-4">
+      <div className="bg-exam-surface rounded-xl border border-exam-border p-6 shadow-sm space-y-4">
         {question.statements.map((stmt, si) => {
           const selected = answers[si];
           const revealHere = revealFor(si);

@@ -35,7 +35,7 @@ const ExamFinishScreen = ({
         if (e.target === e.currentTarget && onCancel) onCancel();
       }}
     >
-      <div className="bg-exam-surface rounded-xl shadow-xl max-w-md w-full p-8">
+      <div className="bg-exam-surface rounded-xl border border-exam-border shadow-xl max-w-md w-full p-8">
         <h2 className="text-xl font-bold text-exam-text mb-3">{title}</h2>
         <p className="text-sm text-exam-text-muted mb-6 leading-relaxed">{message}</p>
         <div className="flex justify-end gap-3">
