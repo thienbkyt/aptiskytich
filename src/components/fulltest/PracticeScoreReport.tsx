@@ -168,7 +168,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
       {/* Sheet */}
       <div
         ref={sheetRef}
-        className="relative mx-auto max-w-3xl bg-white text-neutral-900 shadow-xl rounded-md overflow-hidden"
+        className="relative mx-auto max-w-3xl bg-exam-surface text-exam-text shadow-xl rounded-md overflow-hidden"
         style={{ padding: "40px 44px", fontFamily: "Inter, system-ui, sans-serif" }}
       >
         {/* Watermark */}
@@ -198,10 +198,10 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
             />
             <div>
               <div className="font-bold tracking-wide" style={{ color: BRAND_BROWN }}>APTIS KỲ TÍCH</div>
-              <div className="text-xs text-neutral-500">aptiskytich.vn</div>
+              <div className="text-xs text-exam-text-muted">aptiskytich.vn</div>
             </div>
           </div>
-          <div className="text-xs text-neutral-400 text-right leading-tight">
+          <div className="text-xs text-exam-text-muted text-right leading-tight">
             Copy of the<br />original certificate
           </div>
         </div>
@@ -209,33 +209,33 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
         {/* Aptis ESOL title */}
         <div className="mb-1 text-2xl font-semibold" style={{ color: BRAND_RED }}>Aptis ESOL</div>
         <div className="h-[3px] w-16 mb-4" style={{ backgroundColor: BRAND_RED }} />
-        <h1 className="text-3xl font-bold text-neutral-900 mb-8">Practice Score Report</h1>
+        <h1 className="text-3xl font-bold text-exam-text mb-8">Practice Score Report</h1>
 
         {/* Row 1 */}
         <div className="grid grid-cols-3 gap-6 mb-6">
           <div>
-            <div className="text-lg font-semibold text-neutral-900">{displayName || "—"}</div>
-            <div className="text-xs text-neutral-500 mt-1 border-t border-neutral-300 pt-1">Test taker name</div>
+            <div className="text-lg font-semibold text-exam-text">{displayName || "—"}</div>
+            <div className="text-xs text-exam-text-muted mt-1 border-t border-exam-border pt-1">Test taker name</div>
           </div>
           <div>
-            <div className="text-lg font-semibold text-neutral-900">{testDate}</div>
-            <div className="text-xs text-neutral-500 mt-1 border-t border-neutral-300 pt-1">Test date</div>
+            <div className="text-lg font-semibold text-exam-text">{testDate}</div>
+            <div className="text-xs text-exam-text-muted mt-1 border-t border-exam-border pt-1">Test date</div>
           </div>
           <div>
-            <div className="text-lg font-semibold text-neutral-900">{refNumber}</div>
-            <div className="text-xs text-neutral-500 mt-1 border-t border-neutral-300 pt-1">Test taker reference number</div>
+            <div className="text-lg font-semibold text-exam-text">{refNumber}</div>
+            <div className="text-xs text-exam-text-muted mt-1 border-t border-exam-border pt-1">Test taker reference number</div>
           </div>
         </div>
 
         {/* Row 2 */}
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div>
-            <div className="text-sm font-semibold text-neutral-900">aptiskytich.vn</div>
-            <div className="text-xs text-neutral-500 mt-1 border-t border-neutral-300 pt-1">Test Centre</div>
+            <div className="text-sm font-semibold text-exam-text">aptiskytich.vn</div>
+            <div className="text-xs text-exam-text-muted mt-1 border-t border-exam-border pt-1">Test Centre</div>
           </div>
           <div className="col-span-2">
-            <div className="text-sm font-semibold text-neutral-900">British Council – Aptis General</div>
-            <div className="text-xs text-neutral-500">Aptis ESOL General (mô phỏng)</div>
+            <div className="text-sm font-semibold text-exam-text">British Council – Aptis General</div>
+            <div className="text-xs text-exam-text-muted">Aptis ESOL General (mô phỏng)</div>
           </div>
         </div>
 
@@ -252,17 +252,17 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
               <div className="font-semibold mb-2" style={{ color: BRAND_NAVY }}>Scale score</div>
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-neutral-600 border-b border-neutral-300">
+                  <tr className="text-exam-text-muted border-b border-exam-border">
                     <th className="text-left font-medium py-1">Skill name</th>
                     <th className="text-right font-medium py-1">Skill score</th>
                   </tr>
                 </thead>
-                <tbody className="text-neutral-800">
-                  <tr className="border-b border-neutral-200"><td className="py-1">Listening</td><td className="text-right py-1">{listening !== null ? `${listening}/50` : "—"}</td></tr>
-                  <tr className="border-b border-neutral-200"><td className="py-1">Reading</td><td className="text-right py-1">{reading !== null ? `${reading}/50` : "—"}</td></tr>
-                  <tr className="border-b border-neutral-200"><td className="py-1">Speaking</td><td className="text-right py-1">{speaking !== null ? `${speaking}/50` : "—"}</td></tr>
-                  <tr className="border-b border-neutral-200"><td className="py-1">Writing</td><td className="text-right py-1">{writing !== null ? `${writing}/50` : "—"}</td></tr>
-                  <tr className="border-b border-neutral-200 font-bold" style={{ color: BRAND_RED }}>
+                <tbody className="text-exam-text">
+                  <tr className="border-b border-exam-border"><td className="py-1">Listening</td><td className="text-right py-1">{listening !== null ? `${listening}/50` : "—"}</td></tr>
+                  <tr className="border-b border-exam-border"><td className="py-1">Reading</td><td className="text-right py-1">{reading !== null ? `${reading}/50` : "—"}</td></tr>
+                  <tr className="border-b border-exam-border"><td className="py-1">Speaking</td><td className="text-right py-1">{speaking !== null ? `${speaking}/50` : "—"}</td></tr>
+                  <tr className="border-b border-exam-border"><td className="py-1">Writing</td><td className="text-right py-1">{writing !== null ? `${writing}/50` : "—"}</td></tr>
+                  <tr className="border-b border-exam-border font-bold" style={{ color: BRAND_RED }}>
                     <td className="py-1">Final scale score</td>
                     <td className="text-right py-1">{totalScore !== null ? `${totalScore}/200` : "—"}</td>
                   </tr>
@@ -274,11 +274,11 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
             {/* CEFR skill profile chart */}
             <div>
               <div className="font-semibold mb-2" style={{ color: BRAND_NAVY }}>CEFR skill profile</div>
-              <div className="text-xs text-neutral-600 mb-1">CEFR grade</div>
+              <div className="text-xs text-exam-text-muted mb-1">CEFR grade</div>
               <div className="flex pt-2">
                 {/* Y-axis */}
                 <div
-                  className="relative text-xs text-neutral-700"
+                  className="relative text-xs text-exam-text"
                   style={{ height: 224, width: 28 }}
                 >
                   {Y_LEVELS.map((lvl, i) => (
@@ -296,7 +296,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                   {/* gridlines */}
                   <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                     {Y_LEVELS.map((lvl) => (
-                      <div key={lvl} className="border-t border-neutral-200 h-0" />
+                      <div key={lvl} className="border-t border-exam-border h-0" />
                     ))}
                   </div>
                   <div className="absolute inset-0 flex items-end gap-2 px-1">
@@ -318,7 +318,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                               />
                             </>
                           ) : (
-                            <div className="absolute left-0 right-0 bottom-0 text-center text-[10px] text-neutral-400">—</div>
+                            <div className="absolute left-0 right-0 bottom-0 text-center text-[10px] text-exam-text-muted">—</div>
                           )}
                         </div>
                       );
@@ -331,7 +331,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
                 <div style={{ width: 28 }} />
                 <div className="flex-1 flex gap-2 px-1">
                   {chartBars.map((b, i) => (
-                    <div key={i} className="flex-1 text-center text-[10px] text-neutral-700 whitespace-pre-line leading-tight">
+                    <div key={i} className="flex-1 text-center text-[10px] text-exam-text whitespace-pre-line leading-tight">
                       {b.label}
                     </div>
                   ))}
@@ -350,8 +350,8 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
             >
               Aptis Kỳ Tích
             </div>
-            <div className="border-b border-neutral-400" />
-            <div className="text-xs text-neutral-500 mt-1">Signed</div>
+            <div className="border-b border-exam-border" />
+            <div className="text-xs text-exam-text-muted mt-1">Signed</div>
           </div>
           <div className="flex justify-end">
             <div
@@ -371,7 +371,7 @@ const PracticeScoreReport = forwardRef<PracticeScoreReportHandle, Props>(({ scor
           </div>
         </div>
 
-        <p className="text-[10px] text-neutral-400 text-center mt-6 italic">
+        <p className="text-[10px] text-exam-text-muted text-center mt-6 italic">
           Phiếu điểm mô phỏng cho mục đích luyện tập, không phải chứng chỉ chính thức của British Council.
         </p>
         </div>

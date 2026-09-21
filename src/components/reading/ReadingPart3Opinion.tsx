@@ -85,7 +85,7 @@ const ReadingPart3Opinion = ({
       )}
 
       {/* People's opinions - plain text paragraphs like real exam */}
-      <div className="bg-white rounded-xl p-6 shadow-sm mb-6 space-y-5">
+      <div className="bg-exam-surface rounded-xl p-6 shadow-sm mb-6 space-y-5">
         {question.people.map((person, pi) => {
           // Collect evidence sentences in this person's block (from AI), then render
           // the block text with each occurrence wrapped in a highlight.
@@ -143,7 +143,7 @@ const ReadingPart3Opinion = ({
       </div>
 
       {/* All statements with dropdowns */}
-      <div className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+      <div className="bg-exam-surface rounded-xl p-6 shadow-sm space-y-4">
         {question.statements.map((stmt, si) => {
           const selected = answers[si];
           const revealHere = revealFor(si);
@@ -167,16 +167,16 @@ const ReadingPart3Opinion = ({
                     if (val !== "") onAnswer(si, Number(val));
                   }}
                   disabled={lockedHere}
-                  className={`appearance-none rounded-lg border-2 px-3 py-2 pr-8 text-sm font-medium min-w-[140px] bg-white transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
+                  className={`appearance-none rounded-lg border-2 px-3 py-2 pr-8 text-sm font-medium min-w-[140px] bg-exam-surface transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
                     revealHere
                       ? isCorrect
-                        ? "border-green-500 bg-green-50 text-green-700"
+                        ? "border-success bg-success/15 text-success"
                         : isWrong
-                          ? "border-red-500 bg-red-50 text-red-700"
+                          ? "border-destructive bg-destructive/15 text-destructive"
                           : "border-border text-muted-foreground"
                       : selected !== null && selected !== undefined
-                        ? "border-[#24085a] bg-[#24085a]/5 text-[#24085a]"
-                        : "border-border text-muted-foreground hover:border-[#24085a]/40"
+                        ? "border-exam-accent bg-exam-accent-soft/15 text-exam-text"
+                        : "border-border text-muted-foreground hover:border-exam-accent/40"
                   }`}
                 >
                   <option value="">—</option>
@@ -187,11 +187,11 @@ const ReadingPart3Opinion = ({
                 <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-muted-foreground" />
               </div>
 
-              {revealHere && isCorrect && <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />}
+              {revealHere && isCorrect && <CheckCircle2 className="w-5 h-5 text-success shrink-0" />}
               {revealHere && selected !== stmt.correctPerson && (
                 <div className="flex items-center gap-1 shrink-0">
-                  <XCircle className="w-5 h-5 text-red-500" />
-                  <span className="text-xs text-green-600 font-medium">
+                  <XCircle className="w-5 h-5 text-destructive" />
+                  <span className="text-xs text-success font-medium">
                     → {question.people[stmt.correctPerson]?.name}
                   </span>
                 </div>

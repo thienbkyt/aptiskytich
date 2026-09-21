@@ -601,7 +601,7 @@ const ReadingExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
@@ -628,7 +628,7 @@ const ReadingExamEngine = ({
 
   if (phase === "reading_intro") {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Reading" partLabel={partLabel} onExit={onExit} />
@@ -637,7 +637,7 @@ const ReadingExamEngine = ({
             <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />
           </div>
         )}
-        <div className="flex-1 pl-[80px] pt-[40px] font-sans text-black">
+        <div className="flex-1 pl-[80px] pt-[40px] font-sans text-exam-text">
           <h1 className="text-xl mb-6">Aptis General Reading Instructions</h1>
           <p className="font-bold mb-2">Reading</p>
           {fullFlow ? (
@@ -696,7 +696,7 @@ const ReadingExamEngine = ({
 
   return (
     <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
-    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+    <div className="min-h-screen bg-exam-bg flex flex-col">
       <RotateDeviceOverlay />
       {adminControls}
       {reportButton}

@@ -563,7 +563,7 @@ const ListeningExamEngine = ({
 
   if (phase === "instructions") {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
@@ -585,11 +585,11 @@ const ListeningExamEngine = ({
 
   if (phase === "listening_intro") {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-exam-bg flex flex-col">
         <RotateDeviceOverlay />
         {adminControls}
         <ExamHeader skillLabel="Listening" partLabel={partLabel} onExit={onExit} />
-        <div className="flex-1 bg-white pl-[80px] pr-[80px] pt-[40px] font-sans text-black">
+        <div className="flex-1 bg-exam-bg pl-[80px] pr-[80px] pt-[40px] font-sans text-exam-text">
           <div className="flex items-start justify-between mb-4">
             <h1 className="text-xl">Aptis General Listening Instructions</h1>
             {hasStarted && !hideTimer && <TimerDisplay timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} onTogglePause={togglePause} hideTimer={hideTimer} />}
@@ -650,7 +650,7 @@ const ListeningExamEngine = ({
 
   return (
     <TimerProvider timeLeft={timeLeft} totalTime={timeLimit} isPaused={isPaused} togglePause={togglePause}>
-    <div className="min-h-screen bg-[#F3F3F3] flex flex-col">
+    <div className="min-h-screen bg-exam-bg flex flex-col">
       <RotateDeviceOverlay />
       {adminControls}
       {!submitted && !reviewMode && (
