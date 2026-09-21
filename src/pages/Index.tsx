@@ -109,17 +109,32 @@ const Index = () => {
     { value: "Đề Key", label: "Cập nhật hằng ngày" },
   ];
 
+  // Force light appearance on the landing page without touching the user's
+  // saved theme choice: while this page is mounted, temporarily lift the
+  // `dark` class off <html> (Tailwind dark: variants key off that class),
+  // then restore the exact previous state when leaving the page.
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    const prevColorScheme = root.style.colorScheme;
+    root.classList.remove("dark");
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+    return () => {
+      if (hadDark) {
+        root.classList.remove("light");
+        root.classList.add("dark");
+      }
+      root.style.colorScheme = prevColorScheme;
+    };
+  }, []);
+
   if (!authLoading && user && !forceHome) {
     return <Navigate to="/dashboard" replace />;
   }
   return (
 
-    <div
-      className="min-h-screen bg-background light"
-      style={{ colorScheme: "light" }}
-    >
-      {/* Force light palette on the landing page regardless of <html> theme */}
-      <style>{lightThemeCss}</style>
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       {/* Hero — light theme (landing only) */}
