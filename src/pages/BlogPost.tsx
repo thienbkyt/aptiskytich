@@ -529,7 +529,7 @@ const BlogPostPage = () => {
       </ol>
     ),
     blockquote: (p: any) => (
-      <blockquote className="my-6 border-l-4 border-[#CC1C01] bg-primary/5 px-5 py-3 rounded-r-lg italic text-foreground/90">
+      <blockquote className="my-6 border-l-4 border-primary bg-primary/5 px-5 py-3 rounded-r-lg italic text-foreground/90">
         {p.children}
       </blockquote>
     ),
@@ -751,7 +751,7 @@ const BlogPostPage = () => {
                             href={`#${h.id}`}
                             className={`block py-1.5 pl-3 border-l-2 transition-colors ${
                               active
-                                ? "border-[#CC1C01] text-primary font-semibold"
+                                ? "border-primary text-primary font-semibold"
                                 : "border-transparent text-muted-foreground hover:text-primary hover:border-primary/40"
                             }`}
                           >

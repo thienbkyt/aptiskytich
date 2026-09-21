@@ -45,14 +45,14 @@ const PRIORITY_CHIP_STYLE: Record<Priority, React.CSSProperties> = {
   high: { background: "#CC1C01", color: "#fff", border: "1px solid #CC1C01" },
   medium: { background: "#FEAD5F", color: "#4D0D0D", border: "1px solid #FEAD5F" },
   low: {
-    background: "var(--surface-0, hsl(var(--background)))",
-    color: "inherit",
-    border: "1px solid var(--border-strong, hsl(var(--border)))",
+    background: "hsl(var(--muted))",
+    color: "hsl(var(--foreground))",
+    border: "1px solid hsl(var(--border))",
   },
   backup: {
     background: "transparent",
-    color: "var(--text-secondary, hsl(var(--muted-foreground)))",
-    border: "1px dashed var(--border-strong, hsl(var(--border)))",
+    color: "hsl(var(--muted-foreground))",
+    border: "1px dashed hsl(var(--border))",
   },
 };
 
@@ -458,7 +458,7 @@ export default function PredictionKeyView() {
                       ? {
                           border: "1.5px solid #CC1C01",
                           color: "#CC1C01",
-                          background: "var(--bg-danger, rgba(204,28,1,0.08))",
+                          background: "hsl(var(--primary) / 0.08)",
                         }
                       : undefined
                   }
@@ -550,7 +550,7 @@ export default function PredictionKeyView() {
                   style={
                     on
                       ? { background: BRAND_GRADIENT }
-                      : { background: "var(--surface-1, hsl(var(--card)))" }
+                      : { background: "hsl(var(--card))" }
                   }
                 >
                   <div className="flex items-center gap-2">
@@ -617,8 +617,8 @@ export default function PredictionKeyView() {
               partChosen
                 ? { border: "2px solid #CC1C01" }
                 : {
-                    border: "0.5px dashed var(--border-strong, hsl(var(--border)))",
-                    background: "var(--surface-1, hsl(var(--card)))",
+                    border: "0.5px dashed hsl(var(--border))",
+                    background: "hsl(var(--card))",
                   }
             }
           >
