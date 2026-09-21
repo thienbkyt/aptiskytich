@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePageMeta } from "@/hooks/usePageMeta";
@@ -28,71 +29,6 @@ import InstallAppCard from "@/components/pwa/InstallAppCard";
 import FeedbackMarquee, { hasFeedbackImages } from "@/components/home/FeedbackMarquee";
 import { useSiteStats } from "@/hooks/useSiteStats";
 
-
-// Re-declares every light-theme token under `.light` so the landing page keeps
-// the :root palette even when <html> carries the `dark` class (Tailwind
-// darkMode: "class" puts dark overrides on html.dark, which would otherwise
-// cascade into this subtree). Values mirror the `:root` block in index.css.
-const lightThemeCss = `
-.light {
-  color-scheme: light;
-  --background: 0 0% 100%;
-  --foreground: 0 0% 5%;
-  --card: 0 0% 98%;
-  --card-foreground: 0 0% 5%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 5%;
-  --primary: 8 99% 40%;
-  --primary-foreground: 0 0% 100%;
-  --primary-glow: 8 99% 55%;
-  --secondary: 0 0% 96%;
-  --secondary-foreground: 0 0% 5%;
-  --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 40%;
-  --accent: 30 99% 68%;
-  --accent-foreground: 0 0% 5%;
-  --destructive: 8 99% 40%;
-  --destructive-foreground: 0 0% 100%;
-  --success: 142 60% 40%;
-  --success-foreground: 0 0% 100%;
-  --border: 0 0% 90%;
-  --input: 0 0% 90%;
-  --ring: 8 99% 40%;
-  --brand-red: 8 99% 40%;
-  --brand-orange: 30 99% 68%;
-  --brand-brown: 0 75% 18%;
-  --sidebar-background: 0 0% 6%;
-  --sidebar-foreground: 0 0% 95%;
-  --sidebar-primary: 8 99% 40%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 0 0% 10%;
-  --sidebar-accent-foreground: 0 0% 95%;
-  --sidebar-border: 0 30% 16%;
-  --sidebar-ring: 8 99% 40%;
-  --warning: 30 99% 68%;
-  --warning-foreground: 0 0% 5%;
-  --info: 200 80% 50%;
-  --info-foreground: 0 0% 100%;
-  --on-dark: 0 0% 100%;
-  --on-dark-muted: 0 0% 100%;
-  --background-elevated: 0 0% 98%;
-  --surface-glass: 0 0% 100%;
-  --border-glow: 8 99% 40%;
-  --gradient-primary: linear-gradient(135deg, hsl(8 99% 40%), hsl(0 75% 18%));
-  --gradient-hero: linear-gradient(135deg, hsl(0 0% 5%) 0%, hsl(240 30% 12%) 50%, hsl(8 99% 25%) 100%);
-  --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
-  --gradient-text-glow: linear-gradient(135deg, hsl(8 99% 50%) 0%, hsl(30 99% 68%) 100%);
-  --gradient-radial-red: radial-gradient(circle at 50% 50%, hsl(8 99% 40% / 0.18) 0%, transparent 60%);
-  --gradient-aurora: linear-gradient(135deg, hsl(8 99% 40% / 0.18), hsl(280 80% 50% / 0.12), hsl(30 99% 68% / 0.18));
-  --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.04);
-  --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.06);
-  --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.1);
-  --shadow-glow: 0 0 30px hsl(8 99% 40% / 0.18);
-  --shadow-glow-red: 0 0 24px hsl(8 99% 40% / 0.35), 0 0 60px hsl(8 99% 40% / 0.18);
-  --shadow-glow-soft: 0 0 20px hsl(8 99% 40% / 0.12);
-  --shadow-elevated: 0 12px 40px -8px hsl(0 0% 0% / 0.12), 0 0 0 1px hsl(0 0% 0% / 0.04);
-}
-`;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
