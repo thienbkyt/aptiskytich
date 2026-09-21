@@ -39,7 +39,7 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBa
 
   return (
     <>
-      <div className="w-full bg-[#24085a] text-white px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between sticky top-0 z-30 shrink-0">
+      <div className="w-full bg-exam-header text-white px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between sticky top-0 z-30 shrink-0">
         <div>
           <p className="text-xs text-white/70">{skillLabel}</p>
           <p className="text-sm font-bold">{partLabel}</p>
@@ -69,12 +69,12 @@ const ExamHeader = ({ skillLabel, partLabel, onExit, immediateExit = false, onBa
       </div>
       {showConfirm && onMarathonFinish && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowConfirm(false); }}>
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-3">Thoát marathon?</h2>
-            <p className="text-sm text-gray-600 mb-6 leading-relaxed">Tiến độ đã được lưu tự động. Lần sau bạn có thể vào làm tiếp từ đúng chỗ đang dừng.</p>
+          <div className="bg-exam-surface rounded-xl shadow-xl max-w-md w-full p-8">
+            <h2 className="text-xl font-bold text-exam-text mb-3">Thoát marathon?</h2>
+            <p className="text-sm text-exam-text-muted mb-6 leading-relaxed">Tiến độ đã được lưu tự động. Lần sau bạn có thể vào làm tiếp từ đúng chỗ đang dừng.</p>
             <div className="flex flex-col gap-3 items-center">
               <button onClick={() => { setShowConfirm(false); if (onMarathonFinish) onMarathonFinish(); else onExit?.(); }} className="w-full px-6 py-3 rounded-lg bg-[#CC1C01] hover:bg-[#4D0D0D] text-white text-sm font-semibold transition-colors">Lưu & thoát</button>
-              <button onClick={() => setShowConfirm(false)} className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2">Ở lại</button>
+              <button onClick={() => setShowConfirm(false)} className="text-sm text-exam-text-muted hover:text-exam-text underline underline-offset-2">Ở lại</button>
             </div>
           </div>
         </div>

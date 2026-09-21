@@ -35,15 +35,15 @@ const ExamFinishScreen = ({
         if (e.target === e.currentTarget && onCancel) onCancel();
       }}
     >
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-3">{title}</h2>
-        <p className="text-sm text-gray-600 mb-6 leading-relaxed">{message}</p>
+      <div className="bg-exam-surface rounded-xl shadow-xl max-w-md w-full p-8">
+        <h2 className="text-xl font-bold text-exam-text mb-3">{title}</h2>
+        <p className="text-sm text-exam-text-muted mb-6 leading-relaxed">{message}</p>
         <div className="flex justify-end gap-3">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-6 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors"
+              className="px-6 py-2.5 rounded-lg bg-exam-surface border border-exam-border hover:bg-exam-border/40 text-exam-text text-sm font-semibold transition-colors"
             >
               {cancelText}
             </button>
@@ -51,7 +51,7 @@ const ExamFinishScreen = ({
           <button
             type="button"
             onClick={onSubmit}
-            className="px-6 py-2.5 rounded-lg bg-[#24085a] hover:bg-[#1a0640] text-white text-sm font-semibold transition-colors"
+            className="px-6 py-2.5 rounded-lg bg-exam-header hover:bg-exam-header/90 text-white text-sm font-semibold transition-colors"
           >
             {buttonText}
           </button>

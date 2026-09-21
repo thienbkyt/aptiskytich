@@ -43,29 +43,29 @@ const ExamInstructions = ({
   }, []);
 
   return (
-    <div className="min-h-screen bg-white pl-[60px] pt-[40px] font-sans text-black">
-      <p className="text-sm text-gray-500 mb-2">Aptis General Practice Test</p>
-      <h1 className="text-xl font-bold text-black">
+    <div className="min-h-screen bg-exam-surface pl-[60px] pt-[40px] font-sans text-exam-text">
+      <p className="text-sm text-exam-text-muted mb-2">Aptis General Practice Test</p>
+      <h1 className="text-xl font-bold text-exam-text">
         {skillName} Practice Test
       </h1>
       {description ? (
-        <p className="text-sm text-gray-500 mt-1 mb-6">{description}</p>
+        <p className="text-sm text-exam-text-muted mt-1 mb-6">{description}</p>
       ) : (
         <div className="mb-6" />
       )}
       <div className="flex gap-16 mb-6">
         <div>
-          <p className="text-xs text-gray-500 mb-1">Number of Questions</p>
-          <p className="text-sm font-bold text-black">{totalParts}</p>
+          <p className="text-xs text-exam-text-muted mb-1">Number of Questions</p>
+          <p className="text-sm font-bold text-exam-text">{totalParts}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-500 mb-1">Time Allowed</p>
-          <p className="text-sm font-bold text-black">{totalMinutes} min</p>
+          <p className="text-xs text-exam-text-muted mb-1">Time Allowed</p>
+          <p className="text-sm font-bold text-exam-text">{totalMinutes} min</p>
         </div>
       </div>
       <button
         onClick={onStart}
-        className="bg-[#2D1B69] text-white text-sm rounded-md px-6 py-2.5 hover:bg-[#1f1149] transition-colors"
+        className="bg-exam-accent text-white text-sm rounded-md px-6 py-2.5 hover:bg-exam-accent/90 transition-colors"
       >
         Start Assessment
       </button>
